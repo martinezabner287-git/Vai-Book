@@ -1,0 +1,1306 @@
+
+import { useState, useEffect } from "react";
+import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile } from "./supabase";
+
+// ── DESIGN TOKENS ──────────────────────────────────────────────
+// Palette: deep forest green (#0D3D2E) + warm sand (#F5EFE0) + 
+// electric lime accent (#C6F135) + soft clay (#D4795A) + near-white (#FAFAF7)
+// Type: "Syne" display (bold, geometric) + "Inter" body
+// Signature: the lime accent used sparingly — only on the ONE thing that matters per screen
+
+const css = `
+  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Inter:wght@400;500;600&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --forest: #0D3D2E;
+    --forest-mid: #164D3A;
+    --forest-light: #1E6B50;
+    --sand: #F5EFE0;
+    --lime: #C6F135;
+    --clay: #D4795A;
+    --near-white: #FAFAF7;
+    --dark-text: #0D1F18;
+    --muted: #6B7F76;
+    --border: #D9E4DF;
+    --radius: 12px;
+    --radius-sm: 8px;
+  }
+
+  body { font-family: 'Inter', sans-serif; background: var(--near-white); color: var(--dark-text); }
+
+  /* NAV */
+  .nav {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 48px; background: var(--forest); position: sticky; top: 0; z-index: 100;
+  }
+  .nav-logo { font-family: 'Syne', sans-serif; font-size: 22px; color: var(--near-white); letter-spacing: -0.5px; }
+  .nav-logo span { color: var(--lime); }
+  .nav-links { display: flex; gap: 32px; }
+  .nav-links a { color: rgba(255,255,255,0.7); font-size: 14px; font-weight: 500; cursor: pointer; text-decoration: none; transition: color .2s; }
+  .nav-links a:hover { color: var(--near-white); }
+  .nav-cta { display: flex; gap: 10px; }
+  .btn-ghost { background: transparent; border: 1px solid rgba(255,255,255,0.3); color: var(--near-white); padding: 8px 20px; border-radius: var(--radius-sm); font-size: 14px; font-weight: 500; cursor: pointer; transition: all .2s; }
+  .btn-ghost:hover { border-color: var(--lime); color: var(--lime); }
+  .btn-lime { background: var(--lime); border: none; color: var(--forest); padding: 8px 20px; border-radius: var(--radius-sm); font-size: 14px; font-weight: 600; cursor: pointer; transition: opacity .2s; }
+  .btn-lime:hover { opacity: 0.85; }
+
+  /* HERO */
+  .hero {
+    background: var(--forest);
+    padding: 96px 48px 80px;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 64px; align-items: center;
+    min-height: 85vh;
+  }
+  .hero-eyebrow { font-size: 12px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--lime); margin-bottom: 20px; }
+  .hero-title { font-family: 'Syne', sans-serif; font-size: clamp(40px, 5vw, 64px); line-height: 1.05; color: var(--near-white); margin-bottom: 24px; }
+  .hero-title em { font-style: normal; color: var(--lime); }
+  .hero-body { font-size: 17px; line-height: 1.7; color: rgba(255,255,255,0.65); max-width: 440px; margin-bottom: 40px; }
+  .hero-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+  .btn-primary { background: var(--lime); color: var(--forest); border: none; padding: 14px 28px; border-radius: var(--radius-sm); font-size: 15px; font-weight: 600; cursor: pointer; transition: opacity .2s; }
+  .btn-primary:hover { opacity: .85; }
+  .btn-outline-white { background: transparent; color: var(--near-white); border: 1px solid rgba(255,255,255,0.35); padding: 14px 28px; border-radius: var(--radius-sm); font-size: 15px; font-weight: 500; cursor: pointer; transition: all .2s; }
+  .btn-outline-white:hover { border-color: var(--lime); color: var(--lime); }
+
+  /* HERO CARD */
+  .hero-card-wrap { display: flex; flex-direction: column; gap: 16px; }
+  .service-card {
+    background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
+    border-radius: var(--radius); padding: 20px 24px;
+    display: flex; align-items: center; gap: 16px; cursor: pointer;
+    transition: background .2s, border-color .2s;
+  }
+  .service-card:hover { background: rgba(198,241,53,0.08); border-color: rgba(198,241,53,0.3); }
+  .service-icon { width: 48px; height: 48px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; }
+  .service-info h4 { font-size: 15px; font-weight: 600; color: var(--near-white); margin-bottom: 2px; }
+  .service-info p { font-size: 13px; color: rgba(255,255,255,0.5); }
+  .service-badge { margin-left: auto; background: var(--lime); color: var(--forest); font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 6px; }
+  .service-badge.open { background: rgba(198,241,53,0.15); color: var(--lime); }
+
+  /* STATS BAR */
+  .stats-bar { background: var(--sand); padding: 40px 48px; display: flex; justify-content: space-around; gap: 32px; flex-wrap: wrap; }
+  .stat { text-align: center; }
+  .stat-num { font-family: 'Syne', sans-serif; font-size: 36px; font-weight: 800; color: var(--forest); }
+  .stat-num span { color: var(--clay); }
+  .stat-label { font-size: 13px; color: var(--muted); margin-top: 4px; }
+
+  /* HOW IT WORKS */
+  .section { padding: 80px 48px; }
+  .section-eyebrow { font-size: 12px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--clay); margin-bottom: 12px; }
+  .section-title { font-family: 'Syne', sans-serif; font-size: clamp(28px, 4vw, 44px); color: var(--forest); margin-bottom: 16px; line-height: 1.1; }
+  .section-sub { font-size: 16px; color: var(--muted); max-width: 520px; line-height: 1.65; margin-bottom: 48px; }
+  .steps-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 24px; }
+  .step-card { background: var(--near-white); border: 1px solid var(--border); border-radius: var(--radius); padding: 28px 24px; position: relative; overflow: hidden; }
+  .step-card::before { content: attr(data-n); position: absolute; top: -10px; right: 16px; font-family: 'Syne', sans-serif; font-size: 72px; font-weight: 800; color: var(--forest); opacity: 0.04; line-height: 1; }
+  .step-icon { font-size: 28px; margin-bottom: 16px; }
+  .step-card h3 { font-size: 16px; font-weight: 600; color: var(--forest); margin-bottom: 8px; }
+  .step-card p { font-size: 14px; color: var(--muted); line-height: 1.6; }
+
+  /* SERVICES SECTION */
+  .services-section { background: var(--forest); padding: 80px 48px; }
+  .services-section .section-title { color: var(--near-white); }
+  .services-section .section-sub { color: rgba(255,255,255,0.55); }
+  .services-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; }
+  .svc-tile { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: var(--radius); padding: 28px 20px; text-align: center; cursor: pointer; transition: all .2s; }
+  .svc-tile:hover { background: rgba(198,241,53,0.1); border-color: var(--lime); }
+  .svc-tile .icon { font-size: 36px; margin-bottom: 12px; }
+  .svc-tile h4 { font-size: 14px; font-weight: 600; color: var(--near-white); margin-bottom: 4px; }
+  .svc-tile p { font-size: 12px; color: rgba(255,255,255,0.45); }
+
+  /* PRICING */
+  .pricing-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; max-width: 960px; margin: 0 auto; }
+  .price-card { background: var(--near-white); border: 1px solid var(--border); border-radius: var(--radius); padding: 32px 28px; position: relative; }
+  .price-card.popular { border-color: var(--forest); box-shadow: 0 0 0 1px var(--forest); }
+  .popular-badge { position: absolute; top: -12px; left: 24px; background: var(--forest); color: var(--lime); font-size: 11px; font-weight: 700; padding: 4px 12px; border-radius: 20px; letter-spacing: .04em; text-transform: uppercase; }
+  .price-tier { font-size: 13px; font-weight: 600; color: var(--muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: .06em; }
+  .price-amount { font-family: 'Syne', sans-serif; font-size: 40px; font-weight: 800; color: var(--forest); margin-bottom: 4px; }
+  .price-amount sup { font-size: 20px; vertical-align: super; }
+  .price-period { font-size: 13px; color: var(--muted); margin-bottom: 24px; }
+  .price-features { list-style: none; margin-bottom: 28px; display: flex; flex-direction: column; gap: 10px; }
+  .price-features li { font-size: 14px; color: var(--dark-text); display: flex; align-items: flex-start; gap: 8px; line-height: 1.4; }
+  .price-features li::before { content: '✓'; color: var(--forest-light); font-weight: 700; margin-top: 1px; flex-shrink: 0; }
+  .btn-forest { background: var(--forest); color: var(--near-white); border: none; width: 100%; padding: 13px; border-radius: var(--radius-sm); font-size: 14px; font-weight: 600; cursor: pointer; transition: opacity .2s; }
+  .btn-forest:hover { opacity: .85; }
+  .btn-outline-forest { background: transparent; color: var(--forest); border: 1px solid var(--forest); width: 100%; padding: 13px; border-radius: var(--radius-sm); font-size: 14px; font-weight: 600; cursor: pointer; transition: all .2s; }
+  .btn-outline-forest:hover { background: var(--forest); color: var(--near-white); }
+
+  /* FOOTER */
+  .footer { background: var(--dark-text); padding: 48px 48px 32px; color: rgba(255,255,255,0.5); }
+  .footer-top { display: flex; justify-content: space-between; gap: 32px; flex-wrap: wrap; margin-bottom: 40px; }
+  .footer-brand .nav-logo { font-size: 20px; display: block; margin-bottom: 12px; }
+  .footer-brand p { font-size: 13px; max-width: 240px; line-height: 1.6; }
+  .footer-links h5 { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: rgba(255,255,255,0.8); margin-bottom: 14px; }
+  .footer-links ul { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+  .footer-links li { font-size: 13px; cursor: pointer; transition: color .2s; }
+  .footer-links li:hover { color: var(--near-white); }
+  .footer-bottom { border-top: 1px solid rgba(255,255,255,0.08); padding-top: 24px; font-size: 12px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+
+  /* PORTAL LAYOUTS */
+  .portal-layout { display: grid; grid-template-columns: 240px 1fr; min-height: calc(100vh - 64px); }
+  .sidebar { background: var(--forest); padding: 28px 0; display: flex; flex-direction: column; }
+  .sidebar-section { padding: 0 16px; margin-bottom: 32px; }
+  .sidebar-label { font-size: 10px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: rgba(255,255,255,0.35); padding: 0 12px; margin-bottom: 8px; }
+  .sidebar-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: var(--radius-sm); cursor: pointer; color: rgba(255,255,255,0.65); font-size: 14px; font-weight: 500; transition: all .2s; margin-bottom: 2px; }
+  .sidebar-item:hover, .sidebar-item.active { background: rgba(198,241,53,0.12); color: var(--near-white); }
+  .sidebar-item.active { color: var(--lime); }
+  .sidebar-item .icon { font-size: 16px; width: 20px; text-align: center; }
+  .sidebar-avatar { padding: 16px; border-top: 1px solid rgba(255,255,255,0.08); margin-top: auto; display: flex; align-items: center; gap: 12px; }
+  .avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--lime); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; color: var(--forest); flex-shrink: 0; }
+  .avatar-info .name { font-size: 13px; font-weight: 600; color: var(--near-white); }
+  .avatar-info .role { font-size: 11px; color: rgba(255,255,255,0.4); }
+
+  /* PORTAL CONTENT */
+  .portal-content { background: #F0F4F2; padding: 32px; overflow-y: auto; }
+  .portal-header { margin-bottom: 28px; }
+  .portal-header h2 { font-family: 'Syne', sans-serif; font-size: 26px; font-weight: 700; color: var(--forest); }
+  .portal-header p { font-size: 14px; color: var(--muted); margin-top: 4px; }
+
+  /* CARDS / WIDGETS */
+  .card { background: var(--near-white); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; }
+  .card-sm { background: var(--near-white); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; }
+  .metric-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 24px; }
+  .metric { background: var(--near-white); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; }
+  .metric-label { font-size: 12px; font-weight: 500; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 8px; }
+  .metric-value { font-family: 'Syne', sans-serif; font-size: 30px; font-weight: 800; color: var(--forest); }
+  .metric-sub { font-size: 12px; color: var(--muted); margin-top: 4px; }
+  .metric-accent { color: var(--clay); }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+  .mb-4 { margin-bottom: 16px; }
+  .mb-6 { margin-bottom: 24px; }
+
+  /* BOOKING CARDS */
+  .booking-item { display: flex; align-items: center; gap: 16px; padding: 14px 0; border-bottom: 1px solid var(--border); }
+  .booking-item:last-child { border-bottom: none; }
+  .booking-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .booking-dot.confirmed { background: #22C55E; }
+  .booking-dot.pending { background: #F59E0B; }
+  .booking-dot.done { background: var(--muted); }
+  .booking-info { flex: 1; }
+  .booking-info .title { font-size: 14px; font-weight: 600; color: var(--dark-text); }
+  .booking-info .meta { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .booking-amount { font-size: 14px; font-weight: 600; color: var(--forest); }
+  .status-pill { font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 20px; margin-left: 10px; }
+  .status-pill.confirmed { background: #DCFCE7; color: #15803D; }
+  .status-pill.pending { background: #FEF3C7; color: #B45309; }
+  .status-pill.done { background: #F1F5F9; color: var(--muted); }
+
+  /* PROVIDER SPECIFIC */
+  .provider-service { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border); }
+  .provider-service:last-child { border-bottom: none; }
+  .toggle { width: 40px; height: 22px; background: #E2E8F0; border-radius: 11px; position: relative; cursor: pointer; transition: background .2s; }
+  .toggle.on { background: var(--forest); }
+  .toggle::after { content: ''; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; background: white; border-radius: 50%; transition: transform .2s; }
+  .toggle.on::after { transform: translateX(18px); }
+  .card-title { font-size: 16px; font-weight: 600; color: var(--forest); margin-bottom: 16px; }
+
+  /* SEARCH BAR */
+  .search-bar { background: white; border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 20px; display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
+  .search-bar input { border: none; outline: none; font-size: 15px; flex: 1; font-family: 'Inter', sans-serif; color: var(--dark-text); background: transparent; }
+  .search-bar .search-icon { color: var(--muted); font-size: 18px; }
+
+  /* PROVIDER GRID */
+  .provider-card { background: var(--near-white); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; cursor: pointer; transition: box-shadow .2s; }
+  .provider-card:hover { box-shadow: 0 4px 20px rgba(13,61,46,0.1); }
+  .provider-card-img { height: 120px; display: flex; align-items: center; justify-content: center; font-size: 52px; }
+  .provider-card-body { padding: 16px; }
+  .provider-card-body h4 { font-size: 15px; font-weight: 600; color: var(--dark-text); margin-bottom: 2px; }
+  .provider-card-body .trade { font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+  .stars { color: #F59E0B; font-size: 13px; }
+  .provider-card-footer { display: flex; align-items: center; justify-content: space-between; margin-top: 10px; }
+  .price-tag { font-size: 14px; font-weight: 600; color: var(--forest); }
+  .avail-badge { font-size: 11px; font-weight: 600; background: #DCFCE7; color: #15803D; padding: 3px 8px; border-radius: 6px; }
+
+  .tab-row { display: flex; gap: 4px; margin-bottom: 24px; background: white; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 4px; }
+  .tab { flex: 1; text-align: center; padding: 8px; font-size: 13px; font-weight: 500; color: var(--muted); cursor: pointer; border-radius: 6px; transition: all .2s; }
+  .tab.active { background: var(--forest); color: var(--near-white); }
+
+  .input-group { margin-bottom: 14px; }
+  .input-group label { font-size: 12px; font-weight: 600; color: var(--dark-text); display: block; margin-bottom: 6px; letter-spacing: .02em; }
+  .input-group input, .input-group select, .input-group textarea { width: 100%; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px 14px; font-size: 14px; font-family: 'Inter', sans-serif; color: var(--dark-text); background: white; outline: none; transition: border-color .2s; }
+  .input-group input:focus, .input-group select:focus, .input-group textarea:focus { border-color: var(--forest); }
+  .input-group textarea { resize: vertical; height: 80px; }
+  .btn-sm { padding: 8px 16px; font-size: 13px; font-weight: 600; border-radius: var(--radius-sm); cursor: pointer; border: none; transition: opacity .2s; }
+  .btn-sm:hover { opacity: .85; }
+  .btn-sm.forest { background: var(--forest); color: var(--near-white); }
+  .btn-sm.lime { background: var(--lime); color: var(--forest); }
+  .btn-sm.ghost { background: transparent; border: 1px solid var(--border); color: var(--dark-text); }
+
+  /* CALENDAR */
+  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+  .cal-day-label { text-align: center; font-size: 11px; font-weight: 600; color: var(--muted); padding: 4px 0; }
+  .cal-day { text-align: center; padding: 8px 4px; border-radius: 6px; font-size: 13px; cursor: pointer; position: relative; }
+  .cal-day:hover { background: var(--sand); }
+  .cal-day.today { background: var(--forest); color: white; font-weight: 600; }
+  .cal-day.has-booking::after { content: ''; position: absolute; bottom: 3px; left: 50%; transform: translateX(-50%); width: 4px; height: 4px; background: var(--lime); border-radius: 50%; }
+  .cal-day.today.has-booking::after { background: var(--lime); }
+  .cal-day.empty { cursor: default; }
+
+  @media (max-width: 768px) {
+    .nav { padding: 14px 20px; }
+    .nav-links { display: none; }
+    .hero { grid-template-columns: 1fr; padding: 60px 24px; min-height: auto; }
+    .hero-card-wrap { display: none; }
+    .section { padding: 60px 24px; }
+    .stats-bar { padding: 32px 24px; }
+    .portal-layout { grid-template-columns: 1fr; }
+    .sidebar { display: none; }
+    .portal-content { padding: 20px; }
+    .grid-2 { grid-template-columns: 1fr; }
+    .grid-3 { grid-template-columns: 1fr; }
+    .metric-grid { grid-template-columns: 1fr 1fr; }
+    .services-grid { grid-template-columns: repeat(2, 1fr); }
+    .footer { padding: 40px 24px 24px; }
+  }
+`;
+
+// ── DATA ────────────────────────────────────────────────────────
+const SERVICES = [
+  { icon: "✂️", name: "Barbers", desc: "Cuts & styles", bg: "#1A5C44" },
+  { icon: "💅", name: "Nail Techs", desc: "Nails & art", bg: "#2A4A3E" },
+  { icon: "🏠", name: "Home Cleaning", desc: "Deep & regular", bg: "#1E4035" },
+  { icon: "🚗", name: "Car Wash", desc: "Mobile & fixed", bg: "#163626" },
+  { icon: "🐾", name: "Pet Grooming", desc: "All breeds", bg: "#1C4A38" },
+  { icon: "🔧", name: "Handyman", desc: "Repairs & more", bg: "#244530" },
+];
+
+const BOOKINGS_CUSTOMER = [
+  { title: "Haircut & Beard Trim", provider: "Karim's Cuts • Today 2:00 PM", amount: "BZ$35", status: "confirmed" },
+  { title: "Full Nail Set", provider: "Mia Beauty • Tomorrow 10:00 AM", amount: "BZ$80", status: "pending" },
+  { title: "Home Cleaning", provider: "CleanPro BZ • Jun 10", amount: "BZ$120", status: "done" },
+  { title: "Car Detail Wash", provider: "ShineBZ • Jun 8", amount: "BZ$60", status: "done" },
+];
+
+const PROVIDERS = [
+  { icon: "✂️", name: "Karim's Cuts", trade: "Barber · San Ignacio", rating: "4.9", reviews: 128, price: "BZ$30", bg: "#E8F5EF", avail: true },
+  { icon: "💅", name: "Mia Beauty", trade: "Nail Tech · Belmopan", rating: "5.0", reviews: 87, price: "BZ$60", bg: "#FEF0F0", avail: true },
+  { icon: "🏠", name: "CleanPro BZ", trade: "Home Cleaning · Cayo", rating: "4.8", reviews: 54, price: "BZ$100", bg: "#F0F4FF", avail: false },
+  { icon: "🚗", name: "ShineBZ", trade: "Car Wash · San Ignacio", rating: "4.7", reviews: 211, price: "BZ$45", bg: "#FFF8E8", avail: true },
+  { icon: "🐾", name: "PawCare BZ", trade: "Pet Grooming · Cayo", rating: "4.9", reviews: 39, price: "BZ$55", bg: "#F5F0FF", avail: true },
+  { icon: "🔧", name: "FixIt Belize", trade: "Handyman · Belmopan", rating: "4.6", reviews: 73, price: "BZ$80", bg: "#F0FFF4", avail: true },
+];
+
+const PROVIDER_BOOKINGS = [
+  { title: "Haircut & Beard Trim", customer: "Carlos M. • Today 2:00 PM", amount: "BZ$35", status: "confirmed" },
+  { title: "Fade & Line-up", customer: "David R. • Today 4:30 PM", amount: "BZ$30", status: "confirmed" },
+  { title: "Kids Cut", customer: "Sarah T. • Tomorrow 9:00 AM", amount: "BZ$20", status: "pending" },
+  { title: "Full Cut & Style", customer: "James B. • Tomorrow 11:00 AM", amount: "BZ$45", status: "pending" },
+];
+
+const DAYS = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+const CALENDAR_DAYS = [
+  null,null,null,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30
+];
+const BOOKED_DAYS = new Set([2,5,9,15,16,22,29]);
+
+// ── COMPONENTS ──────────────────────────────────────────────────
+
+function Nav({ onNav, current }) {
+  return (
+    <nav className="nav">
+      <span className="nav-logo">vai<span>book</span></span>
+      <div className="nav-links">
+        <a onClick={() => onNav("home")}>Home</a>
+        <a onClick={() => onNav("home")}>Services</a>
+        <a onClick={() => onNav("home")}>How it works</a>
+        <a onClick={() => onNav("home")}>Pricing</a>
+      </div>
+      <div className="nav-cta">
+        <button className="btn-ghost" onClick={() => onNav("customer")}>Customer login</button>
+        <button className="btn-lime" onClick={() => onNav("signup")}>List your business</button>
+      </div>
+    </nav>
+  );
+}
+
+function LandingPage({ onNav }) {
+  const [activeService, setActiveService] = useState(0);
+  return (
+    <>
+      {/* HERO */}
+      <section className="hero">
+        <div>
+          <div className="hero-eyebrow">Built for Belize</div>
+          <h1 className="hero-title">Book local services.<br /><em>No messages. No stress.</em></h1>
+          <p className="hero-body">Find trusted barbers, nail techs, car washes, cleaners, and more in your district. Book in seconds, pay securely, and leave a real review.</p>
+          <div className="hero-actions">
+            <button className="btn-primary" onClick={() => onNav("customer")}>Book a service</button>
+            <button className="btn-outline-white" onClick={() => onNav("signup")}>List your business</button>
+          </div>
+        </div>
+        <div className="hero-card-wrap">
+          {SERVICES.map((s, i) => (
+            <div key={i} className="service-card" onClick={() => setActiveService(i)}>
+              <div className="service-icon" style={{ background: s.bg }}>{s.icon}</div>
+              <div className="service-info">
+                <h4>{s.name}</h4>
+                <p>{s.desc}</p>
+              </div>
+              {i === 0 && <span className="service-badge">3 near you</span>}
+              {i === 1 && <span className="service-badge open">Open now</span>}
+              {i === 2 && <span className="service-badge">New</span>}
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* STATS */}
+      <div className="stats-bar">
+        <div className="stat"><div className="stat-num">2<span>,400</span>+</div><div className="stat-label">Bookings completed</div></div>
+        <div className="stat"><div className="stat-num">180<span>+</span></div><div className="stat-label">Verified providers</div></div>
+        <div className="stat"><div className="stat-num">6<span> districts</span></div><div className="stat-label">Across Belize</div></div>
+        <div className="stat"><div className="stat-num">4.9<span>★</span></div><div className="stat-label">Average rating</div></div>
+      </div>
+
+      {/* HOW IT WORKS */}
+      <section className="section">
+        <div className="section-eyebrow">Simple process</div>
+        <h2 className="section-title">From search to booked in under 2 minutes</h2>
+        <p className="section-sub">No more messaging back and forth just to get a haircut. Pick your time, confirm, show up.</p>
+        <div className="steps-grid">
+          {[
+            { n: "1", icon: "🔍", title: "Find your provider", desc: "Search by service type and district. See real ratings from real customers." },
+            { n: "2", icon: "📅", title: "Pick your slot", desc: "View live availability. No more 'are you free Friday?' messages." },
+            { n: "3", icon: "💳", title: "Pay securely", desc: "Payment held in escrow until your service is complete. You're protected." },
+            { n: "4", icon: "⭐", title: "Rate & review", desc: "After your appointment, leave a verified review. Build the community." },
+          ].map((s, i) => (
+            <div className="step-card" key={i} data-n={s.n}>
+              <div className="step-icon">{s.icon}</div>
+              <h3>{s.title}</h3>
+              <p>{s.desc}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* SERVICES */}
+      <section className="services-section">
+        <div className="section-eyebrow" style={{ color: "var(--lime)" }}>What's on VaiBook</div>
+        <h2 className="section-title">Every local service. One platform.</h2>
+        <p className="section-sub">From a fresh fade to a spotless car — all bookable in your district.</p>
+        <div className="services-grid">
+          {SERVICES.map((s, i) => (
+            <div className="svc-tile" key={i} onClick={() => onNav("customer")}>
+              <div className="icon">{s.icon}</div>
+              <h4>{s.name}</h4>
+              <p>{s.desc}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* PRICING */}
+      <section className="section" style={{ background: "var(--sand)" }}>
+        <div style={{ textAlign: "center", marginBottom: 48 }}>
+          <div className="section-eyebrow" style={{ justifyContent: "center", display: "flex" }}>For providers</div>
+          <h2 className="section-title">Simple pricing. Grow your clientele.</h2>
+          <p className="section-sub" style={{ margin: "0 auto" }}>Start free, upgrade when you're ready. No hidden fees.</p>
+        </div>
+        <div className="pricing-grid">
+          <div className="price-card">
+            <div className="price-tier">Starter</div>
+            <div className="price-amount"><sup>BZ$</sup>0</div>
+            <div className="price-period">Free forever</div>
+            <ul className="price-features">
+              <li>Basic public profile</li>
+              <li>Up to 10 bookings/month</li>
+              <li>Customer ratings visible</li>
+              <li>WhatsApp notification</li>
+            </ul>
+            <button className="btn-outline-forest" onClick={() => onNav("signup")}>Get started free</button>
+          </div>
+          <div className="price-card popular">
+            <div className="popular-badge">Most Popular</div>
+            <div className="price-tier">Pro</div>
+            <div className="price-amount"><sup>BZ$</sup>50</div>
+            <div className="price-period">per month</div>
+            <ul className="price-features">
+              <li>Everything in Starter</li>
+              <li>Unlimited bookings</li>
+              <li>Live calendar scheduling</li>
+              <li>Escrow payments</li>
+              <li>Custom booking link</li>
+              <li>SMS & email reminders to clients</li>
+            </ul>
+            <button className="btn-forest" onClick={() => onNav("signup")}>Start Pro trial</button>
+          </div>
+          <div className="price-card">
+            <div className="price-tier">Business</div>
+            <div className="price-amount"><sup>BZ$</sup>120</div>
+            <div className="price-period">per month</div>
+            <ul className="price-features">
+              <li>Everything in Pro</li>
+              <li>Multiple staff seats</li>
+              <li>Loyalty & rewards program</li>
+              <li>Analytics dashboard</li>
+              <li>Featured in district search</li>
+              <li>Priority customer support</li>
+            </ul>
+            <button className="btn-outline-forest" onClick={() => onNav("signup")}>Start Business trial</button>
+          </div>
+        </div>
+      </section>
+
+      {/* FOOTER */}
+      <footer className="footer">
+        <div className="footer-top">
+          <div className="footer-brand">
+            <span className="nav-logo">vai<span>book</span></span>
+            <p>Local services. Booked easily. Built for Belize.</p>
+          </div>
+          <div className="footer-links">
+            <h5>Services</h5>
+            <ul>
+              <li>Barbers</li><li>Nail Techs</li><li>Home Cleaning</li><li>Car Wash</li>
+            </ul>
+          </div>
+          <div className="footer-links">
+            <h5>Company</h5>
+            <ul>
+              <li>About Vai</li><li>How it works</li><li>Pricing</li><li>Blog</li>
+            </ul>
+          </div>
+          <div className="footer-links">
+            <h5>Support</h5>
+            <ul>
+              <li>Help center</li><li>Contact us</li><li>Privacy policy</li><li>Terms</li>
+            </ul>
+          </div>
+        </div>
+        <div className="footer-bottom">
+          <span>© 2026 VaiBook. Built in Belize 🇧🇿</span>
+          <span>Part of the Vai platform</span>
+        </div>
+      </footer>
+    </>
+  );
+}
+
+// ── CUSTOMER PORTAL ─────────────────────────────────────────────
+function CustomerPortal({ onNav }) {
+  const [tab, setTab] = useState("home");
+  const [bookingTab, setBookingTab] = useState("upcoming");
+
+  const sideItems = [
+    { id: "home", icon: "🏠", label: "Home" },
+    { id: "browse", icon: "🔍", label: "Find services" },
+    { id: "bookings", icon: "📅", label: "My bookings" },
+    { id: "payments", icon: "💳", label: "Payments" },
+    { id: "reviews", icon: "⭐", label: "My reviews" },
+    { id: "settings", icon: "⚙️", label: "Settings" },
+  ];
+
+  return (
+    <div className="portal-layout">
+      <aside className="sidebar">
+        <div style={{ padding: "0 16px 20px", borderBottom: "1px solid rgba(255,255,255,0.08)", marginBottom: 20 }}>
+          <span className="nav-logo" style={{ fontFamily: "Syne, sans-serif", fontSize: 18, color: "var(--near-white)" }}>vai<span style={{ color: "var(--lime)" }}>book</span></span>
+          <div style={{ fontSize: 11, color: "rgba(255,255,255,0.35)", marginTop: 4 }}>Customer portal</div>
+        </div>
+        <div className="sidebar-section">
+          <div className="sidebar-label">Menu</div>
+          {sideItems.map(item => (
+            <div key={item.id} className={`sidebar-item ${tab === item.id ? "active" : ""}`} onClick={() => setTab(item.id)}>
+              <span className="icon">{item.icon}</span>{item.label}
+            </div>
+          ))}
+        </div>
+        <div className="sidebar-avatar">
+          <div className="avatar">C</div>
+          <div className="avatar-info">
+            <div className="name">Carlos M.</div>
+            <div className="role">Customer</div>
+          </div>
+        </div>
+      </aside>
+
+      <main className="portal-content">
+        {tab === "home" && (
+          <>
+            <div className="portal-header">
+              <h2>Good afternoon, Carlos 👋</h2>
+              <p>You have 2 upcoming bookings this week.</p>
+            </div>
+            <div className="metric-grid">
+              <div className="metric"><div className="metric-label">Total bookings</div><div className="metric-value">14</div><div className="metric-sub">All time</div></div>
+              <div className="metric"><div className="metric-label">This month spent</div><div className="metric-value" style={{ color: "var(--clay)" }}>BZ$155</div><div className="metric-sub">2 services</div></div>
+              <div className="metric"><div className="metric-label">Saved providers</div><div className="metric-value">5</div><div className="metric-sub">Your favourites</div></div>
+              <div className="metric"><div className="metric-label">Reviews left</div><div className="metric-value">11</div><div className="metric-sub">★ avg 4.8</div></div>
+            </div>
+            <div className="grid-2">
+              <div className="card">
+                <div className="card-title">Upcoming bookings</div>
+                {BOOKINGS_CUSTOMER.slice(0,2).map((b, i) => (
+                  <div className="booking-item" key={i}>
+                    <div className={`booking-dot ${b.status}`}></div>
+                    <div className="booking-info">
+                      <div className="title">{b.title}</div>
+                      <div className="meta">{b.provider}</div>
+                    </div>
+                    <div>
+                      <span className="booking-amount">{b.amount}</span>
+                      <span className={`status-pill ${b.status}`}>{b.status}</span>
+                    </div>
+                  </div>
+                ))}
+                <button className="btn-sm forest" style={{ marginTop: 16 }} onClick={() => setTab("bookings")}>View all bookings</button>
+              </div>
+              <div className="card">
+                <div className="card-title">Quick book</div>
+                <p style={{ fontSize: 13, color: "var(--muted)", marginBottom: 16 }}>What do you need today?</p>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                  {SERVICES.slice(0,4).map((s, i) => (
+                    <div key={i} onClick={() => setTab("browse")} style={{ background: "var(--sand)", borderRadius: 8, padding: "12px 14px", cursor: "pointer", display: "flex", alignItems: "center", gap: 8, transition: "background .2s" }}
+                      onMouseEnter={e => e.currentTarget.style.background = "#E8EDE0"}
+                      onMouseLeave={e => e.currentTarget.style.background = "var(--sand)"}
+                    >
+                      <span style={{ fontSize: 22 }}>{s.icon}</span>
+                      <span style={{ fontSize: 13, fontWeight: 600, color: "var(--forest)" }}>{s.name}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </>
+        )}
+
+        {tab === "browse" && (
+          <>
+            <div className="portal-header"><h2>Find a service</h2><p>Browse verified providers near you in Cayo District.</p></div>
+            <div className="search-bar">
+              <span className="search-icon">🔍</span>
+              <input placeholder="Search barbers, nail techs, cleaners..." />
+            </div>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 20 }}>
+              {["All", "Barbers", "Nail Techs", "Cleaning", "Car Wash", "Pet Care"].map((f, i) => (
+                <button key={i} className="btn-sm" style={{ background: i === 0 ? "var(--forest)" : "white", color: i === 0 ? "white" : "var(--muted)", border: "1px solid var(--border)" }}>{f}</button>
+              ))}
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px,1fr))", gap: 16 }}>
+              {PROVIDERS.map((p, i) => (
+                <div className="provider-card" key={i}>
+                  <div className="provider-card-img" style={{ background: p.bg }}>{p.icon}</div>
+                  <div className="provider-card-body">
+                    <h4>{p.name}</h4>
+                    <div className="trade">{p.trade}</div>
+                    <div className="stars">★★★★★ <span style={{ color: "var(--muted)", fontSize: 12 }}>{p.rating} ({p.reviews})</span></div>
+                    <div className="provider-card-footer">
+                      <span className="price-tag">From {p.price}</span>
+                      {p.avail ? <span className="avail-badge">Available</span> : <span style={{ fontSize: 11, color: "var(--muted)" }}>Fully booked</span>}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+
+        {tab === "bookings" && (
+          <>
+            <div className="portal-header"><h2>My bookings</h2><p>Track all your appointments in one place.</p></div>
+            <div className="tab-row">
+              {["Upcoming", "Completed", "Cancelled"].map((t, i) => (
+                <div key={i} className={`tab ${bookingTab === t.toLowerCase() ? "active" : ""}`} onClick={() => setBookingTab(t.toLowerCase())}>{t}</div>
+              ))}
+            </div>
+            <div className="card">
+              {BOOKINGS_CUSTOMER.filter(b => bookingTab === "upcoming" ? b.status !== "done" : b.status === "done").map((b, i) => (
+                <div className="booking-item" key={i}>
+                  <div className={`booking-dot ${b.status}`}></div>
+                  <div className="booking-info">
+                    <div className="title">{b.title}</div>
+                    <div className="meta">{b.provider}</div>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <span className="booking-amount">{b.amount}</span>
+                    <span className={`status-pill ${b.status}`}>{b.status}</span>
+                    {b.status === "done" && <button className="btn-sm lime" style={{ marginLeft: 4 }}>Review</button>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+
+        {tab === "payments" && (
+          <>
+            <div className="portal-header"><h2>Payments</h2><p>All your transactions and receipts.</p></div>
+            <div className="metric-grid" style={{ gridTemplateColumns: "1fr 1fr 1fr" }}>
+              <div className="metric"><div className="metric-label">Total spent</div><div className="metric-value" style={{ color: "var(--clay)" }}>BZ$720</div><div className="metric-sub">All time</div></div>
+              <div className="metric"><div className="metric-label">In escrow</div><div className="metric-value">BZ$35</div><div className="metric-sub">Pending release</div></div>
+              <div className="metric"><div className="metric-label">Refunds</div><div className="metric-value">BZ$0</div><div className="metric-sub">All time</div></div>
+            </div>
+            <div className="card">
+              <div className="card-title">Recent transactions</div>
+              {BOOKINGS_CUSTOMER.map((b, i) => (
+                <div className="booking-item" key={i}>
+                  <div style={{ width: 36, height: 36, background: "var(--sand)", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18 }}>💳</div>
+                  <div className="booking-info"><div className="title">{b.title}</div><div className="meta">{b.provider}</div></div>
+                  <div>
+                    <span className="booking-amount">{b.amount}</span>
+                    <span className={`status-pill ${b.status}`}>{b.status === "done" ? "paid" : b.status}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+
+        {(tab === "reviews" || tab === "settings") && (
+          <>
+            <div className="portal-header"><h2>{tab === "reviews" ? "My reviews" : "Settings"}</h2></div>
+            <div className="card" style={{ maxWidth: 480 }}>
+              {tab === "settings" ? (
+                <>
+                  <div className="card-title">Account settings</div>
+                  <div className="input-group"><label>Full name</label><input defaultValue="Carlos Martinez" /></div>
+                  <div className="input-group"><label>Email</label><input defaultValue="carlos@email.com" /></div>
+                  <div className="input-group"><label>Phone</label><input defaultValue="+501 600 1234" /></div>
+                  <div className="input-group"><label>District</label><select><option>Cayo</option><option>Belize City</option><option>Orange Walk</option></select></div>
+                  <button className="btn-sm forest">Save changes</button>
+                </>
+              ) : (
+                <>
+                  <div className="card-title">Reviews you've left</div>
+                  {[{ s: "Karim's Cuts", r: "Great cut, very clean shop. Will be back!", stars: 5 }, { s: "ShineBZ", r: "Car looks brand new. Fast service.", stars: 5 }].map((r, i) => (
+                    <div key={i} style={{ padding: "14px 0", borderBottom: "1px solid var(--border)" }}>
+                      <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 4 }}>{r.s}</div>
+                      <div className="stars" style={{ marginBottom: 6 }}>{"★".repeat(r.stars)}</div>
+                      <div style={{ fontSize: 13, color: "var(--muted)" }}>{r.r}</div>
+                    </div>
+                  ))}
+                </>
+              )}
+            </div>
+          </>
+        )}
+      </main>
+    </div>
+  );
+}
+
+// ── PROVIDER PORTAL ─────────────────────────────────────────────
+function ProviderPortal({ onNav }) {
+  const [tab, setTab] = useState("dashboard");
+  const [toggles, setToggles] = useState([true, false, true]);
+
+  const sideItems = [
+    { id: "dashboard", icon: "📊", label: "Dashboard" },
+    { id: "bookings", icon: "📅", label: "Bookings" },
+    { id: "calendar", icon: "🗓️", label: "Availability" },
+    { id: "services", icon: "✂️", label: "My services" },
+    { id: "earnings", icon: "💰", label: "Earnings" },
+    { id: "profile", icon: "👤", label: "Public profile" },
+    { id: "settings", icon: "⚙️", label: "Settings" },
+  ];
+
+  return (
+    <div className="portal-layout">
+      <aside className="sidebar">
+        <div style={{ padding: "0 16px 20px", borderBottom: "1px solid rgba(255,255,255,0.08)", marginBottom: 20 }}>
+          <span className="nav-logo" style={{ fontFamily: "Syne, sans-serif", fontSize: 18, color: "var(--near-white)" }}>vai<span style={{ color: "var(--lime)" }}>book</span></span>
+          <div style={{ fontSize: 11, color: "rgba(255,255,255,0.35)", marginTop: 4 }}>Provider portal</div>
+        </div>
+        <div className="sidebar-section">
+          <div className="sidebar-label">Provider tools</div>
+          {sideItems.map(item => (
+            <div key={item.id} className={`sidebar-item ${tab === item.id ? "active" : ""}`} onClick={() => setTab(item.id)}>
+              <span className="icon">{item.icon}</span>{item.label}
+            </div>
+          ))}
+        </div>
+        <div style={{ padding: "12px 16px", marginTop: 4 }}>
+          <div style={{ background: "rgba(198,241,53,0.12)", borderRadius: 8, padding: "10px 12px" }}>
+            <div style={{ fontSize: 11, color: "var(--lime)", fontWeight: 600, marginBottom: 4 }}>PRO PLAN</div>
+            <div style={{ fontSize: 12, color: "rgba(255,255,255,0.55)" }}>Renews Jul 15 · BZ$50</div>
+          </div>
+        </div>
+        <div className="sidebar-avatar">
+          <div className="avatar">K</div>
+          <div className="avatar-info">
+            <div className="name">Karim's Cuts</div>
+            <div className="role">Barber · San Ignacio</div>
+          </div>
+        </div>
+      </aside>
+
+      <main className="portal-content">
+        {tab === "dashboard" && (
+          <>
+            <div className="portal-header">
+              <h2>Dashboard</h2>
+              <p>Monday, June 15 · 4 appointments today</p>
+            </div>
+            <div className="metric-grid">
+              <div className="metric"><div className="metric-label">This month earnings</div><div className="metric-value" style={{ color: "var(--forest-light)" }}>BZ$1,240</div><div className="metric-sub">↑ 18% vs last month</div></div>
+              <div className="metric"><div className="metric-label">Bookings today</div><div className="metric-value">4</div><div className="metric-sub">2 confirmed, 2 pending</div></div>
+              <div className="metric"><div className="metric-label">Rating</div><div className="metric-value">4.9 ★</div><div className="metric-sub">128 reviews</div></div>
+              <div className="metric"><div className="metric-label">Completion rate</div><div className="metric-value">97<span style={{ fontSize: 18 }}>%</span></div><div className="metric-sub">Excellent</div></div>
+            </div>
+            <div className="grid-2">
+              <div className="card">
+                <div className="card-title">Today's appointments</div>
+                {PROVIDER_BOOKINGS.map((b, i) => (
+                  <div className="booking-item" key={i}>
+                    <div className={`booking-dot ${b.status}`}></div>
+                    <div className="booking-info">
+                      <div className="title">{b.title}</div>
+                      <div className="meta">{b.customer}</div>
+                    </div>
+                    <div>
+                      <span className="booking-amount">{b.amount}</span>
+                      <span className={`status-pill ${b.status}`}>{b.status}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="card">
+                <div className="card-title">Revenue this week</div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 4 }}>
+                  {[["Mon", 280, 100], ["Tue", 210, 75], ["Wed", 350, 100], ["Thu", 190, 68], ["Fri", 310, 100], ["Sat", 0, 0]].map(([d, v, pct], i) => (
+                    <div key={i} style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                      <span style={{ fontSize: 12, width: 28, color: "var(--muted)" }}>{d}</span>
+                      <div style={{ flex: 1, height: 8, background: "var(--border)", borderRadius: 4, overflow: "hidden" }}>
+                        <div style={{ width: `${pct}%`, height: "100%", background: v > 0 ? "var(--forest)" : "transparent", borderRadius: 4 }}></div>
+                      </div>
+                      <span style={{ fontSize: 13, fontWeight: 600, color: "var(--forest)", width: 58, textAlign: "right" }}>{v > 0 ? `BZ$${v}` : "—"}</span>
+                    </div>
+                  ))}
+                </div>
+                <div style={{ marginTop: 16, paddingTop: 14, borderTop: "1px solid var(--border)", display: "flex", justifyContent: "space-between" }}>
+                  <span style={{ fontSize: 13, color: "var(--muted)" }}>Week total</span>
+                  <span style={{ fontSize: 15, fontWeight: 700, color: "var(--forest)" }}>BZ$1,340</span>
+                </div>
+              </div>
+            </div>
+          </>
+        )}
+
+        {tab === "bookings" && (
+          <>
+            <div className="portal-header"><h2>Bookings</h2><p>Manage your upcoming and past appointments.</p></div>
+            <div className="tab-row">
+              {["Upcoming","Pending","Completed"].map((t,i) => (
+                <div key={i} className={`tab ${i===0?"active":""}`}>{t}</div>
+              ))}
+            </div>
+            <div className="card">
+              {PROVIDER_BOOKINGS.map((b, i) => (
+                <div className="booking-item" key={i}>
+                  <div className={`booking-dot ${b.status}`}></div>
+                  <div className="booking-info"><div className="title">{b.title}</div><div className="meta">{b.customer}</div></div>
+                  <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                    <span className="booking-amount">{b.amount}</span>
+                    <span className={`status-pill ${b.status}`}>{b.status}</span>
+                    {b.status === "pending" && <><button className="btn-sm lime">Accept</button><button className="btn-sm ghost">Decline</button></>}
+                    {b.status === "confirmed" && <button className="btn-sm forest">Mark done</button>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+
+        {tab === "calendar" && (
+          <>
+            <div className="portal-header"><h2>Availability</h2><p>Set your open slots. Customers can only book when you're available.</p></div>
+            <div className="grid-2">
+              <div className="card">
+                <div className="card-title">June 2026</div>
+                <div className="cal-grid">
+                  {DAYS.map(d => <div key={d} className="cal-day-label">{d}</div>)}
+                  {CALENDAR_DAYS.map((d, i) => (
+                    <div key={i} className={`cal-day ${d === null ? "empty" : ""} ${d === 15 ? "today" : ""} ${BOOKED_DAYS.has(d) ? "has-booking" : ""}`}>
+                      {d || ""}
+                    </div>
+                  ))}
+                </div>
+                <div style={{ marginTop: 12, display: "flex", gap: 16, fontSize: 12, color: "var(--muted)" }}>
+                  <span>● Today</span>
+                  <span style={{ color: "var(--lime)", fontSize: 14 }}>● </span><span>Has booking</span>
+                </div>
+              </div>
+              <div className="card">
+                <div className="card-title">Working hours</div>
+                {["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"].map((day, i) => (
+                  <div key={i} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 0", borderBottom: "1px solid var(--border)" }}>
+                    <span style={{ fontSize: 14, fontWeight: 500 }}>{day}</span>
+                    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                      <span style={{ fontSize: 12, color: "var(--muted)" }}>{i < 5 ? "8:00 AM – 6:00 PM" : "9:00 AM – 3:00 PM"}</span>
+                      <div className={`toggle on`}></div>
+                    </div>
+                  </div>
+                ))}
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 0" }}>
+                  <span style={{ fontSize: 14, fontWeight: 500 }}>Sunday</span>
+                  <div className="toggle"></div>
+                </div>
+                <button className="btn-sm forest" style={{ marginTop: 12 }}>Save hours</button>
+              </div>
+            </div>
+          </>
+        )}
+
+        {tab === "services" && (
+          <>
+            <div className="portal-header"><h2>My services</h2><p>The services customers can book from your profile.</p></div>
+            <div className="card" style={{ maxWidth: 560 }}>
+              <div className="card-title">Active services</div>
+              {[
+                { name: "Haircut", price: "BZ$30", duration: "30 min" },
+                { name: "Haircut & Beard Trim", price: "BZ$45", duration: "45 min" },
+                { name: "Fade & Line-up", price: "BZ$35", duration: "40 min" },
+                { name: "Kids Cut (under 12)", price: "BZ$20", duration: "20 min" },
+              ].map((s, i) => (
+                <div className="provider-service" key={i}>
+                  <div>
+                    <div style={{ fontSize: 14, fontWeight: 600 }}>{s.name}</div>
+                    <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 2 }}>{s.duration}</div>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                    <span style={{ fontWeight: 700, color: "var(--forest)" }}>{s.price}</span>
+                    <button className="btn-sm ghost" style={{ fontSize: 12 }}>Edit</button>
+                  </div>
+                </div>
+              ))}
+              <div style={{ marginTop: 20, paddingTop: 16, borderTop: "1px solid var(--border)" }}>
+                <div className="card-title">Add a service</div>
+                <div className="input-group"><label>Service name</label><input placeholder="e.g. Full Colour Treatment" /></div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                  <div className="input-group"><label>Price (BZ$)</label><input type="number" placeholder="0" /></div>
+                  <div className="input-group"><label>Duration</label><select><option>15 min</option><option>30 min</option><option>45 min</option><option>60 min</option><option>90 min</option></select></div>
+                </div>
+                <button className="btn-sm lime">Add service</button>
+              </div>
+            </div>
+          </>
+        )}
+
+        {tab === "earnings" && (
+          <>
+            <div className="portal-header"><h2>Earnings</h2><p>Track your income and request payouts.</p></div>
+            <div className="metric-grid" style={{ gridTemplateColumns: "1fr 1fr 1fr" }}>
+              <div className="metric"><div className="metric-label">Available to withdraw</div><div className="metric-value" style={{ color: "var(--forest-light)" }}>BZ$980</div><div className="metric-sub">Cleared funds</div></div>
+              <div className="metric"><div className="metric-label">Pending (in escrow)</div><div className="metric-value">BZ$260</div><div className="metric-sub">Releases after service</div></div>
+              <div className="metric"><div className="metric-label">Total earned (June)</div><div className="metric-value">BZ$1,240</div><div className="metric-sub">↑ 18% vs May</div></div>
+            </div>
+            <div className="grid-2">
+              <div className="card">
+                <div className="card-title">Request payout</div>
+                <div className="input-group"><label>Amount (BZ$)</label><input type="number" placeholder="0.00" /></div>
+                <div className="input-group"><label>Bank / method</label><select><option>Atlantic Bank — Chequing</option><option>Belize Bank</option><option>Vai Wallet</option></select></div>
+                <button className="btn-sm forest">Request withdrawal</button>
+                <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 12 }}>Payouts process within 1–2 business days.</p>
+              </div>
+              <div className="card">
+                <div className="card-title">Recent payouts</div>
+                {[["Jun 1", "BZ$600", "Atlantic Bank"], ["May 15", "BZ$450", "Atlantic Bank"], ["May 1", "BZ$520", "Atlantic Bank"]].map(([d, a, b], i) => (
+                  <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: "1px solid var(--border)" }}>
+                    <div><div style={{ fontSize: 14, fontWeight: 600 }}>{a}</div><div style={{ fontSize: 12, color: "var(--muted)" }}>{d} · {b}</div></div>
+                    <span className="status-pill confirmed">paid</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </>
+        )}
+
+        {tab === "profile" && (
+          <>
+            <div className="portal-header"><h2>Public profile</h2><p>This is what customers see when they find you.</p></div>
+            <div className="card" style={{ maxWidth: 560 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 24, paddingBottom: 20, borderBottom: "1px solid var(--border)" }}>
+                <div style={{ width: 72, height: 72, background: "var(--forest)", borderRadius: 14, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 36 }}>✂️</div>
+                <div>
+                  <div style={{ fontFamily: "Syne, sans-serif", fontSize: 20, fontWeight: 700 }}>Karim's Cuts</div>
+                  <div style={{ color: "var(--muted)", fontSize: 14 }}>Barber · San Ignacio, Cayo</div>
+                  <div className="stars" style={{ marginTop: 4 }}>★★★★★ 4.9 (128 reviews)</div>
+                </div>
+                <span className="status-pill confirmed" style={{ marginLeft: "auto" }}>✓ Verified</span>
+              </div>
+              <div className="input-group"><label>Business name</label><input defaultValue="Karim's Cuts" /></div>
+              <div className="input-group"><label>Tagline</label><input defaultValue="Fresh cuts, clean fades. Walk-ins welcome." /></div>
+              <div className="input-group"><label>About</label><textarea defaultValue="Professional barber with 8 years experience. Specialising in fades, line-ups, and beard trims. Located in the heart of San Ignacio." /></div>
+              <div className="input-group"><label>District</label><select><option>Cayo</option><option>Belize City</option></select></div>
+              <div className="input-group"><label>Phone (WhatsApp)</label><input defaultValue="+501 622 4455" /></div>
+              <button className="btn-sm forest">Save profile</button>
+            </div>
+          </>
+        )}
+
+        {tab === "settings" && (
+          <>
+            <div className="portal-header"><h2>Settings</h2></div>
+            <div className="card" style={{ maxWidth: 480 }}>
+              <div className="card-title">Notifications</div>
+              {[["New booking request", true], ["Booking confirmed", true], ["Payment received", true], ["Review posted", false]].map(([label, on], i) => (
+                <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", borderBottom: "1px solid var(--border)" }}>
+                  <span style={{ fontSize: 14 }}>{label}</span>
+                  <div className={`toggle ${on ? "on" : ""}`} onClick={() => {}}></div>
+                </div>
+              ))}
+              <div className="card-title" style={{ marginTop: 24 }}>Platform fee</div>
+              <p style={{ fontSize: 13, color: "var(--muted)", lineHeight: 1.6 }}>VaiBook charges a 7% transaction fee on completed bookings. This is automatically deducted before your payout. Your Pro subscription reduces this to 5%.</p>
+            </div>
+          </>
+        )}
+      </main>
+    </div>
+  );
+}
+
+// ── PROVIDER SIGNUP ─────────────────────────────────────────────
+const SIGNUP_CSS = `
+  .signup-wrap {
+    min-height: calc(100vh - 64px);
+    background: var(--sand);
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 48px 24px 80px;
+  }
+  .signup-box {
+    width: 100%;
+    max-width: 640px;
+  }
+  .signup-header {
+    text-align: center;
+    margin-bottom: 36px;
+  }
+  .signup-header h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: 34px;
+    font-weight: 800;
+    color: var(--forest);
+    margin-bottom: 8px;
+  }
+  .signup-header p {
+    font-size: 15px;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+  .plan-selector {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 28px;
+  }
+  .plan-option {
+    border: 2px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    cursor: pointer;
+    background: white;
+    transition: all .2s;
+    text-align: center;
+  }
+  .plan-option:hover { border-color: var(--forest); }
+  .plan-option.selected { border-color: var(--forest); background: var(--forest); }
+  .plan-option.selected .plan-name { color: var(--lime); }
+  .plan-option.selected .plan-price { color: white; }
+  .plan-option.selected .plan-desc { color: rgba(255,255,255,0.6); }
+  .plan-name { font-size: 13px; font-weight: 700; color: var(--forest); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 4px; }
+  .plan-price { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; color: var(--forest); margin-bottom: 4px; }
+  .plan-desc { font-size: 11px; color: var(--muted); line-height: 1.4; }
+  .signup-form-card {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 32px;
+    margin-bottom: 20px;
+  }
+  .form-section-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--forest);
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    margin-bottom: 18px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .signup-submit {
+    width: 100%;
+    padding: 16px;
+    background: var(--forest);
+    color: var(--near-white);
+    border: none;
+    border-radius: var(--radius-sm);
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: opacity .2s;
+    font-family: 'Inter', sans-serif;
+  }
+  .signup-submit:hover { opacity: .88; }
+  .signup-submit:disabled { opacity: .5; cursor: not-allowed; }
+  .signup-success {
+    text-align: center;
+    padding: 60px 32px;
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+  }
+  .signup-success .check { font-size: 56px; margin-bottom: 16px; }
+  .signup-success h2 { font-family: 'Syne', sans-serif; font-size: 26px; color: var(--forest); margin-bottom: 10px; }
+  .signup-success p { font-size: 15px; color: var(--muted); line-height: 1.6; max-width: 380px; margin: 0 auto 24px; }
+  .payment-info {
+    background: var(--sand);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 16px 20px;
+    margin-top: 16px;
+    text-align: left;
+  }
+  .payment-info h4 { font-size: 13px; font-weight: 700; color: var(--forest); margin-bottom: 8px; }
+  .payment-info p { font-size: 13px; color: var(--muted); line-height: 1.65; }
+  .payment-info strong { color: var(--dark-text); }
+  @media (max-width: 600px) {
+    .plan-selector { grid-template-columns: 1fr; }
+    .form-row { grid-template-columns: 1fr; }
+    .signup-form-card { padding: 20px; }
+  }
+`;
+
+const PLANS = [
+  { id: "starter", name: "Starter", price: "Free", desc: "Up to 10 bookings/month", monthly: 0 },
+  { id: "pro", name: "Pro", price: "BZ$50/mo", desc: "Unlimited bookings + calendar", monthly: 50 },
+  { id: "business", name: "Business", price: "BZ$120/mo", desc: "Multi-staff + analytics", monthly: 120 },
+];
+
+const DISTRICTS = ["Belize City", "Cayo", "Corozal", "Orange Walk", "Stann Creek", "Toledo"];
+const SERVICE_TYPES = ["Barber", "Nail Tech", "Home Cleaning", "Car Wash", "Pet Grooming", "Handyman", "Beauty Salon", "Massage", "Photography", "Other"];
+
+function ProviderSignup({ onNav }) {
+  const [plan, setPlan] = useState("pro");
+  const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [form, setForm] = useState({
+    businessName: "", ownerName: "", email: "", phone: "",
+    serviceType: "", district: "", description: "",
+  });
+
+  const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+
+  const handleSubmit = async () => {
+    const required = ["businessName", "ownerName", "email", "phone", "serviceType", "district"];
+    if (required.some(k => !form[k].trim())) {
+      alert("Please fill in all required fields.");
+      return;
+    }
+    setLoading(true);
+
+    // Build mailto as fallback — works without any backend
+    const selectedPlan = PLANS.find(p => p.id === plan);
+    const subject = encodeURIComponent(`New VaiBook Provider Signup — ${form.businessName} (${selectedPlan.name})`);
+    const body = encodeURIComponent(
+`New provider signup on VaiBook!
+
+Business: ${form.businessName}
+Owner: ${form.ownerName}
+Email: ${form.email}
+Phone: ${form.phone}
+Service: ${form.serviceType}
+District: ${form.district}
+Plan: ${selectedPlan.name} (${selectedPlan.price})
+Description: ${form.description || "N/A"}
+
+---
+Activate this provider in your admin dashboard.`
+    );
+
+    // Open mailto so you get notified immediately
+    window.open(`mailto:hello@vaibook.bz?subject=${subject}&body=${body}`);
+
+    // Simulate brief processing
+    await new Promise(r => setTimeout(r, 800));
+    setLoading(false);
+    setSubmitted(true);
+  };
+
+  const selectedPlan = PLANS.find(p => p.id === plan);
+
+  if (submitted) {
+    return (
+      <div className="signup-wrap">
+        <style>{SIGNUP_CSS}</style>
+        <div className="signup-box">
+          <div className="signup-success">
+            <div className="check">✅</div>
+            <h2>You're on the list, {form.businessName}!</h2>
+            <p>We've received your application for the <strong>{selectedPlan.name}</strong> plan. We'll reach out to <strong>{form.email}</strong> within 24 hours to activate your profile.</p>
+            {selectedPlan.monthly > 0 && (
+              <div className="payment-info">
+                <h4>How to pay your first month</h4>
+                <p>
+                  Send <strong>BZ${selectedPlan.monthly}</strong> via bank transfer to activate your listing:<br /><br />
+                  <strong>Bank:</strong> Belize Bank<br />
+                  <strong>Account name:</strong> VaiBook Ltd<br />
+                  <strong>Account #:</strong> 1234-5678-9<br />
+                  <strong>Reference:</strong> {form.businessName}<br /><br />
+                  WhatsApp us your receipt at <strong>+501 XXX XXXX</strong> and we'll activate your profile same day.
+                </p>
+              </div>
+            )}
+            <button className="btn-sm forest" style={{ marginTop: 24 }} onClick={() => onNav("home")}>Back to home</button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="signup-wrap">
+      <style>{SIGNUP_CSS}</style>
+      <div className="signup-box">
+        <div className="signup-header">
+          <h1>List your business on VaiBook</h1>
+          <p>Join 180+ providers already getting booked across Belize. Takes less than 3 minutes.</p>
+        </div>
+
+        {/* Plan selector */}
+        <div style={{ marginBottom: 8 }}>
+          <div className="form-section-title" style={{ borderBottom: "none", paddingBottom: 0, marginBottom: 12 }}>Choose your plan</div>
+        </div>
+        <div className="plan-selector">
+          {PLANS.map(p => (
+            <div key={p.id} className={`plan-option ${plan === p.id ? "selected" : ""}`} onClick={() => setPlan(p.id)}>
+              <div className="plan-name">{p.name}</div>
+              <div className="plan-price">{p.price}</div>
+              <div className="plan-desc">{p.desc}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Form */}
+        <div className="signup-form-card">
+          <div className="form-section-title">Business details</div>
+          <div className="form-row">
+            <div className="input-group">
+              <label>Business name *</label>
+              <input placeholder="e.g. Karim's Cuts" value={form.businessName} onChange={e => set("businessName", e.target.value)} />
+            </div>
+            <div className="input-group">
+              <label>Owner / contact name *</label>
+              <input placeholder="Your full name" value={form.ownerName} onChange={e => set("ownerName", e.target.value)} />
+            </div>
+          </div>
+          <div className="form-row">
+            <div className="input-group">
+              <label>Email *</label>
+              <input type="email" placeholder="you@email.com" value={form.email} onChange={e => set("email", e.target.value)} />
+            </div>
+            <div className="input-group">
+              <label>WhatsApp / Phone *</label>
+              <input placeholder="+501 600 0000" value={form.phone} onChange={e => set("phone", e.target.value)} />
+            </div>
+          </div>
+          <div className="form-row">
+            <div className="input-group">
+              <label>Service type *</label>
+              <select value={form.serviceType} onChange={e => set("serviceType", e.target.value)}>
+                <option value="">Select a service</option>
+                {SERVICE_TYPES.map(s => <option key={s}>{s}</option>)}
+              </select>
+            </div>
+            <div className="input-group">
+              <label>District *</label>
+              <select value={form.district} onChange={e => set("district", e.target.value)}>
+                <option value="">Select your district</option>
+                {DISTRICTS.map(d => <option key={d}>{d}</option>)}
+              </select>
+            </div>
+          </div>
+          <div className="input-group">
+            <label>Tell customers about your business (optional)</label>
+            <textarea placeholder="Years of experience, specialties, location details..." value={form.description} onChange={e => set("description", e.target.value)} />
+          </div>
+        </div>
+
+        <button className="signup-submit" onClick={handleSubmit} disabled={loading}>
+          {loading ? "Submitting..." : `Apply for ${selectedPlan.name} plan →`}
+        </button>
+        <p style={{ textAlign: "center", fontSize: 12, color: "var(--muted)", marginTop: 12 }}>
+          We review every application within 24 hours. No credit card required to apply.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+// ── APP ROOT ────────────────────────────────────────────────────
+// ── AUTH-AWARE APP ROOT ──────────────────────────────────────────
+export default function App() {
+  const [view, setView] = useState("home");
+  const [session, setSession] = useState(null);
+  const [user, setUser] = useState(null);
+  const [providerProfile, setProviderProfile] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Get initial session
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      setSession(session);
+      if (session) {
+        const u = await getOrCreateUser(session.user);
+        setUser(u);
+        const p = await getProviderProfile(session.user.id);
+        setProviderProfile(p);
+      }
+      setLoading(false);
+    });
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      setSession(session);
+      if (session) {
+        const u = await getOrCreateUser(session.user);
+        setUser(u);
+        const p = await getProviderProfile(session.user.id);
+        setProviderProfile(p);
+      } else {
+        setUser(null);
+        setProviderProfile(null);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const handleSignOut = async () => {
+    await signOut();
+    setView("home");
+  };
+
+  if (loading) {
+    return (
+      <>
+        <style>{css}</style>
+        <div style={{ minHeight: "100vh", background: "var(--forest)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div style={{ textAlign: "center" }}>
+            <div style={{ fontFamily: "Syne, sans-serif", fontSize: 32, fontWeight: 800, color: "var(--near-white)", marginBottom: 12 }}>
+              vai<span style={{ color: "var(--lime)" }}>book</span>
+            </div>
+            <div style={{ color: "rgba(255,255,255,0.5)", fontSize: 14 }}>Loading...</div>
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  const authProps = { session, user, providerProfile, onSignIn: signInWithGoogle, onSignOut: handleSignOut };
+
+  return (
+    <>
+      <style>{css}</style>
+      <Nav onNav={setView} current={view} {...authProps} />
+      {view === "home" && <LandingPage onNav={setView} {...authProps} />}
+      {view === "customer" && <CustomerPortal onNav={setView} {...authProps} />}
+      {view === "provider" && <ProviderPortal onNav={setView} {...authProps} />}
+      {view === "signup" && <ProviderSignup onNav={setView} {...authProps} />}
+    </>
+  );
+}

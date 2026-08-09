@@ -1,0 +1,221 @@
+import { createClient } from '@supabase/supabase-js';
+
+const SUPABASE_URL = 'https://nvfpdkpzrtpmvmgzvdca.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_zpAA2Gdcm_BJhu1D56tsTw_sBpZXiNA';
+
+export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// ── AUTH HELPERS ─────────────────────────────────────────────────
+
+export const signInWithGoogle = async () => {
+  const { error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      redirectTo: window.location.origin,
+    },
+  });
+  if (error) console.error('Google sign in error:', error.message);
+};
+
+export const signOut = async () => {
+  const { error } = await supabase.auth.signOut();
+  if (error) console.error('Sign out error:', error.message);
+};
+
+export const getSession = async () => {
+  const { data: { session } } = await supabase.auth.getSession();
+  return session;
+};
+
+// ── USER HELPERS ─────────────────────────────────────────────────
+
+export const getOrCreateUser = async (authUser) => {
+  // Check if user profile exists
+  const { data: existing } = await supabase
+    .from('users')
+    .select('*')
+    .eq('id', authUser.id)
+    .single();
+
+  if (existing) return existing;
+
+  // Create new user profile
+  const { data: newUser, error } = await supabase
+    .from('users')
+    .insert({
+      id: authUser.id,
+      full_name: authUser.user_metadata?.full_name || authUser.email,
+      email: authUser.email,
+      avatar_url: authUser.user_metadata?.avatar_url || null,
+      oauth_provider: authUser.app_metadata?.provider || 'email',
+      role: 'customer',
+    })
+    .select()
+    .single();
+
+  if (error) console.error('Error creating user:', error.message);
+  return newUser;
+};
+
+// ── PROVIDER HELPERS ─────────────────────────────────────────────
+
+export const getProviderProfile = async (userId) => {
+  const { data, error } = await supabase
+    .from('provider_profiles')
+    .select('*, services(*), working_hours(*)')
+    .eq('user_id', userId)
+    .single();
+  if (error && error.code !== 'PGRST116') console.error(error.message);
+  return data;
+};
+
+export const upsertProviderProfile = async (profile) => {
+  const { data, error } = await supabase
+    .from('provider_profiles')
+    .upsert(profile, { onConflict: 'user_id' })
+    .select()
+    .single();
+  if (error) console.error('Error saving provider profile:', error.message);
+  return data;
+};
+
+export const getActiveProviders = async (filters = {}) => {
+  let query = supabase
+    .from('provider_profiles')
+    .select('*, services(*), reviews(rating)')
+    .eq('is_active', true);
+
+  if (filters.district) query = query.eq('district', filters.district);
+  if (filters.service_type) query = query.eq('service_type', filters.service_type);
+
+  const { data, error } = await query;
+  if (error) console.error(error.message);
+  return data || [];
+};
+
+// ── BOOKING HELPERS ──────────────────────────────────────────────
+
+export const createBooking = async (booking) => {
+  const { data, error } = await supabase
+    .from('bookings')
+    .insert(booking)
+    .select()
+    .single();
+  if (error) console.error('Error creating booking:', error.message);
+  return data;
+};
+
+export const getCustomerBookings = async (customerId) => {
+  const { data, error } = await supabase
+    .from('bookings')
+    .select('*, provider_profiles(business_name, service_type, district), services(name, price, duration_min)')
+    .eq('customer_id', customerId)
+    .order('booking_date', { ascending: false });
+  if (error) console.error(error.message);
+  return data || [];
+};
+
+export const getProviderBookings = async (providerId) => {
+  const { data, error } = await supabase
+    .from('bookings')
+    .select('*, users(full_name, email, avatar_url), services(name, price)')
+    .eq('provider_id', providerId)
+    .order('booking_date', { ascending: true });
+  if (error) console.error(error.message);
+  return data || [];
+};
+
+export const updateBookingStatus = async (bookingId, status) => {
+  const { data, error } = await supabase
+    .from('bookings')
+    .update({ status })
+    .eq('id', bookingId)
+    .select()
+    .single();
+  if (error) console.error(error.message);
+  return data;
+};
+
+export const uploadReceipt = async (bookingId, file) => {
+  const path = `receipts/${bookingId}/${file.name}`;
+  const { error: uploadError } = await supabase.storage
+    .from('vaibook')
+    .upload(path, file);
+  if (uploadError) { console.error(uploadError.message); return null; }
+
+  const { data: { publicUrl } } = supabase.storage
+    .from('vaibook')
+    .getPublicUrl(path);
+
+  await supabase
+    .from('bookings')
+    .update({ receipt_url: publicUrl, payment_status: 'receipt_uploaded' })
+    .eq('id', bookingId);
+
+  return publicUrl;
+};
+
+// ── REVIEW HELPERS ───────────────────────────────────────────────
+
+export const submitReview = async (review) => {
+  const { data, error } = await supabase
+    .from('reviews')
+    .insert(review)
+    .select()
+    .single();
+  if (error) console.error(error.message);
+  return data;
+};
+
+export const getProviderReviews = async (providerId) => {
+  const { data, error } = await supabase
+    .from('reviews')
+    .select('*, users(full_name, avatar_url)')
+    .eq('provider_id', providerId)
+    .order('created_at', { ascending: false });
+  if (error) console.error(error.message);
+  return data || [];
+};
+
+// ── VIP HELPERS ──────────────────────────────────────────────────
+
+export const tagVIP = async (providerId, customerId) => {
+  const { error } = await supabase
+    .from('vip_clients')
+    .upsert({ provider_id: providerId, customer_id: customerId });
+  if (error) console.error(error.message);
+};
+
+export const getVIPClients = async (providerId) => {
+  const { data, error } = await supabase
+    .from('vip_clients')
+    .select('*, users(full_name, email, avatar_url)')
+    .eq('provider_id', providerId);
+  if (error) console.error(error.message);
+  return data || [];
+};
+
+// ── ANALYTICS HELPERS ────────────────────────────────────────────
+
+export const getProviderAnalytics = async (providerId) => {
+  const { data: bookings } = await supabase
+    .from('bookings')
+    .select('*, services(name, price)')
+    .eq('provider_id', providerId)
+    .eq('status', 'completed');
+
+  const totalRevenue = bookings?.reduce((sum, b) => sum + (b.total_amount || 0), 0) || 0;
+  const totalBookings = bookings?.length || 0;
+
+  // Most requested services
+  const serviceCounts = {};
+  bookings?.forEach(b => {
+    const name = b.services?.name || 'Unknown';
+    serviceCounts[name] = (serviceCounts[name] || 0) + 1;
+  });
+  const topServices = Object.entries(serviceCounts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5);
+
+  return { totalRevenue, totalBookings, topServices, bookings };
+};
