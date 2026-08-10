@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile } from "./supabase";
+import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication } from "./supabase";
 
 // ── DESIGN TOKENS ──────────────────────────────────────────────
 // Palette: deep forest green (#0D3D2E) + warm sand (#F5EFE0) + 
@@ -1093,8 +1093,20 @@ function ProviderSignup({ onNav }) {
     }
     setLoading(true);
 
-    // Build mailto as fallback — works without any backend
     const selectedPlan = PLANS.find(p => p.id === plan);
+
+    // Save the application to Supabase so it shows up in the admin portal
+    await submitProviderApplication({
+      business_name: form.businessName,
+      owner_name: form.ownerName,
+      email: form.email,
+      phone: form.phone,
+      service_type: form.serviceType,
+      district: form.district,
+      description: form.description || null,
+      plan: selectedPlan.id,
+      status: "pending",
+    });
     const subject = encodeURIComponent(`New VaiBook Provider Signup — ${form.businessName} (${selectedPlan.name})`);
     const body = encodeURIComponent(
 `New provider signup on VaiBook!
@@ -1231,10 +1243,189 @@ Activate this provider in your admin dashboard.`
   );
 }
 
+function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
+  const [checkingAdmin, setCheckingAdmin] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [apps, setApps] = useState([]);
+  const [loadingApps, setLoadingApps] = useState(false);
+  const [tab, setTab] = useState("pending");
+  const [busyId, setBusyId] = useState(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (!session?.user?.email) {
+        setIsAdmin(false);
+        setCheckingAdmin(false);
+        return;
+      }
+      setCheckingAdmin(true);
+      const ok = await checkIsAdmin(session.user.email);
+      if (!cancelled) {
+        setIsAdmin(ok);
+        setCheckingAdmin(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [session]);
+
+  const loadApps = async () => {
+    setLoadingApps(true);
+    const data = await getProviderApplications();
+    setApps(data);
+    setLoadingApps(false);
+  };
+
+  useEffect(() => {
+    if (isAdmin) loadApps();
+  }, [isAdmin]);
+
+  const act = async (id, status) => {
+    setBusyId(id);
+    await updateApplicationStatus(id, status);
+    await loadApps();
+    setBusyId(null);
+  };
+
+  // Not signed in at all
+  if (!session) {
+    return (
+      <div style={{ minHeight: "100vh", background: "var(--forest)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
+        <div style={{ textAlign: "center", maxWidth: 360 }}>
+          <div style={{ fontFamily: "Syne, sans-serif", fontSize: 28, fontWeight: 800, color: "var(--near-white)", marginBottom: 8 }}>
+            vai<span style={{ color: "var(--lime)" }}>book</span> <span style={{ color: "rgba(255,255,255,0.5)", fontWeight: 600, fontSize: 16 }}>admin</span>
+          </div>
+          <p style={{ color: "rgba(255,255,255,0.6)", fontSize: 14, marginBottom: 24 }}>Sign in with the Google account approved for admin access.</p>
+          <button className="btn-lime" style={{ width: "100%", padding: "12px 0" }} onClick={onSignIn}>Sign in with Google</button>
+          <div style={{ marginTop: 20 }}>
+            <a style={{ color: "rgba(255,255,255,0.4)", fontSize: 13, cursor: "pointer" }} onClick={() => onNav("home")}>← Back to site</a>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Signed in, checking admin status
+  if (checkingAdmin) {
+    return (
+      <div style={{ minHeight: "100vh", background: "var(--forest)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ color: "rgba(255,255,255,0.5)", fontSize: 14 }}>Checking access...</div>
+      </div>
+    );
+  }
+
+  // Signed in but not on the admin allowlist
+  if (!isAdmin) {
+    return (
+      <div style={{ minHeight: "100vh", background: "var(--forest)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
+        <div style={{ textAlign: "center", maxWidth: 380 }}>
+          <div style={{ fontSize: 40, marginBottom: 12 }}>🔒</div>
+          <h2 style={{ color: "var(--near-white)", fontFamily: "Syne, sans-serif", marginBottom: 8 }}>Not authorized</h2>
+          <p style={{ color: "rgba(255,255,255,0.6)", fontSize: 14, marginBottom: 24 }}>
+            {session.user.email} isn't on the VaiBook admin list. Ask an existing admin to add you in Supabase.
+          </p>
+          <button className="btn-ghost" onClick={onSignOut}>Sign out</button>
+        </div>
+      </div>
+    );
+  }
+
+  const counts = {
+    pending: apps.filter(a => a.status === "pending").length,
+    active: apps.filter(a => a.status === "active").length,
+    rejected: apps.filter(a => a.status === "rejected").length,
+  };
+  const filtered = apps.filter(a => a.status === tab);
+
+  const sideItems = [
+    { id: "pending", icon: "\u23f3", label: "Pending" },
+    { id: "active", icon: "\u2705", label: "Active" },
+    { id: "rejected", icon: "\u2716", label: "Rejected" },
+  ];
+
+  const planLabel = (id) => (PLANS.find(p => p.id === id)?.name) || id;
+
+  return (
+    <div className="portal-layout">
+      <aside className="sidebar">
+        <div style={{ padding: "0 16px 20px", borderBottom: "1px solid rgba(255,255,255,0.08)", marginBottom: 20 }}>
+          <span className="nav-logo" style={{ fontFamily: "Syne, sans-serif", fontSize: 18, color: "var(--near-white)" }}>vai<span style={{ color: "var(--lime)" }}>book</span></span>
+          <div style={{ fontSize: 11, color: "rgba(255,255,255,0.35)", marginTop: 4 }}>Admin portal</div>
+        </div>
+        <div className="sidebar-section">
+          <div className="sidebar-label">Applications</div>
+          {sideItems.map(item => (
+            <div key={item.id} className={`sidebar-item ${tab === item.id ? "active" : ""}`} onClick={() => setTab(item.id)}>
+              <span className="icon">{item.icon}</span>{item.label} ({counts[item.id]})
+            </div>
+          ))}
+        </div>
+        <div className="sidebar-avatar">
+          <div className="avatar">{(user?.full_name || session.user.email)[0].toUpperCase()}</div>
+          <div className="avatar-info">
+            <div className="name">{user?.full_name || session.user.email}</div>
+            <div className="role" style={{ cursor: "pointer" }} onClick={onSignOut}>Sign out</div>
+          </div>
+        </div>
+      </aside>
+
+      <main className="portal-content">
+        <div className="portal-header">
+          <h2>Provider applications</h2>
+          <p>Review new signups, confirm bank transfer payment, then activate.</p>
+        </div>
+
+        <div className="metric-grid">
+          <div className="metric"><div className="metric-label">Pending</div><div className="metric-value">{counts.pending}</div><div className="metric-sub">Awaiting review</div></div>
+          <div className="metric"><div className="metric-label">Active</div><div className="metric-value" style={{ color: "var(--lime)" }}>{counts.active}</div><div className="metric-sub">Live on VaiBook</div></div>
+          <div className="metric"><div className="metric-label">Rejected</div><div className="metric-value">{counts.rejected}</div><div className="metric-sub">Declined</div></div>
+          <div className="metric"><div className="metric-label">Total</div><div className="metric-value">{apps.length}</div><div className="metric-sub">All time</div></div>
+        </div>
+
+        <div className="card">
+          <div className="card-title" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <span>{tab.charAt(0).toUpperCase() + tab.slice(1)} applications</span>
+            <button className="btn-sm forest" onClick={loadApps} disabled={loadingApps}>{loadingApps ? "Refreshing..." : "Refresh"}</button>
+          </div>
+
+          {filtered.length === 0 && (
+            <p style={{ fontSize: 13, color: "var(--muted)", padding: "16px 0" }}>
+              {loadingApps ? "Loading..." : `No ${tab} applications.`}
+            </p>
+          )}
+
+          {filtered.map(app => (
+            <div key={app.id} className="booking-item" style={{ alignItems: "flex-start" }}>
+              <div className="booking-info" style={{ flex: 1 }}>
+                <div className="title">{app.business_name} <span style={{ fontWeight: 500, color: "var(--muted)", fontSize: 12 }}>— {planLabel(app.plan)}</span></div>
+                <div className="meta">{app.owner_name} · {app.service_type} · {app.district}</div>
+                <div className="meta">{app.email} · {app.phone}</div>
+                {app.description && <div className="meta" style={{ marginTop: 4, fontStyle: "italic" }}>{app.description}</div>}
+                <div className="meta" style={{ marginTop: 4, fontSize: 11 }}>Applied {new Date(app.created_at).toLocaleDateString()}</div>
+              </div>
+              <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
+                {app.status !== "active" && (
+                  <button className="btn-sm forest" disabled={busyId === app.id} onClick={() => act(app.id, "active")}>Activate</button>
+                )}
+                {app.status !== "rejected" && (
+                  <button className="btn-sm" style={{ background: "transparent", border: "1px solid var(--muted)", color: "var(--muted)" }} disabled={busyId === app.id} onClick={() => act(app.id, "rejected")}>Reject</button>
+                )}
+                {app.status !== "pending" && (
+                  <button className="btn-sm" style={{ background: "transparent", border: "1px solid var(--muted)", color: "var(--muted)" }} disabled={busyId === app.id} onClick={() => act(app.id, "pending")}>Reset</button>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      </main>
+    </div>
+  );
+}
+
 // ── APP ROOT ────────────────────────────────────────────────────
 // ── AUTH-AWARE APP ROOT ──────────────────────────────────────────
 export default function App() {
-  const [view, setView] = useState("home");
+  const [view, setView] = useState(() => (window.location.hash === "#admin" ? "admin" : "home"));
   const [session, setSession] = useState(null);
   const [user, setUser] = useState(null);
   const [providerProfile, setProviderProfile] = useState(null);
@@ -1301,6 +1492,7 @@ export default function App() {
       {view === "customer" && <CustomerPortal onNav={setView} {...authProps} />}
       {view === "provider" && <ProviderPortal onNav={setView} {...authProps} />}
       {view === "signup" && <ProviderSignup onNav={setView} {...authProps} />}
+      {view === "admin" && <AdminPortal onNav={setView} {...authProps} />}
     </>
   );
 }
