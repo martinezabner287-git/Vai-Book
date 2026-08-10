@@ -297,25 +297,46 @@ const BOOKED_DAYS = new Set([2,5,9,15,16,22,29]);
 
 // ── COMPONENTS ──────────────────────────────────────────────────
 
-function Nav({ onNav, current }) {
+function scrollToSection(id, onNav, current) {
+  const jump = () => document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+  if (current !== "home") {
+    onNav("home");
+    setTimeout(jump, 60);
+  } else {
+    jump();
+  }
+}
+
+function enterCustomerPortal(onNav, session, onSignIn) {
+  if (session) {
+    onNav("customer");
+  } else {
+    window.location.hash = "customer";
+    onSignIn();
+  }
+}
+
+function Nav({ onNav, current, session, user, onSignIn }) {
   return (
     <nav className="nav">
-      <span className="nav-logo">vai<span>book</span></span>
+      <span className="nav-logo" style={{ cursor: "pointer" }} onClick={() => onNav("home")}>vai<span>book</span></span>
       <div className="nav-links">
         <a onClick={() => onNav("home")}>Home</a>
-        <a onClick={() => onNav("home")}>Services</a>
-        <a onClick={() => onNav("home")}>How it works</a>
-        <a onClick={() => onNav("home")}>Pricing</a>
+        <a onClick={() => scrollToSection("services", onNav, current)}>Services</a>
+        <a onClick={() => scrollToSection("how-it-works", onNav, current)}>How it works</a>
+        <a onClick={() => scrollToSection("pricing", onNav, current)}>Pricing</a>
       </div>
       <div className="nav-cta">
-        <button className="btn-ghost" onClick={() => onNav("customer")}>Customer login</button>
+        <button className="btn-ghost" onClick={() => enterCustomerPortal(onNav, session, onSignIn)}>
+          {session ? (user?.full_name?.split(" ")[0] || "My account") : "Customer login"}
+        </button>
         <button className="btn-lime" onClick={() => onNav("signup")}>List your business</button>
       </div>
     </nav>
   );
 }
 
-function LandingPage({ onNav }) {
+function LandingPage({ onNav, session, onSignIn }) {
   const [activeService, setActiveService] = useState(0);
   return (
     <>
@@ -326,7 +347,7 @@ function LandingPage({ onNav }) {
           <h1 className="hero-title">Book local services.<br /><em>No messages. No stress.</em></h1>
           <p className="hero-body">Find trusted barbers, nail techs, car washes, cleaners, and more in your district. Book in seconds, pay securely, and leave a real review.</p>
           <div className="hero-actions">
-            <button className="btn-primary" onClick={() => onNav("customer")}>Book a service</button>
+            <button className="btn-primary" onClick={() => enterCustomerPortal(onNav, session, onSignIn)}>Book a service</button>
             <button className="btn-outline-white" onClick={() => onNav("signup")}>List your business</button>
           </div>
         </div>
@@ -355,7 +376,7 @@ function LandingPage({ onNav }) {
       </div>
 
       {/* HOW IT WORKS */}
-      <section className="section">
+      <section className="section" id="how-it-works">
         <div className="section-eyebrow">Simple process</div>
         <h2 className="section-title">From search to booked in under 2 minutes</h2>
         <p className="section-sub">No more messaging back and forth just to get a haircut. Pick your time, confirm, show up.</p>
@@ -376,13 +397,13 @@ function LandingPage({ onNav }) {
       </section>
 
       {/* SERVICES */}
-      <section className="services-section">
+      <section className="services-section" id="services">
         <div className="section-eyebrow" style={{ color: "var(--lime)" }}>What's on VaiBook</div>
         <h2 className="section-title">Every local service. One platform.</h2>
         <p className="section-sub">From a fresh fade to a spotless car — all bookable in your district.</p>
         <div className="services-grid">
           {SERVICES.map((s, i) => (
-            <div className="svc-tile" key={i} onClick={() => onNav("customer")}>
+            <div className="svc-tile" key={i} onClick={() => enterCustomerPortal(onNav, session, onSignIn)}>
               <div className="icon">{s.icon}</div>
               <h4>{s.name}</h4>
               <p>{s.desc}</p>
@@ -392,7 +413,7 @@ function LandingPage({ onNav }) {
       </section>
 
       {/* PRICING */}
-      <section className="section" style={{ background: "var(--sand)" }}>
+      <section className="section" id="pricing" style={{ background: "var(--sand)" }}>
         <div style={{ textAlign: "center", marginBottom: 48 }}>
           <div className="section-eyebrow" style={{ justifyContent: "center", display: "flex" }}>For providers</div>
           <h2 className="section-title">Simple pricing. Grow your clientele.</h2>
@@ -479,8 +500,11 @@ function LandingPage({ onNav }) {
 }
 
 // ── CUSTOMER PORTAL ─────────────────────────────────────────────
-function CustomerPortal({ onNav }) {
+function CustomerPortal({ onNav, user, session, onSignOut }) {
   const [tab, setTab] = useState("home");
+  const displayName = user?.full_name || session?.user?.email || "there";
+  const firstName = displayName.split(" ")[0].split("@")[0];
+  const initial = displayName[0]?.toUpperCase() || "?";
   const [bookingTab, setBookingTab] = useState("upcoming");
 
   const sideItems = [
@@ -508,10 +532,10 @@ function CustomerPortal({ onNav }) {
           ))}
         </div>
         <div className="sidebar-avatar">
-          <div className="avatar">C</div>
+          <div className="avatar">{initial}</div>
           <div className="avatar-info">
-            <div className="name">Carlos M.</div>
-            <div className="role">Customer</div>
+            <div className="name">{displayName}</div>
+            <div className="role" style={{ cursor: "pointer" }} onClick={onSignOut}>Sign out</div>
           </div>
         </div>
       </aside>
@@ -520,7 +544,7 @@ function CustomerPortal({ onNav }) {
         {tab === "home" && (
           <>
             <div className="portal-header">
-              <h2>Good afternoon, Carlos 👋</h2>
+              <h2>Good afternoon, {firstName} 👋</h2>
               <p>You have 2 upcoming bookings this week.</p>
             </div>
             <div className="metric-grid">
@@ -1425,7 +1449,10 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
 // ── APP ROOT ────────────────────────────────────────────────────
 // ── AUTH-AWARE APP ROOT ──────────────────────────────────────────
 export default function App() {
-  const [view, setView] = useState(() => (window.location.hash === "#admin" ? "admin" : "home"));
+  const [view, setView] = useState(() => {
+    const h = window.location.hash.replace("#", "");
+    return h === "admin" || h === "customer" ? h : "home";
+  });
   const [session, setSession] = useState(null);
   const [user, setUser] = useState(null);
   const [providerProfile, setProviderProfile] = useState(null);
