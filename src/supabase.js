@@ -219,3 +219,46 @@ export const getProviderAnalytics = async (providerId) => {
 
   return { totalRevenue, totalBookings, topServices, bookings };
 };
+
+// ── ADMIN HELPERS ─────────────────────────────────────────────────
+
+export const checkIsAdmin = async (email) => {
+  if (!email) return false;
+  const { data, error } = await supabase
+    .from('admins')
+    .select('email')
+    .eq('email', email)
+    .maybeSingle();
+  if (error) { console.error('Admin check error:', error.message); return false; }
+  return !!data;
+};
+
+export const submitProviderApplication = async (application) => {
+  const { data, error } = await supabase
+    .from('provider_applications')
+    .insert(application)
+    .select()
+    .single();
+  if (error) { console.error('Error submitting application:', error.message); return null; }
+  return data;
+};
+
+export const getProviderApplications = async () => {
+  const { data, error } = await supabase
+    .from('provider_applications')
+    .select('*')
+    .order('created_at', { ascending: false });
+  if (error) { console.error('Error fetching applications:', error.message); return []; }
+  return data || [];
+};
+
+export const updateApplicationStatus = async (id, status) => {
+  const { data, error } = await supabase
+    .from('provider_applications')
+    .update({ status })
+    .eq('id', id)
+    .select()
+    .single();
+  if (error) { console.error('Error updating application:', error.message); return null; }
+  return data;
+};
