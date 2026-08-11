@@ -290,3 +290,21 @@ export const updateApplicationStatus = async (id, status) => {
   if (error) { console.error('Error updating application:', error.message); return null; }
   return data;
 };
+
+// Looks up the most recent *active* application submitted with this email.
+// Used to auto-create a provider_profiles row the first time that person
+// signs in, since applications are submitted before the applicant has an
+// account and activation alone doesn't create their provider profile.
+export const getActiveApplicationByEmail = async (email) => {
+  if (!email) return null;
+  const { data, error } = await supabase
+    .from('provider_applications')
+    .select('*')
+    .eq('email', email)
+    .eq('status', 'active')
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) { console.error('Error fetching application by email:', error.message); return null; }
+  return data;
+};

@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, upsertProviderProfile, getWorkingHours, upsertWorkingHours } from "./supabase";
+import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail } from "./supabase";
 
 // ── DESIGN TOKENS ──────────────────────────────────────────────
 // Palette: deep forest green (#0D3D2E) + warm sand (#F5EFE0) + 
@@ -1652,6 +1652,27 @@ export default function App() {
   const [providerProfile, setProviderProfile] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // If this account doesn't have a provider profile yet, check whether an
+  // admin already activated an application submitted with this email — if
+  // so, create the provider profile now so the portal has something to show.
+  const loadProviderProfile = async (authUser) => {
+    let p = await getProviderProfile(authUser.id);
+    if (!p) {
+      const app = await getActiveApplicationByEmail(authUser.email);
+      if (app) {
+        p = await upsertProviderProfile({
+          user_id: authUser.id,
+          business_name: app.business_name,
+          service_type: app.service_type,
+          district: app.district,
+          description: app.description,
+          is_active: true,
+        });
+      }
+    }
+    return p;
+  };
+
   useEffect(() => {
     // Get initial session
     supabase.auth.getSession().then(async ({ data: { session } }) => {
@@ -1659,7 +1680,7 @@ export default function App() {
       if (session) {
         const u = await getOrCreateUser(session.user);
         setUser(u);
-        const p = await getProviderProfile(session.user.id);
+        const p = await loadProviderProfile(session.user);
         setProviderProfile(p);
       }
       setLoading(false);
@@ -1671,7 +1692,7 @@ export default function App() {
       if (session) {
         const u = await getOrCreateUser(session.user);
         setUser(u);
-        const p = await getProviderProfile(session.user.id);
+        const p = await loadProviderProfile(session.user);
         setProviderProfile(p);
       } else {
         setUser(null);
