@@ -1270,6 +1270,7 @@ function ProviderSignup({ onNav }) {
   const [plan, setPlan] = useState("pro");
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [submitError, setSubmitError] = useState(false);
   const [form, setForm] = useState({
     businessName: "", ownerName: "", email: "", phone: "",
     serviceType: "", district: "", description: "",
@@ -1284,11 +1285,12 @@ function ProviderSignup({ onNav }) {
       return;
     }
     setLoading(true);
+    setSubmitError(false);
 
     const selectedPlan = PLANS.find(p => p.id === plan);
 
     // Save the application to Supabase so it shows up in the admin portal
-    await submitProviderApplication({
+    const saved = await submitProviderApplication({
       business_name: form.businessName,
       owner_name: form.ownerName,
       email: form.email,
@@ -1299,6 +1301,13 @@ function ProviderSignup({ onNav }) {
       plan: selectedPlan.id,
       status: "pending",
     });
+
+    if (!saved) {
+      setLoading(false);
+      setSubmitError(true);
+      return;
+    }
+
     const subject = encodeURIComponent(`New VaiBook Provider Signup — ${form.businessName} (${selectedPlan.name})`);
     const body = encodeURIComponent(
 `New provider signup on VaiBook!
@@ -1427,6 +1436,11 @@ Activate this provider in your admin dashboard.`
         <button className="signup-submit" onClick={handleSubmit} disabled={loading}>
           {loading ? "Submitting..." : `Apply for ${selectedPlan.name} plan →`}
         </button>
+        {submitError && (
+          <p style={{ textAlign: "center", fontSize: 13, color: "#B91C1C", marginTop: 12, fontWeight: 600 }}>
+            Something went wrong saving your application. Please try again, or WhatsApp us directly if it keeps failing.
+          </p>
+        )}
         <p style={{ textAlign: "center", fontSize: 12, color: "var(--muted)", marginTop: 12 }}>
           We review every application within 24 hours. No credit card required to apply.
         </p>
@@ -1621,6 +1635,18 @@ export default function App() {
     const h = window.location.hash.replace("#", "");
     return h === "admin" || h === "customer" ? h : "home";
   });
+
+  // Keep view in sync if the URL hash changes without a full page reload
+  // (e.g. typing/pasting a #admin or #customer link into an already-open tab).
+  useEffect(() => {
+    const onHashChange = () => {
+      const h = window.location.hash.replace("#", "");
+      if (h === "admin" || h === "customer") setView(h);
+    };
+    window.addEventListener("hashchange", onHashChange);
+    return () => window.removeEventListener("hashchange", onHashChange);
+  }, []);
+
   const [session, setSession] = useState(null);
   const [user, setUser] = useState(null);
   const [providerProfile, setProviderProfile] = useState(null);
