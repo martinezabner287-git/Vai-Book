@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication } from "./supabase";
+import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, upsertProviderProfile, getWorkingHours, upsertWorkingHours } from "./supabase";
 
 // ── DESIGN TOKENS ──────────────────────────────────────────────
 // Palette: deep forest green (#0D3D2E) + warm sand (#F5EFE0) + 
@@ -282,18 +282,17 @@ const PROVIDERS = [
   { icon: "🔧", name: "FixIt Belize", trade: "Handyman · Belmopan", rating: "4.6", reviews: 73, price: "BZ$80", bg: "#F0FFF4", avail: true },
 ];
 
-const PROVIDER_BOOKINGS = [
-  { title: "Haircut & Beard Trim", customer: "Carlos M. • Today 2:00 PM", amount: "BZ$35", status: "confirmed" },
-  { title: "Fade & Line-up", customer: "David R. • Today 4:30 PM", amount: "BZ$30", status: "confirmed" },
-  { title: "Kids Cut", customer: "Sarah T. • Tomorrow 9:00 AM", amount: "BZ$20", status: "pending" },
-  { title: "Full Cut & Style", customer: "James B. • Tomorrow 11:00 AM", amount: "BZ$45", status: "pending" },
-];
-
 const DAYS = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
-const CALENDAR_DAYS = [
-  null,null,null,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30
-];
-const BOOKED_DAYS = new Set([2,5,9,15,16,22,29]);
+const DAY_NAMES = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+const DEFAULT_HOURS = DAY_NAMES.map((day, i) => ({
+  day, day_of_week: i, is_open: i !== 0, start_time: i === 6 ? "09:00" : "08:00", end_time: i === 6 ? "15:00" : "18:00",
+}));
+
+function bookingStatusClass(status) {
+  if (status === "confirmed") return "confirmed";
+  if (status === "pending") return "pending";
+  return "done";
+}
 
 // ── COMPONENTS ──────────────────────────────────────────────────
 
@@ -706,9 +705,79 @@ function CustomerPortal({ onNav, user, session, onSignOut }) {
 }
 
 // ── PROVIDER PORTAL ─────────────────────────────────────────────
-function ProviderPortal({ onNav }) {
+function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSignOut }) {
   const [tab, setTab] = useState("dashboard");
-  const [toggles, setToggles] = useState([true, false, true]);
+  const [bookings, setBookings] = useState([]);
+  const [loadingBookings, setLoadingBookings] = useState(false);
+  const [busyId, setBusyId] = useState(null);
+  const [hours, setHours] = useState(DEFAULT_HOURS);
+  const [savingHours, setSavingHours] = useState(false);
+  const [selectedDay, setSelectedDay] = useState(null);
+  const [profileForm, setProfileForm] = useState({ business_name: "", description: "", district: "" });
+  const [savingProfile, setSavingProfile] = useState(false);
+
+  const providerId = providerProfile?.id;
+
+  const loadBookings = async () => {
+    if (!providerId) return;
+    setLoadingBookings(true);
+    const data = await getProviderBookings(providerId);
+    setBookings(data || []);
+    setLoadingBookings(false);
+  };
+
+  useEffect(() => {
+    loadBookings();
+  }, [providerId]);
+
+  useEffect(() => {
+    (async () => {
+      if (!providerId) return;
+      const wh = await getWorkingHours(providerId);
+      if (wh && wh.length) {
+        setHours(DAY_NAMES.map((day, i) => {
+          const match = wh.find(w => w.day_of_week === i);
+          return match
+            ? { day, day_of_week: i, is_open: !!match.is_open, start_time: match.start_time || "08:00", end_time: match.end_time || "18:00" }
+            : { day, day_of_week: i, is_open: false, start_time: "08:00", end_time: "18:00" };
+        }));
+      }
+    })();
+  }, [providerId]);
+
+  useEffect(() => {
+    if (providerProfile) {
+      setProfileForm({
+        business_name: providerProfile.business_name || "",
+        description: providerProfile.description || "",
+        district: providerProfile.district || "",
+      });
+    }
+  }, [providerProfile]);
+
+  const act = async (id, status) => {
+    setBusyId(id);
+    await updateBookingStatus(id, status);
+    await loadBookings();
+    setBusyId(null);
+  };
+
+  const toggleDay = (i) => setHours(h => h.map((d, idx) => (idx === i ? { ...d, is_open: !d.is_open } : d)));
+  const setDayTime = (i, field, value) => setHours(h => h.map((d, idx) => (idx === i ? { ...d, [field]: value } : d)));
+
+  const saveHours = async () => {
+    if (!providerId) return;
+    setSavingHours(true);
+    await upsertWorkingHours(providerId, hours.map(h => ({ day_of_week: h.day_of_week, is_open: h.is_open, start_time: h.start_time, end_time: h.end_time })));
+    setSavingHours(false);
+  };
+
+  const saveProfile = async () => {
+    if (!providerId) return;
+    setSavingProfile(true);
+    await upsertProviderProfile({ id: providerProfile.id, user_id: providerProfile.user_id, ...profileForm });
+    setSavingProfile(false);
+  };
 
   const sideItems = [
     { id: "dashboard", icon: "📊", label: "Dashboard" },
@@ -719,6 +788,74 @@ function ProviderPortal({ onNav }) {
     { id: "profile", icon: "👤", label: "Public profile" },
     { id: "settings", icon: "⚙️", label: "Settings" },
   ];
+
+  // Not signed in at all
+  if (!session) {
+    return (
+      <div style={{ minHeight: "100vh", background: "var(--forest)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
+        <div style={{ textAlign: "center", maxWidth: 360 }}>
+          <div style={{ fontFamily: "Syne, sans-serif", fontSize: 28, fontWeight: 800, color: "var(--near-white)", marginBottom: 8 }}>
+            vai<span style={{ color: "var(--lime)" }}>book</span> <span style={{ color: "rgba(255,255,255,0.5)", fontWeight: 600, fontSize: 16 }}>providers</span>
+          </div>
+          <p style={{ color: "rgba(255,255,255,0.6)", fontSize: 14, marginBottom: 24 }}>Sign in with Google to access your provider portal.</p>
+          <button className="btn-lime" style={{ width: "100%", padding: "12px 0" }} onClick={onSignIn}>Sign in with Google</button>
+          <div style={{ marginTop: 20 }}>
+            <a style={{ color: "rgba(255,255,255,0.4)", fontSize: 13, cursor: "pointer" }} onClick={() => onNav("home")}>← Back to site</a>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Signed in but no provider profile yet
+  if (!providerProfile) {
+    return (
+      <div style={{ minHeight: "100vh", background: "var(--forest)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
+        <div style={{ textAlign: "center", maxWidth: 380 }}>
+          <div style={{ fontSize: 40, marginBottom: 12 }}>✂️</div>
+          <h2 style={{ color: "var(--near-white)", fontFamily: "Syne, sans-serif", marginBottom: 8 }}>No provider profile yet</h2>
+          <p style={{ color: "rgba(255,255,255,0.6)", fontSize: 14, marginBottom: 24 }}>
+            List your business to apply. Once we confirm your subscription payment, we'll activate your provider portal.
+          </p>
+          <button className="btn-lime" style={{ padding: "12px 24px" }} onClick={() => onNav("signup")}>List your business</button>
+          <div style={{ marginTop: 20 }}>
+            <a style={{ color: "rgba(255,255,255,0.4)", fontSize: 13, cursor: "pointer" }} onClick={onSignOut}>Sign out</a>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const isSameDay = (isoDate, d) => {
+    if (!isoDate) return false;
+    const bd = new Date(isoDate);
+    return bd.getFullYear() === d.getFullYear() && bd.getMonth() === d.getMonth() && bd.getDate() === d.getDate();
+  };
+
+  const now = new Date();
+  const todaysBookings = bookings.filter(b => isSameDay(b.booking_date, now));
+  const pendingBookings = bookings.filter(b => b.status === "pending");
+  const confirmedBookings = bookings.filter(b => b.status === "confirmed");
+  const completedBookings = bookings.filter(b => b.status === "completed" || b.status === "done");
+  const thisMonthEarnings = completedBookings
+    .filter(b => { const d = new Date(b.booking_date); return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear(); })
+    .reduce((sum, b) => sum + (Number(b.total_amount) || 0), 0);
+  const completionRate = bookings.length ? Math.round((completedBookings.length / bookings.length) * 100) : null;
+
+  const calYear = now.getFullYear();
+  const calMonth = now.getMonth();
+  const monthLabel = now.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+  const firstWeekday = new Date(calYear, calMonth, 1).getDay();
+  const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+  const calendarDays = [...Array(firstWeekday).fill(null), ...Array.from({ length: daysInMonth }, (_, i) => i + 1)];
+  const bookedDaysInMonth = new Set(
+    bookings
+      .filter(b => { const d = new Date(b.booking_date); return d.getFullYear() === calYear && d.getMonth() === calMonth; })
+      .map(b => new Date(b.booking_date).getDate())
+  );
+  const selectedDayBookings = selectedDay
+    ? bookings.filter(b => { const d = new Date(b.booking_date); return d.getFullYear() === calYear && d.getMonth() === calMonth && d.getDate() === selectedDay; })
+    : [];
 
   return (
     <div className="portal-layout">
@@ -737,15 +874,15 @@ function ProviderPortal({ onNav }) {
         </div>
         <div style={{ padding: "12px 16px", marginTop: 4 }}>
           <div style={{ background: "rgba(198,241,53,0.12)", borderRadius: 8, padding: "10px 12px" }}>
-            <div style={{ fontSize: 11, color: "var(--lime)", fontWeight: 600, marginBottom: 4 }}>PRO PLAN</div>
-            <div style={{ fontSize: 12, color: "rgba(255,255,255,0.55)" }}>Renews Jul 15 · BZ$50</div>
+            <div style={{ fontSize: 11, color: "var(--lime)", fontWeight: 600, marginBottom: 4 }}>{providerProfile.is_active ? "ACTIVE PROVIDER" : "PENDING ACTIVATION"}</div>
+            <div style={{ fontSize: 12, color: "rgba(255,255,255,0.55)" }}>{providerProfile.service_type} · {providerProfile.district}</div>
           </div>
         </div>
         <div className="sidebar-avatar">
-          <div className="avatar">K</div>
+          <div className="avatar">{(providerProfile.business_name || "V")[0].toUpperCase()}</div>
           <div className="avatar-info">
-            <div className="name">Karim's Cuts</div>
-            <div className="role">Barber · San Ignacio</div>
+            <div className="name">{providerProfile.business_name || "Your business"}</div>
+            <div className="role" style={{ cursor: "pointer" }} onClick={onSignOut}>Sign out</div>
           </div>
         </div>
       </aside>
@@ -755,48 +892,47 @@ function ProviderPortal({ onNav }) {
           <>
             <div className="portal-header">
               <h2>Dashboard</h2>
-              <p>Monday, June 15 · 4 appointments today</p>
+              <p>{now.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })} · {todaysBookings.length} appointment{todaysBookings.length === 1 ? "" : "s"} today</p>
             </div>
             <div className="metric-grid">
-              <div className="metric"><div className="metric-label">This month earnings</div><div className="metric-value" style={{ color: "var(--forest-light)" }}>BZ$1,240</div><div className="metric-sub">↑ 18% vs last month</div></div>
-              <div className="metric"><div className="metric-label">Bookings today</div><div className="metric-value">4</div><div className="metric-sub">2 confirmed, 2 pending</div></div>
-              <div className="metric"><div className="metric-label">Rating</div><div className="metric-value">4.9 ★</div><div className="metric-sub">128 reviews</div></div>
-              <div className="metric"><div className="metric-label">Completion rate</div><div className="metric-value">97<span style={{ fontSize: 18 }}>%</span></div><div className="metric-sub">Excellent</div></div>
+              <div className="metric"><div className="metric-label">This month earnings</div><div className="metric-value" style={{ color: "var(--forest-light)" }}>BZ${thisMonthEarnings.toFixed(0)}</div><div className="metric-sub">{completedBookings.length} completed</div></div>
+              <div className="metric"><div className="metric-label">Bookings today</div><div className="metric-value">{todaysBookings.length}</div><div className="metric-sub">{confirmedBookings.length} confirmed, {pendingBookings.length} pending</div></div>
+              <div className="metric"><div className="metric-label">Total bookings</div><div className="metric-value">{bookings.length}</div><div className="metric-sub">All time</div></div>
+              <div className="metric"><div className="metric-label">Completion rate</div><div className="metric-value">{completionRate === null ? "—" : `${completionRate}%`}</div><div className="metric-sub">{completionRate === null ? "No bookings yet" : "Of all bookings"}</div></div>
             </div>
             <div className="grid-2">
               <div className="card">
-                <div className="card-title">Today's appointments</div>
-                {PROVIDER_BOOKINGS.map((b, i) => (
-                  <div className="booking-item" key={i}>
-                    <div className={`booking-dot ${b.status}`}></div>
+                <div className="card-title" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <span>Today's appointments</span>
+                  <button className="btn-sm ghost" onClick={loadBookings} disabled={loadingBookings}>{loadingBookings ? "Refreshing..." : "Refresh"}</button>
+                </div>
+                {todaysBookings.length === 0 && <p style={{ fontSize: 13, color: "var(--muted)", padding: "16px 0" }}>Nothing booked for today.</p>}
+                {todaysBookings.map((b) => (
+                  <div className="booking-item" key={b.id}>
+                    <div className={`booking-dot ${bookingStatusClass(b.status)}`}></div>
                     <div className="booking-info">
-                      <div className="title">{b.title}</div>
-                      <div className="meta">{b.customer}</div>
+                      <div className="title">{b.services?.name || "Service"}</div>
+                      <div className="meta">{b.users?.full_name || "Customer"} · {new Date(b.booking_date).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}</div>
                     </div>
                     <div>
-                      <span className="booking-amount">{b.amount}</span>
-                      <span className={`status-pill ${b.status}`}>{b.status}</span>
+                      <span className="booking-amount">BZ${b.total_amount ?? b.services?.price ?? "—"}</span>
+                      <span className={`status-pill ${bookingStatusClass(b.status)}`}>{b.status}</span>
                     </div>
                   </div>
                 ))}
               </div>
               <div className="card">
-                <div className="card-title">Revenue this week</div>
-                <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 4 }}>
-                  {[["Mon", 280, 100], ["Tue", 210, 75], ["Wed", 350, 100], ["Thu", 190, 68], ["Fri", 310, 100], ["Sat", 0, 0]].map(([d, v, pct], i) => (
-                    <div key={i} style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                      <span style={{ fontSize: 12, width: 28, color: "var(--muted)" }}>{d}</span>
-                      <div style={{ flex: 1, height: 8, background: "var(--border)", borderRadius: 4, overflow: "hidden" }}>
-                        <div style={{ width: `${pct}%`, height: "100%", background: v > 0 ? "var(--forest)" : "transparent", borderRadius: 4 }}></div>
-                      </div>
-                      <span style={{ fontSize: 13, fontWeight: 600, color: "var(--forest)", width: 58, textAlign: "right" }}>{v > 0 ? `BZ$${v}` : "—"}</span>
+                <div className="card-title">Recent bookings</div>
+                {bookings.length === 0 && <p style={{ fontSize: 13, color: "var(--muted)", padding: "16px 0" }}>{loadingBookings ? "Loading..." : "No bookings yet. Once customers book you, they'll show up here."}</p>}
+                {bookings.slice(0, 6).map((b) => (
+                  <div key={b.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: "1px solid var(--border)" }}>
+                    <div>
+                      <div style={{ fontSize: 13, fontWeight: 600 }}>{b.services?.name || "Service"}</div>
+                      <div style={{ fontSize: 12, color: "var(--muted)" }}>{new Date(b.booking_date).toLocaleDateString()}</div>
                     </div>
-                  ))}
-                </div>
-                <div style={{ marginTop: 16, paddingTop: 14, borderTop: "1px solid var(--border)", display: "flex", justifyContent: "space-between" }}>
-                  <span style={{ fontSize: 13, color: "var(--muted)" }}>Week total</span>
-                  <span style={{ fontSize: 15, fontWeight: 700, color: "var(--forest)" }}>BZ$1,340</span>
-                </div>
+                    <span className={`status-pill ${bookingStatusClass(b.status)}`}>{b.status}</span>
+                  </div>
+                ))}
               </div>
             </div>
           </>
@@ -805,21 +941,33 @@ function ProviderPortal({ onNav }) {
         {tab === "bookings" && (
           <>
             <div className="portal-header"><h2>Bookings</h2><p>Manage your upcoming and past appointments.</p></div>
-            <div className="tab-row">
-              {["Upcoming","Pending","Completed"].map((t,i) => (
-                <div key={i} className={`tab ${i===0?"active":""}`}>{t}</div>
-              ))}
-            </div>
             <div className="card">
-              {PROVIDER_BOOKINGS.map((b, i) => (
-                <div className="booking-item" key={i}>
-                  <div className={`booking-dot ${b.status}`}></div>
-                  <div className="booking-info"><div className="title">{b.title}</div><div className="meta">{b.customer}</div></div>
+              <div className="card-title" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span>All bookings</span>
+                <button className="btn-sm forest" onClick={loadBookings} disabled={loadingBookings}>{loadingBookings ? "Refreshing..." : "Refresh"}</button>
+              </div>
+              {bookings.length === 0 && (
+                <p style={{ fontSize: 13, color: "var(--muted)", padding: "16px 0" }}>{loadingBookings ? "Loading..." : "No bookings yet."}</p>
+              )}
+              {bookings.map((b) => (
+                <div className="booking-item" key={b.id}>
+                  <div className={`booking-dot ${bookingStatusClass(b.status)}`}></div>
+                  <div className="booking-info">
+                    <div className="title">{b.services?.name || "Service"}</div>
+                    <div className="meta">{b.users?.full_name || "Customer"} · {new Date(b.booking_date).toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}</div>
+                  </div>
                   <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                    <span className="booking-amount">{b.amount}</span>
-                    <span className={`status-pill ${b.status}`}>{b.status}</span>
-                    {b.status === "pending" && <><button className="btn-sm lime">Accept</button><button className="btn-sm ghost">Decline</button></>}
-                    {b.status === "confirmed" && <button className="btn-sm forest">Mark done</button>}
+                    <span className="booking-amount">BZ${b.total_amount ?? b.services?.price ?? "—"}</span>
+                    <span className={`status-pill ${bookingStatusClass(b.status)}`}>{b.status}</span>
+                    {b.status === "pending" && (
+                      <>
+                        <button className="btn-sm lime" disabled={busyId === b.id} onClick={() => act(b.id, "confirmed")}>Accept</button>
+                        <button className="btn-sm ghost" disabled={busyId === b.id} onClick={() => act(b.id, "cancelled")}>Decline</button>
+                      </>
+                    )}
+                    {b.status === "confirmed" && (
+                      <button className="btn-sm forest" disabled={busyId === b.id} onClick={() => act(b.id, "completed")}>Mark done</button>
+                    )}
                   </div>
                 </div>
               ))}
@@ -832,11 +980,16 @@ function ProviderPortal({ onNav }) {
             <div className="portal-header"><h2>Availability</h2><p>Set your open slots. Customers can only book when you're available.</p></div>
             <div className="grid-2">
               <div className="card">
-                <div className="card-title">June 2026</div>
+                <div className="card-title">{monthLabel}</div>
                 <div className="cal-grid">
                   {DAYS.map(d => <div key={d} className="cal-day-label">{d}</div>)}
-                  {CALENDAR_DAYS.map((d, i) => (
-                    <div key={i} className={`cal-day ${d === null ? "empty" : ""} ${d === 15 ? "today" : ""} ${BOOKED_DAYS.has(d) ? "has-booking" : ""}`}>
+                  {calendarDays.map((d, i) => (
+                    <div
+                      key={i}
+                      className={`cal-day ${d === null ? "empty" : ""} ${d === now.getDate() ? "today" : ""} ${d && bookedDaysInMonth.has(d) ? "has-booking" : ""}`}
+                      style={d && d === selectedDay ? { boxShadow: "inset 0 0 0 2px var(--forest)" } : undefined}
+                      onClick={() => d && setSelectedDay(d === selectedDay ? null : d)}
+                    >
                       {d || ""}
                     </div>
                   ))}
@@ -845,23 +998,38 @@ function ProviderPortal({ onNav }) {
                   <span>● Today</span>
                   <span style={{ color: "var(--lime)", fontSize: 14 }}>● </span><span>Has booking</span>
                 </div>
+                {selectedDay && (
+                  <div style={{ marginTop: 16, paddingTop: 14, borderTop: "1px solid var(--border)" }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 8 }}>{monthLabel.split(" ")[0]} {selectedDay}</div>
+                    {selectedDayBookings.length === 0 && <p style={{ fontSize: 12, color: "var(--muted)" }}>No bookings this day.</p>}
+                    {selectedDayBookings.map(b => (
+                      <div key={b.id} style={{ fontSize: 12, color: "var(--muted)", padding: "4px 0" }}>
+                        {new Date(b.booking_date).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })} · {b.services?.name || "Service"} · {b.users?.full_name || "Customer"}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
               <div className="card">
                 <div className="card-title">Working hours</div>
-                {["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"].map((day, i) => (
+                {hours.map((d, i) => (
                   <div key={i} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 0", borderBottom: "1px solid var(--border)" }}>
-                    <span style={{ fontSize: 14, fontWeight: 500 }}>{day}</span>
+                    <span style={{ fontSize: 14, fontWeight: 500 }}>{d.day}</span>
                     <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                      <span style={{ fontSize: 12, color: "var(--muted)" }}>{i < 5 ? "8:00 AM – 6:00 PM" : "9:00 AM – 3:00 PM"}</span>
-                      <div className={`toggle on`}></div>
+                      {d.is_open ? (
+                        <>
+                          <input type="time" value={d.start_time} onChange={e => setDayTime(i, "start_time", e.target.value)} style={{ fontSize: 12, border: "1px solid var(--border)", borderRadius: 6, padding: "4px 6px" }} />
+                          <span style={{ fontSize: 12, color: "var(--muted)" }}>–</span>
+                          <input type="time" value={d.end_time} onChange={e => setDayTime(i, "end_time", e.target.value)} style={{ fontSize: 12, border: "1px solid var(--border)", borderRadius: 6, padding: "4px 6px" }} />
+                        </>
+                      ) : (
+                        <span style={{ fontSize: 12, color: "var(--muted)" }}>Closed</span>
+                      )}
+                      <div className={`toggle ${d.is_open ? "on" : ""}`} onClick={() => toggleDay(i)}></div>
                     </div>
                   </div>
                 ))}
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 0" }}>
-                  <span style={{ fontSize: 14, fontWeight: 500 }}>Sunday</span>
-                  <div className="toggle"></div>
-                </div>
-                <button className="btn-sm forest" style={{ marginTop: 12 }}>Save hours</button>
+                <button className="btn-sm forest" style={{ marginTop: 12 }} onClick={saveHours} disabled={savingHours}>{savingHours ? "Saving..." : "Save hours"}</button>
               </div>
             </div>
           </>
@@ -872,19 +1040,17 @@ function ProviderPortal({ onNav }) {
             <div className="portal-header"><h2>My services</h2><p>The services customers can book from your profile.</p></div>
             <div className="card" style={{ maxWidth: 560 }}>
               <div className="card-title">Active services</div>
-              {[
-                { name: "Haircut", price: "BZ$30", duration: "30 min" },
-                { name: "Haircut & Beard Trim", price: "BZ$45", duration: "45 min" },
-                { name: "Fade & Line-up", price: "BZ$35", duration: "40 min" },
-                { name: "Kids Cut (under 12)", price: "BZ$20", duration: "20 min" },
-              ].map((s, i) => (
-                <div className="provider-service" key={i}>
+              {(!providerProfile.services || providerProfile.services.length === 0) && (
+                <p style={{ fontSize: 13, color: "var(--muted)", padding: "12px 0" }}>No services added yet. Add your first one below.</p>
+              )}
+              {(providerProfile.services || []).map((s) => (
+                <div className="provider-service" key={s.id}>
                   <div>
                     <div style={{ fontSize: 14, fontWeight: 600 }}>{s.name}</div>
-                    <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 2 }}>{s.duration}</div>
+                    <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 2 }}>{s.duration_min} min</div>
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                    <span style={{ fontWeight: 700, color: "var(--forest)" }}>{s.price}</span>
+                    <span style={{ fontWeight: 700, color: "var(--forest)" }}>BZ${s.price}</span>
                     <button className="btn-sm ghost" style={{ fontSize: 12 }}>Edit</button>
                   </div>
                 </div>
@@ -938,18 +1104,20 @@ function ProviderPortal({ onNav }) {
               <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 24, paddingBottom: 20, borderBottom: "1px solid var(--border)" }}>
                 <div style={{ width: 72, height: 72, background: "var(--forest)", borderRadius: 14, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 36 }}>✂️</div>
                 <div>
-                  <div style={{ fontFamily: "Syne, sans-serif", fontSize: 20, fontWeight: 700 }}>Karim's Cuts</div>
-                  <div style={{ color: "var(--muted)", fontSize: 14 }}>Barber · San Ignacio, Cayo</div>
-                  <div className="stars" style={{ marginTop: 4 }}>★★★★★ 4.9 (128 reviews)</div>
+                  <div style={{ fontFamily: "Syne, sans-serif", fontSize: 20, fontWeight: 700 }}>{providerProfile.business_name}</div>
+                  <div style={{ color: "var(--muted)", fontSize: 14 }}>{providerProfile.service_type} · {providerProfile.district}</div>
                 </div>
-                <span className="status-pill confirmed" style={{ marginLeft: "auto" }}>✓ Verified</span>
+                <span className={`status-pill ${providerProfile.is_active ? "confirmed" : "pending"}`} style={{ marginLeft: "auto" }}>{providerProfile.is_active ? "✓ Verified" : "Pending activation"}</span>
               </div>
-              <div className="input-group"><label>Business name</label><input defaultValue="Karim's Cuts" /></div>
-              <div className="input-group"><label>Tagline</label><input defaultValue="Fresh cuts, clean fades. Walk-ins welcome." /></div>
-              <div className="input-group"><label>About</label><textarea defaultValue="Professional barber with 8 years experience. Specialising in fades, line-ups, and beard trims. Located in the heart of San Ignacio." /></div>
-              <div className="input-group"><label>District</label><select><option>Cayo</option><option>Belize City</option></select></div>
-              <div className="input-group"><label>Phone (WhatsApp)</label><input defaultValue="+501 622 4455" /></div>
-              <button className="btn-sm forest">Save profile</button>
+              <div className="input-group"><label>Business name</label><input value={profileForm.business_name} onChange={e => setProfileForm(f => ({ ...f, business_name: e.target.value }))} /></div>
+              <div className="input-group"><label>About</label><textarea value={profileForm.description} onChange={e => setProfileForm(f => ({ ...f, description: e.target.value }))} /></div>
+              <div className="input-group">
+                <label>District</label>
+                <select value={profileForm.district} onChange={e => setProfileForm(f => ({ ...f, district: e.target.value }))}>
+                  {DISTRICTS.map(d => <option key={d}>{d}</option>)}
+                </select>
+              </div>
+              <button className="btn-sm forest" onClick={saveProfile} disabled={savingProfile}>{savingProfile ? "Saving..." : "Save profile"}</button>
             </div>
           </>
         )}

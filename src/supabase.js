@@ -79,6 +79,34 @@ export const upsertProviderProfile = async (profile) => {
   return data;
 };
 
+// ── WORKING HOURS HELPERS ─────────────────────────────────────────
+
+export const getWorkingHours = async (providerId) => {
+  const { data, error } = await supabase
+    .from('working_hours')
+    .select('*')
+    .eq('provider_id', providerId)
+    .order('day_of_week', { ascending: true });
+  if (error) console.error('Error fetching working hours:', error.message);
+  return data || [];
+};
+
+export const upsertWorkingHours = async (providerId, days) => {
+  const rows = days.map((d) => ({
+    provider_id: providerId,
+    day_of_week: d.day_of_week,
+    is_open: d.is_open,
+    start_time: d.start_time,
+    end_time: d.end_time,
+  }));
+  const { data, error } = await supabase
+    .from('working_hours')
+    .upsert(rows, { onConflict: 'provider_id,day_of_week' })
+    .select();
+  if (error) console.error('Error saving working hours:', error.message);
+  return data;
+};
+
 export const getActiveProviders = async (filters = {}) => {
   let query = supabase
     .from('provider_profiles')
