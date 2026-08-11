@@ -315,6 +315,15 @@ function enterCustomerPortal(onNav, session, onSignIn) {
   }
 }
 
+function enterProviderPortal(onNav, session, onSignIn) {
+  if (session) {
+    onNav("provider");
+  } else {
+    window.location.hash = "provider";
+    onSignIn();
+  }
+}
+
 function Nav({ onNav, current, session, user, onSignIn }) {
   return (
     <nav className="nav">
@@ -329,6 +338,9 @@ function Nav({ onNav, current, session, user, onSignIn }) {
         <button className="btn-ghost" onClick={() => enterCustomerPortal(onNav, session, onSignIn)}>
           {session ? (user?.full_name?.split(" ")[0] || "My account") : "Customer login"}
         </button>
+        <a style={{ cursor: "pointer", fontSize: 14, color: "rgba(255,255,255,0.7)" }} onClick={() => enterProviderPortal(onNav, session, onSignIn)}>
+          Provider login
+        </a>
         <button className="btn-lime" onClick={() => onNav("signup")}>List your business</button>
       </div>
     </nav>
@@ -1358,6 +1370,9 @@ Activate this provider in your admin dashboard.`
                 </p>
               </div>
             )}
+            <p style={{ marginTop: 16, fontSize: 13, color: "var(--muted)" }}>
+              Once we activate your listing, come back to vaibook.bz and click <strong>Provider login</strong> in the top menu to manage your bookings and calendar.
+            </p>
             <button className="btn-sm forest" style={{ marginTop: 24 }} onClick={() => onNav("home")}>Back to home</button>
           </div>
         </div>
@@ -1633,7 +1648,7 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
 export default function App() {
   const [view, setView] = useState(() => {
     const h = window.location.hash.replace("#", "");
-    return h === "admin" || h === "customer" ? h : "home";
+    return h === "admin" || h === "customer" || h === "provider" ? h : "home";
   });
 
   // Keep view in sync if the URL hash changes without a full page reload
@@ -1641,7 +1656,7 @@ export default function App() {
   useEffect(() => {
     const onHashChange = () => {
       const h = window.location.hash.replace("#", "");
-      if (h === "admin" || h === "customer") setView(h);
+      if (h === "admin" || h === "customer" || h === "provider") setView(h);
     };
     window.addEventListener("hashchange", onHashChange);
     return () => window.removeEventListener("hashchange", onHashChange);
