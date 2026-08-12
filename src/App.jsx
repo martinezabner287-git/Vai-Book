@@ -338,9 +338,9 @@ function Nav({ onNav, current, session, user, onSignIn }) {
         <button className="btn-ghost" onClick={() => enterCustomerPortal(onNav, session, onSignIn)}>
           {session ? (user?.full_name?.split(" ")[0] || "My account") : "Customer login"}
         </button>
-        <a style={{ cursor: "pointer", fontSize: 14, color: "rgba(255,255,255,0.7)" }} onClick={() => enterProviderPortal(onNav, session, onSignIn)}>
+        <button className="btn-ghost" onClick={() => enterProviderPortal(onNav, session, onSignIn)}>
           Provider login
-        </a>
+        </button>
         <button className="btn-lime" onClick={() => onNav("signup")}>List your business</button>
       </div>
     </nav>
