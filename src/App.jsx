@@ -1,6 +1,37 @@
 
 import { useState, useEffect } from "react";
-import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail } from "./supabase";
+import { MapContainer, TileLayer, Marker, useMapEvents } from "react-leaflet";
+import "leaflet/dist/leaflet.css";
+import L from "leaflet";
+import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
+import markerIcon from "leaflet/dist/images/marker-icon.png";
+import markerShadow from "leaflet/dist/images/marker-shadow.png";
+import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto } from "./supabase";
+
+// Leaflet's default marker icons reference image paths that don't resolve
+// correctly under CRA's bundler unless re-pointed at the imported assets.
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: markerIcon2x,
+  iconUrl: markerIcon,
+  shadowUrl: markerShadow,
+});
+
+// Default map center: Belize (roughly Belmopan) for providers who haven't set a pin yet.
+const BELIZE_CENTER = [17.25, -88.77];
+
+function LocationPicker({ position, onPick }) {
+  useMapEvents({
+    click(e) {
+      onPick([e.latlng.lat, e.latlng.lng]);
+    },
+  });
+  return position ? <Marker position={position} /> : null;
+}
+
+function directionsUrl(lat, lng) {
+  return `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
+}
 
 // ── DESIGN TOKENS ──────────────────────────────────────────────
 // Palette: deep forest green (#0D3D2E) + warm sand (#F5EFE0) + 
@@ -727,6 +758,11 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
   const [selectedDay, setSelectedDay] = useState(null);
   const [profileForm, setProfileForm] = useState({ business_name: "", bio: "", district: "" });
   const [savingProfile, setSavingProfile] = useState(false);
+  const [photos, setPhotos] = useState([]);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [mapPosition, setMapPosition] = useState(null);
+  const [locationLabel, setLocationLabel] = useState("");
+  const [savingLocation, setSavingLocation] = useState(false);
 
   const providerId = providerProfile?.id;
 
@@ -764,6 +800,11 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
         bio: providerProfile.bio || "",
         district: providerProfile.district || "",
       });
+      setPhotos(providerProfile.portfolio_urls || []);
+      if (providerProfile.latitude != null && providerProfile.longitude != null) {
+        setMapPosition([providerProfile.latitude, providerProfile.longitude]);
+      }
+      setLocationLabel(providerProfile.location_label || "");
     }
   }, [providerProfile]);
 
@@ -789,6 +830,41 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
     setSavingProfile(true);
     await upsertProviderProfile({ id: providerProfile.id, user_id: providerProfile.user_id, ...profileForm });
     setSavingProfile(false);
+  };
+
+  const handlePhotoUpload = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file || !providerProfile?.user_id) return;
+    setUploadingPhoto(true);
+    const url = await uploadProviderPhoto(providerProfile.user_id, file);
+    if (url) {
+      const next = [...photos, url];
+      setPhotos(next);
+      await upsertProviderProfile({ id: providerProfile.id, user_id: providerProfile.user_id, portfolio_urls: next });
+    }
+    setUploadingPhoto(false);
+  };
+
+  const handleDeletePhoto = async (url) => {
+    if (!providerProfile?.user_id) return;
+    const next = photos.filter((p) => p !== url);
+    setPhotos(next);
+    await deleteProviderPhoto(providerProfile.user_id, url);
+    await upsertProviderProfile({ id: providerProfile.id, user_id: providerProfile.user_id, portfolio_urls: next });
+  };
+
+  const saveLocation = async () => {
+    if (!providerId || !mapPosition) return;
+    setSavingLocation(true);
+    await upsertProviderProfile({
+      id: providerProfile.id,
+      user_id: providerProfile.user_id,
+      latitude: mapPosition[0],
+      longitude: mapPosition[1],
+      location_label: locationLabel,
+    });
+    setSavingLocation(false);
   };
 
   const sideItems = [
@@ -1130,6 +1206,49 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                 </select>
               </div>
               <button className="btn-sm forest" onClick={saveProfile} disabled={savingProfile}>{savingProfile ? "Saving..." : "Save profile"}</button>
+            </div>
+
+            <div className="card" style={{ maxWidth: 560, marginTop: 20 }}>
+              <div className="card-title">Photos</div>
+              <p style={{ color: "var(--muted)", fontSize: 13, marginTop: -8, marginBottom: 16 }}>Show off your work. Customers see these on your public profile.</p>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginBottom: 16 }}>
+                {photos.map((url) => (
+                  <div key={url} style={{ position: "relative", width: 96, height: 96 }}>
+                    <img src={url} alt="Provider work" style={{ width: 96, height: 96, objectFit: "cover", borderRadius: 10, border: "1px solid var(--border)" }} />
+                    <button
+                      onClick={() => handleDeletePhoto(url)}
+                      style={{ position: "absolute", top: -6, right: -6, width: 22, height: 22, borderRadius: "50%", background: "var(--forest)", color: "#fff", border: "none", cursor: "pointer", fontSize: 12, lineHeight: "22px" }}
+                      title="Remove photo"
+                    >×</button>
+                  </div>
+                ))}
+                <label style={{ width: 96, height: 96, borderRadius: 10, border: "1px dashed var(--border)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "var(--muted)", fontSize: 12, textAlign: "center" }}>
+                  {uploadingPhoto ? "Uploading..." : "+ Add photo"}
+                  <input type="file" accept="image/*" onChange={handlePhotoUpload} disabled={uploadingPhoto} style={{ display: "none" }} />
+                </label>
+              </div>
+            </div>
+
+            <div className="card" style={{ maxWidth: 560, marginTop: 20 }}>
+              <div className="card-title">Location</div>
+              <p style={{ color: "var(--muted)", fontSize: 13, marginTop: -8, marginBottom: 16 }}>Click the map to drop a pin at your exact location. Customers will get a "Get Directions" link straight to it.</p>
+              <div style={{ borderRadius: 10, overflow: "hidden", border: "1px solid var(--border)", marginBottom: 12 }}>
+                <MapContainer center={mapPosition || BELIZE_CENTER} zoom={mapPosition ? 15 : 8} style={{ height: 260, width: "100%" }}>
+                  <TileLayer
+                    attribution='&copy; OpenStreetMap contributors'
+                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                  />
+                  <LocationPicker position={mapPosition} onPick={setMapPosition} />
+                </MapContainer>
+              </div>
+              <div className="input-group"><label>Location label (optional)</label><input placeholder="e.g. Next to Brodie's, San Ignacio" value={locationLabel} onChange={e => setLocationLabel(e.target.value)} /></div>
+              {mapPosition && (
+                <p style={{ fontSize: 12, color: "var(--muted)", marginBottom: 12 }}>
+                  Pin set at {mapPosition[0].toFixed(5)}, {mapPosition[1].toFixed(5)} —{" "}
+                  <a href={directionsUrl(mapPosition[0], mapPosition[1])} target="_blank" rel="noreferrer">preview directions</a>
+                </p>
+              )}
+              <button className="btn-sm forest" onClick={saveLocation} disabled={savingLocation || !mapPosition}>{savingLocation ? "Saving..." : "Save location"}</button>
             </div>
           </>
         )}

@@ -79,6 +79,39 @@ export const upsertProviderProfile = async (profile) => {
   return data;
 };
 
+// ── PROVIDER PHOTO HELPERS ─────────────────────────────────────────
+
+export const uploadProviderPhoto = async (userId, file) => {
+  const ext = file.name.split('.').pop();
+  const path = `${userId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+  const { error } = await supabase.storage.from('provider-photos').upload(path, file, {
+    cacheControl: '3600',
+    upsert: false,
+  });
+  if (error) {
+    console.error('Error uploading photo:', error.message);
+    return null;
+  }
+  const { data } = supabase.storage.from('provider-photos').getPublicUrl(path);
+  return data?.publicUrl || null;
+};
+
+export const deleteProviderPhoto = async (userId, url) => {
+  // Extract the storage path from a public URL like
+  // .../storage/v1/object/public/provider-photos/<userId>/<file>
+  const marker = '/provider-photos/';
+  const idx = url.indexOf(marker);
+  if (idx === -1) return false;
+  const path = url.slice(idx + marker.length);
+  const { error } = await supabase.storage.from('provider-photos').remove([path]);
+  if (error) {
+    console.error('Error deleting photo:', error.message);
+    return false;
+  }
+  return true;
+};
+
+
 // ── WORKING HOURS HELPERS ─────────────────────────────────────────
 
 export const getWorkingHours = async (providerId) => {
