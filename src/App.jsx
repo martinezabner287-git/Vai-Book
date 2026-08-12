@@ -725,7 +725,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
   const [hours, setHours] = useState(DEFAULT_HOURS);
   const [savingHours, setSavingHours] = useState(false);
   const [selectedDay, setSelectedDay] = useState(null);
-  const [profileForm, setProfileForm] = useState({ business_name: "", description: "", district: "" });
+  const [profileForm, setProfileForm] = useState({ business_name: "", bio: "", district: "" });
   const [savingProfile, setSavingProfile] = useState(false);
 
   const providerId = providerProfile?.id;
@@ -761,7 +761,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
     if (providerProfile) {
       setProfileForm({
         business_name: providerProfile.business_name || "",
-        description: providerProfile.description || "",
+        bio: providerProfile.bio || "",
         district: providerProfile.district || "",
       });
     }
@@ -1122,7 +1122,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                 <span className={`status-pill ${providerProfile.is_active ? "confirmed" : "pending"}`} style={{ marginLeft: "auto" }}>{providerProfile.is_active ? "✓ Verified" : "Pending activation"}</span>
               </div>
               <div className="input-group"><label>Business name</label><input value={profileForm.business_name} onChange={e => setProfileForm(f => ({ ...f, business_name: e.target.value }))} /></div>
-              <div className="input-group"><label>About</label><textarea value={profileForm.description} onChange={e => setProfileForm(f => ({ ...f, description: e.target.value }))} /></div>
+              <div className="input-group"><label>About</label><textarea value={profileForm.bio} onChange={e => setProfileForm(f => ({ ...f, bio: e.target.value }))} /></div>
               <div className="input-group">
                 <label>District</label>
                 <select value={profileForm.district} onChange={e => setProfileForm(f => ({ ...f, district: e.target.value }))}>
@@ -1680,7 +1680,7 @@ export default function App() {
           business_name: app.business_name,
           service_type: app.service_type,
           district: app.district,
-          description: app.description,
+          bio: app.description,
           is_active: true,
         });
       }
