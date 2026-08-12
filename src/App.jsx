@@ -6,7 +6,7 @@ import L from "leaflet";
 import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
 import markerIcon from "leaflet/dist/images/marker-icon.png";
 import markerShadow from "leaflet/dist/images/marker-shadow.png";
-import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto } from "./supabase";
+import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, deleteService } from "./supabase";
 
 // Leaflet's default marker icons reference image paths that don't resolve
 // correctly under CRA's bundler unless re-pointed at the imported assets.
@@ -763,6 +763,9 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
   const [mapPosition, setMapPosition] = useState(null);
   const [locationLabel, setLocationLabel] = useState("");
   const [savingLocation, setSavingLocation] = useState(false);
+  const [services, setServices] = useState([]);
+  const [serviceForm, setServiceForm] = useState({ name: "", price: "", duration_min: 15 });
+  const [savingService, setSavingService] = useState(false);
 
   const providerId = providerProfile?.id;
 
@@ -801,6 +804,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
         district: providerProfile.district || "",
       });
       setPhotos(providerProfile.portfolio_urls || []);
+      setServices(providerProfile.services || []);
       if (providerProfile.latitude != null && providerProfile.longitude != null) {
         setMapPosition([providerProfile.latitude, providerProfile.longitude]);
       }
@@ -865,6 +869,28 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
       location_label: locationLabel,
     });
     setSavingLocation(false);
+  };
+
+  const handleAddService = async () => {
+    if (!providerId || !serviceForm.name.trim()) return;
+    setSavingService(true);
+    const created = await createService({
+      provider_id: providerId,
+      name: serviceForm.name.trim(),
+      price: Number(serviceForm.price) || 0,
+      duration_min: Number(serviceForm.duration_min) || 15,
+      is_active: true,
+    });
+    if (created) {
+      setServices((prev) => [...prev, created]);
+      setServiceForm({ name: "", price: "", duration_min: 15 });
+    }
+    setSavingService(false);
+  };
+
+  const handleDeleteService = async (serviceId) => {
+    setServices((prev) => prev.filter((s) => s.id !== serviceId));
+    await deleteService(serviceId);
   };
 
   const sideItems = [
@@ -1128,10 +1154,10 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
             <div className="portal-header"><h2>My services</h2><p>The services customers can book from your profile.</p></div>
             <div className="card" style={{ maxWidth: 560 }}>
               <div className="card-title">Active services</div>
-              {(!providerProfile.services || providerProfile.services.length === 0) && (
+              {services.length === 0 && (
                 <p style={{ fontSize: 13, color: "var(--muted)", padding: "12px 0" }}>No services added yet. Add your first one below.</p>
               )}
-              {(providerProfile.services || []).map((s) => (
+              {services.map((s) => (
                 <div className="provider-service" key={s.id}>
                   <div>
                     <div style={{ fontSize: 14, fontWeight: 600 }}>{s.name}</div>
@@ -1139,18 +1165,27 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                     <span style={{ fontWeight: 700, color: "var(--forest)" }}>BZ${s.price}</span>
-                    <button className="btn-sm ghost" style={{ fontSize: 12 }}>Edit</button>
+                    <button className="btn-sm ghost" style={{ fontSize: 12 }} onClick={() => handleDeleteService(s.id)}>Remove</button>
                   </div>
                 </div>
               ))}
               <div style={{ marginTop: 20, paddingTop: 16, borderTop: "1px solid var(--border)" }}>
                 <div className="card-title">Add a service</div>
-                <div className="input-group"><label>Service name</label><input placeholder="e.g. Full Colour Treatment" /></div>
+                <div className="input-group"><label>Service name</label><input placeholder="e.g. Full Colour Treatment" value={serviceForm.name} onChange={e => setServiceForm(f => ({ ...f, name: e.target.value }))} /></div>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-                  <div className="input-group"><label>Price (BZ$)</label><input type="number" placeholder="0" /></div>
-                  <div className="input-group"><label>Duration</label><select><option>15 min</option><option>30 min</option><option>45 min</option><option>60 min</option><option>90 min</option></select></div>
+                  <div className="input-group"><label>Price (BZ$)</label><input type="number" placeholder="0" value={serviceForm.price} onChange={e => setServiceForm(f => ({ ...f, price: e.target.value }))} /></div>
+                  <div className="input-group">
+                    <label>Duration</label>
+                    <select value={serviceForm.duration_min} onChange={e => setServiceForm(f => ({ ...f, duration_min: e.target.value }))}>
+                      <option value={15}>15 min</option>
+                      <option value={30}>30 min</option>
+                      <option value={45}>45 min</option>
+                      <option value={60}>60 min</option>
+                      <option value={90}>90 min</option>
+                    </select>
+                  </div>
                 </div>
-                <button className="btn-sm lime">Add service</button>
+                <button className="btn-sm lime" onClick={handleAddService} disabled={savingService || !serviceForm.name.trim()}>{savingService ? "Adding..." : "Add service"}</button>
               </div>
             </div>
           </>

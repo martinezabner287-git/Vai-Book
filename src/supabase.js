@@ -140,6 +140,35 @@ export const upsertWorkingHours = async (providerId, days) => {
   return data;
 };
 
+// ── SERVICE HELPERS ──────────────────────────────────────────────
+
+export const createService = async (service) => {
+  const { data, error } = await supabase
+    .from('services')
+    .insert(service)
+    .select()
+    .single();
+  if (error) { console.error('Error creating service:', error.message); return null; }
+  return data;
+};
+
+export const updateService = async (serviceId, updates) => {
+  const { data, error } = await supabase
+    .from('services')
+    .update(updates)
+    .eq('id', serviceId)
+    .select()
+    .single();
+  if (error) { console.error('Error updating service:', error.message); return null; }
+  return data;
+};
+
+export const deleteService = async (serviceId) => {
+  const { error } = await supabase.from('services').delete().eq('id', serviceId);
+  if (error) { console.error('Error deleting service:', error.message); return false; }
+  return true;
+};
+
 export const getActiveProviders = async (filters = {}) => {
   let query = supabase
     .from('provider_profiles')
