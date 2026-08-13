@@ -205,7 +205,7 @@ export const createBooking = async (booking) => {
 export const getCustomerBookings = async (customerId) => {
   const { data, error } = await supabase
     .from('bookings')
-    .select('*, provider_profiles(id, business_name, service_type, district, whatsapp), services(name, price, duration_min), reviews(id, rating, comment)')
+    .select('*, provider_profiles(id, business_name, service_type, district, whatsapp, bank_name, account_name, account_number), services(name, price, duration_min), reviews(id, rating, comment)')
     .eq('customer_id', customerId)
     .order('booking_date', { ascending: false });
   if (error) console.error(error.message);
@@ -365,25 +365,6 @@ export const updateUserProfile = async (userId, updates) => {
   return data;
 };
 
-export const getProviderPayouts = async (providerId) => {
-  const { data, error } = await supabase
-    .from('payouts')
-    .select('*')
-    .eq('provider_id', providerId)
-    .order('created_at', { ascending: false });
-  if (error) console.error('Error loading payouts:', error.message);
-  return data || [];
-};
-
-export const requestPayout = async (providerId, amount, method) => {
-  const { data, error } = await supabase
-    .from('payouts')
-    .insert([{ provider_id: providerId, amount, method, status: 'requested' }])
-    .select()
-    .single();
-  if (error) console.error('Error requesting payout:', error.message);
-  return data;
-};
 
 // ── ADMIN HELPERS ─────────────────────────────────────────────────
 

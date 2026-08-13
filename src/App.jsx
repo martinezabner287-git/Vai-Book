@@ -6,7 +6,7 @@ import L from "leaflet";
 import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
 import markerIcon from "leaflet/dist/images/marker-icon.png";
 import markerShadow from "leaflet/dist/images/marker-shadow.png";
-import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, deleteService, getActiveProviders, createBooking, getCustomerBookings, uploadReceipt, submitReview, sendBookingEmail, updateUserProfile, getProviderPayouts, requestPayout } from "./supabase";
+import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, deleteService, getActiveProviders, createBooking, getCustomerBookings, uploadReceipt, submitReview, sendBookingEmail, updateUserProfile } from "./supabase";
 
 // Leaflet's default marker icons reference image paths that don't resolve
 // correctly under CRA's bundler unless re-pointed at the imported assets.
@@ -1139,15 +1139,36 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate }) {
                     )}
 
                     {b.status === "awaiting_payment" && b.payment_status === "unpaid" && (
-                      <div style={{ marginTop: 8, display: "flex", alignItems: "center", gap: 10 }}>
+                      <div style={{ marginTop: 8 }}>
+                        {(b.provider_profiles?.bank_name || b.provider_profiles?.account_number) ? (
+                          <div style={{ background: "var(--sand)", borderRadius: 10, padding: "10px 12px", marginBottom: 10, fontSize: 12.5, lineHeight: 1.6 }}>
+                            <div style={{ fontWeight: 700, marginBottom: 2 }}>Send BZ${b.downpayment_amount ?? "—"} to:</div>
+                            {b.provider_profiles?.bank_name && <div>Bank: {b.provider_profiles.bank_name}</div>}
+                            {b.provider_profiles?.account_name && <div>Account name: {b.provider_profiles.account_name}</div>}
+                            {b.provider_profiles?.account_number && <div>Account number: {b.provider_profiles.account_number}</div>}
+                          </div>
+                        ) : (
+                          <p style={{ fontSize: 12, color: "var(--muted)", marginBottom: 10 }}>The provider hasn't added their payment details yet — reach out to them directly to arrange the deposit.</p>
+                        )}
                         <label className="btn-sm lime" style={{ cursor: "pointer" }}>
-                          {uploadingReceiptId === b.id ? "Uploading..." : `Upload deposit receipt (BZ$${b.downpayment_amount ?? "—"})`}
+                          {uploadingReceiptId === b.id ? "Uploading..." : "Upload deposit receipt"}
                           <input type="file" accept="image/*,application/pdf" style={{ display: "none" }} disabled={uploadingReceiptId === b.id} onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ""; handleUploadReceipt(b.id, f); }} />
                         </label>
                       </div>
                     )}
                     {b.status === "awaiting_payment" && b.payment_status === "receipt_uploaded" && (
                       <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 6 }}>Receipt submitted — waiting for the provider to confirm payment.</p>
+                    )}
+
+                    {b.status === "confirmed" && (b.provider_profiles?.bank_name || b.provider_profiles?.account_number) && (
+                      <details style={{ marginTop: 8 }}>
+                        <summary style={{ fontSize: 12, color: "var(--forest)", cursor: "pointer", fontWeight: 600 }}>Payment details</summary>
+                        <div style={{ background: "var(--sand)", borderRadius: 10, padding: "10px 12px", marginTop: 8, fontSize: 12.5, lineHeight: 1.6 }}>
+                          {b.provider_profiles?.bank_name && <div>Bank: {b.provider_profiles.bank_name}</div>}
+                          {b.provider_profiles?.account_name && <div>Account name: {b.provider_profiles.account_name}</div>}
+                          {b.provider_profiles?.account_number && <div>Account number: {b.provider_profiles.account_number}</div>}
+                        </div>
+                      </details>
                     )}
 
                     {b.status === "completed" && !hasReview && reviewingId !== b.id && (
@@ -1363,22 +1384,10 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
   const [confirmingPaymentId, setConfirmingPaymentId] = useState(null);
   const [depositForm, setDepositForm] = useState({ downpayment_required: false, downpayment_pct: 50 });
   const [savingDeposit, setSavingDeposit] = useState(false);
-  const [payouts, setPayouts] = useState([]);
-  const [payoutForm, setPayoutForm] = useState({ amount: "", method: "Atlantic Bank — Chequing" });
-  const [requestingPayout, setRequestingPayout] = useState(false);
-  const [payoutError, setPayoutError] = useState("");
+  const [bankForm, setBankForm] = useState({ bank_name: "", account_name: "", account_number: "" });
+  const [savingBankInfo, setSavingBankInfo] = useState(false);
 
   const providerId = providerProfile?.id;
-
-  const loadPayouts = async () => {
-    if (!providerId) return;
-    const data = await getProviderPayouts(providerId);
-    setPayouts(data);
-  };
-
-  useEffect(() => {
-    loadPayouts();
-  }, [providerId]);
 
   const loadBookings = async () => {
     if (!providerId) return;
@@ -1424,6 +1433,11 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
       setDepositForm({
         downpayment_required: !!providerProfile.downpayment_required,
         downpayment_pct: providerProfile.downpayment_pct || 50,
+      });
+      setBankForm({
+        bank_name: providerProfile.bank_name || "",
+        account_name: providerProfile.account_name || "",
+        account_number: providerProfile.account_number || "",
       });
     }
   }, [providerProfile]);
@@ -1659,13 +1673,9 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
   const FEE_RATE = 0.07;
   const netAmount = (b) => (Number(b.total_amount) || 0) * (1 - FEE_RATE);
   const totalNetEarned = completedBookings.reduce((sum, b) => sum + netAmount(b), 0);
-  const pendingEscrow = bookings
+  const pendingEarnings = bookings
     .filter(b => b.status === "confirmed" || b.status === "awaiting_payment")
     .reduce((sum, b) => sum + netAmount(b), 0);
-  const paidOutTotal = payouts
-    .filter(p => p.status === "paid" || p.status === "requested")
-    .reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
-  const availableToWithdraw = Math.max(0, totalNetEarned - paidOutTotal);
   const lastMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
   const thisMonthNetEarnings = completedBookings
     .filter(b => { const d = new Date(b.booking_date); return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear(); })
@@ -1678,20 +1688,17 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
     : null;
   const currentMonthLabel = now.toLocaleDateString("en-US", { month: "long" });
 
-  const submitPayoutRequest = async () => {
-    setPayoutError("");
-    const amt = Number(payoutForm.amount);
-    if (!amt || amt <= 0) { setPayoutError("Enter a valid amount."); return; }
-    if (amt > availableToWithdraw) { setPayoutError("Amount exceeds your available balance."); return; }
-    setRequestingPayout(true);
-    const created = await requestPayout(providerId, amt, payoutForm.method);
-    setRequestingPayout(false);
-    if (created) {
-      setPayoutForm(f => ({ ...f, amount: "" }));
-      await loadPayouts();
-    } else {
-      setPayoutError("Something went wrong. Please try again.");
-    }
+  const saveBankInfo = async () => {
+    if (!providerId) return;
+    setSavingBankInfo(true);
+    await upsertProviderProfile({
+      id: providerProfile.id,
+      user_id: providerProfile.user_id,
+      bank_name: bankForm.bank_name.trim() || null,
+      account_name: bankForm.account_name.trim() || null,
+      account_number: bankForm.account_number.trim() || null,
+    });
+    setSavingBankInfo(false);
   };
 
   const calYear = now.getFullYear();
@@ -1974,31 +1981,21 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
 
         {tab === "earnings" && (
           <>
-            <div className="portal-header"><h2>Earnings</h2><p>Track your income and request payouts.</p></div>
+            <div className="portal-header"><h2>Earnings</h2><p>Customers pay you directly — track your income here.</p></div>
             <div className="metric-grid" style={{ gridTemplateColumns: "1fr 1fr 1fr" }}>
-              <div className="metric"><div className="metric-label">Available to withdraw</div><div className="metric-value" style={{ color: "var(--forest-light)" }}>BZ${availableToWithdraw.toFixed(2)}</div><div className="metric-sub">Cleared funds, after 7% fee</div></div>
-              <div className="metric"><div className="metric-label">Pending (in escrow)</div><div className="metric-value">BZ${pendingEscrow.toFixed(2)}</div><div className="metric-sub">Releases after service</div></div>
-              <div className="metric"><div className="metric-label">Total earned ({currentMonthLabel})</div><div className="metric-value">BZ${thisMonthNetEarnings.toFixed(2)}</div><div className="metric-sub">{monthOverMonthPct === null ? "No data for last month" : `${monthOverMonthPct >= 0 ? "↑" : "↓"} ${Math.abs(monthOverMonthPct)}% vs last month`}</div></div>
+              <div className="metric"><div className="metric-label">Total earned</div><div className="metric-value" style={{ color: "var(--forest-light)" }}>BZ${totalNetEarned.toFixed(2)}</div><div className="metric-sub">All time, after 7% fee</div></div>
+              <div className="metric"><div className="metric-label">Upcoming</div><div className="metric-value">BZ${pendingEarnings.toFixed(2)}</div><div className="metric-sub">Confirmed, not yet completed</div></div>
+              <div className="metric"><div className="metric-label">This month ({currentMonthLabel})</div><div className="metric-value">BZ${thisMonthNetEarnings.toFixed(2)}</div><div className="metric-sub">{monthOverMonthPct === null ? "No data for last month" : `${monthOverMonthPct >= 0 ? "↑" : "↓"} ${Math.abs(monthOverMonthPct)}% vs last month`}</div></div>
             </div>
-            <div className="grid-2">
-              <div className="card">
-                <div className="card-title">Request payout</div>
-                <div className="input-group"><label>Amount (BZ$)</label><input type="number" placeholder="0.00" value={payoutForm.amount} onChange={e => setPayoutForm(f => ({ ...f, amount: e.target.value }))} /></div>
-                <div className="input-group"><label>Bank / method</label><select value={payoutForm.method} onChange={e => setPayoutForm(f => ({ ...f, method: e.target.value }))}><option>Atlantic Bank — Chequing</option><option>Belize Bank</option><option>Vai Wallet</option></select></div>
-                {payoutError && <p style={{ fontSize: 12, color: "var(--clay)", marginBottom: 8 }}>{payoutError}</p>}
-                <button className="btn-sm forest" disabled={requestingPayout || availableToWithdraw <= 0} onClick={submitPayoutRequest}>{requestingPayout ? "Sending..." : "Request withdrawal"}</button>
-                <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 12 }}>Payouts process within 1–2 business days.</p>
+            <div className="card">
+              <div className="card-title">Your payment details</div>
+              <p style={{ fontSize: 13, color: "var(--muted)", marginBottom: 16 }}>Customers pay deposits and full payments straight to your bank account. This is what they'll see when it's time to pay.</p>
+              <div className="grid-2">
+                <div className="input-group"><label>Bank name</label><input value={bankForm.bank_name} onChange={e => setBankForm(f => ({ ...f, bank_name: e.target.value }))} placeholder="e.g. Atlantic Bank" /></div>
+                <div className="input-group"><label>Account holder name</label><input value={bankForm.account_name} onChange={e => setBankForm(f => ({ ...f, account_name: e.target.value }))} placeholder="Name on the account" /></div>
               </div>
-              <div className="card">
-                <div className="card-title">Recent payouts</div>
-                {payouts.length === 0 && <p style={{ fontSize: 13, color: "var(--muted)" }}>No payouts yet.</p>}
-                {payouts.map((p) => (
-                  <div key={p.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: "1px solid var(--border)" }}>
-                    <div><div style={{ fontSize: 14, fontWeight: 600 }}>BZ${Number(p.amount).toFixed(2)}</div><div style={{ fontSize: 12, color: "var(--muted)" }}>{new Date(p.created_at).toLocaleDateString()} · {p.method}</div></div>
-                    <span className={`status-pill ${p.status === "paid" ? "confirmed" : p.status === "rejected" ? "rejected" : "pending"}`}>{p.status}</span>
-                  </div>
-                ))}
-              </div>
+              <div className="input-group"><label>Account number</label><input value={bankForm.account_number} onChange={e => setBankForm(f => ({ ...f, account_number: e.target.value }))} placeholder="Account number" /></div>
+              <button className="btn-sm forest" disabled={savingBankInfo} onClick={saveBankInfo}>{savingBankInfo ? "Saving..." : "Save payment details"}</button>
             </div>
           </>
         )}
