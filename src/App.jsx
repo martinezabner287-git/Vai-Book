@@ -807,11 +807,16 @@ function CustomerPortal({ onNav, user, session, onSignOut }) {
                 const fromPrice = providerFromPrice(p);
                 return (
                   <div className="provider-card" key={p.id} style={{ cursor: "pointer" }} onClick={() => openBooking(p)}>
-                    <div className="provider-card-img" style={{ background: "#E8F5EF" }}>{p.service_type === "Barber" ? "✂️" : p.service_type === "Nail Tech" ? "💅" : p.service_type === "Car Wash" ? "🚗" : p.service_type === "Pet Grooming" ? "🐾" : p.service_type === "Home Cleaning" ? "🏠" : "🛠️"}</div>
+                    {p.portfolio_urls && p.portfolio_urls.length > 0 ? (
+                      <div className="provider-card-img" style={{ background: `center/cover no-repeat url(${p.portfolio_urls[0]})` }} />
+                    ) : (
+                      <div className="provider-card-img" style={{ background: "#E8F5EF" }}>{p.service_type === "Barber" ? "✂️" : p.service_type === "Nail Tech" ? "💅" : p.service_type === "Car Wash" ? "🚗" : p.service_type === "Pet Grooming" ? "🐾" : p.service_type === "Home Cleaning" ? "🏠" : "🛠️"}</div>
+                    )}
                     <div className="provider-card-body">
                       <h4>{p.business_name}</h4>
                       <div className="trade">{p.service_type} · {p.district}</div>
                       <div className="stars">{rating ? `★★★★★ ` : "No reviews yet "}<span style={{ color: "var(--muted)", fontSize: 12 }}>{rating ? `${rating} (${p.reviews.length})` : ""}</span></div>
+                      {p.whatsapp && <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 4 }}>📞 {p.whatsapp}</div>}
                       <div className="provider-card-footer">
                         <span className="price-tag">{fromPrice != null ? `From BZ$${fromPrice}` : "Contact for pricing"}</span>
                         {p.downpayment_required ? <span style={{ fontSize: 11, color: "var(--muted)" }}>{p.downpayment_pct || 50}% deposit</span> : <span className="avail-badge">No deposit</span>}
@@ -958,7 +963,32 @@ function CustomerPortal({ onNav, user, session, onSignOut }) {
           <div className="modal-panel" onClick={(e) => e.stopPropagation()}>
             <span className="modal-close" onClick={() => setSelectedProvider(null)}>✕ Close</span>
             <div className="card-title" style={{ marginBottom: 4 }}>Book {selectedProvider.business_name}</div>
-            <p style={{ fontSize: 13, color: "var(--muted)", marginBottom: 16 }}>{selectedProvider.service_type} · {selectedProvider.district}</p>
+            <p style={{ fontSize: 13, color: "var(--muted)", marginBottom: 12 }}>{selectedProvider.service_type} · {selectedProvider.district}</p>
+
+            {selectedProvider.portfolio_urls && selectedProvider.portfolio_urls.length > 0 && (
+              <div style={{ display: "flex", gap: 8, overflowX: "auto", marginBottom: 12 }}>
+                {selectedProvider.portfolio_urls.map((url) => (
+                  <img key={url} src={url} alt="Provider work" style={{ width: 72, height: 72, objectFit: "cover", borderRadius: 8, flexShrink: 0, border: "1px solid var(--border)" }} />
+                ))}
+              </div>
+            )}
+
+            {selectedProvider.bio && (
+              <p style={{ fontSize: 13, color: "var(--dark-text)", marginBottom: 12 }}>{selectedProvider.bio}</p>
+            )}
+
+            {(selectedProvider.whatsapp || (selectedProvider.latitude != null && selectedProvider.longitude != null)) && (
+              <div style={{ display: "flex", gap: 16, flexWrap: "wrap", fontSize: 13, marginBottom: 16, background: "var(--sand)", borderRadius: 8, padding: "10px 12px" }}>
+                {selectedProvider.whatsapp && (
+                  <a href={`https://wa.me/${selectedProvider.whatsapp.replace(/[^\d]/g, "")}`} target="_blank" rel="noreferrer" style={{ color: "var(--forest)", fontWeight: 600 }}>📞 {selectedProvider.whatsapp}</a>
+                )}
+                {selectedProvider.latitude != null && selectedProvider.longitude != null && (
+                  <a href={directionsUrl(selectedProvider.latitude, selectedProvider.longitude)} target="_blank" rel="noreferrer" style={{ color: "var(--forest)", fontWeight: 600 }}>
+                    📍 {selectedProvider.location_label || "Get directions"}
+                  </a>
+                )}
+              </div>
+            )}
 
             {(selectedProvider.services || []).filter(s => s.is_active !== false).length === 0 ? (
               <p style={{ fontSize: 13, color: "var(--muted)" }}>This provider hasn't listed any services yet.</p>
@@ -1004,7 +1034,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
   const [hours, setHours] = useState(DEFAULT_HOURS);
   const [savingHours, setSavingHours] = useState(false);
   const [selectedDay, setSelectedDay] = useState(null);
-  const [profileForm, setProfileForm] = useState({ business_name: "", bio: "", district: "" });
+  const [profileForm, setProfileForm] = useState({ business_name: "", bio: "", district: "", whatsapp: "" });
   const [savingProfile, setSavingProfile] = useState(false);
   const [photos, setPhotos] = useState([]);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
@@ -1056,6 +1086,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
         business_name: providerProfile.business_name || "",
         bio: providerProfile.bio || "",
         district: providerProfile.district || "",
+        whatsapp: providerProfile.whatsapp || "",
       });
       setPhotos(providerProfile.portfolio_urls || []);
       setServices(providerProfile.services || []);
@@ -1625,6 +1656,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                   {DISTRICTS.map(d => <option key={d}>{d}</option>)}
                 </select>
               </div>
+              <div className="input-group"><label>WhatsApp / phone number</label><input placeholder="+501 600 0000" value={profileForm.whatsapp} onChange={e => setProfileForm(f => ({ ...f, whatsapp: e.target.value }))} /></div>
               <button className="btn-sm forest" onClick={saveProfile} disabled={savingProfile}>{savingProfile ? "Saving..." : "Save profile"}</button>
             </div>
 
@@ -2236,6 +2268,7 @@ export default function App() {
           service_type: app.service_type,
           district: app.district,
           bio: app.description,
+          whatsapp: app.phone || null,
           is_active: true,
         });
       }
