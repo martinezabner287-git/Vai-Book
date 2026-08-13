@@ -85,6 +85,34 @@ const css = `
   .nav-dropdown a:hover, .nav-dropdown button.nav-dropdown-item:hover { background: var(--sand); }
   .nav-dropdown hr { border: none; border-top: 1px solid var(--border); margin: 8px 4px; }
 
+  /* AUTH CHOICE */
+  .auth-choice { min-height: 100vh; display: grid; grid-template-columns: 1fr 1fr; background: var(--near-white); }
+  .auth-choice-left { position: relative; padding: 40px; display: flex; flex-direction: column; }
+  .auth-back { width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--border); background: white; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 18px; color: var(--dark-text); }
+  .auth-back:hover { border-color: var(--forest); color: var(--forest); }
+  .auth-choice-body { flex: 1; display: flex; flex-direction: column; justify-content: center; max-width: 420px; margin: 0 auto; width: 100%; }
+  .auth-choice-body h1 { font-family: 'Syne', sans-serif; font-size: 30px; font-weight: 800; color: var(--forest); margin-bottom: 32px; text-align: center; }
+  .auth-option-card { display: flex; align-items: center; justify-content: space-between; gap: 16px; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 20px 22px; margin-bottom: 16px; cursor: pointer; transition: all .2s; background: white; }
+  .auth-option-card:hover { border-color: var(--forest); box-shadow: 0 6px 20px rgba(13,61,46,0.08); }
+  .auth-option-card h3 { font-size: 16px; font-weight: 700; color: var(--dark-text); margin-bottom: 4px; }
+  .auth-option-card p { font-size: 13px; color: var(--muted); }
+  .auth-option-arrow { font-size: 18px; color: var(--forest); flex-shrink: 0; }
+  .auth-choice-panel { position: relative; overflow: hidden; background: var(--forest); display: flex; align-items: center; justify-content: center; }
+  .auth-choice-panel::before {
+    content: '';
+    position: absolute; inset: -20%;
+    background:
+      radial-gradient(circle at 25% 30%, rgba(198,241,53,0.35), transparent 50%),
+      radial-gradient(circle at 80% 70%, rgba(212,121,90,0.30), transparent 55%);
+    filter: blur(60px);
+  }
+  .auth-choice-panel-logo { position: relative; z-index: 1; font-family: 'Syne', sans-serif; font-size: 44px; font-weight: 800; color: var(--near-white); }
+  .auth-choice-panel-logo span { color: var(--lime); }
+  @media (max-width: 768px) {
+    .auth-choice { grid-template-columns: 1fr; }
+    .auth-choice-panel { display: none; }
+  }
+
   /* HERO */
   .hero {
     background: var(--forest);
@@ -396,6 +424,37 @@ function enterProviderPortal(onNav, session, onSignIn) {
   }
 }
 
+function AuthChoice({ onNav, session, onSignIn }) {
+  return (
+    <div className="auth-choice">
+      <div className="auth-choice-left">
+        <button className="auth-back" onClick={() => onNav("home")} aria-label="Back">←</button>
+        <div className="auth-choice-body">
+          <h1>Sign up / log in</h1>
+          <div className="auth-option-card" onClick={() => enterCustomerPortal(onNav, session, onSignIn)}>
+            <div>
+              <h3>VaiBook for customers</h3>
+              <p>Book local services near you</p>
+            </div>
+            <span className="auth-option-arrow">→</span>
+          </div>
+          <div className="auth-option-card" onClick={() => enterProviderPortal(onNav, session, onSignIn)}>
+            <div>
+              <h3>VaiBook for professionals</h3>
+              <p>Manage and grow your business</p>
+            </div>
+            <span className="auth-option-arrow">→</span>
+          </div>
+        </div>
+      </div>
+      <div className="auth-choice-panel">
+        {/* Swap this for a real photo later: <img src="/your-photo.jpg" style={{width:"100%",height:"100%",objectFit:"cover"}} /> */}
+        <div className="auth-choice-panel-logo">vai<span>book</span></div>
+      </div>
+    </div>
+  );
+}
+
 function Nav({ onNav, current, session, user, onSignIn }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const closeMenu = () => setMenuOpen(false);
@@ -408,7 +467,10 @@ function Nav({ onNav, current, session, user, onSignIn }) {
 
       {(current === "home" || (current === "customer" && !session)) ? (
         <div className="nav-cta">
-          <button className="nav-login-link" onClick={() => enterCustomerPortal(onNav, session, onSignIn)}>
+          <button
+            className="nav-login-link"
+            onClick={() => (session ? enterCustomerPortal(onNav, session, onSignIn) : onNav("auth"))}
+          >
             {session ? (user?.full_name?.split(" ")[0] || "My account") : "Log in"}
           </button>
           {current === "home" && (
@@ -2431,12 +2493,13 @@ export default function App() {
   return (
     <>
       <style>{css}</style>
-      <Nav onNav={setView} current={view} {...authProps} />
+      {view !== "auth" && <Nav onNav={setView} current={view} {...authProps} />}
       {view === "home" && <LandingPage onNav={setView} {...authProps} />}
       {view === "customer" && <CustomerPortal onNav={setView} {...authProps} />}
       {view === "provider" && <ProviderPortal onNav={setView} {...authProps} />}
       {view === "signup" && <ProviderSignup onNav={setView} {...authProps} />}
       {view === "admin" && <AdminPortal onNav={setView} {...authProps} />}
+      {view === "auth" && <AuthChoice onNav={setView} {...authProps} />}
     </>
   );
 }
