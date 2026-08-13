@@ -512,8 +512,8 @@ function Nav({ onNav, current, session, user, onSignIn, onSignOut }) {
               {accountOpen && (
                 <div className="nav-account-dropdown" onMouseLeave={closeAccount}>
                   <div className="nav-account-name">{user?.full_name || "My account"}</div>
-                  <button className="nav-dropdown-item" onClick={() => goAccount(() => openTab("home"))}>
-                    <span className="icn">👤</span> My account
+                  <button className="nav-dropdown-item" onClick={() => goAccount(() => openTab("settings"))}>
+                    <span className="icn">👤</span> Profile
                   </button>
                   <button className="nav-dropdown-item" onClick={() => goAccount(() => openTab("bookings"))}>
                     <span className="icn">📅</span> My bookings
