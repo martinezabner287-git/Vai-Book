@@ -524,6 +524,11 @@ function Nav({ onNav, current, session, user, onSignIn, onSignOut }) {
                     <span className="icn">↪</span> Log out
                   </button>
                   <hr />
+                  <a onClick={() => goAccount(() => onNav("home"))}>Home</a>
+                  <a onClick={() => goAccount(() => scrollToSection("services", onNav, current))}>Services</a>
+                  <a onClick={() => goAccount(() => scrollToSection("how-it-works", onNav, current))}>How it works</a>
+                  <a onClick={() => goAccount(() => scrollToSection("pricing", onNav, current))}>Pricing</a>
+                  <hr />
                   <button className="nav-dropdown-item for-biz" onClick={() => goAccount(() => enterProviderPortal(onNav, session, onSignIn))}>
                     For businesses <span>→</span>
                   </button>
@@ -536,6 +541,7 @@ function Nav({ onNav, current, session, user, onSignIn, onSignOut }) {
           {current === "home" && (
             <button className="btn-ghost" onClick={() => onNav("signup")}>List your business</button>
           )}
+          {!session && (
           <div style={{ position: "relative" }}>
             <button className="nav-menu-btn" onClick={() => setMenuOpen((v) => !v)}>
               Menu
@@ -558,6 +564,7 @@ function Nav({ onNav, current, session, user, onSignIn, onSignOut }) {
               </div>
             )}
           </div>
+          )}
         </div>
       ) : (
         <div style={{ position: "relative" }}>
