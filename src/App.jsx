@@ -109,6 +109,36 @@ const css = `
   .service-badge { margin-left: auto; background: var(--lime); color: var(--forest); font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 6px; }
   .service-badge.open { background: rgba(198,241,53,0.15); color: var(--lime); }
 
+  /* SEARCH HERO */
+  .search-hero { position: relative; overflow: hidden; padding: 120px 24px 96px; text-align: center; background: var(--sand); }
+  .search-hero::before {
+    content: '';
+    position: absolute; inset: -25%;
+    background:
+      radial-gradient(circle at 18% 25%, rgba(198,241,53,0.38), transparent 50%),
+      radial-gradient(circle at 82% 20%, rgba(212,121,90,0.22), transparent 50%),
+      radial-gradient(circle at 50% 95%, rgba(13,61,46,0.16), transparent 55%);
+    filter: blur(50px);
+    z-index: 0;
+  }
+  .search-hero > * { position: relative; z-index: 1; }
+  .search-hero h1 { font-family: 'Syne', sans-serif; font-weight: 800; font-size: clamp(34px, 5vw, 58px); color: var(--forest); line-height: 1.08; margin-bottom: 16px; }
+  .search-sub { font-size: 17px; color: var(--muted); max-width: 560px; margin: 0 auto 40px; line-height: 1.5; }
+  .search-bar-pill { max-width: 760px; margin: 0 auto; background: white; border-radius: 100px; box-shadow: 0 12px 40px rgba(13,61,46,0.14); display: flex; align-items: center; padding: 8px; gap: 4px; }
+  .search-bar-pill .field { flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; padding: 10px 18px; }
+  .search-bar-pill .field input, .search-bar-pill .field select { border: none; outline: none; background: transparent; font-size: 14px; width: 100%; color: var(--dark-text); font-family: 'Inter', sans-serif; }
+  .search-bar-pill .sep { width: 1px; height: 28px; background: var(--border); flex-shrink: 0; }
+  .search-submit { background: var(--forest); color: var(--near-white); border: none; border-radius: 100px; padding: 14px 30px; font-weight: 600; font-size: 15px; cursor: pointer; white-space: nowrap; transition: opacity .2s; font-family: 'Inter', sans-serif; }
+  .search-submit:hover { opacity: .87; }
+  .search-hero-tagline { margin-top: 26px; font-size: 13px; color: var(--muted); }
+  .search-hero-tagline a { color: var(--forest); font-weight: 600; cursor: pointer; text-decoration: underline; }
+  @media (max-width: 640px) {
+    .search-hero { padding: 80px 20px 64px; }
+    .search-bar-pill { flex-direction: column; border-radius: 20px; align-items: stretch; }
+    .search-bar-pill .sep { display: none; }
+    .search-submit { width: 100%; }
+  }
+
   /* STATS BAR */
   .stats-bar { background: var(--sand); padding: 40px 48px; display: flex; justify-content: space-around; gap: 32px; flex-wrap: wrap; }
   .stat { text-align: center; }
@@ -389,33 +419,44 @@ function Nav({ onNav, current, session, user, onSignIn }) {
 }
 
 function LandingPage({ onNav, session, onSignIn }) {
-  const [activeService, setActiveService] = useState(0);
+  const [heroQuery, setHeroQuery] = useState("");
+  const [heroDistrict, setHeroDistrict] = useState("");
+
+  const submitHeroSearch = () => {
+    try {
+      localStorage.setItem("vaibook_pending_search", JSON.stringify({ query: heroQuery.trim(), district: heroDistrict || "All" }));
+    } catch (e) { /* ignore storage errors */ }
+    enterCustomerPortal(onNav, session, onSignIn);
+  };
+
   return (
     <>
       {/* HERO */}
-      <section className="hero">
-        <div>
-          <div className="hero-eyebrow">Built for Belize</div>
-          <h1 className="hero-title">Book local services.<br /><em>No messages. No stress.</em></h1>
-          <p className="hero-body">Find trusted barbers, nail techs, car washes, cleaners, and more in your district. Book in seconds, pay securely, and leave a real review.</p>
-          <div className="hero-actions">
-            <button className="btn-primary" onClick={() => enterCustomerPortal(onNav, session, onSignIn)}>Book a service</button>
-            <button className="btn-outline-white" onClick={() => onNav("signup")}>List your business</button>
+      <section className="search-hero">
+        <h1>Book local services,<br />the easy way</h1>
+        <p className="search-sub">Find trusted barbers, nail techs, cleaners, and more near you in Belize.</p>
+        <div className="search-bar-pill">
+          <div className="field">
+            <span>🔍</span>
+            <input
+              placeholder="What service do you need?"
+              value={heroQuery}
+              onChange={e => setHeroQuery(e.target.value)}
+              onKeyDown={e => { if (e.key === "Enter") submitHeroSearch(); }}
+            />
           </div>
+          <div className="sep" />
+          <div className="field">
+            <span>📍</span>
+            <select value={heroDistrict} onChange={e => setHeroDistrict(e.target.value)}>
+              <option value="">Any district</option>
+              {DISTRICTS.map(d => <option key={d} value={d}>{d}</option>)}
+            </select>
+          </div>
+          <button className="search-submit" onClick={submitHeroSearch}>Search</button>
         </div>
-        <div className="hero-card-wrap">
-          {SERVICES.map((s, i) => (
-            <div key={i} className="service-card" onClick={() => setActiveService(i)}>
-              <div className="service-icon" style={{ background: s.bg }}>{s.icon}</div>
-              <div className="service-info">
-                <h4>{s.name}</h4>
-                <p>{s.desc}</p>
-              </div>
-              {i === 0 && <span className="service-badge">3 near you</span>}
-              {i === 1 && <span className="service-badge open">Open now</span>}
-              {i === 2 && <span className="service-badge">New</span>}
-            </div>
-          ))}
+        <div className="search-hero-tagline">
+          Own a business? <a onClick={() => onNav("signup")}>List it on VaiBook, free to start</a>
         </div>
       </section>
 
@@ -599,6 +640,19 @@ function CustomerPortal({ onNav, user, session, onSignOut }) {
   useEffect(() => {
     loadBookings();
   }, [user?.id]);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("vaibook_pending_search");
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        setTab("browse");
+        if (parsed.query) setProviderSearch(parsed.query);
+        setDistrictFilter(parsed.district || "All");
+        localStorage.removeItem("vaibook_pending_search");
+      }
+    } catch (e) { /* ignore malformed/missing storage */ }
+  }, []);
 
   const sideItems = [
     { id: "home", icon: "🏠", label: "Home" },
