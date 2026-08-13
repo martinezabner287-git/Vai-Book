@@ -198,7 +198,7 @@ export const createBooking = async (booking) => {
 export const getCustomerBookings = async (customerId) => {
   const { data, error } = await supabase
     .from('bookings')
-    .select('*, provider_profiles(business_name, service_type, district), services(name, price, duration_min)')
+    .select('*, provider_profiles(id, business_name, service_type, district, whatsapp), services(name, price, duration_min), reviews(id, rating, comment)')
     .eq('customer_id', customerId)
     .order('booking_date', { ascending: false });
   if (error) console.error(error.message);
@@ -223,6 +223,19 @@ export const updateBookingStatus = async (bookingId, status) => {
     .select()
     .single();
   if (error) console.error(error.message);
+  return data;
+};
+
+// Generalized update — used by the accept/reject/payment-confirmation flow
+// to set status + provider_message + payment_status together in one call.
+export const updateBooking = async (bookingId, updates) => {
+  const { data, error } = await supabase
+    .from('bookings')
+    .update(updates)
+    .eq('id', bookingId)
+    .select()
+    .single();
+  if (error) console.error('Error updating booking:', error.message);
   return data;
 };
 
@@ -308,6 +321,29 @@ export const getProviderAnalytics = async (providerId) => {
     .slice(0, 5);
 
   return { totalRevenue, totalBookings, topServices, bookings };
+};
+
+// ── EMAIL HELPERS ─────────────────────────────────────────────────
+// Sends transactional email via the `send-email` Supabase Edge Function,
+// which forwards to Resend server-side (keeps the API key off the client).
+// Best-effort: booking actions should never fail just because an email
+// didn't go out (e.g. Resend's free tier only delivers to the account's
+// own verified address until a custom sending domain is verified).
+export const sendBookingEmail = async ({ to, subject, html }) => {
+  if (!to) return false;
+  try {
+    const { error } = await supabase.functions.invoke('send-email', {
+      body: { to, subject, html },
+    });
+    if (error) {
+      console.error('Email send error:', error.message);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.error('Email send failed:', err.message);
+    return false;
+  }
 };
 
 // ── ADMIN HELPERS ─────────────────────────────────────────────────

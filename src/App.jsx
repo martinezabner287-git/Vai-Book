@@ -6,7 +6,7 @@ import L from "leaflet";
 import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
 import markerIcon from "leaflet/dist/images/marker-icon.png";
 import markerShadow from "leaflet/dist/images/marker-shadow.png";
-import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, deleteService } from "./supabase";
+import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, deleteService, getActiveProviders, createBooking, getCustomerBookings, uploadReceipt, submitReview, sendBookingEmail } from "./supabase";
 
 // Leaflet's default marker icons reference image paths that don't resolve
 // correctly under CRA's bundler unless re-pointed at the imported assets.
@@ -217,6 +217,18 @@ const css = `
   .status-pill.confirmed { background: #DCFCE7; color: #15803D; }
   .status-pill.pending { background: #FEF3C7; color: #B45309; }
   .status-pill.done { background: #F1F5F9; color: var(--muted); }
+  .status-pill.rejected { background: #FEE2E2; color: #B91C1C; }
+  .status-pill.awaiting { background: #DBEAFE; color: #1D4ED8; }
+  .booking-dot.rejected { background: #EF4444; }
+  .booking-dot.awaiting { background: #3B82F6; }
+
+  /* MODAL */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(13,61,46,0.55); display: flex; align-items: center; justify-content: center; z-index: 200; padding: 20px; }
+  .modal-panel { background: white; border-radius: var(--radius); padding: 28px; width: 100%; max-width: 440px; max-height: 88vh; overflow-y: auto; }
+  .modal-close { float: right; cursor: pointer; color: var(--muted); font-size: 14px; }
+  .star-picker { display: flex; gap: 6px; margin: 8px 0 16px; }
+  .star-picker span { font-size: 26px; cursor: pointer; color: #E2E8F0; }
+  .star-picker span.on { color: #F59E0B; }
 
   /* PROVIDER SPECIFIC */
   .provider-service { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border); }
@@ -297,21 +309,6 @@ const SERVICES = [
   { icon: "🔧", name: "Handyman", desc: "Repairs & more", bg: "#244530" },
 ];
 
-const BOOKINGS_CUSTOMER = [
-  { title: "Haircut & Beard Trim", provider: "Karim's Cuts • Today 2:00 PM", amount: "BZ$35", status: "confirmed" },
-  { title: "Full Nail Set", provider: "Mia Beauty • Tomorrow 10:00 AM", amount: "BZ$80", status: "pending" },
-  { title: "Home Cleaning", provider: "CleanPro BZ • Jun 10", amount: "BZ$120", status: "done" },
-  { title: "Car Detail Wash", provider: "ShineBZ • Jun 8", amount: "BZ$60", status: "done" },
-];
-
-const PROVIDERS = [
-  { icon: "✂️", name: "Karim's Cuts", trade: "Barber · San Ignacio", rating: "4.9", reviews: 128, price: "BZ$30", bg: "#E8F5EF", avail: true },
-  { icon: "💅", name: "Mia Beauty", trade: "Nail Tech · Belmopan", rating: "5.0", reviews: 87, price: "BZ$60", bg: "#FEF0F0", avail: true },
-  { icon: "🏠", name: "CleanPro BZ", trade: "Home Cleaning · Cayo", rating: "4.8", reviews: 54, price: "BZ$100", bg: "#F0F4FF", avail: false },
-  { icon: "🚗", name: "ShineBZ", trade: "Car Wash · San Ignacio", rating: "4.7", reviews: 211, price: "BZ$45", bg: "#FFF8E8", avail: true },
-  { icon: "🐾", name: "PawCare BZ", trade: "Pet Grooming · Cayo", rating: "4.9", reviews: 39, price: "BZ$55", bg: "#F5F0FF", avail: true },
-  { icon: "🔧", name: "FixIt Belize", trade: "Handyman · Belmopan", rating: "4.6", reviews: 73, price: "BZ$80", bg: "#F0FFF4", avail: true },
-];
 
 const DAYS = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
 const DAY_NAMES = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
@@ -322,7 +319,14 @@ const DEFAULT_HOURS = DAY_NAMES.map((day, i) => ({
 function bookingStatusClass(status) {
   if (status === "confirmed") return "confirmed";
   if (status === "pending") return "pending";
+  if (status === "awaiting_payment") return "awaiting";
+  if (status === "rejected") return "rejected";
   return "done";
+}
+
+function statusLabel(status) {
+  if (status === "awaiting_payment") return "awaiting payment";
+  return status;
 }
 
 // ── COMPONENTS ──────────────────────────────────────────────────
@@ -549,6 +553,47 @@ function CustomerPortal({ onNav, user, session, onSignOut }) {
   const initial = displayName[0]?.toUpperCase() || "?";
   const [bookingTab, setBookingTab] = useState("upcoming");
 
+  const [providers, setProviders] = useState([]);
+  const [loadingProviders, setLoadingProviders] = useState(false);
+  const [providerSearch, setProviderSearch] = useState("");
+  const [districtFilter, setDistrictFilter] = useState("All");
+
+  const [bookings, setBookings] = useState([]);
+  const [loadingBookings, setLoadingBookings] = useState(false);
+
+  const [selectedProvider, setSelectedProvider] = useState(null);
+  const [bookingForm, setBookingForm] = useState({ service_id: "", date: "", time: "10:00", notes: "" });
+  const [submittingBooking, setSubmittingBooking] = useState(false);
+  const [bookingError, setBookingError] = useState("");
+
+  const [uploadingReceiptId, setUploadingReceiptId] = useState(null);
+  const [reviewingId, setReviewingId] = useState(null);
+  const [reviewForm, setReviewForm] = useState({ rating: 5, comment: "" });
+  const [submittingReview, setSubmittingReview] = useState(false);
+
+  const loadProviders = async () => {
+    setLoadingProviders(true);
+    const data = await getActiveProviders(districtFilter !== "All" ? { district: districtFilter } : {});
+    setProviders(data || []);
+    setLoadingProviders(false);
+  };
+
+  useEffect(() => {
+    loadProviders();
+  }, [districtFilter]);
+
+  const loadBookings = async () => {
+    if (!user?.id) return;
+    setLoadingBookings(true);
+    const data = await getCustomerBookings(user.id);
+    setBookings(data || []);
+    setLoadingBookings(false);
+  };
+
+  useEffect(() => {
+    loadBookings();
+  }, [user?.id]);
+
   const sideItems = [
     { id: "home", icon: "🏠", label: "Home" },
     { id: "browse", icon: "🔍", label: "Find services" },
@@ -557,6 +602,113 @@ function CustomerPortal({ onNav, user, session, onSignOut }) {
     { id: "reviews", icon: "⭐", label: "My reviews" },
     { id: "settings", icon: "⚙️", label: "Settings" },
   ];
+
+  const openBooking = (provider) => {
+    const firstService = (provider.services || []).find((s) => s.is_active !== false);
+    setBookingForm({
+      service_id: firstService?.id || "",
+      date: new Date().toISOString().slice(0, 10),
+      time: "10:00",
+      notes: "",
+    });
+    setBookingError("");
+    setSelectedProvider(provider);
+  };
+
+  const submitBooking = async () => {
+    if (!user?.id) { setBookingError("Please sign in again to book."); return; }
+    if (!bookingForm.service_id || !bookingForm.date || !bookingForm.time) {
+      setBookingError("Please choose a service, date, and time.");
+      return;
+    }
+    const service = (selectedProvider.services || []).find((s) => s.id === bookingForm.service_id);
+    if (!service) { setBookingError("Please choose a service."); return; }
+
+    setSubmittingBooking(true);
+    setBookingError("");
+
+    const total = Number(service.price) || 0;
+    const dpPct = selectedProvider.downpayment_required ? (selectedProvider.downpayment_pct || 50) : 0;
+    const downpayment = dpPct ? Math.round(total * dpPct) / 100 : null;
+    const order_number = `VB-${Date.now().toString(36).toUpperCase()}${Math.random().toString(36).slice(2, 5).toUpperCase()}`;
+
+    const created = await createBooking({
+      order_number,
+      customer_id: user.id,
+      provider_id: selectedProvider.id,
+      service_id: service.id,
+      booking_date: bookingForm.date,
+      booking_time: bookingForm.time,
+      status: "pending",
+      total_amount: total,
+      downpayment_amount: downpayment,
+      payment_status: "unpaid",
+      notes: bookingForm.notes ? bookingForm.notes.trim() : null,
+    });
+
+    setSubmittingBooking(false);
+
+    if (created) {
+      setSelectedProvider(null);
+      await loadBookings();
+      setTab("bookings");
+      setBookingTab("upcoming");
+    } else {
+      setBookingError("Something went wrong sending your request. Please try again.");
+    }
+  };
+
+  const handleUploadReceipt = async (bookingId, file) => {
+    if (!file) return;
+    setUploadingReceiptId(bookingId);
+    await uploadReceipt(bookingId, file);
+    await loadBookings();
+    setUploadingReceiptId(null);
+  };
+
+  const openReview = (bookingId) => {
+    setReviewingId(bookingId);
+    setReviewForm({ rating: 5, comment: "" });
+  };
+
+  const submitBookingReview = async (booking) => {
+    if (!user?.id) return;
+    setSubmittingReview(true);
+    await submitReview({
+      booking_id: booking.id,
+      customer_id: user.id,
+      provider_id: booking.provider_id,
+      rating: reviewForm.rating,
+      comment: reviewForm.comment ? reviewForm.comment.trim() : null,
+    });
+    await loadBookings();
+    setReviewingId(null);
+    setSubmittingReview(false);
+  };
+
+  const upcomingBookings = bookings.filter((b) => ["pending", "awaiting_payment", "confirmed"].includes(b.status));
+  const completedBookings = bookings.filter((b) => b.status === "completed");
+  const rejectedBookings = bookings.filter((b) => b.status === "rejected");
+  const totalSpent = completedBookings.reduce((sum, b) => sum + (Number(b.total_amount) || 0), 0);
+  const reviewedBookings = bookings.filter((b) => b.reviews && b.reviews.length > 0);
+
+  const filteredProviders = providers.filter((p) => {
+    if (!providerSearch.trim()) return true;
+    const q = providerSearch.trim().toLowerCase();
+    return (p.business_name || "").toLowerCase().includes(q) || (p.service_type || "").toLowerCase().includes(q);
+  });
+
+  const providerRating = (p) => {
+    const ratings = (p.reviews || []).map((r) => r.rating).filter((r) => r != null);
+    if (!ratings.length) return null;
+    return (ratings.reduce((a, b) => a + b, 0) / ratings.length).toFixed(1);
+  };
+
+  const providerFromPrice = (p) => {
+    const prices = (p.services || []).filter((s) => s.is_active !== false).map((s) => Number(s.price) || 0);
+    if (!prices.length) return null;
+    return Math.min(...prices);
+  };
 
   return (
     <div className="portal-layout">
@@ -586,28 +738,29 @@ function CustomerPortal({ onNav, user, session, onSignOut }) {
         {tab === "home" && (
           <>
             <div className="portal-header">
-              <h2>Good afternoon, {firstName} 👋</h2>
-              <p>You have 2 upcoming bookings this week.</p>
+              <h2>Good to see you, {firstName} 👋</h2>
+              <p>{upcomingBookings.length === 0 ? "No upcoming bookings right now." : `You have ${upcomingBookings.length} upcoming booking${upcomingBookings.length === 1 ? "" : "s"}.`}</p>
             </div>
             <div className="metric-grid">
-              <div className="metric"><div className="metric-label">Total bookings</div><div className="metric-value">14</div><div className="metric-sub">All time</div></div>
-              <div className="metric"><div className="metric-label">This month spent</div><div className="metric-value" style={{ color: "var(--clay)" }}>BZ$155</div><div className="metric-sub">2 services</div></div>
-              <div className="metric"><div className="metric-label">Saved providers</div><div className="metric-value">5</div><div className="metric-sub">Your favourites</div></div>
-              <div className="metric"><div className="metric-label">Reviews left</div><div className="metric-value">11</div><div className="metric-sub">★ avg 4.8</div></div>
+              <div className="metric"><div className="metric-label">Total bookings</div><div className="metric-value">{bookings.length}</div><div className="metric-sub">All time</div></div>
+              <div className="metric"><div className="metric-label">Total spent</div><div className="metric-value" style={{ color: "var(--clay)" }}>BZ${totalSpent.toFixed(0)}</div><div className="metric-sub">{completedBookings.length} completed</div></div>
+              <div className="metric"><div className="metric-label">Providers found</div><div className="metric-value">{providers.length}</div><div className="metric-sub">Active on VaiBook</div></div>
+              <div className="metric"><div className="metric-label">Reviews left</div><div className="metric-value">{reviewedBookings.length}</div><div className="metric-sub">Of {completedBookings.length} completed</div></div>
             </div>
             <div className="grid-2">
               <div className="card">
                 <div className="card-title">Upcoming bookings</div>
-                {BOOKINGS_CUSTOMER.slice(0,2).map((b, i) => (
-                  <div className="booking-item" key={i}>
-                    <div className={`booking-dot ${b.status}`}></div>
+                {upcomingBookings.length === 0 && <p style={{ fontSize: 13, color: "var(--muted)", padding: "16px 0" }}>{loadingBookings ? "Loading..." : "Nothing booked yet — find a provider to get started."}</p>}
+                {upcomingBookings.slice(0, 2).map((b) => (
+                  <div className="booking-item" key={b.id}>
+                    <div className={`booking-dot ${bookingStatusClass(b.status)}`}></div>
                     <div className="booking-info">
-                      <div className="title">{b.title}</div>
-                      <div className="meta">{b.provider}</div>
+                      <div className="title">{b.services?.name || "Service"}</div>
+                      <div className="meta">{b.provider_profiles?.business_name || "Provider"} · {new Date(b.booking_date).toLocaleDateString()}</div>
                     </div>
                     <div>
-                      <span className="booking-amount">{b.amount}</span>
-                      <span className={`status-pill ${b.status}`}>{b.status}</span>
+                      <span className="booking-amount">BZ${b.total_amount ?? "—"}</span>
+                      <span className={`status-pill ${bookingStatusClass(b.status)}`}>{statusLabel(b.status)}</span>
                     </div>
                   </div>
                 ))}
@@ -634,31 +787,39 @@ function CustomerPortal({ onNav, user, session, onSignOut }) {
 
         {tab === "browse" && (
           <>
-            <div className="portal-header"><h2>Find a service</h2><p>Browse verified providers near you in Cayo District.</p></div>
+            <div className="portal-header"><h2>Find a service</h2><p>Browse verified providers across Belize.</p></div>
             <div className="search-bar">
               <span className="search-icon">🔍</span>
-              <input placeholder="Search barbers, nail techs, cleaners..." />
+              <input placeholder="Search barbers, nail techs, cleaners..." value={providerSearch} onChange={e => setProviderSearch(e.target.value)} />
             </div>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 20 }}>
-              {["All", "Barbers", "Nail Techs", "Cleaning", "Car Wash", "Pet Care"].map((f, i) => (
-                <button key={i} className="btn-sm" style={{ background: i === 0 ? "var(--forest)" : "white", color: i === 0 ? "white" : "var(--muted)", border: "1px solid var(--border)" }}>{f}</button>
+              {["All", ...DISTRICTS].map((f, i) => (
+                <button key={i} className="btn-sm" style={{ background: f === districtFilter ? "var(--forest)" : "white", color: f === districtFilter ? "white" : "var(--muted)", border: "1px solid var(--border)" }} onClick={() => setDistrictFilter(f)}>{f}</button>
               ))}
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px,1fr))", gap: 16 }}>
-              {PROVIDERS.map((p, i) => (
-                <div className="provider-card" key={i}>
-                  <div className="provider-card-img" style={{ background: p.bg }}>{p.icon}</div>
-                  <div className="provider-card-body">
-                    <h4>{p.name}</h4>
-                    <div className="trade">{p.trade}</div>
-                    <div className="stars">★★★★★ <span style={{ color: "var(--muted)", fontSize: 12 }}>{p.rating} ({p.reviews})</span></div>
-                    <div className="provider-card-footer">
-                      <span className="price-tag">From {p.price}</span>
-                      {p.avail ? <span className="avail-badge">Available</span> : <span style={{ fontSize: 11, color: "var(--muted)" }}>Fully booked</span>}
+            {loadingProviders && <p style={{ fontSize: 13, color: "var(--muted)" }}>Loading providers...</p>}
+            {!loadingProviders && filteredProviders.length === 0 && (
+              <p style={{ fontSize: 13, color: "var(--muted)" }}>No providers found. Try a different district or search term.</p>
+            )}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px,1fr))", gap: 16 }}>
+              {filteredProviders.map((p) => {
+                const rating = providerRating(p);
+                const fromPrice = providerFromPrice(p);
+                return (
+                  <div className="provider-card" key={p.id} style={{ cursor: "pointer" }} onClick={() => openBooking(p)}>
+                    <div className="provider-card-img" style={{ background: "#E8F5EF" }}>{p.service_type === "Barber" ? "✂️" : p.service_type === "Nail Tech" ? "💅" : p.service_type === "Car Wash" ? "🚗" : p.service_type === "Pet Grooming" ? "🐾" : p.service_type === "Home Cleaning" ? "🏠" : "🛠️"}</div>
+                    <div className="provider-card-body">
+                      <h4>{p.business_name}</h4>
+                      <div className="trade">{p.service_type} · {p.district}</div>
+                      <div className="stars">{rating ? `★★★★★ ` : "No reviews yet "}<span style={{ color: "var(--muted)", fontSize: 12 }}>{rating ? `${rating} (${p.reviews.length})` : ""}</span></div>
+                      <div className="provider-card-footer">
+                        <span className="price-tag">{fromPrice != null ? `From BZ$${fromPrice}` : "Contact for pricing"}</span>
+                        {p.downpayment_required ? <span style={{ fontSize: 11, color: "var(--muted)" }}>{p.downpayment_pct || 50}% deposit</span> : <span className="avail-badge">No deposit</span>}
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </>
         )}
@@ -667,25 +828,73 @@ function CustomerPortal({ onNav, user, session, onSignOut }) {
           <>
             <div className="portal-header"><h2>My bookings</h2><p>Track all your appointments in one place.</p></div>
             <div className="tab-row">
-              {["Upcoming", "Completed", "Cancelled"].map((t, i) => (
+              {["Upcoming", "Completed", "Rejected"].map((t, i) => (
                 <div key={i} className={`tab ${bookingTab === t.toLowerCase() ? "active" : ""}`} onClick={() => setBookingTab(t.toLowerCase())}>{t}</div>
               ))}
             </div>
             <div className="card">
-              {BOOKINGS_CUSTOMER.filter(b => bookingTab === "upcoming" ? b.status !== "done" : b.status === "done").map((b, i) => (
-                <div className="booking-item" key={i}>
-                  <div className={`booking-dot ${b.status}`}></div>
-                  <div className="booking-info">
-                    <div className="title">{b.title}</div>
-                    <div className="meta">{b.provider}</div>
+              {loadingBookings && <p style={{ fontSize: 13, color: "var(--muted)", padding: "16px 0" }}>Loading...</p>}
+              {!loadingBookings && (bookingTab === "upcoming" ? upcomingBookings : bookingTab === "completed" ? completedBookings : rejectedBookings).length === 0 && (
+                <p style={{ fontSize: 13, color: "var(--muted)", padding: "16px 0" }}>Nothing here yet.</p>
+              )}
+              {(bookingTab === "upcoming" ? upcomingBookings : bookingTab === "completed" ? completedBookings : rejectedBookings).map((b) => {
+                const hasReview = b.reviews && b.reviews.length > 0;
+                return (
+                  <div key={b.id} style={{ padding: "14px 0", borderBottom: "1px solid var(--border)" }}>
+                    <div className="booking-item" style={{ padding: 0, border: "none" }}>
+                      <div className={`booking-dot ${bookingStatusClass(b.status)}`}></div>
+                      <div className="booking-info">
+                        <div className="title">{b.services?.name || "Service"}</div>
+                        <div className="meta">{b.provider_profiles?.business_name || "Provider"} · {new Date(b.booking_date).toLocaleDateString()} {b.booking_time?.slice(0,5)}</div>
+                      </div>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <span className="booking-amount">BZ${b.total_amount ?? "—"}</span>
+                        <span className={`status-pill ${bookingStatusClass(b.status)}`}>{statusLabel(b.status)}</span>
+                      </div>
+                    </div>
+
+                    {b.status === "rejected" && b.provider_message && (
+                      <p style={{ fontSize: 12, color: "#B91C1C", marginTop: 6 }}>Provider's note: {b.provider_message}</p>
+                    )}
+                    {b.status !== "rejected" && b.provider_message && (
+                      <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 6 }}>Provider's note: {b.provider_message}</p>
+                    )}
+
+                    {b.status === "awaiting_payment" && b.payment_status === "unpaid" && (
+                      <div style={{ marginTop: 8, display: "flex", alignItems: "center", gap: 10 }}>
+                        <label className="btn-sm lime" style={{ cursor: "pointer" }}>
+                          {uploadingReceiptId === b.id ? "Uploading..." : `Upload deposit receipt (BZ$${b.downpayment_amount ?? "—"})`}
+                          <input type="file" accept="image/*,application/pdf" style={{ display: "none" }} disabled={uploadingReceiptId === b.id} onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ""; handleUploadReceipt(b.id, f); }} />
+                        </label>
+                      </div>
+                    )}
+                    {b.status === "awaiting_payment" && b.payment_status === "receipt_uploaded" && (
+                      <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 6 }}>Receipt submitted — waiting for the provider to confirm payment.</p>
+                    )}
+
+                    {b.status === "completed" && !hasReview && reviewingId !== b.id && (
+                      <button className="btn-sm ghost" style={{ marginTop: 8 }} onClick={() => openReview(b.id)}>Leave a review</button>
+                    )}
+                    {b.status === "completed" && reviewingId === b.id && (
+                      <div style={{ marginTop: 10, background: "var(--sand)", borderRadius: 8, padding: 12 }}>
+                        <div className="star-picker">
+                          {[1,2,3,4,5].map(n => (
+                            <span key={n} className={n <= reviewForm.rating ? "on" : ""} onClick={() => setReviewForm(f => ({ ...f, rating: n }))}>★</span>
+                          ))}
+                        </div>
+                        <textarea placeholder="How was it?" value={reviewForm.comment} onChange={e => setReviewForm(f => ({ ...f, comment: e.target.value }))} style={{ width: "100%", minHeight: 60, marginBottom: 8 }} />
+                        <div style={{ display: "flex", gap: 8 }}>
+                          <button className="btn-sm forest" disabled={submittingReview} onClick={() => submitBookingReview(b)}>{submittingReview ? "Submitting..." : "Submit review"}</button>
+                          <button className="btn-sm ghost" onClick={() => setReviewingId(null)}>Cancel</button>
+                        </div>
+                      </div>
+                    )}
+                    {b.status === "completed" && hasReview && (
+                      <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 6 }}>You rated this {"★".repeat(b.reviews[0].rating)}{b.reviews[0].comment ? ` — "${b.reviews[0].comment}"` : ""}</p>
+                    )}
                   </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <span className="booking-amount">{b.amount}</span>
-                    <span className={`status-pill ${b.status}`}>{b.status}</span>
-                    {b.status === "done" && <button className="btn-sm lime" style={{ marginLeft: 4 }}>Review</button>}
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </>
         )}
@@ -694,19 +903,20 @@ function CustomerPortal({ onNav, user, session, onSignOut }) {
           <>
             <div className="portal-header"><h2>Payments</h2><p>All your transactions and receipts.</p></div>
             <div className="metric-grid" style={{ gridTemplateColumns: "1fr 1fr 1fr" }}>
-              <div className="metric"><div className="metric-label">Total spent</div><div className="metric-value" style={{ color: "var(--clay)" }}>BZ$720</div><div className="metric-sub">All time</div></div>
-              <div className="metric"><div className="metric-label">In escrow</div><div className="metric-value">BZ$35</div><div className="metric-sub">Pending release</div></div>
-              <div className="metric"><div className="metric-label">Refunds</div><div className="metric-value">BZ$0</div><div className="metric-sub">All time</div></div>
+              <div className="metric"><div className="metric-label">Total spent</div><div className="metric-value" style={{ color: "var(--clay)" }}>BZ${totalSpent.toFixed(0)}</div><div className="metric-sub">All time</div></div>
+              <div className="metric"><div className="metric-label">Awaiting payment</div><div className="metric-value">{bookings.filter(b => b.status === "awaiting_payment").length}</div><div className="metric-sub">Bookings</div></div>
+              <div className="metric"><div className="metric-label">Completed</div><div className="metric-value">{completedBookings.length}</div><div className="metric-sub">Bookings</div></div>
             </div>
             <div className="card">
               <div className="card-title">Recent transactions</div>
-              {BOOKINGS_CUSTOMER.map((b, i) => (
-                <div className="booking-item" key={i}>
+              {bookings.length === 0 && <p style={{ fontSize: 13, color: "var(--muted)", padding: "16px 0" }}>{loadingBookings ? "Loading..." : "No transactions yet."}</p>}
+              {bookings.map((b) => (
+                <div className="booking-item" key={b.id}>
                   <div style={{ width: 36, height: 36, background: "var(--sand)", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18 }}>💳</div>
-                  <div className="booking-info"><div className="title">{b.title}</div><div className="meta">{b.provider}</div></div>
+                  <div className="booking-info"><div className="title">{b.services?.name || "Service"}</div><div className="meta">{b.provider_profiles?.business_name || "Provider"}{b.receipt_url ? " · " : ""}{b.receipt_url && <a href={b.receipt_url} target="_blank" rel="noreferrer">receipt</a>}</div></div>
                   <div>
-                    <span className="booking-amount">{b.amount}</span>
-                    <span className={`status-pill ${b.status}`}>{b.status === "done" ? "paid" : b.status}</span>
+                    <span className="booking-amount">BZ${b.total_amount ?? "—"}</span>
+                    <span className={`status-pill ${bookingStatusClass(b.status)}`}>{b.payment_status === "paid" ? "paid" : statusLabel(b.status)}</span>
                   </div>
                 </div>
               ))}
@@ -721,20 +931,19 @@ function CustomerPortal({ onNav, user, session, onSignOut }) {
               {tab === "settings" ? (
                 <>
                   <div className="card-title">Account settings</div>
-                  <div className="input-group"><label>Full name</label><input defaultValue="Carlos Martinez" /></div>
-                  <div className="input-group"><label>Email</label><input defaultValue="carlos@email.com" /></div>
-                  <div className="input-group"><label>Phone</label><input defaultValue="+501 600 1234" /></div>
-                  <div className="input-group"><label>District</label><select><option>Cayo</option><option>Belize City</option><option>Orange Walk</option></select></div>
-                  <button className="btn-sm forest">Save changes</button>
+                  <div className="input-group"><label>Full name</label><input defaultValue={user?.full_name || ""} disabled /></div>
+                  <div className="input-group"><label>Email</label><input defaultValue={user?.email || session?.user?.email || ""} disabled /></div>
+                  <p style={{ fontSize: 12, color: "var(--muted)" }}>Your name and email are managed through your Google sign-in.</p>
                 </>
               ) : (
                 <>
                   <div className="card-title">Reviews you've left</div>
-                  {[{ s: "Karim's Cuts", r: "Great cut, very clean shop. Will be back!", stars: 5 }, { s: "ShineBZ", r: "Car looks brand new. Fast service.", stars: 5 }].map((r, i) => (
-                    <div key={i} style={{ padding: "14px 0", borderBottom: "1px solid var(--border)" }}>
-                      <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 4 }}>{r.s}</div>
-                      <div className="stars" style={{ marginBottom: 6 }}>{"★".repeat(r.stars)}</div>
-                      <div style={{ fontSize: 13, color: "var(--muted)" }}>{r.r}</div>
+                  {reviewedBookings.length === 0 && <p style={{ fontSize: 13, color: "var(--muted)" }}>No reviews yet. Leave one after a completed booking.</p>}
+                  {reviewedBookings.map((b) => (
+                    <div key={b.id} style={{ padding: "14px 0", borderBottom: "1px solid var(--border)" }}>
+                      <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 4 }}>{b.provider_profiles?.business_name || "Provider"}</div>
+                      <div className="stars" style={{ marginBottom: 6 }}>{"★".repeat(b.reviews[0].rating)}</div>
+                      <div style={{ fontSize: 13, color: "var(--muted)" }}>{b.reviews[0].comment}</div>
                     </div>
                   ))}
                 </>
@@ -743,6 +952,45 @@ function CustomerPortal({ onNav, user, session, onSignOut }) {
           </>
         )}
       </main>
+
+      {selectedProvider && (
+        <div className="modal-overlay" onClick={() => setSelectedProvider(null)}>
+          <div className="modal-panel" onClick={(e) => e.stopPropagation()}>
+            <span className="modal-close" onClick={() => setSelectedProvider(null)}>✕ Close</span>
+            <div className="card-title" style={{ marginBottom: 4 }}>Book {selectedProvider.business_name}</div>
+            <p style={{ fontSize: 13, color: "var(--muted)", marginBottom: 16 }}>{selectedProvider.service_type} · {selectedProvider.district}</p>
+
+            {(selectedProvider.services || []).filter(s => s.is_active !== false).length === 0 ? (
+              <p style={{ fontSize: 13, color: "var(--muted)" }}>This provider hasn't listed any services yet.</p>
+            ) : (
+              <>
+                <div className="input-group">
+                  <label>Service</label>
+                  <select value={bookingForm.service_id} onChange={e => setBookingForm(f => ({ ...f, service_id: e.target.value }))}>
+                    {(selectedProvider.services || []).filter(s => s.is_active !== false).map(s => (
+                      <option key={s.id} value={s.id}>{s.name} — BZ${s.price} ({s.duration_min} min)</option>
+                    ))}
+                  </select>
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                  <div className="input-group"><label>Date</label><input type="date" min={new Date().toISOString().slice(0,10)} value={bookingForm.date} onChange={e => setBookingForm(f => ({ ...f, date: e.target.value }))} /></div>
+                  <div className="input-group"><label>Time</label><input type="time" value={bookingForm.time} onChange={e => setBookingForm(f => ({ ...f, time: e.target.value }))} /></div>
+                </div>
+                <div className="input-group"><label>Notes (optional)</label><textarea placeholder="Anything the provider should know?" value={bookingForm.notes} onChange={e => setBookingForm(f => ({ ...f, notes: e.target.value }))} style={{ minHeight: 60 }} /></div>
+
+                {selectedProvider.downpayment_required && (
+                  <p style={{ fontSize: 12, color: "var(--clay)", marginBottom: 12 }}>This provider requires a {selectedProvider.downpayment_pct || 50}% deposit after they accept your booking.</p>
+                )}
+                {bookingError && <p style={{ fontSize: 12, color: "#B91C1C", marginBottom: 12 }}>{bookingError}</p>}
+
+                <button className="btn-sm forest" style={{ width: "100%", padding: "10px 0" }} disabled={submittingBooking} onClick={submitBooking}>
+                  {submittingBooking ? "Sending request..." : "Request booking"}
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -766,6 +1014,12 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
   const [services, setServices] = useState([]);
   const [serviceForm, setServiceForm] = useState({ name: "", price: "", duration_min: 15 });
   const [savingService, setSavingService] = useState(false);
+  const [respondingId, setRespondingId] = useState(null);
+  const [responseType, setResponseType] = useState(null);
+  const [responseMessage, setResponseMessage] = useState("");
+  const [confirmingPaymentId, setConfirmingPaymentId] = useState(null);
+  const [depositForm, setDepositForm] = useState({ downpayment_required: false, downpayment_pct: 50 });
+  const [savingDeposit, setSavingDeposit] = useState(false);
 
   const providerId = providerProfile?.id;
 
@@ -809,6 +1063,10 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
         setMapPosition([providerProfile.latitude, providerProfile.longitude]);
       }
       setLocationLabel(providerProfile.location_label || "");
+      setDepositForm({
+        downpayment_required: !!providerProfile.downpayment_required,
+        downpayment_pct: providerProfile.downpayment_pct || 50,
+      });
     }
   }, [providerProfile]);
 
@@ -817,6 +1075,90 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
     await updateBookingStatus(id, status);
     await loadBookings();
     setBusyId(null);
+  };
+
+  const openResponse = (bookingId, type) => {
+    setRespondingId(bookingId);
+    setResponseType(type);
+    setResponseMessage("");
+  };
+
+  const cancelResponse = () => {
+    setRespondingId(null);
+    setResponseType(null);
+    setResponseMessage("");
+  };
+
+  const submitResponse = async (booking) => {
+    setBusyId(booking.id);
+    const msg = responseMessage.trim() || null;
+    const custEmail = booking.users?.email;
+    const serviceName = booking.services?.name || "your service";
+    const dateStr = new Date(booking.booking_date).toLocaleDateString();
+
+    if (responseType === "accept") {
+      const requiresDeposit = !!providerProfile?.downpayment_required;
+      const nextStatus = requiresDeposit ? "awaiting_payment" : "confirmed";
+      await updateBooking(booking.id, { status: nextStatus, provider_message: msg });
+      if (custEmail) {
+        const subject = requiresDeposit
+          ? `${providerProfile.business_name} accepted your booking — deposit needed`
+          : `${providerProfile.business_name} confirmed your booking`;
+        const html = requiresDeposit
+          ? `<p>Your booking for ${serviceName} on ${dateStr} has been accepted.</p>` +
+            (msg ? `<p>Message from the provider: ${msg}</p>` : "") +
+            `<p>Please upload your deposit receipt (BZ$${booking.downpayment_amount ?? ""}) in your VaiBook account to confirm your appointment.</p>`
+          : `<p>Your booking for ${serviceName} on ${dateStr} is confirmed!</p>` +
+            (msg ? `<p>Message from the provider: ${msg}</p>` : "");
+        await sendBookingEmail({ to: custEmail, subject, html });
+      }
+    } else {
+      await updateBooking(booking.id, { status: "rejected", provider_message: msg });
+      if (custEmail) {
+        await sendBookingEmail({
+          to: custEmail,
+          subject: `${providerProfile.business_name} declined your booking request`,
+          html: `<p>Unfortunately your booking request for ${serviceName} on ${dateStr} was declined.</p>` +
+            (msg ? `<p>Message from the provider: ${msg}</p>` : ""),
+        });
+      }
+    }
+
+    await loadBookings();
+    setBusyId(null);
+    cancelResponse();
+  };
+
+  const confirmPayment = async (booking) => {
+    setConfirmingPaymentId(booking.id);
+    await updateBooking(booking.id, { status: "confirmed", payment_status: "paid" });
+    const custEmail = booking.users?.email;
+    if (custEmail) {
+      const serviceName = booking.services?.name || "your service";
+      const dateStr = new Date(booking.booking_date).toLocaleDateString();
+      const balance = (Number(booking.total_amount || 0) - Number(booking.downpayment_amount || 0)).toFixed(2);
+      await sendBookingEmail({
+        to: custEmail,
+        subject: `Payment confirmed — ${providerProfile.business_name}`,
+        html: `<p>Your deposit payment has been confirmed for ${serviceName} on ${dateStr}.</p>` +
+          `<p><strong>Invoice</strong><br/>Total: BZ$${booking.total_amount ?? "—"}<br/>Deposit paid: BZ$${booking.downpayment_amount ?? "—"}<br/>Balance due at appointment: BZ$${balance}</p>` +
+          `<p>See you soon!</p>`,
+      });
+    }
+    await loadBookings();
+    setConfirmingPaymentId(null);
+  };
+
+  const saveDepositSettings = async () => {
+    if (!providerId) return;
+    setSavingDeposit(true);
+    await upsertProviderProfile({
+      id: providerProfile.id,
+      user_id: providerProfile.user_id,
+      downpayment_required: depositForm.downpayment_required,
+      downpayment_pct: Number(depositForm.downpayment_pct) || 50,
+    });
+    setSavingDeposit(false);
   };
 
   const toggleDay = (i) => setHours(h => h.map((d, idx) => (idx === i ? { ...d, is_open: !d.is_open } : d)));
@@ -1064,25 +1406,68 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                 <p style={{ fontSize: 13, color: "var(--muted)", padding: "16px 0" }}>{loadingBookings ? "Loading..." : "No bookings yet."}</p>
               )}
               {bookings.map((b) => (
-                <div className="booking-item" key={b.id}>
-                  <div className={`booking-dot ${bookingStatusClass(b.status)}`}></div>
-                  <div className="booking-info">
-                    <div className="title">{b.services?.name || "Service"}</div>
-                    <div className="meta">{b.users?.full_name || "Customer"} · {new Date(b.booking_date).toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}</div>
+                <div key={b.id} style={{ padding: "14px 0", borderBottom: "1px solid var(--border)" }}>
+                  <div className="booking-item" style={{ padding: 0, border: "none" }}>
+                    <div className={`booking-dot ${bookingStatusClass(b.status)}`}></div>
+                    <div className="booking-info">
+                      <div className="title">{b.services?.name || "Service"}</div>
+                      <div className="meta">{b.users?.full_name || "Customer"} · {new Date(b.booking_date).toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}</div>
+                    </div>
+                    <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", justifyContent: "flex-end" }}>
+                      <span className="booking-amount">BZ${b.total_amount ?? b.services?.price ?? "—"}</span>
+                      <span className={`status-pill ${bookingStatusClass(b.status)}`}>{statusLabel(b.status)}</span>
+                      {b.status === "pending" && respondingId !== b.id && (
+                        <>
+                          <button className="btn-sm lime" disabled={busyId === b.id} onClick={() => openResponse(b.id, "accept")}>Accept</button>
+                          <button className="btn-sm ghost" disabled={busyId === b.id} onClick={() => openResponse(b.id, "reject")}>Decline</button>
+                        </>
+                      )}
+                      {b.status === "confirmed" && (
+                        <button className="btn-sm forest" disabled={busyId === b.id} onClick={() => act(b.id, "completed")}>Mark done</button>
+                      )}
+                    </div>
                   </div>
-                  <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                    <span className="booking-amount">BZ${b.total_amount ?? b.services?.price ?? "—"}</span>
-                    <span className={`status-pill ${bookingStatusClass(b.status)}`}>{b.status}</span>
-                    {b.status === "pending" && (
-                      <>
-                        <button className="btn-sm lime" disabled={busyId === b.id} onClick={() => act(b.id, "confirmed")}>Accept</button>
-                        <button className="btn-sm ghost" disabled={busyId === b.id} onClick={() => act(b.id, "cancelled")}>Decline</button>
-                      </>
-                    )}
-                    {b.status === "confirmed" && (
-                      <button className="btn-sm forest" disabled={busyId === b.id} onClick={() => act(b.id, "completed")}>Mark done</button>
-                    )}
-                  </div>
+
+                  {b.notes && <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 6 }}>Customer note: {b.notes}</p>}
+
+                  {respondingId === b.id && (
+                    <div style={{ marginTop: 10, background: "var(--sand)", borderRadius: 8, padding: 12 }}>
+                      <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 6 }}>
+                        {responseType === "accept" ? "Accept this booking" : "Decline this booking"}
+                      </div>
+                      <textarea
+                        placeholder={responseType === "accept" ? "Optional message for the customer..." : "Optional reason for declining..."}
+                        value={responseMessage}
+                        onChange={e => setResponseMessage(e.target.value)}
+                        style={{ width: "100%", minHeight: 60, marginBottom: 8 }}
+                      />
+                      <div style={{ display: "flex", gap: 8 }}>
+                        <button className={`btn-sm ${responseType === "accept" ? "lime" : "forest"}`} disabled={busyId === b.id} onClick={() => submitResponse(b)}>
+                          {busyId === b.id ? "Sending..." : responseType === "accept" ? "Confirm accept" : "Confirm decline"}
+                        </button>
+                        <button className="btn-sm ghost" onClick={cancelResponse}>Cancel</button>
+                      </div>
+                    </div>
+                  )}
+
+                  {b.status !== "pending" && b.provider_message && (
+                    <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 6 }}>Your note to customer: {b.provider_message}</p>
+                  )}
+
+                  {b.status === "awaiting_payment" && b.payment_status !== "receipt_uploaded" && (
+                    <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 6 }}>Waiting for the customer to upload their deposit receipt.</p>
+                  )}
+                  {b.status === "awaiting_payment" && b.payment_status === "receipt_uploaded" && (
+                    <div style={{ marginTop: 8, background: "var(--sand)", borderRadius: 8, padding: 12 }}>
+                      <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 6 }}>Deposit receipt uploaded</div>
+                      {b.receipt_url && <a href={b.receipt_url} target="_blank" rel="noreferrer" style={{ fontSize: 12 }}>View receipt</a>}
+                      <div style={{ marginTop: 8 }}>
+                        <button className="btn-sm lime" disabled={confirmingPaymentId === b.id} onClick={() => confirmPayment(b)}>
+                          {confirmingPaymentId === b.id ? "Confirming..." : "Confirm payment received"}
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -1292,7 +1677,23 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
           <>
             <div className="portal-header"><h2>Settings</h2></div>
             <div className="card" style={{ maxWidth: 480 }}>
-              <div className="card-title">Notifications</div>
+              <div className="card-title">Deposit requirement</div>
+              <p style={{ fontSize: 13, color: "var(--muted)", marginTop: -8, marginBottom: 16 }}>If turned on, customers must pay a deposit and upload a receipt before their booking is confirmed.</p>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", borderBottom: "1px solid var(--border)" }}>
+                <span style={{ fontSize: 14 }}>Require a deposit before confirming</span>
+                <div className={`toggle ${depositForm.downpayment_required ? "on" : ""}`} onClick={() => setDepositForm(f => ({ ...f, downpayment_required: !f.downpayment_required }))}></div>
+              </div>
+              {depositForm.downpayment_required && (
+                <div className="input-group" style={{ marginTop: 12 }}>
+                  <label>Deposit percentage</label>
+                  <select value={depositForm.downpayment_pct} onChange={e => setDepositForm(f => ({ ...f, downpayment_pct: e.target.value }))}>
+                    {[25, 50, 75, 100].map(p => <option key={p} value={p}>{p}%</option>)}
+                  </select>
+                </div>
+              )}
+              <button className="btn-sm forest" style={{ marginTop: 12 }} onClick={saveDepositSettings} disabled={savingDeposit}>{savingDeposit ? "Saving..." : "Save deposit settings"}</button>
+
+              <div className="card-title" style={{ marginTop: 28 }}>Notifications</div>
               {[["New booking request", true], ["Booking confirmed", true], ["Payment received", true], ["Review posted", false]].map(([label, on], i) => (
                 <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", borderBottom: "1px solid var(--border)" }}>
                   <span style={{ fontSize: 14 }}>{label}</span>
