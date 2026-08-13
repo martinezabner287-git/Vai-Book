@@ -359,6 +359,12 @@ export const sendBookingEmail = async ({ to, subject, html }) => {
   }
 };
 
+export const updateUserProfile = async (userId, updates) => {
+  const { data, error } = await supabase.from('users').update(updates).eq('id', userId).select().single();
+  if (error) console.error('Error updating profile:', error.message);
+  return data;
+};
+
 // ── ADMIN HELPERS ─────────────────────────────────────────────────
 
 export const checkIsAdmin = async (email) => {

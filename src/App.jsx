@@ -6,7 +6,7 @@ import L from "leaflet";
 import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
 import markerIcon from "leaflet/dist/images/marker-icon.png";
 import markerShadow from "leaflet/dist/images/marker-shadow.png";
-import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, deleteService, getActiveProviders, createBooking, getCustomerBookings, uploadReceipt, submitReview, sendBookingEmail } from "./supabase";
+import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, deleteService, getActiveProviders, createBooking, getCustomerBookings, uploadReceipt, submitReview, sendBookingEmail, updateUserProfile } from "./supabase";
 
 // Leaflet's default marker icons reference image paths that don't resolve
 // correctly under CRA's bundler unless re-pointed at the imported assets.
@@ -117,6 +117,7 @@ const css = `
   .nav-avatar-btn { display: flex; align-items: center; gap: 8px; background: transparent; border: 1px solid var(--border); border-radius: 100px; padding: 4px 12px 4px 4px; cursor: pointer; transition: border-color .2s; }
   .nav-avatar-btn:hover { border-color: var(--forest); }
   .nav-avatar-circle { width: 30px; height: 30px; border-radius: 50%; background: var(--lime); color: var(--forest); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; flex-shrink: 0; }
+  .profile-avatar-circle { width: 84px; height: 84px; border-radius: 50%; background: var(--lime); color: var(--forest); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 30px; }
   .nav-avatar-caret { font-size: 10px; color: var(--muted); }
   .nav-account-dropdown { position: absolute; top: calc(100% + 12px); right: 0; background: white; border-radius: var(--radius-sm); box-shadow: 0 16px 40px rgba(13,61,46,0.18); border: 1px solid var(--border); min-width: 250px; padding: 10px; z-index: 200; }
   .nav-account-name { padding: 10px 14px 14px; font-weight: 700; font-size: 16px; color: var(--dark-text); }
@@ -345,6 +346,7 @@ const css = `
   .input-group label { font-size: 12px; font-weight: 600; color: var(--dark-text); display: block; margin-bottom: 6px; letter-spacing: .02em; }
   .input-group input, .input-group select, .input-group textarea { width: 100%; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px 14px; font-size: 14px; font-family: 'Inter', sans-serif; color: var(--dark-text); background: white; outline: none; transition: border-color .2s; }
   .input-group input:focus, .input-group select:focus, .input-group textarea:focus { border-color: var(--forest); }
+  .input-group input:disabled { background: var(--sand); color: var(--muted); cursor: default; }
   .input-group textarea { resize: vertical; height: 80px; }
   .btn-sm { padding: 8px 16px; font-size: 13px; font-weight: 600; border-radius: var(--radius-sm); cursor: pointer; border: none; transition: opacity .2s; }
   .btn-sm:hover { opacity: .85; }
@@ -410,6 +412,15 @@ function statusLabel(status) {
 }
 
 // ── COMPONENTS ──────────────────────────────────────────────────
+
+function getInitials(name) {
+  return (name || "?")
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => w[0].toUpperCase())
+    .join("");
+}
 
 function scrollToSection(id, onNav, current) {
   const jump = () => document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
@@ -484,12 +495,7 @@ function Nav({ onNav, current, session, user, onSignIn, onSignOut }) {
     onNav("customer");
   };
 
-  const initials = (user?.full_name || "?")
-    .split(" ")
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((w) => w[0].toUpperCase())
-    .join("");
+  const initials = getInitials(user?.full_name);
 
   return (
     <nav className="nav">
@@ -763,12 +769,39 @@ function LandingPage({ onNav, session, onSignIn }) {
 }
 
 // ── CUSTOMER PORTAL ─────────────────────────────────────────────
-function CustomerPortal({ onNav, user, session, onSignOut }) {
+function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate }) {
   const [tab, setTab] = useState("home");
   const displayName = user?.full_name || session?.user?.email || "there";
   const firstName = displayName.split(" ")[0].split("@")[0];
   const initial = displayName[0]?.toUpperCase() || "?";
   const [bookingTab, setBookingTab] = useState("upcoming");
+
+  const [editingProfile, setEditingProfile] = useState(false);
+  const [profileForm, setProfileForm] = useState({ firstName: "", lastName: "", phone: "" });
+  const [savingProfile, setSavingProfile] = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+    const [fn, ...rest] = (user.full_name || "").split(" ");
+    setProfileForm({ firstName: fn || "", lastName: rest.join(" "), phone: user.phone || "" });
+  }, [user]);
+
+  const startEditProfile = () => setEditingProfile(true);
+  const cancelEditProfile = () => {
+    const [fn, ...rest] = (user?.full_name || "").split(" ");
+    setProfileForm({ firstName: fn || "", lastName: rest.join(" "), phone: user?.phone || "" });
+    setEditingProfile(false);
+  };
+  const saveProfile = async () => {
+    setSavingProfile(true);
+    const full_name = [profileForm.firstName.trim(), profileForm.lastName.trim()].filter(Boolean).join(" ") || user?.full_name;
+    const updated = await updateUserProfile(user.id, { full_name, phone: profileForm.phone.trim() || null });
+    setSavingProfile(false);
+    if (updated) {
+      onUserUpdate && onUserUpdate(updated);
+      setEditingProfile(false);
+    }
+  };
 
   const [providers, setProviders] = useState([]);
   const [loadingProviders, setLoadingProviders] = useState(false);
@@ -1175,10 +1208,50 @@ function CustomerPortal({ onNav, user, session, onSignOut }) {
             <div className="card" style={{ maxWidth: 480 }}>
               {tab === "settings" ? (
                 <>
-                  <div className="card-title">Account settings</div>
-                  <div className="input-group"><label>Full name</label><input defaultValue={user?.full_name || ""} disabled /></div>
+                  <div className="card-title" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    Profile
+                    {!editingProfile && (
+                      <span style={{ color: "var(--forest)", fontWeight: 600, fontSize: 13, cursor: "pointer" }} onClick={startEditProfile}>Edit</span>
+                    )}
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "center", margin: "8px 0 20px" }}>
+                    <div className="profile-avatar-circle">{getInitials(user?.full_name)}</div>
+                  </div>
+                  <div className="input-group">
+                    <label>First name</label>
+                    <input
+                      value={profileForm.firstName}
+                      disabled={!editingProfile}
+                      onChange={(e) => setProfileForm({ ...profileForm, firstName: e.target.value })}
+                    />
+                  </div>
+                  <div className="input-group">
+                    <label>Last name</label>
+                    <input
+                      value={profileForm.lastName}
+                      disabled={!editingProfile}
+                      onChange={(e) => setProfileForm({ ...profileForm, lastName: e.target.value })}
+                    />
+                  </div>
+                  <div className="input-group">
+                    <label>Phone number</label>
+                    <input
+                      value={profileForm.phone}
+                      disabled={!editingProfile}
+                      placeholder="+501 600 0000"
+                      onChange={(e) => setProfileForm({ ...profileForm, phone: e.target.value })}
+                    />
+                  </div>
                   <div className="input-group"><label>Email</label><input defaultValue={user?.email || session?.user?.email || ""} disabled /></div>
-                  <p style={{ fontSize: 12, color: "var(--muted)" }}>Your name and email are managed through your Google sign-in.</p>
+                  <p style={{ fontSize: 12, color: "var(--muted)" }}>Your email is managed through your Google sign-in.</p>
+                  {editingProfile && (
+                    <div style={{ display: "flex", gap: 10, marginTop: 14 }}>
+                      <button className="btn-primary" onClick={saveProfile} disabled={savingProfile}>
+                        {savingProfile ? "Saving..." : "Save"}
+                      </button>
+                      <button className="btn-ghost" onClick={cancelEditProfile} disabled={savingProfile}>Cancel</button>
+                    </div>
+                  )}
                 </>
               ) : (
                 <>
@@ -2567,7 +2640,7 @@ export default function App() {
     );
   }
 
-  const authProps = { session, user, providerProfile, onSignIn: signInWithGoogle, onSignOut: handleSignOut };
+  const authProps = { session, user, providerProfile, onSignIn: signInWithGoogle, onSignOut: handleSignOut, onUserUpdate: setUser };
 
   return (
     <>
