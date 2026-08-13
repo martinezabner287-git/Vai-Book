@@ -180,7 +180,14 @@ export const getActiveProviders = async (filters = {}) => {
 
   const { data, error } = await query;
   if (error) console.error(error.message);
-  return data || [];
+  // Defensive: PostgREST can infer a to-one embed (single object) instead of
+  // an array depending on constraints, so normalize both embeds to arrays.
+  const toArray = (v) => (v ? (Array.isArray(v) ? v : [v]) : []);
+  return (data || []).map((p) => ({
+    ...p,
+    services: toArray(p.services),
+    reviews: toArray(p.reviews),
+  }));
 };
 
 // ── BOOKING HELPERS ──────────────────────────────────────────────
@@ -202,7 +209,13 @@ export const getCustomerBookings = async (customerId) => {
     .eq('customer_id', customerId)
     .order('booking_date', { ascending: false });
   if (error) console.error(error.message);
-  return data || [];
+  // PostgREST infers a to-one embed for reviews (one review per booking),
+  // so it returns a single object or null rather than an array. Normalize
+  // to an array so the rest of the app can consistently do reviews.length.
+  return (data || []).map((b) => ({
+    ...b,
+    reviews: b.reviews ? (Array.isArray(b.reviews) ? b.reviews : [b.reviews]) : [],
+  }));
 };
 
 export const getProviderBookings = async (providerId) => {
