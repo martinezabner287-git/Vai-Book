@@ -64,18 +64,26 @@ const css = `
   /* NAV */
   .nav {
     display: flex; align-items: center; justify-content: space-between;
-    padding: 16px 48px; background: var(--forest); position: sticky; top: 0; z-index: 100;
+    padding: 16px 48px; background: var(--near-white); position: sticky; top: 0; z-index: 100;
+    border-bottom: 1px solid var(--border);
   }
-  .nav-logo { font-family: 'Syne', sans-serif; font-size: 22px; color: var(--near-white); letter-spacing: -0.5px; }
-  .nav-logo span { color: var(--lime); }
-  .nav-links { display: flex; gap: 32px; }
-  .nav-links a { color: rgba(255,255,255,0.7); font-size: 14px; font-weight: 500; cursor: pointer; text-decoration: none; transition: color .2s; }
-  .nav-links a:hover { color: var(--near-white); }
-  .nav-cta { display: flex; gap: 10px; }
-  .btn-ghost { background: transparent; border: 1px solid rgba(255,255,255,0.3); color: var(--near-white); padding: 8px 20px; border-radius: var(--radius-sm); font-size: 14px; font-weight: 500; cursor: pointer; transition: all .2s; }
-  .btn-ghost:hover { border-color: var(--lime); color: var(--lime); }
+  .nav-logo { font-family: 'Syne', sans-serif; font-size: 22px; color: var(--forest); letter-spacing: -0.5px; }
+  .nav-logo span { color: var(--clay); }
+  .nav-cta { display: flex; align-items: center; gap: 18px; position: relative; }
+  .nav-login-link { background: none; border: none; color: var(--dark-text); font-size: 14px; font-weight: 500; cursor: pointer; padding: 4px; }
+  .nav-login-link:hover { color: var(--forest); }
+  .btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--dark-text); padding: 9px 20px; border-radius: 100px; font-size: 14px; font-weight: 500; cursor: pointer; transition: all .2s; }
+  .btn-ghost:hover { border-color: var(--forest); color: var(--forest); }
   .btn-lime { background: var(--lime); border: none; color: var(--forest); padding: 8px 20px; border-radius: var(--radius-sm); font-size: 14px; font-weight: 600; cursor: pointer; transition: opacity .2s; }
   .btn-lime:hover { opacity: 0.85; }
+  .nav-menu-btn { display: flex; align-items: center; gap: 8px; background: transparent; border: 1px solid var(--border); color: var(--dark-text); padding: 9px 18px 9px 22px; border-radius: 100px; font-size: 14px; font-weight: 500; cursor: pointer; transition: all .2s; }
+  .nav-menu-btn:hover { border-color: var(--forest); color: var(--forest); }
+  .nav-menu-btn .bars { display: flex; flex-direction: column; gap: 3px; }
+  .nav-menu-btn .bars span { width: 16px; height: 2px; background: currentColor; border-radius: 2px; }
+  .nav-dropdown { position: absolute; top: calc(100% + 12px); right: 0; background: white; border-radius: var(--radius-sm); box-shadow: 0 16px 40px rgba(13,61,46,0.18); border: 1px solid var(--border); min-width: 220px; padding: 10px; z-index: 200; }
+  .nav-dropdown a, .nav-dropdown button.nav-dropdown-item { display: block; width: 100%; text-align: left; background: none; border: none; padding: 11px 14px; border-radius: 8px; font-size: 14px; font-weight: 500; color: var(--dark-text); cursor: pointer; text-decoration: none; }
+  .nav-dropdown a:hover, .nav-dropdown button.nav-dropdown-item:hover { background: var(--sand); }
+  .nav-dropdown hr { border: none; border-top: 1px solid var(--border); margin: 8px 4px; }
 
   /* HERO */
   .hero {
@@ -313,7 +321,6 @@ const css = `
 
   @media (max-width: 768px) {
     .nav { padding: 14px 20px; }
-    .nav-links { display: none; }
     .hero { grid-template-columns: 1fr; padding: 60px 24px; min-height: auto; }
     .hero-card-wrap { display: none; }
     .section { padding: 60px 24px; }
@@ -390,27 +397,59 @@ function enterProviderPortal(onNav, session, onSignIn) {
 }
 
 function Nav({ onNav, current, session, user, onSignIn }) {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const closeMenu = () => setMenuOpen(false);
+
+  const go = (fn) => { fn(); closeMenu(); };
+
   return (
     <nav className="nav">
       <span className="nav-logo" style={{ cursor: "pointer" }} onClick={() => onNav("home")}>vai<span>book</span></span>
-      <div className="nav-links">
-        <a onClick={() => onNav("home")}>Home</a>
-        <a onClick={() => scrollToSection("services", onNav, current)}>Services</a>
-        <a onClick={() => scrollToSection("how-it-works", onNav, current)}>How it works</a>
-        <a onClick={() => scrollToSection("pricing", onNav, current)}>Pricing</a>
-      </div>
-      {(current === "home" || (current === "customer" && !session)) && (
+
+      {(current === "home" || (current === "customer" && !session)) ? (
         <div className="nav-cta">
-          <button className="btn-ghost" onClick={() => enterCustomerPortal(onNav, session, onSignIn)}>
-            {session ? (user?.full_name?.split(" ")[0] || "My account") : "Customer login"}
+          <button className="nav-login-link" onClick={() => enterCustomerPortal(onNav, session, onSignIn)}>
+            {session ? (user?.full_name?.split(" ")[0] || "My account") : "Log in"}
           </button>
           {current === "home" && (
-            <>
-              <button className="btn-ghost" onClick={() => enterProviderPortal(onNav, session, onSignIn)}>
-                Provider login
-              </button>
-              <button className="btn-lime" onClick={() => onNav("signup")}>List your business</button>
-            </>
+            <button className="btn-ghost" onClick={() => onNav("signup")}>List your business</button>
+          )}
+          <div style={{ position: "relative" }}>
+            <button className="nav-menu-btn" onClick={() => setMenuOpen((v) => !v)}>
+              Menu
+              <span className="bars"><span /><span /></span>
+            </button>
+            {menuOpen && (
+              <div className="nav-dropdown" onMouseLeave={closeMenu}>
+                <a onClick={() => go(() => onNav("home"))}>Home</a>
+                <a onClick={() => go(() => scrollToSection("services", onNav, current))}>Services</a>
+                <a onClick={() => go(() => scrollToSection("how-it-works", onNav, current))}>How it works</a>
+                <a onClick={() => go(() => scrollToSection("pricing", onNav, current))}>Pricing</a>
+                {current === "home" && (
+                  <>
+                    <hr />
+                    <button className="nav-dropdown-item" onClick={() => go(() => enterProviderPortal(onNav, session, onSignIn))}>
+                      Provider login
+                    </button>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      ) : (
+        <div style={{ position: "relative" }}>
+          <button className="nav-menu-btn" onClick={() => setMenuOpen((v) => !v)}>
+            Menu
+            <span className="bars"><span /><span /></span>
+          </button>
+          {menuOpen && (
+            <div className="nav-dropdown" onMouseLeave={closeMenu}>
+              <a onClick={() => go(() => onNav("home"))}>Home</a>
+              <a onClick={() => go(() => scrollToSection("services", onNav, current))}>Services</a>
+              <a onClick={() => go(() => scrollToSection("how-it-works", onNav, current))}>How it works</a>
+              <a onClick={() => go(() => scrollToSection("pricing", onNav, current))}>Pricing</a>
+            </div>
           )}
         </div>
       )}
