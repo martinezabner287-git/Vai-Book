@@ -369,15 +369,19 @@ function Nav({ onNav, current, session, user, onSignIn }) {
         <a onClick={() => scrollToSection("how-it-works", onNav, current)}>How it works</a>
         <a onClick={() => scrollToSection("pricing", onNav, current)}>Pricing</a>
       </div>
-      {current === "home" && (
+      {(current === "home" || (current === "customer" && !session)) && (
         <div className="nav-cta">
           <button className="btn-ghost" onClick={() => enterCustomerPortal(onNav, session, onSignIn)}>
             {session ? (user?.full_name?.split(" ")[0] || "My account") : "Customer login"}
           </button>
-          <button className="btn-ghost" onClick={() => enterProviderPortal(onNav, session, onSignIn)}>
-            Provider login
-          </button>
-          <button className="btn-lime" onClick={() => onNav("signup")}>List your business</button>
+          {current === "home" && (
+            <>
+              <button className="btn-ghost" onClick={() => enterProviderPortal(onNav, session, onSignIn)}>
+                Provider login
+              </button>
+              <button className="btn-lime" onClick={() => onNav("signup")}>List your business</button>
+            </>
+          )}
         </div>
       )}
     </nav>
