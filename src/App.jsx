@@ -124,6 +124,8 @@ const css = `
   .nav-account-dropdown button.nav-dropdown-item:hover { background: var(--sand); }
   .nav-account-dropdown button.nav-dropdown-item .icn { width: 18px; text-align: center; }
   .nav-account-dropdown button.nav-dropdown-item.for-biz { justify-content: space-between; font-weight: 600; }
+  .nav-account-dropdown a { display: block; width: 100%; text-align: left; padding: 11px 14px; border-radius: 8px; font-size: 14px; font-weight: 500; color: var(--dark-text); cursor: pointer; text-decoration: none; }
+  .nav-account-dropdown a:hover { background: var(--sand); }
   .nav-account-dropdown hr { border: none; border-top: 1px solid var(--border); margin: 8px 4px; }
 
   /* HERO */
