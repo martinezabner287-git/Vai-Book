@@ -113,6 +113,19 @@ const css = `
     .auth-choice-panel { display: none; }
   }
 
+  /* ACCOUNT DROPDOWN */
+  .nav-avatar-btn { display: flex; align-items: center; gap: 8px; background: transparent; border: 1px solid var(--border); border-radius: 100px; padding: 4px 12px 4px 4px; cursor: pointer; transition: border-color .2s; }
+  .nav-avatar-btn:hover { border-color: var(--forest); }
+  .nav-avatar-circle { width: 30px; height: 30px; border-radius: 50%; background: var(--lime); color: var(--forest); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; flex-shrink: 0; }
+  .nav-avatar-caret { font-size: 10px; color: var(--muted); }
+  .nav-account-dropdown { position: absolute; top: calc(100% + 12px); right: 0; background: white; border-radius: var(--radius-sm); box-shadow: 0 16px 40px rgba(13,61,46,0.18); border: 1px solid var(--border); min-width: 250px; padding: 10px; z-index: 200; }
+  .nav-account-name { padding: 10px 14px 14px; font-weight: 700; font-size: 16px; color: var(--dark-text); }
+  .nav-account-dropdown button.nav-dropdown-item { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; background: none; border: none; padding: 11px 14px; border-radius: 8px; font-size: 14px; font-weight: 500; color: var(--dark-text); cursor: pointer; }
+  .nav-account-dropdown button.nav-dropdown-item:hover { background: var(--sand); }
+  .nav-account-dropdown button.nav-dropdown-item .icn { width: 18px; text-align: center; }
+  .nav-account-dropdown button.nav-dropdown-item.for-biz { justify-content: space-between; font-weight: 600; }
+  .nav-account-dropdown hr { border: none; border-top: 1px solid var(--border); margin: 8px 4px; }
+
   /* HERO */
   .hero {
     background: var(--forest);
@@ -455,11 +468,26 @@ function AuthChoice({ onNav, session, onSignIn }) {
   );
 }
 
-function Nav({ onNav, current, session, user, onSignIn }) {
+function Nav({ onNav, current, session, user, onSignIn, onSignOut }) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [accountOpen, setAccountOpen] = useState(false);
   const closeMenu = () => setMenuOpen(false);
+  const closeAccount = () => setAccountOpen(false);
 
   const go = (fn) => { fn(); closeMenu(); };
+  const goAccount = (fn) => { fn(); closeAccount(); };
+
+  const openTab = (tabId) => {
+    try { localStorage.setItem("vaibook_pending_tab", tabId); } catch (e) { /* ignore */ }
+    onNav("customer");
+  };
+
+  const initials = (user?.full_name || "?")
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => w[0].toUpperCase())
+    .join("");
 
   return (
     <nav className="nav">
@@ -467,12 +495,44 @@ function Nav({ onNav, current, session, user, onSignIn }) {
 
       {(current === "home" || (current === "customer" && !session)) ? (
         <div className="nav-cta">
-          <button
-            className="nav-login-link"
-            onClick={() => (session ? enterCustomerPortal(onNav, session, onSignIn) : onNav("auth"))}
-          >
-            {session ? (user?.full_name?.split(" ")[0] || "My account") : "Log in"}
-          </button>
+          {session ? (
+            <div style={{ position: "relative" }}>
+              <button className="nav-avatar-btn" onClick={() => setAccountOpen((v) => !v)}>
+                <span className="nav-avatar-circle">{initials}</span>
+                <span className="nav-avatar-caret">▾</span>
+              </button>
+              {accountOpen && (
+                <div className="nav-account-dropdown" onMouseLeave={closeAccount}>
+                  <div className="nav-account-name">{user?.full_name || "My account"}</div>
+                  <button className="nav-dropdown-item" onClick={() => goAccount(() => openTab("home"))}>
+                    <span className="icn">👤</span> My account
+                  </button>
+                  <button className="nav-dropdown-item" onClick={() => goAccount(() => openTab("bookings"))}>
+                    <span className="icn">📅</span> My bookings
+                  </button>
+                  <button className="nav-dropdown-item" onClick={() => goAccount(() => openTab("payments"))}>
+                    <span className="icn">💳</span> Payments
+                  </button>
+                  <button className="nav-dropdown-item" onClick={() => goAccount(() => openTab("reviews"))}>
+                    <span className="icn">⭐</span> My reviews
+                  </button>
+                  <button className="nav-dropdown-item" onClick={() => goAccount(() => openTab("settings"))}>
+                    <span className="icn">⚙️</span> Settings
+                  </button>
+                  <hr />
+                  <button className="nav-dropdown-item" onClick={() => goAccount(onSignOut)}>
+                    <span className="icn">↪</span> Log out
+                  </button>
+                  <hr />
+                  <button className="nav-dropdown-item for-biz" onClick={() => goAccount(() => enterProviderPortal(onNav, session, onSignIn))}>
+                    For businesses <span>→</span>
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <button className="nav-login-link" onClick={() => onNav("auth")}>Log in</button>
+          )}
           {current === "home" && (
             <button className="btn-ghost" onClick={() => onNav("signup")}>List your business</button>
           )}
@@ -751,6 +811,16 @@ function CustomerPortal({ onNav, user, session, onSignOut }) {
         if (parsed.query) setProviderSearch(parsed.query);
         setDistrictFilter(parsed.district || "All");
         localStorage.removeItem("vaibook_pending_search");
+      }
+    } catch (e) { /* ignore malformed/missing storage */ }
+  }, []);
+
+  useEffect(() => {
+    try {
+      const pendingTab = localStorage.getItem("vaibook_pending_tab");
+      if (pendingTab) {
+        setTab(pendingTab);
+        localStorage.removeItem("vaibook_pending_tab");
       }
     } catch (e) { /* ignore malformed/missing storage */ }
   }, []);
