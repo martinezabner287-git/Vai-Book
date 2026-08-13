@@ -436,7 +436,7 @@ function enterCustomerPortal(onNav, session, onSignIn) {
   if (session) {
     onNav("customer");
   } else {
-    window.location.hash = "customer";
+    try { localStorage.setItem("vaibook_pending_view", "customer"); } catch (e) { /* ignore */ }
     onSignIn();
   }
 }
@@ -445,7 +445,7 @@ function enterProviderPortal(onNav, session, onSignIn) {
   if (session) {
     onNav("provider");
   } else {
-    window.location.hash = "provider";
+    try { localStorage.setItem("vaibook_pending_view", "provider"); } catch (e) { /* ignore */ }
     onSignIn();
   }
 }
@@ -2589,6 +2589,16 @@ export default function App() {
     return p;
   };
 
+  const applyPendingView = () => {
+    try {
+      const pending = localStorage.getItem("vaibook_pending_view");
+      if (pending === "admin" || pending === "customer" || pending === "provider") {
+        setView(pending);
+        localStorage.removeItem("vaibook_pending_view");
+      }
+    } catch (e) { /* ignore */ }
+  };
+
   useEffect(() => {
     // Get initial session
     supabase.auth.getSession().then(async ({ data: { session } }) => {
@@ -2598,6 +2608,7 @@ export default function App() {
         setUser(u);
         const p = await loadProviderProfile(session.user);
         setProviderProfile(p);
+        applyPendingView();
       }
       setLoading(false);
     });
@@ -2610,6 +2621,7 @@ export default function App() {
         setUser(u);
         const p = await loadProviderProfile(session.user);
         setProviderProfile(p);
+        applyPendingView();
       } else {
         setUser(null);
         setProviderProfile(null);
