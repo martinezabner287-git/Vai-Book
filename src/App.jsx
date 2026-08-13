@@ -6,7 +6,7 @@ import L from "leaflet";
 import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
 import markerIcon from "leaflet/dist/images/marker-icon.png";
 import markerShadow from "leaflet/dist/images/marker-shadow.png";
-import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, deleteService, getActiveProviders, createBooking, getCustomerBookings, uploadReceipt, submitReview, sendBookingEmail, updateUserProfile } from "./supabase";
+import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, deleteService, getActiveProviders, createBooking, getCustomerBookings, uploadReceipt, submitReview, sendBookingEmail, updateUserProfile, getProviderPayouts, requestPayout } from "./supabase";
 
 // Leaflet's default marker icons reference image paths that don't resolve
 // correctly under CRA's bundler unless re-pointed at the imported assets.
@@ -1363,8 +1363,22 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
   const [confirmingPaymentId, setConfirmingPaymentId] = useState(null);
   const [depositForm, setDepositForm] = useState({ downpayment_required: false, downpayment_pct: 50 });
   const [savingDeposit, setSavingDeposit] = useState(false);
+  const [payouts, setPayouts] = useState([]);
+  const [payoutForm, setPayoutForm] = useState({ amount: "", method: "Atlantic Bank — Chequing" });
+  const [requestingPayout, setRequestingPayout] = useState(false);
+  const [payoutError, setPayoutError] = useState("");
 
   const providerId = providerProfile?.id;
+
+  const loadPayouts = async () => {
+    if (!providerId) return;
+    const data = await getProviderPayouts(providerId);
+    setPayouts(data);
+  };
+
+  useEffect(() => {
+    loadPayouts();
+  }, [providerId]);
 
   const loadBookings = async () => {
     if (!providerId) return;
@@ -1641,6 +1655,44 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
     .filter(b => { const d = new Date(b.booking_date); return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear(); })
     .reduce((sum, b) => sum + (Number(b.total_amount) || 0), 0);
   const completionRate = bookings.length ? Math.round((completedBookings.length / bookings.length) * 100) : null;
+
+  const FEE_RATE = 0.07;
+  const netAmount = (b) => (Number(b.total_amount) || 0) * (1 - FEE_RATE);
+  const totalNetEarned = completedBookings.reduce((sum, b) => sum + netAmount(b), 0);
+  const pendingEscrow = bookings
+    .filter(b => b.status === "confirmed" || b.status === "awaiting_payment")
+    .reduce((sum, b) => sum + netAmount(b), 0);
+  const paidOutTotal = payouts
+    .filter(p => p.status === "paid" || p.status === "requested")
+    .reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+  const availableToWithdraw = Math.max(0, totalNetEarned - paidOutTotal);
+  const lastMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const thisMonthNetEarnings = completedBookings
+    .filter(b => { const d = new Date(b.booking_date); return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear(); })
+    .reduce((sum, b) => sum + netAmount(b), 0);
+  const lastMonthNetEarnings = completedBookings
+    .filter(b => { const d = new Date(b.booking_date); return d.getMonth() === lastMonthDate.getMonth() && d.getFullYear() === lastMonthDate.getFullYear(); })
+    .reduce((sum, b) => sum + netAmount(b), 0);
+  const monthOverMonthPct = lastMonthNetEarnings > 0
+    ? Math.round(((thisMonthNetEarnings - lastMonthNetEarnings) / lastMonthNetEarnings) * 100)
+    : null;
+  const currentMonthLabel = now.toLocaleDateString("en-US", { month: "long" });
+
+  const submitPayoutRequest = async () => {
+    setPayoutError("");
+    const amt = Number(payoutForm.amount);
+    if (!amt || amt <= 0) { setPayoutError("Enter a valid amount."); return; }
+    if (amt > availableToWithdraw) { setPayoutError("Amount exceeds your available balance."); return; }
+    setRequestingPayout(true);
+    const created = await requestPayout(providerId, amt, payoutForm.method);
+    setRequestingPayout(false);
+    if (created) {
+      setPayoutForm(f => ({ ...f, amount: "" }));
+      await loadPayouts();
+    } else {
+      setPayoutError("Something went wrong. Please try again.");
+    }
+  };
 
   const calYear = now.getFullYear();
   const calMonth = now.getMonth();
@@ -1924,24 +1976,26 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
           <>
             <div className="portal-header"><h2>Earnings</h2><p>Track your income and request payouts.</p></div>
             <div className="metric-grid" style={{ gridTemplateColumns: "1fr 1fr 1fr" }}>
-              <div className="metric"><div className="metric-label">Available to withdraw</div><div className="metric-value" style={{ color: "var(--forest-light)" }}>BZ$980</div><div className="metric-sub">Cleared funds</div></div>
-              <div className="metric"><div className="metric-label">Pending (in escrow)</div><div className="metric-value">BZ$260</div><div className="metric-sub">Releases after service</div></div>
-              <div className="metric"><div className="metric-label">Total earned (June)</div><div className="metric-value">BZ$1,240</div><div className="metric-sub">↑ 18% vs May</div></div>
+              <div className="metric"><div className="metric-label">Available to withdraw</div><div className="metric-value" style={{ color: "var(--forest-light)" }}>BZ${availableToWithdraw.toFixed(2)}</div><div className="metric-sub">Cleared funds, after 7% fee</div></div>
+              <div className="metric"><div className="metric-label">Pending (in escrow)</div><div className="metric-value">BZ${pendingEscrow.toFixed(2)}</div><div className="metric-sub">Releases after service</div></div>
+              <div className="metric"><div className="metric-label">Total earned ({currentMonthLabel})</div><div className="metric-value">BZ${thisMonthNetEarnings.toFixed(2)}</div><div className="metric-sub">{monthOverMonthPct === null ? "No data for last month" : `${monthOverMonthPct >= 0 ? "↑" : "↓"} ${Math.abs(monthOverMonthPct)}% vs last month`}</div></div>
             </div>
             <div className="grid-2">
               <div className="card">
                 <div className="card-title">Request payout</div>
-                <div className="input-group"><label>Amount (BZ$)</label><input type="number" placeholder="0.00" /></div>
-                <div className="input-group"><label>Bank / method</label><select><option>Atlantic Bank — Chequing</option><option>Belize Bank</option><option>Vai Wallet</option></select></div>
-                <button className="btn-sm forest">Request withdrawal</button>
+                <div className="input-group"><label>Amount (BZ$)</label><input type="number" placeholder="0.00" value={payoutForm.amount} onChange={e => setPayoutForm(f => ({ ...f, amount: e.target.value }))} /></div>
+                <div className="input-group"><label>Bank / method</label><select value={payoutForm.method} onChange={e => setPayoutForm(f => ({ ...f, method: e.target.value }))}><option>Atlantic Bank — Chequing</option><option>Belize Bank</option><option>Vai Wallet</option></select></div>
+                {payoutError && <p style={{ fontSize: 12, color: "var(--clay)", marginBottom: 8 }}>{payoutError}</p>}
+                <button className="btn-sm forest" disabled={requestingPayout || availableToWithdraw <= 0} onClick={submitPayoutRequest}>{requestingPayout ? "Sending..." : "Request withdrawal"}</button>
                 <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 12 }}>Payouts process within 1–2 business days.</p>
               </div>
               <div className="card">
                 <div className="card-title">Recent payouts</div>
-                {[["Jun 1", "BZ$600", "Atlantic Bank"], ["May 15", "BZ$450", "Atlantic Bank"], ["May 1", "BZ$520", "Atlantic Bank"]].map(([d, a, b], i) => (
-                  <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: "1px solid var(--border)" }}>
-                    <div><div style={{ fontSize: 14, fontWeight: 600 }}>{a}</div><div style={{ fontSize: 12, color: "var(--muted)" }}>{d} · {b}</div></div>
-                    <span className="status-pill confirmed">paid</span>
+                {payouts.length === 0 && <p style={{ fontSize: 13, color: "var(--muted)" }}>No payouts yet.</p>}
+                {payouts.map((p) => (
+                  <div key={p.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: "1px solid var(--border)" }}>
+                    <div><div style={{ fontSize: 14, fontWeight: 600 }}>BZ${Number(p.amount).toFixed(2)}</div><div style={{ fontSize: 12, color: "var(--muted)" }}>{new Date(p.created_at).toLocaleDateString()} · {p.method}</div></div>
+                    <span className={`status-pill ${p.status === "paid" ? "confirmed" : p.status === "rejected" ? "rejected" : "pending"}`}>{p.status}</span>
                   </div>
                 ))}
               </div>

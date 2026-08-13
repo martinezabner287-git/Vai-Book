@@ -365,6 +365,26 @@ export const updateUserProfile = async (userId, updates) => {
   return data;
 };
 
+export const getProviderPayouts = async (providerId) => {
+  const { data, error } = await supabase
+    .from('payouts')
+    .select('*')
+    .eq('provider_id', providerId)
+    .order('created_at', { ascending: false });
+  if (error) console.error('Error loading payouts:', error.message);
+  return data || [];
+};
+
+export const requestPayout = async (providerId, amount, method) => {
+  const { data, error } = await supabase
+    .from('payouts')
+    .insert([{ provider_id: providerId, amount, method, status: 'requested' }])
+    .select()
+    .single();
+  if (error) console.error('Error requesting payout:', error.message);
+  return data;
+};
+
 // ── ADMIN HELPERS ─────────────────────────────────────────────────
 
 export const checkIsAdmin = async (email) => {
