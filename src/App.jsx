@@ -124,6 +124,20 @@ const css = `
   .nav-logo { font-family: 'Syne', sans-serif; font-size: 22px; color: var(--forest); letter-spacing: -0.5px; }
   .nav-logo span { color: var(--clay); }
   .nav-cta { display: flex; align-items: center; gap: 18px; position: relative; }
+
+  /* NAV SEARCH (pinned between the logo and menu/account controls) */
+  .nav-search-wrap { flex: 1; display: flex; justify-content: center; min-width: 0; padding: 0 24px; }
+  .nav-search { position: relative; width: 100%; max-width: 420px; }
+  .nav-search-input-wrap { display: flex; align-items: center; gap: 8px; background: var(--sand); border-radius: 100px; padding: 9px 16px; }
+  .nav-search-input-wrap input { border: none; outline: none; background: transparent; font-size: 13px; width: 100%; font-family: 'Inter', sans-serif; color: var(--dark-text); }
+  .nav-search-icon { font-size: 14px; color: var(--muted); flex-shrink: 0; }
+  .nav-search-toggle { display: none; background: transparent; border: 1px solid var(--border); width: 38px; height: 38px; border-radius: 50%; align-items: center; justify-content: center; cursor: pointer; font-size: 15px; color: var(--dark-text); flex-shrink: 0; }
+  .nav-search-mobile-panel { display: none; }
+  @media (max-width: 768px) {
+    .nav-search-wrap { display: none; }
+    .nav-search-toggle { display: flex; }
+    .nav-search-mobile-panel { display: block; position: absolute; top: 100%; left: 0; right: 0; background: white; border-bottom: 1px solid var(--border); padding: 14px 20px 18px; box-shadow: 0 12px 24px rgba(13,61,46,0.08); }
+  }
   .nav-login-link { background: none; border: none; color: var(--dark-text); font-size: 14px; font-weight: 500; cursor: pointer; padding: 4px; }
   .nav-login-link:hover { color: var(--forest); }
   .btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--dark-text); padding: 9px 20px; border-radius: 100px; font-size: 14px; font-weight: 500; cursor: pointer; transition: all .2s; }
@@ -565,6 +579,34 @@ function Nav({ onNav, current, session, user, onSignIn, onSignOut }) {
   const closeMenu = () => setMenuOpen(false);
   const closeAccount = () => setAccountOpen(false);
 
+  // Pinned search — lives in the nav itself so it's reachable from any page,
+  // not just the landing page hero.
+  const [navQuery, setNavQuery] = useState("");
+  const [showNavSuggestions, setShowNavSuggestions] = useState(false);
+  const [navDirectory, setNavDirectory] = useState([]);
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+
+  useEffect(() => {
+    getProviderDirectory().then((data) => setNavDirectory(data || []));
+  }, []);
+
+  const navSuggestions = buildSuggestions(navDirectory, navQuery);
+
+  const submitNavSearch = (queryOverride) => {
+    const q = (queryOverride != null ? queryOverride : navQuery).trim();
+    try {
+      localStorage.setItem("vaibook_pending_search", JSON.stringify({ query: q, district: "All" }));
+    } catch (e) { /* ignore storage errors */ }
+    setShowNavSuggestions(false);
+    setMobileSearchOpen(false);
+    enterCustomerPortal(onNav, session, onSignIn);
+  };
+
+  const selectNavSuggestion = (s) => {
+    setNavQuery(s.label);
+    submitNavSearch(s.label);
+  };
+
   const go = (fn) => { fn(); closeMenu(); };
   const goAccount = (fn) => { fn(); closeAccount(); };
 
@@ -578,6 +620,34 @@ function Nav({ onNav, current, session, user, onSignIn, onSignOut }) {
   return (
     <nav className="nav">
       <span className="nav-logo" style={{ cursor: "pointer" }} onClick={() => onNav("home")}>vai<span>book</span></span>
+
+      <div className="nav-search-wrap">
+        <div className="nav-search">
+          <div className="nav-search-input-wrap">
+            <span className="nav-search-icon">🔍</span>
+            <input
+              placeholder="Search barbers, haircuts, nail techs..."
+              value={navQuery}
+              onChange={e => { setNavQuery(e.target.value); setShowNavSuggestions(true); }}
+              onFocus={() => setShowNavSuggestions(true)}
+              onBlur={() => setTimeout(() => setShowNavSuggestions(false), 150)}
+              onKeyDown={e => { if (e.key === "Enter") submitNavSearch(); }}
+            />
+          </div>
+          {showNavSuggestions && navSuggestions.length > 0 && (
+            <div className="suggestions-dropdown">
+              {navSuggestions.map((s) => (
+                <div key={s.key} className="suggestion-item" onMouseDown={() => selectNavSuggestion(s)}>
+                  <span className="suggestion-icon">{s.icon}</span>
+                  <span className="suggestion-label">{s.label}</span>
+                  <span className="suggestion-sub">{s.sublabel}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+      <button className="nav-search-toggle" onClick={() => setMobileSearchOpen(v => !v)} aria-label="Search">🔍</button>
 
       {(current === "home" || (current === "customer" && !session)) ? (
         <div className="nav-cta">
@@ -664,6 +734,32 @@ function Nav({ onNav, current, session, user, onSignIn, onSignOut }) {
               <a onClick={() => go(() => scrollToSection("services", onNav, current))}>Services</a>
               <a onClick={() => go(() => scrollToSection("how-it-works", onNav, current))}>How it works</a>
               <a onClick={() => go(() => scrollToSection("pricing", onNav, current))}>Pricing</a>
+            </div>
+          )}
+        </div>
+      )}
+
+      {mobileSearchOpen && (
+        <div className="nav-search-mobile-panel">
+          <div className="nav-search-input-wrap">
+            <span className="nav-search-icon">🔍</span>
+            <input
+              autoFocus
+              placeholder="Search barbers, haircuts, nail techs..."
+              value={navQuery}
+              onChange={e => setNavQuery(e.target.value)}
+              onKeyDown={e => { if (e.key === "Enter") submitNavSearch(); }}
+            />
+          </div>
+          {navSuggestions.length > 0 && (
+            <div className="suggestions-dropdown" style={{ position: "static", boxShadow: "none", border: "none", marginTop: 8 }}>
+              {navSuggestions.map((s) => (
+                <div key={s.key} className="suggestion-item" onMouseDown={() => selectNavSuggestion(s)}>
+                  <span className="suggestion-icon">{s.icon}</span>
+                  <span className="suggestion-label">{s.label}</span>
+                  <span className="suggestion-sub">{s.sublabel}</span>
+                </div>
+              ))}
             </div>
           )}
         </div>
