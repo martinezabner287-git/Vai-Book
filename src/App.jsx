@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useLayoutEffect, useRef } from "react";
 import { MapContainer, TileLayer, Marker, useMapEvents } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
@@ -126,12 +126,14 @@ const css = `
   .nav-cta { display: flex; align-items: center; gap: 18px; position: relative; }
 
   /* NAV SEARCH (pinned between the logo and menu/account controls) */
-  .nav-search-wrap { flex: 1; display: flex; justify-content: center; min-width: 0; padding: 0 24px; }
+  .nav-search-wrap { flex: 1; display: flex; justify-content: center; min-width: 0; padding: 0 24px; opacity: 0; pointer-events: none; transform: translateY(-4px); transition: opacity .2s ease, transform .2s ease; }
+  .nav-search-wrap.visible { opacity: 1; pointer-events: auto; transform: none; }
   .nav-search { position: relative; width: 100%; max-width: 420px; }
   .nav-search-input-wrap { display: flex; align-items: center; gap: 8px; background: var(--sand); border-radius: 100px; padding: 9px 16px; }
   .nav-search-input-wrap input { border: none; outline: none; background: transparent; font-size: 13px; width: 100%; font-family: 'Inter', sans-serif; color: var(--dark-text); }
   .nav-search-icon { font-size: 14px; color: var(--muted); flex-shrink: 0; }
-  .nav-search-toggle { display: none; background: transparent; border: 1px solid var(--border); width: 38px; height: 38px; border-radius: 50%; align-items: center; justify-content: center; cursor: pointer; font-size: 15px; color: var(--dark-text); flex-shrink: 0; }
+  .nav-search-toggle { display: none; background: transparent; border: 1px solid var(--border); width: 38px; height: 38px; border-radius: 50%; align-items: center; justify-content: center; cursor: pointer; font-size: 15px; color: var(--dark-text); flex-shrink: 0; opacity: 0; pointer-events: none; transition: opacity .2s ease; }
+  .nav-search-toggle.visible { opacity: 1; pointer-events: auto; }
   .nav-search-mobile-panel { display: none; }
   @media (max-width: 768px) {
     .nav-search-wrap { display: none; }
@@ -580,15 +582,46 @@ function Nav({ onNav, current, session, user, onSignIn, onSignOut }) {
   const closeAccount = () => setAccountOpen(false);
 
   // Pinned search — lives in the nav itself so it's reachable from any page,
-  // not just the landing page hero.
+  // but should only actually show once the page's own "main" search bar
+  // (the hero pill on the landing page, or the browse-tab bar in the
+  // customer portal) has scrolled out of view — or isn't present at all.
   const [navQuery, setNavQuery] = useState("");
   const [showNavSuggestions, setShowNavSuggestions] = useState(false);
   const [navDirectory, setNavDirectory] = useState([]);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+  const [navSearchActive, setNavSearchActive] = useState(false);
+  const navRef = useRef(null);
 
   useEffect(() => {
     getProviderDirectory().then((data) => setNavDirectory(data || []));
   }, []);
+
+  useLayoutEffect(() => {
+    let rafId = null;
+    const check = () => {
+      const target = document.getElementById("main-search-bar");
+      if (!target) { setNavSearchActive(true); return; }
+      const rect = target.getBoundingClientRect();
+      const navHeight = navRef.current ? navRef.current.getBoundingClientRect().height : 0;
+      const visible = rect.bottom > navHeight && rect.top < window.innerHeight;
+      setNavSearchActive(!visible);
+    };
+    const scheduleCheck = () => {
+      if (rafId) cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(check);
+    };
+    check();
+    window.addEventListener("scroll", scheduleCheck, { passive: true });
+    window.addEventListener("resize", scheduleCheck);
+    const mo = new MutationObserver(scheduleCheck);
+    mo.observe(document.body, { childList: true, subtree: true });
+    return () => {
+      window.removeEventListener("scroll", scheduleCheck);
+      window.removeEventListener("resize", scheduleCheck);
+      mo.disconnect();
+      if (rafId) cancelAnimationFrame(rafId);
+    };
+  }, [current]);
 
   const navSuggestions = buildSuggestions(navDirectory, navQuery);
 
@@ -618,10 +651,10 @@ function Nav({ onNav, current, session, user, onSignIn, onSignOut }) {
   const initials = getInitials(user?.full_name);
 
   return (
-    <nav className="nav">
+    <nav className="nav" ref={navRef}>
       <span className="nav-logo" style={{ cursor: "pointer" }} onClick={() => onNav("home")}>vai<span>book</span></span>
 
-      <div className="nav-search-wrap">
+      <div className={`nav-search-wrap ${navSearchActive ? "visible" : ""}`}>
         <div className="nav-search">
           <div className="nav-search-input-wrap">
             <span className="nav-search-icon">🔍</span>
@@ -647,7 +680,7 @@ function Nav({ onNav, current, session, user, onSignIn, onSignOut }) {
           )}
         </div>
       </div>
-      <button className="nav-search-toggle" onClick={() => setMobileSearchOpen(v => !v)} aria-label="Search">🔍</button>
+      <button className={`nav-search-toggle ${navSearchActive ? "visible" : ""}`} onClick={() => setMobileSearchOpen(v => !v)} aria-label="Search">🔍</button>
 
       {(current === "home" || (current === "customer" && !session)) ? (
         <div className="nav-cta">
@@ -739,7 +772,7 @@ function Nav({ onNav, current, session, user, onSignIn, onSignOut }) {
         </div>
       )}
 
-      {mobileSearchOpen && (
+      {mobileSearchOpen && navSearchActive && (
         <div className="nav-search-mobile-panel">
           <div className="nav-search-input-wrap">
             <span className="nav-search-icon">🔍</span>
@@ -800,7 +833,7 @@ function LandingPage({ onNav, session, onSignIn }) {
       <section className="search-hero">
         <h1>Book local services, the easy way</h1>
         <p className="search-sub">Find trusted barbers, nail techs, cleaners, and more near you in Belize.</p>
-        <div className="search-bar-pill">
+        <div className="search-bar-pill" id="main-search-bar">
           <div className="field">
             <span>🔍</span>
             <input
@@ -1303,7 +1336,7 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate }) {
         {tab === "browse" && (
           <>
             <div className="portal-header"><h2>Find a service</h2><p>Browse verified providers across Belize.</p></div>
-            <div className="search-bar">
+            <div className="search-bar" id="main-search-bar">
               <span className="search-icon">🔍</span>
               <input
                 placeholder="Search barbers, nail techs, cleaners, or 'haircut'..."
