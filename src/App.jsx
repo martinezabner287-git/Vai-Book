@@ -6,7 +6,7 @@ import L from "leaflet";
 import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
 import markerIcon from "leaflet/dist/images/marker-icon.png";
 import markerShadow from "leaflet/dist/images/marker-shadow.png";
-import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, deleteService, getActiveProviders, createBooking, getCustomerBookings, uploadReceipt, submitReview, sendBookingEmail, updateUserProfile, getPaymentMethods, addPaymentMethod, deletePaymentMethod } from "./supabase";
+import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, deleteService, getActiveProviders, getProviderDirectory, createBooking, getCustomerBookings, uploadReceipt, submitReview, getProviderReviews, sendBookingEmail, updateUserProfile, getPaymentMethods, addPaymentMethod, deletePaymentMethod } from "./supabase";
 
 // Leaflet's default marker icons reference image paths that don't resolve
 // correctly under CRA's bundler unless re-pointed at the imported assets.
@@ -31,6 +31,60 @@ function LocationPicker({ position, onPick }) {
 
 function directionsUrl(lat, lng) {
   return `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
+}
+
+// Builds a small, deduplicated list of search suggestions from a list of
+// providers (each with business_name, service_type, and services[].name).
+// Matches happen against three things: the provider's business name, its
+// category (service_type), and the individual services it offers — so
+// typing "the nigglet cuts", "barber", or "haircut" all surface results.
+function buildSuggestions(list, query) {
+  const q = (query || "").trim().toLowerCase();
+  if (!q || !list || list.length === 0) return [];
+  const results = [];
+  const seen = new Set();
+
+  list.forEach((p) => {
+    if ((p.business_name || "").toLowerCase().includes(q)) {
+      const key = `p-${p.id}`;
+      if (!seen.has(key)) {
+        seen.add(key);
+        results.push({ key, type: "provider", icon: "🏪", label: p.business_name, sublabel: p.service_type || "" });
+      }
+    }
+  });
+
+  const categories = new Set();
+  list.forEach((p) => {
+    if (p.service_type && p.service_type.toLowerCase().includes(q)) categories.add(p.service_type);
+  });
+  categories.forEach((cat) => {
+    const key = `c-${cat}`;
+    if (!seen.has(key)) {
+      seen.add(key);
+      results.push({ key, type: "category", icon: "🏷️", label: cat, sublabel: "Category" });
+    }
+  });
+
+  const serviceNames = new Map();
+  list.forEach((p) => {
+    (p.services || []).forEach((s) => {
+      if (s.name && s.name.toLowerCase().includes(q)) {
+        const k = s.name.toLowerCase();
+        if (!serviceNames.has(k)) serviceNames.set(k, { name: s.name, count: 0 });
+        serviceNames.get(k).count += 1;
+      }
+    });
+  });
+  serviceNames.forEach(({ name, count }) => {
+    const key = `s-${name.toLowerCase()}`;
+    if (!seen.has(key)) {
+      seen.add(key);
+      results.push({ key, type: "service", icon: "✂️", label: name, sublabel: `Service · ${count} provider${count === 1 ? "" : "s"}` });
+    }
+  });
+
+  return results.slice(0, 8);
 }
 
 // ── DESIGN TOKENS ──────────────────────────────────────────────
@@ -176,7 +230,7 @@ const css = `
   .search-hero > * { position: relative; z-index: 1; }
   .search-hero h1 { font-family: 'Syne', sans-serif; font-weight: 800; font-size: clamp(34px, 5vw, 58px); color: var(--forest); line-height: 1.08; margin-bottom: 16px; }
   .search-sub { font-size: 17px; color: var(--muted); max-width: 560px; margin: 0 auto 40px; line-height: 1.5; }
-  .search-bar-pill { max-width: 760px; margin: 0 auto; background: white; border-radius: 100px; box-shadow: 0 12px 40px rgba(13,61,46,0.14); display: flex; align-items: center; padding: 8px; gap: 4px; }
+  .search-bar-pill { position: relative; max-width: 760px; margin: 0 auto; background: white; border-radius: 100px; box-shadow: 0 12px 40px rgba(13,61,46,0.14); display: flex; align-items: center; padding: 8px; gap: 4px; }
   .search-bar-pill .field { flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; padding: 10px 18px; }
   .search-bar-pill .field input, .search-bar-pill .field select { border: none; outline: none; background: transparent; font-size: 14px; width: 100%; color: var(--dark-text); font-family: 'Inter', sans-serif; }
   .search-bar-pill .sep { width: 1px; height: 28px; background: var(--border); flex-shrink: 0; }
@@ -184,6 +238,14 @@ const css = `
   .search-submit:hover { opacity: .87; }
   .search-hero-tagline { margin-top: 26px; font-size: 13px; color: var(--muted); }
   .search-hero-tagline a { color: var(--forest); font-weight: 600; cursor: pointer; text-decoration: underline; }
+
+  /* SEARCH SUGGESTIONS (autocomplete dropdown, shared by hero + browse search bars) */
+  .suggestions-dropdown { position: absolute; top: calc(100% + 8px); left: 0; right: 0; background: white; border: 1px solid var(--border); border-radius: 16px; box-shadow: 0 16px 36px rgba(13,61,46,0.16); z-index: 60; overflow: hidden; text-align: left; }
+  .suggestion-item { display: flex; align-items: center; gap: 10px; padding: 11px 18px; cursor: pointer; font-size: 13px; }
+  .suggestion-item:hover, .suggestion-item.active { background: var(--sand); }
+  .suggestion-icon { font-size: 14px; width: 18px; text-align: center; flex-shrink: 0; }
+  .suggestion-label { font-weight: 600; color: var(--dark-text); }
+  .suggestion-sub { font-size: 11px; color: var(--muted); margin-left: auto; flex-shrink: 0; padding-left: 12px; }
   @media (max-width: 640px) {
     .search-hero { padding: 80px 20px 64px; }
     .search-bar-pill { flex-direction: column; border-radius: 20px; align-items: stretch; }
@@ -322,7 +384,7 @@ const css = `
   .card-title { font-size: 16px; font-weight: 600; color: var(--forest); margin-bottom: 16px; }
 
   /* SEARCH BAR */
-  .search-bar { background: white; border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 20px; display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
+  .search-bar { position: relative; background: white; border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 20px; display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
   .search-bar input { border: none; outline: none; font-size: 15px; flex: 1; font-family: 'Inter', sans-serif; color: var(--dark-text); background: transparent; }
   .search-bar .search-icon { color: var(--muted); font-size: 18px; }
 
@@ -337,6 +399,18 @@ const css = `
   .provider-card-footer { display: flex; align-items: center; justify-content: space-between; margin-top: 10px; }
   .price-tag { font-size: 14px; font-weight: 600; color: var(--forest); }
   .avail-badge { font-size: 11px; font-weight: 600; background: #DCFCE7; color: #15803D; padding: 3px 8px; border-radius: 6px; }
+
+  /* PROVIDER PROFILE MODAL (Services / Portfolio / Reviews / About) */
+  .modal-panel.profile-panel { max-width: 580px; }
+  .service-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 0; border-bottom: 1px solid var(--border); }
+  .service-row:last-child { border-bottom: none; }
+  .portfolio-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .portfolio-thumb { width: 100%; aspect-ratio: 1 / 1; object-fit: cover; border-radius: 10px; cursor: pointer; border: 1px solid var(--border); transition: opacity .15s; }
+  .portfolio-thumb:hover { opacity: .85; }
+  .review-card { padding: 14px 0; border-bottom: 1px solid var(--border); }
+  .review-card:last-child { border-bottom: none; }
+  .lightbox-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: flex; align-items: center; justify-content: center; z-index: 300; padding: 24px; cursor: zoom-out; }
+  .lightbox-overlay img { max-width: 92vw; max-height: 92vh; border-radius: 10px; object-fit: contain; }
 
   .tab-row { display: flex; gap: 4px; margin-bottom: 24px; background: white; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 4px; }
   .tab { flex: 1; text-align: center; padding: 8px; font-size: 13px; font-weight: 500; color: var(--muted); cursor: pointer; border-radius: 6px; transition: all .2s; }
@@ -597,12 +671,27 @@ function Nav({ onNav, current, session, user, onSignIn, onSignOut }) {
 function LandingPage({ onNav, session, onSignIn }) {
   const [heroQuery, setHeroQuery] = useState("");
   const [heroDistrict, setHeroDistrict] = useState("");
+  const [heroDirectory, setHeroDirectory] = useState([]);
+  const [showHeroSuggestions, setShowHeroSuggestions] = useState(false);
 
-  const submitHeroSearch = () => {
+  useEffect(() => {
+    getProviderDirectory().then((data) => setHeroDirectory(data || []));
+  }, []);
+
+  const heroSuggestions = buildSuggestions(heroDirectory, heroQuery);
+
+  const submitHeroSearch = (queryOverride) => {
+    const q = (queryOverride != null ? queryOverride : heroQuery).trim();
     try {
-      localStorage.setItem("vaibook_pending_search", JSON.stringify({ query: heroQuery.trim(), district: heroDistrict || "All" }));
+      localStorage.setItem("vaibook_pending_search", JSON.stringify({ query: q, district: heroDistrict || "All" }));
     } catch (e) { /* ignore storage errors */ }
     enterCustomerPortal(onNav, session, onSignIn);
+  };
+
+  const selectHeroSuggestion = (s) => {
+    setHeroQuery(s.label);
+    setShowHeroSuggestions(false);
+    submitHeroSearch(s.label);
   };
 
   return (
@@ -617,8 +706,10 @@ function LandingPage({ onNav, session, onSignIn }) {
             <input
               placeholder="What service do you need?"
               value={heroQuery}
-              onChange={e => setHeroQuery(e.target.value)}
-              onKeyDown={e => { if (e.key === "Enter") submitHeroSearch(); }}
+              onChange={e => { setHeroQuery(e.target.value); setShowHeroSuggestions(true); }}
+              onFocus={() => setShowHeroSuggestions(true)}
+              onBlur={() => setTimeout(() => setShowHeroSuggestions(false), 150)}
+              onKeyDown={e => { if (e.key === "Enter") { setShowHeroSuggestions(false); submitHeroSearch(); } }}
             />
           </div>
           <div className="sep" />
@@ -629,7 +720,18 @@ function LandingPage({ onNav, session, onSignIn }) {
               {DISTRICTS.map(d => <option key={d} value={d}>{d}</option>)}
             </select>
           </div>
-          <button className="search-submit" onClick={submitHeroSearch}>Search</button>
+          <button className="search-submit" onClick={() => { setShowHeroSuggestions(false); submitHeroSearch(); }}>Search</button>
+          {showHeroSuggestions && heroSuggestions.length > 0 && (
+            <div className="suggestions-dropdown">
+              {heroSuggestions.map((s) => (
+                <div key={s.key} className="suggestion-item" onMouseDown={() => selectHeroSuggestion(s)}>
+                  <span className="suggestion-icon">{s.icon}</span>
+                  <span className="suggestion-label">{s.label}</span>
+                  <span className="suggestion-sub">{s.sublabel}</span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
         <div className="search-hero-tagline">
           Own a business? <a onClick={() => onNav("signup")}>List it on VaiBook, free to start</a>
@@ -815,6 +917,12 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate }) {
   const [bookingForm, setBookingForm] = useState({ service_id: "", date: "", time: "10:00", notes: "" });
   const [submittingBooking, setSubmittingBooking] = useState(false);
   const [bookingError, setBookingError] = useState("");
+  const [profileTab, setProfileTab] = useState("services");
+  const [bookingService, setBookingService] = useState(null);
+  const [providerReviews, setProviderReviews] = useState([]);
+  const [loadingReviews, setLoadingReviews] = useState(false);
+  const [lightboxUrl, setLightboxUrl] = useState(null);
+  const [showBrowseSuggestions, setShowBrowseSuggestions] = useState(false);
 
   const [uploadingReceiptId, setUploadingReceiptId] = useState(null);
   const [reviewingId, setReviewingId] = useState(null);
@@ -877,15 +985,39 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate }) {
   ];
 
   const openBooking = (provider) => {
-    const firstService = (provider.services || []).find((s) => s.is_active !== false);
+    setBookingError("");
+    setProfileTab("services");
+    setBookingService(null);
+    setProviderReviews([]);
+    setLightboxUrl(null);
+    setSelectedProvider(provider);
+  };
+
+  const startBookingForService = (service) => {
     setBookingForm({
-      service_id: firstService?.id || "",
+      service_id: service.id,
       date: new Date().toISOString().slice(0, 10),
       time: "10:00",
       notes: "",
     });
     setBookingError("");
-    setSelectedProvider(provider);
+    setBookingService(service);
+  };
+
+  const backToServices = () => {
+    setBookingService(null);
+    setBookingError("");
+  };
+
+  const openReviewsTab = () => {
+    setProfileTab("reviews");
+    if (selectedProvider && providerReviews.length === 0 && !loadingReviews) {
+      setLoadingReviews(true);
+      getProviderReviews(selectedProvider.id).then((data) => {
+        setProviderReviews(data || []);
+        setLoadingReviews(false);
+      });
+    }
   };
 
   const submitBooking = async () => {
@@ -923,6 +1055,7 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate }) {
 
     if (created) {
       setSelectedProvider(null);
+      setBookingService(null);
       await loadBookings();
       setTab("bookings");
       setBookingTab("upcoming");
@@ -968,8 +1101,17 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate }) {
   const filteredProviders = providers.filter((p) => {
     if (!providerSearch.trim()) return true;
     const q = providerSearch.trim().toLowerCase();
-    return (p.business_name || "").toLowerCase().includes(q) || (p.service_type || "").toLowerCase().includes(q);
+    const nameMatch = (p.business_name || "").toLowerCase().includes(q);
+    const categoryMatch = (p.service_type || "").toLowerCase().includes(q);
+    const serviceMatch = (p.services || []).some((s) => (s.name || "").toLowerCase().includes(q));
+    return nameMatch || categoryMatch || serviceMatch;
   });
+
+  const browseSuggestions = buildSuggestions(providers, providerSearch);
+  const selectBrowseSuggestion = (s) => {
+    setProviderSearch(s.label);
+    setShowBrowseSuggestions(false);
+  };
 
   const providerRating = (p) => {
     const ratings = (p.reviews || []).map((r) => r.rating).filter((r) => r != null);
@@ -1063,7 +1205,24 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate }) {
             <div className="portal-header"><h2>Find a service</h2><p>Browse verified providers across Belize.</p></div>
             <div className="search-bar">
               <span className="search-icon">🔍</span>
-              <input placeholder="Search barbers, nail techs, cleaners..." value={providerSearch} onChange={e => setProviderSearch(e.target.value)} />
+              <input
+                placeholder="Search barbers, nail techs, cleaners, or 'haircut'..."
+                value={providerSearch}
+                onChange={e => { setProviderSearch(e.target.value); setShowBrowseSuggestions(true); }}
+                onFocus={() => setShowBrowseSuggestions(true)}
+                onBlur={() => setTimeout(() => setShowBrowseSuggestions(false), 150)}
+              />
+              {showBrowseSuggestions && browseSuggestions.length > 0 && (
+                <div className="suggestions-dropdown">
+                  {browseSuggestions.map((s) => (
+                    <div key={s.key} className="suggestion-item" onMouseDown={() => selectBrowseSuggestion(s)}>
+                      <span className="suggestion-icon">{s.icon}</span>
+                      <span className="suggestion-label">{s.label}</span>
+                      <span className="suggestion-sub">{s.sublabel}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 20 }}>
               {["All", ...DISTRICTS].map((f, i) => (
@@ -1300,65 +1459,132 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate }) {
 
       {selectedProvider && (
         <div className="modal-overlay" onClick={() => setSelectedProvider(null)}>
-          <div className="modal-panel" onClick={(e) => e.stopPropagation()}>
+          <div className="modal-panel profile-panel" onClick={(e) => e.stopPropagation()}>
             <span className="modal-close" onClick={() => setSelectedProvider(null)}>✕ Close</span>
-            <div className="card-title" style={{ marginBottom: 4 }}>Book {selectedProvider.business_name}</div>
-            <p style={{ fontSize: 13, color: "var(--muted)", marginBottom: 12 }}>{selectedProvider.service_type} · {selectedProvider.district}</p>
+            <div className="card-title" style={{ marginBottom: 2 }}>{selectedProvider.business_name}</div>
+            <p style={{ fontSize: 13, color: "var(--muted)", marginBottom: 16 }}>
+              {providerRating(selectedProvider) ? (
+                <span className="stars">★★★★★ {providerRating(selectedProvider)} <span style={{ color: "var(--muted)" }}>({selectedProvider.reviews.length})</span></span>
+              ) : "No reviews yet"}
+              {" · "}{selectedProvider.service_type} · {selectedProvider.district}
+            </p>
 
-            {selectedProvider.portfolio_urls && selectedProvider.portfolio_urls.length > 0 && (
-              <div style={{ display: "flex", gap: 8, overflowX: "auto", marginBottom: 12 }}>
-                {selectedProvider.portfolio_urls.map((url) => (
-                  <img key={url} src={url} alt="Provider work" style={{ width: 72, height: 72, objectFit: "cover", borderRadius: 8, flexShrink: 0, border: "1px solid var(--border)" }} />
-                ))}
-              </div>
-            )}
+            <div className="tab-row">
+              {[
+                { id: "services", label: "Services" },
+                { id: "portfolio", label: "Portfolio" },
+                { id: "reviews", label: "Reviews" },
+                { id: "about", label: "About" },
+              ].map((t) => (
+                <div key={t.id} className={`tab ${profileTab === t.id ? "active" : ""}`} onClick={() => (t.id === "reviews" ? openReviewsTab() : setProfileTab(t.id))}>
+                  {t.label}
+                </div>
+              ))}
+            </div>
 
-            {selectedProvider.bio && (
-              <p style={{ fontSize: 13, color: "var(--dark-text)", marginBottom: 12 }}>{selectedProvider.bio}</p>
-            )}
+            {profileTab === "services" && (
+              bookingService ? (
+                <>
+                  <div onClick={backToServices} style={{ fontSize: 12, color: "var(--forest)", fontWeight: 600, cursor: "pointer", marginBottom: 14 }}>← Back to services</div>
+                  <div style={{ background: "var(--sand)", borderRadius: 8, padding: "12px 14px", marginBottom: 16, fontSize: 13 }}>
+                    <strong>{bookingService.name}</strong> — BZ${bookingService.price} · {bookingService.duration_min} min
+                  </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                    <div className="input-group"><label>Date</label><input type="date" min={new Date().toISOString().slice(0,10)} value={bookingForm.date} onChange={e => setBookingForm(f => ({ ...f, date: e.target.value }))} /></div>
+                    <div className="input-group"><label>Time</label><input type="time" value={bookingForm.time} onChange={e => setBookingForm(f => ({ ...f, time: e.target.value }))} /></div>
+                  </div>
+                  <div className="input-group"><label>Notes (optional)</label><textarea placeholder="Anything the provider should know?" value={bookingForm.notes} onChange={e => setBookingForm(f => ({ ...f, notes: e.target.value }))} style={{ minHeight: 60 }} /></div>
 
-            {(selectedProvider.whatsapp || (selectedProvider.latitude != null && selectedProvider.longitude != null)) && (
-              <div style={{ display: "flex", gap: 16, flexWrap: "wrap", fontSize: 13, marginBottom: 16, background: "var(--sand)", borderRadius: 8, padding: "10px 12px" }}>
-                {selectedProvider.whatsapp && (
-                  <a href={`https://wa.me/${selectedProvider.whatsapp.replace(/[^\d]/g, "")}`} target="_blank" rel="noreferrer" style={{ color: "var(--forest)", fontWeight: 600 }}>📞 {selectedProvider.whatsapp}</a>
-                )}
-                {selectedProvider.latitude != null && selectedProvider.longitude != null && (
-                  <a href={directionsUrl(selectedProvider.latitude, selectedProvider.longitude)} target="_blank" rel="noreferrer" style={{ color: "var(--forest)", fontWeight: 600 }}>
-                    📍 {selectedProvider.location_label || "Get directions"}
-                  </a>
-                )}
-              </div>
-            )}
+                  {selectedProvider.downpayment_required && (
+                    <p style={{ fontSize: 12, color: "var(--clay)", marginBottom: 12 }}>This provider requires a {selectedProvider.downpayment_pct || 50}% deposit after they accept your booking.</p>
+                  )}
+                  {bookingError && <p style={{ fontSize: 12, color: "#B91C1C", marginBottom: 12 }}>{bookingError}</p>}
 
-            {(selectedProvider.services || []).filter(s => s.is_active !== false).length === 0 ? (
-              <p style={{ fontSize: 13, color: "var(--muted)" }}>This provider hasn't listed any services yet.</p>
-            ) : (
-              <>
-                <div className="input-group">
-                  <label>Service</label>
-                  <select value={bookingForm.service_id} onChange={e => setBookingForm(f => ({ ...f, service_id: e.target.value }))}>
+                  <button className="btn-sm forest" style={{ width: "100%", padding: "10px 0" }} disabled={submittingBooking} onClick={submitBooking}>
+                    {submittingBooking ? "Sending request..." : "Request booking"}
+                  </button>
+                </>
+              ) : (
+                (selectedProvider.services || []).filter(s => s.is_active !== false).length === 0 ? (
+                  <p style={{ fontSize: 13, color: "var(--muted)" }}>This provider hasn't listed any services yet.</p>
+                ) : (
+                  <div>
                     {(selectedProvider.services || []).filter(s => s.is_active !== false).map(s => (
-                      <option key={s.id} value={s.id}>{s.name} — BZ${s.price} ({s.duration_min} min)</option>
+                      <div key={s.id} className="service-row">
+                        <div>
+                          <div style={{ fontWeight: 600, fontSize: 14, color: "var(--dark-text)" }}>{s.name}</div>
+                          <div style={{ fontSize: 12, color: "var(--muted)" }}>{s.duration_min} min · BZ${s.price}</div>
+                        </div>
+                        <button className="btn-sm forest" onClick={() => startBookingForService(s)}>Book</button>
+                      </div>
                     ))}
-                  </select>
-                </div>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-                  <div className="input-group"><label>Date</label><input type="date" min={new Date().toISOString().slice(0,10)} value={bookingForm.date} onChange={e => setBookingForm(f => ({ ...f, date: e.target.value }))} /></div>
-                  <div className="input-group"><label>Time</label><input type="time" value={bookingForm.time} onChange={e => setBookingForm(f => ({ ...f, time: e.target.value }))} /></div>
-                </div>
-                <div className="input-group"><label>Notes (optional)</label><textarea placeholder="Anything the provider should know?" value={bookingForm.notes} onChange={e => setBookingForm(f => ({ ...f, notes: e.target.value }))} style={{ minHeight: 60 }} /></div>
+                  </div>
+                )
+              )
+            )}
 
-                {selectedProvider.downpayment_required && (
-                  <p style={{ fontSize: 12, color: "var(--clay)", marginBottom: 12 }}>This provider requires a {selectedProvider.downpayment_pct || 50}% deposit after they accept your booking.</p>
+            {profileTab === "portfolio" && (
+              (selectedProvider.portfolio_urls && selectedProvider.portfolio_urls.length > 0) ? (
+                <div className="portfolio-grid">
+                  {selectedProvider.portfolio_urls.map((url) => (
+                    <img key={url} src={url} alt="Provider work" className="portfolio-thumb" onClick={() => setLightboxUrl(url)} />
+                  ))}
+                </div>
+              ) : (
+                <p style={{ fontSize: 13, color: "var(--muted)" }}>No portfolio photos yet.</p>
+              )
+            )}
+
+            {profileTab === "reviews" && (
+              loadingReviews ? (
+                <p style={{ fontSize: 13, color: "var(--muted)" }}>Loading reviews...</p>
+              ) : providerReviews.length === 0 ? (
+                <p style={{ fontSize: 13, color: "var(--muted)" }}>No reviews yet.</p>
+              ) : (
+                <div>
+                  {providerReviews.map((r) => (
+                    <div key={r.id} className="review-card">
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                        <strong style={{ fontSize: 13 }}>{r.users?.full_name || "Customer"}</strong>
+                        <span className="stars">{"★".repeat(r.rating || 0)}{"☆".repeat(5 - (r.rating || 0))}</span>
+                      </div>
+                      {r.comment && <p style={{ fontSize: 13, color: "var(--dark-text)", marginTop: 4 }}>{r.comment}</p>}
+                      {r.created_at && <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 4 }}>{new Date(r.created_at).toLocaleDateString()}</div>}
+                    </div>
+                  ))}
+                </div>
+              )
+            )}
+
+            {profileTab === "about" && (
+              <div>
+                {selectedProvider.bio && (
+                  <p style={{ fontSize: 13, color: "var(--dark-text)", marginBottom: 12 }}>{selectedProvider.bio}</p>
                 )}
-                {bookingError && <p style={{ fontSize: 12, color: "#B91C1C", marginBottom: 12 }}>{bookingError}</p>}
-
-                <button className="btn-sm forest" style={{ width: "100%", padding: "10px 0" }} disabled={submittingBooking} onClick={submitBooking}>
-                  {submittingBooking ? "Sending request..." : "Request booking"}
-                </button>
-              </>
+                {(selectedProvider.whatsapp || (selectedProvider.latitude != null && selectedProvider.longitude != null)) && (
+                  <div style={{ display: "flex", gap: 16, flexWrap: "wrap", fontSize: 13, background: "var(--sand)", borderRadius: 8, padding: "10px 12px" }}>
+                    {selectedProvider.whatsapp && (
+                      <a href={`https://wa.me/${selectedProvider.whatsapp.replace(/[^\d]/g, "")}`} target="_blank" rel="noreferrer" style={{ color: "var(--forest)", fontWeight: 600 }}>📞 {selectedProvider.whatsapp}</a>
+                    )}
+                    {selectedProvider.latitude != null && selectedProvider.longitude != null && (
+                      <a href={directionsUrl(selectedProvider.latitude, selectedProvider.longitude)} target="_blank" rel="noreferrer" style={{ color: "var(--forest)", fontWeight: 600 }}>
+                        📍 {selectedProvider.location_label || "Get directions"}
+                      </a>
+                    )}
+                  </div>
+                )}
+                {!selectedProvider.bio && !selectedProvider.whatsapp && selectedProvider.latitude == null && (
+                  <p style={{ fontSize: 13, color: "var(--muted)" }}>No additional details yet.</p>
+                )}
+              </div>
             )}
           </div>
+        </div>
+      )}
+
+      {lightboxUrl && (
+        <div className="lightbox-overlay" onClick={() => setLightboxUrl(null)}>
+          <img src={lightboxUrl} alt="Provider work" />
         </div>
       )}
     </div>

@@ -190,6 +190,19 @@ export const getActiveProviders = async (filters = {}) => {
   }));
 };
 
+// Lightweight directory used for search-suggestion autocomplete (business
+// name, category, and service names) — kept minimal since it's fetched
+// eagerly on the landing page before the user has searched for anything.
+export const getProviderDirectory = async () => {
+  const { data, error } = await supabase
+    .from('provider_profiles')
+    .select('id, business_name, service_type, district, services(name)')
+    .eq('is_active', true);
+  if (error) console.error(error.message);
+  const toArray = (v) => (v ? (Array.isArray(v) ? v : [v]) : []);
+  return (data || []).map((p) => ({ ...p, services: toArray(p.services) }));
+};
+
 // ── BOOKING HELPERS ──────────────────────────────────────────────
 
 export const createBooking = async (booking) => {
