@@ -218,7 +218,7 @@ export const createBooking = async (booking) => {
 export const getCustomerBookings = async (customerId) => {
   const { data, error } = await supabase
     .from('bookings')
-    .select('*, provider_profiles(id, business_name, service_type, district, whatsapp, payment_methods(id, type, name, account_name, account_number)), services(name, price, duration_min), reviews(id, rating, comment)')
+    .select('*, provider_profiles(id, user_id, business_name, service_type, district, latitude, longitude, location_label, whatsapp, payment_methods(id, type, name, account_name, account_number)), services(name, price, duration_min), reviews(id, rating, comment)')
     .eq('customer_id', customerId)
     .order('booking_date', { ascending: false });
   if (error) console.error(error.message);
@@ -466,4 +466,40 @@ export const getActiveApplicationByEmail = async (email) => {
     .maybeSingle();
   if (error) { console.error('Error fetching application by email:', error.message); return null; }
   return data;
+};
+
+// ── NOTIFICATION HELPERS ─────────────────────────────────────────
+
+export const createNotification = async ({ user_id, title, body, type, booking_id }) => {
+  if (!user_id) return null;
+  const { data, error } = await supabase
+    .from('notifications')
+    .insert({ user_id, title, body: body || null, type: type || null, booking_id: booking_id || null })
+    .select()
+    .single();
+  if (error) { console.error('Error creating notification:', error.message); return null; }
+  return data;
+};
+
+export const getNotifications = async (userId) => {
+  if (!userId) return [];
+  const { data, error } = await supabase
+    .from('notifications')
+    .select('*')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false })
+    .limit(30);
+  if (error) { console.error('Error loading notifications:', error.message); return []; }
+  return data || [];
+};
+
+export const markNotificationRead = async (id) => {
+  const { error } = await supabase.from('notifications').update({ read: true }).eq('id', id);
+  if (error) console.error('Error marking notification read:', error.message);
+};
+
+export const markAllNotificationsRead = async (userId) => {
+  if (!userId) return;
+  const { error } = await supabase.from('notifications').update({ read: true }).eq('user_id', userId).eq('read', false);
+  if (error) console.error('Error marking all notifications read:', error.message);
 };

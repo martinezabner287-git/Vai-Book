@@ -6,7 +6,7 @@ import L from "leaflet";
 import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
 import markerIcon from "leaflet/dist/images/marker-icon.png";
 import markerShadow from "leaflet/dist/images/marker-shadow.png";
-import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, deleteService, getActiveProviders, getProviderDirectory, createBooking, getCustomerBookings, uploadReceipt, submitReview, getProviderReviews, sendBookingEmail, updateUserProfile, getPaymentMethods, addPaymentMethod, deletePaymentMethod } from "./supabase";
+import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, deleteService, getActiveProviders, getProviderDirectory, createBooking, getCustomerBookings, uploadReceipt, submitReview, getProviderReviews, sendBookingEmail, updateUserProfile, getPaymentMethods, addPaymentMethod, deletePaymentMethod, createNotification, getNotifications, markNotificationRead, markAllNotificationsRead } from "./supabase";
 
 // Leaflet's default marker icons reference image paths that don't resolve
 // correctly under CRA's bundler unless re-pointed at the imported assets.
@@ -31,6 +31,68 @@ function LocationPicker({ position, onPick }) {
 
 function directionsUrl(lat, lng) {
   return `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
+}
+
+// Builds the professional "you're booked" confirmation email: a thank-you
+// note, an appointment card, a proper invoice breakdown, and the provider's
+// location with a one-tap directions link. Used once a booking is actually
+// confirmed (immediately for no-deposit bookings, or once the deposit
+// payment is confirmed) — not for the earlier accept/deposit-request emails.
+function bookingConfirmedEmailHtml({ customerName, providerProfile, serviceName, dateStr, timeStr, total, deposit }) {
+  const balance = deposit != null ? (Number(total || 0) - Number(deposit || 0)).toFixed(2) : null;
+  const hasLocation = providerProfile?.latitude != null && providerProfile?.longitude != null;
+  const mapsUrl = hasLocation ? directionsUrl(providerProfile.latitude, providerProfile.longitude) : null;
+  const addressLine = providerProfile?.location_label || providerProfile?.district || "";
+  const providerName = providerProfile?.business_name || "your provider";
+
+  return `
+  <div style="font-family: -apple-system, Helvetica, Arial, sans-serif; max-width: 520px; margin: 0 auto; color: #1a2e22;">
+    <div style="background: #0D3D2E; padding: 22px 28px; border-radius: 10px 10px 0 0;">
+      <span style="font-size: 20px; font-weight: 700; color: #FAFAF7;">vai<span style="color: #C6F135;">book</span></span>
+    </div>
+    <div style="background: #ffffff; border: 1px solid #E5E0D3; border-top: none; border-radius: 0 0 10px 10px; padding: 28px;">
+      <h2 style="margin: 0 0 6px; font-size: 20px; color: #0D3D2E;">Thank you for booking with VaiBook${customerName ? `, ${customerName}` : ""}!</h2>
+      <p style="margin: 0 0 20px; font-size: 14px; color: #5b6b62; line-height: 1.5;">Your appointment with <strong>${providerName}</strong> is confirmed. Here's everything you need for your visit.</p>
+
+      <div style="background: #F5EFE0; border-radius: 8px; padding: 16px 18px; margin-bottom: 16px;">
+        <div style="font-size: 12px; color: #5b6b62; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.4px;">Appointment</div>
+        <div style="font-size: 15px; font-weight: 600;">${serviceName}</div>
+        <div style="font-size: 13px; color: #5b6b62; margin-top: 2px;">${dateStr}${timeStr ? ` at ${timeStr}` : ""}</div>
+      </div>
+
+      <div style="border: 1px solid #E5E0D3; border-radius: 8px; padding: 16px 18px; margin-bottom: 16px;">
+        <div style="font-size: 12px; font-weight: 600; color: #0D3D2E; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.4px;">Invoice</div>
+        <table style="width: 100%; font-size: 14px; border-collapse: collapse;">
+          <tr><td style="padding: 4px 0; color: #5b6b62;">Total</td><td style="padding: 4px 0; text-align: right;">BZ$${Number(total || 0).toFixed(2)}</td></tr>
+          ${deposit != null ? `<tr><td style="padding: 4px 0; color: #5b6b62;">Deposit paid</td><td style="padding: 4px 0; text-align: right;">BZ$${Number(deposit).toFixed(2)}</td></tr>
+          <tr><td style="padding: 8px 0 0; font-weight: 600; border-top: 1px solid #E5E0D3;">Balance due at appointment</td><td style="padding: 8px 0 0; text-align: right; font-weight: 600; border-top: 1px solid #E5E0D3;">BZ$${balance}</td></tr>` : ""}
+        </table>
+      </div>
+
+      ${addressLine || mapsUrl ? `
+      <div style="border: 1px solid #E5E0D3; border-radius: 8px; padding: 16px 18px; margin-bottom: 16px;">
+        <div style="font-size: 12px; font-weight: 600; color: #0D3D2E; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.4px;">Location</div>
+        ${addressLine ? `<div style="font-size: 14px; margin-bottom: 10px;">${addressLine}</div>` : ""}
+        ${mapsUrl ? `<a href="${mapsUrl}" style="display: inline-block; background: #0D3D2E; color: #FAFAF7; text-decoration: none; font-size: 13px; font-weight: 600; padding: 9px 18px; border-radius: 100px;">Get directions</a>` : ""}
+      </div>` : ""}
+
+      <p style="font-size: 13px; color: #5b6b62; line-height: 1.5; margin-top: 24px;">We look forward to seeing you. If anything comes up, you can reach ${providerName} directly.</p>
+      <p style="font-size: 13px; color: #5b6b62; margin-top: 16px;">— The VaiBook Team</p>
+    </div>
+  </div>`;
+}
+
+// Compact relative-time formatter for the notification list ("2h ago").
+function timeAgo(dateStr) {
+  const diffMs = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(diffMs / 60000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  const days = Math.floor(hrs / 24);
+  if (days < 7) return `${days}d ago`;
+  return new Date(dateStr).toLocaleDateString();
 }
 
 // Builds a small, deduplicated list of search suggestions from a list of
@@ -140,6 +202,24 @@ const css = `
     .nav-search-toggle { display: flex; }
     .nav-search-mobile-panel { display: block; position: absolute; top: 100%; left: 0; right: 0; background: white; border-bottom: 1px solid var(--border); padding: 14px 20px 18px; box-shadow: 0 12px 24px rgba(13,61,46,0.08); }
   }
+
+  /* NOTIFICATION BELL */
+  .notif-bell-btn { position: relative; background: transparent; border: 1px solid var(--border); width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 16px; flex-shrink: 0; }
+  .notif-bell-btn:hover { border-color: var(--forest); }
+  .notif-badge { position: absolute; top: -4px; right: -4px; background: var(--clay); color: white; font-size: 10px; font-weight: 700; min-width: 16px; height: 16px; border-radius: 8px; display: flex; align-items: center; justify-content: center; padding: 0 3px; }
+  .notif-dropdown { position: absolute; top: calc(100% + 10px); right: 0; width: 320px; max-height: 420px; overflow-y: auto; background: white; border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 16px 36px rgba(13,61,46,0.16); z-index: 150; }
+  .notif-dropdown-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid var(--border); font-size: 13px; }
+  .notif-dropdown-header a { color: var(--forest); font-weight: 600; cursor: pointer; font-size: 12px; }
+  .notif-empty { padding: 24px 16px; font-size: 13px; color: var(--muted); text-align: center; margin: 0; }
+  .notif-item { padding: 12px 16px; border-bottom: 1px solid var(--border); cursor: pointer; position: relative; }
+  .notif-item:last-child { border-bottom: none; }
+  .notif-item:hover { background: var(--sand); }
+  .notif-item.unread { background: #F3F8EE; }
+  .notif-item.unread::before { content: ''; position: absolute; top: 16px; left: 6px; width: 6px; height: 6px; border-radius: 50%; background: var(--clay); }
+  .notif-item.unread .notif-title { padding-left: 12px; }
+  .notif-title { font-size: 13px; font-weight: 600; color: var(--dark-text); }
+  .notif-body { font-size: 12px; color: var(--muted); margin-top: 2px; line-height: 1.4; }
+  .notif-time { font-size: 11px; color: var(--muted); margin-top: 4px; }
   .nav-login-link { background: none; border: none; color: var(--dark-text); font-size: 14px; font-weight: 500; cursor: pointer; padding: 4px; }
   .nav-login-link:hover { color: var(--forest); }
   .btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--dark-text); padding: 9px 20px; border-radius: 100px; font-size: 14px; font-weight: 500; cursor: pointer; transition: all .2s; }
@@ -575,6 +655,67 @@ function AuthChoice({ onNav, session, onSignIn }) {
   );
 }
 
+function NotificationBell({ userId }) {
+  const [notifications, setNotifications] = useState([]);
+  const [open, setOpen] = useState(false);
+
+  const load = async () => {
+    const data = await getNotifications(userId);
+    setNotifications(data || []);
+  };
+
+  useEffect(() => {
+    if (!userId) return;
+    load();
+    const interval = setInterval(load, 30000);
+    return () => clearInterval(interval);
+  }, [userId]);
+
+  const unreadCount = notifications.filter((n) => !n.read).length;
+
+  const openNotification = async (n) => {
+    if (!n.read) {
+      setNotifications((prev) => prev.map((x) => (x.id === n.id ? { ...x, read: true } : x)));
+      await markNotificationRead(n.id);
+    }
+  };
+
+  const markAllRead = async () => {
+    setNotifications((prev) => prev.map((x) => ({ ...x, read: true })));
+    await markAllNotificationsRead(userId);
+  };
+
+  if (!userId) return null;
+
+  return (
+    <div style={{ position: "relative" }}>
+      <button className="notif-bell-btn" onClick={() => setOpen((v) => !v)} aria-label="Notifications">
+        🔔
+        {unreadCount > 0 && <span className="notif-badge">{unreadCount > 9 ? "9+" : unreadCount}</span>}
+      </button>
+      {open && (
+        <div className="notif-dropdown" onMouseLeave={() => setOpen(false)}>
+          <div className="notif-dropdown-header">
+            <strong>Notifications</strong>
+            {unreadCount > 0 && <a onClick={markAllRead}>Mark all read</a>}
+          </div>
+          {notifications.length === 0 ? (
+            <p className="notif-empty">No notifications yet.</p>
+          ) : (
+            notifications.map((n) => (
+              <div key={n.id} className={`notif-item ${n.read ? "" : "unread"}`} onClick={() => openNotification(n)}>
+                <div className="notif-title">{n.title}</div>
+                {n.body && <div className="notif-body">{n.body}</div>}
+                <div className="notif-time">{timeAgo(n.created_at)}</div>
+              </div>
+            ))
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function Nav({ onNav, current, session, user, onSignIn, onSignOut }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
@@ -681,6 +822,8 @@ function Nav({ onNav, current, session, user, onSignIn, onSignOut }) {
         </div>
       </div>
       <button className={`nav-search-toggle ${navSearchActive ? "visible" : ""}`} onClick={() => setMobileSearchOpen(v => !v)} aria-label="Search">🔍</button>
+
+      {session && user && <NotificationBell userId={user.id} />}
 
       {(current === "home" || (current === "customer" && !session)) ? (
         <div className="nav-cta">
@@ -1187,6 +1330,15 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate }) {
     setSubmittingBooking(false);
 
     if (created) {
+      if (selectedProvider.user_id) {
+        await createNotification({
+          user_id: selectedProvider.user_id,
+          title: "New booking request",
+          body: `${user?.full_name || "A customer"} requested ${service.name} on ${new Date(bookingForm.date).toLocaleDateString()}.`,
+          type: "booking_requested",
+          booking_id: created.id,
+        });
+      }
       setSelectedProvider(null);
       setBookingService(null);
       await loadBookings();
@@ -1201,6 +1353,16 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate }) {
     if (!file) return;
     setUploadingReceiptId(bookingId);
     await uploadReceipt(bookingId, file);
+    const uploadedBooking = bookings.find((b) => b.id === bookingId);
+    if (uploadedBooking?.provider_profiles?.user_id) {
+      await createNotification({
+        user_id: uploadedBooking.provider_profiles.user_id,
+        title: "Deposit receipt uploaded",
+        body: `${user?.full_name || "A customer"} uploaded a receipt for ${uploadedBooking.services?.name || "their booking"}. Confirm payment to finalize.`,
+        type: "receipt_uploaded",
+        booking_id: bookingId,
+      });
+    }
     await loadBookings();
     setUploadingReceiptId(null);
   };
@@ -1220,6 +1382,15 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate }) {
       rating: reviewForm.rating,
       comment: reviewForm.comment ? reviewForm.comment.trim() : null,
     });
+    if (booking.provider_profiles?.user_id) {
+      await createNotification({
+        user_id: booking.provider_profiles.user_id,
+        title: "New review received",
+        body: `${user?.full_name || "A customer"} left a ${reviewForm.rating}-star review${reviewForm.comment ? `: "${reviewForm.comment.trim().slice(0, 80)}"` : "."}`,
+        type: "review",
+        booking_id: booking.id,
+      });
+    }
     await loadBookings();
     setReviewingId(null);
     setSubmittingReview(false);
@@ -1836,8 +2007,10 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
     setBusyId(booking.id);
     const msg = responseMessage.trim() || null;
     const custEmail = booking.users?.email;
+    const custName = booking.users?.full_name;
     const serviceName = booking.services?.name || "your service";
     const dateStr = new Date(booking.booking_date).toLocaleDateString();
+    const timeStr = booking.booking_time?.slice(0, 5);
 
     if (responseType === "accept") {
       const requiresDeposit = !!providerProfile?.downpayment_required;
@@ -1851,9 +2024,27 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
           ? `<p>Your booking for ${serviceName} on ${dateStr} has been accepted.</p>` +
             (msg ? `<p>Message from the provider: ${msg}</p>` : "") +
             `<p>Please upload your deposit receipt (BZ$${booking.downpayment_amount ?? ""}) in your VaiBook account to confirm your appointment.</p>`
-          : `<p>Your booking for ${serviceName} on ${dateStr} is confirmed!</p>` +
-            (msg ? `<p>Message from the provider: ${msg}</p>` : "");
+          : bookingConfirmedEmailHtml({
+              customerName: custName,
+              providerProfile,
+              serviceName,
+              dateStr,
+              timeStr,
+              total: booking.total_amount,
+              deposit: null,
+            }) + (msg ? `<p style="max-width:520px;margin:12px auto 0;font-size:13px;color:#5b6b62;">Message from ${providerProfile.business_name}: ${msg}</p>` : "");
         await sendBookingEmail({ to: custEmail, subject, html });
+      }
+      if (booking.customer_id) {
+        await createNotification({
+          user_id: booking.customer_id,
+          title: requiresDeposit ? "Booking accepted — deposit needed" : "Booking confirmed!",
+          body: requiresDeposit
+            ? `${providerProfile.business_name} accepted your ${serviceName} request. Upload your deposit to confirm.`
+            : `${providerProfile.business_name} confirmed your ${serviceName} booking on ${dateStr}.`,
+          type: requiresDeposit ? "booking_accepted_deposit" : "booking_confirmed",
+          booking_id: booking.id,
+        });
       }
     } else {
       await updateBooking(booking.id, { status: "rejected", provider_message: msg });
@@ -1863,6 +2054,15 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
           subject: `${providerProfile.business_name} declined your booking request`,
           html: `<p>Unfortunately your booking request for ${serviceName} on ${dateStr} was declined.</p>` +
             (msg ? `<p>Message from the provider: ${msg}</p>` : ""),
+        });
+      }
+      if (booking.customer_id) {
+        await createNotification({
+          user_id: booking.customer_id,
+          title: "Booking declined",
+          body: `${providerProfile.business_name} declined your ${serviceName} request for ${dateStr}.`,
+          type: "booking_rejected",
+          booking_id: booking.id,
         });
       }
     }
@@ -1876,16 +2076,31 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
     setConfirmingPaymentId(booking.id);
     await updateBooking(booking.id, { status: "confirmed", payment_status: "paid" });
     const custEmail = booking.users?.email;
+    const serviceName = booking.services?.name || "your service";
+    const dateStr = new Date(booking.booking_date).toLocaleDateString();
+    const timeStr = booking.booking_time?.slice(0, 5);
     if (custEmail) {
-      const serviceName = booking.services?.name || "your service";
-      const dateStr = new Date(booking.booking_date).toLocaleDateString();
-      const balance = (Number(booking.total_amount || 0) - Number(booking.downpayment_amount || 0)).toFixed(2);
       await sendBookingEmail({
         to: custEmail,
         subject: `Payment confirmed — ${providerProfile.business_name}`,
-        html: `<p>Your deposit payment has been confirmed for ${serviceName} on ${dateStr}.</p>` +
-          `<p><strong>Invoice</strong><br/>Total: BZ$${booking.total_amount ?? "—"}<br/>Deposit paid: BZ$${booking.downpayment_amount ?? "—"}<br/>Balance due at appointment: BZ$${balance}</p>` +
-          `<p>See you soon!</p>`,
+        html: bookingConfirmedEmailHtml({
+          customerName: booking.users?.full_name,
+          providerProfile,
+          serviceName,
+          dateStr,
+          timeStr,
+          total: booking.total_amount,
+          deposit: booking.downpayment_amount,
+        }),
+      });
+    }
+    if (booking.customer_id) {
+      await createNotification({
+        user_id: booking.customer_id,
+        title: "Payment confirmed!",
+        body: `Your deposit for ${serviceName} on ${dateStr} was confirmed. See you soon!`,
+        type: "payment_confirmed",
+        booking_id: booking.id,
       });
     }
     await loadBookings();
