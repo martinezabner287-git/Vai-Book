@@ -205,7 +205,7 @@ export const createBooking = async (booking) => {
 export const getCustomerBookings = async (customerId) => {
   const { data, error } = await supabase
     .from('bookings')
-    .select('*, provider_profiles(id, business_name, service_type, district, whatsapp, bank_name, account_name, account_number), services(name, price, duration_min), reviews(id, rating, comment)')
+    .select('*, provider_profiles(id, business_name, service_type, district, whatsapp, payment_methods(id, type, name, account_name, account_number)), services(name, price, duration_min), reviews(id, rating, comment)')
     .eq('customer_id', customerId)
     .order('booking_date', { ascending: false });
   if (error) console.error(error.message);
@@ -363,6 +363,34 @@ export const updateUserProfile = async (userId, updates) => {
   const { data, error } = await supabase.from('users').update(updates).eq('id', userId).select().single();
   if (error) console.error('Error updating profile:', error.message);
   return data;
+};
+
+// ── PAYMENT METHOD HELPERS ───────────────────────────────────────
+
+export const getPaymentMethods = async (providerId) => {
+  const { data, error } = await supabase
+    .from('payment_methods')
+    .select('*')
+    .eq('provider_id', providerId)
+    .order('created_at', { ascending: true });
+  if (error) console.error('Error loading payment methods:', error.message);
+  return data || [];
+};
+
+export const addPaymentMethod = async (method) => {
+  const { data, error } = await supabase
+    .from('payment_methods')
+    .insert(method)
+    .select()
+    .single();
+  if (error) { console.error('Error adding payment method:', error.message); return null; }
+  return data;
+};
+
+export const deletePaymentMethod = async (id) => {
+  const { error } = await supabase.from('payment_methods').delete().eq('id', id);
+  if (error) { console.error('Error deleting payment method:', error.message); return false; }
+  return true;
 };
 
 

@@ -6,7 +6,7 @@ import L from "leaflet";
 import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
 import markerIcon from "leaflet/dist/images/marker-icon.png";
 import markerShadow from "leaflet/dist/images/marker-shadow.png";
-import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, deleteService, getActiveProviders, createBooking, getCustomerBookings, uploadReceipt, submitReview, sendBookingEmail, updateUserProfile } from "./supabase";
+import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, deleteService, getActiveProviders, createBooking, getCustomerBookings, uploadReceipt, submitReview, sendBookingEmail, updateUserProfile, getPaymentMethods, addPaymentMethod, deletePaymentMethod } from "./supabase";
 
 // Leaflet's default marker icons reference image paths that don't resolve
 // correctly under CRA's bundler unless re-pointed at the imported assets.
@@ -1140,12 +1140,14 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate }) {
 
                     {b.status === "awaiting_payment" && b.payment_status === "unpaid" && (
                       <div style={{ marginTop: 8 }}>
-                        {(b.provider_profiles?.bank_name || b.provider_profiles?.account_number) ? (
+                        {(b.provider_profiles?.payment_methods && b.provider_profiles.payment_methods.length > 0) ? (
                           <div style={{ background: "var(--sand)", borderRadius: 10, padding: "10px 12px", marginBottom: 10, fontSize: 12.5, lineHeight: 1.6 }}>
-                            <div style={{ fontWeight: 700, marginBottom: 2 }}>Send BZ${b.downpayment_amount ?? "—"} to:</div>
-                            {b.provider_profiles?.bank_name && <div>Bank: {b.provider_profiles.bank_name}</div>}
-                            {b.provider_profiles?.account_name && <div>Account name: {b.provider_profiles.account_name}</div>}
-                            {b.provider_profiles?.account_number && <div>Account number: {b.provider_profiles.account_number}</div>}
+                            <div style={{ fontWeight: 700, marginBottom: 4 }}>Send BZ${b.downpayment_amount ?? "—"} to one of:</div>
+                            {b.provider_profiles.payment_methods.map((m) => (
+                              <div key={m.id} style={{ marginBottom: 6 }}>
+                                <div>{m.type === "wallet" ? "📱" : "🏦"} {m.name}{m.account_name ? ` — ${m.account_name}` : ""}{m.account_number ? ` — ${m.account_number}` : ""}</div>
+                              </div>
+                            ))}
                           </div>
                         ) : (
                           <p style={{ fontSize: 12, color: "var(--muted)", marginBottom: 10 }}>The provider hasn't added their payment details yet — reach out to them directly to arrange the deposit.</p>
@@ -1160,13 +1162,17 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate }) {
                       <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 6 }}>Receipt submitted — waiting for the provider to confirm payment.</p>
                     )}
 
-                    {b.status === "confirmed" && (b.provider_profiles?.bank_name || b.provider_profiles?.account_number) && (
+                    {b.status === "confirmed" && b.provider_profiles?.payment_methods && b.provider_profiles.payment_methods.length > 0 && (
                       <details style={{ marginTop: 8 }}>
                         <summary style={{ fontSize: 12, color: "var(--forest)", cursor: "pointer", fontWeight: 600 }}>Payment details</summary>
                         <div style={{ background: "var(--sand)", borderRadius: 10, padding: "10px 12px", marginTop: 8, fontSize: 12.5, lineHeight: 1.6 }}>
-                          {b.provider_profiles?.bank_name && <div>Bank: {b.provider_profiles.bank_name}</div>}
-                          {b.provider_profiles?.account_name && <div>Account name: {b.provider_profiles.account_name}</div>}
-                          {b.provider_profiles?.account_number && <div>Account number: {b.provider_profiles.account_number}</div>}
+                          {b.provider_profiles.payment_methods.map((m) => (
+                            <div key={m.id} style={{ marginBottom: 6 }}>
+                              <div style={{ fontWeight: 700 }}>{m.type === "wallet" ? "📱" : "🏦"} {m.name}</div>
+                              {m.account_name && <div>Account name: {m.account_name}</div>}
+                              {m.account_number && <div>{m.type === "wallet" ? "Wallet number" : "Account number"}: {m.account_number}</div>}
+                            </div>
+                          ))}
                         </div>
                       </details>
                     )}
@@ -1384,10 +1390,21 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
   const [confirmingPaymentId, setConfirmingPaymentId] = useState(null);
   const [depositForm, setDepositForm] = useState({ downpayment_required: false, downpayment_pct: 50 });
   const [savingDeposit, setSavingDeposit] = useState(false);
-  const [bankForm, setBankForm] = useState({ bank_name: "", account_name: "", account_number: "" });
-  const [savingBankInfo, setSavingBankInfo] = useState(false);
+  const [paymentMethods, setPaymentMethods] = useState([]);
+  const [paymentMethodForm, setPaymentMethodForm] = useState({ type: "bank", name: "", account_name: "", account_number: "" });
+  const [savingPaymentMethod, setSavingPaymentMethod] = useState(false);
 
   const providerId = providerProfile?.id;
+
+  const loadPaymentMethods = async () => {
+    if (!providerId) return;
+    const data = await getPaymentMethods(providerId);
+    setPaymentMethods(data);
+  };
+
+  useEffect(() => {
+    loadPaymentMethods();
+  }, [providerId]);
 
   const loadBookings = async () => {
     if (!providerId) return;
@@ -1433,11 +1450,6 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
       setDepositForm({
         downpayment_required: !!providerProfile.downpayment_required,
         downpayment_pct: providerProfile.downpayment_pct || 50,
-      });
-      setBankForm({
-        bank_name: providerProfile.bank_name || "",
-        account_name: providerProfile.account_name || "",
-        account_number: providerProfile.account_number || "",
       });
     }
   }, [providerProfile]);
@@ -1688,17 +1700,26 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
     : null;
   const currentMonthLabel = now.toLocaleDateString("en-US", { month: "long" });
 
-  const saveBankInfo = async () => {
-    if (!providerId) return;
-    setSavingBankInfo(true);
-    await upsertProviderProfile({
-      id: providerProfile.id,
-      user_id: providerProfile.user_id,
-      bank_name: bankForm.bank_name.trim() || null,
-      account_name: bankForm.account_name.trim() || null,
-      account_number: bankForm.account_number.trim() || null,
+  const handleAddPaymentMethod = async () => {
+    if (!providerId || !paymentMethodForm.name.trim()) return;
+    setSavingPaymentMethod(true);
+    const created = await addPaymentMethod({
+      provider_id: providerId,
+      type: paymentMethodForm.type,
+      name: paymentMethodForm.name.trim(),
+      account_name: paymentMethodForm.account_name.trim() || null,
+      account_number: paymentMethodForm.account_number.trim() || null,
     });
-    setSavingBankInfo(false);
+    if (created) {
+      setPaymentMethods((prev) => [...prev, created]);
+      setPaymentMethodForm({ type: "bank", name: "", account_name: "", account_number: "" });
+    }
+    setSavingPaymentMethod(false);
+  };
+
+  const handleDeletePaymentMethod = async (id) => {
+    setPaymentMethods((prev) => prev.filter((m) => m.id !== id));
+    await deletePaymentMethod(id);
   };
 
   const calYear = now.getFullYear();
@@ -1989,13 +2010,43 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
             </div>
             <div className="card">
               <div className="card-title">Your payment details</div>
-              <p style={{ fontSize: 13, color: "var(--muted)", marginBottom: 16 }}>Customers pay deposits and full payments straight to your bank account. This is what they'll see when it's time to pay.</p>
-              <div className="grid-2">
-                <div className="input-group"><label>Bank name</label><input value={bankForm.bank_name} onChange={e => setBankForm(f => ({ ...f, bank_name: e.target.value }))} placeholder="e.g. Atlantic Bank" /></div>
-                <div className="input-group"><label>Account holder name</label><input value={bankForm.account_name} onChange={e => setBankForm(f => ({ ...f, account_name: e.target.value }))} placeholder="Name on the account" /></div>
+              <p style={{ fontSize: 13, color: "var(--muted)", marginBottom: 16 }}>Customers pay deposits and full payments straight to you — add a bank account, a mobile wallet, or both. This is what they'll see when it's time to pay.</p>
+
+              {paymentMethods.length === 0 && (
+                <p style={{ fontSize: 13, color: "var(--muted)", padding: "8px 0" }}>No payment methods added yet. Add one below.</p>
+              )}
+              {paymentMethods.map((m) => (
+                <div key={m.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: "1px solid var(--border)" }}>
+                  <div>
+                    <div style={{ fontSize: 14, fontWeight: 600 }}>{m.type === "wallet" ? "📱" : "🏦"} {m.name}</div>
+                    <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 2 }}>{[m.account_name, m.account_number].filter(Boolean).join(" · ")}</div>
+                  </div>
+                  <button className="btn-sm ghost" style={{ fontSize: 12 }} onClick={() => handleDeletePaymentMethod(m.id)}>Remove</button>
+                </div>
+              ))}
+
+              <div style={{ marginTop: 20, paddingTop: 16, borderTop: "1px solid var(--border)" }}>
+                <div className="card-title">Add a payment method</div>
+                <div className="input-group">
+                  <label>Type</label>
+                  <select value={paymentMethodForm.type} onChange={e => setPaymentMethodForm(f => ({ ...f, type: e.target.value }))}>
+                    <option value="bank">Bank account</option>
+                    <option value="wallet">Mobile wallet</option>
+                  </select>
+                </div>
+                <div className="grid-2">
+                  <div className="input-group">
+                    <label>{paymentMethodForm.type === "wallet" ? "Wallet name" : "Bank name"}</label>
+                    <input value={paymentMethodForm.name} onChange={e => setPaymentMethodForm(f => ({ ...f, name: e.target.value }))} placeholder={paymentMethodForm.type === "wallet" ? "e.g. Wave, PayPal" : "e.g. Atlantic Bank"} />
+                  </div>
+                  <div className="input-group"><label>Account holder name</label><input value={paymentMethodForm.account_name} onChange={e => setPaymentMethodForm(f => ({ ...f, account_name: e.target.value }))} placeholder="Name on the account" /></div>
+                </div>
+                <div className="input-group">
+                  <label>{paymentMethodForm.type === "wallet" ? "Wallet number / handle" : "Account number"}</label>
+                  <input value={paymentMethodForm.account_number} onChange={e => setPaymentMethodForm(f => ({ ...f, account_number: e.target.value }))} placeholder={paymentMethodForm.type === "wallet" ? "Phone number or handle" : "Account number"} />
+                </div>
+                <button className="btn-sm lime" disabled={savingPaymentMethod || !paymentMethodForm.name.trim()} onClick={handleAddPaymentMethod}>{savingPaymentMethod ? "Adding..." : "Add payment method"}</button>
               </div>
-              <div className="input-group"><label>Account number</label><input value={bankForm.account_number} onChange={e => setBankForm(f => ({ ...f, account_number: e.target.value }))} placeholder="Account number" /></div>
-              <button className="btn-sm forest" disabled={savingBankInfo} onClick={saveBankInfo}>{savingBankInfo ? "Saving..." : "Save payment details"}</button>
             </div>
           </>
         )}
