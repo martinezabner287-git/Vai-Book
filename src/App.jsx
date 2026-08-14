@@ -228,7 +228,11 @@ const css = `
     z-index: 0;
   }
   .search-hero > * { position: relative; z-index: 1; }
-  .search-hero h1 { font-family: 'Syne', sans-serif; font-weight: 800; font-size: clamp(34px, 5vw, 58px); color: var(--forest); line-height: 1.08; margin-bottom: 16px; }
+  .search-hero > .search-bar-pill { z-index: 10; }
+  .search-hero h1 { font-family: 'Syne', sans-serif; font-weight: 800; font-size: clamp(30px, 6vw, 58px); color: var(--forest); line-height: 1.15; letter-spacing: -0.5px; margin-bottom: 16px; }
+  @media (max-width: 480px) {
+    .search-hero h1 { font-size: clamp(26px, 8vw, 34px); }
+  }
   .search-sub { font-size: 17px; color: var(--muted); max-width: 560px; margin: 0 auto 40px; line-height: 1.5; }
   .search-bar-pill { position: relative; max-width: 760px; margin: 0 auto; background: white; border-radius: 100px; box-shadow: 0 12px 40px rgba(13,61,46,0.14); display: flex; align-items: center; padding: 8px; gap: 4px; }
   .search-bar-pill .field { flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; padding: 10px 18px; }
@@ -698,7 +702,7 @@ function LandingPage({ onNav, session, onSignIn }) {
     <>
       {/* HERO */}
       <section className="search-hero">
-        <h1>Book local services,<br />the easy way</h1>
+        <h1>Book local services, the easy way</h1>
         <p className="search-sub">Find trusted barbers, nail techs, cleaners, and more near you in Belize.</p>
         <div className="search-bar-pill">
           <div className="field">
