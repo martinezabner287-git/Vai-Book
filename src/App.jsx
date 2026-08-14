@@ -229,7 +229,7 @@ const css = `
   }
   .search-hero > * { position: relative; z-index: 1; }
   .search-hero > .search-bar-pill { z-index: 10; }
-  .search-hero h1 { font-family: 'Syne', sans-serif; font-weight: 800; font-size: clamp(30px, 6vw, 58px); color: var(--forest); line-height: 1.15; letter-spacing: -0.5px; margin-bottom: 16px; }
+  .search-hero h1 { font-family: 'Syne', sans-serif; font-weight: 800; font-size: clamp(30px, 6vw, 58px); color: var(--forest); line-height: 1.15; letter-spacing: -0.5px; margin: 0 auto 16px; max-width: 760px; }
   @media (max-width: 480px) {
     .search-hero h1 { font-size: clamp(26px, 8vw, 34px); }
   }
