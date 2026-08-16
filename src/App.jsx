@@ -552,7 +552,53 @@ const css = `
     .metric-grid { grid-template-columns: 1fr 1fr; }
     .services-grid { grid-template-columns: repeat(2, 1fr); }
     .footer { padding: 40px 24px 24px; }
+    .a2hs-banner { left: 12px; right: 12px; bottom: 12px; padding: 12px; }
   }
+
+  .a2hs-banner {
+    position: fixed;
+    left: 20px;
+    right: 20px;
+    bottom: 20px;
+    max-width: 420px;
+    margin: 0 auto;
+    background: var(--forest);
+    color: white;
+    border-radius: var(--radius);
+    box-shadow: 0 16px 40px rgba(13,61,46,0.35);
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    z-index: 500;
+    animation: a2hsSlideUp .35s ease;
+  }
+  @keyframes a2hsSlideUp {
+    from { transform: translateY(24px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+  .a2hs-banner-icon { font-size: 24px; flex-shrink: 0; }
+  .a2hs-banner-text { flex: 1; min-width: 0; }
+  .a2hs-banner-title { font-size: 13px; font-weight: 700; line-height: 1.3; }
+  .a2hs-banner-sub { font-size: 12px; color: rgba(255,255,255,0.65); margin-top: 2px; }
+  .a2hs-banner-cta { background: var(--lime); color: var(--forest); border: none; border-radius: 100px; padding: 8px 14px; font-size: 13px; font-weight: 700; cursor: pointer; flex-shrink: 0; white-space: nowrap; }
+  .a2hs-banner-close { background: none; border: none; color: rgba(255,255,255,0.5); font-size: 14px; cursor: pointer; padding: 4px; flex-shrink: 0; }
+  .a2hs-banner-close:hover { color: white; }
+
+  .a2hs-modal { max-width: 380px; text-align: center; position: relative; padding: 32px 28px 28px; }
+  .a2hs-modal-close { position: absolute; top: 16px; right: 16px; background: none; border: none; font-size: 16px; color: var(--muted); cursor: pointer; }
+  .a2hs-modal-close:hover { color: var(--forest); }
+  .a2hs-modal-icon { font-size: 40px; margin-bottom: 8px; }
+  .a2hs-modal-title { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 800; color: var(--forest); margin: 0 0 8px; }
+  .a2hs-modal-sub { font-size: 13px; color: var(--muted); line-height: 1.5; margin: 0 0 20px; }
+  .a2hs-install-btn { width: 100%; padding: 12px; font-size: 14px; margin-bottom: 16px; }
+  .a2hs-tabs { display: flex; gap: 8px; background: var(--sand); border-radius: 100px; padding: 4px; margin-bottom: 20px; }
+  .a2hs-tab { flex: 1; background: none; border: none; padding: 8px 12px; border-radius: 100px; font-size: 13px; font-weight: 600; color: var(--muted); cursor: pointer; }
+  .a2hs-tab.active { background: white; color: var(--forest); box-shadow: 0 2px 8px rgba(13,61,46,0.12); }
+  .a2hs-steps { list-style: none; margin: 0; padding: 0; text-align: left; display: flex; flex-direction: column; gap: 14px; }
+  .a2hs-steps li { display: flex; align-items: flex-start; gap: 12px; font-size: 14px; color: var(--dark-text); line-height: 1.4; }
+  .a2hs-step-num { flex-shrink: 0; width: 22px; height: 22px; border-radius: 50%; background: var(--forest); color: white; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+  .a2hs-glyph { font-size: 13px; }
 `;
 
 // ── DATA ────────────────────────────────────────────────────────
@@ -652,6 +698,119 @@ function AuthChoice({ onNav, session, onSignIn }) {
         <div className="auth-choice-panel-logo">vai<span>book</span></div>
       </div>
     </div>
+  );
+}
+
+function openInstallAppGuide() {
+  window.dispatchEvent(new Event("vaibook-open-install-guide"));
+}
+
+function InstallAppGuide() {
+  const [open, setOpen] = useState(false);
+  const [platform, setPlatform] = useState("ios");
+  const [showBanner, setShowBanner] = useState(false);
+  const [deferredPrompt, setDeferredPrompt] = useState(null);
+
+  useEffect(() => {
+    const ua = window.navigator.userAgent || "";
+    const isIOS = /iPhone|iPad|iPod/.test(ua) && !window.MSStream;
+    const isAndroid = /Android/.test(ua);
+    const isMobile = isIOS || isAndroid;
+    setPlatform(isIOS ? "ios" : "android");
+
+    const isStandalone =
+      (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) ||
+      window.navigator.standalone === true;
+
+    const onBeforeInstall = (e) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+    window.addEventListener("beforeinstallprompt", onBeforeInstall);
+
+    const onOpenGuide = () => setOpen(true);
+    window.addEventListener("vaibook-open-install-guide", onOpenGuide);
+
+    let bannerTimer = null;
+    if (isMobile && !isStandalone) {
+      let dismissed = null;
+      try { dismissed = localStorage.getItem("vaibook_a2hs_dismissed"); } catch (e) { /* ignore */ }
+      if (!dismissed) {
+        bannerTimer = setTimeout(() => setShowBanner(true), 2500);
+      }
+    }
+
+    return () => {
+      window.removeEventListener("beforeinstallprompt", onBeforeInstall);
+      window.removeEventListener("vaibook-open-install-guide", onOpenGuide);
+      if (bannerTimer) clearTimeout(bannerTimer);
+    };
+  }, []);
+
+  const dismissBanner = () => {
+    setShowBanner(false);
+    try { localStorage.setItem("vaibook_a2hs_dismissed", "1"); } catch (e) { /* ignore */ }
+  };
+
+  const handleInstallClick = async () => {
+    setShowBanner(false);
+    try { localStorage.setItem("vaibook_a2hs_dismissed", "1"); } catch (e) { /* ignore */ }
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      try { await deferredPrompt.userChoice; } catch (e) { /* ignore */ }
+      setDeferredPrompt(null);
+    } else {
+      setOpen(true);
+    }
+  };
+
+  return (
+    <>
+      {showBanner && (
+        <div className="a2hs-banner">
+          <span className="a2hs-banner-icon">📲</span>
+          <div className="a2hs-banner-text">
+            <div className="a2hs-banner-title">Add VaiBook to your Home Screen</div>
+            <div className="a2hs-banner-sub">Quick access, just like an app.</div>
+          </div>
+          <button className="a2hs-banner-cta" onClick={handleInstallClick}>{deferredPrompt ? "Install" : "Show me"}</button>
+          <button className="a2hs-banner-close" onClick={dismissBanner} aria-label="Dismiss">✕</button>
+        </div>
+      )}
+      {open && (
+        <div className="modal-overlay" onClick={() => setOpen(false)}>
+          <div className="modal-panel a2hs-modal" onClick={(e) => e.stopPropagation()}>
+            <button className="a2hs-modal-close" onClick={() => setOpen(false)} aria-label="Close">✕</button>
+            <div className="a2hs-modal-icon">📲</div>
+            <h2 className="a2hs-modal-title">Add VaiBook to your Home Screen</h2>
+            <p className="a2hs-modal-sub">Get one-tap access and a full-screen app experience — no App Store needed.</p>
+
+            {deferredPrompt && (
+              <button className="btn-lime a2hs-install-btn" onClick={handleInstallClick}>Install App</button>
+            )}
+
+            <div className="a2hs-tabs">
+              <button className={`a2hs-tab ${platform === "ios" ? "active" : ""}`} onClick={() => setPlatform("ios")}>📱 iPhone</button>
+              <button className={`a2hs-tab ${platform === "android" ? "active" : ""}`} onClick={() => setPlatform("android")}>🤖 Android</button>
+            </div>
+
+            {platform === "ios" ? (
+              <ol className="a2hs-steps">
+                <li><span className="a2hs-step-num">1</span> Tap the <strong>Share</strong> icon <span className="a2hs-glyph">⬆️</span> in Safari's toolbar.</li>
+                <li><span className="a2hs-step-num">2</span> Scroll down and tap <strong>"Add to Home Screen"</strong>.</li>
+                <li><span className="a2hs-step-num">3</span> Tap <strong>"Add"</strong> in the top right.</li>
+              </ol>
+            ) : (
+              <ol className="a2hs-steps">
+                <li><span className="a2hs-step-num">1</span> Tap the <strong>⋮ menu</strong> icon in Chrome's top right.</li>
+                <li><span className="a2hs-step-num">2</span> Tap <strong>"Add to Home screen"</strong> or <strong>"Install app"</strong>.</li>
+                <li><span className="a2hs-step-num">3</span> Tap <strong>"Add"</strong> / <strong>"Install"</strong> to confirm.</li>
+              </ol>
+            )}
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 
@@ -864,6 +1023,10 @@ function Nav({ onNav, current, session, user, onSignIn, onSignOut }) {
                   <button className="nav-dropdown-item for-biz" onClick={() => goAccount(() => enterProviderPortal(onNav, session, onSignIn))}>
                     For businesses <span>→</span>
                   </button>
+                  <hr />
+                  <button className="nav-dropdown-item" onClick={() => goAccount(openInstallAppGuide)}>
+                    <span className="icn">📲</span> Add to Home Screen
+                  </button>
                 </div>
               )}
             </div>
@@ -885,6 +1048,8 @@ function Nav({ onNav, current, session, user, onSignIn, onSignOut }) {
                 <a onClick={() => go(() => scrollToSection("services", onNav, current))}>Services</a>
                 <a onClick={() => go(() => scrollToSection("how-it-works", onNav, current))}>How it works</a>
                 <a onClick={() => go(() => scrollToSection("pricing", onNav, current))}>Pricing</a>
+                <hr />
+                <button className="nav-dropdown-item" onClick={() => go(openInstallAppGuide)}>Add to Home Screen</button>
                 {current === "home" && (
                   <>
                     <hr />
@@ -910,6 +1075,8 @@ function Nav({ onNav, current, session, user, onSignIn, onSignOut }) {
               <a onClick={() => go(() => scrollToSection("services", onNav, current))}>Services</a>
               <a onClick={() => go(() => scrollToSection("how-it-works", onNav, current))}>How it works</a>
               <a onClick={() => go(() => scrollToSection("pricing", onNav, current))}>Pricing</a>
+              <hr />
+              <button className="nav-dropdown-item" onClick={() => go(openInstallAppGuide)}>Add to Home Screen</button>
             </div>
           )}
         </div>
@@ -3333,6 +3500,7 @@ export default function App() {
   return (
     <>
       <style>{css}</style>
+      <InstallAppGuide />
       {view !== "auth" && <Nav onNav={setView} current={view} {...authProps} />}
       {view === "home" && <LandingPage onNav={setView} {...authProps} />}
       {view === "customer" && <CustomerPortal onNav={setView} {...authProps} />}
