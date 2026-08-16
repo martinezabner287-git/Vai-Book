@@ -875,6 +875,35 @@ function NotificationBell({ userId }) {
   );
 }
 
+const PORTAL_TOOLS_BY_VIEW = {
+  customer: [
+    { id: "home", icon: "🏠", label: "Home" },
+    { id: "browse", icon: "🔍", label: "Find services" },
+    { id: "bookings", icon: "📅", label: "My bookings" },
+    { id: "payments", icon: "💳", label: "Payments" },
+    { id: "reviews", icon: "⭐", label: "My reviews" },
+    { id: "settings", icon: "⚙️", label: "Settings" },
+  ],
+  provider: [
+    { id: "dashboard", icon: "📊", label: "Dashboard" },
+    { id: "bookings", icon: "📅", label: "Bookings" },
+    { id: "calendar", icon: "🗓️", label: "Availability" },
+    { id: "services", icon: "✂️", label: "My services" },
+    { id: "earnings", icon: "💰", label: "Earnings" },
+    { id: "profile", icon: "👤", label: "Public profile" },
+    { id: "settings", icon: "⚙️", label: "Settings" },
+  ],
+  admin: [
+    { id: "pending", icon: "⏳", label: "Pending" },
+    { id: "active", icon: "✅", label: "Active" },
+    { id: "rejected", icon: "✖", label: "Rejected" },
+  ],
+};
+
+function setPortalTab(tabId) {
+  window.dispatchEvent(new CustomEvent("vaibook-set-portal-tab", { detail: { tab: tabId } }));
+}
+
 function Nav({ onNav, current, session, user, onSignIn, onSignOut }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
@@ -1061,6 +1090,31 @@ function Nav({ onNav, current, session, user, onSignIn, onSignOut }) {
               </div>
             )}
           </div>
+          )}
+        </div>
+      ) : session && PORTAL_TOOLS_BY_VIEW[current] ? (
+        <div style={{ position: "relative" }}>
+          <button className="nav-avatar-btn" onClick={() => setAccountOpen((v) => !v)}>
+            <span className="nav-avatar-circle">{initials}</span>
+            <span className="nav-avatar-caret">▾</span>
+          </button>
+          {accountOpen && (
+            <div className="nav-account-dropdown" onMouseLeave={closeAccount}>
+              <div className="nav-account-name">{user?.full_name || "My account"}</div>
+              {PORTAL_TOOLS_BY_VIEW[current].map((item) => (
+                <button key={item.id} className="nav-dropdown-item" onClick={() => goAccount(() => setPortalTab(item.id))}>
+                  <span className="icn">{item.icon}</span> {item.label}
+                </button>
+              ))}
+              <hr />
+              <button className="nav-dropdown-item" onClick={() => goAccount(openInstallAppGuide)}>
+                <span className="icn">📲</span> Add to Home Screen
+              </button>
+              <hr />
+              <button className="nav-dropdown-item" onClick={() => goAccount(onSignOut)}>
+                <span className="icn">↪</span> Log out
+              </button>
+            </div>
           )}
         </div>
       ) : (
@@ -1316,6 +1370,15 @@ function LandingPage({ onNav, session, onSignIn }) {
 // ── CUSTOMER PORTAL ─────────────────────────────────────────────
 function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate }) {
   const [tab, setTab] = useState("home");
+
+  // Lets the top nav's account dropdown (with the same tools list as the
+  // sidebar) switch tabs while already inside the customer portal,
+  // since the sidebar itself is hidden on mobile.
+  useEffect(() => {
+    const onSetTab = (e) => { if (e.detail && e.detail.tab) setTab(e.detail.tab); };
+    window.addEventListener("vaibook-set-portal-tab", onSetTab);
+    return () => window.removeEventListener("vaibook-set-portal-tab", onSetTab);
+  }, []);
   const displayName = user?.full_name || session?.user?.email || "there";
   const firstName = displayName.split(" ")[0].split("@")[0];
   const initial = displayName[0]?.toUpperCase() || "?";
@@ -2065,6 +2128,15 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate }) {
 // ── PROVIDER PORTAL ─────────────────────────────────────────────
 function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSignOut }) {
   const [tab, setTab] = useState("dashboard");
+
+  // Lets the top nav's account dropdown (with the same tools list as the
+  // sidebar) switch tabs while already inside the provider portal,
+  // since the sidebar itself is hidden on mobile.
+  useEffect(() => {
+    const onSetTab = (e) => { if (e.detail && e.detail.tab) setTab(e.detail.tab); };
+    window.addEventListener("vaibook-set-portal-tab", onSetTab);
+    return () => window.removeEventListener("vaibook-set-portal-tab", onSetTab);
+  }, []);
   const [bookings, setBookings] = useState([]);
   const [loadingBookings, setLoadingBookings] = useState(false);
   const [busyId, setBusyId] = useState(null);
@@ -3213,6 +3285,15 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
   const [apps, setApps] = useState([]);
   const [loadingApps, setLoadingApps] = useState(false);
   const [tab, setTab] = useState("pending");
+
+  // Lets the top nav's account dropdown (with the same tools list as the
+  // sidebar) switch tabs while already inside the admin portal,
+  // since the sidebar itself is hidden on mobile.
+  useEffect(() => {
+    const onSetTab = (e) => { if (e.detail && e.detail.tab) setTab(e.detail.tab); };
+    window.addEventListener("vaibook-set-portal-tab", onSetTab);
+    return () => window.removeEventListener("vaibook-set-portal-tab", onSetTab);
+  }, []);
   const [busyId, setBusyId] = useState(null);
 
   useEffect(() => {
