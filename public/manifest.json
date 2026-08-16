@@ -1,0 +1,31 @@
+{
+  "short_name": "VaiBook",
+  "name": "VaiBook — Book Local Services in Belize",
+  "description": "Find and book trusted barbers, nail techs, car washes, cleaners and more across Belize.",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-maskable-512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "maskable"
+    }
+  ],
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#0D3D2E",
+  "background_color": "#F5EFE0"
+}
