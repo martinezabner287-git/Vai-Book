@@ -6,7 +6,7 @@ import L from "leaflet";
 import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
 import markerIcon from "leaflet/dist/images/marker-icon.png";
 import markerShadow from "leaflet/dist/images/marker-shadow.png";
-import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, deleteService, getActiveProviders, getProviderDirectory, createBooking, getCustomerBookings, uploadReceipt, submitReview, getProviderReviews, sendBookingEmail, updateUserProfile, getPaymentMethods, addPaymentMethod, deletePaymentMethod, createNotification, getNotifications, markNotificationRead, markAllNotificationsRead } from "./supabase";
+import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, deleteService, getActiveProviders, getProviderDirectory, createBooking, getProviderBusyWindows, createBookingSafe, cancelBooking, getCustomerBookings, uploadReceipt, submitReview, getProviderReviews, sendBookingEmail, updateUserProfile, getPaymentMethods, addPaymentMethod, deletePaymentMethod, createNotification, getNotifications, markNotificationRead, markAllNotificationsRead } from "./supabase";
 
 // Leaflet's default marker icons reference image paths that don't resolve
 // correctly under CRA's bundler unless re-pointed at the imported assets.
@@ -622,7 +622,7 @@ function bookingStatusClass(status) {
   if (status === "confirmed") return "confirmed";
   if (status === "pending") return "pending";
   if (status === "awaiting_payment") return "awaiting";
-  if (status === "rejected") return "rejected";
+  if (status === "rejected" || status === "cancelled") return "rejected";
   return "done";
 }
 
@@ -1423,6 +1423,10 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate }) {
   const [bookingForm, setBookingForm] = useState({ service_id: "", date: "", time: "10:00", notes: "" });
   const [submittingBooking, setSubmittingBooking] = useState(false);
   const [bookingError, setBookingError] = useState("");
+  const [providerHours, setProviderHours] = useState([]);
+  const [busyWindows, setBusyWindows] = useState([]);
+  const [loadingSlots, setLoadingSlots] = useState(false);
+  const [cancellingId, setCancellingId] = useState(null);
   const [profileTab, setProfileTab] = useState("services");
   const [bookingService, setBookingService] = useState(null);
   const [providerReviews, setProviderReviews] = useState([]);
@@ -1497,18 +1501,78 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate }) {
     setProviderReviews([]);
     setLightboxUrl(null);
     setSelectedProvider(provider);
+    setProviderHours([]);
+    setBusyWindows([]);
+    if (provider?.id) {
+      getWorkingHours(provider.id).then((hrs) => setProviderHours(hrs || []));
+    }
   };
 
   const startBookingForService = (service) => {
     setBookingForm({
       service_id: service.id,
       date: new Date().toISOString().slice(0, 10),
-      time: "10:00",
+      time: "",
       notes: "",
     });
     setBookingError("");
     setBookingService(service);
   };
+
+  // Reload the provider's busy windows whenever the chosen date changes so the
+  // slot picker reflects live availability (not just what was true when the
+  // modal first opened).
+  useEffect(() => {
+    if (!selectedProvider?.id || !bookingForm.date) { setBusyWindows([]); return; }
+    let cancelled = false;
+    setLoadingSlots(true);
+    getProviderBusyWindows(selectedProvider.id, bookingForm.date).then((windows) => {
+      if (!cancelled) { setBusyWindows(windows || []); setLoadingSlots(false); }
+    });
+    return () => { cancelled = true; };
+  }, [selectedProvider?.id, bookingForm.date]);
+
+  const timeToMinutes = (t) => {
+    const [h, m] = String(t).slice(0, 5).split(":").map(Number);
+    return h * 60 + m;
+  };
+  const minutesToTime = (m) => `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
+  const formatTimeLabel = (t) => {
+    const mins = timeToMinutes(t);
+    const h24 = Math.floor(mins / 60);
+    const m = mins % 60;
+    const ampm = h24 >= 12 ? "PM" : "AM";
+    const h12 = h24 % 12 === 0 ? 12 : h24 % 12;
+    return `${h12}:${String(m).padStart(2, "0")} ${ampm}`;
+  };
+
+  // Builds the list of bookable slots for the currently selected date + service:
+  // provider working hours minus already-busy windows minus times in the past.
+  const availableSlots = (() => {
+    if (!bookingForm.date) return [];
+    const service = (selectedProvider?.services || []).find((s) => s.id === bookingForm.service_id);
+    const durationMin = Number(service?.duration_min) || 30;
+    const dow = new Date(bookingForm.date + "T00:00:00").getDay();
+    const dayHours = providerHours.find((h) => h.day_of_week === dow);
+    if (!dayHours || !dayHours.is_open || !dayHours.start_time || !dayHours.end_time) return [];
+    const startM = timeToMinutes(dayHours.start_time);
+    const endM = timeToMinutes(dayHours.end_time);
+    const isToday = bookingForm.date === new Date().toISOString().slice(0, 10);
+    const nowM = isToday ? new Date().getHours() * 60 + new Date().getMinutes() : -1;
+    const step = 30;
+    const slots = [];
+    for (let m = startM; m + durationMin <= endM; m += step) {
+      if (isToday && m <= nowM) continue;
+      const slotEnd = m + durationMin;
+      const busy = busyWindows.some((w) => {
+        const wStart = timeToMinutes(w.start_time);
+        const wEnd = timeToMinutes(w.end_time);
+        return m < wEnd && wStart < slotEnd;
+      });
+      if (!busy) slots.push(minutesToTime(m));
+    }
+    return slots;
+  })();
 
   const backToServices = () => {
     setBookingService(null);
@@ -1543,19 +1607,31 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate }) {
     const downpayment = dpPct ? Math.round(total * dpPct) / 100 : null;
     const order_number = `VB-${Date.now().toString(36).toUpperCase()}${Math.random().toString(36).slice(2, 5).toUpperCase()}`;
 
-    const created = await createBooking({
-      order_number,
-      customer_id: user.id,
-      provider_id: selectedProvider.id,
-      service_id: service.id,
-      booking_date: bookingForm.date,
-      booking_time: bookingForm.time,
-      status: "pending",
-      total_amount: total,
-      downpayment_amount: downpayment,
-      payment_status: "unpaid",
-      notes: bookingForm.notes ? bookingForm.notes.trim() : null,
-    });
+    let created = null;
+    try {
+      created = await createBookingSafe({
+        order_number,
+        customer_id: user.id,
+        provider_id: selectedProvider.id,
+        service_id: service.id,
+        booking_date: bookingForm.date,
+        booking_time: bookingForm.time,
+        total_amount: total,
+        downpayment_amount: downpayment,
+        notes: bookingForm.notes ? bookingForm.notes.trim() : null,
+      });
+    } catch (err) {
+      setSubmittingBooking(false);
+      if (err?.code === "SLOT_TAKEN") {
+        setBookingError("Sorry, that time was just taken by another customer. Please pick a different slot.");
+        // Refresh so the now-taken slot disappears from the picker.
+        getProviderBusyWindows(selectedProvider.id, bookingForm.date).then((w) => setBusyWindows(w || []));
+        setBookingForm((f) => ({ ...f, time: "" }));
+      } else {
+        setBookingError("Something went wrong sending your request. Please try again.");
+      }
+      return;
+    }
 
     setSubmittingBooking(false);
 
@@ -1577,6 +1653,24 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate }) {
     } else {
       setBookingError("Something went wrong sending your request. Please try again.");
     }
+  };
+
+  const handleCancelBooking = async (bookingId) => {
+    if (!window.confirm("Cancel this booking?")) return;
+    setCancellingId(bookingId);
+    const cancelled = bookings.find((b) => b.id === bookingId);
+    await cancelBooking(bookingId);
+    if (cancelled?.provider_profiles?.user_id) {
+      await createNotification({
+        user_id: cancelled.provider_profiles.user_id,
+        title: "Booking cancelled",
+        body: `${user?.full_name || "A customer"} cancelled their booking${cancelled?.services?.name ? ` for ${cancelled.services.name}` : ""} on ${new Date(cancelled.booking_date).toLocaleDateString()}.`,
+        type: "booking_cancelled",
+        booking_id: bookingId,
+      });
+    }
+    await loadBookings();
+    setCancellingId(null);
   };
 
   const handleUploadReceipt = async (bookingId, file) => {
@@ -1628,7 +1722,7 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate }) {
 
   const upcomingBookings = bookings.filter((b) => ["pending", "awaiting_payment", "confirmed"].includes(b.status));
   const completedBookings = bookings.filter((b) => b.status === "completed");
-  const rejectedBookings = bookings.filter((b) => b.status === "rejected");
+  const rejectedBookings = bookings.filter((b) => b.status === "rejected" || b.status === "cancelled");
   const totalSpent = completedBookings.reduce((sum, b) => sum + (Number(b.total_amount) || 0), 0);
   const reviewedBookings = bookings.filter((b) => b.reviews && b.reviews.length > 0);
 
@@ -1799,7 +1893,7 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate }) {
           <>
             <div className="portal-header"><h2>My bookings</h2><p>Track all your appointments in one place.</p></div>
             <div className="tab-row">
-              {["Upcoming", "Completed", "Rejected"].map((t, i) => (
+              {["Upcoming", "Completed", "Cancelled"].map((t, i) => (
                 <div key={i} className={`tab ${bookingTab === t.toLowerCase() ? "active" : ""}`} onClick={() => setBookingTab(t.toLowerCase())}>{t}</div>
               ))}
             </div>
@@ -1829,6 +1923,17 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate }) {
                     )}
                     {b.status !== "rejected" && b.provider_message && (
                       <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 6 }}>Provider's note: {b.provider_message}</p>
+                    )}
+
+                    {["pending", "awaiting_payment", "confirmed"].includes(b.status) && (
+                      <button
+                        className="btn-sm ghost"
+                        style={{ marginTop: 8, color: "#B91C1C" }}
+                        disabled={cancellingId === b.id}
+                        onClick={() => handleCancelBooking(b.id)}
+                      >
+                        {cancellingId === b.id ? "Cancelling..." : "Cancel booking"}
+                      </button>
                     )}
 
                     {b.status === "awaiting_payment" && b.payment_status === "unpaid" && (
@@ -2023,9 +2128,41 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate }) {
                   <div style={{ background: "var(--sand)", borderRadius: 8, padding: "12px 14px", marginBottom: 16, fontSize: 13 }}>
                     <strong>{bookingService.name}</strong> — BZ${bookingService.price} · {bookingService.duration_min} min
                   </div>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-                    <div className="input-group"><label>Date</label><input type="date" min={new Date().toISOString().slice(0,10)} value={bookingForm.date} onChange={e => setBookingForm(f => ({ ...f, date: e.target.value }))} /></div>
-                    <div className="input-group"><label>Time</label><input type="time" value={bookingForm.time} onChange={e => setBookingForm(f => ({ ...f, time: e.target.value }))} /></div>
+                  <div className="input-group">
+                    <label>Date</label>
+                    <input type="date" min={new Date().toISOString().slice(0,10)} value={bookingForm.date} onChange={e => setBookingForm(f => ({ ...f, date: e.target.value, time: "" }))} />
+                  </div>
+                  <div className="input-group">
+                    <label>Available times</label>
+                    {loadingSlots ? (
+                      <p style={{ fontSize: 12, color: "var(--muted)" }}>Checking live availability...</p>
+                    ) : !providerHours.length ? (
+                      <p style={{ fontSize: 12, color: "var(--muted)" }}>This provider hasn't set their working hours yet — try again later or send a note with your preferred time.</p>
+                    ) : availableSlots.length === 0 ? (
+                      <p style={{ fontSize: 12, color: "var(--clay)" }}>No open slots on this date. Please choose another day.</p>
+                    ) : (
+                      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(84px, 1fr))", gap: 8, maxHeight: 180, overflowY: "auto", paddingTop: 4 }}>
+                        {availableSlots.map((t) => (
+                          <button
+                            type="button"
+                            key={t}
+                            onClick={() => setBookingForm(f => ({ ...f, time: t }))}
+                            className="btn-sm"
+                            style={{
+                              padding: "6px 4px",
+                              fontSize: 12,
+                              border: bookingForm.time === t ? "2px solid var(--forest)" : "1px solid var(--border, #ddd)",
+                              background: bookingForm.time === t ? "var(--forest)" : "#fff",
+                              color: bookingForm.time === t ? "#fff" : "var(--dark-text)",
+                              borderRadius: 6,
+                              cursor: "pointer",
+                            }}
+                          >
+                            {formatTimeLabel(t)}
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
                   <div className="input-group"><label>Notes (optional)</label><textarea placeholder="Anything the provider should know?" value={bookingForm.notes} onChange={e => setBookingForm(f => ({ ...f, notes: e.target.value }))} style={{ minHeight: 60 }} /></div>
 
@@ -2226,6 +2363,18 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
   const act = async (id, status) => {
     setBusyId(id);
     await updateBookingStatus(id, status);
+    if (status === "completed") {
+      const finished = bookings.find((b) => b.id === id);
+      if (finished?.customer_id) {
+        await createNotification({
+          user_id: finished.customer_id,
+          title: "Booking complete",
+          body: `Your ${finished.services?.name || "appointment"} with ${providerProfile?.business_name || "the provider"} is marked done. Leave a review to let others know how it went!`,
+          type: "booking_completed",
+          booking_id: id,
+        });
+      }
+    }
     await loadBookings();
     setBusyId(null);
   };
