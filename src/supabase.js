@@ -121,7 +121,8 @@ export const getWorkingHours = async (providerId) => {
     .eq('provider_id', providerId)
     .order('day_of_week', { ascending: true });
   if (error) console.error('Error fetching working hours:', error.message);
-  return data || [];
+  // DB columns are open_time/close_time; the rest of the app reads start_time/end_time.
+  return (data || []).map((d) => ({ ...d, start_time: d.open_time, end_time: d.close_time }));
 };
 
 export const upsertWorkingHours = async (providerId, days) => {
@@ -129,15 +130,15 @@ export const upsertWorkingHours = async (providerId, days) => {
     provider_id: providerId,
     day_of_week: d.day_of_week,
     is_open: d.is_open,
-    start_time: d.start_time,
-    end_time: d.end_time,
+    open_time: d.start_time,
+    close_time: d.end_time,
   }));
   const { data, error } = await supabase
     .from('working_hours')
     .upsert(rows, { onConflict: 'provider_id,day_of_week' })
     .select();
   if (error) console.error('Error saving working hours:', error.message);
-  return data;
+  return (data || []).map((d) => ({ ...d, start_time: d.open_time, end_time: d.close_time }));
 };
 
 // ── SERVICE HELPERS ──────────────────────────────────────────────
@@ -212,6 +213,54 @@ export const createBooking = async (booking) => {
     .select()
     .single();
   if (error) console.error('Error creating booking:', error.message);
+  return data;
+};
+
+// Returns the busy time windows (start/end only, no customer identity) for a
+// provider on a given date — used to render live availability and to block
+// out already-taken slots on the booking calendar.
+export const getProviderBusyWindows = async (providerId, dateStr) => {
+  const { data, error } = await supabase
+    .rpc('get_busy_windows', { p_provider_id: providerId, p_date: dateStr });
+  if (error) { console.error('Error fetching busy windows:', error.message); return []; }
+  return data || [];
+};
+
+// Atomically re-checks for a conflicting booking and inserts, using a
+// server-side advisory lock so two customers can't win the same slot in a
+// race. Throws with a `.code === 'SLOT_TAKEN'` when the slot was just taken.
+export const createBookingSafe = async (booking) => {
+  const { data, error } = await supabase.rpc('create_booking_safe', {
+    p_order_number: booking.order_number,
+    p_customer_id: booking.customer_id,
+    p_provider_id: booking.provider_id,
+    p_service_id: booking.service_id,
+    p_booking_date: booking.booking_date,
+    p_booking_time: booking.booking_time,
+    p_total_amount: booking.total_amount,
+    p_downpayment_amount: booking.downpayment_amount,
+    p_notes: booking.notes,
+  });
+  if (error) {
+    if (error.message && error.message.includes('SLOT_TAKEN')) {
+      const err = new Error('SLOT_TAKEN');
+      err.code = 'SLOT_TAKEN';
+      throw err;
+    }
+    console.error('Error creating booking:', error.message);
+    return null;
+  }
+  return Array.isArray(data) ? data[0] : data;
+};
+
+export const cancelBooking = async (bookingId) => {
+  const { data, error } = await supabase
+    .from('bookings')
+    .update({ status: 'cancelled' })
+    .eq('id', bookingId)
+    .select()
+    .single();
+  if (error) console.error('Error cancelling booking:', error.message);
   return data;
 };
 
