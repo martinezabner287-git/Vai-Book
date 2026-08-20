@@ -6,7 +6,7 @@ import L from "leaflet";
 import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
 import markerIcon from "leaflet/dist/images/marker-icon.png";
 import markerShadow from "leaflet/dist/images/marker-shadow.png";
-import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, deleteService, getActiveProviders, getProviderDirectory, createBooking, getProviderBusyWindows, createBookingSafe, cancelBooking, getCustomerBookings, uploadReceipt, submitReview, getProviderReviews, sendBookingEmail, updateUserProfile, getPaymentMethods, addPaymentMethod, deletePaymentMethod, createNotification, getNotifications, markNotificationRead, markAllNotificationsRead, getLandingStats, getRecommendedServices, getCategoryDefaultFeatures, getProviderFeatureOverrides, setProviderFeatureOverride, getVisitNotes, upsertVisitNote } from "./supabase";
+import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, deleteService, getActiveProviders, getProviderDirectory, createBooking, getProviderBusyWindows, createBookingSafe, cancelBooking, getCustomerBookings, uploadReceipt, submitReview, getProviderReviews, sendBookingEmail, updateUserProfile, getPaymentMethods, addPaymentMethod, deletePaymentMethod, createNotification, getNotifications, markNotificationRead, markAllNotificationsRead, getLandingStats, getRecommendedServices, getCategoryDefaultFeatures, getProviderFeatureOverrides, setProviderFeatureOverride, getVisitNotes, upsertVisitNote, adminListProviders, adminUpdateProvider, adminDeleteProvider } from "./supabase";
 
 // Leaflet's default marker icons reference image paths that don't resolve
 // correctly under CRA's bundler unless re-pointed at the imported assets.
@@ -3607,7 +3607,7 @@ Activate this provider in your admin dashboard.`
       <div className="signup-box">
         <div className="signup-header">
           <h1>List your business on VaiBook</h1>
-          <p>Join 180+ providers already getting booked across Belize. Takes less than 3 minutes.</p>
+          <p>Join local providers already getting booked across Belize. Takes less than 3 minutes.</p>
         </div>
 
         {/* Plan selector */}
@@ -3692,6 +3692,14 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
   const [loadingApps, setLoadingApps] = useState(false);
   const [tab, setTab] = useState("pending");
 
+  const [providers, setProviders] = useState([]);
+  const [loadingProviders, setLoadingProviders] = useState(false);
+  const [editingProviderId, setEditingProviderId] = useState(null);
+  const [providerEditForm, setProviderEditForm] = useState({});
+  const [savingProviderId, setSavingProviderId] = useState(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null);
+  const [deletingId, setDeletingId] = useState(null);
+
   // Lets the top nav's account dropdown (with the same tools list as the
   // sidebar) switch tabs while already inside the admin portal,
   // since the sidebar itself is hidden on mobile.
@@ -3727,8 +3735,15 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
     setLoadingApps(false);
   };
 
+  const loadProviders = async () => {
+    setLoadingProviders(true);
+    const data = await adminListProviders();
+    setProviders(data);
+    setLoadingProviders(false);
+  };
+
   useEffect(() => {
-    if (isAdmin) loadApps();
+    if (isAdmin) { loadApps(); loadProviders(); }
   }, [isAdmin]);
 
   const act = async (id, status) => {
@@ -3736,6 +3751,54 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
     await updateApplicationStatus(id, status);
     await loadApps();
     setBusyId(null);
+  };
+
+  const startEditProvider = (p) => {
+    setEditingProviderId(p.id);
+    setProviderEditForm({
+      business_name: p.business_name || "",
+      district: p.district || "",
+      service_type: p.service_type || "",
+      whatsapp: p.whatsapp || "",
+      bio: p.bio || "",
+      plan: p.plan || "starter",
+    });
+  };
+  const cancelEditProvider = () => { setEditingProviderId(null); setProviderEditForm({}); };
+
+  const saveProviderEdit = async (providerId) => {
+    setSavingProviderId(providerId);
+    const updated = await adminUpdateProvider(providerId, {
+      ...providerEditForm,
+      category_key: categoryForServiceType(providerEditForm.service_type),
+    });
+    setSavingProviderId(null);
+    if (updated) {
+      setProviders((prev) => prev.map((p) => (p.id === providerId ? updated : p)));
+      setEditingProviderId(null);
+    }
+  };
+
+  const changeProviderPlan = async (providerId, plan) => {
+    setSavingProviderId(providerId);
+    const updated = await adminUpdateProvider(providerId, { plan });
+    setSavingProviderId(null);
+    if (updated) setProviders((prev) => prev.map((p) => (p.id === providerId ? updated : p)));
+  };
+
+  const toggleProviderActive = async (provider) => {
+    setSavingProviderId(provider.id);
+    const updated = await adminUpdateProvider(provider.id, { is_active: !provider.is_active });
+    setSavingProviderId(null);
+    if (updated) setProviders((prev) => prev.map((p) => (p.id === provider.id ? updated : p)));
+  };
+
+  const confirmDeleteProvider = async (providerId) => {
+    setDeletingId(providerId);
+    const ok = await adminDeleteProvider(providerId);
+    setDeletingId(null);
+    setConfirmDeleteId(null);
+    if (ok) setProviders((prev) => prev.filter((p) => p.id !== providerId));
   };
 
   // Not signed in at all
@@ -3811,6 +3874,12 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
             </div>
           ))}
         </div>
+        <div className="sidebar-section">
+          <div className="sidebar-label">Manage</div>
+          <div className={`sidebar-item ${tab === "providers" ? "active" : ""}`} onClick={() => setTab("providers")}>
+            <span className="icon">{"🏪"}</span>Providers ({providers.length})
+          </div>
+        </div>
         <div className="sidebar-avatar">
           <div className="avatar">{(user?.full_name || session.user.email)[0].toUpperCase()}</div>
           <div className="avatar-info">
@@ -3821,53 +3890,163 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
       </aside>
 
       <main className="portal-content">
-        <div className="portal-header">
-          <h2>Provider applications</h2>
-          <p>Review new signups, confirm bank transfer payment, then activate.</p>
-        </div>
-
-        <div className="metric-grid">
-          <div className="metric"><div className="metric-label">Pending</div><div className="metric-value">{counts.pending}</div><div className="metric-sub">Awaiting review</div></div>
-          <div className="metric"><div className="metric-label">Active</div><div className="metric-value" style={{ color: "var(--lime)" }}>{counts.active}</div><div className="metric-sub">Live on VaiBook</div></div>
-          <div className="metric"><div className="metric-label">Rejected</div><div className="metric-value">{counts.rejected}</div><div className="metric-sub">Declined</div></div>
-          <div className="metric"><div className="metric-label">Total</div><div className="metric-value">{apps.length}</div><div className="metric-sub">All time</div></div>
-        </div>
-
-        <div className="card">
-          <div className="card-title" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <span>{tab.charAt(0).toUpperCase() + tab.slice(1)} applications</span>
-            <button className="btn-sm forest" onClick={loadApps} disabled={loadingApps}>{loadingApps ? "Refreshing..." : "Refresh"}</button>
-          </div>
-
-          {filtered.length === 0 && (
-            <p style={{ fontSize: 13, color: "var(--muted)", padding: "16px 0" }}>
-              {loadingApps ? "Loading..." : `No ${tab} applications.`}
-            </p>
-          )}
-
-          {filtered.map(app => (
-            <div key={app.id} className="booking-item" style={{ alignItems: "flex-start" }}>
-              <div className="booking-info" style={{ flex: 1 }}>
-                <div className="title">{app.business_name} <span style={{ fontWeight: 500, color: "var(--muted)", fontSize: 12 }}>— {planLabel(app.plan)}</span></div>
-                <div className="meta">{app.owner_name} · {app.service_type} · {app.district}</div>
-                <div className="meta">{app.email} · {app.phone}</div>
-                {app.description && <div className="meta" style={{ marginTop: 4, fontStyle: "italic" }}>{app.description}</div>}
-                <div className="meta" style={{ marginTop: 4, fontSize: 11 }}>Applied {new Date(app.created_at).toLocaleDateString()}</div>
-              </div>
-              <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
-                {app.status !== "active" && (
-                  <button className="btn-sm forest" disabled={busyId === app.id} onClick={() => act(app.id, "active")}>Activate</button>
-                )}
-                {app.status !== "rejected" && (
-                  <button className="btn-sm" style={{ background: "transparent", border: "1px solid var(--muted)", color: "var(--muted)" }} disabled={busyId === app.id} onClick={() => act(app.id, "rejected")}>Reject</button>
-                )}
-                {app.status !== "pending" && (
-                  <button className="btn-sm" style={{ background: "transparent", border: "1px solid var(--muted)", color: "var(--muted)" }} disabled={busyId === app.id} onClick={() => act(app.id, "pending")}>Reset</button>
-                )}
-              </div>
+        {tab !== "providers" && (
+          <>
+            <div className="portal-header">
+              <h2>Provider applications</h2>
+              <p>Review new signups, confirm bank transfer payment, then activate.</p>
             </div>
-          ))}
-        </div>
+
+            <div className="metric-grid">
+              <div className="metric"><div className="metric-label">Pending</div><div className="metric-value">{counts.pending}</div><div className="metric-sub">Awaiting review</div></div>
+              <div className="metric"><div className="metric-label">Active</div><div className="metric-value" style={{ color: "var(--lime)" }}>{counts.active}</div><div className="metric-sub">Live on VaiBook</div></div>
+              <div className="metric"><div className="metric-label">Rejected</div><div className="metric-value">{counts.rejected}</div><div className="metric-sub">Declined</div></div>
+              <div className="metric"><div className="metric-label">Total</div><div className="metric-value">{apps.length}</div><div className="metric-sub">All time</div></div>
+            </div>
+
+            <div className="card">
+              <div className="card-title" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span>{tab.charAt(0).toUpperCase() + tab.slice(1)} applications</span>
+                <button className="btn-sm forest" onClick={loadApps} disabled={loadingApps}>{loadingApps ? "Refreshing..." : "Refresh"}</button>
+              </div>
+
+              {filtered.length === 0 && (
+                <p style={{ fontSize: 13, color: "var(--muted)", padding: "16px 0" }}>
+                  {loadingApps ? "Loading..." : `No ${tab} applications.`}
+                </p>
+              )}
+
+              {filtered.map(app => (
+                <div key={app.id} className="booking-item" style={{ alignItems: "flex-start" }}>
+                  <div className="booking-info" style={{ flex: 1 }}>
+                    <div className="title">{app.business_name} <span style={{ fontWeight: 500, color: "var(--muted)", fontSize: 12 }}>— {planLabel(app.plan)}</span></div>
+                    <div className="meta">{app.owner_name} · {app.service_type} · {app.district}</div>
+                    <div className="meta">{app.email} · {app.phone}</div>
+                    {app.description && <div className="meta" style={{ marginTop: 4, fontStyle: "italic" }}>{app.description}</div>}
+                    <div className="meta" style={{ marginTop: 4, fontSize: 11 }}>Applied {new Date(app.created_at).toLocaleDateString()}</div>
+                  </div>
+                  <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
+                    {app.status !== "active" && (
+                      <button className="btn-sm forest" disabled={busyId === app.id} onClick={() => act(app.id, "active")}>Activate</button>
+                    )}
+                    {app.status !== "rejected" && (
+                      <button className="btn-sm" style={{ background: "transparent", border: "1px solid var(--muted)", color: "var(--muted)" }} disabled={busyId === app.id} onClick={() => act(app.id, "rejected")}>Reject</button>
+                    )}
+                    {app.status !== "pending" && (
+                      <button className="btn-sm" style={{ background: "transparent", border: "1px solid var(--muted)", color: "var(--muted)" }} disabled={busyId === app.id} onClick={() => act(app.id, "pending")}>Reset</button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+
+        {tab === "providers" && (
+          <>
+            <div className="portal-header">
+              <h2>Providers</h2>
+              <p>Change a provider's plan, suspend or reactivate them, edit their business details, or permanently delete their account.</p>
+            </div>
+
+            <div className="metric-grid">
+              <div className="metric"><div className="metric-label">Total</div><div className="metric-value">{providers.length}</div><div className="metric-sub">All providers</div></div>
+              <div className="metric"><div className="metric-label">Active</div><div className="metric-value" style={{ color: "var(--lime)" }}>{providers.filter(p => p.is_active).length}</div><div className="metric-sub">Live on VaiBook</div></div>
+              <div className="metric"><div className="metric-label">Suspended</div><div className="metric-value">{providers.filter(p => !p.is_active).length}</div><div className="metric-sub">Hidden from customers</div></div>
+            </div>
+
+            <div className="card">
+              <div className="card-title" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span>All providers</span>
+                <button className="btn-sm forest" onClick={loadProviders} disabled={loadingProviders}>{loadingProviders ? "Refreshing..." : "Refresh"}</button>
+              </div>
+
+              {providers.length === 0 && (
+                <p style={{ fontSize: 13, color: "var(--muted)", padding: "16px 0" }}>
+                  {loadingProviders ? "Loading..." : "No providers yet."}
+                </p>
+              )}
+
+              {providers.map(p => {
+                const isEditing = editingProviderId === p.id;
+                const isSaving = savingProviderId === p.id;
+                const isConfirmingDelete = confirmDeleteId === p.id;
+                const isDeleting = deletingId === p.id;
+
+                if (isEditing) {
+                  return (
+                    <div key={p.id} className="booking-item" style={{ alignItems: "flex-start", flexDirection: "column", gap: 10 }}>
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, width: "100%" }}>
+                        <input className="input" placeholder="Business name" value={providerEditForm.business_name || ""} onChange={e => setProviderEditForm(f => ({ ...f, business_name: e.target.value }))} />
+                        <input className="input" placeholder="District" value={providerEditForm.district || ""} onChange={e => setProviderEditForm(f => ({ ...f, district: e.target.value }))} />
+                        <select className="input" value={providerEditForm.service_type || ""} onChange={e => setProviderEditForm(f => ({ ...f, service_type: e.target.value }))}>
+                          {SERVICE_TYPES.map(st => <option key={st} value={st}>{st}</option>)}
+                        </select>
+                        <input className="input" placeholder="WhatsApp" value={providerEditForm.whatsapp || ""} onChange={e => setProviderEditForm(f => ({ ...f, whatsapp: e.target.value }))} />
+                      </div>
+                      <textarea className="input" placeholder="Bio" style={{ width: "100%", minHeight: 60 }} value={providerEditForm.bio || ""} onChange={e => setProviderEditForm(f => ({ ...f, bio: e.target.value }))} />
+                      <div style={{ display: "flex", gap: 8 }}>
+                        <button className="btn-sm forest" disabled={isSaving} onClick={() => saveProviderEdit(p.id)}>{isSaving ? "Saving..." : "Save"}</button>
+                        <button className="btn-sm" style={{ background: "transparent", border: "1px solid var(--muted)", color: "var(--muted)" }} disabled={isSaving} onClick={cancelEditProvider}>Cancel</button>
+                      </div>
+                    </div>
+                  );
+                }
+
+                return (
+                  <div key={p.id} className="booking-item" style={{ alignItems: "flex-start" }}>
+                    <div className="booking-info" style={{ flex: 1 }}>
+                      <div className="title">
+                        {p.business_name}{" "}
+                        <span style={{ fontWeight: 500, color: p.is_active ? "var(--lime)" : "var(--muted)", fontSize: 12 }}>
+                          — {p.is_active ? "Active" : "Suspended"}
+                        </span>
+                      </div>
+                      <div className="meta">{p.service_type} · {p.district}</div>
+                      {p.whatsapp && <div className="meta">{p.whatsapp}</div>}
+                    </div>
+
+                    <div style={{ display: "flex", flexDirection: "column", gap: 8, alignItems: "flex-end", flexShrink: 0 }}>
+                      <select
+                        className="input"
+                        style={{ padding: "4px 8px", fontSize: 12 }}
+                        value={p.plan || "starter"}
+                        disabled={isSaving}
+                        onChange={e => changeProviderPlan(p.id, e.target.value)}
+                      >
+                        {PLANS.map(pl => <option key={pl.id} value={pl.id}>{pl.name}</option>)}
+                      </select>
+
+                      {!isConfirmingDelete && (
+                        <div style={{ display: "flex", gap: 8 }}>
+                          <button className="btn-sm" style={{ background: "transparent", border: "1px solid var(--muted)", color: "var(--muted)" }} disabled={isSaving} onClick={() => startEditProvider(p)}>Edit</button>
+                          <button className="btn-sm" style={{ background: "transparent", border: "1px solid var(--muted)", color: "var(--muted)" }} disabled={isSaving} onClick={() => toggleProviderActive(p)}>
+                            {isSaving ? "..." : p.is_active ? "Suspend" : "Reactivate"}
+                          </button>
+                          <button className="btn-sm" style={{ background: "transparent", border: "1px solid #e05252", color: "#e05252" }} onClick={() => setConfirmDeleteId(p.id)}>Delete</button>
+                        </div>
+                      )}
+
+                      {isConfirmingDelete && (
+                        <div style={{ display: "flex", flexDirection: "column", gap: 6, alignItems: "flex-end" }}>
+                          <div style={{ fontSize: 12, color: "#e05252", maxWidth: 220, textAlign: "right" }}>
+                            Delete {p.business_name} permanently? This removes their bookings, reviews, and services too.
+                          </div>
+                          <div style={{ display: "flex", gap: 8 }}>
+                            <button className="btn-sm" style={{ background: "#e05252", border: "1px solid #e05252", color: "#fff" }} disabled={isDeleting} onClick={() => confirmDeleteProvider(p.id)}>
+                              {isDeleting ? "Deleting..." : "Confirm delete"}
+                            </button>
+                            <button className="btn-sm" style={{ background: "transparent", border: "1px solid var(--muted)", color: "var(--muted)" }} disabled={isDeleting} onClick={() => setConfirmDeleteId(null)}>Cancel</button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </>
+        )}
       </main>
     </div>
   );

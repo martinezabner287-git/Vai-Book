@@ -694,3 +694,42 @@ export const upsertVisitNote = async (note) => {
   if (error) { console.error(error.message); return false; }
   return true;
 };
+
+// ── ADMIN: PROVIDER MANAGEMENT ────────────────────────────────────
+// Every admin-mutating action here goes through a SECURITY DEFINER RPC
+// that checks the caller's email against the `admins` table server-side
+// (see supabase_admin_provider_management.sql) — enforced in the
+// database, not just hidden behind a UI check.
+export const adminListProviders = async () => {
+  const { data, error } = await supabase.rpc('admin_list_providers');
+  if (error) { console.error('Error listing providers:', error.message); return []; }
+  return data || [];
+};
+
+// Pass only the fields you want to change — omitted/undefined fields are
+// left as-is server-side (the RPC coalesces nulls against current values).
+export const adminUpdateProvider = async (providerId, updates) => {
+  const { data, error } = await supabase.rpc('admin_update_provider', {
+    p_provider_id: providerId,
+    p_business_name: updates.business_name ?? null,
+    p_district: updates.district ?? null,
+    p_service_type: updates.service_type ?? null,
+    p_category_key: updates.category_key ?? null,
+    p_whatsapp: updates.whatsapp ?? null,
+    p_bio: updates.bio ?? null,
+    p_plan: updates.plan ?? null,
+    p_is_active: updates.is_active ?? null,
+  });
+  if (error) { console.error('Error updating provider:', error.message); return null; }
+  return data;
+};
+
+// Irreversible — deletes the provider and every row tied to them
+// (services, bookings, reviews, working hours, payment methods, feature
+// overrides, visit notes, VIP tags). The UI requires a confirmation step
+// before calling this.
+export const adminDeleteProvider = async (providerId) => {
+  const { error } = await supabase.rpc('admin_delete_provider', { p_provider_id: providerId });
+  if (error) { console.error('Error deleting provider:', error.message); return false; }
+  return true;
+};
