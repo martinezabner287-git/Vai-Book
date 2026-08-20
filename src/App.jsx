@@ -924,11 +924,23 @@ function InstallAppGuide() {
   const [showBanner, setShowBanner] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState(null);
 
+  // How long a dismiss (or an "install"/"show me" tap that didn't end in a
+  // real install) snoozes the banner before it's allowed to reappear on a
+  // later visit. It only stops reappearing for good once the app is
+  // actually installed — detected live via standalone mode below, not by
+  // remembering a one-time dismiss forever.
+  const SNOOZE_MS = 3 * 24 * 60 * 60 * 1000; // 3 days
+
   useEffect(() => {
     const ua = window.navigator.userAgent || "";
-    const isIOS = /iPhone|iPad|iPod/.test(ua) && !window.MSStream;
-    const isAndroid = /Android/.test(ua);
-    const isMobile = isIOS || isAndroid;
+    const isIOSPhone = /iPhone|iPod/.test(ua) && !window.MSStream;
+    // iPadOS Safari reports itself as a desktop Mac by default (since iOS
+    // 13), so a plain UA check misses iPads entirely. A touch-capable
+    // "MacIntel" is the standard way to still catch it.
+    const isIPad = /iPad/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+    const isIOS = isIOSPhone || isIPad;
+    const isAndroid = /Android/.test(ua); // covers Android phones and tablets alike
+    const isMobileOrTablet = isIOS || isAndroid;
     setPlatform(isIOS ? "ios" : "android");
 
     const isStandalone =
@@ -945,10 +957,11 @@ function InstallAppGuide() {
     window.addEventListener("vaibook-open-install-guide", onOpenGuide);
 
     let bannerTimer = null;
-    if (isMobile && !isStandalone) {
-      let dismissed = null;
-      try { dismissed = localStorage.getItem("vaibook_a2hs_dismissed"); } catch (e) { /* ignore */ }
-      if (!dismissed) {
+    if (isMobileOrTablet && !isStandalone) {
+      let snoozedAt = null;
+      try { snoozedAt = Number(localStorage.getItem("vaibook_a2hs_snoozed_at")) || null; } catch (e) { /* ignore */ }
+      const stillSnoozed = snoozedAt && (Date.now() - snoozedAt < SNOOZE_MS);
+      if (!stillSnoozed) {
         bannerTimer = setTimeout(() => setShowBanner(true), 2500);
       }
     }
@@ -960,14 +973,15 @@ function InstallAppGuide() {
     };
   }, []);
 
-  const dismissBanner = () => {
+  const snoozeBanner = () => {
     setShowBanner(false);
-    try { localStorage.setItem("vaibook_a2hs_dismissed", "1"); } catch (e) { /* ignore */ }
+    try { localStorage.setItem("vaibook_a2hs_snoozed_at", String(Date.now())); } catch (e) { /* ignore */ }
   };
 
+  const dismissBanner = snoozeBanner;
+
   const handleInstallClick = async () => {
-    setShowBanner(false);
-    try { localStorage.setItem("vaibook_a2hs_dismissed", "1"); } catch (e) { /* ignore */ }
+    snoozeBanner();
     if (deferredPrompt) {
       deferredPrompt.prompt();
       try { await deferredPrompt.userChoice; } catch (e) { /* ignore */ }
