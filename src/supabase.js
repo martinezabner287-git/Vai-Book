@@ -470,13 +470,19 @@ export const checkIsAdmin = async (email) => {
 };
 
 export const submitProviderApplication = async (application) => {
-  const { data, error } = await supabase
+  // Deliberately a plain insert with no .select() — this form is reachable
+  // by anyone who hasn't signed in yet, and Postgres RLS treats "hand back
+  // the inserted row" (RETURNING) as a read, which requires a SELECT policy
+  // in addition to the INSERT policy. There's intentionally no public SELECT
+  // policy on provider_applications (that would let anyone read every
+  // applicant's email/phone), so requesting the row back made every
+  // anonymous submission fail with a misleading RLS error. The caller only
+  // checks success/failure, so we don't need the row back at all.
+  const { error } = await supabase
     .from('provider_applications')
-    .insert(application)
-    .select()
-    .single();
-  if (error) { console.error('Error submitting application:', error.message); return null; }
-  return data;
+    .insert(application);
+  if (error) { console.error('Error submitting application:', error.message); return false; }
+  return true;
 };
 
 export const getProviderApplications = async () => {
