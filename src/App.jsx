@@ -1,12 +1,12 @@
 
-import { useState, useEffect, useLayoutEffect, useRef } from "react";
+import { useState, useEffect, useLayoutEffect, useRef, useContext, createContext } from "react";
 import { MapContainer, TileLayer, Marker, useMapEvents } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
 import markerIcon from "leaflet/dist/images/marker-icon.png";
 import markerShadow from "leaflet/dist/images/marker-shadow.png";
-import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, deleteService, getActiveProviders, getProviderDirectory, createBooking, getProviderBusyWindows, createBookingSafe, cancelBooking, getCustomerBookings, uploadReceipt, submitReview, getProviderReviews, sendBookingEmail, updateUserProfile, getPaymentMethods, addPaymentMethod, deletePaymentMethod, createNotification, getNotifications, markNotificationRead, markAllNotificationsRead } from "./supabase";
+import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, deleteService, getActiveProviders, getProviderDirectory, createBooking, getProviderBusyWindows, createBookingSafe, cancelBooking, getCustomerBookings, uploadReceipt, submitReview, getProviderReviews, sendBookingEmail, updateUserProfile, getPaymentMethods, addPaymentMethod, deletePaymentMethod, createNotification, getNotifications, markNotificationRead, markAllNotificationsRead, getLandingStats, getRecommendedServices, getCategoryDefaultFeatures, getProviderFeatureOverrides, setProviderFeatureOverride, getVisitNotes, upsertVisitNote } from "./supabase";
 
 // Leaflet's default marker icons reference image paths that don't resolve
 // correctly under CRA's bundler unless re-pointed at the imported assets.
@@ -611,6 +611,219 @@ const SERVICES = [
   { icon: "🔧", name: "Handyman", desc: "Repairs & more", bg: "#244530" },
 ];
 
+// ── BUSINESS CATEGORIES & FEATURE FLAGS ──────────────────────────
+// Every provider belongs to one business category, chosen at signup. Core
+// features are on for every category; industry-specific "modules" default
+// on/off per category and can be overridden per-provider in Settings →
+// Modules. The canonical data lives in Supabase (business_categories /
+// feature_flags / category_default_features / provider_feature_overrides —
+// see supabase_feature_flags.sql); this is the client-side mirror used for
+// labels/icons and for computing category_key at signup time.
+const CORE_FEATURES = ["calendar_scheduling", "client_crm", "pos", "reporting_analytics"];
+
+const CORE_FEATURE_CATALOG = {
+  calendar_scheduling: { label: "Calendar & Scheduling", icon: "🗓️", desc: "Staff availability, shift management, booking interface" },
+  client_crm: { label: "Client CRM", icon: "👥", desc: "Client profiles, booking history, automated reminders" },
+  pos: { label: "Point of Sale", icon: "💳", desc: "Checkout, deposit collection, payment processing" },
+  reporting_analytics: { label: "Reporting & Analytics", icon: "📊", desc: "Revenue tracking, commission payouts" },
+};
+
+const BUSINESS_CATEGORIES = [
+  { key: "general", label: "General Service", icon: "🛠️" },
+  { key: "hair_salon", label: "Hair Salons, Barbershops & Nail Studios", icon: "✂️" },
+  { key: "spa_massage", label: "Spas & Massage Therapy", icon: "💆" },
+  { key: "med_spa", label: "Med Spas & Clinics", icon: "🩺" },
+  { key: "tattoo_piercing", label: "Tattoo & Piercing Studios", icon: "🖋️" },
+];
+
+const SERVICE_TYPE_TO_CATEGORY = {
+  "Barber": "hair_salon",
+  "Nail Tech": "hair_salon",
+  "Beauty Salon": "hair_salon",
+  "Massage": "spa_massage",
+  "Med Spa / Clinic": "med_spa",
+  "Tattoo & Piercing Studio": "tattoo_piercing",
+  "Home Cleaning": "general",
+  "Car Wash": "general",
+  "Pet Grooming": "general",
+  "Handyman": "general",
+  "Photography": "general",
+  "Other": "general",
+};
+const categoryForServiceType = (serviceType) => SERVICE_TYPE_TO_CATEGORY[serviceType] || "general";
+
+// Industry-specific adaptive modules. `label`/`icon`/`desc` drive the
+// Settings → Modules UI; which ones default on per category lives in the
+// `category_default_features` table (mirrored below only for reference).
+const INDUSTRY_FEATURE_CATALOG = {
+  hipaa_compliance_mode: { label: "HIPAA Compliance Mode", icon: "🔒", desc: "Restricted access & audit logging for medical data" },
+  soap_charting: { label: "SOAP Medical Charting", icon: "📋", desc: "Structured clinical notes per completed visit" },
+  digital_consent_forms: { label: "Digital Consent Forms", icon: "✍️", desc: "Client e-signs consent before treatment" },
+  secure_photo_storage: { label: "Secure Photo Storage", icon: "🖼️", desc: "Access-controlled before/after photos" },
+  processing_time_buffers: { label: "Processing Time Buffers", icon: "⏱️", desc: "Extra unbookable time after a service (e.g. color processing)" },
+  hair_formula_tracking: { label: "Hair Formula Tracking", icon: "🎨", desc: "Save color/chemical formulas per client" },
+  virtual_waiting_room: { label: "Virtual Waiting Room", icon: "🪑", desc: "Check-in queue shown to walk-ins" },
+  express_walkin_checkout: { label: "Express Walk-in Checkout", icon: "⚡", desc: "Fast checkout flow for walk-in clients" },
+  room_resource_booking: { label: "Room & Resource Booking", icon: "🚪", desc: "Assign a specific room or equipment to an appointment" },
+  digital_liability_waivers: { label: "Digital Liability Waivers", icon: "📝", desc: "Client e-signs a liability waiver" },
+  id_verification_upload: { label: "ID Verification Upload", icon: "🪪", desc: "Client uploads ID for age/identity verification" },
+  reference_art_upload: { label: "Reference Art Upload", icon: "🖌️", desc: "Client uploads reference images for the artist" },
+};
+
+const FeatureFlagsContext = createContext({ flags: {}, loading: true, categoryKey: "general", setOverride: async () => {} });
+const useFeatureFlags = () => useContext(FeatureFlagsContext);
+
+// Wraps the provider portal. Merges this provider's category defaults with
+// any manual per-provider overrides into a single `flags` map, and exposes
+// `setOverride` so Settings → Modules can flip a module on/off live.
+function FeatureFlagsProvider({ providerId, categoryKey, children }) {
+  const [defaults, setDefaults] = useState([]);
+  const [overrides, setOverrides] = useState({});
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    Promise.all([
+      getCategoryDefaultFeatures(categoryKey),
+      getProviderFeatureOverrides(providerId),
+    ]).then(([defs, ovr]) => {
+      if (cancelled) return;
+      setDefaults(defs || []);
+      setOverrides(ovr || {});
+      setLoading(false);
+    });
+    return () => { cancelled = true; };
+  }, [providerId, categoryKey]);
+
+  const flags = {};
+  CORE_FEATURES.forEach((k) => { flags[k] = true; });
+  Object.keys(INDUSTRY_FEATURE_CATALOG).forEach((k) => {
+    flags[k] = overrides[k] != null ? overrides[k] : defaults.includes(k);
+  });
+
+  const setOverride = async (featureKey, enabled) => {
+    setOverrides((prev) => ({ ...prev, [featureKey]: enabled }));
+    await setProviderFeatureOverride(providerId, featureKey, enabled);
+  };
+
+  return (
+    <FeatureFlagsContext.Provider value={{ flags, loading, categoryKey, defaults, overrides, setOverride }}>
+      {children}
+    </FeatureFlagsContext.Provider>
+  );
+}
+
+// Gate for conditionally rendering a flag-dependent module anywhere in the
+// tree, e.g. `<FeatureGate flag="soap_charting"><VisitNotesButton .../></FeatureGate>`.
+function FeatureGate({ flag, children, fallback = null }) {
+  const { flags, loading } = useFeatureFlags();
+  if (loading) return fallback;
+  return flags[flag] ? children : fallback;
+}
+
+// Settings → Modules: shows core features (always on) plus every industry
+// module, pre-toggled from the provider's category defaults, with a manual
+// per-provider override switch. This is the live UI for the adaptive
+// feature-flag system described in the architecture doc.
+function ModulesPanel() {
+  const { flags, loading, defaults, categoryKey, setOverride } = useFeatureFlags();
+  const categoryLabel = (BUSINESS_CATEGORIES.find((c) => c.key === categoryKey) || {}).label || "General Service";
+
+  return (
+    <>
+      <div className="portal-header">
+        <h2>Modules</h2>
+        <p>Your default modules come from your business category ({categoryLabel}). Toggle any module on or off for your account.</p>
+      </div>
+      <div className="card" style={{ maxWidth: 560 }}>
+        <div className="card-title">Core — included for every provider</div>
+        {CORE_FEATURES.map((key) => (
+          <div key={key} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", borderBottom: "1px solid var(--border)" }}>
+            <div>
+              <div style={{ fontSize: 14 }}>{CORE_FEATURE_CATALOG[key].icon} {CORE_FEATURE_CATALOG[key].label}</div>
+              <div style={{ fontSize: 12, color: "var(--muted)" }}>{CORE_FEATURE_CATALOG[key].desc}</div>
+            </div>
+            <div className="toggle on" style={{ opacity: 0.5, cursor: "not-allowed" }} title="Always on"></div>
+          </div>
+        ))}
+
+        <div className="card-title" style={{ marginTop: 24 }}>Industry-specific modules</div>
+        {loading ? (
+          <p style={{ fontSize: 13, color: "var(--muted)" }}>Loading modules...</p>
+        ) : (
+          Object.keys(INDUSTRY_FEATURE_CATALOG).map((key) => {
+            const f = INDUSTRY_FEATURE_CATALOG[key];
+            const isOn = !!flags[key];
+            const isDefault = defaults.includes(key);
+            return (
+              <div key={key} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", borderBottom: "1px solid var(--border)" }}>
+                <div>
+                  <div style={{ fontSize: 14 }}>
+                    {f.icon} {f.label}
+                    {isDefault && <span style={{ fontSize: 10, color: "var(--forest-light)", fontWeight: 700, marginLeft: 6 }}>RECOMMENDED FOR YOUR CATEGORY</span>}
+                  </div>
+                  <div style={{ fontSize: 12, color: "var(--muted)" }}>{f.desc}</div>
+                </div>
+                <div className={`toggle ${isOn ? "on" : ""}`} onClick={() => setOverride(key, !isOn)}></div>
+              </div>
+            );
+          })
+        )}
+      </div>
+    </>
+  );
+}
+
+// Bookings → completed appointments: minimal working example of a flag-gated
+// module (soap_charting). Saves structured Subjective/Objective/Assessment/
+// Plan notes per booking.
+function VisitNotesButton({ booking }) {
+  const [open, setOpen] = useState(false);
+  const [note, setNote] = useState({ subjective: "", objective: "", assessment: "", plan: "" });
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    let cancelled = false;
+    getVisitNotes(booking.id).then((existing) => {
+      if (cancelled || !existing) return;
+      setNote({
+        subjective: existing.subjective || "",
+        objective: existing.objective || "",
+        assessment: existing.assessment || "",
+        plan: existing.plan || "",
+      });
+      setSaved(true);
+    });
+    return () => { cancelled = true; };
+  }, [open, booking.id]);
+
+  const save = async () => {
+    setSaving(true);
+    const ok = await upsertVisitNote({ booking_id: booking.id, provider_id: booking.provider_id, ...note });
+    setSaving(false);
+    if (ok) setSaved(true);
+  };
+
+  return (
+    <div style={{ marginTop: 8 }}>
+      <button className="btn-sm ghost" onClick={() => setOpen((o) => !o)}>{saved ? "View / edit visit notes" : "Add visit notes (SOAP)"}</button>
+      {open && (
+        <div style={{ marginTop: 8, padding: 12, background: "var(--sand)", borderRadius: 8 }}>
+          {["subjective", "objective", "assessment", "plan"].map((k) => (
+            <div key={k} className="input-group" style={{ marginBottom: 8 }}>
+              <label style={{ textTransform: "capitalize" }}>{k}</label>
+              <textarea style={{ width: "100%", minHeight: 44 }} value={note[k] || ""} onChange={(e) => setNote((n) => ({ ...n, [k]: e.target.value }))} />
+            </div>
+          ))}
+          <button className="btn-sm forest" disabled={saving} onClick={save}>{saving ? "Saving..." : "Save visit notes"}</button>
+        </div>
+      )}
+    </div>
+  );
+}
 
 const DAYS = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
 const DAY_NAMES = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
@@ -1170,9 +1383,15 @@ function LandingPage({ onNav, session, onSignIn }) {
   const [heroDistrict, setHeroDistrict] = useState("");
   const [heroDirectory, setHeroDirectory] = useState([]);
   const [showHeroSuggestions, setShowHeroSuggestions] = useState(false);
+  const [stats, setStats] = useState(null);
+  const [loadingStats, setLoadingStats] = useState(true);
+  const [recommended, setRecommended] = useState([]);
+  const [loadingRecommended, setLoadingRecommended] = useState(true);
 
   useEffect(() => {
     getProviderDirectory().then((data) => setHeroDirectory(data || []));
+    getLandingStats().then((data) => { setStats(data); setLoadingStats(false); });
+    getRecommendedServices(6).then((data) => { setRecommended(data || []); setLoadingRecommended(false); });
   }, []);
 
   const heroSuggestions = buildSuggestions(heroDirectory, heroQuery);
@@ -1235,13 +1454,39 @@ function LandingPage({ onNav, session, onSignIn }) {
         </div>
       </section>
 
-      {/* STATS */}
+      {/* STATS — live counts from the database, not placeholders */}
       <div className="stats-bar">
-        <div className="stat"><div className="stat-num">2<span>,400</span>+</div><div className="stat-label">Bookings completed</div></div>
-        <div className="stat"><div className="stat-num">180<span>+</span></div><div className="stat-label">Verified providers</div></div>
-        <div className="stat"><div className="stat-num">6<span> districts</span></div><div className="stat-label">Across Belize</div></div>
-        <div className="stat"><div className="stat-num">4.9<span>★</span></div><div className="stat-label">Average rating</div></div>
+        <div className="stat"><div className="stat-num">{loadingStats ? "—" : (stats?.bookingsCompleted ?? 0).toLocaleString()}</div><div className="stat-label">Bookings completed</div></div>
+        <div className="stat"><div className="stat-num">{loadingStats ? "—" : (stats?.activeProviders ?? 0).toLocaleString()}</div><div className="stat-label">Verified providers</div></div>
+        <div className="stat"><div className="stat-num">{loadingStats ? "—" : (stats?.districts ?? 0)}<span> district{stats?.districts === 1 ? "" : "s"}</span></div><div className="stat-label">Across Belize</div></div>
+        <div className="stat"><div className="stat-num">{loadingStats ? "—" : (stats?.avgRating != null ? `${stats.avgRating}★` : "New")}</div><div className="stat-label">{stats?.avgRating != null ? `Average rating (${stats.reviewCount})` : "Average rating"}</div></div>
       </div>
+
+      {/* RECOMMENDED — surfaces services from the highest-rated providers
+          (2+ reviews required so one 5-star review can't dominate). Hidden
+          entirely once loaded if there isn't enough review data yet. */}
+      {!loadingRecommended && recommended.length > 0 && (
+        <section className="section" id="recommended" style={{ paddingBottom: 24 }}>
+          <div className="section-eyebrow">Loved by customers</div>
+          <h2 className="section-title">Recommended for you</h2>
+          <p className="section-sub">The highest-rated providers on VaiBook right now.</p>
+          <div className="steps-grid">
+            {recommended.map((r) => (
+              <div
+                className="step-card"
+                key={`${r.provider_id}-${r.service_id}`}
+                style={{ cursor: "pointer", textAlign: "left" }}
+                onClick={() => enterCustomerPortal(onNav, session, onSignIn)}
+              >
+                <div className="step-icon">⭐</div>
+                <h3>{r.service_name}</h3>
+                <p style={{ marginBottom: 4 }}>{r.business_name} · {r.service_type} · {r.district}</p>
+                <p style={{ fontWeight: 700, color: "var(--forest)" }}>{r.rating}★ <span style={{ fontWeight: 400, color: "var(--muted)" }}>({r.reviewCount} review{r.reviewCount === 1 ? "" : "s"})</span> · BZ${r.price}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* HOW IT WORKS */}
       <section className="section" id="how-it-works">
@@ -2588,8 +2833,10 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
     { id: "services", icon: "✂️", label: "My services" },
     { id: "earnings", icon: "💰", label: "Earnings" },
     { id: "profile", icon: "👤", label: "Public profile" },
+    { id: "modules", icon: "🧩", label: "Modules" },
     { id: "settings", icon: "⚙️", label: "Settings" },
   ];
+  const providerCategoryKey = providerProfile?.category_key || categoryForServiceType(providerProfile?.service_type);
 
   // Not signed in at all
   if (!session) {
@@ -2700,6 +2947,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
     : [];
 
   return (
+    <FeatureFlagsProvider providerId={providerId} categoryKey={providerCategoryKey}>
     <div className="portal-layout">
       <aside className="sidebar">
         <div style={{ padding: "0 16px 20px", borderBottom: "1px solid rgba(255,255,255,0.08)", marginBottom: 20 }}>
@@ -2853,6 +3101,12 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                         </button>
                       </div>
                     </div>
+                  )}
+
+                  {b.status === "completed" && (
+                    <FeatureGate flag="soap_charting">
+                      <VisitNotesButton booking={b} />
+                    </FeatureGate>
                   )}
                 </div>
               ))}
@@ -3082,6 +3336,8 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
           </>
         )}
 
+        {tab === "modules" && <ModulesPanel />}
+
         {tab === "settings" && (
           <>
             <div className="portal-header"><h2>Settings</h2></div>
@@ -3116,6 +3372,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
         )}
       </main>
     </div>
+    </FeatureFlagsProvider>
   );
 }
 
@@ -3240,7 +3497,7 @@ const PLANS = [
 ];
 
 const DISTRICTS = ["Belize City", "Cayo", "Corozal", "Orange Walk", "Stann Creek", "Toledo"];
-const SERVICE_TYPES = ["Barber", "Nail Tech", "Home Cleaning", "Car Wash", "Pet Grooming", "Handyman", "Beauty Salon", "Massage", "Photography", "Other"];
+const SERVICE_TYPES = ["Barber", "Nail Tech", "Home Cleaning", "Car Wash", "Pet Grooming", "Handyman", "Beauty Salon", "Massage", "Med Spa / Clinic", "Tattoo & Piercing Studio", "Photography", "Other"];
 
 function ProviderSignup({ onNav }) {
   const [plan, setPlan] = useState("pro");
@@ -3652,6 +3909,7 @@ export default function App() {
           user_id: authUser.id,
           business_name: app.business_name,
           service_type: app.service_type,
+          category_key: categoryForServiceType(app.service_type),
           district: app.district,
           bio: app.description,
           whatsapp: app.phone || null,
