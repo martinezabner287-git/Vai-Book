@@ -6,7 +6,7 @@ import L from "leaflet";
 import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
 import markerIcon from "leaflet/dist/images/marker-icon.png";
 import markerShadow from "leaflet/dist/images/marker-shadow.png";
-import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, deleteService, getActiveProviders, getProviderDirectory, createBooking, getProviderBusyWindows, createBookingSafe, cancelBooking, getCustomerBookings, uploadReceipt, submitReview, getProviderReviews, sendBookingEmail, updateUserProfile, getPaymentMethods, addPaymentMethod, deletePaymentMethod, createNotification, getNotifications, markNotificationRead, markAllNotificationsRead, getLandingStats, getRecommendedServices, getCategoryDefaultFeatures, getProviderFeatureOverrides, setProviderFeatureOverride, getVisitNotes, upsertVisitNote, adminListProviders, adminUpdateProvider, adminDeleteProvider, tagVIP, untagVIP, getVIPClients, getFavoriteProviderIds, getFavoriteProviders, addFavorite, removeFavorite } from "./supabase";
+import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, deleteService, getActiveProviders, getProviderDirectory, createBooking, getProviderBusyWindows, createBookingSafe, cancelBooking, getCustomerBookings, uploadReceipt, submitReview, getProviderReviews, sendBookingEmail, updateUserProfile, getPaymentMethods, addPaymentMethod, deletePaymentMethod, createNotification, getNotifications, markNotificationRead, markAllNotificationsRead, getLandingStats, getRecommendedServices, getCategoryDefaultFeatures, getProviderFeatureOverrides, setProviderFeatureOverride, getVisitNotes, upsertVisitNote, adminListProviders, adminUpdateProvider, adminDeleteProvider, tagVIP, untagVIP, getVIPClients, getFavoriteProviderIds, getFavoriteProviders, addFavorite, removeFavorite, getBookingMessages, sendBookingMessage, markBookingMessagesRead, getUnreadBookingMessages } from "./supabase";
 
 // Leaflet's default marker icons reference image paths that don't resolve
 // correctly under CRA's bundler unless re-pointed at the imported assets.
@@ -825,6 +825,106 @@ function VisitNotesButton({ booking }) {
   );
 }
 
+// A collapsible message thread tied to one specific booking. Works the
+// same in both portals — only `currentRole`/`recipientUserId` differ
+// depending on which side is rendering it. Polls every 15s (same pattern
+// as NotificationBell) rather than a realtime subscription, to match how
+// the rest of the app is built.
+function BookingChat({ bookingId, currentUserId, currentRole, recipientUserId }) {
+  const [open, setOpen] = useState(false);
+  const [messages, setMessages] = useState([]);
+  const [draft, setDraft] = useState("");
+  const [sending, setSending] = useState(false);
+  const [unread, setUnread] = useState(0);
+  const bottomRef = useRef(null);
+
+  const load = async (markRead) => {
+    const data = await getBookingMessages(bookingId);
+    setMessages(data);
+    setUnread(data.filter((m) => !m.read_at && m.sender_id !== currentUserId).length);
+    if (markRead && data.some((m) => !m.read_at && m.sender_id !== currentUserId)) {
+      await markBookingMessagesRead(bookingId, currentUserId);
+      setUnread(0);
+    }
+  };
+
+  useEffect(() => {
+    load(false);
+    const interval = setInterval(() => load(open), 15000);
+    return () => clearInterval(interval);
+  }, [bookingId, open]);
+
+  useEffect(() => {
+    if (open) load(true);
+  }, [open]);
+
+  useEffect(() => {
+    if (open) bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, open]);
+
+  const send = async () => {
+    const body = draft.trim();
+    if (!body || sending) return;
+    setSending(true);
+    const ok = await sendBookingMessage({ booking_id: bookingId, sender_id: currentUserId, sender_role: currentRole, body });
+    if (ok) {
+      setDraft("");
+      await load(false);
+      if (recipientUserId) {
+        createNotification({
+          user_id: recipientUserId,
+          title: "New message",
+          body: body.length > 80 ? body.slice(0, 80) + "…" : body,
+          type: "message",
+          booking_id: bookingId,
+        });
+      }
+    }
+    setSending(false);
+  };
+
+  return (
+    <div style={{ marginTop: 8 }}>
+      <button className="btn-sm ghost" style={{ position: "relative" }} onClick={() => setOpen((v) => !v)}>
+        💬 {open ? "Hide messages" : "Message"}
+        {!open && unread > 0 && (
+          <span className="notif-badge" style={{ position: "absolute", top: -6, right: -6 }}>{unread > 9 ? "9+" : unread}</span>
+        )}
+      </button>
+      {open && (
+        <div style={{ marginTop: 8, background: "var(--sand)", borderRadius: 10, padding: 12 }}>
+          <div style={{ maxHeight: 220, overflowY: "auto", display: "flex", flexDirection: "column", gap: 8, marginBottom: 10 }}>
+            {messages.length === 0 && <p style={{ fontSize: 12, color: "var(--muted)" }}>No messages yet — say hello about this booking.</p>}
+            {messages.map((m) => {
+              const mine = m.sender_id === currentUserId;
+              return (
+                <div key={m.id} style={{ alignSelf: mine ? "flex-end" : "flex-start", maxWidth: "80%" }}>
+                  <div style={{ background: mine ? "var(--forest)" : "#fff", color: mine ? "#fff" : "inherit", borderRadius: 10, padding: "8px 10px", fontSize: 13, lineHeight: 1.4 }}>
+                    {m.body}
+                  </div>
+                  <div style={{ fontSize: 10, color: "var(--muted)", marginTop: 2, textAlign: mine ? "right" : "left" }}>{timeAgo(m.created_at)}</div>
+                </div>
+              );
+            })}
+            <div ref={bottomRef} />
+          </div>
+          <div style={{ display: "flex", gap: 8 }}>
+            <input
+              value={draft}
+              placeholder="Type a message..."
+              style={{ flex: 1 }}
+              disabled={sending}
+              onChange={(e) => setDraft(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }}
+            />
+            <button className="btn-sm forest" disabled={sending || !draft.trim()} onClick={send}>Send</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 const DAYS = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
 const DAY_NAMES = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
 const DEFAULT_HOURS = DAY_NAMES.map((day, i) => ({
@@ -1337,6 +1437,20 @@ function Nav({ onNav, current, session, user, onSignIn, onSignOut }) {
                   <span className="icn">{item.icon}</span> {item.label}
                 </button>
               ))}
+              {(current === "customer" || current === "provider") && (
+                <>
+                  <hr />
+                  {current === "provider" ? (
+                    <button className="nav-dropdown-item" onClick={() => goAccount(() => enterCustomerPortal(onNav, session, onSignIn))}>
+                      <span className="icn">🛍️</span> Switch to customer
+                    </button>
+                  ) : (
+                    <button className="nav-dropdown-item for-biz" onClick={() => goAccount(() => enterProviderPortal(onNav, session, onSignIn))}>
+                      <span className="icn">🏪</span> Switch to provider
+                    </button>
+                  )}
+                </>
+              )}
               <hr />
               <button className="nav-dropdown-item" onClick={() => goAccount(openInstallAppGuide)}>
                 <span className="icn">📲</span> Add to Home Screen
@@ -2360,6 +2474,15 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate }) {
                     {b.status === "completed" && hasReview && (
                       <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 6 }}>You rated this {"★".repeat(b.reviews[0].rating)}{b.reviews[0].comment ? ` — "${b.reviews[0].comment}"` : ""}</p>
                     )}
+
+                    {["pending", "awaiting_payment", "confirmed", "completed"].includes(b.status) && (
+                      <BookingChat
+                        bookingId={b.id}
+                        currentUserId={user?.id}
+                        currentRole="customer"
+                        recipientUserId={b.provider_profiles?.user_id}
+                      />
+                    )}
                   </div>
                 );
               })}
@@ -3311,6 +3434,15 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                     <FeatureGate flag="soap_charting">
                       <VisitNotesButton booking={b} />
                     </FeatureGate>
+                  )}
+
+                  {["pending", "awaiting_payment", "confirmed", "completed"].includes(b.status) && (
+                    <BookingChat
+                      bookingId={b.id}
+                      currentUserId={user?.id}
+                      currentRole="provider"
+                      recipientUserId={b.customer_id}
+                    />
                   )}
                 </div>
               ))}
