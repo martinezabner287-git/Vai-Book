@@ -333,6 +333,52 @@ export const uploadReceipt = async (bookingId, file) => {
   return publicUrl;
 };
 
+// ── BOOKING MESSAGES (customer ↔ provider, tied to one booking) ────
+
+export const getBookingMessages = async (bookingId) => {
+  const { data, error } = await supabase
+    .from('booking_messages')
+    .select('*')
+    .eq('booking_id', bookingId)
+    .order('created_at', { ascending: true });
+  if (error) { console.error('Error loading messages:', error.message); return []; }
+  return data || [];
+};
+
+export const sendBookingMessage = async ({ booking_id, sender_id, sender_role, body }) => {
+  const { error } = await supabase
+    .from('booking_messages')
+    .insert({ booking_id, sender_id, sender_role, body });
+  if (error) { console.error('Error sending message:', error.message); return false; }
+  return true;
+};
+
+// Marks every message in a thread that wasn't sent by `viewerId` as read —
+// called once the viewer actually opens the thread, to clear their unread
+// badge without also clearing the badge on the other side.
+export const markBookingMessagesRead = async (bookingId, viewerId) => {
+  const { error } = await supabase
+    .from('booking_messages')
+    .update({ read_at: new Date().toISOString() })
+    .eq('booking_id', bookingId)
+    .is('read_at', null)
+    .neq('sender_id', viewerId);
+  if (error) console.error('Error marking messages read:', error.message);
+};
+
+// Every unread message across every booking thread this user participates
+// in (RLS already scopes rows to threads they're part of), used to badge
+// "My bookings" / "Bookings" per-booking in the portal list views.
+export const getUnreadBookingMessages = async (viewerId) => {
+  const { data, error } = await supabase
+    .from('booking_messages')
+    .select('booking_id')
+    .is('read_at', null)
+    .neq('sender_id', viewerId);
+  if (error) { console.error('Error loading unread messages:', error.message); return []; }
+  return data || [];
+};
+
 // ── REVIEW HELPERS ───────────────────────────────────────────────
 
 export const submitReview = async (review) => {
