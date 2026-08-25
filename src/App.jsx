@@ -82,6 +82,32 @@ function bookingConfirmedEmailHtml({ customerName, providerProfile, serviceName,
   </div>`;
 }
 
+// Sent the moment an admin activates a provider application. Important:
+// activation alone does NOT put the business live — the very first time
+// this person signs in to VaiBook with the same email, their provider
+// profile is created automatically (see loadProviderProfile). This email
+// exists so they actually know to go do that, rather than the admin
+// approving someone who never finds out and never shows up in search.
+function providerApprovedEmailHtml({ businessName, ownerName }) {
+  return `
+  <div style="font-family: -apple-system, Helvetica, Arial, sans-serif; max-width: 520px; margin: 0 auto; color: #1a2e22;">
+    <div style="background: #0D3D2E; padding: 22px 28px; border-radius: 10px 10px 0 0;">
+      <span style="font-size: 20px; font-weight: 700; color: #FAFAF7;">vai<span style="color: #C6F135;">book</span></span>
+    </div>
+    <div style="background: #ffffff; border: 1px solid #E5E0D3; border-top: none; border-radius: 0 0 10px 10px; padding: 28px;">
+      <h2 style="margin: 0 0 6px; font-size: 20px; color: #0D3D2E;">You're approved${ownerName ? `, ${ownerName}` : ""}! 🎉</h2>
+      <p style="margin: 0 0 20px; font-size: 14px; color: #5b6b62; line-height: 1.5;"><strong>${businessName}</strong> has been approved on VaiBook. One last step to go live:</p>
+      <div style="background: #F5EFE0; border-radius: 8px; padding: 16px 18px; margin-bottom: 16px;">
+        <div style="font-size: 14px; line-height: 1.6;">
+          Sign in at <strong>vai-book.vercel.app/#provider</strong> with Google, using this same email address. The moment you do, your business goes live and customers can start finding and booking you.
+        </div>
+      </div>
+      <p style="font-size: 13px; color: #5b6b62; line-height: 1.5;">Nothing else is needed — no forms, no re-applying. Just sign in once and you're live.</p>
+      <p style="font-size: 13px; color: #5b6b62; margin-top: 16px;">— The VaiBook Team</p>
+    </div>
+  </div>`;
+}
+
 // Compact relative-time formatter for the notification list ("2h ago").
 function timeAgo(dateStr) {
   const diffMs = Date.now() - new Date(dateStr).getTime();
@@ -4272,8 +4298,20 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
 
   const act = async (id, status) => {
     setBusyId(id);
+    const app = apps.find((a) => a.id === id);
     await updateApplicationStatus(id, status);
+    // Activation alone doesn't make them live — they still need to sign in
+    // once with this email for their provider profile to be created (see
+    // loadProviderProfile). Tell them so, or they'll never know to.
+    if (status === "active" && app?.email) {
+      sendBookingEmail({
+        to: app.email,
+        subject: "You're approved on VaiBook!",
+        html: providerApprovedEmailHtml({ businessName: app.business_name, ownerName: app.owner_name }),
+      });
+    }
     await loadApps();
+    await loadProviders();
     setBusyId(null);
   };
 
@@ -4375,6 +4413,14 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
   };
   const filtered = apps.filter(a => a.status === tab);
 
+  // An "active" application isn't actually live until the applicant signs
+  // in once (that's what creates their real provider_profiles row — see
+  // loadProviderProfile). Cross-reference by business name against the
+  // real provider list so admins can see who's still waiting, since the
+  // application list alone can't tell the two apart.
+  const liveBusinessNames = new Set(providers.map((p) => (p.business_name || "").trim().toLowerCase()));
+  const isApplicationLive = (app) => liveBusinessNames.has((app.business_name || "").trim().toLowerCase());
+
   const sideItems = [
     { id: "pending", icon: "\u23f3", label: "Pending" },
     { id: "active", icon: "\u2705", label: "Active" },
@@ -4448,6 +4494,15 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
                     <div className="meta">{app.email} · {app.phone}</div>
                     {app.description && <div className="meta" style={{ marginTop: 4, fontStyle: "italic" }}>{app.description}</div>}
                     <div className="meta" style={{ marginTop: 4, fontSize: 11 }}>Applied {new Date(app.created_at).toLocaleDateString()}</div>
+                    {app.status === "active" && (
+                      isApplicationLive(app) ? (
+                        <div style={{ marginTop: 6, fontSize: 12, fontWeight: 600, color: "var(--forest)" }}>✅ Live on VaiBook</div>
+                      ) : (
+                        <div style={{ marginTop: 6, fontSize: 12, fontWeight: 600, color: "#B45309", background: "#FEF3C7", display: "inline-block", padding: "3px 8px", borderRadius: 6 }}>
+                          ⏳ Approved, but not live yet — they haven't signed in to VaiBook with {app.email}. Follow up with them directly ({app.phone || "no phone on file"}); we've also emailed them, but it may not have gone through yet.
+                        </div>
+                      )
+                    )}
                   </div>
                   <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
                     {app.status !== "active" && (
