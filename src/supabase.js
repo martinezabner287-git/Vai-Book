@@ -379,6 +379,15 @@ export const getUnreadBookingMessages = async (viewerId) => {
   return data || [];
 };
 
+// Returns the last `months` calendar months (oldest first) of the calling
+// provider's own revenue/bookings/reviews numbers — always live for the
+// current month, backed by the permanent monthly snapshot for past ones.
+export const getProviderMonthlyTrend = async (months = 6) => {
+  const { data, error } = await supabase.rpc('get_my_provider_monthly_trend', { p_months: months });
+  if (error) { console.error('Error loading monthly trend:', error.message); return []; }
+  return data || [];
+};
+
 // ── REVIEW HELPERS ───────────────────────────────────────────────
 
 export const submitReview = async (review) => {
