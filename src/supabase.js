@@ -79,6 +79,21 @@ export const upsertProviderProfile = async (profile) => {
   return data;
 };
 
+// Used only the very first time a newly-approved applicant signs in, to
+// create their provider_profiles row from scratch. Deliberately a plain
+// insert with no .select() — same reasoning as submitProviderApplication:
+// Postgres RLS treats "hand back the inserted row" (RETURNING) as a read,
+// which needs a SELECT policy in addition to the INSERT policy, and this
+// is the one place in the app where a brand-new row gets created by a
+// regular (non-admin) authenticated user rather than an existing owner
+// updating their own row. The caller re-reads with getProviderProfile
+// afterward instead of relying on the insert to hand the row back.
+export const createProviderProfile = async (profile) => {
+  const { error } = await supabase.from('provider_profiles').insert(profile);
+  if (error) { console.error('Error creating provider profile:', error.message); return false; }
+  return true;
+};
+
 // ── PROVIDER PHOTO HELPERS ─────────────────────────────────────────
 
 export const uploadProviderPhoto = async (userId, file) => {
@@ -613,10 +628,16 @@ export const updateApplicationStatus = async (id, status) => {
 // account and activation alone doesn't create their provider profile.
 export const getActiveApplicationByEmail = async (email) => {
   if (!email) return null;
+  // Case-insensitive on purpose: the application's email was typed by hand
+  // on a form (could be "John@Gmail.com"), while this is looked up against
+  // the exact-case email Google hands back on sign-in ("john@gmail.com").
+  // An exact match here silently stranded anyone whose casing didn't line
+  // up — approved, but never able to actually reach their portal.
+  const normalized = String(email).trim();
   const { data, error } = await supabase
     .from('provider_applications')
     .select('*')
-    .eq('email', email)
+    .ilike('email', normalized)
     .eq('status', 'active')
     .order('created_at', { ascending: false })
     .limit(1)
