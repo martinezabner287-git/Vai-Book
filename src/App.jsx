@@ -6,7 +6,7 @@ import L from "leaflet";
 import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
 import markerIcon from "leaflet/dist/images/marker-icon.png";
 import markerShadow from "leaflet/dist/images/marker-shadow.png";
-import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, deleteService, getActiveProviders, getProviderDirectory, createBooking, getProviderBusyWindows, createBookingSafe, cancelBooking, getCustomerBookings, uploadReceipt, submitReview, getProviderReviews, sendBookingEmail, updateUserProfile, getPaymentMethods, addPaymentMethod, deletePaymentMethod, createNotification, getNotifications, markNotificationRead, markAllNotificationsRead, getLandingStats, getRecommendedServices, getCategoryDefaultFeatures, getProviderFeatureOverrides, setProviderFeatureOverride, getVisitNotes, upsertVisitNote, adminListProviders, adminUpdateProvider, adminDeleteProvider, tagVIP, untagVIP, getVIPClients, getFavoriteProviderIds, getFavoriteProviders, addFavorite, removeFavorite, getBookingMessages, sendBookingMessage, markBookingMessagesRead, getUnreadBookingMessages } from "./supabase";
+import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, deleteService, getActiveProviders, getProviderDirectory, createBooking, getProviderBusyWindows, createBookingSafe, cancelBooking, getCustomerBookings, uploadReceipt, submitReview, getProviderReviews, sendBookingEmail, updateUserProfile, getPaymentMethods, addPaymentMethod, deletePaymentMethod, createNotification, getNotifications, markNotificationRead, markAllNotificationsRead, getLandingStats, getRecommendedServices, getCategoryDefaultFeatures, getProviderFeatureOverrides, setProviderFeatureOverride, getVisitNotes, upsertVisitNote, adminListProviders, adminUpdateProvider, adminDeleteProvider, tagVIP, untagVIP, getVIPClients, getFavoriteProviderIds, getFavoriteProviders, addFavorite, removeFavorite, getBookingMessages, sendBookingMessage, markBookingMessagesRead, getUnreadBookingMessages, getProviderMonthlyTrend } from "./supabase";
 
 // Leaflet's default marker icons reference image paths that don't resolve
 // correctly under CRA's bundler unless re-pointed at the imported assets.
@@ -925,6 +925,99 @@ function BookingChat({ bookingId, currentUserId, currentRole, recipientUserId })
   );
 }
 
+const MONTH_ABBR = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+
+// Supabase returns month_start as a plain "YYYY-MM-DD" string — parsed by
+// splitting rather than `new Date(...)`, since the latter reads it as UTC
+// midnight and can render as the *previous* day's month in timezones west
+// of UTC.
+function monthLabelFromDateStr(s) {
+  if (!s) return "";
+  const m = parseInt(String(s).split("-")[1], 10);
+  return MONTH_ABBR[m - 1] || s;
+}
+
+// A small, dependency-free line/bar chart for one monthly-trend series.
+// Values are few (a handful of months) so every point gets a direct label
+// and a native tooltip rather than a full interactive-tooltip layer — kept
+// intentionally simple to match how the rest of this app is built (plain
+// inline SVG, no charting library).
+function TrendChart({ points, kind = "line", color, formatValue }) {
+  const width = 560;
+  const height = 170;
+  const padTop = 30;
+  const padBottom = 26;
+  const padSide = 22;
+  const plotW = width - padSide * 2;
+  const plotH = height - padTop - padBottom;
+
+  const values = points.map((p) => p.y).filter((v) => v != null);
+  const hasData = values.some((v) => v > 0);
+  const maxV = values.length ? Math.max(...values, 0) : 0;
+  const niceMax = maxV === 0 ? 1 : maxV * 1.2;
+
+  const stepX = points.length > 1 ? plotW / (points.length - 1) : 0;
+  const xFor = (i) => padSide + (points.length > 1 ? i * stepX : plotW / 2);
+  const yFor = (v) => padTop + plotH - (Math.max(v || 0, 0) / niceMax) * plotH;
+  const fmt = (v) => (formatValue ? formatValue(v) : v);
+
+  if (!hasData) {
+    return (
+      <div style={{ height, display: "flex", alignItems: "center", justifyContent: "center", color: "var(--muted)", fontSize: 13 }}>
+        Not enough data yet
+      </div>
+    );
+  }
+
+  return (
+    <svg viewBox={`0 0 ${width} ${height}`} style={{ width: "100%", height: "auto", display: "block" }}>
+      <line x1={padSide} y1={padTop + plotH} x2={width - padSide} y2={padTop + plotH} style={{ stroke: "var(--border)" }} strokeWidth="1" />
+
+      {kind === "bar" && points.map((p, i) => {
+        const barW = Math.min(34, stepX * 0.5) || 34;
+        const x = xFor(i) - barW / 2;
+        const y = yFor(p.y || 0);
+        const barH = padTop + plotH - y;
+        return (
+          <g key={i}>
+            <rect x={x} y={y} width={barW} height={Math.max(barH, 0)} rx={4} fill={color}>
+              <title>{`${p.label}: ${p.y == null ? "—" : fmt(p.y)}`}</title>
+            </rect>
+            {p.y != null && (
+              <text x={xFor(i)} y={y - 8} textAnchor="middle" fontSize="11" fontWeight="700" style={{ fill: "var(--dark-text)" }}>{fmt(p.y)}</text>
+            )}
+            <text x={xFor(i)} y={padTop + plotH + 18} textAnchor="middle" fontSize="11" style={{ fill: "var(--muted)" }}>{p.label}</text>
+          </g>
+        );
+      })}
+
+      {kind === "line" && (
+        <>
+          <path
+            d={points.map((p, i) => `${i === 0 ? "M" : "L"} ${xFor(i)} ${yFor(p.y || 0)}`).join(" ")}
+            fill="none"
+            stroke={color}
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          {points.map((p, i) => (
+            <g key={i}>
+              <circle cx={xFor(i)} cy={yFor(p.y || 0)} r="4" fill="white" stroke={color} strokeWidth="2">
+                <title>{`${p.label}: ${p.y == null ? "—" : fmt(p.y)}`}</title>
+              </circle>
+              {p.y != null && (
+                <text x={xFor(i)} y={yFor(p.y) - 11} textAnchor="middle" fontSize="11" fontWeight="700" style={{ fill: "var(--dark-text)" }}>{fmt(p.y)}</text>
+              )}
+              <text x={xFor(i)} y={padTop + plotH + 18} textAnchor="middle" fontSize="11" style={{ fill: "var(--muted)" }}>{p.label}</text>
+            </g>
+          ))}
+        </>
+      )}
+    </svg>
+  );
+}
+
 const DAYS = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
 const DAY_NAMES = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
 const DEFAULT_HOURS = DAY_NAMES.map((day, i) => ({
@@ -1219,6 +1312,7 @@ const PORTAL_TOOLS_BY_VIEW = {
     { id: "calendar", icon: "🗓️", label: "Availability" },
     { id: "services", icon: "✂️", label: "My services" },
     { id: "earnings", icon: "💰", label: "Earnings" },
+    { id: "review", icon: "📈", label: "Monthly review" },
     { id: "profile", icon: "👤", label: "Public profile" },
     { id: "modules", icon: "🧩", label: "Modules" },
     { id: "settings", icon: "⚙️", label: "Settings" },
@@ -2838,6 +2932,21 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
     loadVIPClients();
   }, [providerId]);
 
+  const [monthlyTrend, setMonthlyTrend] = useState([]);
+  const [loadingTrend, setLoadingTrend] = useState(false);
+
+  const loadMonthlyTrend = async () => {
+    if (!providerId) return;
+    setLoadingTrend(true);
+    const data = await getProviderMonthlyTrend(6);
+    setMonthlyTrend(data || []);
+    setLoadingTrend(false);
+  };
+
+  useEffect(() => {
+    loadMonthlyTrend();
+  }, [providerId]);
+
   const toggleVIP = async (customerId) => {
     if (!providerId || !customerId || togglingVipId === customerId) return;
     setTogglingVipId(customerId);
@@ -3116,6 +3225,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
     { id: "calendar", icon: "🗓️", label: "Availability" },
     { id: "services", icon: "✂️", label: "My services" },
     { id: "earnings", icon: "💰", label: "Earnings" },
+    { id: "review", icon: "📈", label: "Monthly review" },
     { id: "profile", icon: "👤", label: "Public profile" },
     { id: "modules", icon: "🧩", label: "Modules" },
     { id: "settings", icon: "⚙️", label: "Settings" },
@@ -3602,6 +3712,84 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
             </div>
           </>
         )}
+
+        {tab === "review" && (() => {
+          const thisMonth = monthlyTrend.length ? monthlyTrend[monthlyTrend.length - 1] : null;
+          const prevMonth = monthlyTrend.length > 1 ? monthlyTrend[monthlyTrend.length - 2] : null;
+          const revenueDeltaPct = thisMonth && prevMonth && Number(prevMonth.revenue_total) > 0
+            ? Math.round(((Number(thisMonth.revenue_total) - Number(prevMonth.revenue_total)) / Number(prevMonth.revenue_total)) * 100)
+            : null;
+          const completionPct = thisMonth && thisMonth.bookings_total > 0
+            ? Math.round((thisMonth.bookings_completed / thisMonth.bookings_total) * 100)
+            : null;
+          const revenuePoints = monthlyTrend.map((m) => ({ label: monthLabelFromDateStr(m.month_start), y: Number(m.revenue_total) }));
+          const bookingPoints = monthlyTrend.map((m) => ({ label: monthLabelFromDateStr(m.month_start), y: m.bookings_total }));
+          const ratingPoints = monthlyTrend.map((m) => ({ label: monthLabelFromDateStr(m.month_start), y: m.avg_rating != null ? Number(m.avg_rating) : null }));
+
+          return (
+            <>
+              <div className="portal-header">
+                <h2>Monthly review</h2>
+                <p>Your business, tracked month over month — the same trends a business owner watches.</p>
+              </div>
+
+              {loadingTrend && monthlyTrend.length === 0 ? (
+                <p style={{ fontSize: 13, color: "var(--muted)", padding: "16px 0" }}>Loading...</p>
+              ) : (
+                <>
+                  <div className="metric-grid" style={{ gridTemplateColumns: "1fr 1fr 1fr" }}>
+                    <div className="metric">
+                      <div className="metric-label">Revenue this month</div>
+                      <div className="metric-value" style={{ color: "var(--clay)" }}>BZ${thisMonth ? Number(thisMonth.revenue_total).toFixed(0) : "0"}</div>
+                      <div className="metric-sub">{revenueDeltaPct === null ? "No data for last month" : `${revenueDeltaPct >= 0 ? "↑" : "↓"} ${Math.abs(revenueDeltaPct)}% vs last month`}</div>
+                    </div>
+                    <div className="metric">
+                      <div className="metric-label">Bookings this month</div>
+                      <div className="metric-value">{thisMonth ? thisMonth.bookings_total : 0}</div>
+                      <div className="metric-sub">{completionPct === null ? "No bookings yet" : `${completionPct}% completed`}</div>
+                    </div>
+                    <div className="metric">
+                      <div className="metric-label">Avg. rating this month</div>
+                      <div className="metric-value">{thisMonth && thisMonth.avg_rating != null ? Number(thisMonth.avg_rating).toFixed(1) : "—"}</div>
+                      <div className="metric-sub">{thisMonth && thisMonth.reviews_count ? `${thisMonth.reviews_count} review${thisMonth.reviews_count === 1 ? "" : "s"} this month` : "No reviews yet"}</div>
+                    </div>
+                  </div>
+
+                  <div className="card" style={{ marginBottom: 20 }}>
+                    <div className="card-title">Revenue trend</div>
+                    <p style={{ fontSize: 12.5, color: "var(--muted)", marginTop: -8, marginBottom: 12 }}>Earnings from completed bookings, by month.</p>
+                    <TrendChart points={revenuePoints} kind="line" color="#D4795A" formatValue={(v) => `$${Math.round(v)}`} />
+                  </div>
+
+                  <div className="card" style={{ marginBottom: 20 }}>
+                    <div className="card-title">Booking volume</div>
+                    <p style={{ fontSize: 12.5, color: "var(--muted)", marginTop: -8, marginBottom: 12 }}>Total bookings received each month.</p>
+                    <TrendChart points={bookingPoints} kind="bar" color="#1BAF7A" formatValue={(v) => `${v}`} />
+                  </div>
+
+                  <div className="card">
+                    <div className="card-title">Reviews &amp; ratings</div>
+                    <p style={{ fontSize: 12.5, color: "var(--muted)", marginTop: -8, marginBottom: 12 }}>Your average star rating each month.</p>
+                    <TrendChart points={ratingPoints} kind="line" color="#F59E0B" formatValue={(v) => `${v.toFixed(1)}★`} />
+                    {monthlyTrend.some((m) => m.reviews_count > 0) && (
+                      <div style={{ display: "flex", justifyContent: "space-around", marginTop: 4, paddingTop: 10, borderTop: "1px solid var(--border)" }}>
+                        {monthlyTrend.map((m) => (
+                          <div key={m.month_start} style={{ textAlign: "center", fontSize: 11, color: "var(--muted)" }}>
+                            {m.reviews_count} review{m.reviews_count === 1 ? "" : "s"}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 16 }}>
+                    We also email you this summary automatically at the start of each month.
+                  </p>
+                </>
+              )}
+            </>
+          );
+        })()}
 
         {tab === "profile" && (
           <>
