@@ -209,6 +209,24 @@ export const getActiveProviders = async (filters = {}) => {
 // Lightweight directory used for search-suggestion autocomplete (business
 // name, category, and service names) — kept minimal since it's fetched
 // eagerly on the landing page before the user has searched for anything.
+// Fetches a single active provider by id, in the same shape as
+// getActiveProviders — used to open a provider's booking page directly
+// from a deep link (e.g. their QR code), without the customer having to
+// search for them first.
+export const getProviderById = async (id) => {
+  if (!id) return null;
+  const { data, error } = await supabase
+    .from('provider_profiles')
+    .select('*, services(*), reviews(rating)')
+    .eq('id', id)
+    .eq('is_active', true)
+    .maybeSingle();
+  if (error) { console.error('Error fetching provider:', error.message); return null; }
+  if (!data) return null;
+  const toArray = (v) => (v ? (Array.isArray(v) ? v : [v]) : []);
+  return { ...data, services: toArray(data.services), reviews: toArray(data.reviews) };
+};
+
 export const getProviderDirectory = async () => {
   const { data, error } = await supabase
     .from('provider_profiles')
