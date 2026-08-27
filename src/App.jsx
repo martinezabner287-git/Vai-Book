@@ -6,7 +6,7 @@ import L from "leaflet";
 import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
 import markerIcon from "leaflet/dist/images/marker-icon.png";
 import markerShadow from "leaflet/dist/images/marker-shadow.png";
-import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, deleteService, getActiveProviders, getProviderDirectory, createBooking, getProviderBusyWindows, createBookingSafe, cancelBooking, getCustomerBookings, uploadReceipt, submitReview, getProviderReviews, sendBookingEmail, updateUserProfile, getPaymentMethods, addPaymentMethod, deletePaymentMethod, createNotification, getNotifications, markNotificationRead, markAllNotificationsRead, getLandingStats, getRecommendedServices, getCategoryDefaultFeatures, getProviderFeatureOverrides, setProviderFeatureOverride, getVisitNotes, upsertVisitNote, adminListProviders, adminUpdateProvider, adminDeleteProvider, tagVIP, untagVIP, getVIPClients, getFavoriteProviderIds, getFavoriteProviders, addFavorite, removeFavorite, getBookingMessages, sendBookingMessage, markBookingMessagesRead, getUnreadBookingMessages, getProviderMonthlyTrend, createProviderProfile } from "./supabase";
+import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, deleteService, getActiveProviders, getProviderDirectory, createBooking, getProviderBusyWindows, createBookingSafe, cancelBooking, getCustomerBookings, uploadReceipt, submitReview, getProviderReviews, sendBookingEmail, updateUserProfile, getPaymentMethods, addPaymentMethod, deletePaymentMethod, createNotification, getNotifications, markNotificationRead, markAllNotificationsRead, getLandingStats, getRecommendedServices, getCategoryDefaultFeatures, getProviderFeatureOverrides, setProviderFeatureOverride, getVisitNotes, upsertVisitNote, adminListProviders, adminUpdateProvider, adminDeleteProvider, tagVIP, untagVIP, getVIPClients, getFavoriteProviderIds, getFavoriteProviders, addFavorite, removeFavorite, getBookingMessages, sendBookingMessage, markBookingMessagesRead, getUnreadBookingMessages, getProviderMonthlyTrend, createProviderProfile, getProviderById } from "./supabase";
 
 // Leaflet's default marker icons reference image paths that don't resolve
 // correctly under CRA's bundler unless re-pointed at the imported assets.
@@ -1340,6 +1340,7 @@ const PORTAL_TOOLS_BY_VIEW = {
     { id: "earnings", icon: "💰", label: "Earnings" },
     { id: "review", icon: "📈", label: "Monthly review" },
     { id: "profile", icon: "👤", label: "Public profile" },
+    { id: "qr", icon: "📱", label: "My QR code" },
     { id: "modules", icon: "🧩", label: "Modules" },
     { id: "settings", icon: "⚙️", label: "Settings" },
   ],
@@ -1865,7 +1866,7 @@ function LandingPage({ onNav, session, onSignIn }) {
 }
 
 // ── CUSTOMER PORTAL ─────────────────────────────────────────────
-function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate }) {
+function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLinkProviderId, onDeepLinkConsumed }) {
   const [tab, setTab] = useState("home");
 
   // Lets the top nav's account dropdown (with the same tools list as the
@@ -1917,6 +1918,21 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate }) {
   const [loadingBookings, setLoadingBookings] = useState(false);
 
   const [selectedProvider, setSelectedProvider] = useState(null);
+
+  // A QR code / booking-link deep link ("#book-<id>") jumps straight to
+  // that provider's booking view, same modal as clicking them from search —
+  // no account needed just to look, same as browsing normally.
+  useEffect(() => {
+    if (!deepLinkProviderId) return;
+    let cancelled = false;
+    (async () => {
+      const p = await getProviderById(deepLinkProviderId);
+      if (!cancelled && p) setSelectedProvider(p);
+      if (!cancelled) onDeepLinkConsumed && onDeepLinkConsumed();
+    })();
+    return () => { cancelled = true; };
+  }, [deepLinkProviderId]);
+
   const [bookingForm, setBookingForm] = useState({ service_id: "", date: "", time: "10:00", notes: "" });
   const [submittingBooking, setSubmittingBooking] = useState(false);
   const [bookingError, setBookingError] = useState("");
@@ -3253,6 +3269,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
     { id: "earnings", icon: "💰", label: "Earnings" },
     { id: "review", icon: "📈", label: "Monthly review" },
     { id: "profile", icon: "👤", label: "Public profile" },
+    { id: "qr", icon: "📱", label: "My QR code" },
     { id: "modules", icon: "🧩", label: "Modules" },
     { id: "settings", icon: "⚙️", label: "Settings" },
   ];
@@ -3886,6 +3903,45 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
           </>
         )}
 
+        {tab === "qr" && (() => {
+          const bookingUrl = `${window.location.origin}/#book-${providerId}`;
+          const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=320x320&margin=12&data=${encodeURIComponent(bookingUrl)}`;
+          return (
+            <>
+              <div className="portal-header">
+                <h2>My QR code</h2>
+                <p>Print this and put it up in your shop — customers scan it and go straight to your booking page on VaiBook, no searching needed.</p>
+              </div>
+              <div className="card" style={{ maxWidth: 420 }}>
+                <div style={{ textAlign: "center" }}>
+                  <img
+                    src={qrImageUrl}
+                    alt={`QR code linking to ${providerProfile?.business_name || "your"} booking page`}
+                    style={{ width: 240, height: 240, borderRadius: 12, border: "1px solid var(--border)", background: "#fff", padding: 12 }}
+                  />
+                  <div style={{ marginTop: 16, fontSize: 13, color: "var(--muted)", wordBreak: "break-all" }}>{bookingUrl}</div>
+                  <div style={{ display: "flex", gap: 8, justifyContent: "center", marginTop: 16, flexWrap: "wrap" }}>
+                    <button
+                      className="btn-sm forest"
+                      onClick={async () => {
+                        try { await navigator.clipboard.writeText(bookingUrl); } catch (e) { /* clipboard unavailable — link is shown below already */ }
+                      }}
+                    >
+                      Copy link
+                    </button>
+                    <a className="btn-sm lime" href={qrImageUrl} target="_blank" rel="noreferrer" style={{ textDecoration: "none", display: "inline-flex", alignItems: "center" }}>
+                      Open full-size to save/print
+                    </a>
+                  </div>
+                  <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 16 }}>
+                    On phone or desktop: open the full-size image above, then save or print it like any picture — it never expires or changes, so one printout works forever.
+                  </p>
+                </div>
+              </div>
+            </>
+          );
+        })()}
+
         {tab === "modules" && <ModulesPanel />}
 
         {tab === "settings" && (
@@ -4235,6 +4291,54 @@ Activate this provider in your admin dashboard.`
   );
 }
 
+// ── Duplicate-application detection ──────────────────────────────
+// Catches the exact mess that caused the "approved but he still can't
+// sign in" bug: someone submits more than one application, or fat-fingers
+// their email on one, so the "active" record on file doesn't match what
+// they actually type in later. Flags it for the admin BEFORE approval
+// instead of after, when it's much harder to untangle.
+
+const normalizeForCompare = (s) => (s || "").trim().toLowerCase().replace(/\s+/g, " ");
+
+// Plain Levenshtein edit distance — small and dependency-free, good enough
+// for "is this basically the same email/name with a typo" at this scale.
+function editDistance(a, b) {
+  if (a === b) return 0;
+  const m = a.length, n = b.length;
+  if (!m) return n;
+  if (!n) return m;
+  const dp = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
+  for (let i = 0; i <= m; i++) dp[i][0] = i;
+  for (let j = 0; j <= n; j++) dp[0][j] = j;
+  for (let i = 1; i <= m; i++) {
+    for (let j = 1; j <= n; j++) {
+      dp[i][j] = a[i - 1] === b[j - 1]
+        ? dp[i - 1][j - 1]
+        : 1 + Math.min(dp[i - 1][j - 1], dp[i - 1][j], dp[i][j - 1]);
+    }
+  }
+  return dp[m][n];
+}
+
+// Returns the other applications that look like they might be the same
+// business/person as `app` — same or near-identical business name, or a
+// near-identical (typo-distance) email — excluding rejected duplicates
+// once one of the pair is already rejected, since that's the normal
+// "they fixed the typo and reapplied" flow, not a live conflict.
+const findSimilarApplications = (app, allApps) => {
+  const name = normalizeForCompare(app.business_name);
+  const email = normalizeForCompare(app.email);
+  return allApps.filter((other) => {
+    if (other.id === app.id) return false;
+    if (app.status === "rejected" || other.status === "rejected") return false;
+    const otherName = normalizeForCompare(other.business_name);
+    const otherEmail = normalizeForCompare(other.email);
+    const nameMatch = name.length > 2 && otherName.length > 2 && (name === otherName || editDistance(name, otherName) <= 2);
+    const emailMatch = email && otherEmail && (email === otherEmail || editDistance(email, otherEmail) <= 2);
+    return nameMatch || emailMatch;
+  });
+};
+
 function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
   const [checkingAdmin, setCheckingAdmin] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -4494,6 +4598,15 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
                     <div className="meta">{app.email} · {app.phone}</div>
                     {app.description && <div className="meta" style={{ marginTop: 4, fontStyle: "italic" }}>{app.description}</div>}
                     <div className="meta" style={{ marginTop: 4, fontSize: 11 }}>Applied {new Date(app.created_at).toLocaleDateString()}</div>
+                    {(() => {
+                      const similar = findSimilarApplications(app, apps);
+                      if (!similar.length) return null;
+                      return (
+                        <div style={{ marginTop: 6, fontSize: 12, fontWeight: 600, color: "#B91C1C", background: "#FEE2E2", display: "inline-block", padding: "3px 8px", borderRadius: 6 }}>
+                          ⚠️ Possible duplicate — looks similar to {similar.map((s) => `"${s.business_name}" (${s.email}, ${s.status})`).join(", ")}. Double-check before activating so the wrong email doesn't end up "active."
+                        </div>
+                      );
+                    })()}
                     {app.status === "active" && (
                       isApplicationLive(app) ? (
                         <div style={{ marginTop: 6, fontSize: 12, fontWeight: 600, color: "var(--forest)" }}>✅ Live on VaiBook</div>
@@ -4633,10 +4746,25 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
 
 // ── APP ROOT ────────────────────────────────────────────────────
 // ── AUTH-AWARE APP ROOT ──────────────────────────────────────────
+// A provider's QR code links to "#book-<provider id>" so scanning it jumps
+// straight to their booking page inside VaiBook, instead of the generic
+// homepage. Kept as a plain helper so both the initial-load state and the
+// hashchange listener below parse it identically.
+const parseBookingHash = (h) => (h.startsWith("book-") ? h.slice(5) : null);
+
 export default function App() {
   const [view, setView] = useState(() => {
     const h = window.location.hash.replace("#", "");
+    if (parseBookingHash(h)) return "customer";
     return h === "admin" || h === "customer" || h === "provider" ? h : "home";
+  });
+
+  // Which provider a QR-code / booking-link deep link pointed at, if any —
+  // consumed once by CustomerPortal to jump straight to that provider's
+  // booking view instead of making the visitor search for them.
+  const [deepLinkProviderId, setDeepLinkProviderId] = useState(() => {
+    const h = window.location.hash.replace("#", "");
+    return parseBookingHash(h);
   });
 
   // Keep view in sync if the URL hash changes without a full page reload
@@ -4644,7 +4772,13 @@ export default function App() {
   useEffect(() => {
     const onHashChange = () => {
       const h = window.location.hash.replace("#", "");
-      if (h === "admin" || h === "customer" || h === "provider") setView(h);
+      const bookingId = parseBookingHash(h);
+      if (bookingId) {
+        setDeepLinkProviderId(bookingId);
+        setView("customer");
+      } else if (h === "admin" || h === "customer" || h === "provider") {
+        setView(h);
+      }
     };
     window.addEventListener("hashchange", onHashChange);
     return () => window.removeEventListener("hashchange", onHashChange);
@@ -4752,7 +4886,14 @@ export default function App() {
       <InstallAppGuide />
       {view !== "auth" && <Nav onNav={setView} current={view} {...authProps} />}
       {view === "home" && <LandingPage onNav={setView} {...authProps} />}
-      {view === "customer" && <CustomerPortal onNav={setView} {...authProps} />}
+      {view === "customer" && (
+        <CustomerPortal
+          onNav={setView}
+          {...authProps}
+          deepLinkProviderId={deepLinkProviderId}
+          onDeepLinkConsumed={() => setDeepLinkProviderId(null)}
+        />
+      )}
       {view === "provider" && <ProviderPortal onNav={setView} {...authProps} />}
       {view === "signup" && <ProviderSignup onNav={setView} {...authProps} />}
       {view === "admin" && <AdminPortal onNav={setView} {...authProps} />}
