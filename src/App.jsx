@@ -1274,6 +1274,8 @@ const NOTIF_DESTINATIONS = {
   booking_rejected: { view: "customer", tab: "bookings" },
   payment_confirmed: { view: "customer", tab: "bookings" },
   booking_completed: { view: "customer", tab: "bookings" },
+  payment_due_reminder: { view: "provider", tab: "billing" },
+  payment_overdue_suspended: { view: "provider", tab: "billing" },
 };
 
 function NotificationBell({ userId, providerProfile, onNav }) {
@@ -3948,6 +3950,17 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                 <div className="card-title">Current plan</div>
                 <div style={{ fontSize: 20, fontWeight: 700 }}>{currentPlan.name} <span style={{ fontSize: 14, fontWeight: 500, color: "var(--muted)" }}>— {currentPlan.price}</span></div>
                 <p style={{ fontSize: 13, color: "var(--muted)", marginTop: 4 }}>{currentPlan.desc}</p>
+
+                {currentPlan.monthly > 0 && providerProfile?.next_payment_due_date && (
+                  <p style={{ fontSize: 13, fontWeight: 600, marginTop: 10, color: providerProfile.is_active ? "var(--dark-text)" : "#B91C1C" }}>
+                    Next payment due {new Date(providerProfile.next_payment_due_date).toLocaleDateString([], { month: "long", day: "numeric", year: "numeric" })}
+                  </p>
+                )}
+                {currentPlan.monthly > 0 && !providerProfile?.is_active && (
+                  <div style={{ marginTop: 12, background: "#FEE2E2", border: "1px solid #FCA5A5", borderRadius: 8, padding: "10px 14px", fontSize: 13, color: "#B91C1C" }}>
+                    Your listing is currently hidden from customers. If this is because a payment is overdue, upload your receipt below — you'll go back live as soon as it's confirmed.
+                  </div>
+                )}
 
                 {currentPlan.monthly === 0 ? (
                   <p style={{ fontSize: 13, color: "var(--forest)", fontWeight: 600, marginTop: 16 }}>You're on the free Starter plan — nothing to pay.</p>
