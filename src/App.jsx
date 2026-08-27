@@ -6,7 +6,7 @@ import L from "leaflet";
 import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
 import markerIcon from "leaflet/dist/images/marker-icon.png";
 import markerShadow from "leaflet/dist/images/marker-shadow.png";
-import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, deleteService, getActiveProviders, getProviderDirectory, createBooking, getProviderBusyWindows, createBookingSafe, cancelBooking, getCustomerBookings, uploadReceipt, submitReview, getProviderReviews, sendBookingEmail, updateUserProfile, getPaymentMethods, addPaymentMethod, deletePaymentMethod, createNotification, getNotifications, markNotificationRead, markAllNotificationsRead, getLandingStats, getRecommendedServices, getCategoryDefaultFeatures, getProviderFeatureOverrides, setProviderFeatureOverride, getVisitNotes, upsertVisitNote, adminListProviders, adminUpdateProvider, adminDeleteProvider, tagVIP, untagVIP, getVIPClients, getFavoriteProviderIds, getFavoriteProviders, addFavorite, removeFavorite, getBookingMessages, sendBookingMessage, markBookingMessagesRead, getUnreadBookingMessages, getProviderMonthlyTrend, createProviderProfile, getProviderById, createWalkInBooking } from "./supabase";
+import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, deleteService, getActiveProviders, getProviderDirectory, createBooking, getProviderBusyWindows, createBookingSafe, cancelBooking, getCustomerBookings, uploadReceipt, submitReview, getProviderReviews, sendBookingEmail, updateUserProfile, getPaymentMethods, addPaymentMethod, deletePaymentMethod, createNotification, getNotifications, markNotificationRead, markAllNotificationsRead, getLandingStats, getRecommendedServices, getCategoryDefaultFeatures, getProviderFeatureOverrides, setProviderFeatureOverride, getVisitNotes, upsertVisitNote, adminListProviders, adminUpdateProvider, adminDeleteProvider, tagVIP, untagVIP, getVIPClients, getFavoriteProviderIds, getFavoriteProviders, addFavorite, removeFavorite, getBookingMessages, sendBookingMessage, markBookingMessagesRead, getUnreadBookingMessages, getProviderMonthlyTrend, createProviderProfile, getProviderById, createWalkInBooking, submitProviderPayment, getMyProviderPayments, adminListProviderPayments, adminReviewProviderPayment } from "./supabase";
 
 // Leaflet's default marker icons reference image paths that don't resolve
 // correctly under CRA's bundler unless re-pointed at the imported assets.
@@ -1367,6 +1367,7 @@ const PORTAL_TOOLS_BY_VIEW = {
     { id: "calendar", icon: "🗓️", label: "Availability" },
     { id: "services", icon: "✂️", label: "My services" },
     { id: "earnings", icon: "💰", label: "Earnings" },
+    { id: "billing", icon: "🧾", label: "My plan & billing" },
     { id: "review", icon: "📈", label: "Monthly review" },
     { id: "profile", icon: "👤", label: "Public profile" },
     { id: "qr", icon: "📱", label: "My QR code" },
@@ -1378,6 +1379,7 @@ const PORTAL_TOOLS_BY_VIEW = {
     { id: "active", icon: "✅", label: "Active" },
     { id: "rejected", icon: "✖", label: "Rejected" },
     { id: "providers", icon: "🏪", label: "Providers" },
+    { id: "payments", icon: "🧾", label: "Payments" },
   ],
 };
 
@@ -3032,6 +3034,49 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
     }
   };
 
+  // Plan & billing — the provider's own VaiBook subscription payment,
+  // separate from anything a customer pays for a booking.
+  const [payments, setPayments] = useState([]);
+  const [loadingPayments, setLoadingPayments] = useState(false);
+  const [paymentForm, setPaymentForm] = useState({ periodLabel: "", receipt: null });
+  const [submittingPayment, setSubmittingPayment] = useState(false);
+  const [paymentError, setPaymentError] = useState("");
+
+  const loadPayments = async () => {
+    if (!providerId) return;
+    setLoadingPayments(true);
+    const data = await getMyProviderPayments(providerId);
+    setPayments(data || []);
+    setLoadingPayments(false);
+  };
+
+  useEffect(() => {
+    loadPayments();
+    // Default the period label to the current month whenever the tab's
+    // form is fresh (e.g. after a submit resets it).
+    setPaymentForm((f) => (f.periodLabel ? f : { ...f, periodLabel: new Date().toLocaleDateString([], { month: "long", year: "numeric" }) }));
+  }, [providerId]);
+
+  const submitPayment = async () => {
+    if (!paymentForm.receipt) { setPaymentError("Please attach a receipt image or PDF."); return; }
+    if (!paymentForm.periodLabel.trim()) { setPaymentError("Please say which period this payment covers."); return; }
+    const plan = PLANS.find((p) => p.id === (providerProfile?.plan || "starter"));
+    setSubmittingPayment(true);
+    setPaymentError("");
+    const ok = await submitProviderPayment(providerId, paymentForm.receipt, {
+      plan: plan?.id || "starter",
+      amount: plan?.monthly || 0,
+      periodLabel: paymentForm.periodLabel.trim(),
+    });
+    setSubmittingPayment(false);
+    if (ok) {
+      setPaymentForm({ periodLabel: "", receipt: null });
+      await loadPayments();
+    } else {
+      setPaymentError("Something went wrong uploading that. Please try again.");
+    }
+  };
+
   const [vipClients, setVipClients] = useState([]);
   const [loadingVip, setLoadingVip] = useState(false);
   const [togglingVipId, setTogglingVipId] = useState(null);
@@ -3342,6 +3387,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
     { id: "calendar", icon: "🗓️", label: "Availability" },
     { id: "services", icon: "✂️", label: "My services" },
     { id: "earnings", icon: "💰", label: "Earnings" },
+    { id: "billing", icon: "🧾", label: "My plan & billing" },
     { id: "review", icon: "📈", label: "Monthly review" },
     { id: "profile", icon: "👤", label: "Public profile" },
     { id: "qr", icon: "📱", label: "My QR code" },
@@ -3889,6 +3935,66 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
             </div>
           </>
         )}
+
+        {tab === "billing" && (() => {
+          const currentPlan = PLANS.find((p) => p.id === (providerProfile?.plan || "starter")) || PLANS[0];
+          const statusColor = { pending: "#B45309", confirmed: "var(--forest)", rejected: "#B91C1C" };
+          const statusBg = { pending: "#FEF3C7", confirmed: "#E7F5EC", rejected: "#FEE2E2" };
+          return (
+            <>
+              <div className="portal-header"><h2>My plan &amp; billing</h2><p>This is your VaiBook subscription — separate from what customers pay you for bookings.</p></div>
+
+              <div className="card" style={{ maxWidth: 560 }}>
+                <div className="card-title">Current plan</div>
+                <div style={{ fontSize: 20, fontWeight: 700 }}>{currentPlan.name} <span style={{ fontSize: 14, fontWeight: 500, color: "var(--muted)" }}>— {currentPlan.price}</span></div>
+                <p style={{ fontSize: 13, color: "var(--muted)", marginTop: 4 }}>{currentPlan.desc}</p>
+
+                {currentPlan.monthly === 0 ? (
+                  <p style={{ fontSize: 13, color: "var(--forest)", fontWeight: 600, marginTop: 16 }}>You're on the free Starter plan — nothing to pay.</p>
+                ) : (
+                  <div style={{ marginTop: 20, paddingTop: 16, borderTop: "1px solid var(--border)" }}>
+                    <div className="card-title">Submit a payment</div>
+                    <p style={{ fontSize: 13, color: "var(--muted)", marginBottom: 12 }}>Paid your {currentPlan.name} plan fee (BZ${currentPlan.monthly}) by bank transfer or mobile wallet? Upload the receipt here so admin can confirm it and keep your account active.</p>
+                    <div className="input-group">
+                      <label>Which period is this for?</label>
+                      <input value={paymentForm.periodLabel} onChange={e => setPaymentForm(f => ({ ...f, periodLabel: e.target.value }))} placeholder="e.g. September 2026" />
+                    </div>
+                    <div className="input-group">
+                      <label>Receipt (image or PDF)</label>
+                      <input type="file" accept="image/*,application/pdf" onChange={e => setPaymentForm(f => ({ ...f, receipt: e.target.files?.[0] || null }))} />
+                    </div>
+                    {paymentError && <p style={{ fontSize: 12, color: "#B91C1C", marginBottom: 8 }}>{paymentError}</p>}
+                    <button className="btn-sm lime" disabled={submittingPayment} onClick={submitPayment}>{submittingPayment ? "Uploading..." : "Submit payment"}</button>
+                  </div>
+                )}
+              </div>
+
+              <div className="card" style={{ maxWidth: 560, marginTop: 20 }}>
+                <div className="card-title" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <span>Payment history</span>
+                  <button className="btn-sm forest" onClick={loadPayments} disabled={loadingPayments}>{loadingPayments ? "Refreshing..." : "Refresh"}</button>
+                </div>
+                {payments.length === 0 ? (
+                  <p style={{ fontSize: 13, color: "var(--muted)", padding: "16px 0" }}>{loadingPayments ? "Loading..." : "No payments submitted yet."}</p>
+                ) : (
+                  payments.map((pmt) => (
+                    <div key={pmt.id} style={{ padding: "12px 0", borderBottom: "1px solid var(--border)", display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                      <div>
+                        <div style={{ fontSize: 14, fontWeight: 600 }}>{pmt.period_label} — BZ${pmt.amount}</div>
+                        <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 2 }}>Submitted {new Date(pmt.submitted_at).toLocaleDateString()}</div>
+                        {pmt.admin_note && <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 2, fontStyle: "italic" }}>Admin note: {pmt.admin_note}</div>}
+                        {pmt.receipt_url && <a href={pmt.receipt_url} target="_blank" rel="noreferrer" style={{ fontSize: 12 }}>View receipt</a>}
+                      </div>
+                      <span style={{ fontSize: 12, fontWeight: 600, color: statusColor[pmt.status] || "var(--muted)", background: statusBg[pmt.status] || "var(--sand)", padding: "3px 8px", borderRadius: 6, whiteSpace: "nowrap" }}>
+                        {pmt.status.charAt(0).toUpperCase() + pmt.status.slice(1)}
+                      </span>
+                    </div>
+                  ))
+                )}
+              </div>
+            </>
+          );
+        })()}
 
         {tab === "review" && (() => {
           const thisMonth = monthlyTrend.length ? monthlyTrend[monthlyTrend.length - 1] : null;
@@ -4488,6 +4594,10 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
 
+  const [payments, setPayments] = useState([]);
+  const [loadingPayments, setLoadingPayments] = useState(false);
+  const [reviewingPaymentId, setReviewingPaymentId] = useState(null);
+
   // Lets the top nav's account dropdown (with the same tools list as the
   // sidebar) switch tabs while already inside the admin portal,
   // since the sidebar itself is hidden on mobile.
@@ -4530,8 +4640,22 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
     setLoadingProviders(false);
   };
 
+  const loadPayments = async () => {
+    setLoadingPayments(true);
+    const data = await adminListProviderPayments();
+    setPayments(data);
+    setLoadingPayments(false);
+  };
+
+  const reviewPayment = async (paymentId, status) => {
+    setReviewingPaymentId(paymentId);
+    const ok = await adminReviewProviderPayment(paymentId, status);
+    setReviewingPaymentId(null);
+    if (ok) await loadPayments();
+  };
+
   useEffect(() => {
-    if (isAdmin) { loadApps(); loadProviders(); }
+    if (isAdmin) { loadApps(); loadProviders(); loadPayments(); }
   }, [isAdmin]);
 
   const act = async (id, status) => {
@@ -4687,6 +4811,9 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
           <div className={`sidebar-item ${tab === "providers" ? "active" : ""}`} onClick={() => setTab("providers")}>
             <span className="icon">{"🏪"}</span>Providers ({providers.length})
           </div>
+          <div className={`sidebar-item ${tab === "payments" ? "active" : ""}`} onClick={() => setTab("payments")}>
+            <span className="icon">{"🧾"}</span>Payments ({payments.filter(p => p.status === "pending").length})
+          </div>
         </div>
         <div className="sidebar-avatar">
           <div className="avatar">{(user?.full_name || session.user.email)[0].toUpperCase()}</div>
@@ -4698,7 +4825,7 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
       </aside>
 
       <main className="portal-content">
-        {tab !== "providers" && (
+        {tab !== "providers" && tab !== "payments" && (
           <>
             <div className="portal-header">
               <h2>Provider applications</h2>
@@ -4873,6 +5000,52 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
             </div>
           </>
         )}
+
+        {tab === "payments" && (() => {
+          const statusColor = { pending: "#B45309", confirmed: "var(--forest)", rejected: "#B91C1C" };
+          const statusBg = { pending: "#FEF3C7", confirmed: "#E7F5EC", rejected: "#FEE2E2" };
+          return (
+            <>
+              <div className="portal-header">
+                <h2>Provider payments</h2>
+                <p>Plan-fee receipts providers have submitted — confirm the ones that check out.</p>
+              </div>
+              <div className="card">
+                <div className="card-title" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <span>All submissions</span>
+                  <button className="btn-sm forest" onClick={loadPayments} disabled={loadingPayments}>{loadingPayments ? "Refreshing..." : "Refresh"}</button>
+                </div>
+                {payments.length === 0 && (
+                  <p style={{ fontSize: 13, color: "var(--muted)", padding: "16px 0" }}>{loadingPayments ? "Loading..." : "No payments submitted yet."}</p>
+                )}
+                {payments.map((pmt) => (
+                  <div key={pmt.id} className="booking-item" style={{ alignItems: "flex-start" }}>
+                    <div className="booking-info" style={{ flex: 1 }}>
+                      <div className="title">{pmt.business_name} <span style={{ fontWeight: 500, color: "var(--muted)", fontSize: 12 }}>— {planLabel(pmt.plan)}</span></div>
+                      <div className="meta">{pmt.period_label} · BZ${pmt.amount}</div>
+                      <div className="meta" style={{ fontSize: 11 }}>Submitted {new Date(pmt.submitted_at).toLocaleDateString()}</div>
+                      {pmt.receipt_url && <a href={pmt.receipt_url} target="_blank" rel="noreferrer" style={{ fontSize: 12 }}>View receipt</a>}
+                      {pmt.reviewed_at && (
+                        <div className="meta" style={{ fontSize: 11, marginTop: 4 }}>Reviewed {new Date(pmt.reviewed_at).toLocaleDateString()} by {pmt.reviewed_by}</div>
+                      )}
+                    </div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 8, alignItems: "flex-end", flexShrink: 0 }}>
+                      <span style={{ fontSize: 12, fontWeight: 600, color: statusColor[pmt.status] || "var(--muted)", background: statusBg[pmt.status] || "var(--sand)", padding: "3px 8px", borderRadius: 6, whiteSpace: "nowrap" }}>
+                        {pmt.status.charAt(0).toUpperCase() + pmt.status.slice(1)}
+                      </span>
+                      {pmt.status === "pending" && (
+                        <div style={{ display: "flex", gap: 8 }}>
+                          <button className="btn-sm lime" disabled={reviewingPaymentId === pmt.id} onClick={() => reviewPayment(pmt.id, "confirmed")}>Confirm</button>
+                          <button className="btn-sm" style={{ background: "transparent", border: "1px solid var(--muted)", color: "var(--muted)" }} disabled={reviewingPaymentId === pmt.id} onClick={() => reviewPayment(pmt.id, "rejected")}>Reject</button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          );
+        })()}
       </main>
     </div>
   );
