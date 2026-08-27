@@ -1260,7 +1260,23 @@ function InstallAppGuide() {
   );
 }
 
-function NotificationBell({ userId }) {
+// Where clicking a notification should take you — keyed by the
+// `notifications.type` values created throughout the app (booking
+// requests/responses, receipts, reviews, monthly review, messages).
+// "message" isn't included here since it can go to either portal
+// depending on who's being notified — handled separately below.
+const NOTIF_DESTINATIONS = {
+  booking_requested: { view: "provider", tab: "bookings" },
+  booking_cancelled: { view: "provider", tab: "bookings" },
+  receipt_uploaded: { view: "provider", tab: "bookings" },
+  review: { view: "provider", tab: "bookings" },
+  monthly_review: { view: "provider", tab: "review" },
+  booking_rejected: { view: "customer", tab: "bookings" },
+  payment_confirmed: { view: "customer", tab: "bookings" },
+  booking_completed: { view: "customer", tab: "bookings" },
+};
+
+function NotificationBell({ userId, providerProfile, onNav }) {
   const [notifications, setNotifications] = useState([]);
   const [open, setOpen] = useState(false);
 
@@ -1283,6 +1299,19 @@ function NotificationBell({ userId }) {
       setNotifications((prev) => prev.map((x) => (x.id === n.id ? { ...x, read: true } : x)));
       await markNotificationRead(n.id);
     }
+    setOpen(false);
+
+    // "message" notifications can belong to either portal depending on who
+    // sent it — best guess without more context is: send them to whichever
+    // portal this account actually has (a dual customer+provider account
+    // is the one case this can guess wrong).
+    const dest = NOTIF_DESTINATIONS[n.type]
+      || (n.type === "message" ? { view: providerProfile ? "provider" : "customer", tab: "bookings" } : null);
+    if (!dest || !onNav) return;
+    onNav(dest.view);
+    // The target portal only starts listening for a tab switch once it has
+    // mounted — give the nav change one render cycle before dispatching.
+    setTimeout(() => setPortalTab(dest.tab), 60);
   };
 
   const markAllRead = async () => {
@@ -1356,7 +1385,7 @@ function setPortalTab(tabId) {
   window.dispatchEvent(new CustomEvent("vaibook-set-portal-tab", { detail: { tab: tabId } }));
 }
 
-function Nav({ onNav, current, session, user, onSignIn, onSignOut }) {
+function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignOut }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
   const closeMenu = () => setMenuOpen(false);
@@ -1463,7 +1492,7 @@ function Nav({ onNav, current, session, user, onSignIn, onSignOut }) {
       </div>
       <button className={`nav-search-toggle ${navSearchActive ? "visible" : ""}`} onClick={() => setMobileSearchOpen(v => !v)} aria-label="Search">🔍</button>
 
-      {session && user && <NotificationBell userId={user.id} />}
+      {session && user && <NotificationBell userId={user.id} providerProfile={providerProfile} onNav={onNav} />}
 
       {(current === "home" || (current === "customer" && !session)) ? (
         <div className="nav-cta">
