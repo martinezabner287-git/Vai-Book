@@ -6,7 +6,7 @@ import L from "leaflet";
 import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
 import markerIcon from "leaflet/dist/images/marker-icon.png";
 import markerShadow from "leaflet/dist/images/marker-shadow.png";
-import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, deleteService, getActiveProviders, getProviderDirectory, createBooking, getProviderBusyWindows, createBookingSafe, cancelBooking, getCustomerBookings, uploadReceipt, submitReview, getProviderReviews, sendBookingEmail, updateUserProfile, getPaymentMethods, addPaymentMethod, deletePaymentMethod, createNotification, getNotifications, markNotificationRead, markAllNotificationsRead, getLandingStats, getRecommendedServices, getCategoryDefaultFeatures, getProviderFeatureOverrides, setProviderFeatureOverride, getVisitNotes, upsertVisitNote, adminListProviders, adminUpdateProvider, adminDeleteProvider, tagVIP, untagVIP, getVIPClients, getFavoriteProviderIds, getFavoriteProviders, addFavorite, removeFavorite, getBookingMessages, sendBookingMessage, markBookingMessagesRead, getUnreadBookingMessages, getProviderMonthlyTrend, createProviderProfile, getProviderById } from "./supabase";
+import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, deleteService, getActiveProviders, getProviderDirectory, createBooking, getProviderBusyWindows, createBookingSafe, cancelBooking, getCustomerBookings, uploadReceipt, submitReview, getProviderReviews, sendBookingEmail, updateUserProfile, getPaymentMethods, addPaymentMethod, deletePaymentMethod, createNotification, getNotifications, markNotificationRead, markAllNotificationsRead, getLandingStats, getRecommendedServices, getCategoryDefaultFeatures, getProviderFeatureOverrides, setProviderFeatureOverride, getVisitNotes, upsertVisitNote, adminListProviders, adminUpdateProvider, adminDeleteProvider, tagVIP, untagVIP, getVIPClients, getFavoriteProviderIds, getFavoriteProviders, addFavorite, removeFavorite, getBookingMessages, sendBookingMessage, markBookingMessagesRead, getUnreadBookingMessages, getProviderMonthlyTrend, createProviderProfile, getProviderById, createWalkInBooking } from "./supabase";
 
 // Leaflet's default marker icons reference image paths that don't resolve
 // correctly under CRA's bundler unless re-pointed at the imported assets.
@@ -2957,6 +2957,52 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
     loadBookings();
   }, [providerId]);
 
+  // Walk-in / "add appointment for someone" — for a client who calls or
+  // asks in person and doesn't have (or want) a VaiBook account, like an
+  // older customer. No sign-in required on their end.
+  const [addingWalkIn, setAddingWalkIn] = useState(false);
+  const [walkInForm, setWalkInForm] = useState({ service_id: "", date: "", time: "10:00", name: "", phone: "", notes: "" });
+  const [savingWalkIn, setSavingWalkIn] = useState(false);
+  const [walkInError, setWalkInError] = useState("");
+
+  const openWalkInForm = () => {
+    setWalkInForm({ service_id: services[0]?.id || "", date: "", time: "10:00", name: "", phone: "", notes: "" });
+    setWalkInError("");
+    setAddingWalkIn(true);
+  };
+  const closeWalkInForm = () => { setAddingWalkIn(false); setWalkInError(""); };
+
+  const submitWalkIn = async () => {
+    if (!walkInForm.service_id || !walkInForm.date || !walkInForm.time) {
+      setWalkInError("Please choose a service, date, and time.");
+      return;
+    }
+    if (!walkInForm.name.trim()) {
+      setWalkInError("Please enter the client's name.");
+      return;
+    }
+    setSavingWalkIn(true);
+    setWalkInError("");
+    const order_number = `VB-${Date.now().toString(36).toUpperCase()}${Math.random().toString(36).slice(2, 5).toUpperCase()}`;
+    const created = await createWalkInBooking({
+      order_number,
+      provider_id: providerId,
+      service_id: walkInForm.service_id,
+      booking_date: walkInForm.date,
+      booking_time: walkInForm.time,
+      customer_name: walkInForm.name.trim(),
+      customer_phone: walkInForm.phone.trim() || null,
+      notes: walkInForm.notes.trim() || null,
+    });
+    setSavingWalkIn(false);
+    if (created) {
+      await loadBookings();
+      setAddingWalkIn(false);
+    } else {
+      setWalkInError("Something went wrong saving this appointment. Please try again.");
+    }
+  };
+
   const [vipClients, setVipClients] = useState([]);
   const [loadingVip, setLoadingVip] = useState(false);
   const [togglingVipId, setTogglingVipId] = useState(null);
@@ -3502,8 +3548,60 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
             <div className="card">
               <div className="card-title" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <span>All bookings</span>
-                <button className="btn-sm forest" onClick={loadBookings} disabled={loadingBookings}>{loadingBookings ? "Refreshing..." : "Refresh"}</button>
+                <div style={{ display: "flex", gap: 8 }}>
+                  <button className="btn-sm lime" onClick={openWalkInForm}>+ Add appointment</button>
+                  <button className="btn-sm forest" onClick={loadBookings} disabled={loadingBookings}>{loadingBookings ? "Refreshing..." : "Refresh"}</button>
+                </div>
               </div>
+              <p style={{ fontSize: 12, color: "var(--muted)", marginTop: -8, marginBottom: 12 }}>
+                Had someone ask you directly — in person, by phone, or WhatsApp — instead of booking through the app? Add it yourself with "+ Add appointment," no account needed on their end.
+              </p>
+
+              {addingWalkIn && (
+                <div style={{ background: "var(--sand)", borderRadius: 10, padding: 16, marginBottom: 16 }}>
+                  <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 10 }}>Add an appointment</div>
+                  {services.length === 0 ? (
+                    <p style={{ fontSize: 13, color: "var(--muted)" }}>Add a service under "My services" first, then come back here.</p>
+                  ) : (
+                    <>
+                      <div className="input-group">
+                        <label>Client's name *</label>
+                        <input placeholder="e.g. Mrs. Alvarez" value={walkInForm.name} onChange={e => setWalkInForm(f => ({ ...f, name: e.target.value }))} />
+                      </div>
+                      <div className="input-group">
+                        <label>Client's phone (optional)</label>
+                        <input placeholder="e.g. +501 600-0000" value={walkInForm.phone} onChange={e => setWalkInForm(f => ({ ...f, phone: e.target.value }))} />
+                      </div>
+                      <div className="input-group">
+                        <label>Service *</label>
+                        <select value={walkInForm.service_id} onChange={e => setWalkInForm(f => ({ ...f, service_id: e.target.value }))}>
+                          {services.map(s => <option key={s.id} value={s.id}>{s.name} — BZ${s.price}</option>)}
+                        </select>
+                      </div>
+                      <div className="form-row">
+                        <div className="input-group">
+                          <label>Date *</label>
+                          <input type="date" value={walkInForm.date} onChange={e => setWalkInForm(f => ({ ...f, date: e.target.value }))} />
+                        </div>
+                        <div className="input-group">
+                          <label>Time *</label>
+                          <input type="time" value={walkInForm.time} onChange={e => setWalkInForm(f => ({ ...f, time: e.target.value }))} />
+                        </div>
+                      </div>
+                      <div className="input-group">
+                        <label>Notes (optional)</label>
+                        <textarea placeholder="Anything you want to remember about this appointment..." value={walkInForm.notes} onChange={e => setWalkInForm(f => ({ ...f, notes: e.target.value }))} style={{ minHeight: 50 }} />
+                      </div>
+                      {walkInError && <p style={{ fontSize: 12, color: "#B91C1C", marginBottom: 8 }}>{walkInError}</p>}
+                      <div style={{ display: "flex", gap: 8 }}>
+                        <button className="btn-sm lime" disabled={savingWalkIn} onClick={submitWalkIn}>{savingWalkIn ? "Saving..." : "Save appointment"}</button>
+                        <button className="btn-sm ghost" onClick={closeWalkInForm}>Cancel</button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
+
               {bookings.length === 0 && (
                 <p style={{ fontSize: 13, color: "var(--muted)", padding: "16px 0" }}>{loadingBookings ? "Loading..." : "No bookings yet."}</p>
               )}
@@ -3512,9 +3610,16 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                   <div className="booking-item" style={{ padding: 0, border: "none" }}>
                     <div className={`booking-dot ${bookingStatusClass(b.status)}`}></div>
                     <div className="booking-info">
-                      <div className="title">{b.services?.name || "Service"}</div>
+                      <div className="title">
+                        {b.services?.name || "Service"}
+                        {b.created_by_provider && (
+                          <span style={{ marginLeft: 8, fontSize: 11, fontWeight: 600, color: "var(--forest)", background: "var(--sand)", padding: "2px 7px", borderRadius: 5, verticalAlign: "middle" }}>Walk-in</span>
+                        )}
+                      </div>
                       <div className="meta">
-                        {b.users?.full_name || "Customer"} · {new Date(b.booking_date).toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
+                        {b.users?.full_name || b.walkin_customer_name || "Customer"}
+                        {b.walkin_customer_phone && ` · ${b.walkin_customer_phone}`}
+                        {" · "}{new Date(b.booking_date).toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
                         {b.customer_id && (
                           <button
                             onClick={() => toggleVIP(b.customer_id)}
