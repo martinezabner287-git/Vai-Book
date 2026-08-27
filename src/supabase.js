@@ -286,6 +286,27 @@ export const createBookingSafe = async (booking) => {
   return Array.isArray(data) ? data[0] : data;
 };
 
+// Lets a provider add a confirmed booking directly for someone who isn't
+// a VaiBook customer — a walk-in, or someone who called/asked in person
+// (an older client, for example). Goes straight to "confirmed" since the
+// provider is entering it on the client's behalf. See
+// supabase_walkin_bookings.sql for the RPC and the security check that
+// only lets a provider add walk-ins under their own profile.
+export const createWalkInBooking = async (booking) => {
+  const { data, error } = await supabase.rpc('create_walkin_booking', {
+    p_order_number: booking.order_number,
+    p_provider_id: booking.provider_id,
+    p_service_id: booking.service_id,
+    p_booking_date: booking.booking_date,
+    p_booking_time: booking.booking_time,
+    p_customer_name: booking.customer_name,
+    p_customer_phone: booking.customer_phone || null,
+    p_notes: booking.notes || null,
+  });
+  if (error) { console.error('Error adding walk-in booking:', error.message); return null; }
+  return Array.isArray(data) ? data[0] : data;
+};
+
 export const cancelBooking = async (bookingId) => {
   const { data, error } = await supabase
     .from('bookings')
