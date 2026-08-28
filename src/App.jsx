@@ -6,7 +6,7 @@ import L from "leaflet";
 import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
 import markerIcon from "leaflet/dist/images/marker-icon.png";
 import markerShadow from "leaflet/dist/images/marker-shadow.png";
-import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, deleteService, getActiveProviders, getProviderDirectory, createBooking, getProviderBusyWindows, createBookingSafe, cancelBooking, getCustomerBookings, uploadReceipt, submitReview, getProviderReviews, sendBookingEmail, updateUserProfile, getPaymentMethods, addPaymentMethod, deletePaymentMethod, createNotification, getNotifications, markNotificationRead, markAllNotificationsRead, getLandingStats, getRecommendedServices, getCategoryDefaultFeatures, getProviderFeatureOverrides, setProviderFeatureOverride, getVisitNotes, upsertVisitNote, adminListProviders, adminUpdateProvider, adminDeleteProvider, tagVIP, untagVIP, getVIPClients, getFavoriteProviderIds, getFavoriteProviders, addFavorite, removeFavorite, getBookingMessages, sendBookingMessage, markBookingMessagesRead, getUnreadBookingMessages, getProviderMonthlyTrend, createProviderProfile, getProviderById, createWalkInBooking, submitProviderPayment, getMyProviderPayments, adminListProviderPayments, adminReviewProviderPayment } from "./supabase";
+import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, deleteService, getActiveProviders, getProviderDirectory, createBooking, getProviderBusyWindows, createBookingSafe, cancelBooking, getCustomerBookings, uploadReceipt, submitReview, getProviderReviews, sendBookingEmail, updateUserProfile, getPaymentMethods, addPaymentMethod, deletePaymentMethod, createNotification, getNotifications, markNotificationRead, markAllNotificationsRead, getLandingStats, getRecommendedServices, getCategoryDefaultFeatures, getProviderFeatureOverrides, setProviderFeatureOverride, getVisitNotes, upsertVisitNote, adminListProviders, adminUpdateProvider, adminDeleteProvider, tagVIP, untagVIP, getVIPClients, getFavoriteProviderIds, getFavoriteProviders, addFavorite, removeFavorite, getBookingMessages, sendBookingMessage, markBookingMessagesRead, getUnreadBookingMessages, getProviderMonthlyTrend, createProviderProfile, getProviderById, createWalkInBooking, submitProviderPayment, getMyProviderPayments, adminListProviderPayments, adminReviewProviderPayment, submitBookingRefund, adminListBookingRefunds } from "./supabase";
 
 // Leaflet's default marker icons reference image paths that don't resolve
 // correctly under CRA's bundler unless re-pointed at the imported assets.
@@ -2573,6 +2573,14 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
                       <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 6 }}>Provider's note: {b.provider_message}</p>
                     )}
 
+                    {["cancelled", "rejected"].includes(b.status) && b.booking_refunds && b.booking_refunds.length > 0 && (
+                      <div style={{ marginTop: 8, background: "#E7F5EC", borderRadius: 8, padding: 12 }}>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: "var(--forest)" }}>💸 You were refunded BZ${b.booking_refunds[0].amount}</div>
+                        {b.booking_refunds[0].note && <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 4 }}>{b.booking_refunds[0].note}</p>}
+                        {b.booking_refunds[0].receipt_url && <a href={b.booking_refunds[0].receipt_url} target="_blank" rel="noreferrer" style={{ fontSize: 12 }}>View proof</a>}
+                      </div>
+                    )}
+
                     {["pending", "awaiting_payment", "confirmed"].includes(b.status) && (
                       <button
                         className="btn-sm ghost"
@@ -3033,6 +3041,39 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
       setAddingWalkIn(false);
     } else {
       setWalkInError("Something went wrong saving this appointment. Please try again.");
+    }
+  };
+
+  // Refund proof — VaiBook doesn't process payments itself, so a refund
+  // is the provider sending money back to the customer directly; this
+  // just records proof of it on the specific cancelled/rejected booking.
+  const [refundingBookingId, setRefundingBookingId] = useState(null);
+  const [refundForm, setRefundForm] = useState({ amount: "", receipt: null, note: "" });
+  const [savingRefund, setSavingRefund] = useState(false);
+  const [refundError, setRefundError] = useState("");
+
+  const openRefundForm = (booking) => {
+    setRefundForm({ amount: booking.total_amount || booking.downpayment_amount || "", receipt: null, note: "" });
+    setRefundError("");
+    setRefundingBookingId(booking.id);
+  };
+  const closeRefundForm = () => { setRefundingBookingId(null); setRefundError(""); };
+
+  const submitRefund = async (bookingId) => {
+    if (!refundForm.receipt) { setRefundError("Please attach a screenshot or receipt of the refund."); return; }
+    if (!refundForm.amount || Number(refundForm.amount) <= 0) { setRefundError("Please enter the amount refunded."); return; }
+    setSavingRefund(true);
+    setRefundError("");
+    const ok = await submitBookingRefund(bookingId, providerId, refundForm.receipt, {
+      amount: Number(refundForm.amount),
+      note: refundForm.note.trim() || null,
+    });
+    setSavingRefund(false);
+    if (ok) {
+      await loadBookings();
+      setRefundingBookingId(null);
+    } else {
+      setRefundError("Something went wrong uploading that. Please try again.");
     }
   };
 
@@ -3769,6 +3810,39 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                     <FeatureGate flag="soap_charting">
                       <VisitNotesButton booking={b} />
                     </FeatureGate>
+                  )}
+
+                  {["cancelled", "rejected"].includes(b.status) && (
+                    b.booking_refunds && b.booking_refunds.length > 0 ? (
+                      <div style={{ marginTop: 8, background: "#E7F5EC", borderRadius: 8, padding: 12 }}>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: "var(--forest)" }}>💸 Refund recorded — BZ${b.booking_refunds[0].amount}</div>
+                        {b.booking_refunds[0].note && <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 4 }}>{b.booking_refunds[0].note}</p>}
+                        {b.booking_refunds[0].receipt_url && <a href={b.booking_refunds[0].receipt_url} target="_blank" rel="noreferrer" style={{ fontSize: 12 }}>View receipt</a>}
+                      </div>
+                    ) : refundingBookingId === b.id ? (
+                      <div style={{ marginTop: 8, background: "var(--sand)", borderRadius: 8, padding: 12 }}>
+                        <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 8 }}>Record a refund for this booking</div>
+                        <div className="input-group">
+                          <label>Amount refunded (BZ$) *</label>
+                          <input type="number" min="0" step="0.01" value={refundForm.amount} onChange={e => setRefundForm(f => ({ ...f, amount: e.target.value }))} />
+                        </div>
+                        <div className="input-group">
+                          <label>Screenshot or receipt *</label>
+                          <input type="file" accept="image/*,application/pdf" onChange={e => setRefundForm(f => ({ ...f, receipt: e.target.files?.[0] || null }))} />
+                        </div>
+                        <div className="input-group">
+                          <label>Note (optional)</label>
+                          <input value={refundForm.note} onChange={e => setRefundForm(f => ({ ...f, note: e.target.value }))} placeholder="e.g. Refunded via bank transfer" />
+                        </div>
+                        {refundError && <p style={{ fontSize: 12, color: "#B91C1C", marginBottom: 8 }}>{refundError}</p>}
+                        <div style={{ display: "flex", gap: 8 }}>
+                          <button className="btn-sm lime" disabled={savingRefund} onClick={() => submitRefund(b.id)}>{savingRefund ? "Saving..." : "Save refund"}</button>
+                          <button className="btn-sm ghost" onClick={closeRefundForm}>Cancel</button>
+                        </div>
+                      </div>
+                    ) : (
+                      <button className="btn-sm ghost" style={{ marginTop: 8, fontSize: 12 }} onClick={() => openRefundForm(b)}>Record a refund</button>
+                    )
                   )}
 
                   {["pending", "awaiting_payment", "confirmed", "completed"].includes(b.status) && (
@@ -4611,6 +4685,9 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
   const [loadingPayments, setLoadingPayments] = useState(false);
   const [reviewingPaymentId, setReviewingPaymentId] = useState(null);
 
+  const [refunds, setRefunds] = useState([]);
+  const [loadingRefunds, setLoadingRefunds] = useState(false);
+
   // Lets the top nav's account dropdown (with the same tools list as the
   // sidebar) switch tabs while already inside the admin portal,
   // since the sidebar itself is hidden on mobile.
@@ -4667,8 +4744,15 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
     if (ok) await loadPayments();
   };
 
+  const loadRefunds = async () => {
+    setLoadingRefunds(true);
+    const data = await adminListBookingRefunds();
+    setRefunds(data);
+    setLoadingRefunds(false);
+  };
+
   useEffect(() => {
-    if (isAdmin) { loadApps(); loadProviders(); loadPayments(); }
+    if (isAdmin) { loadApps(); loadProviders(); loadPayments(); loadRefunds(); }
   }, [isAdmin]);
 
   const act = async (id, status) => {
@@ -4827,6 +4911,9 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
           <div className={`sidebar-item ${tab === "payments" ? "active" : ""}`} onClick={() => setTab("payments")}>
             <span className="icon">{"🧾"}</span>Payments ({payments.filter(p => p.status === "pending").length})
           </div>
+          <div className={`sidebar-item ${tab === "refunds" ? "active" : ""}`} onClick={() => setTab("refunds")}>
+            <span className="icon">{"💸"}</span>Refunds ({refunds.length})
+          </div>
         </div>
         <div className="sidebar-avatar">
           <div className="avatar">{(user?.full_name || session.user.email)[0].toUpperCase()}</div>
@@ -4838,7 +4925,7 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
       </aside>
 
       <main className="portal-content">
-        {tab !== "providers" && tab !== "payments" && (
+        {tab !== "providers" && tab !== "payments" && tab !== "refunds" && (
           <>
             <div className="portal-header">
               <h2>Provider applications</h2>
@@ -5059,6 +5146,34 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
             </>
           );
         })()}
+
+        {tab === "refunds" && (
+          <>
+            <div className="portal-header">
+              <h2>Refunds</h2>
+              <p>Refund proof providers have recorded on cancelled/rejected bookings — VaiBook doesn't process the refund itself, this is just the record.</p>
+            </div>
+            <div className="card">
+              <div className="card-title" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span>All refunds</span>
+                <button className="btn-sm forest" onClick={loadRefunds} disabled={loadingRefunds}>{loadingRefunds ? "Refreshing..." : "Refresh"}</button>
+              </div>
+              {refunds.length === 0 && (
+                <p style={{ fontSize: 13, color: "var(--muted)", padding: "16px 0" }}>{loadingRefunds ? "Loading..." : "No refunds recorded yet."}</p>
+              )}
+              {refunds.map((r) => (
+                <div key={r.id} className="booking-item" style={{ alignItems: "flex-start" }}>
+                  <div className="booking-info" style={{ flex: 1 }}>
+                    <div className="title">{r.business_name} <span style={{ fontWeight: 500, color: "var(--muted)", fontSize: 12 }}>— {r.order_number}</span></div>
+                    <div className="meta">BZ${r.amount} refunded · {new Date(r.created_at).toLocaleDateString()}</div>
+                    {r.note && <div className="meta" style={{ fontStyle: "italic" }}>{r.note}</div>}
+                  </div>
+                  {r.receipt_url && <a href={r.receipt_url} target="_blank" rel="noreferrer" style={{ fontSize: 12, flexShrink: 0 }}>View receipt</a>}
+                </div>
+              ))}
+            </div>
+          </>
+        )}
       </main>
     </div>
   );
