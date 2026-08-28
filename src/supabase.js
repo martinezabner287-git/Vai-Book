@@ -225,11 +225,59 @@ export const deleteService = async (serviceId) => {
   return true;
 };
 
+// ── PROVIDER STAFF (Business plan) ──────────────────────────────
+// Owner-managed staff seats — no separate staff logins. The owner adds
+// staff by name, then assigns bookings to whoever handled them so
+// everyone's schedule shows up in the same portal. Enforced as a
+// Business-plan-only feature server-side too (see
+// supabase_provider_staff.sql), not just hidden in the UI.
+export const getProviderStaff = async (providerId) => {
+  if (!providerId) return [];
+  const { data, error } = await supabase
+    .from('provider_staff')
+    .select('*')
+    .eq('provider_id', providerId)
+    .order('created_at', { ascending: true });
+  if (error) { console.error('Error fetching staff:', error.message); return []; }
+  return data || [];
+};
+
+export const addProviderStaff = async (providerId, { name, phone }) => {
+  const { data, error } = await supabase
+    .from('provider_staff')
+    .insert({ provider_id: providerId, name, phone: phone || null })
+    .select()
+    .single();
+  if (error) { console.error('Error adding staff:', error.message); return null; }
+  return data;
+};
+
+export const updateProviderStaff = async (staffId, updates) => {
+  const { data, error } = await supabase
+    .from('provider_staff')
+    .update(updates)
+    .eq('id', staffId)
+    .select()
+    .single();
+  if (error) { console.error('Error updating staff:', error.message); return null; }
+  return data;
+};
+
+export const deleteProviderStaff = async (staffId) => {
+  const { error } = await supabase.from('provider_staff').delete().eq('id', staffId);
+  if (error) { console.error('Error deleting staff:', error.message); return false; }
+  return true;
+};
+
 export const getActiveProviders = async (filters = {}) => {
   let query = supabase
     .from('provider_profiles')
     .select('*, services(*), reviews(rating)')
-    .eq('is_active', true);
+    .eq('is_active', true)
+    // Business-plan providers can turn on "Featured in district search" —
+    // boosts them to the top of every browse/search result, everything
+    // else keeps whatever order it already had.
+    .order('is_featured', { ascending: false });
 
   if (filters.district) query = query.eq('district', filters.district);
   if (filters.service_type) query = query.eq('service_type', filters.service_type);
