@@ -6,7 +6,7 @@ import L from "leaflet";
 import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
 import markerIcon from "leaflet/dist/images/marker-icon.png";
 import markerShadow from "leaflet/dist/images/marker-shadow.png";
-import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, deleteService, getActiveProviders, getProviderDirectory, createBooking, getProviderBusyWindows, createBookingSafe, cancelBooking, getCustomerBookings, uploadReceipt, submitReview, getProviderReviews, sendBookingEmail, updateUserProfile, getPaymentMethods, addPaymentMethod, deletePaymentMethod, createNotification, getNotifications, markNotificationRead, markAllNotificationsRead, getLandingStats, getRecommendedServices, getCategoryDefaultFeatures, getProviderFeatureOverrides, setProviderFeatureOverride, getVisitNotes, upsertVisitNote, adminListProviders, adminUpdateProvider, adminDeleteProvider, tagVIP, untagVIP, getVIPClients, getFavoriteProviderIds, getFavoriteProviders, addFavorite, removeFavorite, getBookingMessages, sendBookingMessage, markBookingMessagesRead, getUnreadBookingMessages, getProviderMonthlyTrend, createProviderProfile, getProviderById, createWalkInBooking, submitProviderPayment, getMyProviderPayments, adminListProviderPayments, adminReviewProviderPayment, submitBookingRefund, adminListBookingRefunds, openPrivateFile } from "./supabase";
+import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, deleteService, getActiveProviders, getProviderDirectory, createBooking, getProviderBusyWindows, createBookingSafe, cancelBooking, getCustomerBookings, uploadReceipt, submitReview, getProviderReviews, sendBookingEmail, updateUserProfile, getPaymentMethods, addPaymentMethod, deletePaymentMethod, createNotification, getNotifications, markNotificationRead, markAllNotificationsRead, getLandingStats, getRecommendedServices, getCategoryDefaultFeatures, getProviderFeatureOverrides, setProviderFeatureOverride, getVisitNotes, upsertVisitNote, adminListProviders, adminUpdateProvider, adminDeleteProvider, tagVIP, untagVIP, getVIPClients, getFavoriteProviderIds, getFavoriteProviders, addFavorite, removeFavorite, getBookingMessages, sendBookingMessage, markBookingMessagesRead, getUnreadBookingMessages, getProviderMonthlyTrend, createProviderProfile, getProviderById, createWalkInBooking, submitProviderPayment, getMyProviderPayments, adminListProviderPayments, adminReviewProviderPayment, submitBookingRefund, adminListBookingRefunds, openPrivateFile, getProviderStaff, addProviderStaff, updateProviderStaff, deleteProviderStaff } from "./supabase";
 
 // Leaflet's default marker icons reference image paths that don't resolve
 // correctly under CRA's bundler unless re-pointed at the imported assets.
@@ -1177,6 +1177,70 @@ function printInvoice(html) {
   setTimeout(() => { try { w.print(); } catch (e) { /* window may already be closed */ } }, 250);
 }
 
+// ── SALES & TAX LEDGER ──────────────────────────────────────────
+// Deliberately separate from buildInvoiceHtml above rather than bolted
+// onto it: an invoice is a per-transaction document handed to one
+// customer; a ledger is the provider's own register of every completed
+// booking over a period, for filing taxes — one row per booking,
+// listing the same order number each booking's individual invoice
+// uses, so the two stay reconcilable without being the same document.
+// Built entirely client-side from bookings already loaded, same as
+// invoices — no new table or migration needed.
+function buildLedgerHtml({ providerName, providerTaxId, periodLabel, rows }) {
+  const esc = (s) => String(s ?? "").replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+  const total = rows.reduce((sum, r) => sum + (Number(r.amount) || 0), 0);
+  const rowsHtml = rows.length
+    ? rows.map((r) => `<tr><td>${esc(r.dateLabel)}</td><td>${esc(r.orderNumber)}</td><td>${esc(r.serviceName)}</td><td>${esc(r.customerName)}</td><td class="amount-col">BZ$${Number(r.amount || 0).toFixed(2)}</td></tr>`).join("")
+    : `<tr><td colspan="5" style="color:#888;text-align:center;padding:24px 0;">No completed bookings in this period.</td></tr>`;
+
+  return `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Sales &amp; tax ledger — ${esc(periodLabel)}</title>
+<style>
+  body { font-family: Arial, sans-serif; color: #0D1F18; max-width: 760px; margin: 40px auto; padding: 0 20px; }
+  .head { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid #0D3D2E; padding-bottom: 16px; margin-bottom: 24px; }
+  .logo { font-size: 22px; font-weight: 800; color: #0D3D2E; }
+  .logo span { color: #7A9E1F; }
+  .meta { text-align: right; font-size: 13px; color: #555; }
+  h1 { font-size: 18px; margin: 0 0 4px; }
+  .party { font-size: 13px; line-height: 1.6; margin-bottom: 24px; }
+  table { width: 100%; border-collapse: collapse; margin-bottom: 24px; }
+  th, td { text-align: left; padding: 8px 10px 8px 0; border-bottom: 1px solid #E5E5E5; font-size: 12.5px; }
+  th { color: #888; font-weight: 600; text-transform: uppercase; font-size: 10.5px; letter-spacing: .04em; }
+  .amount-col { text-align: right; }
+  .total-row td { border-bottom: none; padding-top: 14px; font-size: 16px; font-weight: 800; }
+  .footnote { font-size: 11.5px; color: #888; line-height: 1.6; margin-top: 32px; border-top: 1px solid #E5E5E5; padding-top: 16px; }
+  @media print { body { margin: 0; padding: 20px; } }
+</style>
+</head>
+<body>
+  <div class="head">
+    <div class="logo">vai<span>book</span></div>
+    <div class="meta">
+      <h1>Sales &amp; tax ledger</h1>
+      <div>${esc(periodLabel)}</div>
+    </div>
+  </div>
+  <div class="party">
+    <div><strong>${esc(providerName)}</strong></div>
+    ${providerTaxId ? `<div>Business reg./TIN: ${esc(providerTaxId)}</div>` : ""}
+  </div>
+  <table>
+    <thead><tr><th>Date</th><th>Order #</th><th>Service</th><th>Customer</th><th class="amount-col">Amount</th></tr></thead>
+    <tbody>
+      ${rowsHtml}
+      <tr class="total-row"><td colspan="4">Total (${rows.length} completed booking${rows.length === 1 ? "" : "s"})</td><td class="amount-col">BZ$${total.toFixed(2)}</td></tr>
+    </tbody>
+  </table>
+  <div class="footnote">
+    VaiBook is a booking marketplace, not a payment processor — every amount here reflects a transaction directly between this provider and their customer, generated from their VaiBook booking records for their own tax filing use. It is not issued by VaiBook and is not a formal receipt of taxes paid.
+  </div>
+</body>
+</html>`;
+}
+
 // ── COMPONENTS ──────────────────────────────────────────────────
 
 function getInitials(name) {
@@ -1484,6 +1548,7 @@ const PORTAL_TOOLS_BY_VIEW = {
     { id: "services", icon: "✂️", label: "My services" },
     { id: "earnings", icon: "💰", label: "Earnings" },
     { id: "billing", icon: "🧾", label: "My plan & billing" },
+    { id: "staff", icon: "👥", label: "My staff" },
     { id: "review", icon: "📈", label: "Monthly review" },
     { id: "profile", icon: "👤", label: "Public profile" },
     { id: "qr", icon: "📱", label: "My QR code" },
@@ -2603,7 +2668,7 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
                       <div className="provider-card-img" style={{ background: "#E8F5EF" }}>{p.service_type === "Barber" ? "✂️" : p.service_type === "Nail Tech" ? "💅" : p.service_type === "Car Wash" ? "🚗" : p.service_type === "Pet Grooming" ? "🐾" : p.service_type === "Home Cleaning" ? "🏠" : "🛠️"}</div>
                     )}
                     <div className="provider-card-body">
-                      <h4>{p.business_name}</h4>
+                      <h4>{p.business_name}{p.is_featured && <span style={{ marginLeft: 6, fontSize: 11, fontWeight: 700, color: "var(--forest)", background: "var(--sand)", padding: "2px 7px", borderRadius: 5, verticalAlign: "middle" }}>⭐ Featured</span>}</h4>
                       <div className="trade">{p.service_type} · {p.district}</div>
                       <div className="stars">{rating ? `★★★★★ ` : "No reviews yet "}<span style={{ color: "var(--muted)", fontSize: 12 }}>{rating ? `${rating} (${p.reviews.length})` : ""}</span></div>
                       {p.whatsapp && <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 4 }}>📞 {p.whatsapp}</div>}
@@ -3112,7 +3177,8 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
   const [hours, setHours] = useState(DEFAULT_HOURS);
   const [savingHours, setSavingHours] = useState(false);
   const [selectedDay, setSelectedDay] = useState(null);
-  const [profileForm, setProfileForm] = useState({ business_name: "", bio: "", district: "", whatsapp: "", tax_id: "" });
+  const [profileForm, setProfileForm] = useState({ business_name: "", bio: "", district: "", whatsapp: "", tax_id: "", is_featured: false });
+  const [savingFeatured, setSavingFeatured] = useState(false);
   const [savingProfile, setSavingProfile] = useState(false);
   const [photos, setPhotos] = useState([]);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
@@ -3278,6 +3344,60 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
     }
   };
 
+  // Staff seats (Business plan) — owner-managed, no separate staff
+  // logins. See supabase_provider_staff.sql.
+  const [staff, setStaff] = useState([]);
+  const [loadingStaff, setLoadingStaff] = useState(false);
+  const [newStaffName, setNewStaffName] = useState("");
+  const [newStaffPhone, setNewStaffPhone] = useState("");
+  const [savingStaff, setSavingStaff] = useState(false);
+  const [staffError, setStaffError] = useState("");
+  const [staffFilter, setStaffFilter] = useState("all");
+  const isBusinessPlan = (providerProfile?.plan || "starter") === "business";
+
+  const loadStaff = async () => {
+    if (!providerId) return;
+    setLoadingStaff(true);
+    const data = await getProviderStaff(providerId);
+    setStaff(data || []);
+    setLoadingStaff(false);
+  };
+
+  useEffect(() => {
+    loadStaff();
+  }, [providerId]);
+
+  const addStaff = async () => {
+    if (!providerId || !newStaffName.trim()) { setStaffError("Enter a name."); return; }
+    setSavingStaff(true);
+    setStaffError("");
+    const created = await addProviderStaff(providerId, { name: newStaffName.trim(), phone: newStaffPhone.trim() });
+    setSavingStaff(false);
+    if (created) {
+      setNewStaffName("");
+      setNewStaffPhone("");
+      await loadStaff();
+    } else {
+      setStaffError("Couldn't add that staff member. Please try again.");
+    }
+  };
+
+  const toggleStaffActive = async (member) => {
+    await updateProviderStaff(member.id, { is_active: !member.is_active });
+    await loadStaff();
+  };
+
+  const removeStaff = async (member) => {
+    if (!window.confirm(`Remove ${member.name}? Past bookings stay on record, just unassigned.`)) return;
+    await deleteProviderStaff(member.id);
+    await loadStaff();
+  };
+
+  const assignBookingStaff = async (bookingId, staffId) => {
+    await updateBooking(bookingId, { staff_id: staffId || null });
+    await loadBookings();
+  };
+
   const [vipClients, setVipClients] = useState([]);
   const [loadingVip, setLoadingVip] = useState(false);
   const [togglingVipId, setTogglingVipId] = useState(null);
@@ -3347,6 +3467,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
         district: providerProfile.district || "",
         whatsapp: providerProfile.whatsapp || "",
         tax_id: providerProfile.tax_id || "",
+        is_featured: !!providerProfile.is_featured,
       });
       setPhotos(providerProfile.portfolio_urls || []);
       setServices(providerProfile.services || []);
@@ -3525,6 +3646,19 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
     setSavingProfile(false);
   };
 
+  // "Featured in district search" — Business plan only, saves immediately
+  // on toggle rather than waiting for the main "Save profile" button.
+  // Reads the value back from what the server actually saved (not just
+  // the optimistic flip) since a Business-plan-only trigger silently
+  // resets this to false for anyone not on that plan.
+  const toggleFeatured = async () => {
+    if (!providerId || savingFeatured) return;
+    setSavingFeatured(true);
+    const updated = await upsertProviderProfile({ id: providerProfile.id, user_id: providerProfile.user_id, is_featured: !profileForm.is_featured });
+    if (updated) setProfileForm((f) => ({ ...f, is_featured: !!updated.is_featured }));
+    setSavingFeatured(false);
+  };
+
   const handlePhotoUpload = async (e) => {
     const file = e.target.files?.[0];
     e.target.value = "";
@@ -3590,6 +3724,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
     { id: "services", icon: "✂️", label: "My services" },
     { id: "earnings", icon: "💰", label: "Earnings" },
     { id: "billing", icon: "🧾", label: "My plan & billing" },
+    { id: "staff", icon: "👥", label: "My staff" },
     { id: "review", icon: "📈", label: "Monthly review" },
     { id: "profile", icon: "👤", label: "Public profile" },
     { id: "qr", icon: "📱", label: "My QR code" },
@@ -3651,7 +3786,12 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
     .reduce((sum, b) => sum + (Number(b.total_amount) || 0), 0);
   const completionRate = bookings.length ? Math.round((completedBookings.length / bookings.length) * 100) : null;
   const bookingNameFn = (b) => b.users?.full_name || b.walkin_customer_name || "";
-  const visibleBookings = filterAndSortBookings(bookings, bookingSearch, bookingSort, bookingNameFn);
+  const staffFilteredBookings = staffFilter === "all"
+    ? bookings
+    : staffFilter === "unassigned"
+      ? bookings.filter((b) => !b.staff_id)
+      : bookings.filter((b) => b.staff_id === staffFilter);
+  const visibleBookings = filterAndSortBookings(staffFilteredBookings, bookingSearch, bookingSort, bookingNameFn);
 
   const FEE_RATE = 0.07;
   const netAmount = (b) => (Number(b.total_amount) || 0) * (1 - FEE_RATE);
@@ -3670,6 +3810,41 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
     ? Math.round(((thisMonthNetEarnings - lastMonthNetEarnings) / lastMonthNetEarnings) * 100)
     : null;
   const currentMonthLabel = now.toLocaleDateString("en-US", { month: "long" });
+
+  // Sales & tax ledger — separate from per-booking invoices on purpose,
+  // see buildLedgerHtml. Defaults to the current calendar month.
+  const monthStartStr = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
+  const monthEndStr = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().slice(0, 10);
+  const [ledgerStart, setLedgerStart] = useState(monthStartStr);
+  const [ledgerEnd, setLedgerEnd] = useState(monthEndStr);
+
+  const printLedger = () => {
+    const start = ledgerStart ? new Date(ledgerStart) : null;
+    const end = ledgerEnd ? new Date(ledgerEnd) : null;
+    if (end) end.setHours(23, 59, 59, 999);
+    const rows = completedBookings
+      .filter((b) => {
+        const d = new Date(b.booking_date);
+        return (!start || d >= start) && (!end || d <= end);
+      })
+      .sort((a, b) => new Date(a.booking_date) - new Date(b.booking_date))
+      .map((b) => ({
+        dateLabel: new Date(b.booking_date).toLocaleDateString(),
+        orderNumber: b.order_number || b.id?.slice(0, 8) || "—",
+        serviceName: b.services?.name || "Service",
+        customerName: b.users?.full_name || b.walkin_customer_name || "Customer",
+        amount: b.total_amount,
+      }));
+    const periodLabel = ledgerStart && ledgerEnd
+      ? `${new Date(ledgerStart).toLocaleDateString()} – ${new Date(ledgerEnd).toLocaleDateString()}`
+      : "All completed bookings";
+    printInvoice(buildLedgerHtml({
+      providerName: providerProfile?.business_name || "Provider",
+      providerTaxId: providerProfile?.tax_id || "",
+      periodLabel,
+      rows,
+    }));
+  };
 
   const handleAddPaymentMethod = async () => {
     if (!providerId || !paymentMethodForm.name.trim()) return;
@@ -3846,6 +4021,15 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                     <option value="oldest">Recently booked: oldest first</option>
                   </select>
                 </div>
+                {isBusinessPlan && staff.length > 0 && (
+                  <div className="input-group" style={{ flex: 1 }}>
+                    <select value={staffFilter} onChange={e => setStaffFilter(e.target.value)}>
+                      <option value="all">Everyone's bookings</option>
+                      <option value="unassigned">Unassigned</option>
+                      {staff.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
+                    </select>
+                  </div>
+                )}
               </div>
 
               {addingWalkIn && (
@@ -3922,6 +4106,18 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                           </button>
                         )}
                       </div>
+                      {isBusinessPlan && staff.length > 0 && (
+                        <div style={{ marginTop: 4 }}>
+                          <select
+                            value={b.staff_id || ""}
+                            onChange={(e) => assignBookingStaff(b.id, e.target.value || null)}
+                            style={{ fontSize: 12, padding: "2px 6px" }}
+                          >
+                            <option value="">Unassigned</option>
+                            {staff.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
+                          </select>
+                        </div>
+                      )}
                     </div>
                     <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", justifyContent: "flex-end" }}>
                       <span className="booking-amount">BZ${b.total_amount ?? b.services?.price ?? "—"}</span>
@@ -4165,6 +4361,23 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
               <div className="metric"><div className="metric-label">This month ({currentMonthLabel})</div><div className="metric-value">BZ${thisMonthNetEarnings.toFixed(2)}</div><div className="metric-sub">{monthOverMonthPct === null ? "No data for last month" : `${monthOverMonthPct >= 0 ? "↑" : "↓"} ${Math.abs(monthOverMonthPct)}% vs last month`}</div></div>
             </div>
             <div className="card">
+              <div className="card-title">Sales &amp; tax ledger</div>
+              <p style={{ fontSize: 13, color: "var(--muted)", marginBottom: 12 }}>
+                Every completed booking in one printable/downloadable list, for your own tax filing — separate from the per-booking invoices you can print from each completed booking below.
+              </p>
+              <div className="form-row">
+                <div className="input-group">
+                  <label>From</label>
+                  <input type="date" value={ledgerStart} onChange={e => setLedgerStart(e.target.value)} />
+                </div>
+                <div className="input-group">
+                  <label>To</label>
+                  <input type="date" value={ledgerEnd} onChange={e => setLedgerEnd(e.target.value)} />
+                </div>
+              </div>
+              <button className="btn-sm forest" onClick={printLedger}>🧾 Print / download ledger</button>
+            </div>
+            <div className="card">
               <div className="card-title">Your payment details</div>
               <p style={{ fontSize: 13, color: "var(--muted)", marginBottom: 16 }}>Customers pay deposits and full payments straight to you — add a bank account, a mobile wallet, or both. This is what they'll see when it's time to pay.</p>
 
@@ -4278,6 +4491,62 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
           );
         })()}
 
+        {tab === "staff" && (
+          <>
+            <div className="portal-header"><h2>My staff</h2><p>Add the people on your team and assign bookings to whoever's handling them.</p></div>
+
+            {!isBusinessPlan ? (
+              <div className="card" style={{ maxWidth: 560 }}>
+                <div className="card-title">This is a Business plan feature</div>
+                <p style={{ fontSize: 13, color: "var(--muted)", marginBottom: 12 }}>
+                  Staff seats let you add your team by name and assign each booking to whoever's handling it. Upgrade to the Business plan (BZ${PLANS.find(p => p.id === "business")?.monthly}/mo) to turn this on.
+                </p>
+                <button className="btn-sm lime" onClick={() => setTab("billing")}>View plans & billing</button>
+              </div>
+            ) : (
+              <>
+                <div className="card" style={{ maxWidth: 560 }}>
+                  <div className="card-title">Add a staff member</div>
+                  <div className="form-row">
+                    <div className="input-group">
+                      <label>Name *</label>
+                      <input placeholder="e.g. Maria" value={newStaffName} onChange={e => setNewStaffName(e.target.value)} />
+                    </div>
+                    <div className="input-group">
+                      <label>Phone (optional)</label>
+                      <input placeholder="e.g. +501 600-0000" value={newStaffPhone} onChange={e => setNewStaffPhone(e.target.value)} />
+                    </div>
+                  </div>
+                  {staffError && <p style={{ fontSize: 12, color: "#B91C1C", marginBottom: 8 }}>{staffError}</p>}
+                  <button className="btn-sm lime" disabled={savingStaff} onClick={addStaff}>{savingStaff ? "Adding..." : "Add staff member"}</button>
+                </div>
+
+                <div className="card" style={{ maxWidth: 560, marginTop: 20 }}>
+                  <div className="card-title" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <span>Your team</span>
+                    <button className="btn-sm forest" onClick={loadStaff} disabled={loadingStaff}>{loadingStaff ? "Refreshing..." : "Refresh"}</button>
+                  </div>
+                  {staff.length === 0 && (
+                    <p style={{ fontSize: 13, color: "var(--muted)", padding: "16px 0" }}>{loadingStaff ? "Loading..." : "No staff added yet."}</p>
+                  )}
+                  {staff.map((member) => (
+                    <div key={member.id} style={{ padding: "12px 0", borderBottom: "1px solid var(--border)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <div>
+                        <div style={{ fontSize: 14, fontWeight: 600 }}>{member.name}{!member.is_active && <span style={{ fontWeight: 500, color: "var(--muted)" }}> — inactive</span>}</div>
+                        {member.phone && <div style={{ fontSize: 12, color: "var(--muted)" }}>{member.phone}</div>}
+                      </div>
+                      <div style={{ display: "flex", gap: 8 }}>
+                        <button className="btn-sm ghost" onClick={() => toggleStaffActive(member)}>{member.is_active ? "Set inactive" : "Set active"}</button>
+                        <button className="btn-sm ghost" style={{ color: "#B91C1C" }} onClick={() => removeStaff(member)}>Remove</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+          </>
+        )}
+
         {tab === "review" && (() => {
           const thisMonth = monthlyTrend.length ? monthlyTrend[monthlyTrend.length - 1] : null;
           const prevMonth = monthlyTrend.length > 1 ? monthlyTrend[monthlyTrend.length - 2] : null;
@@ -4382,6 +4651,24 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                 <input placeholder="Shows on your invoices once you're registered" value={profileForm.tax_id} onChange={e => setProfileForm(f => ({ ...f, tax_id: e.target.value }))} />
               </div>
               <button className="btn-sm forest" onClick={saveProfile} disabled={savingProfile}>{savingProfile ? "Saving..." : "Save profile"}</button>
+            </div>
+
+            <div className="card" style={{ maxWidth: 560, marginTop: 20 }}>
+              <div className="card-title">Featured in district search</div>
+              {isBusinessPlan ? (
+                <>
+                  <p style={{ fontSize: 13, color: "var(--muted)", marginBottom: 12 }}>
+                    Turn this on and you'll show up at the top of "Find services" results for your district, ahead of non-featured listings — a Business plan perk.
+                  </p>
+                  <button className={profileForm.is_featured ? "btn-sm forest" : "btn-sm ghost"} disabled={savingFeatured} onClick={toggleFeatured}>
+                    {savingFeatured ? "Saving..." : profileForm.is_featured ? "✓ Featured — tap to turn off" : "Turn on featured placement"}
+                  </button>
+                </>
+              ) : (
+                <p style={{ fontSize: 13, color: "var(--muted)" }}>
+                  Business plan providers can turn on featured placement to show up at the top of search results in their district. <a href="#" onClick={(e) => { e.preventDefault(); setTab("billing"); }}>View plans</a>.
+                </p>
+              )}
             </div>
 
             <div className="card" style={{ maxWidth: 560, marginTop: 20 }}>
