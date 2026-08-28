@@ -321,7 +321,7 @@ export const cancelBooking = async (bookingId) => {
 export const getCustomerBookings = async (customerId) => {
   const { data, error } = await supabase
     .from('bookings')
-    .select('*, provider_profiles(id, user_id, business_name, service_type, district, latitude, longitude, location_label, whatsapp, payment_methods(id, type, name, account_name, account_number)), services(name, price, duration_min), reviews(id, rating, comment)')
+    .select('*, provider_profiles(id, user_id, business_name, service_type, district, latitude, longitude, location_label, whatsapp, payment_methods(id, type, name, account_name, account_number)), services(name, price, duration_min), reviews(id, rating, comment), booking_refunds(id, amount, receipt_url, note, created_at)')
     .eq('customer_id', customerId)
     .order('booking_date', { ascending: false });
   if (error) console.error(error.message);
@@ -337,7 +337,7 @@ export const getCustomerBookings = async (customerId) => {
 export const getProviderBookings = async (providerId) => {
   const { data, error } = await supabase
     .from('bookings')
-    .select('*, users(full_name, email, avatar_url), services(name, price)')
+    .select('*, users(full_name, email, avatar_url), services(name, price), booking_refunds(id, amount, receipt_url, note, created_at)')
     .eq('provider_id', providerId)
     .order('booking_date', { ascending: true });
   if (error) console.error(error.message);
@@ -436,6 +436,34 @@ export const adminReviewProviderPayment = async (paymentId, status, note) => {
   });
   if (error) { console.error('Error reviewing payment:', error.message); return false; }
   return true;
+};
+
+// ── BOOKING REFUNDS (provider ↔ customer, proof of a direct refund) ────
+// VaiBook doesn't process payments, so a "refund" is the provider sending
+// money back to the customer themselves — this just records proof of it.
+// See supabase_booking_refunds.sql for the table, RLS, and admin RPC.
+export const submitBookingRefund = async (bookingId, providerId, file, { amount, note }) => {
+  const path = `refunds/${bookingId}/${Date.now()}-${file.name}`;
+  const { error: uploadError } = await supabase.storage.from('vaibook').upload(path, file);
+  if (uploadError) { console.error('Error uploading refund receipt:', uploadError.message); return false; }
+
+  const { data: { publicUrl } } = supabase.storage.from('vaibook').getPublicUrl(path);
+
+  const { error } = await supabase.from('booking_refunds').insert({
+    booking_id: bookingId,
+    provider_id: providerId,
+    amount,
+    receipt_url: publicUrl,
+    note: note || null,
+  });
+  if (error) { console.error('Error recording refund:', error.message); return false; }
+  return true;
+};
+
+export const adminListBookingRefunds = async () => {
+  const { data, error } = await supabase.rpc('admin_list_booking_refunds');
+  if (error) { console.error('Error listing refunds:', error.message); return []; }
+  return data || [];
 };
 
 // ── BOOKING MESSAGES (customer ↔ provider, tied to one booking) ────
