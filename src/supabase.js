@@ -5,6 +5,46 @@ const SUPABASE_ANON_KEY = 'sb_publishable_zpAA2Gdcm_BJhu1D56tsTw_sBpZXiNA';
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+// ── PRIVATE FILES (receipts / refund proof) ─────────────────────
+// The `vaibook` bucket holds payment-related screenshots (deposit
+// receipts, provider plan-payment receipts, refund proof) and is
+// private — only the people a file actually concerns (see
+// supabase_private_receipts.sql for the storage RLS) can open it, and
+// only via a short-lived signed link, not a permanent public URL.
+//
+// Older rows saved before this change still hold a full public URL in
+// their receipt_url column rather than a bare storage path — this
+// strips that prefix back down to a path so both old and new rows
+// keep working the same way.
+const BUCKET_PUBLIC_PREFIX = '/storage/v1/object/public/vaibook/';
+function extractStoragePath(pathOrUrl) {
+  if (!pathOrUrl) return null;
+  if (pathOrUrl.startsWith('http')) {
+    const idx = pathOrUrl.indexOf(BUCKET_PUBLIC_PREFIX);
+    if (idx === -1) return null;
+    try { return decodeURIComponent(pathOrUrl.slice(idx + BUCKET_PUBLIC_PREFIX.length)); }
+    catch (e) { return pathOrUrl.slice(idx + BUCKET_PUBLIC_PREFIX.length); }
+  }
+  return pathOrUrl;
+}
+
+// Opens a receipt/refund file in a new tab via a short-lived signed URL.
+// Opens the blank tab synchronously (before the await) so browsers don't
+// treat it as a blocked popup — same trick used by printInvoice below.
+export const openPrivateFile = async (pathOrUrl) => {
+  const w = window.open("", "_blank");
+  const path = extractStoragePath(pathOrUrl);
+  if (!path) { if (w) w.close(); alert("This file can't be found."); return; }
+  const { data, error } = await supabase.storage.from('vaibook').createSignedUrl(path, 300);
+  if (error || !data?.signedUrl) {
+    console.error('Error creating signed url:', error?.message);
+    if (w) w.close();
+    alert("Couldn't open this file — it may have been removed.");
+    return;
+  }
+  if (w) w.location.href = data.signedUrl;
+};
+
 // ── AUTH HELPERS ─────────────────────────────────────────────────
 
 export const signInWithGoogle = async () => {
@@ -375,16 +415,14 @@ export const uploadReceipt = async (bookingId, file) => {
     .upload(path, file);
   if (uploadError) { console.error(uploadError.message); return null; }
 
-  const { data: { publicUrl } } = supabase.storage
-    .from('vaibook')
-    .getPublicUrl(path);
-
+  // vaibook is a private bucket — store the storage path, not a public URL;
+  // viewers open it via openPrivateFile(), which signs a short-lived link.
   await supabase
     .from('bookings')
-    .update({ receipt_url: publicUrl, payment_status: 'receipt_uploaded' })
+    .update({ receipt_url: path, payment_status: 'receipt_uploaded' })
     .eq('id', bookingId);
 
-  return publicUrl;
+  return path;
 };
 
 // ── PROVIDER PLAN PAYMENTS (provider ↔ VaiBook, not tied to a booking) ──
@@ -398,14 +436,14 @@ export const submitProviderPayment = async (providerId, file, { plan, amount, pe
   const { error: uploadError } = await supabase.storage.from('vaibook').upload(path, file);
   if (uploadError) { console.error('Error uploading payment receipt:', uploadError.message); return false; }
 
-  const { data: { publicUrl } } = supabase.storage.from('vaibook').getPublicUrl(path);
-
+  // vaibook is a private bucket — store the storage path, not a public URL;
+  // viewers open it via openPrivateFile(), which signs a short-lived link.
   const { error } = await supabase.from('provider_payments').insert({
     provider_id: providerId,
     plan,
     amount,
     period_label: periodLabel,
-    receipt_url: publicUrl,
+    receipt_url: path,
   });
   if (error) { console.error('Error submitting payment:', error.message); return false; }
   return true;
@@ -447,13 +485,13 @@ export const submitBookingRefund = async (bookingId, providerId, file, { amount,
   const { error: uploadError } = await supabase.storage.from('vaibook').upload(path, file);
   if (uploadError) { console.error('Error uploading refund receipt:', uploadError.message); return false; }
 
-  const { data: { publicUrl } } = supabase.storage.from('vaibook').getPublicUrl(path);
-
+  // vaibook is a private bucket — store the storage path, not a public URL;
+  // viewers open it via openPrivateFile(), which signs a short-lived link.
   const { error } = await supabase.from('booking_refunds').insert({
     booking_id: bookingId,
     provider_id: providerId,
     amount,
-    receipt_url: publicUrl,
+    receipt_url: path,
     note: note || null,
   });
   if (error) { console.error('Error recording refund:', error.message); return false; }
