@@ -1063,6 +1063,25 @@ function statusLabel(status) {
   return status;
 }
 
+// ── BOOKING SEARCH + SORT ───────────────────────────────────────
+// Shared by both the customer's "My bookings" list and the provider's
+// "Bookings" list: text search by name (nameFn picks which name field
+// to match per side) plus a "recently booked" sort — by when the
+// booking was created (created_at), falling back to the appointment
+// date/time for older rows or walk-ins where created_at might be
+// missing, so sorting never silently breaks.
+function filterAndSortBookings(list, search, sort, nameFn) {
+  const q = (search || "").trim().toLowerCase();
+  const filtered = q ? list.filter((b) => (nameFn(b) || "").toLowerCase().includes(q)) : list;
+  const bookedAt = (b) => {
+    const t = b.created_at ? new Date(b.created_at).getTime() : NaN;
+    if (!isNaN(t)) return t;
+    return new Date(`${b.booking_date}T${b.booking_time || "00:00"}`).getTime() || 0;
+  };
+  const sorted = [...filtered].sort((a, b) => sort === "oldest" ? bookedAt(a) - bookedAt(b) : bookedAt(b) - bookedAt(a));
+  return sorted;
+}
+
 // ── INVOICES ────────────────────────────────────────────────────
 // VaiBook doesn't process payments itself, so this isn't a payment
 // receipt from VaiBook — it's a record of the transaction between the
@@ -2009,6 +2028,8 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
   const firstName = displayName.split(" ")[0].split("@")[0];
   const initial = displayName[0]?.toUpperCase() || "?";
   const [bookingTab, setBookingTab] = useState("upcoming");
+  const [bookingSearch, setBookingSearch] = useState("");
+  const [bookingSort, setBookingSort] = useState("newest");
 
   const [editingProfile, setEditingProfile] = useState(false);
   const [profileForm, setProfileForm] = useState({ firstName: "", lastName: "", phone: "" });
@@ -2418,6 +2439,13 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
   const upcomingBookings = bookings.filter((b) => ["pending", "awaiting_payment", "confirmed"].includes(b.status));
   const completedBookings = bookings.filter((b) => b.status === "completed");
   const rejectedBookings = bookings.filter((b) => b.status === "rejected" || b.status === "cancelled");
+  const bookingNameFn = (b) => b.provider_profiles?.business_name || b.services?.name || "";
+  const visibleBookings = filterAndSortBookings(
+    bookingTab === "upcoming" ? upcomingBookings : bookingTab === "completed" ? completedBookings : rejectedBookings,
+    bookingSearch,
+    bookingSort,
+    bookingNameFn
+  );
   const totalSpent = completedBookings.reduce((sum, b) => sum + (Number(b.total_amount) || 0), 0);
   const reviewedBookings = bookings.filter((b) => b.reviews && b.reviews.length > 0);
 
@@ -2640,12 +2668,23 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
                 <div key={i} className={`tab ${bookingTab === t.toLowerCase() ? "active" : ""}`} onClick={() => setBookingTab(t.toLowerCase())}>{t}</div>
               ))}
             </div>
+            <div className="form-row" style={{ marginBottom: 12 }}>
+              <div className="input-group" style={{ flex: 2 }}>
+                <input placeholder="Search by provider or service name..." value={bookingSearch} onChange={e => setBookingSearch(e.target.value)} />
+              </div>
+              <div className="input-group" style={{ flex: 1 }}>
+                <select value={bookingSort} onChange={e => setBookingSort(e.target.value)}>
+                  <option value="newest">Recently booked: newest first</option>
+                  <option value="oldest">Recently booked: oldest first</option>
+                </select>
+              </div>
+            </div>
             <div className="card">
               {loadingBookings && <p style={{ fontSize: 13, color: "var(--muted)", padding: "16px 0" }}>Loading...</p>}
-              {!loadingBookings && (bookingTab === "upcoming" ? upcomingBookings : bookingTab === "completed" ? completedBookings : rejectedBookings).length === 0 && (
-                <p style={{ fontSize: 13, color: "var(--muted)", padding: "16px 0" }}>Nothing here yet.</p>
+              {!loadingBookings && visibleBookings.length === 0 && (
+                <p style={{ fontSize: 13, color: "var(--muted)", padding: "16px 0" }}>{bookingSearch.trim() ? "No bookings match your search." : "Nothing here yet."}</p>
               )}
-              {(bookingTab === "upcoming" ? upcomingBookings : bookingTab === "completed" ? completedBookings : rejectedBookings).map((b) => {
+              {visibleBookings.map((b) => {
                 const hasReview = b.reviews && b.reviews.length > 0;
                 return (
                   <div key={b.id} style={{ padding: "14px 0", borderBottom: "1px solid var(--border)" }}>
@@ -3067,6 +3106,8 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
   }, []);
   const [bookings, setBookings] = useState([]);
   const [loadingBookings, setLoadingBookings] = useState(false);
+  const [bookingSearch, setBookingSearch] = useState("");
+  const [bookingSort, setBookingSort] = useState("newest");
   const [busyId, setBusyId] = useState(null);
   const [hours, setHours] = useState(DEFAULT_HOURS);
   const [savingHours, setSavingHours] = useState(false);
@@ -3609,6 +3650,8 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
     .filter(b => { const d = new Date(b.booking_date); return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear(); })
     .reduce((sum, b) => sum + (Number(b.total_amount) || 0), 0);
   const completionRate = bookings.length ? Math.round((completedBookings.length / bookings.length) * 100) : null;
+  const bookingNameFn = (b) => b.users?.full_name || b.walkin_customer_name || "";
+  const visibleBookings = filterAndSortBookings(bookings, bookingSearch, bookingSort, bookingNameFn);
 
   const FEE_RATE = 0.07;
   const netAmount = (b) => (Number(b.total_amount) || 0) * (1 - FEE_RATE);
@@ -3793,6 +3836,18 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                 Had someone ask you directly — in person, by phone, or WhatsApp — instead of booking through the app? Add it yourself with "+ Add appointment," no account needed on their end.
               </p>
 
+              <div className="form-row" style={{ marginBottom: 12 }}>
+                <div className="input-group" style={{ flex: 2 }}>
+                  <input placeholder="Search by client name..." value={bookingSearch} onChange={e => setBookingSearch(e.target.value)} />
+                </div>
+                <div className="input-group" style={{ flex: 1 }}>
+                  <select value={bookingSort} onChange={e => setBookingSort(e.target.value)}>
+                    <option value="newest">Recently booked: newest first</option>
+                    <option value="oldest">Recently booked: oldest first</option>
+                  </select>
+                </div>
+              </div>
+
               {addingWalkIn && (
                 <div style={{ background: "var(--sand)", borderRadius: 10, padding: 16, marginBottom: 16 }}>
                   <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 10 }}>Add an appointment</div>
@@ -3838,10 +3893,10 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                 </div>
               )}
 
-              {bookings.length === 0 && (
-                <p style={{ fontSize: 13, color: "var(--muted)", padding: "16px 0" }}>{loadingBookings ? "Loading..." : "No bookings yet."}</p>
+              {visibleBookings.length === 0 && (
+                <p style={{ fontSize: 13, color: "var(--muted)", padding: "16px 0" }}>{loadingBookings ? "Loading..." : bookingSearch.trim() ? "No bookings match your search." : "No bookings yet."}</p>
               )}
-              {bookings.map((b) => (
+              {visibleBookings.map((b) => (
                 <div key={b.id} style={{ padding: "14px 0", borderBottom: "1px solid var(--border)" }}>
                   <div className="booking-item" style={{ padding: 0, border: "none" }}>
                     <div className={`booking-dot ${bookingStatusClass(b.status)}`}></div>
