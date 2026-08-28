@@ -321,7 +321,7 @@ export const cancelBooking = async (bookingId) => {
 export const getCustomerBookings = async (customerId) => {
   const { data, error } = await supabase
     .from('bookings')
-    .select('*, provider_profiles(id, user_id, business_name, service_type, district, latitude, longitude, location_label, whatsapp, payment_methods(id, type, name, account_name, account_number)), services(name, price, duration_min), reviews(id, rating, comment), booking_refunds(id, amount, receipt_url, note, created_at)')
+    .select('*, provider_profiles(id, user_id, business_name, service_type, district, latitude, longitude, location_label, whatsapp, tax_id, payment_methods(id, type, name, account_name, account_number)), services(name, price, duration_min), reviews(id, rating, comment), booking_refunds(id, amount, receipt_url, note, created_at)')
     .eq('customer_id', customerId)
     .order('booking_date', { ascending: false });
   if (error) console.error(error.message);
