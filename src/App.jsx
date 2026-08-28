@@ -6,7 +6,7 @@ import L from "leaflet";
 import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
 import markerIcon from "leaflet/dist/images/marker-icon.png";
 import markerShadow from "leaflet/dist/images/marker-shadow.png";
-import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, deleteService, getActiveProviders, getProviderDirectory, createBooking, getProviderBusyWindows, createBookingSafe, cancelBooking, getCustomerBookings, uploadReceipt, submitReview, getProviderReviews, sendBookingEmail, updateUserProfile, getPaymentMethods, addPaymentMethod, deletePaymentMethod, createNotification, getNotifications, markNotificationRead, markAllNotificationsRead, getLandingStats, getRecommendedServices, getCategoryDefaultFeatures, getProviderFeatureOverrides, setProviderFeatureOverride, getVisitNotes, upsertVisitNote, adminListProviders, adminUpdateProvider, adminDeleteProvider, tagVIP, untagVIP, getVIPClients, getFavoriteProviderIds, getFavoriteProviders, addFavorite, removeFavorite, getBookingMessages, sendBookingMessage, markBookingMessagesRead, getUnreadBookingMessages, getProviderMonthlyTrend, createProviderProfile, getProviderById, createWalkInBooking, submitProviderPayment, getMyProviderPayments, adminListProviderPayments, adminReviewProviderPayment, submitBookingRefund, adminListBookingRefunds } from "./supabase";
+import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, deleteService, getActiveProviders, getProviderDirectory, createBooking, getProviderBusyWindows, createBookingSafe, cancelBooking, getCustomerBookings, uploadReceipt, submitReview, getProviderReviews, sendBookingEmail, updateUserProfile, getPaymentMethods, addPaymentMethod, deletePaymentMethod, createNotification, getNotifications, markNotificationRead, markAllNotificationsRead, getLandingStats, getRecommendedServices, getCategoryDefaultFeatures, getProviderFeatureOverrides, setProviderFeatureOverride, getVisitNotes, upsertVisitNote, adminListProviders, adminUpdateProvider, adminDeleteProvider, tagVIP, untagVIP, getVIPClients, getFavoriteProviderIds, getFavoriteProviders, addFavorite, removeFavorite, getBookingMessages, sendBookingMessage, markBookingMessagesRead, getUnreadBookingMessages, getProviderMonthlyTrend, createProviderProfile, getProviderById, createWalkInBooking, submitProviderPayment, getMyProviderPayments, adminListProviderPayments, adminReviewProviderPayment, submitBookingRefund, adminListBookingRefunds, openPrivateFile } from "./supabase";
 
 // Leaflet's default marker icons reference image paths that don't resolve
 // correctly under CRA's bundler unless re-pointed at the imported assets.
@@ -2711,7 +2711,7 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
                       <div style={{ marginTop: 8, background: "#E7F5EC", borderRadius: 8, padding: 12 }}>
                         <div style={{ fontSize: 13, fontWeight: 600, color: "var(--forest)" }}>💸 You were refunded BZ${b.booking_refunds[0].amount}</div>
                         {b.booking_refunds[0].note && <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 4 }}>{b.booking_refunds[0].note}</p>}
-                        {b.booking_refunds[0].receipt_url && <a href={b.booking_refunds[0].receipt_url} target="_blank" rel="noreferrer" style={{ fontSize: 12 }}>View proof</a>}
+                        {b.booking_refunds[0].receipt_url && <a href="#" onClick={(e) => { e.preventDefault(); openPrivateFile(b.booking_refunds[0].receipt_url); }} style={{ fontSize: 12 }}>View proof</a>}
                       </div>
                     )}
 
@@ -2837,7 +2837,7 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
               {bookings.map((b) => (
                 <div className="booking-item" key={b.id}>
                   <div style={{ width: 36, height: 36, background: "var(--sand)", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18 }}>💳</div>
-                  <div className="booking-info"><div className="title">{b.services?.name || "Service"}</div><div className="meta">{b.provider_profiles?.business_name || "Provider"}{b.receipt_url ? " · " : ""}{b.receipt_url && <a href={b.receipt_url} target="_blank" rel="noreferrer">receipt</a>}</div></div>
+                  <div className="booking-info"><div className="title">{b.services?.name || "Service"}</div><div className="meta">{b.provider_profiles?.business_name || "Provider"}{b.receipt_url ? " · " : ""}{b.receipt_url && <a href="#" onClick={(e) => { e.preventDefault(); openPrivateFile(b.receipt_url); }}>receipt</a>}</div></div>
                   <div>
                     <span className="booking-amount">BZ${b.total_amount ?? "—"}</span>
                     <span className={`status-pill ${bookingStatusClass(b.status)}`}>{b.payment_status === "paid" ? "paid" : statusLabel(b.status)}</span>
@@ -3970,7 +3970,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                   {b.status === "awaiting_payment" && b.payment_status === "receipt_uploaded" && (
                     <div style={{ marginTop: 8, background: "var(--sand)", borderRadius: 8, padding: 12 }}>
                       <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 6 }}>Deposit receipt uploaded</div>
-                      {b.receipt_url && <a href={b.receipt_url} target="_blank" rel="noreferrer" style={{ fontSize: 12 }}>View receipt</a>}
+                      {b.receipt_url && <a href="#" onClick={(e) => { e.preventDefault(); openPrivateFile(b.receipt_url); }} style={{ fontSize: 12 }}>View receipt</a>}
                       <div style={{ marginTop: 8 }}>
                         <button className="btn-sm lime" disabled={confirmingPaymentId === b.id} onClick={() => confirmPayment(b)}>
                           {confirmingPaymentId === b.id ? "Confirming..." : "Confirm payment received"}
@@ -4012,7 +4012,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                       <div style={{ marginTop: 8, background: "#E7F5EC", borderRadius: 8, padding: 12 }}>
                         <div style={{ fontSize: 13, fontWeight: 600, color: "var(--forest)" }}>💸 Refund recorded — BZ${b.booking_refunds[0].amount}</div>
                         {b.booking_refunds[0].note && <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 4 }}>{b.booking_refunds[0].note}</p>}
-                        {b.booking_refunds[0].receipt_url && <a href={b.booking_refunds[0].receipt_url} target="_blank" rel="noreferrer" style={{ fontSize: 12 }}>View receipt</a>}
+                        {b.booking_refunds[0].receipt_url && <a href="#" onClick={(e) => { e.preventDefault(); openPrivateFile(b.booking_refunds[0].receipt_url); }} style={{ fontSize: 12 }}>View receipt</a>}
                       </div>
                     ) : refundingBookingId === b.id ? (
                       <div style={{ marginTop: 8, background: "var(--sand)", borderRadius: 8, padding: 12 }}>
@@ -4265,7 +4265,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                         <div style={{ fontSize: 14, fontWeight: 600 }}>{pmt.period_label} — BZ${pmt.amount}</div>
                         <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 2 }}>Submitted {new Date(pmt.submitted_at).toLocaleDateString()}</div>
                         {pmt.admin_note && <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 2, fontStyle: "italic" }}>Admin note: {pmt.admin_note}</div>}
-                        {pmt.receipt_url && <a href={pmt.receipt_url} target="_blank" rel="noreferrer" style={{ fontSize: 12 }}>View receipt</a>}
+                        {pmt.receipt_url && <a href="#" onClick={(e) => { e.preventDefault(); openPrivateFile(pmt.receipt_url); }} style={{ fontSize: 12 }}>View receipt</a>}
                       </div>
                       <span style={{ fontSize: 12, fontWeight: 600, color: statusColor[pmt.status] || "var(--muted)", background: statusBg[pmt.status] || "var(--sand)", padding: "3px 8px", borderRadius: 6, whiteSpace: "nowrap" }}>
                         {pmt.status.charAt(0).toUpperCase() + pmt.status.slice(1)}
@@ -5323,7 +5323,7 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
                       <div className="title">{pmt.business_name} <span style={{ fontWeight: 500, color: "var(--muted)", fontSize: 12 }}>— {planLabel(pmt.plan)}</span></div>
                       <div className="meta">{pmt.period_label} · BZ${pmt.amount}</div>
                       <div className="meta" style={{ fontSize: 11 }}>Submitted {new Date(pmt.submitted_at).toLocaleDateString()}</div>
-                      {pmt.receipt_url && <a href={pmt.receipt_url} target="_blank" rel="noreferrer" style={{ fontSize: 12 }}>View receipt</a>}
+                      {pmt.receipt_url && <a href="#" onClick={(e) => { e.preventDefault(); openPrivateFile(pmt.receipt_url); }} style={{ fontSize: 12 }}>View receipt</a>}
                       {pmt.reviewed_at && (
                         <div className="meta" style={{ fontSize: 11, marginTop: 4 }}>Reviewed {new Date(pmt.reviewed_at).toLocaleDateString()} by {pmt.reviewed_by}</div>
                       )}
@@ -5367,7 +5367,7 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
                     <div className="meta">BZ${r.amount} refunded · {new Date(r.created_at).toLocaleDateString()}</div>
                     {r.note && <div className="meta" style={{ fontStyle: "italic" }}>{r.note}</div>}
                   </div>
-                  {r.receipt_url && <a href={r.receipt_url} target="_blank" rel="noreferrer" style={{ fontSize: 12, flexShrink: 0 }}>View receipt</a>}
+                  {r.receipt_url && <a href="#" onClick={(e) => { e.preventDefault(); openPrivateFile(r.receipt_url); }} style={{ fontSize: 12, flexShrink: 0 }}>View receipt</a>}
                 </div>
               ))}
             </div>
