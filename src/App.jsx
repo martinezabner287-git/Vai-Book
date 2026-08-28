@@ -1063,6 +1063,101 @@ function statusLabel(status) {
   return status;
 }
 
+// ── INVOICES ────────────────────────────────────────────────────
+// VaiBook doesn't process payments itself, so this isn't a payment
+// receipt from VaiBook — it's a record of the transaction between the
+// provider and the customer, built entirely client-side from data
+// already on the booking. Only offered on "completed" bookings (see
+// callers), matching the same definition of real, delivered revenue
+// already used everywhere else in the app (Earnings tab, Monthly review).
+// Takes a flat options object so both portals can build it from whatever
+// shape their own booking join happens to have.
+function buildInvoiceHtml({
+  orderNumber, bookingDate, bookingTime, serviceName, amount, depositAmount,
+  providerName, providerTaxId, providerDistrict, providerWhatsapp,
+  customerName, customerEmail,
+}) {
+  const dateLabel = bookingDate ? new Date(bookingDate).toLocaleDateString([], { year: "numeric", month: "long", day: "numeric" }) : "—";
+  const timeLabel = bookingTime ? String(bookingTime).slice(0, 5) : "";
+  const esc = (s) => String(s ?? "").replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+
+  return `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Invoice ${esc(orderNumber)}</title>
+<style>
+  body { font-family: Arial, sans-serif; color: #0D1F18; max-width: 640px; margin: 40px auto; padding: 0 20px; }
+  .head { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid #0D3D2E; padding-bottom: 16px; margin-bottom: 24px; }
+  .logo { font-size: 22px; font-weight: 800; color: #0D3D2E; }
+  .logo span { color: #7A9E1F; }
+  .meta { text-align: right; font-size: 13px; color: #555; }
+  h1 { font-size: 18px; margin: 0 0 4px; }
+  .parties { display: flex; justify-content: space-between; margin-bottom: 24px; gap: 24px; }
+  .party { font-size: 13px; line-height: 1.6; }
+  .party h3 { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: #888; margin: 0 0 6px; }
+  table { width: 100%; border-collapse: collapse; margin-bottom: 24px; }
+  th, td { text-align: left; padding: 10px 0; border-bottom: 1px solid #E5E5E5; font-size: 13px; }
+  th { color: #888; font-weight: 600; text-transform: uppercase; font-size: 11px; letter-spacing: .04em; }
+  .amount-col { text-align: right; }
+  .total-row td { border-bottom: none; padding-top: 14px; font-size: 16px; font-weight: 800; }
+  .footnote { font-size: 11.5px; color: #888; line-height: 1.6; margin-top: 32px; border-top: 1px solid #E5E5E5; padding-top: 16px; }
+  @media print { body { margin: 0; padding: 20px; } }
+</style>
+</head>
+<body>
+  <div class="head">
+    <div class="logo">vai<span>book</span></div>
+    <div class="meta">
+      <h1>Invoice</h1>
+      <div>#${esc(orderNumber)}</div>
+      <div>${dateLabel}${timeLabel ? " · " + timeLabel : ""}</div>
+    </div>
+  </div>
+  <div class="parties">
+    <div class="party">
+      <h3>From</h3>
+      <div><strong>${esc(providerName)}</strong></div>
+      ${providerDistrict ? `<div>${esc(providerDistrict)}, Belize</div>` : ""}
+      ${providerWhatsapp ? `<div>${esc(providerWhatsapp)}</div>` : ""}
+      ${providerTaxId ? `<div>Business reg./TIN: ${esc(providerTaxId)}</div>` : ""}
+    </div>
+    <div class="party">
+      <h3>Billed to</h3>
+      <div><strong>${esc(customerName)}</strong></div>
+      ${customerEmail ? `<div>${esc(customerEmail)}</div>` : ""}
+    </div>
+  </div>
+  <table>
+    <thead><tr><th>Description</th><th class="amount-col">Amount</th></tr></thead>
+    <tbody>
+      <tr><td>${esc(serviceName)}</td><td class="amount-col">BZ$${Number(amount || 0).toFixed(2)}</td></tr>
+      ${depositAmount ? `<tr><td style="color:#888;">— of which deposit paid in advance</td><td class="amount-col" style="color:#888;">BZ$${Number(depositAmount).toFixed(2)}</td></tr>` : ""}
+      <tr class="total-row"><td>Total</td><td class="amount-col">BZ$${Number(amount || 0).toFixed(2)}</td></tr>
+    </tbody>
+  </table>
+  <div class="footnote">
+    VaiBook is a booking marketplace, not a payment processor — this invoice reflects a transaction directly between the customer and the service provider named above, generated from their VaiBook booking record. It is not issued by VaiBook.
+  </div>
+</body>
+</html>`;
+}
+
+// Opens the invoice in a new tab and triggers the browser's native
+// print dialog, where "Save as PDF" is a standard destination — avoids
+// needing a PDF-generation library for something the browser already
+// does well.
+function printInvoice(html) {
+  const w = window.open("", "_blank");
+  if (!w) return;
+  w.document.write(html);
+  w.document.close();
+  // The invoice is static markup with no external resources to wait on,
+  // so a short delay (rather than onload, which can be unreliable on a
+  // document.write'd window) is enough for the new tab to paint before print.
+  setTimeout(() => { try { w.print(); } catch (e) { /* window may already be closed */ } }, 250);
+}
+
 // ── COMPONENTS ──────────────────────────────────────────────────
 
 function getInitials(name) {
@@ -2631,6 +2726,28 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
                       </details>
                     )}
 
+                    {b.status === "completed" && (
+                      <button
+                        className="btn-sm ghost"
+                        style={{ marginTop: 8, marginRight: 8, fontSize: 12 }}
+                        onClick={() => printInvoice(buildInvoiceHtml({
+                          orderNumber: b.order_number,
+                          bookingDate: b.booking_date,
+                          bookingTime: b.booking_time,
+                          serviceName: b.services?.name || "Service",
+                          amount: b.total_amount,
+                          depositAmount: b.downpayment_amount,
+                          providerName: b.provider_profiles?.business_name,
+                          providerTaxId: b.provider_profiles?.tax_id,
+                          providerDistrict: b.provider_profiles?.district,
+                          providerWhatsapp: b.provider_profiles?.whatsapp,
+                          customerName: user?.full_name || session?.user?.email,
+                          customerEmail: user?.email || session?.user?.email,
+                        }))}
+                      >
+                        🧾 Print / download invoice
+                      </button>
+                    )}
                     {b.status === "completed" && !hasReview && reviewingId !== b.id && (
                       <button className="btn-sm ghost" style={{ marginTop: 8 }} onClick={() => openReview(b.id)}>Leave a review</button>
                     )}
@@ -2954,7 +3071,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
   const [hours, setHours] = useState(DEFAULT_HOURS);
   const [savingHours, setSavingHours] = useState(false);
   const [selectedDay, setSelectedDay] = useState(null);
-  const [profileForm, setProfileForm] = useState({ business_name: "", bio: "", district: "", whatsapp: "" });
+  const [profileForm, setProfileForm] = useState({ business_name: "", bio: "", district: "", whatsapp: "", tax_id: "" });
   const [savingProfile, setSavingProfile] = useState(false);
   const [photos, setPhotos] = useState([]);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
@@ -3188,6 +3305,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
         bio: providerProfile.bio || "",
         district: providerProfile.district || "",
         whatsapp: providerProfile.whatsapp || "",
+        tax_id: providerProfile.tax_id || "",
       });
       setPhotos(providerProfile.portfolio_urls || []);
       setServices(providerProfile.services || []);
@@ -3807,9 +3925,31 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                   )}
 
                   {b.status === "completed" && (
-                    <FeatureGate flag="soap_charting">
-                      <VisitNotesButton booking={b} />
-                    </FeatureGate>
+                    <>
+                      <button
+                        className="btn-sm ghost"
+                        style={{ marginTop: 8, marginRight: 8, fontSize: 12 }}
+                        onClick={() => printInvoice(buildInvoiceHtml({
+                          orderNumber: b.order_number,
+                          bookingDate: b.booking_date,
+                          bookingTime: b.booking_time,
+                          serviceName: b.services?.name || "Service",
+                          amount: b.total_amount ?? b.services?.price,
+                          depositAmount: b.downpayment_amount,
+                          providerName: providerProfile?.business_name,
+                          providerTaxId: providerProfile?.tax_id,
+                          providerDistrict: providerProfile?.district,
+                          providerWhatsapp: providerProfile?.whatsapp,
+                          customerName: b.users?.full_name || b.walkin_customer_name || "Customer",
+                          customerEmail: b.users?.email,
+                        }))}
+                      >
+                        🧾 Print / download invoice
+                      </button>
+                      <FeatureGate flag="soap_charting">
+                        <VisitNotesButton booking={b} />
+                      </FeatureGate>
+                    </>
                   )}
 
                   {["cancelled", "rejected"].includes(b.status) && (
@@ -4182,6 +4322,10 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                 </select>
               </div>
               <div className="input-group"><label>WhatsApp / phone number</label><input placeholder="+501 600 0000" value={profileForm.whatsapp} onChange={e => setProfileForm(f => ({ ...f, whatsapp: e.target.value }))} /></div>
+              <div className="input-group">
+                <label>Business registration / TIN number (optional)</label>
+                <input placeholder="Shows on your invoices once you're registered" value={profileForm.tax_id} onChange={e => setProfileForm(f => ({ ...f, tax_id: e.target.value }))} />
+              </div>
               <button className="btn-sm forest" onClick={saveProfile} disabled={savingProfile}>{savingProfile ? "Saving..." : "Save profile"}</button>
             </div>
 
