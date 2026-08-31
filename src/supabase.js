@@ -269,6 +269,45 @@ export const deleteProviderStaff = async (staffId) => {
   return true;
 };
 
+// ── LOYALTY & REWARDS (Business plan) ───────────────────────────
+// Provider-configurable — see supabase_loyalty_program.sql. Points are
+// only ever added by a database trigger when a booking completes;
+// these functions read balances and let a provider manually reduce one
+// (redeeming a reward), matching the "provider applies it themselves"
+// decision.
+export const getLoyaltyAccount = async (providerId, customerId) => {
+  if (!providerId || !customerId) return null;
+  const { data, error } = await supabase
+    .from('loyalty_accounts')
+    .select('*')
+    .eq('provider_id', providerId)
+    .eq('customer_id', customerId)
+    .maybeSingle();
+  if (error) { console.error('Error fetching loyalty balance:', error.message); return null; }
+  return data;
+};
+
+export const getProviderLoyaltyCustomers = async (providerId) => {
+  if (!providerId) return [];
+  const { data, error } = await supabase
+    .from('loyalty_accounts')
+    .select('*, users(full_name, email)')
+    .eq('provider_id', providerId)
+    .gt('points_balance', 0)
+    .order('points_balance', { ascending: false });
+  if (error) { console.error('Error fetching loyalty customers:', error.message); return []; }
+  return data || [];
+};
+
+export const redeemLoyaltyReward = async (accountId, newBalance) => {
+  const { error } = await supabase
+    .from('loyalty_accounts')
+    .update({ points_balance: newBalance, updated_at: new Date().toISOString() })
+    .eq('id', accountId);
+  if (error) { console.error('Error redeeming reward:', error.message); return false; }
+  return true;
+};
+
 export const getActiveProviders = async (filters = {}) => {
   let query = supabase
     .from('provider_profiles')
