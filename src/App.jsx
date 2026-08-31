@@ -6,7 +6,7 @@ import L from "leaflet";
 import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
 import markerIcon from "leaflet/dist/images/marker-icon.png";
 import markerShadow from "leaflet/dist/images/marker-shadow.png";
-import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, deleteService, getActiveProviders, getProviderDirectory, createBooking, getProviderBusyWindows, createBookingSafe, cancelBooking, getCustomerBookings, uploadReceipt, submitReview, getProviderReviews, sendBookingEmail, updateUserProfile, getPaymentMethods, addPaymentMethod, deletePaymentMethod, createNotification, getNotifications, markNotificationRead, markAllNotificationsRead, getLandingStats, getRecommendedServices, getCategoryDefaultFeatures, getProviderFeatureOverrides, setProviderFeatureOverride, getVisitNotes, upsertVisitNote, adminListProviders, adminUpdateProvider, adminDeleteProvider, tagVIP, untagVIP, getVIPClients, getFavoriteProviderIds, getFavoriteProviders, addFavorite, removeFavorite, getBookingMessages, sendBookingMessage, markBookingMessagesRead, getUnreadBookingMessages, getProviderMonthlyTrend, createProviderProfile, getProviderById, createWalkInBooking, submitProviderPayment, getMyProviderPayments, adminListProviderPayments, adminReviewProviderPayment, submitBookingRefund, adminListBookingRefunds, openPrivateFile, getProviderStaff, addProviderStaff, updateProviderStaff, deleteProviderStaff, getLoyaltyAccount, getProviderLoyaltyCustomers, redeemLoyaltyReward } from "./supabase";
+import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, deleteService, getActiveProviders, getProviderDirectory, createBooking, getProviderBusyWindows, createBookingSafe, cancelBooking, getCustomerBookings, uploadReceipt, submitReview, getProviderReviews, sendBookingEmail, updateUserProfile, getPaymentMethods, addPaymentMethod, deletePaymentMethod, createNotification, getNotifications, markNotificationRead, markAllNotificationsRead, getLandingStats, getRecommendedServices, getCategoryDefaultFeatures, getProviderFeatureOverrides, setProviderFeatureOverride, getVisitNotes, upsertVisitNote, adminListProviders, adminUpdateProvider, adminDeleteProvider, tagVIP, untagVIP, getVIPClients, getFavoriteProviderIds, getFavoriteProviders, addFavorite, removeFavorite, getBookingMessages, sendBookingMessage, markBookingMessagesRead, getUnreadBookingMessages, getProviderMonthlyTrend, createProviderProfile, getProviderById, createWalkInBooking, submitProviderPayment, getMyProviderPayments, adminListProviderPayments, adminReviewProviderPayment, submitBookingRefund, adminListBookingRefunds, openPrivateFile, getProviderStaff, addProviderStaff, updateProviderStaff, deleteProviderStaff, getLoyaltyAccount, getProviderLoyaltyCustomers, redeemLoyaltyReward, getMyStaffProfile, claimStaffSeatByEmail, getStaffBookings } from "./supabase";
 
 // Leaflet's default marker icons reference image paths that don't resolve
 // correctly under CRA's bundler unless re-pointed at the imported assets.
@@ -3180,6 +3180,126 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
   );
 }
 
+// ── STAFF PORTAL ─────────────────────────────────────────────────
+// A cut-down portal for a staff member's own login (separate from the
+// business owner's account) — see supabase_staff_accounts.sql. Shows
+// only bookings assigned to them; everything else about the business
+// (settings, pricing, billing, other staff, loyalty) stays owner-only,
+// only reachable from the owner's own login via ProviderPortal.
+function StaffPortal({ onNav, session, staffProfile, onSignOut }) {
+  const [bookings, setBookings] = useState([]);
+  const [loadingBookings, setLoadingBookings] = useState(false);
+  const [bookingTab, setBookingTab] = useState("upcoming");
+  const [bookingSearch, setBookingSearch] = useState("");
+  const [bookingSort, setBookingSort] = useState("newest");
+  const [busyId, setBusyId] = useState(null);
+
+  const staffId = staffProfile?.id;
+
+  const loadBookings = async () => {
+    if (!staffId) return;
+    setLoadingBookings(true);
+    const data = await getStaffBookings(staffId);
+    setBookings(data || []);
+    setLoadingBookings(false);
+  };
+
+  useEffect(() => {
+    loadBookings();
+  }, [staffId]);
+
+  const markDone = async (bookingId) => {
+    setBusyId(bookingId);
+    await updateBooking(bookingId, { status: "completed" });
+    await loadBookings();
+    setBusyId(null);
+  };
+
+  if (!session) {
+    return (
+      <div style={{ minHeight: "100vh", background: "var(--forest)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
+        <div style={{ textAlign: "center", maxWidth: 360 }}>
+          <div style={{ fontFamily: "Syne, sans-serif", fontSize: 28, fontWeight: 800, color: "var(--near-white)", marginBottom: 8 }}>
+            vai<span style={{ color: "var(--lime)" }}>book</span>
+          </div>
+          <p style={{ color: "rgba(255,255,255,0.6)", fontSize: 14, marginBottom: 24 }}>Sign in with Google to access your schedule.</p>
+          <button className="btn-lime" style={{ width: "100%", padding: "12px 0" }} onClick={() => onNav("home")}>← Back to site</button>
+        </div>
+      </div>
+    );
+  }
+
+  const upcomingBookings = bookings.filter((b) => ["pending", "awaiting_payment", "confirmed"].includes(b.status));
+  const completedBookings = bookings.filter((b) => b.status === "completed");
+  const rejectedBookings = bookings.filter((b) => b.status === "rejected" || b.status === "cancelled");
+  const bookingNameFn = (b) => b.users?.full_name || b.walkin_customer_name || "";
+  const visibleBookings = filterAndSortBookings(
+    bookingTab === "upcoming" ? upcomingBookings : bookingTab === "completed" ? completedBookings : rejectedBookings,
+    bookingSearch,
+    bookingSort,
+    bookingNameFn
+  );
+
+  return (
+    <div style={{ maxWidth: 760, margin: "0 auto", padding: "32px 20px" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+        <div>
+          <div style={{ fontFamily: "Syne, sans-serif", fontSize: 20, fontWeight: 800 }}>vai<span style={{ color: "var(--lime)" }}>book</span> <span style={{ fontWeight: 500, fontSize: 14, color: "var(--muted)" }}>staff</span></div>
+          <p style={{ fontSize: 13, color: "var(--muted)", marginTop: 2 }}>
+            {staffProfile?.name} · {staffProfile?.provider_profiles?.business_name || "your team"}
+          </p>
+        </div>
+        <a style={{ fontSize: 13, color: "var(--muted)", cursor: "pointer" }} onClick={onSignOut}>Sign out</a>
+      </div>
+
+      <div className="portal-header"><h2>My bookings</h2><p>Only appointments assigned to you show up here.</p></div>
+      <div className="tab-row">
+        {["Upcoming", "Completed", "Cancelled"].map((t, i) => (
+          <div key={i} className={`tab ${bookingTab === t.toLowerCase() ? "active" : ""}`} onClick={() => setBookingTab(t.toLowerCase())}>{t}</div>
+        ))}
+      </div>
+      <div className="form-row" style={{ marginBottom: 12 }}>
+        <div className="input-group" style={{ flex: 2 }}>
+          <input placeholder="Search by client name..." value={bookingSearch} onChange={e => setBookingSearch(e.target.value)} />
+        </div>
+        <div className="input-group" style={{ flex: 1 }}>
+          <select value={bookingSort} onChange={e => setBookingSort(e.target.value)}>
+            <option value="newest">Recently booked: newest first</option>
+            <option value="oldest">Recently booked: oldest first</option>
+          </select>
+        </div>
+      </div>
+      <div className="card">
+        {loadingBookings && <p style={{ fontSize: 13, color: "var(--muted)", padding: "16px 0" }}>Loading...</p>}
+        {!loadingBookings && visibleBookings.length === 0 && (
+          <p style={{ fontSize: 13, color: "var(--muted)", padding: "16px 0" }}>{bookingSearch.trim() ? "No bookings match your search." : "Nothing here yet."}</p>
+        )}
+        {visibleBookings.map((b) => (
+          <div key={b.id} style={{ padding: "14px 0", borderBottom: "1px solid var(--border)" }}>
+            <div className="booking-item" style={{ padding: 0, border: "none" }}>
+              <div className={`booking-dot ${bookingStatusClass(b.status)}`}></div>
+              <div className="booking-info">
+                <div className="title">{b.services?.name || "Service"}</div>
+                <div className="meta">
+                  {b.users?.full_name || b.walkin_customer_name || "Customer"}
+                  {" · "}{new Date(b.booking_date).toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
+                </div>
+              </div>
+              <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                <span className="booking-amount">BZ${b.total_amount ?? b.services?.price ?? "—"}</span>
+                <span className={`status-pill ${bookingStatusClass(b.status)}`}>{statusLabel(b.status)}</span>
+                {b.status === "confirmed" && (
+                  <button className="btn-sm forest" disabled={busyId === b.id} onClick={() => markDone(b.id)}>{busyId === b.id ? "Saving..." : "Mark done"}</button>
+                )}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // ── PROVIDER PORTAL ─────────────────────────────────────────────
 function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSignOut, onProviderProfileUpdate }) {
   const [tab, setTab] = useState("dashboard");
@@ -3382,9 +3502,12 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
   const [loadingStaff, setLoadingStaff] = useState(false);
   const [newStaffName, setNewStaffName] = useState("");
   const [newStaffPhone, setNewStaffPhone] = useState("");
+  const [newStaffEmail, setNewStaffEmail] = useState("");
   const [savingStaff, setSavingStaff] = useState(false);
   const [staffError, setStaffError] = useState("");
   const [staffFilter, setStaffFilter] = useState("all");
+  const [editingStaffEmailId, setEditingStaffEmailId] = useState(null);
+  const [editStaffEmailValue, setEditStaffEmailValue] = useState("");
   const isBusinessPlan = (providerProfile?.plan || "starter") === "business";
 
   const loadStaff = async () => {
@@ -3401,13 +3524,15 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
 
   const addStaff = async () => {
     if (!providerId || !newStaffName.trim()) { setStaffError("Enter a name."); return; }
+    if (!newStaffEmail.trim()) { setStaffError("Enter the email they'll sign in with — that's how they get their own login."); return; }
     setSavingStaff(true);
     setStaffError("");
-    const created = await addProviderStaff(providerId, { name: newStaffName.trim(), phone: newStaffPhone.trim() });
+    const created = await addProviderStaff(providerId, { name: newStaffName.trim(), phone: newStaffPhone.trim(), email: newStaffEmail.trim() });
     setSavingStaff(false);
     if (created) {
       setNewStaffName("");
       setNewStaffPhone("");
+      setNewStaffEmail("");
       await loadStaff();
     } else {
       setStaffError("Couldn't add that staff member. Please try again.");
@@ -3416,6 +3541,18 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
 
   const toggleStaffActive = async (member) => {
     await updateProviderStaff(member.id, { is_active: !member.is_active });
+    await loadStaff();
+  };
+
+  const startEditStaffEmail = (member) => {
+    setEditingStaffEmailId(member.id);
+    setEditStaffEmailValue(member.email || "");
+  };
+
+  const saveStaffEmail = async (member) => {
+    if (!editStaffEmailValue.trim()) return;
+    await updateProviderStaff(member.id, { email: editStaffEmailValue.trim() });
+    setEditingStaffEmailId(null);
     await loadStaff();
   };
 
@@ -4619,13 +4756,13 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
 
         {tab === "staff" && (
           <>
-            <div className="portal-header"><h2>My staff</h2><p>Add the people on your team and assign bookings to whoever's handling them.</p></div>
+            <div className="portal-header"><h2>My staff</h2><p>Add the people on your team — they'll sign in with their own Google account and only see their own bookings.</p></div>
 
             {!isBusinessPlan ? (
               <div className="card" style={{ maxWidth: 560 }}>
                 <div className="card-title">This is a Business plan feature</div>
                 <p style={{ fontSize: 13, color: "var(--muted)", marginBottom: 12 }}>
-                  Staff seats let you add your team by name and assign each booking to whoever's handling it. Upgrade to the Business plan (BZ${PLANS.find(p => p.id === "business")?.monthly}/mo) to turn this on.
+                  Staff seats let you add your team and each person gets their own login to see just their own bookings. Upgrade to the Business plan (BZ${PLANS.find(p => p.id === "business")?.monthly}/mo) to turn this on.
                 </p>
                 <button className="btn-sm lime" onClick={() => setTab("billing")}>View plans & billing</button>
               </div>
@@ -4643,8 +4780,15 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                       <input placeholder="e.g. +501 600-0000" value={newStaffPhone} onChange={e => setNewStaffPhone(e.target.value)} />
                     </div>
                   </div>
+                  <div className="input-group">
+                    <label>Their email *</label>
+                    <input type="email" placeholder="e.g. maria@gmail.com" value={newStaffEmail} onChange={e => setNewStaffEmail(e.target.value)} />
+                  </div>
                   {staffError && <p style={{ fontSize: 12, color: "#B91C1C", marginBottom: 8 }}>{staffError}</p>}
                   <button className="btn-sm lime" disabled={savingStaff} onClick={addStaff}>{savingStaff ? "Adding..." : "Add staff member"}</button>
+                  <p style={{ fontSize: 11, color: "var(--muted)", marginTop: 10 }}>
+                    They don't need an account yet — have them go to VaiBook, choose "VaiBook for professionals," and sign in with this exact email. Their own portal appears automatically, no chooser needed.
+                  </p>
                 </div>
 
                 <div className="card" style={{ maxWidth: 560, marginTop: 20 }}>
@@ -4656,14 +4800,36 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                     <p style={{ fontSize: 13, color: "var(--muted)", padding: "16px 0" }}>{loadingStaff ? "Loading..." : "No staff added yet."}</p>
                   )}
                   {staff.map((member) => (
-                    <div key={member.id} style={{ padding: "12px 0", borderBottom: "1px solid var(--border)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                      <div>
-                        <div style={{ fontSize: 14, fontWeight: 600 }}>{member.name}{!member.is_active && <span style={{ fontWeight: 500, color: "var(--muted)" }}> — inactive</span>}</div>
-                        {member.phone && <div style={{ fontSize: 12, color: "var(--muted)" }}>{member.phone}</div>}
-                      </div>
-                      <div style={{ display: "flex", gap: 8 }}>
-                        <button className="btn-sm ghost" onClick={() => toggleStaffActive(member)}>{member.is_active ? "Set inactive" : "Set active"}</button>
-                        <button className="btn-sm ghost" style={{ color: "#B91C1C" }} onClick={() => removeStaff(member)}>Remove</button>
+                    <div key={member.id} style={{ padding: "12px 0", borderBottom: "1px solid var(--border)" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                        <div>
+                          <div style={{ fontSize: 14, fontWeight: 600 }}>
+                            {member.name}{!member.is_active && <span style={{ fontWeight: 500, color: "var(--muted)" }}> — inactive</span>}
+                            {" "}
+                            <span style={{ fontSize: 11, fontWeight: 600, padding: "2px 7px", borderRadius: 5, background: member.user_id ? "#E7F5EC" : "var(--sand)", color: member.user_id ? "var(--forest)" : "var(--muted)" }}>
+                              {member.user_id ? "Signed in" : "Invited — hasn't signed in yet"}
+                            </span>
+                          </div>
+                          {member.phone && <div style={{ fontSize: 12, color: "var(--muted)" }}>{member.phone}</div>}
+                          {editingStaffEmailId === member.id ? (
+                            <div style={{ display: "flex", gap: 6, marginTop: 4 }}>
+                              <input type="email" style={{ fontSize: 12, padding: "3px 6px" }} value={editStaffEmailValue} onChange={e => setEditStaffEmailValue(e.target.value)} />
+                              <button className="btn-sm forest" style={{ padding: "2px 8px" }} onClick={() => saveStaffEmail(member)}>Save</button>
+                              <button className="btn-sm ghost" style={{ padding: "2px 8px" }} onClick={() => setEditingStaffEmailId(null)}>Cancel</button>
+                            </div>
+                          ) : (
+                            <div style={{ fontSize: 12, color: "var(--muted)" }}>
+                              {member.email || "No email set"}
+                              {!member.user_id && (
+                                <a href="#" style={{ marginLeft: 8 }} onClick={(e) => { e.preventDefault(); startEditStaffEmail(member); }}>{member.email ? "Edit" : "Add email"}</a>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                        <div style={{ display: "flex", gap: 8 }}>
+                          <button className="btn-sm ghost" onClick={() => toggleStaffActive(member)}>{member.is_active ? "Set inactive" : "Set active"}</button>
+                          <button className="btn-sm ghost" style={{ color: "#B91C1C" }} onClick={() => removeStaff(member)}>Remove</button>
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -5871,6 +6037,7 @@ export default function App() {
   const [session, setSession] = useState(null);
   const [user, setUser] = useState(null);
   const [providerProfile, setProviderProfile] = useState(null);
+  const [staffProfile, setStaffProfile] = useState(null);
   const [loading, setLoading] = useState(true);
 
   // If this account doesn't have a provider profile yet, check whether an
@@ -5899,6 +6066,17 @@ export default function App() {
     return p;
   };
 
+  // Same "claim on first sign-in" idea as loadProviderProfile above, for
+  // a staff seat instead of a whole business — only called once we
+  // already know this account doesn't own a business itself.
+  const loadStaffProfile = async (authUser) => {
+    let sp = await getMyStaffProfile(authUser.id);
+    if (!sp) {
+      sp = await claimStaffSeatByEmail(authUser.email, authUser.id);
+    }
+    return sp;
+  };
+
   const applyPendingView = () => {
     try {
       const pending = localStorage.getItem("vaibook_pending_view");
@@ -5918,6 +6096,7 @@ export default function App() {
         setUser(u);
         const p = await loadProviderProfile(session.user);
         setProviderProfile(p);
+        setStaffProfile(p ? null : await loadStaffProfile(session.user));
         applyPendingView();
       }
       setLoading(false);
@@ -5931,10 +6110,12 @@ export default function App() {
         setUser(u);
         const p = await loadProviderProfile(session.user);
         setProviderProfile(p);
+        setStaffProfile(p ? null : await loadStaffProfile(session.user));
         applyPendingView();
       } else {
         setUser(null);
         setProviderProfile(null);
+        setStaffProfile(null);
       }
     });
 
@@ -5978,7 +6159,11 @@ export default function App() {
           onDeepLinkConsumed={() => setDeepLinkProviderId(null)}
         />
       )}
-      {view === "provider" && <ProviderPortal onNav={setView} {...authProps} />}
+      {view === "provider" && (
+        !providerProfile && staffProfile
+          ? <StaffPortal onNav={setView} session={session} staffProfile={staffProfile} onSignOut={handleSignOut} />
+          : <ProviderPortal onNav={setView} {...authProps} />
+      )}
       {view === "signup" && <ProviderSignup onNav={setView} {...authProps} />}
       {view === "admin" && <AdminPortal onNav={setView} {...authProps} />}
       {view === "auth" && <AuthChoice onNav={setView} {...authProps} />}
