@@ -6,7 +6,7 @@ import L from "leaflet";
 import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
 import markerIcon from "leaflet/dist/images/marker-icon.png";
 import markerShadow from "leaflet/dist/images/marker-shadow.png";
-import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, deleteService, getActiveProviders, getProviderDirectory, createBooking, getProviderBusyWindows, createBookingSafe, cancelBooking, getCustomerBookings, uploadReceipt, submitReview, getProviderReviews, sendBookingEmail, updateUserProfile, getPaymentMethods, addPaymentMethod, deletePaymentMethod, createNotification, getNotifications, markNotificationRead, markAllNotificationsRead, getLandingStats, getRecommendedServices, getCategoryDefaultFeatures, getProviderFeatureOverrides, setProviderFeatureOverride, getVisitNotes, upsertVisitNote, adminListProviders, adminUpdateProvider, adminDeleteProvider, tagVIP, untagVIP, getVIPClients, getFavoriteProviderIds, getFavoriteProviders, addFavorite, removeFavorite, getBookingMessages, sendBookingMessage, markBookingMessagesRead, getUnreadBookingMessages, getProviderMonthlyTrend, createProviderProfile, getProviderById, createWalkInBooking, submitProviderPayment, getMyProviderPayments, adminListProviderPayments, adminReviewProviderPayment, submitBookingRefund, adminListBookingRefunds, openPrivateFile, getProviderStaff, addProviderStaff, updateProviderStaff, deleteProviderStaff } from "./supabase";
+import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, deleteService, getActiveProviders, getProviderDirectory, createBooking, getProviderBusyWindows, createBookingSafe, cancelBooking, getCustomerBookings, uploadReceipt, submitReview, getProviderReviews, sendBookingEmail, updateUserProfile, getPaymentMethods, addPaymentMethod, deletePaymentMethod, createNotification, getNotifications, markNotificationRead, markAllNotificationsRead, getLandingStats, getRecommendedServices, getCategoryDefaultFeatures, getProviderFeatureOverrides, setProviderFeatureOverride, getVisitNotes, upsertVisitNote, adminListProviders, adminUpdateProvider, adminDeleteProvider, tagVIP, untagVIP, getVIPClients, getFavoriteProviderIds, getFavoriteProviders, addFavorite, removeFavorite, getBookingMessages, sendBookingMessage, markBookingMessagesRead, getUnreadBookingMessages, getProviderMonthlyTrend, createProviderProfile, getProviderById, createWalkInBooking, submitProviderPayment, getMyProviderPayments, adminListProviderPayments, adminReviewProviderPayment, submitBookingRefund, adminListBookingRefunds, openPrivateFile, getProviderStaff, addProviderStaff, updateProviderStaff, deleteProviderStaff, getLoyaltyAccount, getProviderLoyaltyCustomers, redeemLoyaltyReward } from "./supabase";
 
 // Leaflet's default marker icons reference image paths that don't resolve
 // correctly under CRA's bundler unless re-pointed at the imported assets.
@@ -2141,7 +2141,12 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
     let cancelled = false;
     (async () => {
       const p = await getProviderById(deepLinkProviderId);
-      if (!cancelled && p) setSelectedProvider(p);
+      if (!cancelled && p) {
+        setSelectedProvider(p);
+        if (p.loyalty_enabled && user?.id) {
+          getLoyaltyAccount(p.id, user.id).then((acc) => { if (!cancelled) setMyLoyalty(acc); });
+        }
+      }
       if (!cancelled) onDeepLinkConsumed && onDeepLinkConsumed();
     })();
     return () => { cancelled = true; };
@@ -2152,6 +2157,7 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
   const [bookingError, setBookingError] = useState("");
   const [providerHours, setProviderHours] = useState([]);
   const [busyWindows, setBusyWindows] = useState([]);
+  const [myLoyalty, setMyLoyalty] = useState(null);
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [cancellingId, setCancellingId] = useState(null);
   const [profileTab, setProfileTab] = useState("services");
@@ -2284,8 +2290,12 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
     setSelectedProvider(provider);
     setProviderHours([]);
     setBusyWindows([]);
+    setMyLoyalty(null);
     if (provider?.id) {
       getWorkingHours(provider.id).then((hrs) => setProviderHours(hrs || []));
+      if (provider.loyalty_enabled && user?.id) {
+        getLoyaltyAccount(provider.id, user.id).then((acc) => setMyLoyalty(acc));
+      }
     }
   };
 
@@ -3003,6 +3013,19 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
               {" · "}{selectedProvider.service_type} · {selectedProvider.district}
             </p>
 
+            {selectedProvider.loyalty_enabled && (
+              <div style={{ background: "var(--sand)", borderRadius: 8, padding: "10px 14px", marginBottom: 16, fontSize: 13 }}>
+                {(() => {
+                  const threshold = Number(selectedProvider.loyalty_reward_threshold) || 0;
+                  const balance = myLoyalty?.points_balance || 0;
+                  const reward = selectedProvider.loyalty_reward_description || "a reward";
+                  if (!user) return <>⭐ Loyalty program: earn points here toward <strong>{reward}</strong> — sign in to start earning.</>;
+                  if (threshold > 0 && balance >= threshold) return <>⭐ You've earned <strong>{reward}</strong>! Mention it at your next visit.</>;
+                  return <>⭐ You have <strong>{balance}</strong> point{balance === 1 ? "" : "s"} here{threshold > 0 ? ` — ${threshold - balance} more for ${reward}` : ""}.</>;
+                })()}
+              </div>
+            )}
+
             <div className="tab-row">
               {[
                 { id: "services", label: "Services" },
@@ -3158,7 +3181,7 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
 }
 
 // ── PROVIDER PORTAL ─────────────────────────────────────────────
-function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSignOut }) {
+function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSignOut, onProviderProfileUpdate }) {
   const [tab, setTab] = useState("dashboard");
 
   // Lets the top nav's account dropdown (with the same tools list as the
@@ -3179,6 +3202,15 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
   const [selectedDay, setSelectedDay] = useState(null);
   const [profileForm, setProfileForm] = useState({ business_name: "", bio: "", district: "", whatsapp: "", tax_id: "", is_featured: false });
   const [savingFeatured, setSavingFeatured] = useState(false);
+
+  // Loyalty & rewards program (Business plan) — provider-configurable,
+  // saved as its own small form rather than folded into profileForm so
+  // toggling it on doesn't require touching every other profile field.
+  const [loyaltyForm, setLoyaltyForm] = useState({ enabled: false, pointsPerDollar: 1, threshold: 100, description: "" });
+  const [savingLoyalty, setSavingLoyalty] = useState(false);
+  const [loyaltyCustomers, setLoyaltyCustomers] = useState([]);
+  const [loadingLoyaltyCustomers, setLoadingLoyaltyCustomers] = useState(false);
+  const [redeemingId, setRedeemingId] = useState(null);
   const [savingProfile, setSavingProfile] = useState(false);
   const [photos, setPhotos] = useState([]);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
@@ -3469,6 +3501,12 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
         tax_id: providerProfile.tax_id || "",
         is_featured: !!providerProfile.is_featured,
       });
+      setLoyaltyForm({
+        enabled: !!providerProfile.loyalty_enabled,
+        pointsPerDollar: providerProfile.loyalty_points_per_dollar ?? 1,
+        threshold: providerProfile.loyalty_reward_threshold ?? 100,
+        description: providerProfile.loyalty_reward_description || "",
+      });
       setPhotos(providerProfile.portfolio_urls || []);
       setServices(providerProfile.services || []);
       if (providerProfile.latitude != null && providerProfile.longitude != null) {
@@ -3642,7 +3680,8 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
   const saveProfile = async () => {
     if (!providerId) return;
     setSavingProfile(true);
-    await upsertProviderProfile({ id: providerProfile.id, user_id: providerProfile.user_id, ...profileForm });
+    const updated = await upsertProviderProfile({ id: providerProfile.id, user_id: providerProfile.user_id, ...profileForm });
+    if (updated) onProviderProfileUpdate && onProviderProfileUpdate(updated);
     setSavingProfile(false);
   };
 
@@ -3655,8 +3694,63 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
     if (!providerId || savingFeatured) return;
     setSavingFeatured(true);
     const updated = await upsertProviderProfile({ id: providerProfile.id, user_id: providerProfile.user_id, is_featured: !profileForm.is_featured });
-    if (updated) setProfileForm((f) => ({ ...f, is_featured: !!updated.is_featured }));
+    if (updated) {
+      setProfileForm((f) => ({ ...f, is_featured: !!updated.is_featured }));
+      onProviderProfileUpdate && onProviderProfileUpdate(updated);
+    }
     setSavingFeatured(false);
+  };
+
+  // Saves loyalty program settings as one batch (the toggle plus the rate,
+  // threshold, and reward text) rather than saving the toggle immediately
+  // like is_featured — these fields are meant to be set together.
+  const saveLoyaltySettings = async () => {
+    if (!providerId) return;
+    setSavingLoyalty(true);
+    const updated = await upsertProviderProfile({
+      id: providerProfile.id,
+      user_id: providerProfile.user_id,
+      loyalty_enabled: loyaltyForm.enabled,
+      loyalty_points_per_dollar: Number(loyaltyForm.pointsPerDollar) || 0,
+      loyalty_reward_threshold: Number(loyaltyForm.threshold) || 0,
+      loyalty_reward_description: loyaltyForm.description.trim() || null,
+    });
+    if (updated) {
+      setLoyaltyForm({
+        enabled: !!updated.loyalty_enabled,
+        pointsPerDollar: updated.loyalty_points_per_dollar ?? 1,
+        threshold: updated.loyalty_reward_threshold ?? 100,
+        description: updated.loyalty_reward_description || "",
+      });
+      onProviderProfileUpdate && onProviderProfileUpdate(updated);
+    }
+    setSavingLoyalty(false);
+  };
+
+  const loadLoyaltyCustomers = async () => {
+    if (!providerId) return;
+    setLoadingLoyaltyCustomers(true);
+    const data = await getProviderLoyaltyCustomers(providerId);
+    setLoyaltyCustomers(data || []);
+    setLoadingLoyaltyCustomers(false);
+  };
+
+  useEffect(() => {
+    loadLoyaltyCustomers();
+  }, [providerId]);
+
+  // Redeeming subtracts the reward threshold rather than resetting to
+  // zero, so any points earned past the threshold carry forward toward
+  // the next reward instead of being lost.
+  const redeemReward = async (account) => {
+    if (redeemingId === account.id) return;
+    const threshold = Number(providerProfile?.loyalty_reward_threshold) || 0;
+    if (account.points_balance < threshold) return;
+    if (!window.confirm(`Mark the reward as given to ${account.users?.full_name || "this customer"}? This will deduct ${threshold} points.`)) return;
+    setRedeemingId(account.id);
+    await redeemLoyaltyReward(account.id, account.points_balance - threshold);
+    await loadLoyaltyCustomers();
+    setRedeemingId(null);
   };
 
   const handlePhotoUpload = async (e) => {
@@ -3993,6 +4087,38 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                 </div>
               ))}
             </div>
+
+            {isBusinessPlan && providerProfile?.loyalty_enabled && (
+              <div className="card" style={{ marginTop: 20 }}>
+                <div className="card-title" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <span>Loyalty &amp; rewards</span>
+                  <button className="btn-sm forest" onClick={loadLoyaltyCustomers} disabled={loadingLoyaltyCustomers}>{loadingLoyaltyCustomers ? "Refreshing..." : "Refresh"}</button>
+                </div>
+                <p style={{ fontSize: 12, color: "var(--muted)", marginTop: -8, marginBottom: 12 }}>
+                  {providerProfile.loyalty_points_per_dollar} point{Number(providerProfile.loyalty_points_per_dollar) === 1 ? "" : "s"} per BZ$1 spent · {providerProfile.loyalty_reward_threshold} points = {providerProfile.loyalty_reward_description || "a reward"}
+                </p>
+                {loyaltyCustomers.length === 0 && (
+                  <p style={{ fontSize: 13, color: "var(--muted)", padding: "16px 0" }}>{loadingLoyaltyCustomers ? "Loading..." : "No customers with points yet."}</p>
+                )}
+                {loyaltyCustomers.map((account) => {
+                  const threshold = Number(providerProfile.loyalty_reward_threshold) || 0;
+                  const eligible = threshold > 0 && account.points_balance >= threshold;
+                  return (
+                    <div key={account.id} className="booking-item" style={{ alignItems: "center" }}>
+                      <div className="booking-info" style={{ flex: 1 }}>
+                        <div className="title">{account.users?.full_name || "Customer"}</div>
+                        <div className="meta">{account.points_balance} points{threshold > 0 && !eligible ? ` · ${threshold - account.points_balance} to go` : ""}</div>
+                      </div>
+                      {eligible && (
+                        <button className="btn-sm lime" disabled={redeemingId === account.id} onClick={() => redeemReward(account)}>
+                          {redeemingId === account.id ? "Redeeming..." : "Mark reward given"}
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </>
         )}
 
@@ -4667,6 +4793,43 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
               ) : (
                 <p style={{ fontSize: 13, color: "var(--muted)" }}>
                   Business plan providers can turn on featured placement to show up at the top of search results in their district. <a href="#" onClick={(e) => { e.preventDefault(); setTab("billing"); }}>View plans</a>.
+                </p>
+              )}
+            </div>
+
+            <div className="card" style={{ maxWidth: 560, marginTop: 20 }}>
+              <div className="card-title">Loyalty &amp; rewards program</div>
+              {isBusinessPlan ? (
+                <>
+                  <p style={{ fontSize: 13, color: "var(--muted)", marginBottom: 12 }}>
+                    Turn this on to earn your customers points on every completed booking, based on how much they spend. When someone reaches your reward threshold, you'll see it here to redeem yourself, however you like — a discount, a free add-on, whatever you decide.
+                  </p>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+                    <div className={`toggle ${loyaltyForm.enabled ? "on" : ""}`} onClick={() => setLoyaltyForm(f => ({ ...f, enabled: !f.enabled }))}></div>
+                    <span style={{ fontSize: 13, fontWeight: 600 }}>{loyaltyForm.enabled ? "On" : "Off"}</span>
+                  </div>
+                  <div className="form-row">
+                    <div className="input-group">
+                      <label>Points per BZ$1 spent</label>
+                      <input type="number" min="0" step="0.1" value={loyaltyForm.pointsPerDollar} onChange={e => setLoyaltyForm(f => ({ ...f, pointsPerDollar: e.target.value }))} />
+                    </div>
+                    <div className="input-group">
+                      <label>Points needed for a reward</label>
+                      <input type="number" min="1" step="1" value={loyaltyForm.threshold} onChange={e => setLoyaltyForm(f => ({ ...f, threshold: e.target.value }))} />
+                    </div>
+                  </div>
+                  <div className="input-group">
+                    <label>What's the reward?</label>
+                    <input placeholder="e.g. 10% off your next visit, or a free add-on" value={loyaltyForm.description} onChange={e => setLoyaltyForm(f => ({ ...f, description: e.target.value }))} />
+                  </div>
+                  <button className="btn-sm forest" onClick={saveLoyaltySettings} disabled={savingLoyalty}>{savingLoyalty ? "Saving..." : "Save loyalty settings"}</button>
+                  <p style={{ fontSize: 11, color: "var(--muted)", marginTop: 10 }}>
+                    Only bookings made by a signed-in customer earn points — walk-ins you add yourself don't have an account to attach points to.
+                  </p>
+                </>
+              ) : (
+                <p style={{ fontSize: 13, color: "var(--muted)" }}>
+                  Business plan providers can run their own loyalty program — set the earn rate and the reward yourself. <a href="#" onClick={(e) => { e.preventDefault(); setTab("billing"); }}>View plans</a>.
                 </p>
               )}
             </div>
@@ -5799,7 +5962,7 @@ export default function App() {
     );
   }
 
-  const authProps = { session, user, providerProfile, onSignIn: signInWithGoogle, onSignOut: handleSignOut, onUserUpdate: setUser };
+  const authProps = { session, user, providerProfile, onSignIn: signInWithGoogle, onSignOut: handleSignOut, onUserUpdate: setUser, onProviderProfileUpdate: setProviderProfile };
 
   return (
     <>
