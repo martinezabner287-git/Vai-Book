@@ -242,10 +242,10 @@ export const getProviderStaff = async (providerId) => {
   return data || [];
 };
 
-export const addProviderStaff = async (providerId, { name, phone }) => {
+export const addProviderStaff = async (providerId, { name, phone, email }) => {
   const { data, error } = await supabase
     .from('provider_staff')
-    .insert({ provider_id: providerId, name, phone: phone || null })
+    .insert({ provider_id: providerId, name, phone: phone || null, email: email || null })
     .select()
     .single();
   if (error) { console.error('Error adding staff:', error.message); return null; }
@@ -267,6 +267,55 @@ export const deleteProviderStaff = async (staffId) => {
   const { error } = await supabase.from('provider_staff').delete().eq('id', staffId);
   if (error) { console.error('Error deleting staff:', error.message); return false; }
   return true;
+};
+
+// ── STAFF LOGINS ─────────────────────────────────────────────────
+// Each staff member gets their own account rather than sharing the
+// owner's login — see supabase_staff_accounts.sql. A seat is "claimed"
+// the first time someone signs in with the email the owner registered
+// it under; after that getMyStaffProfile finds it directly by user_id.
+
+// Called once per sign-in, same spot loadProviderProfile() checks
+// whether this account owns a business — this checks whether it's
+// already claimed a staff seat.
+export const getMyStaffProfile = async (userId) => {
+  if (!userId) return null;
+  const { data, error } = await supabase
+    .from('provider_staff')
+    .select('*, provider_profiles(business_name, service_type, district)')
+    .eq('user_id', userId)
+    .eq('is_active', true)
+    .maybeSingle();
+  if (error) { console.error('Error fetching staff profile:', error.message); return null; }
+  return data;
+};
+
+// Case-insensitive for the same reason getActiveApplicationByEmail is:
+// the owner typed this email by hand when adding the staff member, but
+// it's matched against the exact-case email Google hands back.
+export const claimStaffSeatByEmail = async (email, userId) => {
+  if (!email || !userId) return null;
+  const normalized = String(email).trim();
+  const { data, error } = await supabase
+    .from('provider_staff')
+    .update({ user_id: userId })
+    .ilike('email', normalized)
+    .is('user_id', null)
+    .select('*, provider_profiles(business_name, service_type, district)')
+    .maybeSingle();
+  if (error) { console.error('Error claiming staff seat:', error.message); return null; }
+  return data;
+};
+
+export const getStaffBookings = async (staffId) => {
+  if (!staffId) return [];
+  const { data, error } = await supabase
+    .from('bookings')
+    .select('*, users(full_name, email, avatar_url), services(name, price)')
+    .eq('staff_id', staffId)
+    .order('booking_date', { ascending: true });
+  if (error) { console.error('Error fetching staff bookings:', error.message); return []; }
+  return data || [];
 };
 
 // ── LOYALTY & REWARDS (Business plan) ───────────────────────────
