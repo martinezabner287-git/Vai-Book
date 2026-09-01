@@ -6,7 +6,7 @@ import L from "leaflet";
 import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
 import markerIcon from "leaflet/dist/images/marker-icon.png";
 import markerShadow from "leaflet/dist/images/marker-shadow.png";
-import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, deleteService, getActiveProviders, getProviderDirectory, createBooking, getProviderBusyWindows, createBookingSafe, cancelBooking, getCustomerBookings, uploadReceipt, submitReview, getProviderReviews, sendBookingEmail, updateUserProfile, getPaymentMethods, addPaymentMethod, deletePaymentMethod, createNotification, getNotifications, markNotificationRead, markAllNotificationsRead, getLandingStats, getRecommendedServices, getCategoryDefaultFeatures, getProviderFeatureOverrides, setProviderFeatureOverride, getVisitNotes, upsertVisitNote, adminListProviders, adminUpdateProvider, adminDeleteProvider, tagVIP, untagVIP, getVIPClients, getFavoriteProviderIds, getFavoriteProviders, addFavorite, removeFavorite, getBookingMessages, sendBookingMessage, markBookingMessagesRead, getUnreadBookingMessages, getProviderMonthlyTrend, createProviderProfile, getProviderById, createWalkInBooking, submitProviderPayment, getMyProviderPayments, adminListProviderPayments, adminReviewProviderPayment, submitBookingRefund, adminListBookingRefunds, openPrivateFile, getProviderStaff, addProviderStaff, updateProviderStaff, deleteProviderStaff, getLoyaltyAccount, getProviderLoyaltyCustomers, redeemLoyaltyReward, getMyStaffProfile, claimStaffSeatByEmail, getStaffBookings } from "./supabase";
+import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, deleteService, getActiveProviders, getProviderDirectory, createBooking, getProviderBusyWindows, createBookingSafe, cancelBooking, getCustomerBookings, uploadReceipt, submitReview, getProviderReviews, sendBookingEmail, updateUserProfile, getPaymentMethods, addPaymentMethod, deletePaymentMethod, createNotification, getNotifications, markNotificationRead, markAllNotificationsRead, getLandingStats, getRecommendedServices, getCategoryDefaultFeatures, getProviderFeatureOverrides, setProviderFeatureOverride, getVisitNotes, upsertVisitNote, adminListProviders, adminUpdateProvider, adminDeleteProvider, tagVIP, untagVIP, getVIPClients, getFavoriteProviderIds, getFavoriteProviders, addFavorite, removeFavorite, getBookingMessages, sendBookingMessage, markBookingMessagesRead, getUnreadBookingMessages, getProviderMonthlyTrend, createProviderProfile, getProviderById, createWalkInBooking, submitProviderPayment, getMyProviderPayments, adminListProviderPayments, adminReviewProviderPayment, submitBookingRefund, adminListBookingRefunds, openPrivateFile, getProviderStaff, addProviderStaff, updateProviderStaff, deleteProviderStaff, getLoyaltyAccount, getProviderLoyaltyCustomers, redeemLoyaltyReward, getMyStaffProfile, claimStaffSeatByEmail, getStaffBookings, rescheduleBooking, getProviderNotifyEmail } from "./supabase";
 
 // Leaflet's default marker icons reference image paths that don't resolve
 // correctly under CRA's bundler unless re-pointed at the imported assets.
@@ -1020,7 +1020,9 @@ function TrendChart({ points, kind = "line", color, formatValue }) {
       {kind === "line" && (
         <>
           <path
-            d={points.map((p, i) => `${i === 0 ? "M" : "L"} ${xFor(i)} ${yFor(p.y || 0)}`).join(" ")}
+            d={points
+              .map((p, i) => (p.y == null ? null : `${xFor(i)} ${yFor(p.y)}`))
+              .reduce((acc, seg, idx) => (seg == null ? { d: acc.d, pen: false } : { d: `${acc.d}${acc.pen ? " L " : `${acc.d ? " " : ""}M `}${seg}`, pen: true }), { d: "", pen: false }).d}
             fill="none"
             stroke={color}
             strokeWidth="2"
@@ -1029,9 +1031,11 @@ function TrendChart({ points, kind = "line", color, formatValue }) {
           />
           {points.map((p, i) => (
             <g key={i}>
-              <circle cx={xFor(i)} cy={yFor(p.y || 0)} r="4" fill="white" stroke={color} strokeWidth="2">
-                <title>{`${p.label}: ${p.y == null ? "—" : fmt(p.y)}`}</title>
-              </circle>
+              {p.y != null && (
+                <circle cx={xFor(i)} cy={yFor(p.y)} r="4" fill="white" stroke={color} strokeWidth="2">
+                  <title>{`${p.label}: ${fmt(p.y)}`}</title>
+                </circle>
+              )}
               {p.y != null && (
                 <text x={xFor(i)} y={yFor(p.y) - 11} textAnchor="middle" fontSize="11" fontWeight="700" style={{ fill: "var(--dark-text)" }}>{fmt(p.y)}</text>
               )}
@@ -1054,13 +1058,70 @@ function bookingStatusClass(status) {
   if (status === "confirmed") return "confirmed";
   if (status === "pending") return "pending";
   if (status === "awaiting_payment") return "awaiting";
-  if (status === "rejected" || status === "cancelled") return "rejected";
+  // A no-show is a failed appointment, not a finished one — it shares the
+  // cancelled/declined styling so it can't be mistaken for completed work.
+  if (status === "rejected" || status === "cancelled" || status === "no_show") return "rejected";
   return "done";
 }
 
 function statusLabel(status) {
   if (status === "awaiting_payment") return "awaiting payment";
+  if (status === "no_show") return "no-show";
   return status;
+}
+
+// ── DATES AND TIMES ─────────────────────────────────────────────
+// booking_date is a Postgres `date` ("2026-08-31") and booking_time a
+// separate `time` ("14:30:00"). `new Date("2026-08-31")` is parsed as UTC
+// midnight, which in Belize (UTC−6) is 6:00 PM the DAY BEFORE — so every
+// date rendered that way was off by one, and every "time" rendered from
+// booking_date alone printed a constant 6:00 PM instead of the real
+// appointment time. Always go through these.
+function bookingDateTime(dateStr, timeStr) {
+  if (!dateStr) return null;
+  const d = new Date(`${String(dateStr).slice(0, 10)}T${String(timeStr || "00:00").slice(0, 5)}:00`);
+  return isNaN(d.getTime()) ? null : d;
+}
+function bookingDateOnly(dateStr) {
+  return bookingDateTime(dateStr, "00:00");
+}
+function formatBookingDate(dateStr, opts) {
+  const d = bookingDateOnly(dateStr);
+  return d ? d.toLocaleDateString([], opts) : "—";
+}
+function formatBookingTime(timeStr) {
+  if (!timeStr) return "";
+  const d = bookingDateTime("2000-01-01", timeStr);
+  return d ? d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }) : String(timeStr).slice(0, 5);
+}
+// "Aug 31, 2:30 PM" — the one-line form used in every booking list.
+function formatBookingWhen(b) {
+  const datePart = formatBookingDate(b?.booking_date, { month: "short", day: "numeric" });
+  const timePart = formatBookingTime(b?.booking_time);
+  return timePart ? `${datePart}, ${timePart}` : datePart;
+}
+function isSameLocalDay(dateStr, d) {
+  const bd = bookingDateOnly(dateStr);
+  if (!bd || !d) return false;
+  return bd.getFullYear() === d.getFullYear() && bd.getMonth() === d.getMonth() && bd.getDate() === d.getDate();
+}
+
+// Renders the actual score rather than five hardcoded stars — a 2-star
+// provider used to display ★★★★★ with only the small number beside it
+// telling the truth.
+function StarRating({ value, size = 13 }) {
+  const v = Math.max(0, Math.min(5, Number(value) || 0));
+  const pct = (v / 5) * 100;
+  return (
+    <span
+      aria-label={`${v} out of 5`}
+      title={`${v} out of 5`}
+      style={{ position: "relative", display: "inline-block", fontSize: size, lineHeight: 1, letterSpacing: 1, whiteSpace: "nowrap" }}
+    >
+      <span style={{ color: "var(--border)" }}>★★★★★</span>
+      <span style={{ position: "absolute", left: 0, top: 0, width: `${pct}%`, overflow: "hidden", color: "#F5A623" }}>★★★★★</span>
+    </span>
+  );
 }
 
 // ── BOOKING SEARCH + SORT ───────────────────────────────────────
@@ -1096,7 +1157,7 @@ function buildInvoiceHtml({
   providerName, providerTaxId, providerDistrict, providerWhatsapp,
   customerName, customerEmail,
 }) {
-  const dateLabel = bookingDate ? new Date(bookingDate).toLocaleDateString([], { year: "numeric", month: "long", day: "numeric" }) : "—";
+  const dateLabel = bookingDate ? formatBookingDate(bookingDate, { year: "numeric", month: "long", day: "numeric" }) : "—";
   const timeLabel = bookingTime ? String(bookingTime).slice(0, 5) : "";
   const esc = (s) => String(s ?? "").replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
 
@@ -1168,7 +1229,11 @@ function buildInvoiceHtml({
 // does well.
 function printInvoice(html) {
   const w = window.open("", "_blank");
-  if (!w) return;
+  if (!w) {
+    // Otherwise the button just looks dead.
+    window.alert("Your browser blocked the new tab this opens in. Allow pop-ups for VaiBook and try again.");
+    return;
+  }
   w.document.write(html);
   w.document.close();
   // The invoice is static markup with no external resources to wait on,
@@ -1186,9 +1251,15 @@ function printInvoice(html) {
 // uses, so the two stay reconcilable without being the same document.
 // Built entirely client-side from bookings already loaded, same as
 // invoices — no new table or migration needed.
-function buildLedgerHtml({ providerName, providerTaxId, periodLabel, rows }) {
+function buildLedgerHtml({ providerName, providerTaxId, periodLabel, rows, taxRate = 0 }) {
   const esc = (s) => String(s ?? "").replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
   const total = rows.reduce((sum, r) => sum + (Number(r.amount) || 0), 0);
+  // Amounts collected from customers are tax-inclusive, so the tax portion
+  // is backed out of the total rather than added on top: at 12.5%, BZ$100
+  // collected is BZ$88.89 net + BZ$11.11 tax.
+  const rate = Number(taxRate) || 0;
+  const taxPortion = rate > 0 ? total - total / (1 + rate / 100) : 0;
+  const netOfTax = total - taxPortion;
   const rowsHtml = rows.length
     ? rows.map((r) => `<tr><td>${esc(r.dateLabel)}</td><td>${esc(r.orderNumber)}</td><td>${esc(r.serviceName)}</td><td>${esc(r.customerName)}</td><td class="amount-col">BZ$${Number(r.amount || 0).toFixed(2)}</td></tr>`).join("")
     : `<tr><td colspan="5" style="color:#888;text-align:center;padding:24px 0;">No completed bookings in this period.</td></tr>`;
@@ -1231,11 +1302,14 @@ function buildLedgerHtml({ providerName, providerTaxId, periodLabel, rows }) {
     <thead><tr><th>Date</th><th>Order #</th><th>Service</th><th>Customer</th><th class="amount-col">Amount</th></tr></thead>
     <tbody>
       ${rowsHtml}
-      <tr class="total-row"><td colspan="4">Total (${rows.length} completed booking${rows.length === 1 ? "" : "s"})</td><td class="amount-col">BZ$${total.toFixed(2)}</td></tr>
+      <tr class="total-row"><td colspan="4">Total collected (${rows.length} completed booking${rows.length === 1 ? "" : "s"})</td><td class="amount-col">BZ$${total.toFixed(2)}</td></tr>
+      ${rate > 0 ? `
+      <tr><td colspan="4" style="padding-top:10px;">Net of tax</td><td class="amount-col">BZ$${netOfTax.toFixed(2)}</td></tr>
+      <tr><td colspan="4"><strong>Tax included at ${rate}%</strong></td><td class="amount-col"><strong>BZ$${taxPortion.toFixed(2)}</strong></td></tr>` : ""}
     </tbody>
   </table>
   <div class="footnote">
-    VaiBook is a booking marketplace, not a payment processor — every amount here reflects a transaction directly between this provider and their customer, generated from their VaiBook booking records for their own tax filing use. It is not issued by VaiBook and is not a formal receipt of taxes paid.
+    VaiBook is a booking marketplace, not a payment processor — every amount here reflects a transaction directly between this provider and their customer, generated from their VaiBook booking records for their own tax filing use. It is not issued by VaiBook and is not a formal receipt of taxes paid.${rate > 0 ? ` The tax figure above is a straight ${rate}% calculation on the amounts collected, provided for convenience — confirm your actual liability with your accountant or the tax department.` : ""}
   </div>
 </body>
 </html>`;
@@ -1452,6 +1526,15 @@ const NOTIF_DESTINATIONS = {
   booking_rejected: { view: "customer", tab: "bookings" },
   payment_confirmed: { view: "customer", tab: "bookings" },
   booking_completed: { view: "customer", tab: "bookings" },
+  // These were missing, so the two notifications that matter most to a
+  // customer — "you've been accepted, go pay your deposit" and "you're
+  // confirmed" — silently did nothing when tapped.
+  booking_accepted_deposit: { view: "customer", tab: "bookings" },
+  booking_confirmed: { view: "customer", tab: "bookings" },
+  booking_cancelled_by_provider: { view: "customer", tab: "bookings" },
+  booking_rescheduled: { view: "customer", tab: "bookings" },
+  booking_no_show: { view: "customer", tab: "bookings" },
+  review_reply: { view: "customer", tab: "bookings" },
   payment_due_reminder: { view: "provider", tab: "billing" },
   payment_overdue_suspended: { view: "provider", tab: "billing" },
 };
@@ -1549,6 +1632,7 @@ const PORTAL_TOOLS_BY_VIEW = {
     { id: "earnings", icon: "💰", label: "Earnings" },
     { id: "billing", icon: "🧾", label: "My plan & billing" },
     { id: "staff", icon: "👥", label: "My staff" },
+    { id: "reviews", icon: "⭐", label: "My reviews" },
     { id: "review", icon: "📈", label: "Monthly review" },
     { id: "profile", icon: "👤", label: "Public profile" },
     { id: "qr", icon: "📱", label: "My QR code" },
@@ -1561,6 +1645,7 @@ const PORTAL_TOOLS_BY_VIEW = {
     { id: "rejected", icon: "✖", label: "Rejected" },
     { id: "providers", icon: "🏪", label: "Providers" },
     { id: "payments", icon: "🧾", label: "Payments" },
+    { id: "refunds", icon: "↩️", label: "Refunds" },
   ],
 };
 
@@ -2133,6 +2218,22 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
 
   const [selectedProvider, setSelectedProvider] = useState(null);
 
+  // Per-booking unread message counts, so a waiting message is visible from
+  // the list instead of only after opening that booking's chat.
+  const [unreadByBooking, setUnreadByBooking] = useState({});
+  const loadUnreadMessages = async () => {
+    if (!user?.id) return;
+    const rows = await getUnreadBookingMessages(user.id);
+    const map = {};
+    (rows || []).forEach((r) => { map[r.booking_id] = (map[r.booking_id] || 0) + 1; });
+    setUnreadByBooking(map);
+  };
+  useEffect(() => {
+    loadUnreadMessages();
+    const t = setInterval(loadUnreadMessages, 30000);
+    return () => clearInterval(t);
+  }, [user?.id]);
+
   // A QR code / booking-link deep link ("#book-<id>") jumps straight to
   // that provider's booking view, same modal as clicking them from search —
   // no account needed just to look, same as browsing normally.
@@ -2143,6 +2244,13 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
       const p = await getProviderById(deepLinkProviderId);
       if (!cancelled && p) {
         setSelectedProvider(p);
+        // Without this the booking form has no working hours to build time
+        // slots from, so every QR/NFC scan dead-ended on "this provider
+        // hasn't set their working hours yet" — openBooking() loads them,
+        // and this path has to do exactly the same.
+        setProviderHours([]);
+        setBusyWindows([]);
+        getWorkingHours(p.id).then((hrs) => { if (!cancelled) setProviderHours(hrs || []); });
         if (p.loyalty_enabled && user?.id) {
           getLoyaltyAccount(p.id, user.id).then((acc) => { if (!cancelled) setMyLoyalty(acc); });
         }
@@ -2427,13 +2535,26 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
     setSubmittingBooking(false);
 
     if (created) {
+      const whenLabel = `${formatBookingDate(bookingForm.date)} at ${formatBookingTime(bookingForm.time)}`;
       if (selectedProvider.user_id) {
         await createNotification({
           user_id: selectedProvider.user_id,
           title: "New booking request",
-          body: `${user?.full_name || "A customer"} requested ${service.name} on ${new Date(bookingForm.date).toLocaleDateString()}.`,
+          body: `${user?.full_name || "A customer"} requested ${service.name} on ${whenLabel}.`,
           type: "booking_requested",
           booking_id: created.id,
+        });
+      }
+      // A provider who isn't sitting in the app had no way of knowing a
+      // request had come in. The address is resolved server-side for this
+      // one booking (and only if they still want these emails) rather than
+      // being published on every provider's public profile row.
+      const providerEmail = await getProviderNotifyEmail(created.id);
+      if (providerEmail) {
+        await sendBookingEmail({
+          to: providerEmail,
+          subject: `New booking request — ${service.name}, ${whenLabel}`,
+          html: `<p>Hi ${selectedProvider.business_name || "there"},</p><p><strong>${user?.full_name || "A customer"}</strong> just requested <strong>${service.name}</strong> for <strong>${whenLabel}</strong> (BZ$${total.toFixed(2)}).</p>${bookingForm.notes ? `<p>Their note: "${bookingForm.notes.trim()}"</p>` : ""}<p>Open VaiBook to accept or decline it. You can turn these emails off under Settings → Notifications.</p>`,
         });
       }
       setSelectedProvider(null);
@@ -2466,8 +2587,19 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
 
   const handleUploadReceipt = async (bookingId, file) => {
     if (!file) return;
+    if (file.size > 10 * 1024 * 1024) {
+      window.alert("That file is larger than 10MB. Please upload a smaller photo or PDF.");
+      return;
+    }
     setUploadingReceiptId(bookingId);
-    await uploadReceipt(bookingId, file);
+    const savedPath = await uploadReceipt(bookingId, file);
+    if (!savedPath) {
+      // Used to notify the provider and carry on as if it worked, leaving
+      // the customer sure they'd sent proof they hadn't.
+      setUploadingReceiptId(null);
+      window.alert("That receipt didn't upload. Please check your connection and try again.");
+      return;
+    }
     const uploadedBooking = bookings.find((b) => b.id === bookingId);
     if (uploadedBooking?.provider_profiles?.user_id) {
       await createNotification({
@@ -2489,14 +2621,25 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
 
   const submitBookingReview = async (booking) => {
     if (!user?.id) return;
+    // A provider account is also a customer account, so nothing stopped
+    // someone booking their own business, completing it and reviewing it.
+    if (booking.provider_profiles?.user_id && booking.provider_profiles.user_id === user.id) {
+      window.alert("You can't review your own business.");
+      return;
+    }
     setSubmittingReview(true);
-    await submitReview({
+    const saved = await submitReview({
       booking_id: booking.id,
       customer_id: user.id,
       provider_id: booking.provider_id,
       rating: reviewForm.rating,
       comment: reviewForm.comment ? reviewForm.comment.trim() : null,
     });
+    if (!saved) {
+      setSubmittingReview(false);
+      window.alert("That review didn't save. If you've already reviewed this booking, it's there under the booking. Otherwise please try again.");
+      return;
+    }
     if (booking.provider_profiles?.user_id) {
       await createNotification({
         user_id: booking.provider_profiles.user_id,
@@ -2597,7 +2740,7 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
                     <div className={`booking-dot ${bookingStatusClass(b.status)}`}></div>
                     <div className="booking-info">
                       <div className="title">{b.services?.name || "Service"}</div>
-                      <div className="meta">{b.provider_profiles?.business_name || "Provider"} · {new Date(b.booking_date).toLocaleDateString()}</div>
+                      <div className="meta">{b.provider_profiles?.business_name || "Provider"} · {formatBookingWhen(b)}</div>
                     </div>
                     <div>
                       <span className="booking-amount">BZ${b.total_amount ?? "—"}</span>
@@ -2680,7 +2823,7 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
                     <div className="provider-card-body">
                       <h4>{p.business_name}{p.is_featured && <span style={{ marginLeft: 6, fontSize: 11, fontWeight: 700, color: "var(--forest)", background: "var(--sand)", padding: "2px 7px", borderRadius: 5, verticalAlign: "middle" }}>⭐ Featured</span>}</h4>
                       <div className="trade">{p.service_type} · {p.district}</div>
-                      <div className="stars">{rating ? `★★★★★ ` : "No reviews yet "}<span style={{ color: "var(--muted)", fontSize: 12 }}>{rating ? `${rating} (${p.reviews.length})` : ""}</span></div>
+                      <div className="stars">{rating ? <StarRating value={rating} /> : "No reviews yet "}<span style={{ color: "var(--muted)", fontSize: 12 }}>{rating ? ` ${rating} (${p.reviews.length})` : ""}</span></div>
                       {p.whatsapp && <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 4 }}>📞 {p.whatsapp}</div>}
                       <div className="provider-card-footer">
                         <span className="price-tag">{fromPrice != null ? `From BZ$${fromPrice}` : "Contact for pricing"}</span>
@@ -2722,7 +2865,7 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
                     <div className="provider-card-body">
                       <h4>{p.business_name}</h4>
                       <div className="trade">{p.service_type} · {p.district}</div>
-                      <div className="stars">{rating ? `★★★★★ ` : "No reviews yet "}<span style={{ color: "var(--muted)", fontSize: 12 }}>{rating ? `${rating} (${p.reviews.length})` : ""}</span></div>
+                      <div className="stars">{rating ? <StarRating value={rating} /> : "No reviews yet "}<span style={{ color: "var(--muted)", fontSize: 12 }}>{rating ? ` ${rating} (${p.reviews.length})` : ""}</span></div>
                       <div className="provider-card-footer">
                         <span className="price-tag">{fromPrice != null ? `From BZ$${fromPrice}` : "Contact for pricing"}</span>
                         {p.downpayment_required ? <span style={{ fontSize: 11, color: "var(--muted)" }}>{p.downpayment_pct || 50}% deposit</span> : <span className="avail-badge">No deposit</span>}
@@ -2767,7 +2910,14 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
                       <div className={`booking-dot ${bookingStatusClass(b.status)}`}></div>
                       <div className="booking-info">
                         <div className="title">{b.services?.name || "Service"}</div>
-                        <div className="meta">{b.provider_profiles?.business_name || "Provider"} · {new Date(b.booking_date).toLocaleDateString()} {b.booking_time?.slice(0,5)}</div>
+                        <div className="meta">
+                          {b.provider_profiles?.business_name || "Provider"} · {formatBookingWhen(b)}
+                          {unreadByBooking[b.id] > 0 && (
+                            <span style={{ marginLeft: 8, fontSize: 11, fontWeight: 700, color: "var(--forest)", background: "var(--lime)", padding: "2px 7px", borderRadius: 999 }}>
+                              💬 {unreadByBooking[b.id]} new
+                            </span>
+                          )}
+                        </div>
                       </div>
                       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                         <span className="booking-amount">BZ${b.total_amount ?? "—"}</span>
@@ -2881,6 +3031,13 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
                     )}
                     {b.status === "completed" && hasReview && (
                       <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 6 }}>You rated this {"★".repeat(b.reviews[0].rating)}{b.reviews[0].comment ? ` — "${b.reviews[0].comment}"` : ""}</p>
+                    )}
+
+                    {["pending", "awaiting_payment", "confirmed"].includes(b.status) && (
+                      <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 8 }}>
+                        Need a different time? Message them below — they can move this booking to a new slot without you
+                        having to cancel and rebook.
+                      </p>
                     )}
 
                     {["pending", "awaiting_payment", "confirmed", "completed"].includes(b.status) && (
@@ -3008,7 +3165,7 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
             </div>
             <p style={{ fontSize: 13, color: "var(--muted)", marginBottom: 16 }}>
               {providerRating(selectedProvider) ? (
-                <span className="stars">★★★★★ {providerRating(selectedProvider)} <span style={{ color: "var(--muted)" }}>({selectedProvider.reviews.length})</span></span>
+                <span className="stars"><StarRating value={providerRating(selectedProvider)} size={15} /> {providerRating(selectedProvider) || "—"} <span style={{ color: "var(--muted)" }}>({selectedProvider.reviews.length})</span></span>
               ) : "No reviews yet"}
               {" · "}{selectedProvider.service_type} · {selectedProvider.district}
             </p>
@@ -3210,7 +3367,25 @@ function StaffPortal({ onNav, session, staffProfile, onSignOut }) {
 
   const markDone = async (bookingId) => {
     setBusyId(bookingId);
-    await updateBooking(bookingId, { status: "completed" });
+    const finished = bookings.find((b) => b.id === bookingId);
+    const updated = await updateBooking(bookingId, { status: "completed" });
+    if (!updated) {
+      setBusyId(null);
+      window.alert("Couldn't mark that done. Please check your connection and try again.");
+      return;
+    }
+    // Same business event as the owner marking it done, so the customer
+    // gets the same "leave a review" prompt — before, bookings finished by
+    // a staff member silently never asked for a review.
+    if (finished?.customer_id) {
+      await createNotification({
+        user_id: finished.customer_id,
+        title: "Booking complete",
+        body: `Your ${finished.services?.name || "appointment"} with ${staffProfile?.provider_profiles?.business_name || "the provider"} is marked done. Leave a review to let others know how it went!`,
+        type: "booking_completed",
+        booking_id: bookingId,
+      });
+    }
     await loadBookings();
     setBusyId(null);
   };
@@ -3282,7 +3457,7 @@ function StaffPortal({ onNav, session, staffProfile, onSignOut }) {
                 <div className="title">{b.services?.name || "Service"}</div>
                 <div className="meta">
                   {b.users?.full_name || b.walkin_customer_name || "Customer"}
-                  {" · "}{new Date(b.booking_date).toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
+                  {" · "}{formatBookingWhen(b)}
                 </div>
               </div>
               <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
@@ -3316,7 +3491,48 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
   const [loadingBookings, setLoadingBookings] = useState(false);
   const [bookingSearch, setBookingSearch] = useState("");
   const [bookingSort, setBookingSort] = useState("newest");
+  const [bookingStatusFilter, setBookingStatusFilter] = useState("all");
   const [busyId, setBusyId] = useState(null);
+
+  // Every hook in this component has to be declared up here, above the
+  // "not signed in" / "no provider profile yet" early returns further
+  // down — React requires the same number of hooks on every render, and
+  // ledgerStart/ledgerEnd used to be declared *after* those returns, which
+  // white-screens the portal the moment either condition flips while the
+  // component stays mounted.
+  const nowForState = new Date();
+  const [ledgerStart, setLedgerStart] = useState(new Date(nowForState.getFullYear(), nowForState.getMonth(), 1).toISOString().slice(0, 10));
+  const [ledgerEnd, setLedgerEnd] = useState(new Date(nowForState.getFullYear(), nowForState.getMonth() + 1, 0).toISOString().slice(0, 10));
+  const [ledgerTaxRate, setLedgerTaxRate] = useState("");
+  // Calendar month being viewed, as an offset from the current month.
+  const [calOffset, setCalOffset] = useState(0);
+  // The provider's own reviews.
+  const [myReviews, setMyReviews] = useState([]);
+  const [loadingMyReviews, setLoadingMyReviews] = useState(false);
+  // Rescheduling an existing booking.
+  const [reschedulingId, setReschedulingId] = useState(null);
+  const [rescheduleForm, setRescheduleForm] = useState({ date: "", time: "" });
+  const [savingReschedule, setSavingReschedule] = useState(false);
+  const [rescheduleError, setRescheduleError] = useState("");
+  // The one real notification preference (see supabase_audit_fixes.sql).
+  const [emailOnNewBooking, setEmailOnNewBooking] = useState(true);
+  const [savingNotifyPref, setSavingNotifyPref] = useState(false);
+
+  // Per-booking unread message counts, so a waiting message is visible from
+  // the list instead of only after opening that booking's chat.
+  const [unreadByBooking, setUnreadByBooking] = useState({});
+  const loadUnreadMessages = async () => {
+    if (!user?.id) return;
+    const rows = await getUnreadBookingMessages(user.id);
+    const map = {};
+    (rows || []).forEach((r) => { map[r.booking_id] = (map[r.booking_id] || 0) + 1; });
+    setUnreadByBooking(map);
+  };
+  useEffect(() => {
+    loadUnreadMessages();
+    const t = setInterval(loadUnreadMessages, 30000);
+    return () => clearInterval(t);
+  }, [user?.id]);
   const [hours, setHours] = useState(DEFAULT_HOURS);
   const [savingHours, setSavingHours] = useState(false);
   const [selectedDay, setSelectedDay] = useState(null);
@@ -3400,6 +3616,32 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
     }
     setSavingWalkIn(true);
     setWalkInError("");
+
+    // Walk-ins skipped every availability check, so a provider could put an
+    // appointment straight on top of a customer's confirmed booking without
+    // either of them being told. Warn first — but still allow it, since a
+    // provider sometimes genuinely does double up on purpose.
+    const walkInService = services.find((sv) => sv.id === walkInForm.service_id);
+    const clash = bookings.find((b) => {
+      if (!["pending", "awaiting_payment", "confirmed"].includes(b.status)) return false;
+      if (String(b.booking_date).slice(0, 10) !== walkInForm.date) return false;
+      const startA = String(walkInForm.time).slice(0, 5);
+      const startB = String(b.booking_time || "").slice(0, 5);
+      const toMin = (t) => { const [h, m] = t.split(":").map(Number); return (h || 0) * 60 + (m || 0); };
+      const aStart = toMin(startA);
+      const aEnd = aStart + (Number(walkInService?.duration_min) || 60);
+      const bStart = toMin(startB);
+      const bEnd = bStart + (Number(b.services?.duration_min) || 60);
+      return aStart < bEnd && bStart < aEnd;
+    });
+    if (clash) {
+      const who = clash.users?.full_name || clash.walkin_customer_name || "another client";
+      if (!window.confirm(`That overlaps your ${formatBookingTime(clash.booking_time)} booking with ${who}. Add it anyway?`)) {
+        setSavingWalkIn(false);
+        return;
+      }
+    }
+
     const order_number = `VB-${Date.now().toString(36).toUpperCase()}${Math.random().toString(36).slice(2, 5).toUpperCase()}`;
     const created = await createWalkInBooking({
       order_number,
@@ -3425,11 +3667,19 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
   // just records proof of it on the specific cancelled/rejected booking.
   const [refundingBookingId, setRefundingBookingId] = useState(null);
   const [refundForm, setRefundForm] = useState({ amount: "", receipt: null, note: "" });
+  const [refundFileKey, setRefundFileKey] = useState(0);
   const [savingRefund, setSavingRefund] = useState(false);
   const [refundError, setRefundError] = useState("");
 
   const openRefundForm = (booking) => {
-    setRefundForm({ amount: booking.total_amount || booking.downpayment_amount || "", receipt: null, note: "" });
+    // If the customer only ever paid a deposit, that's what there is to
+    // refund — prefilling the full price made a double-value refund one
+    // click away, and refund records can't be edited afterwards.
+    const paidDeposit = booking.payment_status === "paid" || booking.payment_status === "receipt_uploaded";
+    const suggested = paidDeposit && booking.downpayment_amount
+      ? booking.downpayment_amount
+      : (booking.downpayment_amount || booking.total_amount || "");
+    setRefundForm({ amount: suggested, receipt: null, note: "" });
     setRefundError("");
     setRefundingBookingId(booking.id);
   };
@@ -3446,6 +3696,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
     });
     setSavingRefund(false);
     if (ok) {
+      setRefundFileKey((k) => k + 1);
       await loadBookings();
       setRefundingBookingId(null);
     } else {
@@ -3460,6 +3711,13 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
   const [paymentForm, setPaymentForm] = useState({ periodLabel: "", receipt: null });
   const [submittingPayment, setSubmittingPayment] = useState(false);
   const [paymentError, setPaymentError] = useState("");
+  // Which plan this payment is for. Providers couldn't change plan from
+  // inside the portal at all before — every "View plans" button just
+  // dropped them on a screen that showed the plan they already had.
+  const [payingForPlan, setPayingForPlan] = useState("");
+  // Bumping this key remounts the file input so it stops showing the name
+  // of a file that's already been submitted.
+  const [paymentFileKey, setPaymentFileKey] = useState(0);
 
   const loadPayments = async () => {
     if (!providerId) return;
@@ -3479,17 +3737,19 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
   const submitPayment = async () => {
     if (!paymentForm.receipt) { setPaymentError("Please attach a receipt image or PDF."); return; }
     if (!paymentForm.periodLabel.trim()) { setPaymentError("Please say which period this payment covers."); return; }
-    const plan = PLANS.find((p) => p.id === (providerProfile?.plan || "starter"));
+    const plan = PLANS.find((p) => p.id === (payingForPlan || providerProfile?.plan || "starter"));
+    if (!plan || plan.monthly <= 0) { setPaymentError("Pick the plan you're paying for first."); return; }
     setSubmittingPayment(true);
     setPaymentError("");
     const ok = await submitProviderPayment(providerId, paymentForm.receipt, {
-      plan: plan?.id || "starter",
-      amount: plan?.monthly || 0,
+      plan: plan.id,
+      amount: plan.monthly,
       periodLabel: paymentForm.periodLabel.trim(),
     });
     setSubmittingPayment(false);
     if (ok) {
       setPaymentForm({ periodLabel: "", receipt: null });
+      setPaymentFileKey((k) => k + 1);
       await loadPayments();
     } else {
       setPaymentError("Something went wrong uploading that. Please try again.");
@@ -3654,26 +3914,134 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
         downpayment_required: !!providerProfile.downpayment_required,
         downpayment_pct: providerProfile.downpayment_pct || 50,
       });
+      setEmailOnNewBooking(providerProfile.notify_email_new_booking !== false);
     }
   }, [providerProfile]);
 
   const act = async (id, status) => {
+    const target = bookings.find((b) => b.id === id);
+    // Cancelling and marking a no-show both end a booking the provider
+    // already accepted, so both ask first — there's no undo.
+    if (status === "cancelled" && !window.confirm("Cancel this booking? The customer will be notified, and the time slot is freed up. If they already paid a deposit, record the refund afterwards.")) return;
+    if (status === "no_show" && !window.confirm("Mark this customer as a no-show? It frees the slot and keeps the booking out of your completion rate as a completed job.")) return;
+
     setBusyId(id);
-    await updateBookingStatus(id, status);
-    if (status === "completed") {
-      const finished = bookings.find((b) => b.id === id);
-      if (finished?.customer_id) {
-        await createNotification({
-          user_id: finished.customer_id,
-          title: "Booking complete",
-          body: `Your ${finished.services?.name || "appointment"} with ${providerProfile?.business_name || "the provider"} is marked done. Leave a review to let others know how it went!`,
-          type: "booking_completed",
-          booking_id: id,
+    const updated = await updateBookingStatus(id, status);
+    if (!updated) {
+      setBusyId(null);
+      window.alert("Couldn't update that booking. Please check your connection and try again.");
+      return;
+    }
+
+    if (status === "completed" && target?.customer_id) {
+      await createNotification({
+        user_id: target.customer_id,
+        title: "Booking complete",
+        body: `Your ${target.services?.name || "appointment"} with ${providerProfile?.business_name || "the provider"} is marked done. Leave a review to let others know how it went!`,
+        type: "booking_completed",
+        booking_id: id,
+      });
+    }
+    if (status === "cancelled" && target?.customer_id) {
+      await createNotification({
+        user_id: target.customer_id,
+        title: "Booking cancelled",
+        body: `${providerProfile?.business_name || "The provider"} had to cancel your ${target.services?.name || "appointment"} on ${formatBookingWhen(target)}. Get in touch with them to rebook.`,
+        type: "booking_cancelled_by_provider",
+        booking_id: id,
+      });
+      if (target.users?.email) {
+        await sendBookingEmail({
+          to: target.users.email,
+          subject: `Your booking with ${providerProfile?.business_name || "your provider"} was cancelled`,
+          html: `<p>Hi ${target.users?.full_name || "there"},</p><p>${providerProfile?.business_name || "Your provider"} had to cancel your <strong>${target.services?.name || "appointment"}</strong> on <strong>${formatBookingWhen(target)}</strong>.</p><p>You can book another time on VaiBook whenever suits you.</p>`,
         });
       }
     }
+    if (status === "no_show" && target?.customer_id) {
+      await createNotification({
+        user_id: target.customer_id,
+        title: "Marked as a no-show",
+        body: `${providerProfile?.business_name || "The provider"} marked your ${formatBookingWhen(target)} appointment as a no-show.`,
+        type: "booking_no_show",
+        booking_id: id,
+      });
+    }
     await loadBookings();
+    // Points are awarded by a database trigger the moment a booking
+    // completes, so the loyalty list on screen is now out of date.
+    if (status === "completed" && providerProfile?.loyalty_enabled) await loadLoyaltyCustomers();
     setBusyId(null);
+  };
+
+  // ── RESCHEDULING ──────────────────────────────────────────────
+  const openReschedule = (booking) => {
+    setRescheduleForm({ date: String(booking.booking_date || "").slice(0, 10), time: String(booking.booking_time || "").slice(0, 5) });
+    setRescheduleError("");
+    setReschedulingId(booking.id);
+  };
+  const closeReschedule = () => { setReschedulingId(null); setRescheduleError(""); };
+
+  const submitReschedule = async (booking) => {
+    if (!rescheduleForm.date || !rescheduleForm.time) { setRescheduleError("Pick a new date and time."); return; }
+    setSavingReschedule(true);
+    setRescheduleError("");
+    let moved = null;
+    try {
+      moved = await rescheduleBooking(booking.id, rescheduleForm.date, rescheduleForm.time);
+    } catch (err) {
+      setSavingReschedule(false);
+      setRescheduleError(err.code === "SLOT_TAKEN"
+        ? "You already have a booking overlapping that time. Pick another slot."
+        : "Couldn't move that booking. Please try again.");
+      return;
+    }
+    setSavingReschedule(false);
+    if (!moved) { setRescheduleError("Couldn't move that booking. Please try again."); return; }
+
+    if (booking.customer_id) {
+      await createNotification({
+        user_id: booking.customer_id,
+        title: "Your booking was moved",
+        body: `${providerProfile?.business_name || "Your provider"} moved your ${booking.services?.name || "appointment"} to ${formatBookingWhen(moved)}.`,
+        type: "booking_rescheduled",
+        booking_id: booking.id,
+      });
+      if (booking.users?.email) {
+        await sendBookingEmail({
+          to: booking.users.email,
+          subject: `Your booking has been moved to ${formatBookingWhen(moved)}`,
+          html: `<p>Hi ${booking.users?.full_name || "there"},</p><p>${providerProfile?.business_name || "Your provider"} moved your <strong>${booking.services?.name || "appointment"}</strong> to <strong>${formatBookingWhen(moved)}</strong>.</p><p>If that doesn't work for you, reply to them directly through the booking chat on VaiBook.</p>`,
+        });
+      }
+    }
+    setReschedulingId(null);
+    await loadBookings();
+  };
+
+  // ── THE PROVIDER'S OWN REVIEWS ───────────────────────────────
+  const loadMyReviews = async () => {
+    if (!providerId) return;
+    setLoadingMyReviews(true);
+    const data = await getProviderReviews(providerId);
+    setMyReviews(data || []);
+    setLoadingMyReviews(false);
+  };
+  useEffect(() => { loadMyReviews(); }, [providerId]);
+
+  const toggleEmailOnNewBooking = async () => {
+    if (!providerId || savingNotifyPref) return;
+    const next = !emailOnNewBooking;
+    setSavingNotifyPref(true);
+    setEmailOnNewBooking(next);
+    const saved = await upsertProviderProfile({ id: providerProfile.id, user_id: providerProfile.user_id, notify_email_new_booking: next });
+    setSavingNotifyPref(false);
+    if (saved) {
+      onProviderProfileUpdate && onProviderProfileUpdate(saved);
+    } else {
+      setEmailOnNewBooking(!next);
+      window.alert("Couldn't save that setting. Please try again.");
+    }
   };
 
   const openResponse = (bookingId, type) => {
@@ -3694,7 +4062,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
     const custEmail = booking.users?.email;
     const custName = booking.users?.full_name;
     const serviceName = booking.services?.name || "your service";
-    const dateStr = new Date(booking.booking_date).toLocaleDateString();
+    const dateStr = formatBookingDate(booking.booking_date);
     const timeStr = booking.booking_time?.slice(0, 5);
 
     if (responseType === "accept") {
@@ -3762,7 +4130,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
     await updateBooking(booking.id, { status: "confirmed", payment_status: "paid" });
     const custEmail = booking.users?.email;
     const serviceName = booking.services?.name || "your service";
-    const dateStr = new Date(booking.booking_date).toLocaleDateString();
+    const dateStr = formatBookingDate(booking.booking_date);
     const timeStr = booking.booking_time?.slice(0, 5);
     if (custEmail) {
       await sendBookingEmail({
@@ -3885,9 +4253,13 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
     if (account.points_balance < threshold) return;
     if (!window.confirm(`Mark the reward as given to ${account.users?.full_name || "this customer"}? This will deduct ${threshold} points.`)) return;
     setRedeemingId(account.id);
-    await redeemLoyaltyReward(account.id, account.points_balance - threshold);
+    // Deducts against the balance as it stands in the database right now —
+    // the figure on screen may be minutes old and points may have been
+    // earned since.
+    const updated = await redeemLoyaltyReward(account.id);
     await loadLoyaltyCustomers();
     setRedeemingId(null);
+    if (!updated) window.alert("Couldn't apply that reward — their balance may have changed. The list has been refreshed.");
   };
 
   const handlePhotoUpload = async (e) => {
@@ -3956,6 +4328,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
     { id: "earnings", icon: "💰", label: "Earnings" },
     { id: "billing", icon: "🧾", label: "My plan & billing" },
     { id: "staff", icon: "👥", label: "My staff" },
+    { id: "reviews", icon: "⭐", label: "My reviews" },
     { id: "review", icon: "📈", label: "Monthly review" },
     { id: "profile", icon: "👤", label: "Public profile" },
     { id: "qr", icon: "📱", label: "My QR code" },
@@ -3992,6 +4365,10 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
           <p style={{ color: "rgba(255,255,255,0.6)", fontSize: 14, marginBottom: 24 }}>
             List your business to apply. Once we confirm your subscription payment, we'll activate your provider portal.
           </p>
+          <p style={{ color: "rgba(255,255,255,0.45)", fontSize: 12, marginBottom: 20, lineHeight: 1.6 }}>
+            Work here as staff? Ask the owner to check that your seat is still active and registered to this exact
+            email address — that's what opens your own staff view.
+          </p>
           <button className="btn-lime" style={{ padding: "12px 24px" }} onClick={() => onNav("signup")}>List your business</button>
           <div style={{ marginTop: 20 }}>
             <a style={{ color: "rgba(255,255,255,0.4)", fontSize: 13, cursor: "pointer" }} onClick={onSignOut}>Sign out</a>
@@ -4001,41 +4378,60 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
     );
   }
 
-  const isSameDay = (isoDate, d) => {
-    if (!isoDate) return false;
-    const bd = new Date(isoDate);
-    return bd.getFullYear() === d.getFullYear() && bd.getMonth() === d.getMonth() && bd.getDate() === d.getDate();
-  };
-
   const now = new Date();
-  const todaysBookings = bookings.filter(b => isSameDay(b.booking_date, now));
+  const todaysBookings = bookings.filter(b => isSameLocalDay(b.booking_date, now));
   const pendingBookings = bookings.filter(b => b.status === "pending");
   const confirmedBookings = bookings.filter(b => b.status === "confirmed");
   const completedBookings = bookings.filter(b => b.status === "completed" || b.status === "done");
-  const thisMonthEarnings = completedBookings
-    .filter(b => { const d = new Date(b.booking_date); return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear(); })
-    .reduce((sum, b) => sum + (Number(b.total_amount) || 0), 0);
-  const completionRate = bookings.length ? Math.round((completedBookings.length / bookings.length) * 100) : null;
+  const thisMonthCompleted = completedBookings
+    .filter(b => { const d = bookingDateOnly(b.booking_date); return d && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear(); });
+  const thisMonthCompletedCount = thisMonthCompleted.length;
+  const thisMonthEarnings = thisMonthCompleted.reduce((sum, b) => sum + (Number(b.total_amount) || 0), 0);
+  // Only bookings that actually reached an outcome count — pending and
+  // upcoming ones aren't failures, and including them held the rate down
+  // permanently for busy providers.
+  const settledBookings = bookings.filter(b => ["completed", "done", "cancelled", "rejected", "no_show"].includes(b.status));
+  const completionRate = settledBookings.length ? Math.round((completedBookings.length / settledBookings.length) * 100) : null;
   const bookingNameFn = (b) => b.users?.full_name || b.walkin_customer_name || "";
-  const staffFilteredBookings = staffFilter === "all"
+  // If the staff member being filtered on has since been removed, fall back
+  // to everyone rather than showing a permanently empty list with no way to
+  // clear the filter (their name is gone from the dropdown).
+  const staffFilterActive = staffFilter === "all" || staffFilter === "unassigned" || staff.some((m) => m.id === staffFilter);
+  const effectiveStaffFilter = staffFilterActive ? staffFilter : "all";
+  const staffFilteredBookings = effectiveStaffFilter === "all"
     ? bookings
-    : staffFilter === "unassigned"
+    : effectiveStaffFilter === "unassigned"
       ? bookings.filter((b) => !b.staff_id)
-      : bookings.filter((b) => b.staff_id === staffFilter);
-  const visibleBookings = filterAndSortBookings(staffFilteredBookings, bookingSearch, bookingSort, bookingNameFn);
+      : bookings.filter((b) => b.staff_id === effectiveStaffFilter);
+  const statusFilteredBookings = bookingStatusFilter === "all"
+    ? staffFilteredBookings
+    : bookingStatusFilter === "needs_action"
+      ? staffFilteredBookings.filter((b) => b.status === "pending" || (b.status === "awaiting_payment" && b.payment_status === "receipt_uploaded"))
+      : bookingStatusFilter === "completed"
+        ? staffFilteredBookings.filter((b) => b.status === "completed" || b.status === "done")
+        : bookingStatusFilter === "cancelled"
+          ? staffFilteredBookings.filter((b) => b.status === "cancelled" || b.status === "rejected")
+          : staffFilteredBookings.filter((b) => b.status === bookingStatusFilter);
+  const visibleBookings = filterAndSortBookings(statusFilteredBookings, bookingSearch, bookingSort, bookingNameFn);
 
-  const FEE_RATE = 0.07;
-  const netAmount = (b) => (Number(b.total_amount) || 0) * (1 - FEE_RATE);
+  // VaiBook never touches the money — providers collect 100% directly and
+  // pay only their monthly subscription — so every figure here is the real
+  // amount taken, matching the invoices and the tax ledger exactly. (There
+  // used to be a hardcoded 7% "platform fee" deducted from all of these,
+  // which understated every provider's income by 7%.)
+  const netAmount = (b) => (Number(b.total_amount) || 0);
   const totalNetEarned = completedBookings.reduce((sum, b) => sum + netAmount(b), 0);
+  // Confirmed only: an awaiting_payment booking may never have its deposit
+  // paid, so counting it as money on the way was wishful.
   const pendingEarnings = bookings
-    .filter(b => b.status === "confirmed" || b.status === "awaiting_payment")
+    .filter(b => b.status === "confirmed")
     .reduce((sum, b) => sum + netAmount(b), 0);
   const lastMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
   const thisMonthNetEarnings = completedBookings
-    .filter(b => { const d = new Date(b.booking_date); return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear(); })
+    .filter(b => { const d = bookingDateOnly(b.booking_date); return d && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear(); })
     .reduce((sum, b) => sum + netAmount(b), 0);
   const lastMonthNetEarnings = completedBookings
-    .filter(b => { const d = new Date(b.booking_date); return d.getMonth() === lastMonthDate.getMonth() && d.getFullYear() === lastMonthDate.getFullYear(); })
+    .filter(b => { const d = bookingDateOnly(b.booking_date); return d && d.getMonth() === lastMonthDate.getMonth() && d.getFullYear() === lastMonthDate.getFullYear(); })
     .reduce((sum, b) => sum + netAmount(b), 0);
   const monthOverMonthPct = lastMonthNetEarnings > 0
     ? Math.round(((thisMonthNetEarnings - lastMonthNetEarnings) / lastMonthNetEarnings) * 100)
@@ -4043,37 +4439,34 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
   const currentMonthLabel = now.toLocaleDateString("en-US", { month: "long" });
 
   // Sales & tax ledger — separate from per-booking invoices on purpose,
-  // see buildLedgerHtml. Defaults to the current calendar month.
-  const monthStartStr = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
-  const monthEndStr = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().slice(0, 10);
-  const [ledgerStart, setLedgerStart] = useState(monthStartStr);
-  const [ledgerEnd, setLedgerEnd] = useState(monthEndStr);
-
+  // see buildLedgerHtml. Defaults to the current calendar month (its state
+  // is declared at the top of the component with every other hook).
   const printLedger = () => {
-    const start = ledgerStart ? new Date(ledgerStart) : null;
-    const end = ledgerEnd ? new Date(ledgerEnd) : null;
+    const start = ledgerStart ? bookingDateOnly(ledgerStart) : null;
+    const end = ledgerEnd ? bookingDateOnly(ledgerEnd) : null;
     if (end) end.setHours(23, 59, 59, 999);
     const rows = completedBookings
       .filter((b) => {
-        const d = new Date(b.booking_date);
+        const d = bookingDateOnly(b.booking_date);
         return (!start || d >= start) && (!end || d <= end);
       })
-      .sort((a, b) => new Date(a.booking_date) - new Date(b.booking_date))
+      .sort((a, b) => (bookingDateTime(a.booking_date, a.booking_time) || 0) - (bookingDateTime(b.booking_date, b.booking_time) || 0))
       .map((b) => ({
-        dateLabel: new Date(b.booking_date).toLocaleDateString(),
+        dateLabel: formatBookingDate(b.booking_date),
         orderNumber: b.order_number || b.id?.slice(0, 8) || "—",
         serviceName: b.services?.name || "Service",
         customerName: b.users?.full_name || b.walkin_customer_name || "Customer",
         amount: b.total_amount,
       }));
     const periodLabel = ledgerStart && ledgerEnd
-      ? `${new Date(ledgerStart).toLocaleDateString()} – ${new Date(ledgerEnd).toLocaleDateString()}`
+      ? `${formatBookingDate(ledgerStart)} – ${formatBookingDate(ledgerEnd)}`
       : "All completed bookings";
     printInvoice(buildLedgerHtml({
       providerName: providerProfile?.business_name || "Provider",
       providerTaxId: providerProfile?.tax_id || "",
       periodLabel,
       rows,
+      taxRate: Number(ledgerTaxRate) || 0,
     }));
   };
 
@@ -4099,19 +4492,20 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
     await deletePaymentMethod(id);
   };
 
-  const calYear = now.getFullYear();
-  const calMonth = now.getMonth();
-  const monthLabel = now.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+  const calCursor = new Date(now.getFullYear(), now.getMonth() + calOffset, 1);
+  const calYear = calCursor.getFullYear();
+  const calMonth = calCursor.getMonth();
+  const monthLabel = calCursor.toLocaleDateString("en-US", { month: "long", year: "numeric" });
   const firstWeekday = new Date(calYear, calMonth, 1).getDay();
   const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
   const calendarDays = [...Array(firstWeekday).fill(null), ...Array.from({ length: daysInMonth }, (_, i) => i + 1)];
   const bookedDaysInMonth = new Set(
     bookings
-      .filter(b => { const d = new Date(b.booking_date); return d.getFullYear() === calYear && d.getMonth() === calMonth; })
-      .map(b => new Date(b.booking_date).getDate())
+      .filter(b => { const d = bookingDateOnly(b.booking_date); return d && d.getFullYear() === calYear && d.getMonth() === calMonth; })
+      .map(b => bookingDateOnly(b.booking_date).getDate())
   );
   const selectedDayBookings = selectedDay
-    ? bookings.filter(b => { const d = new Date(b.booking_date); return d.getFullYear() === calYear && d.getMonth() === calMonth && d.getDate() === selectedDay; })
+    ? bookings.filter(b => { const d = bookingDateOnly(b.booking_date); return d && d.getFullYear() === calYear && d.getMonth() === calMonth && d.getDate() === selectedDay; })
     : [];
 
   return (
@@ -4153,10 +4547,10 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
               <p>{now.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })} · {todaysBookings.length} appointment{todaysBookings.length === 1 ? "" : "s"} today</p>
             </div>
             <div className="metric-grid">
-              <div className="metric"><div className="metric-label">This month earnings</div><div className="metric-value" style={{ color: "var(--forest-light)" }}>BZ${thisMonthEarnings.toFixed(0)}</div><div className="metric-sub">{completedBookings.length} completed</div></div>
-              <div className="metric"><div className="metric-label">Bookings today</div><div className="metric-value">{todaysBookings.length}</div><div className="metric-sub">{confirmedBookings.length} confirmed, {pendingBookings.length} pending</div></div>
+              <div className="metric"><div className="metric-label">This month earnings</div><div className="metric-value" style={{ color: "var(--forest-light)" }}>BZ${thisMonthEarnings.toFixed(0)}</div><div className="metric-sub">{thisMonthCompletedCount} completed this month</div></div>
+              <div className="metric"><div className="metric-label">Bookings today</div><div className="metric-value">{todaysBookings.length}</div><div className="metric-sub">{todaysBookings.filter(b => b.status === "confirmed").length} confirmed, {pendingBookings.length} awaiting your reply</div></div>
               <div className="metric"><div className="metric-label">Total bookings</div><div className="metric-value">{bookings.length}</div><div className="metric-sub">All time</div></div>
-              <div className="metric"><div className="metric-label">Completion rate</div><div className="metric-value">{completionRate === null ? "—" : `${completionRate}%`}</div><div className="metric-sub">{completionRate === null ? "No bookings yet" : "Of all bookings"}</div></div>
+              <div className="metric"><div className="metric-label">Completion rate</div><div className="metric-value">{completionRate === null ? "—" : `${completionRate}%`}</div><div className="metric-sub">{completionRate === null ? "No finished bookings yet" : `Of ${settledBookings.length} finished booking${settledBookings.length === 1 ? "" : "s"}`}</div></div>
             </div>
             <div className="grid-2">
               <div className="card">
@@ -4170,11 +4564,11 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                     <div className={`booking-dot ${bookingStatusClass(b.status)}`}></div>
                     <div className="booking-info">
                       <div className="title">{b.services?.name || "Service"}</div>
-                      <div className="meta">{b.users?.full_name || "Customer"} · {new Date(b.booking_date).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}</div>
+                      <div className="meta">{b.users?.full_name || b.walkin_customer_name || "Customer"} · {formatBookingTime(b.booking_time)}</div>
                     </div>
                     <div>
                       <span className="booking-amount">BZ${b.total_amount ?? b.services?.price ?? "—"}</span>
-                      <span className={`status-pill ${bookingStatusClass(b.status)}`}>{b.status}</span>
+                      <span className={`status-pill ${bookingStatusClass(b.status)}`}>{statusLabel(b.status)}</span>
                     </div>
                   </div>
                 ))}
@@ -4186,9 +4580,9 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                   <div key={b.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: "1px solid var(--border)" }}>
                     <div>
                       <div style={{ fontSize: 13, fontWeight: 600 }}>{b.services?.name || "Service"}</div>
-                      <div style={{ fontSize: 12, color: "var(--muted)" }}>{new Date(b.booking_date).toLocaleDateString()}</div>
+                      <div style={{ fontSize: 12, color: "var(--muted)" }}>{formatBookingWhen(b)}</div>
                     </div>
-                    <span className={`status-pill ${bookingStatusClass(b.status)}`}>{b.status}</span>
+                    <span className={`status-pill ${bookingStatusClass(b.status)}`}>{statusLabel(b.status)}</span>
                   </div>
                 ))}
               </div>
@@ -4284,6 +4678,18 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                     <option value="oldest">Recently booked: oldest first</option>
                   </select>
                 </div>
+                <div className="input-group" style={{ flex: 1 }}>
+                  <select value={bookingStatusFilter} onChange={e => setBookingStatusFilter(e.target.value)}>
+                    <option value="all">All statuses</option>
+                    <option value="needs_action">Needs action ({pendingBookings.length})</option>
+                    <option value="pending">Pending</option>
+                    <option value="awaiting_payment">Awaiting payment</option>
+                    <option value="confirmed">Confirmed</option>
+                    <option value="completed">Completed</option>
+                    <option value="cancelled">Cancelled / declined</option>
+                    <option value="no_show">No-shows</option>
+                  </select>
+                </div>
                 {isBusinessPlan && staff.length > 0 && (
                   <div className="input-group" style={{ flex: 1 }}>
                     <select value={staffFilter} onChange={e => setStaffFilter(e.target.value)}>
@@ -4357,7 +4763,12 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                       <div className="meta">
                         {b.users?.full_name || b.walkin_customer_name || "Customer"}
                         {b.walkin_customer_phone && ` · ${b.walkin_customer_phone}`}
-                        {" · "}{new Date(b.booking_date).toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
+                        {" · "}{formatBookingWhen(b)}
+                        {unreadByBooking[b.id] > 0 && (
+                          <span style={{ marginLeft: 8, fontSize: 11, fontWeight: 700, color: "var(--forest)", background: "var(--lime)", padding: "2px 7px", borderRadius: 999 }}>
+                            💬 {unreadByBooking[b.id]} new
+                          </span>
+                        )}
                         {b.customer_id && (
                           <button
                             onClick={() => toggleVIP(b.customer_id)}
@@ -4394,10 +4805,47 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                       {b.status === "confirmed" && (
                         <button className="btn-sm forest" disabled={busyId === b.id} onClick={() => act(b.id, "completed")}>Mark done</button>
                       )}
+                      {/* A booking you've already accepted has to be movable and
+                          cancellable — otherwise a sick day, or a customer who
+                          never pays their deposit, blocks that slot forever and
+                          no refund can be recorded against it. */}
+                      {["pending", "awaiting_payment", "confirmed"].includes(b.status) && reschedulingId !== b.id && (
+                        <button className="btn-sm ghost" disabled={busyId === b.id} onClick={() => openReschedule(b)}>Reschedule</button>
+                      )}
+                      {["awaiting_payment", "confirmed"].includes(b.status) && (
+                        <button className="btn-sm ghost" disabled={busyId === b.id} onClick={() => act(b.id, "cancelled")}>Cancel</button>
+                      )}
+                      {b.status === "confirmed" && (
+                        <button className="btn-sm ghost" disabled={busyId === b.id} onClick={() => act(b.id, "no_show")}>No-show</button>
+                      )}
                     </div>
                   </div>
 
                   {b.notes && <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 6 }}>Customer note: {b.notes}</p>}
+
+                  {reschedulingId === b.id && (
+                    <div style={{ marginTop: 10, background: "var(--sand)", borderRadius: 8, padding: 12 }}>
+                      <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 8 }}>Move this appointment</div>
+                      <div className="form-row">
+                        <div className="input-group">
+                          <label>New date</label>
+                          <input type="date" value={rescheduleForm.date} min={new Date().toISOString().slice(0, 10)} onChange={e => setRescheduleForm(f => ({ ...f, date: e.target.value }))} />
+                        </div>
+                        <div className="input-group">
+                          <label>New time</label>
+                          <input type="time" value={rescheduleForm.time} onChange={e => setRescheduleForm(f => ({ ...f, time: e.target.value }))} />
+                        </div>
+                      </div>
+                      {rescheduleError && <p style={{ color: "#B91C1C", fontSize: 12, marginBottom: 8 }}>{rescheduleError}</p>}
+                      <div style={{ display: "flex", gap: 8 }}>
+                        <button className="btn-sm lime" disabled={savingReschedule} onClick={() => submitReschedule(b)}>{savingReschedule ? "Moving..." : "Save new time"}</button>
+                        <button className="btn-sm ghost" onClick={closeReschedule}>Cancel</button>
+                      </div>
+                      <p style={{ fontSize: 11, color: "var(--muted)", marginTop: 8 }}>
+                        The customer is notified and emailed the new time. VaiBook won't let you move it on top of another booking.
+                      </p>
+                    </div>
+                  )}
 
                   {respondingId === b.id && (
                     <div style={{ marginTop: 10, background: "var(--sand)", borderRadius: 8, padding: 12 }}>
@@ -4482,7 +4930,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                         </div>
                         <div className="input-group">
                           <label>Screenshot or receipt *</label>
-                          <input type="file" accept="image/*,application/pdf" onChange={e => setRefundForm(f => ({ ...f, receipt: e.target.files?.[0] || null }))} />
+                          <input key={refundFileKey} type="file" accept="image/*,application/pdf" onChange={e => setRefundForm(f => ({ ...f, receipt: e.target.files?.[0] || null }))} />
                         </div>
                         <div className="input-group">
                           <label>Note (optional)</label>
@@ -4499,7 +4947,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                     )
                   )}
 
-                  {["pending", "awaiting_payment", "confirmed", "completed"].includes(b.status) && (
+                  {b.customer_id && ["pending", "awaiting_payment", "confirmed", "completed"].includes(b.status) && (
                     <BookingChat
                       bookingId={b.id}
                       currentUserId={user?.id}
@@ -4518,13 +4966,20 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
             <div className="portal-header"><h2>Availability</h2><p>Set your open slots. Customers can only book when you're available.</p></div>
             <div className="grid-2">
               <div className="card">
-                <div className="card-title">{monthLabel}</div>
+                <div className="card-title" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+                  <button className="btn-sm ghost" onClick={() => { setCalOffset(o => o - 1); setSelectedDay(null); }} aria-label="Previous month">‹</button>
+                  <span>{monthLabel}</span>
+                  <span style={{ display: "flex", gap: 6 }}>
+                    {calOffset !== 0 && <button className="btn-sm ghost" onClick={() => { setCalOffset(0); setSelectedDay(null); }}>Today</button>}
+                    <button className="btn-sm ghost" onClick={() => { setCalOffset(o => o + 1); setSelectedDay(null); }} aria-label="Next month">›</button>
+                  </span>
+                </div>
                 <div className="cal-grid">
                   {DAYS.map(d => <div key={d} className="cal-day-label">{d}</div>)}
                   {calendarDays.map((d, i) => (
                     <div
                       key={i}
-                      className={`cal-day ${d === null ? "empty" : ""} ${d === now.getDate() ? "today" : ""} ${d && bookedDaysInMonth.has(d) ? "has-booking" : ""}`}
+                      className={`cal-day ${d === null ? "empty" : ""} ${d === now.getDate() && calOffset === 0 ? "today" : ""} ${d && bookedDaysInMonth.has(d) ? "has-booking" : ""}`}
                       style={d && d === selectedDay ? { boxShadow: "inset 0 0 0 2px var(--forest)" } : undefined}
                       onClick={() => d && setSelectedDay(d === selectedDay ? null : d)}
                     >
@@ -4542,7 +4997,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                     {selectedDayBookings.length === 0 && <p style={{ fontSize: 12, color: "var(--muted)" }}>No bookings this day.</p>}
                     {selectedDayBookings.map(b => (
                       <div key={b.id} style={{ fontSize: 12, color: "var(--muted)", padding: "4px 0" }}>
-                        {new Date(b.booking_date).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })} · {b.services?.name || "Service"} · {b.users?.full_name || "Customer"}
+                        {formatBookingTime(b.booking_time)} · {b.services?.name || "Service"} · {b.users?.full_name || b.walkin_customer_name || "Customer"}
                       </div>
                     ))}
                   </div>
@@ -4619,7 +5074,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
           <>
             <div className="portal-header"><h2>Earnings</h2><p>Customers pay you directly — track your income here.</p></div>
             <div className="metric-grid" style={{ gridTemplateColumns: "1fr 1fr 1fr" }}>
-              <div className="metric"><div className="metric-label">Total earned</div><div className="metric-value" style={{ color: "var(--forest-light)" }}>BZ${totalNetEarned.toFixed(2)}</div><div className="metric-sub">All time, after 7% fee</div></div>
+              <div className="metric"><div className="metric-label">Total earned</div><div className="metric-value" style={{ color: "var(--forest-light)" }}>BZ${totalNetEarned.toFixed(2)}</div><div className="metric-sub">All time, paid to you in full</div></div>
               <div className="metric"><div className="metric-label">Upcoming</div><div className="metric-value">BZ${pendingEarnings.toFixed(2)}</div><div className="metric-sub">Confirmed, not yet completed</div></div>
               <div className="metric"><div className="metric-label">This month ({currentMonthLabel})</div><div className="metric-value">BZ${thisMonthNetEarnings.toFixed(2)}</div><div className="metric-sub">{monthOverMonthPct === null ? "No data for last month" : `${monthOverMonthPct >= 0 ? "↑" : "↓"} ${Math.abs(monthOverMonthPct)}% vs last month`}</div></div>
             </div>
@@ -4637,7 +5092,24 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                   <label>To</label>
                   <input type="date" value={ledgerEnd} onChange={e => setLedgerEnd(e.target.value)} />
                 </div>
+                <div className="input-group">
+                  <label>Tax rate % (optional)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    max="100"
+                    step="0.5"
+                    placeholder="e.g. 12.5"
+                    value={ledgerTaxRate}
+                    onChange={e => setLedgerTaxRate(e.target.value)}
+                  />
+                </div>
               </div>
+              <p style={{ fontSize: 12, color: "var(--muted)", marginBottom: 12 }}>
+                Leave the rate blank for a plain sales total. Enter one and the ledger also shows the tax included in what you
+                collected and the net figure underneath it — your prices are treated as tax-inclusive, which is how they're
+                quoted to customers.
+              </p>
               <button className="btn-sm forest" onClick={printLedger}>🧾 Print / download ledger</button>
             </div>
             <div className="card">
@@ -4707,25 +5179,80 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                   </div>
                 )}
 
-                {currentPlan.monthly === 0 ? (
+                {currentPlan.monthly === 0 && (
                   <p style={{ fontSize: 13, color: "var(--forest)", fontWeight: 600, marginTop: 16 }}>You're on the free Starter plan — nothing to pay.</p>
-                ) : (
-                  <div style={{ marginTop: 20, paddingTop: 16, borderTop: "1px solid var(--border)" }}>
-                    <div className="card-title">Submit a payment</div>
-                    <p style={{ fontSize: 13, color: "var(--muted)", marginBottom: 12 }}>Paid your {currentPlan.name} plan fee (BZ${currentPlan.monthly}) by bank transfer or mobile wallet? Upload the receipt here so admin can confirm it and keep your account active.</p>
-                    <div className="input-group">
-                      <label>Which period is this for?</label>
-                      <input value={paymentForm.periodLabel} onChange={e => setPaymentForm(f => ({ ...f, periodLabel: e.target.value }))} placeholder="e.g. September 2026" />
-                    </div>
-                    <div className="input-group">
-                      <label>Receipt (image or PDF)</label>
-                      <input type="file" accept="image/*,application/pdf" onChange={e => setPaymentForm(f => ({ ...f, receipt: e.target.files?.[0] || null }))} />
-                    </div>
-                    {paymentError && <p style={{ fontSize: 12, color: "#B91C1C", marginBottom: 8 }}>{paymentError}</p>}
-                    <button className="btn-sm lime" disabled={submittingPayment} onClick={submitPayment}>{submittingPayment ? "Uploading..." : "Submit payment"}</button>
-                  </div>
                 )}
               </div>
+
+              {(() => {
+                const chosenPlan = PLANS.find((p) => p.id === (payingForPlan || currentPlan.id)) || currentPlan;
+                const isUpgrade = chosenPlan.id !== currentPlan.id;
+                return (
+                  <div className="card" style={{ maxWidth: 560, marginTop: 20 }}>
+                    <div className="card-title">{currentPlan.monthly === 0 ? "Upgrade your plan" : "Pay for your plan"}</div>
+                    <p style={{ fontSize: 13, color: "var(--muted)", marginBottom: 12 }}>
+                      Pick the plan you're paying for, transfer the amount by bank or mobile wallet, and upload the receipt.
+                      Admin confirms it, and your plan switches over as soon as they do — that's how an upgrade takes effect.
+                    </p>
+
+                    {PLANS.map((pl) => {
+                      const selected = chosenPlan.id === pl.id;
+                      return (
+                        <label
+                          key={pl.id}
+                          style={{
+                            display: "flex", gap: 10, alignItems: "flex-start", padding: "12px 14px", marginBottom: 8,
+                            border: `1px solid ${selected ? "var(--forest)" : "var(--border)"}`,
+                            background: selected ? "var(--sand)" : "transparent",
+                            borderRadius: 10, cursor: "pointer",
+                          }}
+                        >
+                          <input
+                            type="radio"
+                            name="plan-choice"
+                            checked={selected}
+                            onChange={() => setPayingForPlan(pl.id)}
+                            style={{ marginTop: 3 }}
+                          />
+                          <div style={{ flex: 1 }}>
+                            <div style={{ fontSize: 14, fontWeight: 700 }}>
+                              {pl.name} <span style={{ fontWeight: 500, color: "var(--muted)" }}>— {pl.price}</span>
+                              {pl.id === currentPlan.id && <span style={{ marginLeft: 8, fontSize: 11, fontWeight: 700, color: "var(--forest)" }}>YOUR PLAN</span>}
+                            </div>
+                            <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 2 }}>{pl.desc}</div>
+                          </div>
+                        </label>
+                      );
+                    })}
+
+                    {chosenPlan.monthly === 0 ? (
+                      <p style={{ fontSize: 13, color: "var(--muted)", marginTop: 8 }}>
+                        Starter is free — there's nothing to upload. To move down to Starter, email VaiBook and we'll switch you at the end of your paid period.
+                      </p>
+                    ) : (
+                      <div style={{ marginTop: 8, paddingTop: 16, borderTop: "1px solid var(--border)" }}>
+                        <p style={{ fontSize: 13, marginBottom: 12 }}>
+                          {isUpgrade
+                            ? `Send BZ$${chosenPlan.monthly} for the ${chosenPlan.name} plan, then upload the receipt — you'll move onto ${chosenPlan.name} once admin confirms it.`
+                            : `Send BZ$${chosenPlan.monthly} for your ${chosenPlan.name} plan, then upload the receipt so admin can confirm it and keep your account active.`}
+                        </p>
+                        <div className="input-group">
+                          <label>Which period is this for?</label>
+                          <input value={paymentForm.periodLabel} onChange={e => setPaymentForm(f => ({ ...f, periodLabel: e.target.value }))} placeholder="e.g. September 2026" />
+                        </div>
+                        <div className="input-group">
+                          <label>Receipt (image or PDF)</label>
+                          <input key={paymentFileKey} type="file" accept="image/*,application/pdf" onChange={e => setPaymentForm(f => ({ ...f, receipt: e.target.files?.[0] || null }))} />
+                        </div>
+                        {paymentError && <p style={{ fontSize: 12, color: "#B91C1C", marginBottom: 8 }}>{paymentError}</p>}
+                        <button className="btn-sm lime" disabled={submittingPayment} onClick={submitPayment}>
+                          {submittingPayment ? "Uploading..." : isUpgrade ? `Submit payment for ${chosenPlan.name}` : "Submit payment"}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
 
               <div className="card" style={{ maxWidth: 560, marginTop: 20 }}>
                 <div className="card-title" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -4836,6 +5363,54 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                 </div>
               </>
             )}
+          </>
+        )}
+
+        {tab === "reviews" && (
+          <>
+            <div className="portal-header"><h2>My reviews</h2><p>What your customers said after their appointment.</p></div>
+            <div className="card">
+              <div className="card-title" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span>
+                  {myReviews.length > 0 && (
+                    <>
+                      <StarRating value={(myReviews.reduce((sum, r) => sum + (Number(r.rating) || 0), 0) / myReviews.length).toFixed(1)} size={15} />{" "}
+                      {(myReviews.reduce((sum, r) => sum + (Number(r.rating) || 0), 0) / myReviews.length).toFixed(1)}{" "}
+                    </>
+                  )}
+                  <span style={{ color: "var(--muted)", fontWeight: 500, fontSize: 13 }}>
+                    {myReviews.length} review{myReviews.length === 1 ? "" : "s"}
+                  </span>
+                </span>
+                <button className="btn-sm forest" onClick={loadMyReviews} disabled={loadingMyReviews}>{loadingMyReviews ? "Refreshing..." : "Refresh"}</button>
+              </div>
+
+              {myReviews.length === 0 && (
+                <p style={{ fontSize: 13, color: "var(--muted)", padding: "20px 0" }}>
+                  {loadingMyReviews ? "Loading..." : "No reviews yet. Customers are invited to leave one as soon as you mark their booking done."}
+                </p>
+              )}
+
+              {myReviews.map((r) => (
+                <div key={r.id} className="booking-item" style={{ alignItems: "flex-start" }}>
+                  <div className="booking-info" style={{ flex: 1 }}>
+                    <div className="title" style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                      <StarRating value={r.rating} />
+                      <span>{r.users?.full_name || "Customer"}</span>
+                    </div>
+                    {r.comment && <p style={{ fontSize: 13, marginTop: 6, lineHeight: 1.6 }}>{r.comment}</p>}
+                    <div className="meta" style={{ marginTop: 6 }}>
+                      {r.created_at ? new Date(r.created_at).toLocaleDateString() : ""}
+                    </div>
+                  </div>
+                </div>
+              ))}
+
+              <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 16, lineHeight: 1.6 }}>
+                Reviews can't be edited or removed by a business — that's what makes them worth something to the customers
+                reading them. If one is abusive or clearly not a real customer, email VaiBook and we'll look at it.
+              </p>
+            </div>
           </>
         )}
 
@@ -5107,14 +5682,30 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
               <button className="btn-sm forest" style={{ marginTop: 12 }} onClick={saveDepositSettings} disabled={savingDeposit}>{savingDeposit ? "Saving..." : "Save deposit settings"}</button>
 
               <div className="card-title" style={{ marginTop: 28 }}>Notifications</div>
-              {[["New booking request", true], ["Booking confirmed", true], ["Payment received", true], ["Review posted", false]].map(([label, on], i) => (
-                <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", borderBottom: "1px solid var(--border)" }}>
-                  <span style={{ fontSize: 14 }}>{label}</span>
-                  <div className={`toggle ${on ? "on" : ""}`} onClick={() => {}}></div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", borderBottom: "1px solid var(--border)", gap: 16 }}>
+                <div>
+                  <div style={{ fontSize: 14, fontWeight: 600 }}>Email me about new bookings</div>
+                  <div style={{ fontSize: 12, color: "var(--muted)" }}>
+                    Sends an email the moment a customer requests a booking, so you don't have to be in the app to know.
+                  </div>
                 </div>
-              ))}
-              <div className="card-title" style={{ marginTop: 24 }}>Platform fee</div>
-              <p style={{ fontSize: 13, color: "var(--muted)", lineHeight: 1.6 }}>VaiBook charges a 7% transaction fee on completed bookings. This is automatically deducted before your payout. Your Pro subscription reduces this to 5%.</p>
+                <div
+                  className={`toggle ${emailOnNewBooking ? "on" : ""}`}
+                  style={{ opacity: savingNotifyPref ? 0.5 : 1, flexShrink: 0 }}
+                  onClick={toggleEmailOnNewBooking}
+                ></div>
+              </div>
+              <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 12, lineHeight: 1.6 }}>
+                Everything else — booking requests, cancellations, deposit receipts, completed bookings and new reviews —
+                always shows up in your notification bell 🔔 at the top of the portal.
+              </p>
+
+              <div className="card-title" style={{ marginTop: 24 }}>What VaiBook charges</div>
+              <p style={{ fontSize: 13, color: "var(--muted)", lineHeight: 1.6 }}>
+                Your monthly subscription, and nothing else. VaiBook never handles your customers' payments and takes no
+                cut of a booking — every dollar a customer pays you is yours, which is why the Earnings figures above match
+                your invoices and your tax ledger exactly.
+              </p>
             </div>
           </>
         )}
@@ -5289,28 +5880,32 @@ function ProviderSignup({ onNav }) {
       return;
     }
 
-    const subject = encodeURIComponent(`New VaiBook Provider Signup — ${form.businessName} (${selectedPlan.name})`);
-    const body = encodeURIComponent(
-`New provider signup on VaiBook!
+    // Notify admin by real email rather than window.open("mailto:") — that
+    // ran two awaits after the click, so browsers blocked it as a popup,
+    // and on a phone there's often no mail handler at all. The application
+    // is already saved either way; this is just the heads-up.
+    await sendBookingEmail({
+      to: "martinezabner287@gmail.com",
+      subject: `New VaiBook provider signup — ${form.businessName} (${selectedPlan.name})`,
+      html: `<h3>New provider signup on VaiBook</h3>
+<p><strong>Business:</strong> ${form.businessName}<br/>
+<strong>Owner:</strong> ${form.ownerName}<br/>
+<strong>Email:</strong> ${form.email}<br/>
+<strong>Phone:</strong> ${form.phone}<br/>
+<strong>Service:</strong> ${form.serviceType}<br/>
+<strong>District:</strong> ${form.district}<br/>
+<strong>Plan:</strong> ${selectedPlan.name} (${selectedPlan.price})<br/>
+<strong>Description:</strong> ${form.description || "N/A"}</p>
+<p>Activate them in the admin dashboard.</p>`,
+    });
 
-Business: ${form.businessName}
-Owner: ${form.ownerName}
-Email: ${form.email}
-Phone: ${form.phone}
-Service: ${form.serviceType}
-District: ${form.district}
-Plan: ${selectedPlan.name} (${selectedPlan.price})
-Description: ${form.description || "N/A"}
+    // Send the applicant a confirmation too, so they know it arrived.
+    await sendBookingEmail({
+      to: form.email.trim().toLowerCase(),
+      subject: "We got your VaiBook application",
+      html: `<p>Hi ${form.ownerName},</p><p>Thanks for applying to list <strong>${form.businessName}</strong> on VaiBook. We review applications by hand — you'll get an email as soon as yours is approved, and then you sign in with <strong>${form.email.trim().toLowerCase()}</strong> to open your portal.</p><p>— VaiBook</p>`,
+    });
 
----
-Activate this provider in your admin dashboard.`
-    );
-
-    // Open mailto so you get notified immediately
-    window.open(`mailto:hello@vaibook.bz?subject=${subject}&body=${body}`);
-
-    // Simulate brief processing
-    await new Promise(r => setTimeout(r, 800));
     setLoading(false);
     setSubmitted(true);
   };
@@ -5552,11 +6147,33 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
     setLoadingPayments(false);
   };
 
-  const reviewPayment = async (paymentId, status) => {
+  const reviewPayment = async (payment, status) => {
+    const paymentId = payment.id || payment;
+    const label = payment.business_name || "this provider";
+    const planName = (PLANS.find((pl) => pl.id === payment.plan) || {}).name || payment.plan || "the plan on this payment";
+    // Confirming extends the paid-through date and applies the plan the
+    // payment was for; rejecting is what the provider sees as "declined".
+    // Neither can be undone from this screen, so both ask first.
+    if (status === "confirmed" && !window.confirm(`Confirm this payment from ${label}? Their plan moves to ${planName} and their next due date shifts a month forward.`)) return;
+
+    let note = null;
+    if (status === "rejected") {
+      note = window.prompt(`Why is this payment being rejected? ${label} will see this note in their billing tab.`, "");
+      if (note === null) return;   // cancelled the prompt
+      note = note.trim() || null;
+    }
+
     setReviewingPaymentId(paymentId);
-    const ok = await adminReviewProviderPayment(paymentId, status);
+    const ok = await adminReviewProviderPayment(paymentId, status, note);
     setReviewingPaymentId(null);
-    if (ok) await loadPayments();
+    if (ok) {
+      await loadPayments();
+      // Confirming can reactivate a provider suspended for non-payment, so
+      // the Providers tab is stale until it's reloaded too.
+      await loadProviders();
+    } else {
+      window.alert("That didn't save. Please try again.");
+    }
   };
 
   const loadRefunds = async () => {
@@ -5571,18 +6188,38 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
   }, [isAdmin]);
 
   const act = async (id, status) => {
-    setBusyId(id);
     const app = apps.find((a) => a.id === id);
-    await updateApplicationStatus(id, status);
+
+    // Rejecting someone who is already live has to actually take them
+    // offline — before, it only changed the application row, and the
+    // provider stayed bookable and in search.
+    let alsoSuspend = null;
+    if (status === "rejected" && app?.email) {
+      alsoSuspend = providers.find((p) => (p.contact_email || "").toLowerCase() === app.email.toLowerCase() && p.is_active);
+      if (alsoSuspend && !window.confirm(`${alsoSuspend.business_name} is currently live on VaiBook. Rejecting this application will also suspend their listing. Continue?`)) return;
+    }
+
+    setBusyId(id);
+    const updated = await updateApplicationStatus(id, status);
+    if (!updated) {
+      setBusyId(null);
+      window.alert("That didn't save — the application wasn't changed. Please try again.");
+      return;
+    }
+
+    if (alsoSuspend) await adminUpdateProvider(alsoSuspend.id, { is_active: false });
+
     // Activation alone doesn't make them live — they still need to sign in
     // once with this email for their provider profile to be created (see
-    // loadProviderProfile). Tell them so, or they'll never know to.
+    // loadProviderProfile). Tell them so, or they'll never know to. Sent
+    // only after the status change actually succeeded.
     if (status === "active" && app?.email) {
-      sendBookingEmail({
+      const sent = await sendBookingEmail({
         to: app.email,
         subject: "You're approved on VaiBook!",
         html: providerApprovedEmailHtml({ businessName: app.business_name, ownerName: app.owner_name }),
       });
+      if (!sent) window.alert(`${app.business_name} is approved, but the approval email didn't go out. Let them know directly that they can sign in now.`);
     }
     await loadApps();
     await loadProviders();
@@ -5612,6 +6249,11 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
     if (updated) {
       setProviders((prev) => prev.map((p) => (p.id === providerId ? updated : p)));
       setEditingProviderId(null);
+    } else {
+      // Every admin action used to fail in total silence — the spinner
+      // stopped, nothing changed, and there was no way to tell a rejected
+      // permission apart from a no-op.
+      window.alert("That change didn't save. Please try again.");
     }
   };
 
@@ -5620,6 +6262,7 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
     const updated = await adminUpdateProvider(providerId, { plan });
     setSavingProviderId(null);
     if (updated) setProviders((prev) => prev.map((p) => (p.id === providerId ? updated : p)));
+    else window.alert("Couldn't change that plan. Please try again.");
   };
 
   const toggleProviderActive = async (provider) => {
@@ -5627,6 +6270,7 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
     const updated = await adminUpdateProvider(provider.id, { is_active: !provider.is_active });
     setSavingProviderId(null);
     if (updated) setProviders((prev) => prev.map((p) => (p.id === provider.id ? updated : p)));
+    else window.alert(`Couldn't ${provider.is_active ? "suspend" : "reactivate"} that provider. Please try again.`);
   };
 
   const confirmDeleteProvider = async (providerId) => {
@@ -5635,6 +6279,7 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
     setDeletingId(null);
     setConfirmDeleteId(null);
     if (ok) setProviders((prev) => prev.filter((p) => p.id !== providerId));
+    else window.alert("Couldn't delete that provider. Please try again.");
   };
 
   // Not signed in at all
@@ -5819,7 +6464,7 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
 
             <div className="metric-grid">
               <div className="metric"><div className="metric-label">Total</div><div className="metric-value">{providers.length}</div><div className="metric-sub">All providers</div></div>
-              <div className="metric"><div className="metric-label">Active</div><div className="metric-value" style={{ color: "var(--lime)" }}>{providers.filter(p => p.is_active).length}</div><div className="metric-sub">Live on VaiBook</div></div>
+              <div className="metric"><div className="metric-label">Live providers</div><div className="metric-value" style={{ color: "var(--lime)" }}>{providers.filter(p => p.is_active).length}</div><div className="metric-sub">Signed in and visible in search</div></div>
               <div className="metric"><div className="metric-label">Suspended</div><div className="metric-value">{providers.filter(p => !p.is_active).length}</div><div className="metric-sub">Hidden from customers</div></div>
             </div>
 
@@ -5950,8 +6595,8 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
                       </span>
                       {pmt.status === "pending" && (
                         <div style={{ display: "flex", gap: 8 }}>
-                          <button className="btn-sm lime" disabled={reviewingPaymentId === pmt.id} onClick={() => reviewPayment(pmt.id, "confirmed")}>Confirm</button>
-                          <button className="btn-sm" style={{ background: "transparent", border: "1px solid var(--muted)", color: "var(--muted)" }} disabled={reviewingPaymentId === pmt.id} onClick={() => reviewPayment(pmt.id, "rejected")}>Reject</button>
+                          <button className="btn-sm lime" disabled={reviewingPaymentId === pmt.id} onClick={() => reviewPayment(pmt, "confirmed")}>Confirm</button>
+                          <button className="btn-sm" style={{ background: "transparent", border: "1px solid var(--muted)", color: "var(--muted)" }} disabled={reviewingPaymentId === pmt.id} onClick={() => reviewPayment(pmt, "rejected")}>Reject</button>
                         </div>
                       )}
                     </div>
@@ -6069,11 +6714,11 @@ export default function App() {
   // Same "claim on first sign-in" idea as loadProviderProfile above, for
   // a staff seat instead of a whole business — only called once we
   // already know this account doesn't own a business itself.
-  const loadStaffProfile = async (authUser) => {
-    let sp = await getMyStaffProfile(authUser.id);
-    if (!sp) {
-      sp = await claimStaffSeatByEmail(authUser.email, authUser.id);
-    }
+  const loadStaffProfile = async () => {
+    // Both of these are SECURITY DEFINER RPCs that work off the caller's own
+    // JWT, so they take no arguments — see supabase_audit_fixes.sql.
+    let sp = await getMyStaffProfile();
+    if (!sp) sp = await claimStaffSeatByEmail();
     return sp;
   };
 
@@ -6096,7 +6741,7 @@ export default function App() {
         setUser(u);
         const p = await loadProviderProfile(session.user);
         setProviderProfile(p);
-        setStaffProfile(p ? null : await loadStaffProfile(session.user));
+        setStaffProfile(p ? null : await loadStaffProfile());
         applyPendingView();
       }
       setLoading(false);
@@ -6110,7 +6755,7 @@ export default function App() {
         setUser(u);
         const p = await loadProviderProfile(session.user);
         setProviderProfile(p);
-        setStaffProfile(p ? null : await loadStaffProfile(session.user));
+        setStaffProfile(p ? null : await loadStaffProfile());
         applyPendingView();
       } else {
         setUser(null);
