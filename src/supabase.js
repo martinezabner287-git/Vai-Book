@@ -278,33 +278,25 @@ export const deleteProviderStaff = async (staffId) => {
 // Called once per sign-in, same spot loadProviderProfile() checks
 // whether this account owns a business — this checks whether it's
 // already claimed a staff seat.
-export const getMyStaffProfile = async (userId) => {
-  if (!userId) return null;
-  const { data, error } = await supabase
-    .from('provider_staff')
-    .select('*, provider_profiles(business_name, service_type, district)')
-    .eq('user_id', userId)
-    .eq('is_active', true)
-    .maybeSingle();
+// Both of these go through SECURITY DEFINER RPCs rather than touching
+// provider_staff directly — see supabase_audit_fixes.sql. Reading the seat
+// needs a join onto the employer's provider_profiles row, which a staff
+// member has no policy to read; and claiming a seat is an UPDATE whose
+// WHERE clause reads a row that, being unclaimed and owned by someone
+// else's business, matches no SELECT policy at all — so the direct version
+// silently matched zero rows and the whole staff login never worked.
+// The RPCs also enforce that the employer is still on the Business plan,
+// so access ends by itself on downgrade or deactivation.
+export const getMyStaffProfile = async () => {
+  const { data, error } = await supabase.rpc('get_my_staff_seat');
   if (error) { console.error('Error fetching staff profile:', error.message); return null; }
-  return data;
+  return data || null;
 };
 
-// Case-insensitive for the same reason getActiveApplicationByEmail is:
-// the owner typed this email by hand when adding the staff member, but
-// it's matched against the exact-case email Google hands back.
-export const claimStaffSeatByEmail = async (email, userId) => {
-  if (!email || !userId) return null;
-  const normalized = String(email).trim();
-  const { data, error } = await supabase
-    .from('provider_staff')
-    .update({ user_id: userId })
-    .ilike('email', normalized)
-    .is('user_id', null)
-    .select('*, provider_profiles(business_name, service_type, district)')
-    .maybeSingle();
+export const claimStaffSeatByEmail = async () => {
+  const { data, error } = await supabase.rpc('claim_staff_seat');
   if (error) { console.error('Error claiming staff seat:', error.message); return null; }
-  return data;
+  return data || null;
 };
 
 export const getStaffBookings = async (staffId) => {
@@ -348,13 +340,14 @@ export const getProviderLoyaltyCustomers = async (providerId) => {
   return data || [];
 };
 
-export const redeemLoyaltyReward = async (accountId, newBalance) => {
-  const { error } = await supabase
-    .from('loyalty_accounts')
-    .update({ points_balance: newBalance, updated_at: new Date().toISOString() })
-    .eq('id', accountId);
-  if (error) { console.error('Error redeeming reward:', error.message); return false; }
-  return true;
+// Subtraction happens in the database against the current balance, not as
+// an absolute value computed from a list that may be minutes stale — see
+// redeem_loyalty_reward in supabase_audit_fixes.sql. Returns the updated
+// row, or null if the balance had already dropped below the threshold.
+export const redeemLoyaltyReward = async (accountId) => {
+  const { data, error } = await supabase.rpc('redeem_loyalty_reward', { p_account_id: accountId });
+  if (error) { console.error('Error redeeming reward:', error.message); return null; }
+  return Array.isArray(data) ? data[0] : data;
 };
 
 export const getActiveProviders = async (filters = {}) => {
@@ -513,7 +506,7 @@ export const getCustomerBookings = async (customerId) => {
 export const getProviderBookings = async (providerId) => {
   const { data, error } = await supabase
     .from('bookings')
-    .select('*, users(full_name, email, avatar_url), services(name, price), booking_refunds(id, amount, receipt_url, note, created_at)')
+    .select('*, users(full_name, email, avatar_url), services(name, price, duration_min), booking_refunds(id, amount, receipt_url, note, created_at)')
     .eq('provider_id', providerId)
     .order('booking_date', { ascending: true });
   if (error) console.error(error.message);
@@ -545,7 +538,12 @@ export const updateBooking = async (bookingId, updates) => {
 };
 
 export const uploadReceipt = async (bookingId, file) => {
-  const path = `receipts/${bookingId}/${file.name}`;
+  // Timestamped so re-uploading a second photo doesn't collide with the
+  // first — phone cameras hand back the same filename over and over
+  // ("image.jpg", "IMG_0001.jpg"), and a collision made the upload fail
+  // while the app still reported success.
+  const safeName = String(file.name || 'receipt').replace(/[^a-zA-Z0-9._-]/g, '_');
+  const path = `receipts/${bookingId}/${Date.now()}-${safeName}`;
   const { error: uploadError } = await supabase.storage
     .from('vaibook')
     .upload(path, file);
@@ -553,12 +551,45 @@ export const uploadReceipt = async (bookingId, file) => {
 
   // vaibook is a private bucket — store the storage path, not a public URL;
   // viewers open it via openPrivateFile(), which signs a short-lived link.
-  await supabase
+  const { error: updateError } = await supabase
     .from('bookings')
     .update({ receipt_url: path, payment_status: 'receipt_uploaded' })
     .eq('id', bookingId);
+  if (updateError) { console.error(updateError.message); return null; }
 
   return path;
+};
+
+// Hands back the provider's contact address for ONE booking the caller
+// placed themselves, and only when that provider still wants new-booking
+// emails. Their address deliberately isn't on the publicly readable profile
+// row — see get_provider_notify_email in supabase_audit_fixes.sql.
+export const getProviderNotifyEmail = async (bookingId) => {
+  if (!bookingId) return null;
+  const { data, error } = await supabase.rpc('get_provider_notify_email', { p_booking_id: bookingId });
+  if (error) { console.error('Error resolving provider email:', error.message); return null; }
+  return data || null;
+};
+
+// Moves a booking that hasn't happened yet to a new date/time, re-checking
+// for a clash the same way booking does. Throws with .code === 'SLOT_TAKEN'
+// when the new slot is already taken. See supabase_audit_fixes.sql.
+export const rescheduleBooking = async (bookingId, dateStr, timeStr) => {
+  const { data, error } = await supabase.rpc('reschedule_booking', {
+    p_booking_id: bookingId,
+    p_date: dateStr,
+    p_time: timeStr,
+  });
+  if (error) {
+    if (error.message && error.message.includes('SLOT_TAKEN')) {
+      const err = new Error('SLOT_TAKEN');
+      err.code = 'SLOT_TAKEN';
+      throw err;
+    }
+    console.error('Error rescheduling booking:', error.message);
+    return null;
+  }
+  return Array.isArray(data) ? data[0] : data;
 };
 
 // ── PROVIDER PLAN PAYMENTS (provider ↔ VaiBook, not tied to a booking) ──
@@ -763,7 +794,9 @@ export const getFavoriteProviders = async (customerId) => {
     .eq('customer_id', customerId)
     .order('created_at', { ascending: false });
   if (error) { console.error('Error fetching favorite providers:', error.message); return []; }
-  return (data || []).map((f) => f.provider_profiles).filter(Boolean);
+  // Suspended providers are hidden from search, so they shouldn't stay
+  // bookable from someone's favourites either.
+  return (data || []).map((f) => f.provider_profiles).filter((p) => p && p.is_active !== false);
 };
 
 export const addFavorite = async (customerId, providerId) => {
@@ -925,7 +958,11 @@ export const getActiveApplicationByEmail = async (email) => {
   // the exact-case email Google hands back on sign-in ("john@gmail.com").
   // An exact match here silently stranded anyone whose casing didn't line
   // up — approved, but never able to actually reach their portal.
-  const normalized = String(email).trim();
+  // ilike is a PATTERN match, so % and _ in the address would act as
+  // wildcards — and _ is perfectly legal in an email local part. Escaping
+  // them keeps this a plain case-insensitive comparison, so
+  // "john_doe@gmail.com" can't match an application for "johnXdoe@gmail.com".
+  const normalized = String(email).trim().replace(/([\\%_])/g, '\\$1');
   const { data, error } = await supabase
     .from('provider_applications')
     .select('*')
@@ -940,15 +977,17 @@ export const getActiveApplicationByEmail = async (email) => {
 
 // ── NOTIFICATION HELPERS ─────────────────────────────────────────
 
+// Plain insert with no .select(): the row belongs to the OTHER party, and
+// RLS treats RETURNING as a read, so asking for it back always failed the
+// notifications SELECT policy and logged an error on every send. No caller
+// needs the row.
 export const createNotification = async ({ user_id, title, body, type, booking_id }) => {
-  if (!user_id) return null;
-  const { data, error } = await supabase
+  if (!user_id) return false;
+  const { error } = await supabase
     .from('notifications')
-    .insert({ user_id, title, body: body || null, type: type || null, booking_id: booking_id || null })
-    .select()
-    .single();
-  if (error) { console.error('Error creating notification:', error.message); return null; }
-  return data;
+    .insert({ user_id, title, body: body || null, type: type || null, booking_id: booking_id || null });
+  if (error) { console.error('Error creating notification:', error.message); return false; }
+  return true;
 };
 
 export const getNotifications = async (userId) => {
