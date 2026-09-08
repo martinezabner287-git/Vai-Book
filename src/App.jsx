@@ -6,7 +6,7 @@ import L from "leaflet";
 import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
 import markerIcon from "leaflet/dist/images/marker-icon.png";
 import markerShadow from "leaflet/dist/images/marker-shadow.png";
-import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, deleteService, getActiveProviders, getProviderDirectory, createBooking, getProviderBusyWindows, createBookingSafe, cancelBooking, getCustomerBookings, uploadReceipt, submitReview, getProviderReviews, sendBookingEmail, updateUserProfile, getPaymentMethods, addPaymentMethod, deletePaymentMethod, createNotification, getNotifications, markNotificationRead, markAllNotificationsRead, getLandingStats, getRecommendedServices, getCategoryDefaultFeatures, getProviderFeatureOverrides, setProviderFeatureOverride, getVisitNotes, upsertVisitNote, adminListProviders, adminUpdateProvider, adminDeleteProvider, tagVIP, untagVIP, getVIPClients, getFavoriteProviderIds, getFavoriteProviders, addFavorite, removeFavorite, getBookingMessages, sendBookingMessage, markBookingMessagesRead, getUnreadBookingMessages, getProviderMonthlyTrend, createProviderProfile, getProviderById, createWalkInBooking, submitProviderPayment, getMyProviderPayments, adminListProviderPayments, adminReviewProviderPayment, submitBookingRefund, adminListBookingRefunds, openPrivateFile, getProviderStaff, addProviderStaff, updateProviderStaff, deleteProviderStaff, getLoyaltyAccount, getProviderLoyaltyCustomers, redeemLoyaltyReward, getMyStaffProfile, claimStaffSeatByEmail, getStaffBookings, rescheduleBooking, getProviderNotifyEmail } from "./supabase";
+import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, deleteService, getActiveProviders, getProviderDirectory, createBooking, getProviderBusyWindows, createBookingSafe, cancelBooking, getCustomerBookings, uploadReceipt, submitReview, getProviderReviews, sendBookingEmail, updateUserProfile, getPaymentMethods, addPaymentMethod, deletePaymentMethod, createNotification, getNotifications, markNotificationRead, markAllNotificationsRead, getLandingStats, getRecommendedServices, getCategoryDefaultFeatures, getProviderFeatureOverrides, setProviderFeatureOverride, getVisitNotes, upsertVisitNote, adminListProviders, adminUpdateProvider, adminDeleteProvider, tagVIP, untagVIP, getVIPClients, getFavoriteProviderIds, getFavoriteProviders, addFavorite, removeFavorite, getBookingMessages, sendBookingMessage, markBookingMessagesRead, getUnreadBookingMessages, getProviderMonthlyTrend, createProviderProfile, getProviderById, createWalkInBooking, submitProviderPayment, getMyProviderPayments, adminListProviderPayments, adminReviewProviderPayment, submitBookingRefund, adminListBookingRefunds, openPrivateFile, getProviderStaff, addProviderStaff, updateProviderStaff, deleteProviderStaff, getLoyaltyAccount, getProviderLoyaltyCustomers, redeemLoyaltyReward, getMyStaffProfile, claimStaffSeatByEmail, getStaffBookings, rescheduleBooking, getProviderNotifyEmail, getMaintenanceStatus, setMaintenanceMode } from "./supabase";
 
 // Leaflet's default marker icons reference image paths that don't resolve
 // correctly under CRA's bundler unless re-pointed at the imported assets.
@@ -862,6 +862,7 @@ function BookingChat({ bookingId, currentUserId, currentRole, recipientUserId })
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
   const [unread, setUnread] = useState(0);
+  const [sendError, setSendError] = useState("");
   const bottomRef = useRef(null);
 
   const load = async (markRead) => {
@@ -892,7 +893,17 @@ function BookingChat({ bookingId, currentUserId, currentRole, recipientUserId })
     const body = draft.trim();
     if (!body || sending) return;
     setSending(true);
-    const ok = await sendBookingMessage({ booking_id: bookingId, sender_id: currentUserId, sender_role: currentRole, body });
+    setSendError("");
+    let ok = false;
+    try {
+      ok = await sendBookingMessage({ booking_id: bookingId, sender_id: currentUserId, sender_role: currentRole, body });
+    } catch (err) {
+      setSending(false);
+      setSendError(err?.code === "RATE_LIMITED"
+        ? "You're sending messages quickly — please slow down a bit."
+        : "Something went wrong sending that. Please try again.");
+      return;
+    }
     if (ok) {
       setDraft("");
       await load(false);
@@ -905,6 +916,8 @@ function BookingChat({ bookingId, currentUserId, currentRole, recipientUserId })
           booking_id: bookingId,
         });
       }
+    } else {
+      setSendError("Something went wrong sending that. Please try again.");
     }
     setSending(false);
   };
@@ -945,6 +958,7 @@ function BookingChat({ bookingId, currentUserId, currentRole, recipientUserId })
             />
             <button className="btn-sm forest" disabled={sending || !draft.trim()} onClick={send}>Send</button>
           </div>
+          {sendError && <p style={{ fontSize: 11, color: "#B91C1C", marginTop: 6 }}>{sendError}</p>}
         </div>
       )}
     </div>
@@ -1538,6 +1552,35 @@ const NOTIF_DESTINATIONS = {
   payment_due_reminder: { view: "provider", tab: "billing" },
   payment_overdue_suspended: { view: "provider", tab: "billing" },
 };
+
+// Site-wide banner for the admin-only emergency maintenance switch (see
+// supabase_security_hardening.sql / AdminPortal's "Emergency" tab). Polls
+// rather than subscribing, matching how the rest of the app already
+// checks for updates (e.g. NotificationBell below) — this is a rare
+// admin action, not something that needs to be instant, and the flag is
+// also enforced server-side regardless of whether this banner has caught
+// up yet.
+function MaintenanceBanner() {
+  const [status, setStatus] = useState({ on: false, message: "" });
+
+  useEffect(() => {
+    let cancelled = false;
+    const check = async () => {
+      const s = await getMaintenanceStatus();
+      if (!cancelled) setStatus(s);
+    };
+    check();
+    const interval = setInterval(check, 60000);
+    return () => { cancelled = true; clearInterval(interval); };
+  }, []);
+
+  if (!status.on) return null;
+  return (
+    <div style={{ background: "#b45309", color: "#fff", textAlign: "center", padding: "10px 16px", fontSize: 13, fontWeight: 600, position: "relative", zIndex: 500 }}>
+      🚧 {status.message || "New bookings and signups are temporarily paused for maintenance. Everything else still works — please try again shortly."}
+    </div>
+  );
+}
 
 function NotificationBell({ userId, providerProfile, onNav }) {
   const [notifications, setNotifications] = useState([]);
@@ -2526,6 +2569,10 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
         // Refresh so the now-taken slot disappears from the picker.
         getProviderBusyWindows(selectedProvider.id, bookingForm.date).then((w) => setBusyWindows(w || []));
         setBookingForm((f) => ({ ...f, time: "" }));
+      } else if (err?.code === "RATE_LIMITED") {
+        setBookingError("You've sent a few booking requests in a short time. Please wait a bit before trying again.");
+      } else if (err?.code === "MAINTENANCE_MODE") {
+        setBookingError("New bookings are temporarily paused for maintenance. Please try again shortly.");
       } else {
         setBookingError("Something went wrong sending your request. Please try again.");
       }
@@ -3643,16 +3690,29 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
     }
 
     const order_number = `VB-${Date.now().toString(36).toUpperCase()}${Math.random().toString(36).slice(2, 5).toUpperCase()}`;
-    const created = await createWalkInBooking({
-      order_number,
-      provider_id: providerId,
-      service_id: walkInForm.service_id,
-      booking_date: walkInForm.date,
-      booking_time: walkInForm.time,
-      customer_name: walkInForm.name.trim(),
-      customer_phone: walkInForm.phone.trim() || null,
-      notes: walkInForm.notes.trim() || null,
-    });
+    let created = null;
+    try {
+      created = await createWalkInBooking({
+        order_number,
+        provider_id: providerId,
+        service_id: walkInForm.service_id,
+        booking_date: walkInForm.date,
+        booking_time: walkInForm.time,
+        customer_name: walkInForm.name.trim(),
+        customer_phone: walkInForm.phone.trim() || null,
+        notes: walkInForm.notes.trim() || null,
+      });
+    } catch (err) {
+      setSavingWalkIn(false);
+      if (err?.code === "RATE_LIMITED") {
+        setWalkInError("You've added several appointments in a short time. Please wait a few minutes and try again.");
+      } else if (err?.code === "MAINTENANCE_MODE") {
+        setWalkInError("New bookings are temporarily paused for maintenance. Please try again shortly.");
+      } else {
+        setWalkInError("Something went wrong saving this appointment. Please try again.");
+      }
+      return;
+    }
     setSavingWalkIn(false);
     if (created) {
       await loadBookings();
@@ -5842,7 +5902,7 @@ function ProviderSignup({ onNav }) {
   const [plan, setPlan] = useState("pro");
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [submitError, setSubmitError] = useState(false);
+  const [submitError, setSubmitError] = useState("");
   const [form, setForm] = useState({
     businessName: "", ownerName: "", email: "", phone: "",
     serviceType: "", district: "", description: "",
@@ -5857,26 +5917,39 @@ function ProviderSignup({ onNav }) {
       return;
     }
     setLoading(true);
-    setSubmitError(false);
+    setSubmitError("");
 
     const selectedPlan = PLANS.find(p => p.id === plan);
 
     // Save the application to Supabase so it shows up in the admin portal
-    const saved = await submitProviderApplication({
-      business_name: form.businessName,
-      owner_name: form.ownerName,
-      email: form.email.trim().toLowerCase(),
-      phone: form.phone,
-      service_type: form.serviceType,
-      district: form.district,
-      description: form.description || null,
-      plan: selectedPlan.id,
-      status: "pending",
-    });
+    let saved = false;
+    try {
+      saved = await submitProviderApplication({
+        business_name: form.businessName,
+        owner_name: form.ownerName,
+        email: form.email.trim().toLowerCase(),
+        phone: form.phone,
+        service_type: form.serviceType,
+        district: form.district,
+        description: form.description || null,
+        plan: selectedPlan.id,
+        status: "pending",
+      });
+    } catch (err) {
+      setLoading(false);
+      if (err?.code === "RATE_LIMITED") {
+        setSubmitError("We've received a few applications from this email/address already. Please wait an hour and try again, or WhatsApp us directly.");
+      } else if (err?.code === "MAINTENANCE_MODE") {
+        setSubmitError("New applications are temporarily paused for maintenance. Please try again shortly.");
+      } else {
+        setSubmitError("Something went wrong saving your application. Please try again, or WhatsApp us directly if it keeps failing.");
+      }
+      return;
+    }
 
     if (!saved) {
       setLoading(false);
-      setSubmitError(true);
+      setSubmitError("Something went wrong saving your application. Please try again, or WhatsApp us directly if it keeps failing.");
       return;
     }
 
@@ -6017,7 +6090,7 @@ function ProviderSignup({ onNav }) {
         </button>
         {submitError && (
           <p style={{ textAlign: "center", fontSize: 13, color: "#B91C1C", marginTop: 12, fontWeight: 600 }}>
-            Something went wrong saving your application. Please try again, or WhatsApp us directly if it keeps failing.
+            {submitError}
           </p>
         )}
         <p style={{ textAlign: "center", fontSize: 12, color: "var(--muted)", marginTop: 12 }}>
@@ -6097,6 +6170,23 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
 
   const [refunds, setRefunds] = useState([]);
   const [loadingRefunds, setLoadingRefunds] = useState(false);
+
+  // Emergency maintenance-mode switch — see supabase_security_hardening.sql.
+  // Pauses new bookings and new provider applications app-wide, independent
+  // of Vercel/DNS/Supabase dashboards, for the moment something looks
+  // actively wrong and new writes need to stop while it's investigated.
+  const [maintenance, setMaintenanceState] = useState({ on: false, message: "" });
+  const [maintenanceDraft, setMaintenanceDraft] = useState("");
+  const [loadingMaintenance, setLoadingMaintenance] = useState(false);
+  const [savingMaintenance, setSavingMaintenance] = useState(false);
+
+  const loadMaintenance = async () => {
+    setLoadingMaintenance(true);
+    const s = await getMaintenanceStatus();
+    setMaintenanceState(s);
+    setMaintenanceDraft(s.message || "");
+    setLoadingMaintenance(false);
+  };
 
   // Lets the top nav's account dropdown (with the same tools list as the
   // sidebar) switch tabs while already inside the admin portal,
@@ -6184,8 +6274,23 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
   };
 
   useEffect(() => {
-    if (isAdmin) { loadApps(); loadProviders(); loadPayments(); loadRefunds(); }
+    if (isAdmin) { loadApps(); loadProviders(); loadPayments(); loadRefunds(); loadMaintenance(); }
   }, [isAdmin]);
+
+  const toggleMaintenance = async () => {
+    const turningOn = !maintenance.on;
+    if (turningOn && !window.confirm("Pause new bookings and new provider applications site-wide? Everything else (sign-in, existing bookings, payments, messages) keeps working. You can turn this off again the moment you're ready.")) {
+      return;
+    }
+    setSavingMaintenance(true);
+    const ok = await setMaintenanceMode(turningOn, turningOn ? maintenanceDraft.trim() : null);
+    if (ok) {
+      await loadMaintenance();
+    } else {
+      window.alert("Couldn't update maintenance mode. Please check your connection and try again.");
+    }
+    setSavingMaintenance(false);
+  };
 
   const act = async (id, status) => {
     const app = apps.find((a) => a.id === id);
@@ -6375,6 +6480,12 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
             <span className="icon">{"💸"}</span>Refunds ({refunds.length})
           </div>
         </div>
+        <div className="sidebar-section">
+          <div className="sidebar-label">System</div>
+          <div className={`sidebar-item ${tab === "security" ? "active" : ""}`} onClick={() => setTab("security")}>
+            <span className="icon">{"🚨"}</span>Emergency{maintenance.on ? " (PAUSED)" : ""}
+          </div>
+        </div>
         <div className="sidebar-avatar">
           <div className="avatar">{(user?.full_name || session.user.email)[0].toUpperCase()}</div>
           <div className="avatar-info">
@@ -6385,7 +6496,7 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
       </aside>
 
       <main className="portal-content">
-        {tab !== "providers" && tab !== "payments" && tab !== "refunds" && (
+        {tab !== "providers" && tab !== "payments" && tab !== "refunds" && tab !== "security" && (
           <>
             <div className="portal-header">
               <h2>Provider applications</h2>
@@ -6634,6 +6745,54 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
             </div>
           </>
         )}
+        {tab === "security" && (
+          <>
+            <div className="portal-header">
+              <h2>Emergency</h2>
+              <p>A last-resort switch for the moment something looks actively wrong — new bookings and new provider applications are turned off site-wide, in about a second, without touching Vercel, DNS, or Supabase. Sign-in, existing bookings, payments, messages, and reviews all keep working normally.</p>
+            </div>
+            <div className="card">
+              <div className="card-title">
+                <span>{maintenance.on ? "🚨 New bookings & signups are PAUSED" : "New bookings & signups are open"}</span>
+              </div>
+              {loadingMaintenance ? (
+                <p style={{ fontSize: 13, color: "var(--muted)", padding: "12px 0" }}>Loading...</p>
+              ) : (
+                <>
+                  {maintenance.on && maintenance.message && (
+                    <p style={{ fontSize: 13, color: "var(--muted)", marginBottom: 12 }}>Message shown to visitors: "{maintenance.message}"</p>
+                  )}
+                  {!maintenance.on && (
+                    <div style={{ marginBottom: 12 }}>
+                      <label style={{ fontSize: 12, fontWeight: 600, color: "var(--muted)", display: "block", marginBottom: 4 }}>Message to show visitors while paused (optional)</label>
+                      <input
+                        type="text"
+                        value={maintenanceDraft}
+                        onChange={(e) => setMaintenanceDraft(e.target.value)}
+                        placeholder="e.g. We're doing quick maintenance — back in a few minutes."
+                        style={{ width: "100%" }}
+                      />
+                    </div>
+                  )}
+                  <button
+                    className={maintenance.on ? "btn-sm forest" : "btn-sm"}
+                    style={!maintenance.on ? { background: "#B91C1C", color: "#fff" } : undefined}
+                    onClick={toggleMaintenance}
+                    disabled={savingMaintenance}
+                  >
+                    {savingMaintenance ? "Saving..." : maintenance.on ? "Resume new bookings & signups" : "🚨 Pause new bookings & signups"}
+                  </button>
+                </>
+              )}
+            </div>
+            <div className="card">
+              <div className="card-title"><span>What this does and doesn't do</span></div>
+              <p style={{ fontSize: 13, color: "var(--muted)", lineHeight: 1.6 }}>
+                Pausing blocks new rows being written to bookings and provider_applications — it will not cancel, hide, or affect anything already booked, and it doesn't touch payments, chat, reviews, or anyone's ability to sign in. New booking requests, walk-ins, and new provider applications are declined with a friendly message until you resume. Use this if you suspect the site is being flooded or abused and you want to stop new writes while you look into it — not as a way to take the site offline entirely (for that, see the security guide's "if you think you're under attack" section).
+              </p>
+            </div>
+          </>
+        )}
       </main>
     </div>
   );
@@ -6793,6 +6952,7 @@ export default function App() {
   return (
     <>
       <style>{css}</style>
+      <MaintenanceBanner />
       <InstallAppGuide />
       {view !== "auth" && <Nav onNav={setView} current={view} {...authProps} />}
       {view === "home" && <LandingPage onNav={setView} {...authProps} />}
