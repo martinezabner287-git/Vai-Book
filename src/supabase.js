@@ -444,15 +444,31 @@ export const createBookingSafe = async (booking) => {
     p_notes: booking.notes,
   });
   if (error) {
-    if (error.message && error.message.includes('SLOT_TAKEN')) {
-      const err = new Error('SLOT_TAKEN');
-      err.code = 'SLOT_TAKEN';
-      throw err;
-    }
+    throwKnownGuardErrors(error);
     console.error('Error creating booking:', error.message);
     return null;
   }
   return Array.isArray(data) ? data[0] : data;
+};
+
+// The security-hardening migration added BEFORE INSERT guards (rate
+// limiting + maintenance mode) on provider_applications, bookings, and
+// booking_messages. Postgres surfaces a RAISE EXCEPTION as a plain error
+// with our message text inside it, so we recognize it by substring and
+// re-throw with a `.code` the UI can branch on — same pattern already
+// used for SLOT_TAKEN above.
+const throwKnownGuardErrors = (error) => {
+  if (!error || !error.message) return;
+  if (error.message.includes('RATE_LIMITED')) {
+    const err = new Error('RATE_LIMITED');
+    err.code = 'RATE_LIMITED';
+    throw err;
+  }
+  if (error.message.includes('MAINTENANCE_MODE')) {
+    const err = new Error('MAINTENANCE_MODE');
+    err.code = 'MAINTENANCE_MODE';
+    throw err;
+  }
 };
 
 // Lets a provider add a confirmed booking directly for someone who isn't
@@ -472,7 +488,11 @@ export const createWalkInBooking = async (booking) => {
     p_customer_phone: booking.customer_phone || null,
     p_notes: booking.notes || null,
   });
-  if (error) { console.error('Error adding walk-in booking:', error.message); return null; }
+  if (error) {
+    throwKnownGuardErrors(error);
+    console.error('Error adding walk-in booking:', error.message);
+    return null;
+  }
   return Array.isArray(data) ? data[0] : data;
 };
 
@@ -687,7 +707,11 @@ export const sendBookingMessage = async ({ booking_id, sender_id, sender_role, b
   const { error } = await supabase
     .from('booking_messages')
     .insert({ booking_id, sender_id, sender_role, body });
-  if (error) { console.error('Error sending message:', error.message); return false; }
+  if (error) {
+    throwKnownGuardErrors(error);
+    console.error('Error sending message:', error.message);
+    return false;
+  }
   return true;
 };
 
@@ -911,6 +935,29 @@ export const checkIsAdmin = async (email) => {
   return !!data;
 };
 
+// ── MAINTENANCE MODE (emergency pause switch — see supabase_security_hardening.sql) ──
+
+// Public read — no auth required, so a signed-out visitor sees the banner
+// too. Fails "open" (mode off) if the row can't be read, so a transient
+// error here never itself locks the site.
+export const getMaintenanceStatus = async () => {
+  const { data, error } = await supabase
+    .from('system_settings')
+    .select('maintenance_mode, maintenance_message')
+    .eq('id', true)
+    .maybeSingle();
+  if (error) { console.error('Error checking maintenance mode:', error.message); return { on: false, message: '' }; }
+  return { on: !!data?.maintenance_mode, message: data?.maintenance_message || '' };
+};
+
+// Admin-only — the RPC re-checks admin status server-side regardless of
+// what the client believes.
+export const setMaintenanceMode = async (on, message) => {
+  const { error } = await supabase.rpc('set_maintenance_mode', { p_on: on, p_message: message || null });
+  if (error) { console.error('Error setting maintenance mode:', error.message); return false; }
+  return true;
+};
+
 export const submitProviderApplication = async (application) => {
   // Deliberately a plain insert with no .select() — this form is reachable
   // by anyone who hasn't signed in yet, and Postgres RLS treats "hand back
@@ -923,7 +970,11 @@ export const submitProviderApplication = async (application) => {
   const { error } = await supabase
     .from('provider_applications')
     .insert(application);
-  if (error) { console.error('Error submitting application:', error.message); return false; }
+  if (error) {
+    throwKnownGuardErrors(error);
+    console.error('Error submitting application:', error.message);
+    return false;
+  }
   return true;
 };
 
