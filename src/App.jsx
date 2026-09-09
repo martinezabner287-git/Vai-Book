@@ -598,6 +598,24 @@ const css = `
     .a2hs-banner { left: 12px; right: 12px; bottom: 12px; padding: 12px; }
   }
 
+  /* NAV — keep the top row on one line without pushing "Menu"/the avatar
+     off-screen on phone-width viewports (the 3-button Log in / List your
+     business / Menu row otherwise overflows below ~430px). */
+  .mobile-only-item { display: none; }
+  @media (max-width: 480px) {
+    .nav { padding: 14px 16px; }
+    .nav-logo { font-size: 18px; }
+    .nav-cta { gap: 8px; }
+    .nav-signup-btn { display: none; }
+    .nav-login-link { font-size: 13px; padding: 4px 2px; }
+    .nav-menu-btn { padding: 8px 12px 8px 14px; font-size: 13px; gap: 6px; }
+    .nav-menu-btn .bars span { width: 13px; }
+    .nav-avatar-btn { padding: 3px 8px 3px 3px; gap: 6px; }
+    .notif-bell-btn { width: 34px; height: 34px; font-size: 14px; }
+    .nav-dropdown .mobile-only-item { display: block; }
+    .nav-account-dropdown .mobile-only-item { display: flex; }
+  }
+
   .a2hs-banner {
     position: fixed;
     left: 20px;
@@ -1880,6 +1898,9 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
                   <a onClick={() => goAccount(() => scrollToSection("how-it-works", onNav, current))}>How it works</a>
                   <a onClick={() => goAccount(() => scrollToSection("browse", onNav, current))}>Browse by district</a>
                   <hr />
+                  <button className="nav-dropdown-item mobile-only-item" onClick={() => goAccount(() => onNav("signup"))}>
+                    <span className="icn">🏪</span> List your business
+                  </button>
                   <button className="nav-dropdown-item for-biz" onClick={() => goAccount(() => enterProviderPortal(onNav, session, onSignIn))}>
                     For businesses <span>→</span>
                   </button>
@@ -1894,7 +1915,7 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
             <button className="nav-login-link" onClick={() => onNav("auth")}>Log in</button>
           )}
           {current === "home" && (
-            <button className="btn-ghost" onClick={() => onNav("signup")}>List your business</button>
+            <button className="btn-ghost nav-signup-btn" onClick={() => onNav("signup")}>List your business</button>
           )}
           {!session && (
           <div style={{ position: "relative" }}>
@@ -1913,6 +1934,7 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
                 {current === "home" && (
                   <>
                     <hr />
+                    <button className="nav-dropdown-item mobile-only-item" onClick={() => go(() => onNav("signup"))}>List your business</button>
                     <button className="nav-dropdown-item" onClick={() => go(() => enterProviderPortal(onNav, session, onSignIn))}>
                       Provider login
                     </button>
