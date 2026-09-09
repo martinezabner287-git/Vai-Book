@@ -178,11 +178,11 @@ function buildSuggestions(list, query) {
 // ── DESIGN TOKENS ──────────────────────────────────────────────
 // Palette: deep forest green (#0D3D2E) + warm sand (#F5EFE0) + 
 // electric lime accent (#C6F135) + soft clay (#D4795A) + near-white (#FAFAF7)
-// Type: "Syne" display (bold, geometric) + "Inter" body
+// Type: "Plus Jakarta Sans" throughout (display + body) — matches Vai Buy & Sell
 // Signature: the lime accent used sparingly — only on the ONE thing that matters per screen
 
 const css = `
-  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Inter:wght@400;500;600;700;800&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -201,7 +201,7 @@ const css = `
     --radius-sm: 8px;
   }
 
-  body { font-family: 'Inter', sans-serif; background: var(--near-white); color: var(--dark-text); }
+  body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--near-white); color: var(--dark-text); }
 
   /* NAV */
   .nav-outer { position: sticky; top: 0; z-index: 100; background: var(--forest); }
@@ -209,7 +209,7 @@ const css = `
     display: flex; align-items: center; justify-content: space-between;
     padding: 16px 48px; background: var(--forest); position: relative;
   }
-  .nav-logo { font-family: 'Syne', sans-serif; font-size: 22px; color: var(--near-white); letter-spacing: -0.5px; }
+  .nav-logo { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 22px; color: var(--near-white); letter-spacing: -0.5px; }
   .nav-logo span { color: var(--lime); }
   .nav-cta { display: flex; align-items: center; gap: 18px; position: relative; }
 
@@ -220,7 +220,7 @@ const css = `
     overflow-x: auto; scrollbar-width: none;
   }
   .nav-strip::-webkit-scrollbar { display: none; }
-  .nav-strip-link { background: none; border: none; color: rgba(250,250,247,0.82); font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 500; cursor: pointer; padding: 2px 0; white-space: nowrap; transition: color .2s; }
+  .nav-strip-link { background: none; border: none; color: rgba(250,250,247,0.82); font-family: 'Plus Jakarta Sans', sans-serif; font-size: 13px; font-weight: 500; cursor: pointer; padding: 2px 0; white-space: nowrap; transition: color .2s; }
   .nav-strip-link:hover { color: var(--lime); }
   .nav-strip-cta { color: var(--lime); font-weight: 600; margin-left: auto; }
   .nav-strip-district { margin-left: auto; font-size: 12px; color: rgba(250,250,247,0.55); white-space: nowrap; padding-left: 18px; }
@@ -231,7 +231,7 @@ const css = `
   .nav-search-wrap.visible { opacity: 1; pointer-events: auto; transform: none; }
   .nav-search { position: relative; width: 100%; max-width: 420px; }
   .nav-search-input-wrap { display: flex; align-items: center; gap: 8px; background: var(--sand); border-radius: 100px; padding: 9px 16px; }
-  .nav-search-input-wrap input { border: none; outline: none; background: transparent; font-size: 13px; width: 100%; font-family: 'Inter', sans-serif; color: var(--dark-text); }
+  .nav-search-input-wrap input { border: none; outline: none; background: transparent; font-size: 13px; width: 100%; font-family: 'Plus Jakarta Sans', sans-serif; color: var(--dark-text); }
   .nav-search-icon { font-size: 14px; color: var(--muted); flex-shrink: 0; }
   .nav-search-toggle { display: none; background: transparent; border: 1px solid rgba(255,255,255,0.35); width: 38px; height: 38px; border-radius: 50%; align-items: center; justify-content: center; cursor: pointer; font-size: 15px; color: var(--near-white); flex-shrink: 0; opacity: 0; pointer-events: none; transition: opacity .2s ease; }
   .nav-search-toggle.visible { opacity: 1; pointer-events: auto; }
@@ -280,7 +280,7 @@ const css = `
   .auth-back { width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--border); background: white; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 18px; color: var(--dark-text); }
   .auth-back:hover { border-color: var(--forest); color: var(--forest); }
   .auth-choice-body { flex: 1; display: flex; flex-direction: column; justify-content: center; max-width: 420px; margin: 0 auto; width: 100%; }
-  .auth-choice-body h1 { font-family: 'Syne', sans-serif; font-size: 30px; font-weight: 800; color: var(--forest); margin-bottom: 32px; text-align: center; }
+  .auth-choice-body h1 { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 30px; font-weight: 800; color: var(--forest); margin-bottom: 32px; text-align: center; }
   .auth-option-card { display: flex; align-items: center; justify-content: space-between; gap: 16px; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 20px 22px; margin-bottom: 16px; cursor: pointer; transition: all .2s; background: white; }
   .auth-option-card:hover { border-color: var(--forest); box-shadow: 0 6px 20px rgba(13,61,46,0.08); }
   .auth-option-card h3 { font-size: 16px; font-weight: 700; color: var(--dark-text); margin-bottom: 4px; }
@@ -295,7 +295,7 @@ const css = `
       radial-gradient(circle at 80% 70%, rgba(212,121,90,0.30), transparent 55%);
     filter: blur(60px);
   }
-  .auth-choice-panel-logo { position: relative; z-index: 1; font-family: 'Syne', sans-serif; font-size: 44px; font-weight: 800; color: var(--near-white); }
+  .auth-choice-panel-logo { position: relative; z-index: 1; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 44px; font-weight: 800; color: var(--near-white); }
   .auth-choice-panel-logo span { color: var(--lime); }
   @media (max-width: 768px) {
     .auth-choice { grid-template-columns: 1fr; }
@@ -326,7 +326,7 @@ const css = `
     min-height: 85vh;
   }
   .hero-eyebrow { font-size: 12px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--lime); margin-bottom: 20px; }
-  .hero-title { font-family: 'Syne', sans-serif; font-size: clamp(40px, 5vw, 64px); line-height: 1.05; color: var(--near-white); margin-bottom: 24px; }
+  .hero-title { font-family: 'Plus Jakarta Sans', sans-serif; font-size: clamp(40px, 5vw, 64px); line-height: 1.05; color: var(--near-white); margin-bottom: 24px; }
   .hero-title em { font-style: normal; color: var(--lime); }
   .hero-body { font-size: 17px; line-height: 1.7; color: rgba(255,255,255,0.65); max-width: 440px; margin-bottom: 40px; }
   .hero-actions { display: flex; gap: 12px; flex-wrap: wrap; }
@@ -366,8 +366,8 @@ const css = `
   }
   .search-hero > * { position: relative; z-index: 1; max-width: 780px; margin-left: auto; margin-right: auto; }
   .search-hero > .search-bar-pill { z-index: 10; }
-  .search-hero-eyebrow { font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; color: rgba(250,250,247,0.55); margin-bottom: 18px; text-align: center; }
-  .search-hero h1 { font-family: 'Syne', sans-serif; font-weight: 800; font-size: clamp(32px, 5vw, 58px); line-height: 1.08; letter-spacing: -1px; margin: 0 auto 20px; text-align: center; }
+  .search-hero-eyebrow { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 12px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; color: rgba(250,250,247,0.55); margin-bottom: 18px; text-align: center; }
+  .search-hero h1 { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; font-size: clamp(32px, 5vw, 58px); line-height: 1.08; letter-spacing: -1px; margin: 0 auto 20px; text-align: center; }
   .search-hero h1 .line1 { display: block; color: var(--near-white); }
   .search-hero h1 .line2 { display: block; color: var(--lime); }
   @media (max-width: 480px) {
@@ -376,9 +376,9 @@ const css = `
   .search-sub { font-size: 17px; color: rgba(250,250,247,0.72); max-width: 560px; margin: 0 auto 40px; line-height: 1.5; text-align: center; }
   .search-bar-pill { position: relative; max-width: 760px; margin: 0 auto; background: white; border-radius: 100px; box-shadow: 0 20px 50px rgba(0,0,0,0.28); display: flex; align-items: center; padding: 8px; gap: 4px; }
   .search-bar-pill .field { flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; padding: 10px 18px; }
-  .search-bar-pill .field input, .search-bar-pill .field select { border: none; outline: none; background: transparent; font-size: 14px; width: 100%; color: var(--dark-text); font-family: 'Inter', sans-serif; }
+  .search-bar-pill .field input, .search-bar-pill .field select { border: none; outline: none; background: transparent; font-size: 14px; width: 100%; color: var(--dark-text); font-family: 'Plus Jakarta Sans', sans-serif; }
   .search-bar-pill .sep { width: 1px; height: 28px; background: var(--border); flex-shrink: 0; }
-  .search-submit { background: var(--forest); color: var(--near-white); border: none; border-radius: 100px; padding: 14px 30px; font-weight: 600; font-size: 15px; cursor: pointer; white-space: nowrap; transition: opacity .2s; font-family: 'Inter', sans-serif; }
+  .search-submit { background: var(--forest); color: var(--near-white); border: none; border-radius: 100px; padding: 14px 30px; font-weight: 600; font-size: 15px; cursor: pointer; white-space: nowrap; transition: opacity .2s; font-family: 'Plus Jakarta Sans', sans-serif; }
   .search-submit:hover { opacity: .87; }
   .search-hero-tagline { margin-top: 26px; font-size: 13px; color: rgba(250,250,247,0.6); text-align: center; }
   .search-hero-tagline a { color: var(--lime); font-weight: 600; cursor: pointer; text-decoration: underline; }
@@ -400,18 +400,18 @@ const css = `
   /* STATS BAR */
   .stats-bar { background: var(--sand); padding: 40px 48px; display: flex; justify-content: space-around; gap: 32px; flex-wrap: wrap; }
   .stat { text-align: center; }
-  .stat-num { font-family: 'Syne', sans-serif; font-size: 36px; font-weight: 800; color: var(--forest); }
+  .stat-num { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 36px; font-weight: 800; color: var(--forest); }
   .stat-num span { color: var(--clay); }
   .stat-label { font-size: 13px; color: var(--muted); margin-top: 4px; }
 
   /* HOW IT WORKS */
   .section { padding: 80px 48px; }
   .section-eyebrow { font-size: 12px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--clay); margin-bottom: 12px; }
-  .section-title { font-family: 'Syne', sans-serif; font-size: clamp(28px, 4vw, 44px); color: var(--forest); margin-bottom: 16px; line-height: 1.1; }
+  .section-title { font-family: 'Plus Jakarta Sans', sans-serif; font-size: clamp(28px, 4vw, 44px); color: var(--forest); margin-bottom: 16px; line-height: 1.1; }
   .section-sub { font-size: 16px; color: var(--muted); max-width: 520px; line-height: 1.65; margin-bottom: 48px; }
   .steps-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 24px; }
   .step-card { background: var(--near-white); border: 1px solid var(--border); border-radius: var(--radius); padding: 28px 24px; position: relative; overflow: hidden; }
-  .step-card::before { content: attr(data-n); position: absolute; top: -10px; right: 16px; font-family: 'Syne', sans-serif; font-size: 72px; font-weight: 800; color: var(--forest); opacity: 0.04; line-height: 1; }
+  .step-card::before { content: attr(data-n); position: absolute; top: -10px; right: 16px; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 72px; font-weight: 800; color: var(--forest); opacity: 0.04; line-height: 1; }
   .step-icon { font-size: 28px; margin-bottom: 16px; }
   .step-card h3 { font-size: 16px; font-weight: 600; color: var(--forest); margin-bottom: 8px; }
   .step-card p { font-size: 14px; color: var(--muted); line-height: 1.6; }
@@ -433,7 +433,7 @@ const css = `
   .price-card.popular { border-color: var(--forest); box-shadow: 0 0 0 1px var(--forest); }
   .popular-badge { position: absolute; top: -12px; left: 24px; background: var(--forest); color: var(--lime); font-size: 11px; font-weight: 700; padding: 4px 12px; border-radius: 20px; letter-spacing: .04em; text-transform: uppercase; }
   .price-tier { font-size: 13px; font-weight: 600; color: var(--muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: .06em; }
-  .price-amount { font-family: 'Syne', sans-serif; font-size: 40px; font-weight: 800; color: var(--forest); margin-bottom: 4px; }
+  .price-amount { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 40px; font-weight: 800; color: var(--forest); margin-bottom: 4px; }
   .price-amount sup { font-size: 20px; vertical-align: super; }
   .price-period { font-size: 13px; color: var(--muted); margin-bottom: 24px; }
   .price-features { list-style: none; margin-bottom: 28px; display: flex; flex-direction: column; gap: 10px; }
@@ -472,7 +472,7 @@ const css = `
   /* PORTAL CONTENT */
   .portal-content { background: #F0F4F2; padding: 32px; overflow-y: auto; }
   .portal-header { margin-bottom: 28px; }
-  .portal-header h2 { font-family: 'Syne', sans-serif; font-size: 26px; font-weight: 700; color: var(--forest); }
+  .portal-header h2 { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 26px; font-weight: 700; color: var(--forest); }
   .portal-header p { font-size: 14px; color: var(--muted); margin-top: 4px; }
 
   /* CARDS / WIDGETS */
@@ -481,7 +481,7 @@ const css = `
   .metric-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 24px; }
   .metric { background: var(--near-white); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; }
   .metric-label { font-size: 12px; font-weight: 500; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 8px; }
-  .metric-value { font-family: 'Syne', sans-serif; font-size: 30px; font-weight: 800; color: var(--forest); }
+  .metric-value { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 30px; font-weight: 800; color: var(--forest); }
   .metric-sub { font-size: 12px; color: var(--muted); margin-top: 4px; }
   .metric-accent { color: var(--clay); }
 
@@ -529,7 +529,7 @@ const css = `
 
   /* SEARCH BAR */
   .search-bar { position: relative; background: white; border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 20px; display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
-  .search-bar input { border: none; outline: none; font-size: 15px; flex: 1; font-family: 'Inter', sans-serif; color: var(--dark-text); background: transparent; }
+  .search-bar input { border: none; outline: none; font-size: 15px; flex: 1; font-family: 'Plus Jakarta Sans', sans-serif; color: var(--dark-text); background: transparent; }
   .search-bar .search-icon { color: var(--muted); font-size: 18px; }
 
   /* PROVIDER GRID */
@@ -562,7 +562,7 @@ const css = `
 
   .input-group { margin-bottom: 14px; }
   .input-group label { font-size: 12px; font-weight: 600; color: var(--dark-text); display: block; margin-bottom: 6px; letter-spacing: .02em; }
-  .input-group input, .input-group select, .input-group textarea { width: 100%; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px 14px; font-size: 14px; font-family: 'Inter', sans-serif; color: var(--dark-text); background: white; outline: none; transition: border-color .2s; }
+  .input-group input, .input-group select, .input-group textarea { width: 100%; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px 14px; font-size: 14px; font-family: 'Plus Jakarta Sans', sans-serif; color: var(--dark-text); background: white; outline: none; transition: border-color .2s; }
   .input-group input:focus, .input-group select:focus, .input-group textarea:focus { border-color: var(--forest); }
   .input-group input:disabled { background: var(--sand); color: var(--muted); cursor: default; }
   .input-group textarea { resize: vertical; height: 80px; }
@@ -634,7 +634,7 @@ const css = `
   .a2hs-modal-close { position: absolute; top: 16px; right: 16px; background: none; border: none; font-size: 16px; color: var(--muted); cursor: pointer; }
   .a2hs-modal-close:hover { color: var(--forest); }
   .a2hs-modal-icon { font-size: 40px; margin-bottom: 8px; }
-  .a2hs-modal-title { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 800; color: var(--forest); margin: 0 0 8px; }
+  .a2hs-modal-title { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 20px; font-weight: 800; color: var(--forest); margin: 0 0 8px; }
   .a2hs-modal-sub { font-size: 13px; color: var(--muted); line-height: 1.5; margin: 0 0 20px; }
   .a2hs-install-btn { width: 100%; padding: 12px; font-size: 14px; margin-bottom: 16px; }
   .a2hs-tabs { display: flex; gap: 8px; background: var(--sand); border-radius: 100px; padding: 4px; margin-bottom: 20px; }
@@ -645,6 +645,27 @@ const css = `
   .a2hs-step-num { flex-shrink: 0; width: 22px; height: 22px; border-radius: 50%; background: var(--forest); color: white; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
   .a2hs-glyph { font-size: 13px; }
 `;
+
+// ── BRAND MARK ─────────────────────────────────────────────────
+// Stepped-triangle mark: three ascending terraces reading left-to-right,
+// moss green climbing to the lime accent — the "growth" motif agreed on
+// for VaiBook. Renders as a plain <svg> so it drops in anywhere the
+// wordmark appears, at any size, without an external image file.
+function VaiBookMark({ size = 26, style }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 100 100"
+      style={{ flexShrink: 0, display: "block", ...style }}
+      aria-hidden="true"
+    >
+      <rect x="6" y="62" width="26" height="32" rx="6" fill="#3F6B4A" />
+      <rect x="37" y="38" width="26" height="56" rx="6" fill="#5C8A68" />
+      <rect x="68" y="6" width="26" height="88" rx="6" fill="var(--lime, #C6F135)" />
+    </svg>
+  );
+}
 
 // ── DATA ────────────────────────────────────────────────────────
 const SERVICES = [
@@ -1412,7 +1433,7 @@ function AuthChoice({ onNav, session, onSignIn }) {
       </div>
       <div className="auth-choice-panel">
         {/* Swap this for a real photo later: <img src="/your-photo.jpg" style={{width:"100%",height:"100%",objectFit:"cover"}} /> */}
-        <div className="auth-choice-panel-logo">vai<span>book</span></div>
+        <div className="auth-choice-panel-logo" style={{ display: "flex", alignItems: "center", gap: 12 }}><VaiBookMark size={38} />vai<span>book</span></div>
       </div>
     </div>
   );
@@ -1793,7 +1814,7 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
   return (
     <div className="nav-outer" ref={navRef}>
     <nav className="nav">
-      <span className="nav-logo" style={{ cursor: "pointer" }} onClick={() => onNav("home")}>vai<span>book</span></span>
+      <span className="nav-logo" style={{ cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 8 }} onClick={() => onNav("home")}><VaiBookMark size={24} />vai<span>book</span></span>
 
       <div className={`nav-search-wrap ${navSearchActive ? "visible" : ""}`}>
         <div className="nav-search">
@@ -2205,7 +2226,7 @@ function LandingPage({ onNav, session, onSignIn }) {
       <footer className="footer">
         <div className="footer-top">
           <div className="footer-brand">
-            <span className="nav-logo">vai<span>book</span></span>
+            <span className="nav-logo" style={{ display: "inline-flex", alignItems: "center", gap: 8 }}><VaiBookMark size={20} />vai<span>book</span></span>
             <p>Local services. Booked easily. Built for Belize.</p>
           </div>
           <div className="footer-links">
@@ -2783,7 +2804,7 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
     <div className="portal-layout">
       <aside className="sidebar">
         <div style={{ padding: "0 16px 20px", borderBottom: "1px solid rgba(255,255,255,0.08)", marginBottom: 20 }}>
-          <span className="nav-logo" style={{ fontFamily: "Syne, sans-serif", fontSize: 18, color: "var(--near-white)" }}>vai<span style={{ color: "var(--lime)" }}>book</span></span>
+          <span className="nav-logo" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 18, color: "var(--near-white)", display: "inline-flex", alignItems: "center", gap: 7 }}><VaiBookMark size={19} />vai<span style={{ color: "var(--lime)" }}>book</span></span>
           <div style={{ fontSize: 11, color: "rgba(255,255,255,0.35)", marginTop: 4 }}>Customer portal</div>
         </div>
         <div className="sidebar-section">
@@ -3479,8 +3500,8 @@ function StaffPortal({ onNav, session, staffProfile, onSignOut }) {
     return (
       <div style={{ minHeight: "100vh", background: "var(--forest)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
         <div style={{ textAlign: "center", maxWidth: 360 }}>
-          <div style={{ fontFamily: "Syne, sans-serif", fontSize: 28, fontWeight: 800, color: "var(--near-white)", marginBottom: 8 }}>
-            vai<span style={{ color: "var(--lime)" }}>book</span>
+          <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 28, fontWeight: 800, color: "var(--near-white)", marginBottom: 8, display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}>
+            <VaiBookMark size={30} />vai<span style={{ color: "var(--lime)" }}>book</span>
           </div>
           <p style={{ color: "rgba(255,255,255,0.6)", fontSize: 14, marginBottom: 24 }}>Sign in with Google to access your schedule.</p>
           <button className="btn-lime" style={{ width: "100%", padding: "12px 0" }} onClick={() => onNav("home")}>← Back to site</button>
@@ -3504,7 +3525,7 @@ function StaffPortal({ onNav, session, staffProfile, onSignOut }) {
     <div style={{ maxWidth: 760, margin: "0 auto", padding: "32px 20px" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
         <div>
-          <div style={{ fontFamily: "Syne, sans-serif", fontSize: 20, fontWeight: 800 }}>vai<span style={{ color: "var(--lime)" }}>book</span> <span style={{ fontWeight: 500, fontSize: 14, color: "var(--muted)" }}>staff</span></div>
+          <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 20, fontWeight: 800, display: "flex", alignItems: "center", gap: 8 }}><VaiBookMark size={20} />vai<span style={{ color: "var(--lime)" }}>book</span> <span style={{ fontWeight: 500, fontSize: 14, color: "var(--muted)" }}>staff</span></div>
           <p style={{ fontSize: 13, color: "var(--muted)", marginTop: 2 }}>
             {staffProfile?.name} · {staffProfile?.provider_profiles?.business_name || "your team"}
           </p>
@@ -4440,8 +4461,8 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
     return (
       <div style={{ minHeight: "100vh", background: "var(--forest)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
         <div style={{ textAlign: "center", maxWidth: 360 }}>
-          <div style={{ fontFamily: "Syne, sans-serif", fontSize: 28, fontWeight: 800, color: "var(--near-white)", marginBottom: 8 }}>
-            vai<span style={{ color: "var(--lime)" }}>book</span> <span style={{ color: "rgba(255,255,255,0.5)", fontWeight: 600, fontSize: 16 }}>providers</span>
+          <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 28, fontWeight: 800, color: "var(--near-white)", marginBottom: 8, display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}>
+            <VaiBookMark size={30} />vai<span style={{ color: "var(--lime)" }}>book</span> <span style={{ color: "rgba(255,255,255,0.5)", fontWeight: 600, fontSize: 16 }}>providers</span>
           </div>
           <p style={{ color: "rgba(255,255,255,0.6)", fontSize: 14, marginBottom: 24 }}>Sign in with Google to access your provider portal.</p>
           <button className="btn-lime" style={{ width: "100%", padding: "12px 0" }} onClick={onSignIn}>Sign in with Google</button>
@@ -4459,7 +4480,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
       <div style={{ minHeight: "100vh", background: "var(--forest)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
         <div style={{ textAlign: "center", maxWidth: 380 }}>
           <div style={{ fontSize: 40, marginBottom: 12 }}>✂️</div>
-          <h2 style={{ color: "var(--near-white)", fontFamily: "Syne, sans-serif", marginBottom: 8 }}>No provider profile yet</h2>
+          <h2 style={{ color: "var(--near-white)", fontFamily: "'Plus Jakarta Sans', sans-serif", marginBottom: 8 }}>No provider profile yet</h2>
           <p style={{ color: "rgba(255,255,255,0.6)", fontSize: 14, marginBottom: 24 }}>
             List your business to apply. Once we confirm your subscription payment, we'll activate your provider portal.
           </p>
@@ -4611,7 +4632,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
     <div className="portal-layout">
       <aside className="sidebar">
         <div style={{ padding: "0 16px 20px", borderBottom: "1px solid rgba(255,255,255,0.08)", marginBottom: 20 }}>
-          <span className="nav-logo" style={{ fontFamily: "Syne, sans-serif", fontSize: 18, color: "var(--near-white)" }}>vai<span style={{ color: "var(--lime)" }}>book</span></span>
+          <span className="nav-logo" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 18, color: "var(--near-white)", display: "inline-flex", alignItems: "center", gap: 7 }}><VaiBookMark size={19} />vai<span style={{ color: "var(--lime)" }}>book</span></span>
           <div style={{ fontSize: 11, color: "rgba(255,255,255,0.35)", marginTop: 4 }}>Provider portal</div>
         </div>
         <div className="sidebar-section">
@@ -5597,7 +5618,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
               <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 24, paddingBottom: 20, borderBottom: "1px solid var(--border)" }}>
                 <div style={{ width: 72, height: 72, background: "var(--forest)", borderRadius: 14, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 36 }}>✂️</div>
                 <div>
-                  <div style={{ fontFamily: "Syne, sans-serif", fontSize: 20, fontWeight: 700 }}>{providerProfile.business_name}</div>
+                  <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 20, fontWeight: 700 }}>{providerProfile.business_name}</div>
                   <div style={{ color: "var(--muted)", fontSize: 14 }}>{providerProfile.service_type} · {providerProfile.district}</div>
                 </div>
                 <span className={`status-pill ${providerProfile.is_active ? "confirmed" : "pending"}`} style={{ marginLeft: "auto" }}>{providerProfile.is_active ? "✓ Verified" : "Pending activation"}</span>
@@ -5832,7 +5853,7 @@ const SIGNUP_CSS = `
     margin-bottom: 36px;
   }
   .signup-header h1 {
-    font-family: 'Syne', sans-serif;
+    font-family: 'Plus Jakarta Sans', sans-serif;
     font-size: 34px;
     font-weight: 800;
     color: var(--forest);
@@ -5864,7 +5885,7 @@ const SIGNUP_CSS = `
   .plan-option.selected .plan-price { color: white; }
   .plan-option.selected .plan-desc { color: rgba(255,255,255,0.6); }
   .plan-name { font-size: 13px; font-weight: 700; color: var(--forest); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 4px; }
-  .plan-price { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; color: var(--forest); margin-bottom: 4px; }
+  .plan-price { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 22px; font-weight: 800; color: var(--forest); margin-bottom: 4px; }
   .plan-desc { font-size: 11px; color: var(--muted); line-height: 1.4; }
   .signup-form-card {
     background: white;
@@ -5895,7 +5916,7 @@ const SIGNUP_CSS = `
     font-weight: 700;
     cursor: pointer;
     transition: opacity .2s;
-    font-family: 'Inter', sans-serif;
+    font-family: 'Plus Jakarta Sans', sans-serif;
   }
   .signup-submit:hover { opacity: .88; }
   .signup-submit:disabled { opacity: .5; cursor: not-allowed; }
@@ -5907,7 +5928,7 @@ const SIGNUP_CSS = `
     border-radius: var(--radius);
   }
   .signup-success .check { font-size: 56px; margin-bottom: 16px; }
-  .signup-success h2 { font-family: 'Syne', sans-serif; font-size: 26px; color: var(--forest); margin-bottom: 10px; }
+  .signup-success h2 { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 26px; color: var(--forest); margin-bottom: 10px; }
   .signup-success p { font-size: 15px; color: var(--muted); line-height: 1.6; max-width: 380px; margin: 0 auto 24px; }
   .payment-info {
     background: var(--sand);
@@ -6430,8 +6451,8 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
     return (
       <div style={{ minHeight: "100vh", background: "var(--forest)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
         <div style={{ textAlign: "center", maxWidth: 360 }}>
-          <div style={{ fontFamily: "Syne, sans-serif", fontSize: 28, fontWeight: 800, color: "var(--near-white)", marginBottom: 8 }}>
-            vai<span style={{ color: "var(--lime)" }}>book</span> <span style={{ color: "rgba(255,255,255,0.5)", fontWeight: 600, fontSize: 16 }}>admin</span>
+          <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 28, fontWeight: 800, color: "var(--near-white)", marginBottom: 8, display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}>
+            <VaiBookMark size={30} />vai<span style={{ color: "var(--lime)" }}>book</span> <span style={{ color: "rgba(255,255,255,0.5)", fontWeight: 600, fontSize: 16 }}>admin</span>
           </div>
           <p style={{ color: "rgba(255,255,255,0.6)", fontSize: 14, marginBottom: 24 }}>Sign in with the Google account approved for admin access.</p>
           <button className="btn-lime" style={{ width: "100%", padding: "12px 0" }} onClick={onSignIn}>Sign in with Google</button>
@@ -6458,7 +6479,7 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
       <div style={{ minHeight: "100vh", background: "var(--forest)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
         <div style={{ textAlign: "center", maxWidth: 380 }}>
           <div style={{ fontSize: 40, marginBottom: 12 }}>🔒</div>
-          <h2 style={{ color: "var(--near-white)", fontFamily: "Syne, sans-serif", marginBottom: 8 }}>Not authorized</h2>
+          <h2 style={{ color: "var(--near-white)", fontFamily: "'Plus Jakarta Sans', sans-serif", marginBottom: 8 }}>Not authorized</h2>
           <p style={{ color: "rgba(255,255,255,0.6)", fontSize: 14, marginBottom: 24 }}>
             {session.user.email} isn't on the VaiBook admin list. Ask an existing admin to add you in Supabase.
           </p>
@@ -6495,7 +6516,7 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
     <div className="portal-layout">
       <aside className="sidebar">
         <div style={{ padding: "0 16px 20px", borderBottom: "1px solid rgba(255,255,255,0.08)", marginBottom: 20 }}>
-          <span className="nav-logo" style={{ fontFamily: "Syne, sans-serif", fontSize: 18, color: "var(--near-white)" }}>vai<span style={{ color: "var(--lime)" }}>book</span></span>
+          <span className="nav-logo" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 18, color: "var(--near-white)", display: "inline-flex", alignItems: "center", gap: 7 }}><VaiBookMark size={19} />vai<span style={{ color: "var(--lime)" }}>book</span></span>
           <div style={{ fontSize: 11, color: "rgba(255,255,255,0.35)", marginTop: 4 }}>Admin portal</div>
         </div>
         <div className="sidebar-section">
@@ -6975,8 +6996,8 @@ export default function App() {
         <style>{css}</style>
         <div style={{ minHeight: "100vh", background: "var(--forest)", display: "flex", alignItems: "center", justifyContent: "center" }}>
           <div style={{ textAlign: "center" }}>
-            <div style={{ fontFamily: "Syne, sans-serif", fontSize: 32, fontWeight: 800, color: "var(--near-white)", marginBottom: 12 }}>
-              vai<span style={{ color: "var(--lime)" }}>book</span>
+            <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 32, fontWeight: 800, color: "var(--near-white)", marginBottom: 12, display: "flex", alignItems: "center", justifyContent: "center", gap: 12 }}>
+              <VaiBookMark size={34} />vai<span style={{ color: "var(--lime)" }}>book</span>
             </div>
             <div style={{ color: "rgba(255,255,255,0.5)", fontSize: 14 }}>Loading...</div>
           </div>
