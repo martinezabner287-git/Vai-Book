@@ -204,14 +204,27 @@ const css = `
   body { font-family: 'Inter', sans-serif; background: var(--near-white); color: var(--dark-text); }
 
   /* NAV */
+  .nav-outer { position: sticky; top: 0; z-index: 100; background: var(--forest); }
   .nav {
     display: flex; align-items: center; justify-content: space-between;
-    padding: 16px 48px; background: var(--near-white); position: sticky; top: 0; z-index: 100;
-    border-bottom: 1px solid var(--border);
+    padding: 16px 48px; background: var(--forest); position: relative;
   }
-  .nav-logo { font-family: 'Syne', sans-serif; font-size: 22px; color: var(--forest); letter-spacing: -0.5px; }
-  .nav-logo span { color: var(--clay); }
+  .nav-logo { font-family: 'Syne', sans-serif; font-size: 22px; color: var(--near-white); letter-spacing: -0.5px; }
+  .nav-logo span { color: var(--lime); }
   .nav-cta { display: flex; align-items: center; gap: 18px; position: relative; }
+
+  /* NAV STRIP (second row — category shortcuts, Vai Buy-style) */
+  .nav-strip {
+    display: flex; align-items: center; gap: 26px; padding: 10px 48px;
+    background: var(--forest-mid); border-top: 1px solid rgba(255,255,255,0.08);
+    overflow-x: auto; scrollbar-width: none;
+  }
+  .nav-strip::-webkit-scrollbar { display: none; }
+  .nav-strip-link { background: none; border: none; color: rgba(250,250,247,0.82); font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 500; cursor: pointer; padding: 2px 0; white-space: nowrap; transition: color .2s; }
+  .nav-strip-link:hover { color: var(--lime); }
+  .nav-strip-cta { color: var(--lime); font-weight: 600; margin-left: auto; }
+  .nav-strip-district { margin-left: auto; font-size: 12px; color: rgba(250,250,247,0.55); white-space: nowrap; padding-left: 18px; }
+  .nav-strip-cta ~ .nav-strip-district { margin-left: 0; }
 
   /* NAV SEARCH (pinned between the logo and menu/account controls) */
   .nav-search-wrap { flex: 1; display: flex; justify-content: center; min-width: 0; padding: 0 24px; opacity: 0; pointer-events: none; transform: translateY(-4px); transition: opacity .2s ease, transform .2s ease; }
@@ -220,7 +233,7 @@ const css = `
   .nav-search-input-wrap { display: flex; align-items: center; gap: 8px; background: var(--sand); border-radius: 100px; padding: 9px 16px; }
   .nav-search-input-wrap input { border: none; outline: none; background: transparent; font-size: 13px; width: 100%; font-family: 'Inter', sans-serif; color: var(--dark-text); }
   .nav-search-icon { font-size: 14px; color: var(--muted); flex-shrink: 0; }
-  .nav-search-toggle { display: none; background: transparent; border: 1px solid var(--border); width: 38px; height: 38px; border-radius: 50%; align-items: center; justify-content: center; cursor: pointer; font-size: 15px; color: var(--dark-text); flex-shrink: 0; opacity: 0; pointer-events: none; transition: opacity .2s ease; }
+  .nav-search-toggle { display: none; background: transparent; border: 1px solid rgba(255,255,255,0.35); width: 38px; height: 38px; border-radius: 50%; align-items: center; justify-content: center; cursor: pointer; font-size: 15px; color: var(--near-white); flex-shrink: 0; opacity: 0; pointer-events: none; transition: opacity .2s ease; }
   .nav-search-toggle.visible { opacity: 1; pointer-events: auto; }
   .nav-search-mobile-panel { display: none; }
   @media (max-width: 768px) {
@@ -230,8 +243,8 @@ const css = `
   }
 
   /* NOTIFICATION BELL */
-  .notif-bell-btn { position: relative; background: transparent; border: 1px solid var(--border); width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 16px; flex-shrink: 0; }
-  .notif-bell-btn:hover { border-color: var(--forest); }
+  .notif-bell-btn { position: relative; background: transparent; border: 1px solid rgba(255,255,255,0.35); width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 16px; flex-shrink: 0; }
+  .notif-bell-btn:hover { border-color: var(--lime); }
   .notif-badge { position: absolute; top: -4px; right: -4px; background: var(--clay); color: white; font-size: 10px; font-weight: 700; min-width: 16px; height: 16px; border-radius: 8px; display: flex; align-items: center; justify-content: center; padding: 0 3px; }
   .notif-dropdown { position: absolute; top: calc(100% + 10px); right: 0; width: 320px; max-height: 420px; overflow-y: auto; background: white; border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 16px 36px rgba(13,61,46,0.16); z-index: 150; }
   .notif-dropdown-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid var(--border); font-size: 13px; }
@@ -246,14 +259,14 @@ const css = `
   .notif-title { font-size: 13px; font-weight: 600; color: var(--dark-text); }
   .notif-body { font-size: 12px; color: var(--muted); margin-top: 2px; line-height: 1.4; }
   .notif-time { font-size: 11px; color: var(--muted); margin-top: 4px; }
-  .nav-login-link { background: none; border: none; color: var(--dark-text); font-size: 14px; font-weight: 500; cursor: pointer; padding: 4px; }
-  .nav-login-link:hover { color: var(--forest); }
-  .btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--dark-text); padding: 9px 20px; border-radius: 100px; font-size: 14px; font-weight: 500; cursor: pointer; transition: all .2s; }
-  .btn-ghost:hover { border-color: var(--forest); color: var(--forest); }
+  .nav-login-link { background: none; border: none; color: var(--near-white); font-size: 14px; font-weight: 500; cursor: pointer; padding: 4px; }
+  .nav-login-link:hover { color: var(--lime); }
+  .btn-ghost { background: transparent; border: 1px solid rgba(255,255,255,0.35); color: var(--near-white); padding: 9px 20px; border-radius: 100px; font-size: 14px; font-weight: 500; cursor: pointer; transition: all .2s; }
+  .btn-ghost:hover { border-color: var(--lime); color: var(--lime); }
   .btn-lime { background: var(--lime); border: none; color: var(--forest); padding: 8px 20px; border-radius: var(--radius-sm); font-size: 14px; font-weight: 600; cursor: pointer; transition: opacity .2s; }
   .btn-lime:hover { opacity: 0.85; }
-  .nav-menu-btn { display: flex; align-items: center; gap: 8px; background: transparent; border: 1px solid var(--border); color: var(--dark-text); padding: 9px 18px 9px 22px; border-radius: 100px; font-size: 14px; font-weight: 500; cursor: pointer; transition: all .2s; }
-  .nav-menu-btn:hover { border-color: var(--forest); color: var(--forest); }
+  .nav-menu-btn { display: flex; align-items: center; gap: 8px; background: transparent; border: 1px solid rgba(255,255,255,0.35); color: var(--near-white); padding: 9px 18px 9px 22px; border-radius: 100px; font-size: 14px; font-weight: 500; cursor: pointer; transition: all .2s; }
+  .nav-menu-btn:hover { border-color: var(--lime); color: var(--lime); }
   .nav-menu-btn .bars { display: flex; flex-direction: column; gap: 3px; }
   .nav-menu-btn .bars span { width: 16px; height: 2px; background: currentColor; border-radius: 2px; }
   .nav-dropdown { position: absolute; top: calc(100% + 12px); right: 0; background: white; border-radius: var(--radius-sm); box-shadow: 0 16px 40px rgba(13,61,46,0.18); border: 1px solid var(--border); min-width: 220px; padding: 10px; z-index: 200; }
@@ -290,11 +303,11 @@ const css = `
   }
 
   /* ACCOUNT DROPDOWN */
-  .nav-avatar-btn { display: flex; align-items: center; gap: 8px; background: transparent; border: 1px solid var(--border); border-radius: 100px; padding: 4px 12px 4px 4px; cursor: pointer; transition: border-color .2s; }
-  .nav-avatar-btn:hover { border-color: var(--forest); }
+  .nav-avatar-btn { display: flex; align-items: center; gap: 8px; background: transparent; border: 1px solid rgba(255,255,255,0.35); border-radius: 100px; padding: 4px 12px 4px 4px; cursor: pointer; transition: border-color .2s; }
+  .nav-avatar-btn:hover { border-color: var(--lime); }
   .nav-avatar-circle { width: 30px; height: 30px; border-radius: 50%; background: var(--lime); color: var(--forest); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; flex-shrink: 0; }
   .profile-avatar-circle { width: 84px; height: 84px; border-radius: 50%; background: var(--lime); color: var(--forest); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 30px; }
-  .nav-avatar-caret { font-size: 10px; color: var(--muted); }
+  .nav-avatar-caret { font-size: 10px; color: rgba(250,250,247,0.7); }
   .nav-account-dropdown { position: absolute; top: calc(100% + 12px); right: 0; background: white; border-radius: var(--radius-sm); box-shadow: 0 16px 40px rgba(13,61,46,0.18); border: 1px solid var(--border); min-width: 250px; padding: 10px; z-index: 200; }
   .nav-account-name { padding: 10px 14px 14px; font-weight: 700; font-size: 16px; color: var(--dark-text); }
   .nav-account-dropdown button.nav-dropdown-item { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; background: none; border: none; padding: 11px 14px; border-radius: 8px; font-size: 14px; font-weight: 500; color: var(--dark-text); cursor: pointer; }
@@ -571,6 +584,7 @@ const css = `
 
   @media (max-width: 768px) {
     .nav { padding: 14px 20px; }
+    .nav-strip { padding: 10px 20px; gap: 20px; }
     .hero { grid-template-columns: 1fr; padding: 60px 24px; min-height: auto; }
     .hero-card-wrap { display: none; }
     .section { padding: 60px 24px; }
@@ -1777,7 +1791,8 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
   const initials = getInitials(user?.full_name);
 
   return (
-    <nav className="nav" ref={navRef}>
+    <div className="nav-outer" ref={navRef}>
+    <nav className="nav">
       <span className="nav-logo" style={{ cursor: "pointer" }} onClick={() => onNav("home")}>vai<span>book</span></span>
 
       <div className={`nav-search-wrap ${navSearchActive ? "visible" : ""}`}>
@@ -1973,6 +1988,16 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
         </div>
       )}
     </nav>
+    <div className="nav-strip">
+      <button className="nav-strip-link" onClick={() => scrollToSection("services", onNav, current)}>All Services</button>
+      <button className="nav-strip-link" onClick={() => submitNavSearch("Barbers")}>Barbers</button>
+      <button className="nav-strip-link" onClick={() => submitNavSearch("Nail Techs")}>Nail Techs</button>
+      <button className="nav-strip-link" onClick={() => submitNavSearch("Home Cleaning")}>Home Cleaning</button>
+      <button className="nav-strip-link" onClick={() => submitNavSearch("Car Wash")}>Car Wash</button>
+      <button className="nav-strip-link nav-strip-cta" onClick={() => onNav("signup")}>List your business</button>
+      <span className="nav-strip-district">📍 Serving all districts</span>
+    </div>
+    </div>
   );
 }
 
