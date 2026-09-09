@@ -427,18 +427,16 @@ const css = `
   .svc-tile h4 { font-size: 14px; font-weight: 600; color: var(--near-white); margin-bottom: 4px; }
   .svc-tile p { font-size: 12px; color: rgba(255,255,255,0.45); }
 
-  /* PRICING */
-  .pricing-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; max-width: 960px; margin: 0 auto; }
-  .price-card { background: var(--near-white); border: 1px solid var(--border); border-radius: var(--radius); padding: 32px 28px; position: relative; }
-  .price-card.popular { border-color: var(--forest); box-shadow: 0 0 0 1px var(--forest); }
-  .popular-badge { position: absolute; top: -12px; left: 24px; background: var(--forest); color: var(--lime); font-size: 11px; font-weight: 700; padding: 4px 12px; border-radius: 20px; letter-spacing: .04em; text-transform: uppercase; }
-  .price-tier { font-size: 13px; font-weight: 600; color: var(--muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: .06em; }
-  .price-amount { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 40px; font-weight: 800; color: var(--forest); margin-bottom: 4px; }
-  .price-amount sup { font-size: 20px; vertical-align: super; }
-  .price-period { font-size: 13px; color: var(--muted); margin-bottom: 24px; }
-  .price-features { list-style: none; margin-bottom: 28px; display: flex; flex-direction: column; gap: 10px; }
-  .price-features li { font-size: 14px; color: var(--dark-text); display: flex; align-items: flex-start; gap: 8px; line-height: 1.4; }
-  .price-features li::before { content: '✓'; color: var(--forest-light); font-weight: 700; margin-top: 1px; flex-shrink: 0; }
+  /* BROWSE BY DISTRICT */
+  .browse-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 32px 24px; max-width: 1100px; margin: 0 auto 44px; }
+  .browse-col h5 { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--forest); margin-bottom: 14px; }
+  .browse-col ul { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+  .browse-col li { font-size: 14px; color: var(--dark-text); }
+  .browse-col a { color: inherit; cursor: pointer; transition: color .2s; }
+  .browse-col a:hover { color: var(--forest-light); text-decoration: underline; }
+  .browse-pills { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; max-width: 1100px; margin: 0 auto; }
+  .browse-pill { background: white; border: 1px solid var(--border); color: var(--dark-text); padding: 9px 18px; border-radius: 100px; font-size: 13px; font-weight: 500; cursor: pointer; transition: all .2s; }
+  .browse-pill:hover { border-color: var(--forest); color: var(--forest); }
   .btn-forest { background: var(--forest); color: var(--near-white); border: none; width: 100%; padding: 13px; border-radius: var(--radius-sm); font-size: 14px; font-weight: 600; cursor: pointer; transition: opacity .2s; }
   .btn-forest:hover { opacity: .85; }
   .btn-outline-forest { background: transparent; color: var(--forest); border: 1px solid var(--forest); width: 100%; padding: 13px; border-radius: var(--radius-sm); font-size: 14px; font-weight: 600; cursor: pointer; transition: all .2s; }
@@ -1880,7 +1878,7 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
                   <a onClick={() => goAccount(() => onNav("home"))}>Home</a>
                   <a onClick={() => goAccount(() => scrollToSection("services", onNav, current))}>Services</a>
                   <a onClick={() => goAccount(() => scrollToSection("how-it-works", onNav, current))}>How it works</a>
-                  <a onClick={() => goAccount(() => scrollToSection("pricing", onNav, current))}>Pricing</a>
+                  <a onClick={() => goAccount(() => scrollToSection("browse", onNav, current))}>Browse by district</a>
                   <hr />
                   <button className="nav-dropdown-item for-biz" onClick={() => goAccount(() => enterProviderPortal(onNav, session, onSignIn))}>
                     For businesses <span>→</span>
@@ -1909,7 +1907,7 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
                 <a onClick={() => go(() => onNav("home"))}>Home</a>
                 <a onClick={() => go(() => scrollToSection("services", onNav, current))}>Services</a>
                 <a onClick={() => go(() => scrollToSection("how-it-works", onNav, current))}>How it works</a>
-                <a onClick={() => go(() => scrollToSection("pricing", onNav, current))}>Pricing</a>
+                <a onClick={() => go(() => scrollToSection("browse", onNav, current))}>Browse by district</a>
                 <hr />
                 <button className="nav-dropdown-item" onClick={() => go(openInstallAppGuide)}>Add to Home Screen</button>
                 {current === "home" && (
@@ -1975,7 +1973,7 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
               <a onClick={() => go(() => onNav("home"))}>Home</a>
               <a onClick={() => go(() => scrollToSection("services", onNav, current))}>Services</a>
               <a onClick={() => go(() => scrollToSection("how-it-works", onNav, current))}>How it works</a>
-              <a onClick={() => go(() => scrollToSection("pricing", onNav, current))}>Pricing</a>
+              <a onClick={() => go(() => scrollToSection("browse", onNav, current))}>Browse by district</a>
               <hr />
               <button className="nav-dropdown-item" onClick={() => go(openInstallAppGuide)}>Add to Home Screen</button>
             </div>
@@ -2052,6 +2050,13 @@ function LandingPage({ onNav, session, onSignIn }) {
     setHeroQuery(s.label);
     setShowHeroSuggestions(false);
     submitHeroSearch(s.label);
+  };
+
+  const goBrowse = (query, district) => {
+    try {
+      localStorage.setItem("vaibook_pending_search", JSON.stringify({ query, district: district || "All" }));
+    } catch (e) { /* ignore storage errors */ }
+    enterCustomerPortal(onNav, session, onSignIn);
   };
 
   return (
@@ -2170,55 +2175,37 @@ function LandingPage({ onNav, session, onSignIn }) {
         </div>
       </section>
 
-      {/* PRICING */}
-      <section className="section" id="pricing" style={{ background: "var(--sand)" }}>
+      {/* BROWSE BY DISTRICT */}
+      <section className="section" id="browse" style={{ background: "var(--sand)" }}>
         <div style={{ textAlign: "center", marginBottom: 48 }}>
-          <div className="section-eyebrow" style={{ justifyContent: "center", display: "flex" }}>For providers</div>
-          <h2 className="section-title">Simple pricing. Grow your clientele.</h2>
-          <p className="section-sub" style={{ margin: "0 auto" }}>Start free, upgrade when you're ready. No hidden fees.</p>
+          <div className="section-eyebrow" style={{ justifyContent: "center", display: "flex" }}>Coverage</div>
+          <h2 className="section-title">Browse by district</h2>
+          <p className="section-sub" style={{ margin: "0 auto" }}>VaiBook covers all six districts of Belize. Jump straight to what you need, where you need it.</p>
         </div>
-        <div className="pricing-grid">
-          <div className="price-card">
-            <div className="price-tier">Starter</div>
-            <div className="price-amount"><sup>BZ$</sup>0</div>
-            <div className="price-period">Free forever</div>
-            <ul className="price-features">
-              <li>Basic public profile</li>
-              <li>Up to 10 bookings/month</li>
-              <li>Customer ratings visible</li>
-              <li>WhatsApp notification</li>
+        <div className="browse-grid">
+          <div className="browse-col">
+            <h5>Popular</h5>
+            <ul>
+              {SERVICES.map((s) => (
+                <li key={s.name}><a onClick={() => goBrowse(s.name, "All")}>{s.name} in Belize</a></li>
+              ))}
             </ul>
-            <button className="btn-outline-forest" onClick={() => onNav("signup")}>Get started free</button>
           </div>
-          <div className="price-card popular">
-            <div className="popular-badge">Most Popular</div>
-            <div className="price-tier">Pro</div>
-            <div className="price-amount"><sup>BZ$</sup>50</div>
-            <div className="price-period">per month</div>
-            <ul className="price-features">
-              <li>Everything in Starter</li>
-              <li>Unlimited bookings</li>
-              <li>Live calendar scheduling</li>
-              <li>Deposit receipt tracking</li>
-              <li>Custom booking link</li>
-              <li>SMS & email reminders to clients</li>
-            </ul>
-            <button className="btn-forest" onClick={() => onNav("signup")}>Start Pro trial</button>
-          </div>
-          <div className="price-card">
-            <div className="price-tier">Business</div>
-            <div className="price-amount"><sup>BZ$</sup>120</div>
-            <div className="price-period">per month</div>
-            <ul className="price-features">
-              <li>Everything in Pro</li>
-              <li>Multiple staff seats</li>
-              <li>Loyalty & rewards program</li>
-              <li>Analytics dashboard</li>
-              <li>Featured in district search</li>
-              <li>Priority customer support</li>
-            </ul>
-            <button className="btn-outline-forest" onClick={() => onNav("signup")}>Start Business trial</button>
-          </div>
+          {DISTRICTS.map((d) => (
+            <div className="browse-col" key={d}>
+              <h5>{d}</h5>
+              <ul>
+                {SERVICES.map((s) => (
+                  <li key={s.name}><a onClick={() => goBrowse(s.name, d)}>{s.name} in {d}</a></li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+        <div className="browse-pills">
+          {SERVICES.map((s) => (
+            <button key={s.name} className="browse-pill" onClick={() => goBrowse(s.name, "All")}>{s.icon} {s.name}</button>
+          ))}
         </div>
       </section>
 
@@ -2238,7 +2225,7 @@ function LandingPage({ onNav, session, onSignIn }) {
           <div className="footer-links">
             <h5>Company</h5>
             <ul>
-              <li>About Vai</li><li>How it works</li><li>Pricing</li><li>Blog</li>
+              <li>About Vai</li><li>How it works</li><li>Districts</li><li>Blog</li>
             </ul>
           </div>
           <div className="footer-links">
