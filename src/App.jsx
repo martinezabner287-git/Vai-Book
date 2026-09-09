@@ -337,33 +337,38 @@ const css = `
   .service-badge { margin-left: auto; background: var(--lime); color: var(--forest); font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 6px; }
   .service-badge.open { background: rgba(198,241,53,0.15); color: var(--lime); }
 
-  /* SEARCH HERO */
-  .search-hero { position: relative; overflow: hidden; padding: 120px 24px 96px; text-align: center; background: var(--sand); }
+  /* SEARCH HERO — dark marketplace-style hero: small eyebrow label, bold
+     two-line statement headline (2nd line in lime), then the search pill.
+     Same structural language as Vai Buy's shop hero, in VaiBook's own
+     forest-green palette instead of Vai Buy's navy/teal. */
+  .search-hero { position: relative; overflow: hidden; padding: 100px 24px 88px; text-align: left; background: var(--forest); }
   .search-hero::before {
     content: '';
     position: absolute; inset: -25%;
     background:
-      radial-gradient(circle at 18% 25%, rgba(198,241,53,0.38), transparent 50%),
-      radial-gradient(circle at 82% 20%, rgba(212,121,90,0.22), transparent 50%),
-      radial-gradient(circle at 50% 95%, rgba(13,61,46,0.16), transparent 55%);
-    filter: blur(50px);
+      radial-gradient(circle at 18% 20%, rgba(198,241,53,0.16), transparent 50%),
+      radial-gradient(circle at 85% 10%, rgba(30,107,80,0.55), transparent 55%),
+      radial-gradient(circle at 50% 100%, rgba(0,0,0,0.25), transparent 60%);
     z-index: 0;
   }
-  .search-hero > * { position: relative; z-index: 1; }
+  .search-hero > * { position: relative; z-index: 1; max-width: 780px; margin-left: auto; margin-right: auto; }
   .search-hero > .search-bar-pill { z-index: 10; }
-  .search-hero h1 { font-family: 'Inter', sans-serif; font-weight: 800; font-size: clamp(28px, 4.4vw, 52px); color: var(--forest); line-height: 1.2; letter-spacing: -0.5px; margin: 0 auto 16px; max-width: 780px; }
+  .search-hero-eyebrow { font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; color: rgba(250,250,247,0.55); margin-bottom: 18px; text-align: center; }
+  .search-hero h1 { font-family: 'Syne', sans-serif; font-weight: 800; font-size: clamp(32px, 5vw, 58px); line-height: 1.08; letter-spacing: -1px; margin: 0 auto 20px; text-align: center; }
+  .search-hero h1 .line1 { display: block; color: var(--near-white); }
+  .search-hero h1 .line2 { display: block; color: var(--lime); }
   @media (max-width: 480px) {
-    .search-hero h1 { font-size: clamp(26px, 8vw, 34px); }
+    .search-hero h1 { font-size: clamp(28px, 8vw, 36px); }
   }
-  .search-sub { font-size: 17px; color: var(--muted); max-width: 560px; margin: 0 auto 40px; line-height: 1.5; }
-  .search-bar-pill { position: relative; max-width: 760px; margin: 0 auto; background: white; border-radius: 100px; box-shadow: 0 12px 40px rgba(13,61,46,0.14); display: flex; align-items: center; padding: 8px; gap: 4px; }
+  .search-sub { font-size: 17px; color: rgba(250,250,247,0.72); max-width: 560px; margin: 0 auto 40px; line-height: 1.5; text-align: center; }
+  .search-bar-pill { position: relative; max-width: 760px; margin: 0 auto; background: white; border-radius: 100px; box-shadow: 0 20px 50px rgba(0,0,0,0.28); display: flex; align-items: center; padding: 8px; gap: 4px; }
   .search-bar-pill .field { flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; padding: 10px 18px; }
   .search-bar-pill .field input, .search-bar-pill .field select { border: none; outline: none; background: transparent; font-size: 14px; width: 100%; color: var(--dark-text); font-family: 'Inter', sans-serif; }
   .search-bar-pill .sep { width: 1px; height: 28px; background: var(--border); flex-shrink: 0; }
   .search-submit { background: var(--forest); color: var(--near-white); border: none; border-radius: 100px; padding: 14px 30px; font-weight: 600; font-size: 15px; cursor: pointer; white-space: nowrap; transition: opacity .2s; font-family: 'Inter', sans-serif; }
   .search-submit:hover { opacity: .87; }
-  .search-hero-tagline { margin-top: 26px; font-size: 13px; color: var(--muted); }
-  .search-hero-tagline a { color: var(--forest); font-weight: 600; cursor: pointer; text-decoration: underline; }
+  .search-hero-tagline { margin-top: 26px; font-size: 13px; color: rgba(250,250,247,0.6); text-align: center; }
+  .search-hero-tagline a { color: var(--lime); font-weight: 600; cursor: pointer; text-decoration: underline; }
 
   /* SEARCH SUGGESTIONS (autocomplete dropdown, shared by hero + browse search bars) */
   .suggestions-dropdown { position: absolute; top: calc(100% + 8px); left: 0; right: 0; background: white; border: 1px solid var(--border); border-radius: 16px; box-shadow: 0 16px 36px rgba(13,61,46,0.16); z-index: 60; overflow: hidden; text-align: left; }
@@ -2007,7 +2012,8 @@ function LandingPage({ onNav, session, onSignIn }) {
     <>
       {/* HERO */}
       <section className="search-hero">
-        <h1>Book local services, the easy way</h1>
+        <div className="search-hero-eyebrow">Booking platform</div>
+        <h1><span className="line1">Book local services.</span><span className="line2">The easy way.</span></h1>
         <p className="search-sub">Find trusted barbers, nail techs, cleaners, and more near you in Belize.</p>
         <div className="search-bar-pill" id="main-search-bar">
           <div className="field">
@@ -2195,10 +2201,17 @@ function LandingPage({ onNav, session, onSignIn }) {
               <li>Help center</li><li>Contact us</li><li>Privacy policy</li><li>Terms</li>
             </ul>
           </div>
+          <div className="footer-links">
+            <h5>More from Vai Plaza</h5>
+            <ul>
+              <li><a href="https://vaibuyandsell.bz/shop?category=Home%20%26%20Living" target="_blank" rel="noopener noreferrer" style={{ color: "inherit", textDecoration: "none" }}>Vai Buy — buy &amp; sell</a></li>
+              {/* Vai Media entry goes here once its link/handle is confirmed */}
+            </ul>
+          </div>
         </div>
         <div className="footer-bottom">
           <span>© 2026 VaiBook. Built in Belize 🇧🇿</span>
-          <span>Part of the Vai platform</span>
+          <span>A product of Vai Plaza</span>
         </div>
       </footer>
     </>
