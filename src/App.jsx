@@ -684,13 +684,29 @@ function VaiBookMark({ size = 26, style }) {
 }
 
 // ── DATA ────────────────────────────────────────────────────────
+// VaiBook is scoped to the self-care niche (like Fresha/Mangomint), not a
+// general local-services directory — this list is the merged set of
+// categories those two platforms cover. Home Cleaning/Car Wash/Handyman
+// were dropped from here (they're still findable by direct search, just no
+// longer featured in nav/homepage/footer/browse) — that's the "everyday
+// services" side of the business, slated for its own "Vai Services" product
+// later rather than folded into VaiBook's self-care identity.
 const SERVICES = [
   { icon: "✂️", name: "Barbers", desc: "Cuts & styles", bg: "#1A5C44" },
-  { icon: "💅", name: "Nail Techs", desc: "Nails & art", bg: "#2A4A3E" },
-  { icon: "🏠", name: "Home Cleaning", desc: "Deep & regular", bg: "#1E4035" },
-  { icon: "🚗", name: "Car Wash", desc: "Mobile & fixed", bg: "#163626" },
+  { icon: "💇", name: "Hair Salons", desc: "Color & styling", bg: "#2A4A3E" },
+  { icon: "💅", name: "Nail Techs", desc: "Nails & art", bg: "#1E4035" },
+  { icon: "🧖", name: "Spas", desc: "Full-body relaxation", bg: "#163626" },
+  { icon: "🩺", name: "Med Spas", desc: "Injectables & clinical", bg: "#1C4A38" },
+  { icon: "💆", name: "Massage", desc: "Therapeutic & relaxation", bg: "#244530" },
+  { icon: "🧴", name: "Skincare & Facials", desc: "Cleanses & glow-ups", bg: "#1A5C44" },
+  { icon: "🪒", name: "Hair Removal", desc: "Waxing & laser", bg: "#2A4A3E" },
+  { icon: "🖋️", name: "Tattoo & Piercing", desc: "Ink & piercings", bg: "#1E4035" },
+  { icon: "🌿", name: "Wellness Centers", desc: "Holistic & recovery", bg: "#163626" },
   { icon: "🐾", name: "Pet Grooming", desc: "All breeds", bg: "#1C4A38" },
-  { icon: "🔧", name: "Handyman", desc: "Repairs & more", bg: "#244530" },
+  { icon: "☀️", name: "Tanning Studios", desc: "Sunless & UV", bg: "#244530" },
+  { icon: "💧", name: "IV Therapy", desc: "Hydration & wellness drips", bg: "#1A5C44" },
+  { icon: "🏋️", name: "Fitness & Recovery", desc: "Training & recovery", bg: "#2A4A3E" },
+  { icon: "🦵", name: "Physical Therapy", desc: "Rehab & mobility", bg: "#1E4035" },
 ];
 
 // ── BUSINESS CATEGORIES & FEATURE FLAGS ──────────────────────────
@@ -720,19 +736,62 @@ const BUSINESS_CATEGORIES = [
 
 const SERVICE_TYPE_TO_CATEGORY = {
   "Barber": "hair_salon",
+  "Hair Salon": "hair_salon",
   "Nail Tech": "hair_salon",
-  "Beauty Salon": "hair_salon",
+  "Hair Removal Studio": "hair_salon",
+  "Spa": "spa_massage",
   "Massage": "spa_massage",
+  "Skincare Studio": "spa_massage",
   "Med Spa / Clinic": "med_spa",
+  "IV Therapy": "med_spa",
+  "Physical Therapy": "med_spa",
   "Tattoo & Piercing Studio": "tattoo_piercing",
-  "Home Cleaning": "general",
-  "Car Wash": "general",
+  "Wellness Center": "general",
   "Pet Grooming": "general",
-  "Handyman": "general",
+  "Tanning Studio": "general",
+  "Fitness & Recovery": "general",
   "Photography": "general",
   "Other": "general",
+  // Kept for backward compatibility with providers who signed up before
+  // VaiBook narrowed to the self-care niche — no longer offered at signup,
+  // but existing profiles with these values still resolve correctly.
+  "Beauty Salon": "hair_salon",
+  "Home Cleaning": "general",
+  "Car Wash": "general",
+  "Handyman": "general",
 };
 const categoryForServiceType = (serviceType) => SERVICE_TYPE_TO_CATEGORY[serviceType] || "general";
+
+// Small icon per service_type, used on provider cards that don't have a
+// portfolio photo yet. Kept as its own lookup (rather than reusing SERVICES,
+// whose names are plural/marketing-flavored) since it's keyed by the exact
+// singular strings providers pick at signup.
+const SERVICE_TYPE_ICON = {
+  "Barber": "✂️",
+  "Hair Salon": "💇",
+  "Nail Tech": "💅",
+  "Spa": "🧖",
+  "Med Spa / Clinic": "🩺",
+  "Massage": "💆",
+  "Skincare Studio": "🧴",
+  "Hair Removal Studio": "🪒",
+  "Tattoo & Piercing Studio": "🖋️",
+  "Wellness Center": "🌿",
+  "Pet Grooming": "🐾",
+  "Tanning Studio": "☀️",
+  "IV Therapy": "💧",
+  "Fitness & Recovery": "🏋️",
+  "Physical Therapy": "🦵",
+  "Photography": "📸",
+  "Other": "🛠️",
+  // Legacy values from before the self-care narrowing — still shown
+  // correctly on any provider card that has one.
+  "Beauty Salon": "💇",
+  "Home Cleaning": "🏠",
+  "Car Wash": "🚗",
+  "Handyman": "🔧",
+};
+const iconForServiceType = (serviceType) => SERVICE_TYPE_ICON[serviceType] || "🛠️";
 
 // Industry-specific adaptive modules. `label`/`icon`/`desc` drive the
 // Settings → Modules UI; which ones default on per category lives in the
@@ -2116,7 +2175,7 @@ function LandingPage({ onNav, session, onSignIn }) {
       <section className="search-hero">
         <div className="search-hero-eyebrow">Booking platform</div>
         <h1><span className="line1">Book local services.</span><span className="line2">The easy way.</span></h1>
-        <p className="search-sub">Find trusted barbers, nail techs, cleaners, and more near you in Belize.</p>
+        <p className="search-sub">Find trusted barbers, nail techs, spas, and more near you in Belize.</p>
         <div className="search-bar-pill" id="main-search-bar">
           <div className="field">
             <span>🔍</span>
@@ -2233,7 +2292,7 @@ function LandingPage({ onNav, session, onSignIn }) {
       <section className="services-section" id="services">
         <div className="section-eyebrow" style={{ color: "var(--lime)" }}>What's on VaiBook</div>
         <h2 className="section-title">Every local service. One platform.</h2>
-        <p className="section-sub">From a fresh fade to a spotless car — all bookable in your district.</p>
+        <p className="section-sub">From a fresh fade to a relaxing facial — all bookable in your district.</p>
         <div className="services-grid">
           {SERVICES.map((s, i) => (
             <div className="svc-tile" key={i} onClick={() => enterCustomerPortal(onNav, session, onSignIn)}>
@@ -2938,7 +2997,7 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
             <div className="search-bar" id="main-search-bar">
               <span className="search-icon">🔍</span>
               <input
-                placeholder="Search barbers, nail techs, cleaners, or 'haircut'..."
+                placeholder="Search barbers, nail techs, spas, or 'haircut'..."
                 value={providerSearch}
                 onChange={e => { setProviderSearch(e.target.value); setShowBrowseSuggestions(true); }}
                 onFocus={() => setShowBrowseSuggestions(true)}
@@ -2981,7 +3040,7 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
                     {p.portfolio_urls && p.portfolio_urls.length > 0 ? (
                       <div className="provider-card-img" style={{ background: `center/cover no-repeat url(${p.portfolio_urls[0]})` }} />
                     ) : (
-                      <div className="provider-card-img" style={{ background: "#E8F5EF" }}>{p.service_type === "Barber" ? "✂️" : p.service_type === "Nail Tech" ? "💅" : p.service_type === "Car Wash" ? "🚗" : p.service_type === "Pet Grooming" ? "🐾" : p.service_type === "Home Cleaning" ? "🏠" : "🛠️"}</div>
+                      <div className="provider-card-img" style={{ background: "#E8F5EF" }}>{iconForServiceType(p.service_type)}</div>
                     )}
                     <div className="provider-card-body">
                       <h4>{p.business_name}{p.is_featured && <span style={{ marginLeft: 6, fontSize: 11, fontWeight: 700, color: "var(--forest)", background: "var(--sand)", padding: "2px 7px", borderRadius: 5, verticalAlign: "middle" }}>⭐ Featured</span>}</h4>
@@ -3023,7 +3082,7 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
                     {p.portfolio_urls && p.portfolio_urls.length > 0 ? (
                       <div className="provider-card-img" style={{ background: `center/cover no-repeat url(${p.portfolio_urls[0]})` }} />
                     ) : (
-                      <div className="provider-card-img" style={{ background: "#E8F5EF" }}>{p.service_type === "Barber" ? "✂️" : p.service_type === "Nail Tech" ? "💅" : p.service_type === "Car Wash" ? "🚗" : p.service_type === "Pet Grooming" ? "🐾" : p.service_type === "Home Cleaning" ? "🏠" : "🛠️"}</div>
+                      <div className="provider-card-img" style={{ background: "#E8F5EF" }}>{iconForServiceType(p.service_type)}</div>
                     )}
                     <div className="provider-card-body">
                       <h4>{p.business_name}</h4>
@@ -6012,7 +6071,7 @@ const PLANS = [
 ];
 
 const DISTRICTS = ["Belize City", "Cayo", "Corozal", "Orange Walk", "Stann Creek", "Toledo"];
-const SERVICE_TYPES = ["Barber", "Nail Tech", "Home Cleaning", "Car Wash", "Pet Grooming", "Handyman", "Beauty Salon", "Massage", "Med Spa / Clinic", "Tattoo & Piercing Studio", "Photography", "Other"];
+const SERVICE_TYPES = ["Barber", "Hair Salon", "Nail Tech", "Spa", "Med Spa / Clinic", "Massage", "Skincare Studio", "Hair Removal Studio", "Tattoo & Piercing Studio", "Wellness Center", "Pet Grooming", "Tanning Studio", "IV Therapy", "Fitness & Recovery", "Physical Therapy", "Photography", "Other"];
 
 function ProviderSignup({ onNav }) {
   const [plan, setPlan] = useState("pro");
