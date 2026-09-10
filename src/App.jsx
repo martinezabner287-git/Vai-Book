@@ -2064,10 +2064,9 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
     </nav>
     <div className="nav-strip">
       <button className="nav-strip-link" onClick={() => scrollToSection("services", onNav, current)}>All Services</button>
-      <button className="nav-strip-link" onClick={() => submitNavSearch("Barbers")}>Barbers</button>
-      <button className="nav-strip-link" onClick={() => submitNavSearch("Nail Techs")}>Nail Techs</button>
-      <button className="nav-strip-link" onClick={() => submitNavSearch("Home Cleaning")}>Home Cleaning</button>
-      <button className="nav-strip-link" onClick={() => submitNavSearch("Car Wash")}>Car Wash</button>
+      {SERVICES.map((s) => (
+        <button key={s.name} className="nav-strip-link" onClick={() => submitNavSearch(s.name)}>{s.name}</button>
+      ))}
       <button className="nav-strip-link nav-strip-cta" onClick={() => onNav("signup")}>List your business</button>
       <span className="nav-strip-district">📍 Serving all districts</span>
     </div>
@@ -2290,7 +2289,7 @@ function LandingPage({ onNav, session, onSignIn }) {
           <div className="footer-links">
             <h5>Services</h5>
             <ul>
-              <li>Barbers</li><li>Nail Techs</li><li>Home Cleaning</li><li>Car Wash</li>
+              {SERVICES.map((s) => <li key={s.name}>{s.name}</li>)}
             </ul>
           </div>
           <div className="footer-links">
