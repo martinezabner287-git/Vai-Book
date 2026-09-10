@@ -715,8 +715,6 @@ const SERVICES = [
   { icon: "🖋️", name: "Tattoo & Piercing", desc: "Ink & piercings", bg: "#1E4035" },
   { icon: "🌿", name: "Wellness Centers", desc: "Holistic & recovery", bg: "#163626" },
   { icon: "🐾", name: "Pet Grooming", desc: "All breeds", bg: "#1C4A38" },
-  { icon: "☀️", name: "Tanning Studios", desc: "Sunless & UV", bg: "#244530" },
-  { icon: "💧", name: "IV Therapy", desc: "Hydration & wellness drips", bg: "#1A5C44" },
   { icon: "🏋️", name: "Fitness & Recovery", desc: "Training & recovery", bg: "#2A4A3E" },
   { icon: "🦵", name: "Physical Therapy", desc: "Rehab & mobility", bg: "#1E4035" },
 ];
@@ -755,12 +753,10 @@ const SERVICE_TYPE_TO_CATEGORY = {
   "Massage": "spa_massage",
   "Skincare Studio": "spa_massage",
   "Med Spa / Clinic": "med_spa",
-  "IV Therapy": "med_spa",
   "Physical Therapy": "med_spa",
   "Tattoo & Piercing Studio": "tattoo_piercing",
   "Wellness Center": "general",
   "Pet Grooming": "general",
-  "Tanning Studio": "general",
   "Fitness & Recovery": "general",
   "Photography": "general",
   "Other": "general",
@@ -790,8 +786,6 @@ const SERVICE_TYPE_ICON = {
   "Tattoo & Piercing Studio": "🖋️",
   "Wellness Center": "🌿",
   "Pet Grooming": "🐾",
-  "Tanning Studio": "☀️",
-  "IV Therapy": "💧",
   "Fitness & Recovery": "🏋️",
   "Physical Therapy": "🦵",
   "Photography": "📸",
@@ -6203,7 +6197,7 @@ const PLANS = [
 ];
 
 const DISTRICTS = ["Belize City", "Cayo", "Corozal", "Orange Walk", "Stann Creek", "Toledo"];
-const SERVICE_TYPES = ["Barber", "Hair Salon", "Nail Tech", "Spa", "Med Spa / Clinic", "Massage", "Skincare Studio", "Hair Removal Studio", "Tattoo & Piercing Studio", "Wellness Center", "Pet Grooming", "Tanning Studio", "IV Therapy", "Fitness & Recovery", "Physical Therapy", "Photography", "Other"];
+const SERVICE_TYPES = ["Barber", "Hair Salon", "Nail Tech", "Spa", "Med Spa / Clinic", "Massage", "Skincare Studio", "Hair Removal Studio", "Tattoo & Piercing Studio", "Wellness Center", "Pet Grooming", "Fitness & Recovery", "Physical Therapy", "Photography", "Other"];
 
 function ProviderSignup({ onNav }) {
   const [plan, setPlan] = useState("pro");
@@ -7413,4 +7407,3 @@ export default function App() {
     </>
   );
 }
-
