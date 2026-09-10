@@ -6,7 +6,7 @@ import L from "leaflet";
 import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
 import markerIcon from "leaflet/dist/images/marker-icon.png";
 import markerShadow from "leaflet/dist/images/marker-shadow.png";
-import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, deleteService, getActiveProviders, getProviderDirectory, createBooking, getProviderBusyWindows, createBookingSafe, cancelBooking, getCustomerBookings, uploadReceipt, submitReview, getProviderReviews, sendBookingEmail, updateUserProfile, getPaymentMethods, addPaymentMethod, deletePaymentMethod, createNotification, getNotifications, markNotificationRead, markAllNotificationsRead, getRecommendedServices, getCategoryDefaultFeatures, getProviderFeatureOverrides, setProviderFeatureOverride, getVisitNotes, upsertVisitNote, adminListProviders, adminUpdateProvider, adminDeleteProvider, tagVIP, untagVIP, getVIPClients, getFavoriteProviderIds, getFavoriteProviders, addFavorite, removeFavorite, getBookingMessages, sendBookingMessage, markBookingMessagesRead, getUnreadBookingMessages, getProviderMonthlyTrend, createProviderProfile, getProviderById, createWalkInBooking, submitProviderPayment, getMyProviderPayments, adminListProviderPayments, adminReviewProviderPayment, submitBookingRefund, adminListBookingRefunds, openPrivateFile, getProviderStaff, addProviderStaff, updateProviderStaff, deleteProviderStaff, getLoyaltyAccount, getProviderLoyaltyCustomers, redeemLoyaltyReward, getMyStaffProfile, claimStaffSeatByEmail, getStaffBookings, rescheduleBooking, getProviderNotifyEmail, getMaintenanceStatus, setMaintenanceMode, getSiteOfflineStatus, setSiteOffline } from "./supabase";
+import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, deleteService, getActiveProviders, getProviderDirectory, createBooking, getProviderBusyWindows, createBookingSafe, cancelBooking, getCustomerBookings, uploadReceipt, submitReview, getProviderReviews, sendBookingEmail, updateUserProfile, getPaymentMethods, addPaymentMethod, deletePaymentMethod, createNotification, getNotifications, markNotificationRead, markAllNotificationsRead, getCategoryDefaultFeatures, getProviderFeatureOverrides, setProviderFeatureOverride, getVisitNotes, upsertVisitNote, adminListProviders, adminUpdateProvider, adminDeleteProvider, tagVIP, untagVIP, getVIPClients, getFavoriteProviderIds, getFavoriteProviders, addFavorite, removeFavorite, getBookingMessages, sendBookingMessage, markBookingMessagesRead, getUnreadBookingMessages, getProviderMonthlyTrend, createProviderProfile, getProviderById, createWalkInBooking, submitProviderPayment, getMyProviderPayments, adminListProviderPayments, adminReviewProviderPayment, submitBookingRefund, adminListBookingRefunds, openPrivateFile, getProviderStaff, addProviderStaff, updateProviderStaff, deleteProviderStaff, getLoyaltyAccount, getProviderLoyaltyCustomers, redeemLoyaltyReward, getMyStaffProfile, claimStaffSeatByEmail, getStaffBookings, rescheduleBooking, getProviderNotifyEmail, getMaintenanceStatus, setMaintenanceMode, getSiteOfflineStatus, setSiteOffline } from "./supabase";
 
 // Leaflet's default marker icons reference image paths that don't resolve
 // correctly under CRA's bundler unless re-pointed at the imported assets.
@@ -542,6 +542,20 @@ const css = `
   .price-tag { font-size: 14px; font-weight: 600; color: var(--forest); }
   .avail-badge { font-size: 11px; font-weight: 600; background: #DCFCE7; color: #15803D; padding: 3px 8px; border-radius: 6px; }
 
+  /* DISCOVER CAROUSELS (Recommended / New to VaiBook / Trending) */
+  .carousel-row { display: flex; gap: 16px; overflow-x: auto; scroll-behavior: smooth; scrollbar-width: none; padding-bottom: 6px; }
+  .carousel-row::-webkit-scrollbar { display: none; }
+  .carousel-card { flex: 0 0 240px; background: var(--near-white); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; cursor: pointer; transition: box-shadow .2s; position: relative; }
+  .carousel-card:hover { box-shadow: 0 4px 20px rgba(13,61,46,0.1); }
+  .carousel-card-img { height: 140px; display: flex; align-items: center; justify-content: center; font-size: 44px; background: #E8F5EF; }
+  .carousel-badge { position: absolute; top: 10px; left: 10px; z-index: 2; background: var(--near-white); font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 6px; color: var(--dark-text); box-shadow: 0 1px 4px rgba(0,0,0,0.15); }
+  .carousel-heart { position: absolute; top: 10px; right: 10px; z-index: 2; width: 28px; height: 28px; border-radius: 50%; border: none; background: rgba(255,255,255,0.9); display: flex; align-items: center; justify-content: center; font-size: 13px; cursor: pointer; box-shadow: 0 1px 4px rgba(0,0,0,0.15); }
+  .carousel-card-body { padding: 14px; }
+  .carousel-card-body h4 { font-size: 14px; font-weight: 700; color: var(--dark-text); margin-bottom: 2px; }
+  .carousel-card-body .loc { font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+  .carousel-card-body .meta { font-size: 12px; color: var(--muted); }
+  .carousel-arrow { position: absolute; top: 50%; right: -14px; transform: translateY(-50%); width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--border); background: var(--near-white); box-shadow: 0 2px 10px rgba(0,0,0,0.12); cursor: pointer; font-size: 15px; color: var(--forest); display: flex; align-items: center; justify-content: center; }
+
   /* PROVIDER PROFILE MODAL (Services / Portfolio / Reviews / About) */
   .modal-panel.profile-panel { max-width: 580px; }
   .service-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 0; border-bottom: 1px solid var(--border); }
@@ -614,6 +628,8 @@ const css = `
     .notif-bell-btn { width: 34px; height: 34px; font-size: 14px; }
     .nav-dropdown .mobile-only-item { display: block; }
     .nav-account-dropdown .mobile-only-item { display: flex; }
+    .carousel-arrow { display: none; }
+    .carousel-card { flex-basis: 200px; }
   }
 
   .a2hs-banner {
@@ -792,6 +808,81 @@ const SERVICE_TYPE_ICON = {
   "Handyman": "🔧",
 };
 const iconForServiceType = (serviceType) => SERVICE_TYPE_ICON[serviceType] || "🛠️";
+
+// Shared provider helpers — module-level so both the landing page's
+// discover carousels and the customer portal's browse grid compute rating
+// and starting price the same way, off the same provider shape
+// (getActiveProviders' `*, services(*), reviews(rating)` embed).
+const providerRating = (p) => {
+  const ratings = (p.reviews || []).map((r) => r.rating).filter((r) => r != null);
+  if (!ratings.length) return null;
+  return (ratings.reduce((a, b) => a + b, 0) / ratings.length).toFixed(1);
+};
+
+const providerFromPrice = (p) => {
+  const prices = (p.services || []).filter((s) => s.is_active !== false).map((s) => Number(s.price) || 0);
+  if (!prices.length) return null;
+  return Math.min(...prices);
+};
+
+// "New to VaiBook" badge window — providers who joined in the last 30 days
+// get the pill; older ones can still appear in the row (as the most
+// recently joined of what's available) without being mislabeled as new.
+const isRecentlyJoined = (p, days = 30) => {
+  if (!p.created_at) return false;
+  const joined = new Date(p.created_at).getTime();
+  if (Number.isNaN(joined)) return false;
+  return (Date.now() - joined) / (1000 * 60 * 60 * 24) <= days;
+};
+
+// One horizontally-scrolling row of provider cards, used by the landing
+// page's Recommended / New to VaiBook / Trending sections. `badgeFor` is an
+// optional (provider) => string|null that puts a pill in the top-left
+// corner of a card (e.g. "New", "Featured").
+function ProviderCarousel({ providers, badgeFor, onCardClick }) {
+  const rowRef = useRef(null);
+  const scrollNext = () => {
+    if (rowRef.current) rowRef.current.scrollBy({ left: 260, behavior: "smooth" });
+  };
+  return (
+    <div style={{ position: "relative" }}>
+      <div className="carousel-row" ref={rowRef}>
+        {providers.map((p) => {
+          const rating = providerRating(p);
+          const badge = badgeFor ? badgeFor(p) : null;
+          return (
+            <div className="carousel-card" key={p.id} onClick={() => onCardClick(p)}>
+              {badge && <span className="carousel-badge">{badge}</span>}
+              <button
+                className="carousel-heart"
+                onClick={(e) => { e.stopPropagation(); onCardClick(p); }}
+                aria-label="Save this provider"
+              >
+                🤍
+              </button>
+              {p.portfolio_urls && p.portfolio_urls.length > 0 ? (
+                <div className="carousel-card-img" style={{ background: `center/cover no-repeat url(${p.portfolio_urls[0]})` }} />
+              ) : (
+                <div className="carousel-card-img">{iconForServiceType(p.service_type)}</div>
+              )}
+              <div className="carousel-card-body">
+                <h4>{p.business_name}</h4>
+                <div className="loc">{p.district}</div>
+                <div className="meta">
+                  {p.service_type}
+                  {rating ? <> · ⭐ {rating} ({p.reviews.length})</> : null}
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      {providers.length > 3 && (
+        <button className="carousel-arrow" onClick={scrollNext} aria-label="Scroll for more">→</button>
+      )}
+    </div>
+  );
+}
 
 // Industry-specific adaptive modules. `label`/`icon`/`desc` drive the
 // Settings → Modules UI; which ones default on per category lives in the
@@ -2138,15 +2229,54 @@ function LandingPage({ onNav, session, onSignIn }) {
   const [heroDistrict, setHeroDistrict] = useState("");
   const [heroDirectory, setHeroDirectory] = useState([]);
   const [showHeroSuggestions, setShowHeroSuggestions] = useState(false);
-  const [recommended, setRecommended] = useState([]);
-  const [loadingRecommended, setLoadingRecommended] = useState(true);
+  // Powers the three "discover" carousels below (Recommended / New to
+  // VaiBook / Trending) — one fetch, three client-side sorts, rather than
+  // three separate queries.
+  const [discoverProviders, setDiscoverProviders] = useState([]);
+  const [loadingDiscover, setLoadingDiscover] = useState(true);
 
   useEffect(() => {
     getProviderDirectory().then((data) => setHeroDirectory(data || []));
-    getRecommendedServices(6).then((data) => { setRecommended(data || []); setLoadingRecommended(false); });
+    getActiveProviders().then((data) => { setDiscoverProviders(data || []); setLoadingDiscover(false); });
   }, []);
 
   const heroSuggestions = buildSuggestions(heroDirectory, heroQuery);
+
+  // Recommended: highest-rated first, 2+ reviews required so one 5-star
+  // review can't dominate.
+  const recommendedProviders = discoverProviders
+    .filter((p) => providerRating(p) != null && (p.reviews || []).length >= 2)
+    .sort((a, b) => providerRating(b) - providerRating(a))
+    .slice(0, 8);
+
+  // New to VaiBook: most recently joined, regardless of reviews yet — the
+  // "New" pill only shows on the ones actually within the last 30 days
+  // (see isRecentlyJoined), so this never mislabels an older provider.
+  const newProviders = [...discoverProviders]
+    .sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime())
+    .slice(0, 8);
+
+  // Trending: VaiBook doesn't track view/booking velocity yet, so this
+  // stands in with the closest honest signal available today — providers
+  // who opted into "Featured" placement (a paid visibility boost, i.e.
+  // providers actively investing in being seen), tie-broken by review
+  // count as a rough popularity proxy. Worth swapping for real recent-
+  // booking-volume data once there's enough traffic to make that
+  // meaningful.
+  const trendingProviders = [...discoverProviders]
+    .sort((a, b) => {
+      const bf = b.is_featured ? 1 : 0, af = a.is_featured ? 1 : 0;
+      if (bf !== af) return bf - af;
+      return (b.reviews || []).length - (a.reviews || []).length;
+    })
+    .slice(0, 8);
+
+  const goToProvider = (p) => {
+    try {
+      localStorage.setItem("vaibook_pending_search", JSON.stringify({ query: p.business_name, district: "All" }));
+    } catch (e) { /* ignore storage errors */ }
+    enterCustomerPortal(onNav, session, onSignIn);
+  };
 
   const submitHeroSearch = (queryOverride) => {
     const q = (queryOverride != null ? queryOverride : heroQuery).trim();
@@ -2214,32 +2344,6 @@ function LandingPage({ onNav, session, onSignIn }) {
         </div>
       </section>
 
-      {/* RECOMMENDED — surfaces services from the highest-rated providers
-          (2+ reviews required so one 5-star review can't dominate). Hidden
-          entirely once loaded if there isn't enough review data yet. */}
-      {!loadingRecommended && recommended.length > 0 && (
-        <section className="section" id="recommended" style={{ paddingBottom: 24 }}>
-          <div className="section-eyebrow">Loved by customers</div>
-          <h2 className="section-title">Recommended for you</h2>
-          <p className="section-sub">The highest-rated providers on VaiBook right now.</p>
-          <div className="steps-grid">
-            {recommended.map((r) => (
-              <div
-                className="step-card"
-                key={`${r.provider_id}-${r.service_id}`}
-                style={{ cursor: "pointer", textAlign: "left" }}
-                onClick={() => enterCustomerPortal(onNav, session, onSignIn)}
-              >
-                <div className="step-icon">⭐</div>
-                <h3>{r.service_name}</h3>
-                <p style={{ marginBottom: 4 }}>{r.business_name} · {r.service_type} · {r.district}</p>
-                <p style={{ fontWeight: 700, color: "var(--forest)" }}>{r.rating}★ <span style={{ fontWeight: 400, color: "var(--muted)" }}>({r.reviewCount} review{r.reviewCount === 1 ? "" : "s"})</span> · BZ${r.price}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
-
       {/* HOW IT WORKS */}
       <section className="section" id="how-it-works">
         <div className="section-eyebrow">Simple process</div>
@@ -2260,6 +2364,37 @@ function LandingPage({ onNav, session, onSignIn }) {
           ))}
         </div>
       </section>
+
+      {/* DISCOVER — Fresha-style horizontal carousels. Each row only
+          renders once it has at least 2 real providers to show — a thin
+          market showing 1 card (or the same provider) across three rows
+          would look broken rather than impressive, so this grows in on its
+          own as more providers join instead of needing to be toggled on. */}
+      {!loadingDiscover && (recommendedProviders.length >= 2 || newProviders.length >= 2 || trendingProviders.length >= 2) && (
+        <section className="section" id="discover">
+          {recommendedProviders.length >= 2 && (
+            <div style={{ marginBottom: 44 }}>
+              <div className="section-eyebrow">Loved by customers</div>
+              <h2 className="section-title" style={{ marginBottom: 20 }}>Recommended</h2>
+              <ProviderCarousel providers={recommendedProviders} onCardClick={goToProvider} />
+            </div>
+          )}
+          {newProviders.length >= 2 && (
+            <div style={{ marginBottom: 44 }}>
+              <div className="section-eyebrow">Just joined</div>
+              <h2 className="section-title" style={{ marginBottom: 20 }}>New to VaiBook</h2>
+              <ProviderCarousel providers={newProviders} badgeFor={(p) => (isRecentlyJoined(p) ? "New" : null)} onCardClick={goToProvider} />
+            </div>
+          )}
+          {trendingProviders.length >= 2 && (
+            <div>
+              <div className="section-eyebrow">Getting noticed</div>
+              <h2 className="section-title" style={{ marginBottom: 20 }}>Trending</h2>
+              <ProviderCarousel providers={trendingProviders} badgeFor={(p) => (p.is_featured ? "Featured" : null)} onCardClick={goToProvider} />
+            </div>
+          )}
+        </section>
+      )}
 
       {/* SERVICES */}
       <section className="services-section" id="services">
