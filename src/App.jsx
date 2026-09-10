@@ -7078,8 +7078,24 @@ export default function App() {
       if (pending === "admin" || pending === "customer" || pending === "provider") {
         setView(pending);
         localStorage.removeItem("vaibook_pending_view");
+        return true;
       }
     } catch (e) { /* ignore */ }
+    return false;
+  };
+
+  // Mirrors Vai Buy: once an admin account is signed in, land straight in
+  // the admin portal instead of the regular homepage. Skipped when a deep
+  // link (a QR booking link, or an explicit #customer/#provider URL) or a
+  // pending "sign in to do X" flow already decided where to go — an admin
+  // opening a booking link or the provider portal on purpose should still
+  // land there, not get bounced.
+  const maybeGoToAdmin = async (email, hadPendingView) => {
+    if (hadPendingView) return;
+    const h = window.location.hash.replace("#", "");
+    if (h === "customer" || h === "provider" || parseBookingHash(h)) return;
+    const ok = await checkIsAdmin(email);
+    if (ok) setView("admin");
   };
 
   useEffect(() => {
@@ -7092,13 +7108,17 @@ export default function App() {
         const p = await loadProviderProfile(session.user);
         setProviderProfile(p);
         setStaffProfile(p ? null : await loadStaffProfile());
-        applyPendingView();
+        const hadPending = applyPendingView();
+        await maybeGoToAdmin(session.user.email, hadPending);
       }
       setLoading(false);
     });
 
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    // Listen for auth changes. Gated to the actual SIGNED_IN event (not
+    // TOKEN_REFRESHED, which also fires this callback roughly hourly) so an
+    // admin who's deliberately browsing the customer/provider portal isn't
+    // suddenly bounced back to the admin portal mid-session.
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       setSession(session);
       if (session) {
         const u = await getOrCreateUser(session.user);
@@ -7106,7 +7126,10 @@ export default function App() {
         const p = await loadProviderProfile(session.user);
         setProviderProfile(p);
         setStaffProfile(p ? null : await loadStaffProfile());
-        applyPendingView();
+        const hadPending = applyPendingView();
+        if (event === "SIGNED_IN") {
+          await maybeGoToAdmin(session.user.email, hadPending);
+        }
       } else {
         setUser(null);
         setProviderProfile(null);
