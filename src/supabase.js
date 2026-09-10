@@ -958,6 +958,27 @@ export const setMaintenanceMode = async (on, message) => {
   return true;
 };
 
+// ── SITE OFFLINE (full-site takeover for planned changes — see
+// supabase_site_offline.sql). Different from maintenance mode above: this
+// one hides the whole site behind a "we'll be back shortly" page for
+// everyone except a signed-in admin, instead of just pausing new writes. ──
+
+export const getSiteOfflineStatus = async () => {
+  const { data, error } = await supabase
+    .from('system_settings')
+    .select('site_offline, site_offline_message')
+    .eq('id', true)
+    .maybeSingle();
+  if (error) { console.error('Error checking site offline status:', error.message); return { on: false, message: '' }; }
+  return { on: !!data?.site_offline, message: data?.site_offline_message || '' };
+};
+
+export const setSiteOffline = async (on, message) => {
+  const { error } = await supabase.rpc('set_site_offline', { p_on: on, p_message: message || null });
+  if (error) { console.error('Error setting site offline mode:', error.message); return false; }
+  return true;
+};
+
 export const submitProviderApplication = async (application) => {
   // Deliberately a plain insert with no .select() — this form is reachable
   // by anyone who hasn't signed in yet, and Postgres RLS treats "hand back
