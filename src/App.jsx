@@ -2214,33 +2214,6 @@ function LandingPage({ onNav, session, onSignIn }) {
         </div>
       </section>
 
-      {/* MARKETING STRIP — sells what VaiBook does, not raw usage numbers.
-          A brand-new platform's real counts (bookings, providers, districts)
-          look thin and undercut trust, so this highlights capabilities
-          instead — same slot, same layout, no data fetch required. */}
-      <div className="marketing-strip">
-        <div className="marketing-item">
-          <div className="marketing-item-icon">⚡</div>
-          <div className="marketing-item-title">Instant booking</div>
-          <div className="marketing-item-sub">Book in a few taps — no back-and-forth calls or texts.</div>
-        </div>
-        <div className="marketing-item">
-          <div className="marketing-item-icon">✅</div>
-          <div className="marketing-item-title">Verified providers</div>
-          <div className="marketing-item-sub">Every business is reviewed before it goes live on VaiBook.</div>
-        </div>
-        <div className="marketing-item">
-          <div className="marketing-item-icon">🔒</div>
-          <div className="marketing-item-title">Secure payments</div>
-          <div className="marketing-item-sub">Pay safely and keep every booking in one place.</div>
-        </div>
-        <div className="marketing-item">
-          <div className="marketing-item-icon">📍</div>
-          <div className="marketing-item-title">All of Belize</div>
-          <div className="marketing-item-sub">Serving every district, with more providers joining weekly.</div>
-        </div>
-      </div>
-
       {/* RECOMMENDED — surfaces services from the highest-rated providers
           (2+ reviews required so one 5-star review can't dominate). Hidden
           entirely once loaded if there isn't enough review data yet. */}
@@ -2303,6 +2276,34 @@ function LandingPage({ onNav, session, onSignIn }) {
           ))}
         </div>
       </section>
+
+      {/* MARKETING STRIP — sells what VaiBook does, not raw usage numbers.
+          A brand-new platform's real counts (bookings, providers, districts)
+          look thin and undercut trust, so this highlights capabilities
+          instead. Placed right before Coverage/Browse by district so it
+          leads into "here's where we actually operate". */}
+      <div className="marketing-strip">
+        <div className="marketing-item">
+          <div className="marketing-item-icon">⚡</div>
+          <div className="marketing-item-title">Instant booking</div>
+          <div className="marketing-item-sub">Book in a few taps — no back-and-forth calls or texts.</div>
+        </div>
+        <div className="marketing-item">
+          <div className="marketing-item-icon">✅</div>
+          <div className="marketing-item-title">Verified providers</div>
+          <div className="marketing-item-sub">Every business is reviewed before it goes live on VaiBook.</div>
+        </div>
+        <div className="marketing-item">
+          <div className="marketing-item-icon">🔒</div>
+          <div className="marketing-item-title">Secure payments</div>
+          <div className="marketing-item-sub">Pay safely and keep every booking in one place.</div>
+        </div>
+        <div className="marketing-item">
+          <div className="marketing-item-icon">📍</div>
+          <div className="marketing-item-title">All of Belize</div>
+          <div className="marketing-item-sub">Serving every district, with more providers joining weekly.</div>
+        </div>
+      </div>
 
       {/* BROWSE BY DISTRICT */}
       <section className="section" id="browse" style={{ background: "var(--sand)" }}>
