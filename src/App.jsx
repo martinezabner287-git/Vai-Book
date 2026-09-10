@@ -417,15 +417,11 @@ const css = `
   .step-card p { font-size: 14px; color: var(--muted); line-height: 1.6; }
 
   /* SERVICES SECTION */
-  .services-section { background: var(--forest); padding: 80px 48px; }
-  .services-section .section-title { color: var(--near-white); }
-  .services-section .section-sub { color: rgba(255,255,255,0.55); }
-  .services-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; }
-  .svc-tile { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: var(--radius); padding: 28px 20px; text-align: center; cursor: pointer; transition: all .2s; }
-  .svc-tile:hover { background: rgba(198,241,53,0.1); border-color: var(--lime); }
-  .svc-tile .icon { font-size: 36px; margin-bottom: 12px; }
-  .svc-tile h4 { font-size: 14px; font-weight: 600; color: var(--near-white); margin-bottom: 4px; }
-  .svc-tile p { font-size: 12px; color: rgba(255,255,255,0.45); }
+  .services-section { padding: 80px 48px; }
+  .services-pills { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; max-width: 1040px; margin: 0 auto; }
+  .service-pill { display: inline-flex; align-items: center; gap: 9px; background: #fff; border: 1px solid var(--border); color: var(--dark-text); padding: 13px 22px; border-radius: 100px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all .2s; }
+  .service-pill:hover { border-color: var(--forest); color: var(--forest); box-shadow: 0 2px 10px rgba(13,61,46,0.08); }
+  .service-pill .icon { font-size: 18px; line-height: 1; }
 
   /* BROWSE BY DISTRICT */
   .browse-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 32px 24px; max-width: 1100px; margin: 0 auto 44px; }
@@ -607,7 +603,7 @@ const css = `
     .grid-2 { grid-template-columns: 1fr; }
     .grid-3 { grid-template-columns: 1fr; }
     .metric-grid { grid-template-columns: 1fr 1fr; }
-    .services-grid { grid-template-columns: repeat(2, 1fr); }
+    .services-section { padding: 60px 24px; }
     .footer { padding: 40px 24px 24px; }
     .a2hs-banner { left: 12px; right: 12px; bottom: 12px; padding: 12px; }
   }
@@ -2398,16 +2394,16 @@ function LandingPage({ onNav, session, onSignIn }) {
 
       {/* SERVICES */}
       <section className="services-section" id="services">
-        <div className="section-eyebrow" style={{ color: "var(--lime)" }}>What's on VaiBook</div>
-        <h2 className="section-title">Every local service. One platform.</h2>
-        <p className="section-sub">From a fresh fade to a relaxing facial — all bookable in your district.</p>
-        <div className="services-grid">
+        <div style={{ textAlign: "center", marginBottom: 40 }}>
+          <div className="section-eyebrow" style={{ justifyContent: "center", display: "flex" }}>What's on VaiBook</div>
+          <h2 className="section-title">Every local service. One platform.</h2>
+          <p className="section-sub" style={{ margin: "0 auto" }}>From a fresh fade to a relaxing facial — all bookable in your district.</p>
+        </div>
+        <div className="services-pills">
           {SERVICES.map((s, i) => (
-            <div className="svc-tile" key={i} onClick={() => enterCustomerPortal(onNav, session, onSignIn)}>
-              <div className="icon">{s.icon}</div>
-              <h4>{s.name}</h4>
-              <p>{s.desc}</p>
-            </div>
+            <button className="service-pill" key={i} onClick={() => enterCustomerPortal(onNav, session, onSignIn)}>
+              <span className="icon">{s.icon}</span> {s.name}
+            </button>
           ))}
         </div>
       </section>
@@ -7417,3 +7413,4 @@ export default function App() {
     </>
   );
 }
+
