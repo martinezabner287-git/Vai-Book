@@ -924,13 +924,20 @@ export const deletePaymentMethod = async (id) => {
 
 // ── ADMIN HELPERS ─────────────────────────────────────────────────
 
+// Goes through the is_current_user_admin() RPC (security definer, checks
+// the caller's own JWT email against the admins table server-side) rather
+// than querying the admins table directly. A direct .from('admins').select()
+// depends on a public SELECT policy existing on that table — if RLS blocks
+// it, this silently comes back empty instead of erroring, so real admins
+// would never be recognized. The RPC sidesteps that entirely and also
+// case-normalizes the email, matching how set_maintenance_mode/
+// set_site_offline already check admin status. See
+// supabase_admin_check_fix.sql. (The email param is kept for compatibility
+// with existing call sites, but the RPC only ever checks whoever is
+// currently signed in — every caller already passes their own email.)
 export const checkIsAdmin = async (email) => {
   if (!email) return false;
-  const { data, error } = await supabase
-    .from('admins')
-    .select('email')
-    .eq('email', email)
-    .maybeSingle();
+  const { data, error } = await supabase.rpc('is_current_user_admin');
   if (error) { console.error('Admin check error:', error.message); return false; }
   return !!data;
 };
