@@ -6,7 +6,7 @@ import L from "leaflet";
 import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
 import markerIcon from "leaflet/dist/images/marker-icon.png";
 import markerShadow from "leaflet/dist/images/marker-shadow.png";
-import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, deleteService, getActiveProviders, getProviderDirectory, createBooking, getProviderBusyWindows, createBookingSafe, cancelBooking, getCustomerBookings, uploadReceipt, submitReview, getProviderReviews, sendBookingEmail, updateUserProfile, getPaymentMethods, addPaymentMethod, deletePaymentMethod, createNotification, getNotifications, markNotificationRead, markAllNotificationsRead, getLandingStats, getRecommendedServices, getCategoryDefaultFeatures, getProviderFeatureOverrides, setProviderFeatureOverride, getVisitNotes, upsertVisitNote, adminListProviders, adminUpdateProvider, adminDeleteProvider, tagVIP, untagVIP, getVIPClients, getFavoriteProviderIds, getFavoriteProviders, addFavorite, removeFavorite, getBookingMessages, sendBookingMessage, markBookingMessagesRead, getUnreadBookingMessages, getProviderMonthlyTrend, createProviderProfile, getProviderById, createWalkInBooking, submitProviderPayment, getMyProviderPayments, adminListProviderPayments, adminReviewProviderPayment, submitBookingRefund, adminListBookingRefunds, openPrivateFile, getProviderStaff, addProviderStaff, updateProviderStaff, deleteProviderStaff, getLoyaltyAccount, getProviderLoyaltyCustomers, redeemLoyaltyReward, getMyStaffProfile, claimStaffSeatByEmail, getStaffBookings, rescheduleBooking, getProviderNotifyEmail, getMaintenanceStatus, setMaintenanceMode, getSiteOfflineStatus, setSiteOffline } from "./supabase";
+import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, deleteService, getActiveProviders, getProviderDirectory, createBooking, getProviderBusyWindows, createBookingSafe, cancelBooking, getCustomerBookings, uploadReceipt, submitReview, getProviderReviews, sendBookingEmail, updateUserProfile, getPaymentMethods, addPaymentMethod, deletePaymentMethod, createNotification, getNotifications, markNotificationRead, markAllNotificationsRead, getRecommendedServices, getCategoryDefaultFeatures, getProviderFeatureOverrides, setProviderFeatureOverride, getVisitNotes, upsertVisitNote, adminListProviders, adminUpdateProvider, adminDeleteProvider, tagVIP, untagVIP, getVIPClients, getFavoriteProviderIds, getFavoriteProviders, addFavorite, removeFavorite, getBookingMessages, sendBookingMessage, markBookingMessagesRead, getUnreadBookingMessages, getProviderMonthlyTrend, createProviderProfile, getProviderById, createWalkInBooking, submitProviderPayment, getMyProviderPayments, adminListProviderPayments, adminReviewProviderPayment, submitBookingRefund, adminListBookingRefunds, openPrivateFile, getProviderStaff, addProviderStaff, updateProviderStaff, deleteProviderStaff, getLoyaltyAccount, getProviderLoyaltyCustomers, redeemLoyaltyReward, getMyStaffProfile, claimStaffSeatByEmail, getStaffBookings, rescheduleBooking, getProviderNotifyEmail, getMaintenanceStatus, setMaintenanceMode, getSiteOfflineStatus, setSiteOffline } from "./supabase";
 
 // Leaflet's default marker icons reference image paths that don't resolve
 // correctly under CRA's bundler unless re-pointed at the imported assets.
@@ -398,11 +398,11 @@ const css = `
   }
 
   /* STATS BAR */
-  .stats-bar { background: var(--sand); padding: 40px 48px; display: flex; justify-content: space-around; gap: 32px; flex-wrap: wrap; }
-  .stat { text-align: center; }
-  .stat-num { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 36px; font-weight: 800; color: var(--forest); }
-  .stat-num span { color: var(--clay); }
-  .stat-label { font-size: 13px; color: var(--muted); margin-top: 4px; }
+  .marketing-strip { background: var(--sand); padding: 40px 48px; display: flex; justify-content: space-around; gap: 32px; flex-wrap: wrap; }
+  .marketing-item { text-align: center; max-width: 230px; }
+  .marketing-item-icon { font-size: 26px; line-height: 1; margin-bottom: 10px; }
+  .marketing-item-title { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 16px; font-weight: 800; color: var(--forest); }
+  .marketing-item-sub { font-size: 13px; color: var(--muted); margin-top: 4px; line-height: 1.45; }
 
   /* HOW IT WORKS */
   .section { padding: 80px 48px; }
@@ -586,7 +586,7 @@ const css = `
     .hero { grid-template-columns: 1fr; padding: 60px 24px; min-height: auto; }
     .hero-card-wrap { display: none; }
     .section { padding: 60px 24px; }
-    .stats-bar { padding: 32px 24px; }
+    .marketing-strip { padding: 32px 24px; }
     .portal-layout { grid-template-columns: 1fr; }
     .sidebar { display: none; }
     .portal-content { padding: 20px; }
@@ -2080,14 +2080,11 @@ function LandingPage({ onNav, session, onSignIn }) {
   const [heroDistrict, setHeroDistrict] = useState("");
   const [heroDirectory, setHeroDirectory] = useState([]);
   const [showHeroSuggestions, setShowHeroSuggestions] = useState(false);
-  const [stats, setStats] = useState(null);
-  const [loadingStats, setLoadingStats] = useState(true);
   const [recommended, setRecommended] = useState([]);
   const [loadingRecommended, setLoadingRecommended] = useState(true);
 
   useEffect(() => {
     getProviderDirectory().then((data) => setHeroDirectory(data || []));
-    getLandingStats().then((data) => { setStats(data); setLoadingStats(false); });
     getRecommendedServices(6).then((data) => { setRecommended(data || []); setLoadingRecommended(false); });
   }, []);
 
@@ -2159,12 +2156,31 @@ function LandingPage({ onNav, session, onSignIn }) {
         </div>
       </section>
 
-      {/* STATS — live counts from the database, not placeholders */}
-      <div className="stats-bar">
-        <div className="stat"><div className="stat-num">{loadingStats ? "—" : (stats?.bookingsCompleted ?? 0).toLocaleString()}</div><div className="stat-label">Bookings completed</div></div>
-        <div className="stat"><div className="stat-num">{loadingStats ? "—" : (stats?.activeProviders ?? 0).toLocaleString()}</div><div className="stat-label">Verified providers</div></div>
-        <div className="stat"><div className="stat-num">{loadingStats ? "—" : (stats?.districts ?? 0)}<span> district{stats?.districts === 1 ? "" : "s"}</span></div><div className="stat-label">Across Belize</div></div>
-        <div className="stat"><div className="stat-num">{loadingStats ? "—" : (stats?.avgRating != null ? `${stats.avgRating}★` : "New")}</div><div className="stat-label">{stats?.avgRating != null ? `Average rating (${stats.reviewCount})` : "Average rating"}</div></div>
+      {/* MARKETING STRIP — sells what VaiBook does, not raw usage numbers.
+          A brand-new platform's real counts (bookings, providers, districts)
+          look thin and undercut trust, so this highlights capabilities
+          instead — same slot, same layout, no data fetch required. */}
+      <div className="marketing-strip">
+        <div className="marketing-item">
+          <div className="marketing-item-icon">⚡</div>
+          <div className="marketing-item-title">Instant booking</div>
+          <div className="marketing-item-sub">Book in a few taps — no back-and-forth calls or texts.</div>
+        </div>
+        <div className="marketing-item">
+          <div className="marketing-item-icon">✅</div>
+          <div className="marketing-item-title">Verified providers</div>
+          <div className="marketing-item-sub">Every business is reviewed before it goes live on VaiBook.</div>
+        </div>
+        <div className="marketing-item">
+          <div className="marketing-item-icon">🔒</div>
+          <div className="marketing-item-title">Secure payments</div>
+          <div className="marketing-item-sub">Pay safely and keep every booking in one place.</div>
+        </div>
+        <div className="marketing-item">
+          <div className="marketing-item-icon">📍</div>
+          <div className="marketing-item-title">All of Belize</div>
+          <div className="marketing-item-sub">Serving every district, with more providers joining weekly.</div>
+        </div>
       </div>
 
       {/* RECOMMENDED — surfaces services from the highest-rated providers
