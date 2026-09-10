@@ -6,7 +6,7 @@ import L from "leaflet";
 import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
 import markerIcon from "leaflet/dist/images/marker-icon.png";
 import markerShadow from "leaflet/dist/images/marker-shadow.png";
-import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, deleteService, getActiveProviders, getProviderDirectory, createBooking, getProviderBusyWindows, createBookingSafe, cancelBooking, getCustomerBookings, uploadReceipt, submitReview, getProviderReviews, sendBookingEmail, updateUserProfile, getPaymentMethods, addPaymentMethod, deletePaymentMethod, createNotification, getNotifications, markNotificationRead, markAllNotificationsRead, getLandingStats, getRecommendedServices, getCategoryDefaultFeatures, getProviderFeatureOverrides, setProviderFeatureOverride, getVisitNotes, upsertVisitNote, adminListProviders, adminUpdateProvider, adminDeleteProvider, tagVIP, untagVIP, getVIPClients, getFavoriteProviderIds, getFavoriteProviders, addFavorite, removeFavorite, getBookingMessages, sendBookingMessage, markBookingMessagesRead, getUnreadBookingMessages, getProviderMonthlyTrend, createProviderProfile, getProviderById, createWalkInBooking, submitProviderPayment, getMyProviderPayments, adminListProviderPayments, adminReviewProviderPayment, submitBookingRefund, adminListBookingRefunds, openPrivateFile, getProviderStaff, addProviderStaff, updateProviderStaff, deleteProviderStaff, getLoyaltyAccount, getProviderLoyaltyCustomers, redeemLoyaltyReward, getMyStaffProfile, claimStaffSeatByEmail, getStaffBookings, rescheduleBooking, getProviderNotifyEmail, getMaintenanceStatus, setMaintenanceMode } from "./supabase";
+import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, deleteService, getActiveProviders, getProviderDirectory, createBooking, getProviderBusyWindows, createBookingSafe, cancelBooking, getCustomerBookings, uploadReceipt, submitReview, getProviderReviews, sendBookingEmail, updateUserProfile, getPaymentMethods, addPaymentMethod, deletePaymentMethod, createNotification, getNotifications, markNotificationRead, markAllNotificationsRead, getLandingStats, getRecommendedServices, getCategoryDefaultFeatures, getProviderFeatureOverrides, setProviderFeatureOverride, getVisitNotes, upsertVisitNote, adminListProviders, adminUpdateProvider, adminDeleteProvider, tagVIP, untagVIP, getVIPClients, getFavoriteProviderIds, getFavoriteProviders, addFavorite, removeFavorite, getBookingMessages, sendBookingMessage, markBookingMessagesRead, getUnreadBookingMessages, getProviderMonthlyTrend, createProviderProfile, getProviderById, createWalkInBooking, submitProviderPayment, getMyProviderPayments, adminListProviderPayments, adminReviewProviderPayment, submitBookingRefund, adminListBookingRefunds, openPrivateFile, getProviderStaff, addProviderStaff, updateProviderStaff, deleteProviderStaff, getLoyaltyAccount, getProviderLoyaltyCustomers, redeemLoyaltyReward, getMyStaffProfile, claimStaffSeatByEmail, getStaffBookings, rescheduleBooking, getProviderNotifyEmail, getMaintenanceStatus, setMaintenanceMode, getSiteOfflineStatus, setSiteOffline } from "./supabase";
 
 // Leaflet's default marker icons reference image paths that don't resolve
 // correctly under CRA's bundler unless re-pointed at the imported assets.
@@ -1635,6 +1635,39 @@ function MaintenanceBanner() {
     <div style={{ background: "#b45309", color: "#fff", textAlign: "center", padding: "10px 16px", fontSize: 13, fontWeight: 600, position: "relative", zIndex: 500 }}>
       🚧 {status.message || "New bookings and signups are temporarily paused for maintenance. Everything else still works — please try again shortly."}
     </div>
+  );
+}
+
+// Full-site takeover shown to everyone except a signed-in admin while
+// "Site offline" is on (see AdminPortal's Emergency tab / set_site_offline
+// in supabase_site_offline.sql) — the Vai-Buy-style "we'll be back
+// shortly" screen, so planned changes can be made with the public site
+// hidden, while the admin can still sign in and see the real thing.
+function SiteOffline({ message, onSignIn }) {
+  return (
+    <>
+      <style>{css}</style>
+      <div style={{ minHeight: "100vh", background: "var(--sand)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
+        <div style={{ maxWidth: 440, width: "100%", background: "white", borderRadius: "var(--radius)", overflow: "hidden", boxShadow: "0 20px 60px rgba(13,61,46,0.16)" }}>
+          <div style={{ background: "var(--forest)", padding: "20px 28px", display: "flex", alignItems: "center", gap: 10 }}>
+            <span style={{ width: 9, height: 9, borderRadius: "50%", background: "var(--lime)", flexShrink: 0 }} />
+            <span style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 19, fontWeight: 800, color: "var(--near-white)", display: "flex", alignItems: "center", gap: 8 }}>
+              <VaiBookMark size={19} />vai<span style={{ color: "var(--lime)" }}>book</span>
+            </span>
+          </div>
+          <div style={{ padding: "32px 28px" }}>
+            <h1 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 23, fontWeight: 800, color: "var(--dark-text)", margin: "0 0 12px" }}>We'll be back shortly</h1>
+            <p style={{ color: "var(--muted)", fontSize: 15, lineHeight: 1.6, margin: "0 0 10px" }}>
+              {message || "VaiBook is offline while we make some improvements."}
+            </p>
+            <p style={{ color: "var(--muted)", fontSize: 15, lineHeight: 1.6, margin: 0 }}>Thanks for your patience — check back soon.</p>
+            <div style={{ marginTop: 26, borderTop: "1px solid var(--border)", paddingTop: 16 }}>
+              <a style={{ fontSize: 13, color: "var(--muted)", cursor: "pointer" }} onClick={onSignIn}>Site owner? Sign in</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </>
   );
 }
 
@@ -6256,6 +6289,38 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
     setLoadingMaintenance(false);
   };
 
+  // Site offline — a separate, stronger switch from the pause above: it
+  // hides the whole site behind a "we'll be back shortly" page for
+  // everyone except a signed-in admin (see SiteOffline / supabase_site_offline.sql),
+  // for planned changes/deploys rather than an in-progress incident.
+  const [siteOffline, setSiteOfflineState] = useState({ on: false, message: "" });
+  const [siteOfflineDraft, setSiteOfflineDraft] = useState("");
+  const [loadingSiteOffline, setLoadingSiteOffline] = useState(false);
+  const [savingSiteOffline, setSavingSiteOffline] = useState(false);
+
+  const loadSiteOffline = async () => {
+    setLoadingSiteOffline(true);
+    const s = await getSiteOfflineStatus();
+    setSiteOfflineState(s);
+    setSiteOfflineDraft(s.message || "");
+    setLoadingSiteOffline(false);
+  };
+
+  const toggleSiteOffline = async () => {
+    const turningOn = !siteOffline.on;
+    if (turningOn && !window.confirm("Take VaiBook offline for everyone except admins? Visitors will see a \"we'll be back shortly\" page until you turn this off — you'll still be able to sign in and use the real site to make your changes.")) {
+      return;
+    }
+    setSavingSiteOffline(true);
+    const ok = await setSiteOffline(turningOn, turningOn ? siteOfflineDraft.trim() : null);
+    if (ok) {
+      await loadSiteOffline();
+    } else {
+      window.alert("Couldn't update site offline mode. Please check your connection and try again.");
+    }
+    setSavingSiteOffline(false);
+  };
+
   // Lets the top nav's account dropdown (with the same tools list as the
   // sidebar) switch tabs while already inside the admin portal,
   // since the sidebar itself is hidden on mobile.
@@ -6342,7 +6407,7 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
   };
 
   useEffect(() => {
-    if (isAdmin) { loadApps(); loadProviders(); loadPayments(); loadRefunds(); loadMaintenance(); }
+    if (isAdmin) { loadApps(); loadProviders(); loadPayments(); loadRefunds(); loadMaintenance(); loadSiteOffline(); }
   }, [isAdmin]);
 
   const toggleMaintenance = async () => {
@@ -6551,7 +6616,7 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
         <div className="sidebar-section">
           <div className="sidebar-label">System</div>
           <div className={`sidebar-item ${tab === "security" ? "active" : ""}`} onClick={() => setTab("security")}>
-            <span className="icon">{"🚨"}</span>Emergency{maintenance.on ? " (PAUSED)" : ""}
+            <span className="icon">{"🚨"}</span>Emergency{siteOffline.on ? " (OFFLINE)" : maintenance.on ? " (PAUSED)" : ""}
           </div>
         </div>
         <div className="sidebar-avatar">
@@ -6817,7 +6882,44 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
           <>
             <div className="portal-header">
               <h2>Emergency</h2>
-              <p>A last-resort switch for the moment something looks actively wrong — new bookings and new provider applications are turned off site-wide, in about a second, without touching Vercel, DNS, or Supabase. Sign-in, existing bookings, payments, messages, and reviews all keep working normally.</p>
+              <p>Two independent switches: take the whole site offline for planned changes, or just pause new bookings and applications if something looks actively wrong. Both work in about a second, without touching Vercel, DNS, or Supabase.</p>
+            </div>
+            <div className="card">
+              <div className="card-title">
+                <span>{siteOffline.on ? "🚨 Site is OFFLINE to visitors" : "Site is online"}</span>
+              </div>
+              {loadingSiteOffline ? (
+                <p style={{ fontSize: 13, color: "var(--muted)", padding: "12px 0" }}>Loading...</p>
+              ) : (
+                <>
+                  <p style={{ fontSize: 13, color: "var(--muted)", lineHeight: 1.6, marginBottom: 12 }}>
+                    While on, every visitor sees a "we'll be back shortly" page instead of the site. You stay signed in as an admin and can use the real site normally to make your changes — flip it back off when you're done.
+                  </p>
+                  {siteOffline.on && siteOffline.message && (
+                    <p style={{ fontSize: 13, color: "var(--muted)", marginBottom: 12 }}>Message shown to visitors: "{siteOffline.message}"</p>
+                  )}
+                  {!siteOffline.on && (
+                    <div style={{ marginBottom: 12 }}>
+                      <label style={{ fontSize: 12, fontWeight: 600, color: "var(--muted)", display: "block", marginBottom: 4 }}>Message to show visitors while offline (optional)</label>
+                      <input
+                        type="text"
+                        value={siteOfflineDraft}
+                        onChange={(e) => setSiteOfflineDraft(e.target.value)}
+                        placeholder="e.g. Quick update in progress — back in a few minutes."
+                        style={{ width: "100%" }}
+                      />
+                    </div>
+                  )}
+                  <button
+                    className={siteOffline.on ? "btn-sm forest" : "btn-sm"}
+                    style={!siteOffline.on ? { background: "#B91C1C", color: "#fff" } : undefined}
+                    onClick={toggleSiteOffline}
+                    disabled={savingSiteOffline}
+                  >
+                    {savingSiteOffline ? "Saving..." : siteOffline.on ? "Bring site back online" : "🚨 Take site offline"}
+                  </button>
+                </>
+              )}
             </div>
             <div className="card">
               <div className="card-title">
@@ -6854,9 +6956,12 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
               )}
             </div>
             <div className="card">
-              <div className="card-title"><span>What this does and doesn't do</span></div>
+              <div className="card-title"><span>What each switch does</span></div>
+              <p style={{ fontSize: 13, color: "var(--muted)", lineHeight: 1.6, marginBottom: 12 }}>
+                <strong>Site offline</strong> hides the entire site behind a "we'll be back shortly" page for anyone who isn't signed in as an admin — use it while you (or Claude) are making changes you don't want visitors to see mid-update. It doesn't delete or change any data, and existing sessions/bookings are untouched — it's purely a front door that stays shut to the public until you reopen it.
+              </p>
               <p style={{ fontSize: 13, color: "var(--muted)", lineHeight: 1.6 }}>
-                Pausing blocks new rows being written to bookings and provider_applications — it will not cancel, hide, or affect anything already booked, and it doesn't touch payments, chat, reviews, or anyone's ability to sign in. New booking requests, walk-ins, and new provider applications are declined with a friendly message until you resume. Use this if you suspect the site is being flooded or abused and you want to stop new writes while you look into it — not as a way to take the site offline entirely (for that, see the security guide's "if you think you're under attack" section).
+                <strong>Pausing new bookings &amp; signups</strong> is narrower: it blocks new rows being written to bookings and provider_applications, but leaves the rest of the site browsable — sign-in, existing bookings, payments, chat, and reviews all keep working. New booking requests, walk-ins, and new provider applications are declined with a friendly message until you resume. Use this if you suspect the site is being flooded or abused and want to stop new writes while you look into it, without hiding the whole site.
               </p>
             </div>
           </>
@@ -6904,6 +7009,24 @@ export default function App() {
     };
     window.addEventListener("hashchange", onHashChange);
     return () => window.removeEventListener("hashchange", onHashChange);
+  }, []);
+
+  // Site-wide offline takeover (see SiteOffline / AdminPortal's Emergency
+  // tab). Checked independently of the session/loading flow below so it
+  // still shows up even if, say, Google sign-in itself is having issues —
+  // an admin can always get past it via the "Site owner? Sign in" link.
+  const [siteOffline, setSiteOfflineState] = useState({ on: false, message: "" });
+  const [siteOfflineAdminOk, setSiteOfflineAdminOk] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    const check = async () => {
+      const s = await getSiteOfflineStatus();
+      if (!cancelled) setSiteOfflineState(s);
+    };
+    check();
+    const interval = setInterval(check, 30000);
+    return () => { cancelled = true; clearInterval(interval); };
   }, []);
 
   const [session, setSession] = useState(null);
@@ -6994,6 +7117,17 @@ export default function App() {
     return () => subscription.unsubscribe();
   }, []);
 
+  // Re-check admin status whenever the site is offline and we have (or
+  // gain) a signed-in user — this is what lets the "Site owner? Sign in"
+  // link on SiteOffline actually get you past it once you're recognized.
+  useEffect(() => {
+    let cancelled = false;
+    if (!siteOffline.on) { setSiteOfflineAdminOk(false); return; }
+    if (!session?.user?.email) { setSiteOfflineAdminOk(false); return; }
+    checkIsAdmin(session.user.email).then((ok) => { if (!cancelled) setSiteOfflineAdminOk(ok); });
+    return () => { cancelled = true; };
+  }, [siteOffline.on, session?.user?.email]);
+
   const handleSignOut = async () => {
     await signOut();
     setView("home");
@@ -7013,6 +7147,13 @@ export default function App() {
         </div>
       </>
     );
+  }
+
+  // Checked after the loading splash (not before) so we know the real
+  // session first — otherwise a returning admin would flash-see this
+  // page for a moment before the admin check catches up.
+  if (siteOffline.on && !siteOfflineAdminOk) {
+    return <SiteOffline message={siteOffline.message} onSignIn={signInWithGoogle} />;
   }
 
   const authProps = { session, user, providerProfile, onSignIn: signInWithGoogle, onSignOut: handleSignOut, onUserUpdate: setUser, onProviderProfileUpdate: setProviderProfile };
