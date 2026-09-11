@@ -3175,7 +3175,29 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
               </div>
               <div className="card">
                 <div className="card-title">Quick book</div>
-                <p style={{ fontSize: 13, color: "var(--muted)", marginBottom: 16 }}>What do you need today?</p>
+                <p style={{ fontSize: 13, color: "var(--muted)", marginBottom: 16 }}>What do you need today, {firstName}?</p>
+                <div className="search-bar" style={{ padding: "10px 16px", marginBottom: 16 }}>
+                  <span className="search-icon">🔍</span>
+                  <input
+                    placeholder="Search barbers, nail techs, spas..."
+                    value={providerSearch}
+                    onChange={e => { setProviderSearch(e.target.value); setShowBrowseSuggestions(true); }}
+                    onFocus={() => setShowBrowseSuggestions(true)}
+                    onBlur={() => setTimeout(() => setShowBrowseSuggestions(false), 150)}
+                    onKeyDown={e => { if (e.key === "Enter") { setShowBrowseSuggestions(false); setTab("browse"); } }}
+                  />
+                  {showBrowseSuggestions && browseSuggestions.length > 0 && (
+                    <div className="suggestions-dropdown">
+                      {browseSuggestions.map((s) => (
+                        <div key={s.key} className="suggestion-item" onMouseDown={() => { selectBrowseSuggestion(s); setTab("browse"); }}>
+                          <span className="suggestion-icon">{s.icon}</span>
+                          <span className="suggestion-label">{s.label}</span>
+                          <span className="suggestion-sub">{s.sublabel}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
                   {SERVICES.slice(0,4).map((s, i) => (
                     <div key={i} onClick={() => setTab("browse")} style={{ background: "var(--sand)", borderRadius: 8, padding: "12px 14px", cursor: "pointer", display: "flex", alignItems: "center", gap: 8, transition: "background .2s" }}
