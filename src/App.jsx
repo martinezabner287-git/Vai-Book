@@ -203,11 +203,18 @@ const css = `
 
   body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--near-white); color: var(--dark-text); }
 
-  /* NAV */
-  .nav-outer { position: sticky; top: 0; z-index: 100; background: var(--forest); }
+  /* NAV — carries the same dark-to-vivid color grading as the hero below
+     it (near-black at the very top of the page, easing toward forest by
+     the bottom of the nav strip), so the whole top of the page reads as
+     one continuous fade rather than a flat nav sitting on a graded hero.
+     nav/nav-strip stay transparent so nav-outer's single gradient shows
+     through both rows uninterrupted. This nav renders on every view (not
+     just the homepage), so the same graded top bar now carries through
+     the customer/provider/admin portals too. */
+  .nav-outer { position: sticky; top: 0; z-index: 100; background: linear-gradient(180deg, #030B08 0%, #0D3D2E 100%); }
   .nav {
     display: flex; align-items: center; justify-content: space-between;
-    padding: 16px 48px; background: var(--forest); position: relative;
+    padding: 16px 48px; background: transparent; position: relative;
   }
   .nav-logo { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 22px; color: var(--near-white); letter-spacing: -0.5px; }
   .nav-logo span { color: var(--lime); }
@@ -216,7 +223,7 @@ const css = `
   /* NAV STRIP (second row — category shortcuts, Vai Buy-style) */
   .nav-strip {
     display: flex; align-items: center; gap: 26px; padding: 10px 48px;
-    background: var(--forest-mid); border-top: 1px solid rgba(255,255,255,0.08);
+    background: transparent; border-top: 1px solid rgba(255,255,255,0.08);
     overflow-x: auto; scrollbar-width: none;
   }
   .nav-strip::-webkit-scrollbar { display: none; }
@@ -356,14 +363,16 @@ const css = `
      forest-green palette instead of Vai Buy's navy/teal. */
   .search-hero {
     position: relative; overflow: hidden; padding: 100px 24px 88px; text-align: left;
-    /* Diagonal fade (dark forest → brighter green), same idea as Zoom's
-       navy-to-blue hero fade, just in VaiBook's own palette instead of blue. */
-    background: linear-gradient(135deg, #06231A 0%, #0D3D2E 42%, #1E6B50 78%, #2F9169 100%);
+    /* Picks up exactly where the nav's gradient ends (forest) and keeps
+       brightening toward a vivid emerald glow at the bottom, so the nav,
+       nav-strip and hero read as one unbroken fade down the page — same
+       "dark-to-vivid" vertical flow as Zoom's navy→purple hero, in green. */
+    background: linear-gradient(170deg, #0D3D2E 0%, #155C43 35%, #1E6B50 65%, #2BB37B 100%);
   }
   .search-hero::before {
     content: '';
     position: absolute; inset: -25%;
-    background: radial-gradient(circle at 88% 92%, rgba(198,241,53,0.20), transparent 55%);
+    background: radial-gradient(circle at 50% 100%, rgba(198,241,53,0.22), transparent 60%);
     z-index: 0;
   }
   .search-hero > * { position: relative; z-index: 1; max-width: 780px; margin-left: auto; margin-right: auto; }
