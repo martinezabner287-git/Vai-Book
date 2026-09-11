@@ -354,14 +354,16 @@ const css = `
      two-line statement headline (2nd line in lime), then the search pill.
      Same structural language as Vai Buy's shop hero, in VaiBook's own
      forest-green palette instead of Vai Buy's navy/teal. */
-  .search-hero { position: relative; overflow: hidden; padding: 100px 24px 88px; text-align: left; background: var(--forest); }
+  .search-hero {
+    position: relative; overflow: hidden; padding: 100px 24px 88px; text-align: left;
+    /* Diagonal fade (dark forest → brighter green), same idea as Zoom's
+       navy-to-blue hero fade, just in VaiBook's own palette instead of blue. */
+    background: linear-gradient(135deg, #06231A 0%, #0D3D2E 42%, #1E6B50 78%, #2F9169 100%);
+  }
   .search-hero::before {
     content: '';
     position: absolute; inset: -25%;
-    background:
-      radial-gradient(circle at 18% 20%, rgba(198,241,53,0.16), transparent 50%),
-      radial-gradient(circle at 85% 10%, rgba(30,107,80,0.55), transparent 55%),
-      radial-gradient(circle at 50% 100%, rgba(0,0,0,0.25), transparent 60%);
+    background: radial-gradient(circle at 88% 92%, rgba(198,241,53,0.20), transparent 55%);
     z-index: 0;
   }
   .search-hero > * { position: relative; z-index: 1; max-width: 780px; margin-left: auto; margin-right: auto; }
