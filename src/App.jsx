@@ -552,8 +552,48 @@ const css = `
   .carousel-card-body .meta { font-size: 12px; color: var(--muted); }
   .carousel-arrow { position: absolute; top: 50%; right: -14px; transform: translateY(-50%); width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--border); background: var(--near-white); box-shadow: 0 2px 10px rgba(0,0,0,0.12); cursor: pointer; font-size: 15px; color: var(--forest); display: flex; align-items: center; justify-content: center; }
 
-  /* PROVIDER PROFILE MODAL (Services / Portfolio / Reviews / About) */
-  .modal-panel.profile-panel { max-width: 580px; }
+  /* PROVIDER PROFILE MODAL (Services / Portfolio / Reviews / About) — a
+     Fresha-style profile: photo gallery + name/rating/hours header up top,
+     a sticky booking card alongside the tabbed content. Still an in-app
+     overlay (not a routable URL) rather than a page, since VaiBook doesn't
+     have per-provider routes yet — same trigger (openBooking) and state
+     as before, just a much richer layout. */
+  .modal-panel.profile-panel { max-width: 1080px; padding: 0; }
+  .profile-scroll { padding: 28px; }
+  .profile-header-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+  .profile-name-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .profile-name-row h2 { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 26px; font-weight: 800; color: var(--forest); margin: 0; }
+  .profile-heart-btn { background: none; border: none; cursor: pointer; font-size: 19px; padding: 0; line-height: 1; }
+  .profile-meta { font-size: 13px; color: var(--muted); margin: 8px 0 22px; display: flex; flex-wrap: wrap; align-items: center; gap: 0; }
+  .profile-meta .dot { margin: 0 6px; }
+  .profile-meta a { color: var(--forest); font-weight: 600; }
+  .profile-meta .open-txt { color: #15803D; font-weight: 600; }
+  .profile-meta .closed-txt { color: var(--clay); font-weight: 600; }
+
+  .profile-gallery { display: grid; gap: 8px; border-radius: var(--radius); overflow: hidden; height: 320px; margin-bottom: 28px; }
+  .gallery-hero { background-size: cover; background-position: center; cursor: pointer; }
+  .gallery-fallback { display: flex; align-items: center; justify-content: center; font-size: 72px; background: #E8F5EF; }
+  .gallery-side { display: grid; grid-template-rows: 1fr 1fr; gap: 8px; }
+  .gallery-side-img { background-size: cover; background-position: center; cursor: pointer; position: relative; }
+  .gallery-more-btn { position: absolute; bottom: 12px; right: 12px; background: white; border: none; border-radius: 100px; padding: 8px 16px; font-size: 12px; font-weight: 600; cursor: pointer; box-shadow: 0 2px 10px rgba(0,0,0,0.2); }
+
+  .profile-body { display: grid; grid-template-columns: 1fr 320px; gap: 32px; align-items: start; }
+  .profile-sidebar-card { background: var(--near-white); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; position: sticky; top: 20px; }
+  .profile-sidebar-card h3 { font-size: 18px; font-weight: 800; color: var(--forest); margin-bottom: 8px; }
+  .chip { display: inline-block; font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 100px; margin-bottom: 14px; }
+  .chip-featured { background: var(--sand); color: var(--forest); }
+  .sidebar-divider { height: 1px; background: var(--border); margin: 4px 0; }
+  .sidebar-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; font-size: 13px; color: var(--dark-text); padding: 12px 0; cursor: default; }
+  .sidebar-row + .sidebar-row { border-top: 1px solid var(--border); }
+  .sidebar-row.clickable { cursor: pointer; }
+  .hours-list { padding: 0 0 6px; width: 100%; }
+  .hours-row { display: flex; justify-content: space-between; font-size: 12.5px; padding: 3px 0; color: var(--muted); }
+  .hours-row.today { color: var(--dark-text); font-weight: 700; }
+
+  .reviews-summary { display: flex; align-items: center; gap: 14px; margin-bottom: 22px; }
+  .reviews-summary .big-rating { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 36px; font-weight: 800; color: var(--forest); line-height: 1; }
+  .reviews-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 4px 32px; }
+
   .service-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 0; border-bottom: 1px solid var(--border); }
   .service-row:last-child { border-bottom: none; }
   .portfolio-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
@@ -606,6 +646,13 @@ const css = `
     .services-section { padding: 60px 24px; }
     .footer { padding: 40px 24px 24px; }
     .a2hs-banner { left: 12px; right: 12px; bottom: 12px; padding: 12px; }
+    .profile-scroll { padding: 20px; }
+    .profile-body { grid-template-columns: 1fr; gap: 20px; }
+    .profile-sidebar { order: -1; }
+    .profile-sidebar-card { position: static; }
+    .profile-gallery { height: 220px; }
+    .profile-name-row h2 { font-size: 21px; }
+    .reviews-grid { grid-template-columns: 1fr; }
   }
 
   /* NAV — keep the top row on one line without pushing "Menu"/the avatar
@@ -2613,6 +2660,7 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [cancellingId, setCancellingId] = useState(null);
   const [profileTab, setProfileTab] = useState("services");
+  const [hoursExpanded, setHoursExpanded] = useState(false);
   const [bookingService, setBookingService] = useState(null);
   const [providerReviews, setProviderReviews] = useState([]);
   const [loadingReviews, setLoadingReviews] = useState(false);
@@ -2736,6 +2784,7 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
   const openBooking = (provider) => {
     setBookingError("");
     setProfileTab("services");
+    setHoursExpanded(false);
     setBookingService(null);
     setProviderReviews([]);
     setLightboxUrl(null);
@@ -2787,6 +2836,32 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
     const ampm = h24 >= 12 ? "PM" : "AM";
     const h12 = h24 % 12 === 0 ? 12 : h24 % 12;
     return `${h12}:${String(m).padStart(2, "0")} ${ampm}`;
+  };
+
+  // Open/closed status for the profile header + sidebar, computed from the
+  // provider's own working_hours rows — no separate "is open" field to fake,
+  // just today's (or the next open day's) real hours.
+  const getOpenStatus = (hours) => {
+    if (!hours || !hours.length) return { open: null, label: "Hours not listed" };
+    const now = new Date();
+    const dow = now.getDay();
+    const nowM = now.getHours() * 60 + now.getMinutes();
+    const today = hours.find((h) => h.day_of_week === dow);
+    if (today && today.is_open && today.start_time && today.end_time) {
+      const startM = timeToMinutes(today.start_time);
+      const endM = timeToMinutes(today.end_time);
+      if (nowM >= startM && nowM < endM) return { open: true, label: `Open now · closes ${formatTimeLabel(today.end_time)}` };
+      if (nowM < startM) return { open: false, label: `Closed · opens today at ${formatTimeLabel(today.start_time)}` };
+    }
+    for (let i = 1; i <= 7; i++) {
+      const nextDow = (dow + i) % 7;
+      const day = hours.find((h) => h.day_of_week === nextDow);
+      if (day && day.is_open && day.start_time) {
+        const dayLabel = i === 1 ? "tomorrow" : DAY_NAMES[nextDow];
+        return { open: false, label: `Closed · opens ${dayLabel} at ${formatTimeLabel(day.start_time)}` };
+      }
+    }
+    return { open: false, label: "Closed" };
   };
 
   // Builds the list of bookable slots for the currently selected date + service:
@@ -3497,184 +3572,297 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
         )}
       </main>
 
-      {selectedProvider && (
-        <div className="modal-overlay" onClick={() => setSelectedProvider(null)}>
-          <div className="modal-panel profile-panel" onClick={(e) => e.stopPropagation()}>
-            <span className="modal-close" onClick={() => setSelectedProvider(null)}>✕ Close</span>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 2 }}>
-              <div className="card-title" style={{ marginBottom: 0 }}>{selectedProvider.business_name}</div>
-              <button
-                onClick={(e) => toggleFavorite(e, selectedProvider.id)}
-                aria-label={favoriteIds.has(selectedProvider.id) ? "Remove from favorites" : "Add to favorites"}
-                style={{ background: "none", border: "none", cursor: "pointer", fontSize: 18, padding: 0 }}
-              >
-                {favoriteIds.has(selectedProvider.id) ? "❤️" : "🤍"}
-              </button>
-            </div>
-            <p style={{ fontSize: 13, color: "var(--muted)", marginBottom: 16 }}>
-              {providerRating(selectedProvider) ? (
-                <span className="stars"><StarRating value={providerRating(selectedProvider)} size={15} /> {providerRating(selectedProvider) || "—"} <span style={{ color: "var(--muted)" }}>({selectedProvider.reviews.length})</span></span>
-              ) : "No reviews yet"}
-              {" · "}{selectedProvider.service_type} · {selectedProvider.district}
-            </p>
+      {selectedProvider && (() => {
+        const photos = selectedProvider.portfolio_urls || [];
+        const rating = providerRating(selectedProvider);
+        const openStatus = getOpenStatus(providerHours);
+        const hoursRows = DAY_NAMES.map((day, i) => {
+          const h = providerHours.find((x) => x.day_of_week === i);
+          return { day, i, isToday: i === new Date().getDay(), text: h && h.is_open && h.start_time && h.end_time ? `${formatTimeLabel(h.start_time)} – ${formatTimeLabel(h.end_time)}` : "Closed" };
+        });
+        return (
+          <div className="modal-overlay" onClick={() => setSelectedProvider(null)}>
+            <div className="modal-panel profile-panel" onClick={(e) => e.stopPropagation()}>
+              <div className="profile-scroll">
+                <span className="modal-close" onClick={() => setSelectedProvider(null)}>✕ Close</span>
 
-            {selectedProvider.loyalty_enabled && (
-              <div style={{ background: "var(--sand)", borderRadius: 8, padding: "10px 14px", marginBottom: 16, fontSize: 13 }}>
-                {(() => {
-                  const threshold = Number(selectedProvider.loyalty_reward_threshold) || 0;
-                  const balance = myLoyalty?.points_balance || 0;
-                  const reward = selectedProvider.loyalty_reward_description || "a reward";
-                  if (!user) return <>⭐ Loyalty program: earn points here toward <strong>{reward}</strong> — sign in to start earning.</>;
-                  if (threshold > 0 && balance >= threshold) return <>⭐ You've earned <strong>{reward}</strong>! Mention it at your next visit.</>;
-                  return <>⭐ You have <strong>{balance}</strong> point{balance === 1 ? "" : "s"} here{threshold > 0 ? ` — ${threshold - balance} more for ${reward}` : ""}.</>;
-                })()}
-              </div>
-            )}
-
-            <div className="tab-row">
-              {[
-                { id: "services", label: "Services" },
-                { id: "portfolio", label: "Portfolio" },
-                { id: "reviews", label: "Reviews" },
-                { id: "about", label: "About" },
-              ].map((t) => (
-                <div key={t.id} className={`tab ${profileTab === t.id ? "active" : ""}`} onClick={() => (t.id === "reviews" ? openReviewsTab() : setProfileTab(t.id))}>
-                  {t.label}
+                <div className="profile-header-row">
+                  <div className="profile-name-row">
+                    <h2>{selectedProvider.business_name}</h2>
+                    <button
+                      className="profile-heart-btn"
+                      onClick={(e) => toggleFavorite(e, selectedProvider.id)}
+                      aria-label={favoriteIds.has(selectedProvider.id) ? "Remove from favorites" : "Add to favorites"}
+                    >
+                      {favoriteIds.has(selectedProvider.id) ? "❤️" : "🤍"}
+                    </button>
+                  </div>
                 </div>
-              ))}
-            </div>
-
-            {profileTab === "services" && (
-              bookingService ? (
-                <>
-                  <div onClick={backToServices} style={{ fontSize: 12, color: "var(--forest)", fontWeight: 600, cursor: "pointer", marginBottom: 14 }}>← Back to services</div>
-                  <div style={{ background: "var(--sand)", borderRadius: 8, padding: "12px 14px", marginBottom: 16, fontSize: 13 }}>
-                    <strong>{bookingService.name}</strong> — BZ${bookingService.price} · {bookingService.duration_min} min
-                  </div>
-                  <div className="input-group">
-                    <label>Date</label>
-                    <input type="date" min={new Date().toISOString().slice(0,10)} value={bookingForm.date} onChange={e => setBookingForm(f => ({ ...f, date: e.target.value, time: "" }))} />
-                  </div>
-                  <div className="input-group">
-                    <label>Available times</label>
-                    {loadingSlots ? (
-                      <p style={{ fontSize: 12, color: "var(--muted)" }}>Checking live availability...</p>
-                    ) : !providerHours.length ? (
-                      <p style={{ fontSize: 12, color: "var(--muted)" }}>This provider hasn't set their working hours yet — try again later or send a note with your preferred time.</p>
-                    ) : availableSlots.length === 0 ? (
-                      <p style={{ fontSize: 12, color: "var(--clay)" }}>No open slots on this date. Please choose another day.</p>
-                    ) : (
-                      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(84px, 1fr))", gap: 8, maxHeight: 180, overflowY: "auto", paddingTop: 4 }}>
-                        {availableSlots.map((t) => (
-                          <button
-                            type="button"
-                            key={t}
-                            onClick={() => setBookingForm(f => ({ ...f, time: t }))}
-                            className="btn-sm"
-                            style={{
-                              padding: "6px 4px",
-                              fontSize: 12,
-                              border: bookingForm.time === t ? "2px solid var(--forest)" : "1px solid var(--border, #ddd)",
-                              background: bookingForm.time === t ? "var(--forest)" : "#fff",
-                              color: bookingForm.time === t ? "#fff" : "var(--dark-text)",
-                              borderRadius: 6,
-                              cursor: "pointer",
-                            }}
-                          >
-                            {formatTimeLabel(t)}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                  <div className="input-group"><label>Notes (optional)</label><textarea placeholder="Anything the provider should know?" value={bookingForm.notes} onChange={e => setBookingForm(f => ({ ...f, notes: e.target.value }))} style={{ minHeight: 60 }} /></div>
-
-                  {selectedProvider.downpayment_required && (
-                    <p style={{ fontSize: 12, color: "var(--clay)", marginBottom: 12 }}>This provider requires a {selectedProvider.downpayment_pct || 50}% deposit after they accept your booking.</p>
+                <div className="profile-meta">
+                  {rating ? (
+                    <span className="stars"><StarRating value={rating} size={15} /> {rating} <span style={{ color: "var(--muted)" }}>({selectedProvider.reviews.length})</span></span>
+                  ) : <span>No reviews yet</span>}
+                  <span className="dot">·</span>
+                  <span className={openStatus.open ? "open-txt" : "closed-txt"}>{openStatus.label}</span>
+                  <span className="dot">·</span>
+                  <span>{selectedProvider.service_type}</span>
+                  <span className="dot">·</span>
+                  <span>{selectedProvider.district}</span>
+                  {selectedProvider.latitude != null && selectedProvider.longitude != null && (
+                    <>
+                      <span className="dot">·</span>
+                      <a href={directionsUrl(selectedProvider.latitude, selectedProvider.longitude)} target="_blank" rel="noreferrer">Get directions</a>
+                    </>
                   )}
-                  {bookingError && <p style={{ fontSize: 12, color: "#B91C1C", marginBottom: 12 }}>{bookingError}</p>}
+                </div>
 
-                  <button className="btn-sm forest" style={{ width: "100%", padding: "10px 0" }} disabled={submittingBooking} onClick={submitBooking}>
-                    {submittingBooking ? "Sending request..." : "Request booking"}
-                  </button>
-                </>
-              ) : (
-                (selectedProvider.services || []).filter(s => s.is_active !== false).length === 0 ? (
-                  <p style={{ fontSize: 13, color: "var(--muted)" }}>This provider hasn't listed any services yet.</p>
-                ) : (
-                  <div>
-                    {(selectedProvider.services || []).filter(s => s.is_active !== false).map(s => (
-                      <div key={s.id} className="service-row">
-                        <div>
-                          <div style={{ fontWeight: 600, fontSize: 14, color: "var(--dark-text)" }}>{s.name}</div>
-                          <div style={{ fontSize: 12, color: "var(--muted)" }}>{s.duration_min} min · BZ${s.price}</div>
+                <div className="profile-gallery" style={{ gridTemplateColumns: photos.length > 1 ? "2fr 1fr" : "1fr" }}>
+                  {photos.length === 0 ? (
+                    <div className="gallery-hero gallery-fallback">{iconForServiceType(selectedProvider.service_type)}</div>
+                  ) : (
+                    <>
+                      <div className="gallery-hero" style={{ backgroundImage: `url(${photos[0]})` }} onClick={() => setLightboxUrl(photos[0])} />
+                      {photos.length > 1 && (
+                        <div className="gallery-side">
+                          {photos.slice(1, 3).map((url, i) => (
+                            <div key={url} className="gallery-side-img" style={{ backgroundImage: `url(${url})` }} onClick={() => (photos.length > 3 && i === 1 ? setProfileTab("portfolio") : setLightboxUrl(url))}>
+                              {i === 1 && photos.length > 3 && (
+                                <button className="gallery-more-btn" onClick={(e) => { e.stopPropagation(); setProfileTab("portfolio"); }}>See all photos</button>
+                              )}
+                            </div>
+                          ))}
                         </div>
-                        <button className="btn-sm forest" onClick={() => startBookingForService(s)}>Book</button>
-                      </div>
-                    ))}
-                  </div>
-                )
-              )
-            )}
-
-            {profileTab === "portfolio" && (
-              (selectedProvider.portfolio_urls && selectedProvider.portfolio_urls.length > 0) ? (
-                <div className="portfolio-grid">
-                  {selectedProvider.portfolio_urls.map((url) => (
-                    <img key={url} src={url} alt="Provider work" className="portfolio-thumb" onClick={() => setLightboxUrl(url)} />
-                  ))}
+                      )}
+                    </>
+                  )}
                 </div>
-              ) : (
-                <p style={{ fontSize: 13, color: "var(--muted)" }}>No portfolio photos yet.</p>
-              )
-            )}
 
-            {profileTab === "reviews" && (
-              loadingReviews ? (
-                <p style={{ fontSize: 13, color: "var(--muted)" }}>Loading reviews...</p>
-              ) : providerReviews.length === 0 ? (
-                <p style={{ fontSize: 13, color: "var(--muted)" }}>No reviews yet.</p>
-              ) : (
-                <div>
-                  {providerReviews.map((r) => (
-                    <div key={r.id} className="review-card">
-                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                        <strong style={{ fontSize: 13 }}>{r.users?.full_name || "Customer"}</strong>
-                        <span className="stars">{"★".repeat(r.rating || 0)}{"☆".repeat(5 - (r.rating || 0))}</span>
-                      </div>
-                      {r.comment && <p style={{ fontSize: 13, color: "var(--dark-text)", marginTop: 4 }}>{r.comment}</p>}
-                      {r.created_at && <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 4 }}>{new Date(r.created_at).toLocaleDateString()}</div>}
+                {selectedProvider.loyalty_enabled && (
+                  <div style={{ background: "var(--sand)", borderRadius: 8, padding: "10px 14px", marginBottom: 16, fontSize: 13 }}>
+                    {(() => {
+                      const threshold = Number(selectedProvider.loyalty_reward_threshold) || 0;
+                      const balance = myLoyalty?.points_balance || 0;
+                      const reward = selectedProvider.loyalty_reward_description || "a reward";
+                      if (!user) return <>⭐ Loyalty program: earn points here toward <strong>{reward}</strong> — sign in to start earning.</>;
+                      if (threshold > 0 && balance >= threshold) return <>⭐ You've earned <strong>{reward}</strong>! Mention it at your next visit.</>;
+                      return <>⭐ You have <strong>{balance}</strong> point{balance === 1 ? "" : "s"} here{threshold > 0 ? ` — ${threshold - balance} more for ${reward}` : ""}.</>;
+                    })()}
+                  </div>
+                )}
+
+                <div className="profile-body">
+                  <div className="profile-main">
+                    <div className="tab-row">
+                      {[
+                        { id: "services", label: "Services" },
+                        { id: "portfolio", label: "Portfolio" },
+                        { id: "reviews", label: "Reviews" },
+                        { id: "about", label: "About" },
+                      ].map((t) => (
+                        <div key={t.id} className={`tab ${profileTab === t.id ? "active" : ""}`} onClick={() => (t.id === "reviews" ? openReviewsTab() : setProfileTab(t.id))}>
+                          {t.label}
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
-              )
-            )}
 
-            {profileTab === "about" && (
-              <div>
-                {selectedProvider.bio && (
-                  <p style={{ fontSize: 13, color: "var(--dark-text)", marginBottom: 12 }}>{selectedProvider.bio}</p>
-                )}
-                {(selectedProvider.whatsapp || (selectedProvider.latitude != null && selectedProvider.longitude != null)) && (
-                  <div style={{ display: "flex", gap: 16, flexWrap: "wrap", fontSize: 13, background: "var(--sand)", borderRadius: 8, padding: "10px 12px" }}>
-                    {selectedProvider.whatsapp && (
-                      <a href={`https://wa.me/${selectedProvider.whatsapp.replace(/[^\d]/g, "")}`} target="_blank" rel="noreferrer" style={{ color: "var(--forest)", fontWeight: 600 }}>📞 {selectedProvider.whatsapp}</a>
+                    {profileTab === "services" && (
+                      bookingService ? (
+                        <>
+                          <div onClick={backToServices} style={{ fontSize: 12, color: "var(--forest)", fontWeight: 600, cursor: "pointer", marginBottom: 14 }}>← Back to services</div>
+                          <div style={{ background: "var(--sand)", borderRadius: 8, padding: "12px 14px", marginBottom: 16, fontSize: 13 }}>
+                            <strong>{bookingService.name}</strong> — BZ${bookingService.price} · {bookingService.duration_min} min
+                          </div>
+                          <div className="input-group">
+                            <label>Date</label>
+                            <input type="date" min={new Date().toISOString().slice(0,10)} value={bookingForm.date} onChange={e => setBookingForm(f => ({ ...f, date: e.target.value, time: "" }))} />
+                          </div>
+                          <div className="input-group">
+                            <label>Available times</label>
+                            {loadingSlots ? (
+                              <p style={{ fontSize: 12, color: "var(--muted)" }}>Checking live availability...</p>
+                            ) : !providerHours.length ? (
+                              <p style={{ fontSize: 12, color: "var(--muted)" }}>This provider hasn't set their working hours yet — try again later or send a note with your preferred time.</p>
+                            ) : availableSlots.length === 0 ? (
+                              <p style={{ fontSize: 12, color: "var(--clay)" }}>No open slots on this date. Please choose another day.</p>
+                            ) : (
+                              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(84px, 1fr))", gap: 8, maxHeight: 180, overflowY: "auto", paddingTop: 4 }}>
+                                {availableSlots.map((t) => (
+                                  <button
+                                    type="button"
+                                    key={t}
+                                    onClick={() => setBookingForm(f => ({ ...f, time: t }))}
+                                    className="btn-sm"
+                                    style={{
+                                      padding: "6px 4px",
+                                      fontSize: 12,
+                                      border: bookingForm.time === t ? "2px solid var(--forest)" : "1px solid var(--border, #ddd)",
+                                      background: bookingForm.time === t ? "var(--forest)" : "#fff",
+                                      color: bookingForm.time === t ? "#fff" : "var(--dark-text)",
+                                      borderRadius: 6,
+                                      cursor: "pointer",
+                                    }}
+                                  >
+                                    {formatTimeLabel(t)}
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                          <div className="input-group"><label>Notes (optional)</label><textarea placeholder="Anything the provider should know?" value={bookingForm.notes} onChange={e => setBookingForm(f => ({ ...f, notes: e.target.value }))} style={{ minHeight: 60 }} /></div>
+
+                          {selectedProvider.downpayment_required && (
+                            <p style={{ fontSize: 12, color: "var(--clay)", marginBottom: 12 }}>This provider requires a {selectedProvider.downpayment_pct || 50}% deposit after they accept your booking.</p>
+                          )}
+                          {bookingError && <p style={{ fontSize: 12, color: "#B91C1C", marginBottom: 12 }}>{bookingError}</p>}
+
+                          <button className="btn-sm forest" style={{ width: "100%", padding: "10px 0" }} disabled={submittingBooking} onClick={submitBooking}>
+                            {submittingBooking ? "Sending request..." : "Request booking"}
+                          </button>
+                        </>
+                      ) : (
+                        (selectedProvider.services || []).filter(s => s.is_active !== false).length === 0 ? (
+                          <p style={{ fontSize: 13, color: "var(--muted)" }}>This provider hasn't listed any services yet.</p>
+                        ) : (
+                          <div>
+                            {(selectedProvider.services || []).filter(s => s.is_active !== false).map(s => (
+                              <div key={s.id} className="service-row">
+                                <div>
+                                  <div style={{ fontWeight: 600, fontSize: 14, color: "var(--dark-text)" }}>{s.name}</div>
+                                  <div style={{ fontSize: 12, color: "var(--muted)" }}>{s.duration_min} min · BZ${s.price}</div>
+                                </div>
+                                <button className="btn-sm forest" onClick={() => startBookingForService(s)}>Book</button>
+                              </div>
+                            ))}
+                          </div>
+                        )
+                      )
                     )}
-                    {selectedProvider.latitude != null && selectedProvider.longitude != null && (
-                      <a href={directionsUrl(selectedProvider.latitude, selectedProvider.longitude)} target="_blank" rel="noreferrer" style={{ color: "var(--forest)", fontWeight: 600 }}>
-                        📍 {selectedProvider.location_label || "Get directions"}
-                      </a>
+
+                    {profileTab === "portfolio" && (
+                      photos.length > 0 ? (
+                        <div className="portfolio-grid">
+                          {photos.map((url) => (
+                            <img key={url} src={url} alt="Provider work" className="portfolio-thumb" onClick={() => setLightboxUrl(url)} />
+                          ))}
+                        </div>
+                      ) : (
+                        <p style={{ fontSize: 13, color: "var(--muted)" }}>No portfolio photos yet.</p>
+                      )
+                    )}
+
+                    {profileTab === "reviews" && (
+                      loadingReviews ? (
+                        <p style={{ fontSize: 13, color: "var(--muted)" }}>Loading reviews...</p>
+                      ) : providerReviews.length === 0 ? (
+                        <p style={{ fontSize: 13, color: "var(--muted)" }}>No reviews yet.</p>
+                      ) : (
+                        <div>
+                          <div className="reviews-summary">
+                            <span className="big-rating">{rating || "—"}</span>
+                            <div>
+                              {rating ? <StarRating value={rating} size={16} /> : null}
+                              <div style={{ fontSize: 12, color: "var(--muted)" }}>{providerReviews.length} review{providerReviews.length === 1 ? "" : "s"}</div>
+                            </div>
+                          </div>
+                          <div className="reviews-grid">
+                            {providerReviews.map((r) => (
+                              <div key={r.id} className="review-card">
+                                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                                  <strong style={{ fontSize: 13 }}>{r.users?.full_name || "Customer"}</strong>
+                                  <span className="stars">{"★".repeat(r.rating || 0)}{"☆".repeat(5 - (r.rating || 0))}</span>
+                                </div>
+                                {r.comment && <p style={{ fontSize: 13, color: "var(--dark-text)", marginTop: 4 }}>{r.comment}</p>}
+                                {r.created_at && <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 4 }}>{new Date(r.created_at).toLocaleDateString()}</div>}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )
+                    )}
+
+                    {profileTab === "about" && (
+                      <div>
+                        {selectedProvider.bio ? (
+                          <p style={{ fontSize: 13, color: "var(--dark-text)", marginBottom: 20, lineHeight: 1.6 }}>{selectedProvider.bio}</p>
+                        ) : (
+                          <p style={{ fontSize: 13, color: "var(--muted)", marginBottom: 20 }}>This provider hasn't added a description yet.</p>
+                        )}
+
+                        {selectedProvider.latitude != null && selectedProvider.longitude != null && (
+                          <div style={{ marginBottom: 22 }}>
+                            <div style={{ fontSize: 13, fontWeight: 700, color: "var(--forest)", marginBottom: 10 }}>Location</div>
+                            <div style={{ borderRadius: 10, overflow: "hidden", border: "1px solid var(--border)", marginBottom: 8 }}>
+                              <MapContainer center={[selectedProvider.latitude, selectedProvider.longitude]} zoom={15} style={{ height: 200, width: "100%" }} scrollWheelZoom={false} dragging={false} doubleClickZoom={false} zoomControl={false} attributionControl={false}>
+                                <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+                                <Marker position={[selectedProvider.latitude, selectedProvider.longitude]} />
+                              </MapContainer>
+                            </div>
+                            <p style={{ fontSize: 13 }}>
+                              {selectedProvider.location_label || `${selectedProvider.district}, Belize`}{" "}
+                              <a href={directionsUrl(selectedProvider.latitude, selectedProvider.longitude)} target="_blank" rel="noreferrer" style={{ color: "var(--forest)", fontWeight: 600 }}>Get directions</a>
+                            </p>
+                          </div>
+                        )}
+
+                        <div style={{ marginBottom: 22 }}>
+                          <div style={{ fontSize: 13, fontWeight: 700, color: "var(--forest)", marginBottom: 10 }}>Opening times</div>
+                          <div className="hours-list">
+                            {hoursRows.map((h) => (
+                              <div key={h.i} className={`hours-row ${h.isToday ? "today" : ""}`}>
+                                <span>{h.day}</span>
+                                <span>{h.text}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        {selectedProvider.whatsapp && (
+                          <a href={`https://wa.me/${selectedProvider.whatsapp.replace(/[^\d]/g, "")}`} target="_blank" rel="noreferrer" style={{ display: "inline-block", fontSize: 13, color: "var(--forest)", fontWeight: 600, background: "var(--sand)", borderRadius: 8, padding: "10px 14px" }}>📞 {selectedProvider.whatsapp}</a>
+                        )}
+                      </div>
                     )}
                   </div>
-                )}
-                {!selectedProvider.bio && !selectedProvider.whatsapp && selectedProvider.latitude == null && (
-                  <p style={{ fontSize: 13, color: "var(--muted)" }}>No additional details yet.</p>
-                )}
+
+                  <aside className="profile-sidebar">
+                    <div className="profile-sidebar-card">
+                      <h3>{selectedProvider.business_name}</h3>
+                      <div className="stars" style={{ marginBottom: 4, display: "block" }}>
+                        {rating ? <>{"★".repeat(Math.round(rating))}{"☆".repeat(5 - Math.round(rating))} <span style={{ color: "var(--muted)", fontWeight: 400 }}>{rating} ({selectedProvider.reviews.length})</span></> : <span style={{ color: "var(--muted)" }}>No reviews yet</span>}
+                      </div>
+                      {selectedProvider.is_featured && <span className="chip chip-featured">⭐ Featured</span>}
+                      <button className="btn-sm forest" style={{ width: "100%", padding: "13px 0", marginTop: 4 }} onClick={() => setProfileTab("services")}>Book now</button>
+
+                      <div className="sidebar-row clickable" onClick={() => setHoursExpanded(v => !v)}>
+                        <span>🕐 <span className={openStatus.open ? "open-txt" : "closed-txt"}>{openStatus.label}</span></span>
+                        <span style={{ color: "var(--muted)" }}>{hoursExpanded ? "▲" : "▼"}</span>
+                      </div>
+                      {hoursExpanded && (
+                        <div className="hours-list">
+                          {hoursRows.map((h) => (
+                            <div key={h.i} className={`hours-row ${h.isToday ? "today" : ""}`}>
+                              <span>{h.day}</span>
+                              <span>{h.text}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {(selectedProvider.district || selectedProvider.location_label) && (
+                        <div className="sidebar-row">
+                          <span>📍 {selectedProvider.location_label || `${selectedProvider.district}, Belize`}</span>
+                        </div>
+                      )}
+                      {selectedProvider.latitude != null && selectedProvider.longitude != null && (
+                        <a href={directionsUrl(selectedProvider.latitude, selectedProvider.longitude)} target="_blank" rel="noreferrer" style={{ fontSize: 12, color: "var(--forest)", fontWeight: 600 }}>Get directions</a>
+                      )}
+                    </div>
+                  </aside>
+                </div>
               </div>
-            )}
+            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {lightboxUrl && (
         <div className="lightbox-overlay" onClick={() => setLightboxUrl(null)}>
