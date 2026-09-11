@@ -203,15 +203,22 @@ const css = `
 
   body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--near-white); color: var(--dark-text); }
 
-  /* NAV — carries the same dark-to-vivid color grading as the hero below
-     it (near-black at the very top of the page, easing toward forest by
-     the bottom of the nav strip), so the whole top of the page reads as
-     one continuous fade rather than a flat nav sitting on a graded hero.
-     nav/nav-strip stay transparent so nav-outer's single gradient shows
-     through both rows uninterrupted. This nav renders on every view (not
-     just the homepage), so the same graded top bar now carries through
-     the customer/provider/admin portals too. */
-  .nav-outer { position: sticky; top: 0; z-index: 100; background: linear-gradient(180deg, #030B08 0%, #0D3D2E 100%); }
+  /* NAV — carries its own visible dark-to-green fade over its own (short)
+     height, ending on the exact color the hero starts from, so nav and
+     hero read as one continuous fade rather than nav sitting as a flat
+     dark cap on top of a graded hero. Earlier version only moved from
+     near-black to dark forest here (#030B08→#0D3D2E) — too small a jump
+     over ~108px to look like it was fading at all next to the hero's much
+     bigger swing. Widening nav's own jump (near-black to a clearly lighter
+     mid-green) makes the brightening visible within the nav bar itself.
+     Kept as two independent percentage-based gradients (not a shared
+     canvas) so the hero always still reaches full vivid green at its own
+     bottom edge regardless of actual rendered height.
+     nav/nav-strip stay transparent so nav-outer's gradient shows through
+     both rows uninterrupted. This nav renders on every view (not just the
+     homepage), so the same graded top bar now carries through the
+     customer/provider/admin portals too. */
+  .nav-outer { position: sticky; top: 0; z-index: 100; background: linear-gradient(180deg, #02100A 0%, #17593F 100%); }
   .nav {
     display: flex; align-items: center; justify-content: space-between;
     padding: 16px 48px; background: transparent; position: relative;
@@ -363,11 +370,13 @@ const css = `
      forest-green palette instead of Vai Buy's navy/teal. */
   .search-hero {
     position: relative; overflow: hidden; padding: 100px 24px 88px; text-align: left;
-    /* Picks up exactly where the nav's gradient ends (forest) and keeps
-       brightening toward a vivid emerald glow at the bottom, so the nav,
-       nav-strip and hero read as one unbroken fade down the page — same
-       "dark-to-vivid" vertical flow as Zoom's navy→purple hero, in green. */
-    background: linear-gradient(170deg, #0D3D2E 0%, #155C43 35%, #1E6B50 65%, #2BB37B 100%);
+    /* Picks up exactly where the nav's gradient ends (#17593F) and keeps
+       brightening toward a vivid emerald glow at the bottom, so the nav
+       and hero read as one unbroken fade down the page. Percentage-based
+       to its own box (not a fixed pixel canvas), so the hero always
+       reaches full vivid green right at its own bottom edge, whatever its
+       actual rendered height turns out to be. */
+    background: linear-gradient(170deg, #17593F 0%, #1E6B50 45%, #2BB37B 100%);
   }
   .search-hero::before {
     content: '';
