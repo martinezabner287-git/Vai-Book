@@ -240,17 +240,34 @@ const css = `
   .nav-strip-district { margin-left: auto; font-size: 12px; color: rgba(250,250,247,0.55); white-space: nowrap; padding-left: 18px; }
   .nav-strip-cta ~ .nav-strip-district { margin-left: 0; }
 
-  /* NAV SEARCH (pinned between the logo and menu/account controls) */
-  .nav-search-wrap { flex: 1; display: flex; justify-content: center; min-width: 0; padding: 0 24px; opacity: 0; pointer-events: none; transform: translateY(-4px); transition: opacity .2s ease, transform .2s ease; }
-  .nav-search-wrap.visible { opacity: 1; pointer-events: auto; transform: none; }
-  .nav-search { position: relative; width: 100%; max-width: 420px; }
+  /* NAV SEARCH (pinned between the logo and menu/account controls).
+     Positioned absolutely and centered on .nav itself (left:50% + translateX
+     -50%), NOT centered-within-leftover-flex-space — the logo (~112px) and
+     the cta group (~337px) are different widths, so a flex:1 middle slot
+     centers itself around the midpoint of the SPACE BETWEEN them, which
+     sits well left of the bar's true center once the cta group's width is
+     counted. Absolute + translate ties it to the nav's actual center
+     regardless of how wide the logo or cta group are.
+     There isn't enough room for a centered bar next to the fixed-width cta
+     group below ~1180px, so that range keeps the toggle-button + slide-down
+     panel pattern (already the mobile-accessible fallback) instead of
+     shrinking/overlapping it — bumped up from the old 768px cutoff to cover
+     that gap, not just phones. */
+  .nav-search-wrap {
+    position: absolute; left: 50%; top: 50%; width: 380px;
+    opacity: 0; pointer-events: none;
+    transform: translate(-50%, calc(-50% - 4px));
+    transition: opacity .2s ease, transform .2s ease;
+  }
+  .nav-search-wrap.visible { opacity: 1; pointer-events: auto; transform: translate(-50%, -50%); }
+  .nav-search { position: relative; width: 100%; }
   .nav-search-input-wrap { display: flex; align-items: center; gap: 8px; background: var(--sand); border-radius: 100px; padding: 9px 16px; }
   .nav-search-input-wrap input { border: none; outline: none; background: transparent; font-size: 13px; width: 100%; font-family: 'Plus Jakarta Sans', sans-serif; color: var(--dark-text); }
   .nav-search-icon { font-size: 14px; color: var(--muted); flex-shrink: 0; }
   .nav-search-toggle { display: none; background: transparent; border: 1px solid rgba(255,255,255,0.35); width: 38px; height: 38px; border-radius: 50%; align-items: center; justify-content: center; cursor: pointer; font-size: 15px; color: var(--near-white); flex-shrink: 0; opacity: 0; pointer-events: none; transition: opacity .2s ease; }
   .nav-search-toggle.visible { opacity: 1; pointer-events: auto; }
   .nav-search-mobile-panel { display: none; }
-  @media (max-width: 768px) {
+  @media (max-width: 1180px) {
     .nav-search-wrap { display: none; }
     .nav-search-toggle { display: flex; }
     .nav-search-mobile-panel { display: block; position: absolute; top: 100%; left: 0; right: 0; background: white; border-bottom: 1px solid var(--border); padding: 14px 20px 18px; box-shadow: 0 12px 24px rgba(13,61,46,0.08); }
