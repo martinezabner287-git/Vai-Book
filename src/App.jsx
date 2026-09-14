@@ -470,6 +470,29 @@ const css = `
   .browse-pills { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; max-width: 1100px; margin: 0 auto; }
   .browse-pill { background: white; border: 1px solid var(--border); color: var(--dark-text); padding: 9px 18px; border-radius: 100px; font-size: 13px; font-weight: 500; cursor: pointer; transition: all .2s; }
   .browse-pill:hover { border-color: var(--forest); color: var(--forest); }
+
+  /* PRICING (public, for prospective providers) */
+  .pricing-section { padding: 80px 48px; }
+  .pricing-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; max-width: 1040px; margin: 0 auto; align-items: stretch; }
+  .pricing-card { background: #fff; border: 1px solid var(--border); border-radius: 16px; padding: 32px 28px; display: flex; flex-direction: column; position: relative; }
+  .pricing-card.recommended { border: 2px solid var(--forest); box-shadow: 0 16px 36px rgba(13,61,46,0.12); }
+  .pricing-badge { position: absolute; top: -13px; left: 50%; transform: translateX(-50%); background: var(--forest); color: var(--lime); font-size: 11px; font-weight: 800; letter-spacing: .4px; text-transform: uppercase; padding: 5px 14px; border-radius: 100px; white-space: nowrap; }
+  .pricing-name { font-size: 13px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
+  .pricing-price { font-size: 34px; font-weight: 800; color: var(--dark-text); margin: 10px 0 6px; font-family: 'Plus Jakarta Sans', sans-serif; }
+  .pricing-price span { font-size: 14px; font-weight: 500; color: var(--muted); }
+  .pricing-tagline { font-size: 13px; color: var(--muted); margin-bottom: 22px; min-height: 34px; }
+  .pricing-features { list-style: none; padding: 0; margin: 0 0 28px; flex: 1; }
+  .pricing-features li { display: flex; gap: 9px; align-items: flex-start; font-size: 13.5px; color: var(--dark-text); padding: 7px 0; line-height: 1.4; }
+  .pricing-features li .check { color: var(--forest); font-weight: 700; flex-shrink: 0; }
+  .pricing-cta { width: 100%; text-align: center; }
+  .pricing-foot-note { text-align: center; font-size: 13px; color: var(--muted); margin-top: 32px; max-width: 620px; margin-left: auto; margin-right: auto; }
+  @media (max-width: 900px) {
+    .pricing-grid { grid-template-columns: 1fr; max-width: 420px; }
+  }
+  @media (max-width: 768px) {
+    .pricing-section { padding: 60px 24px; }
+  }
+
   .btn-forest { background: var(--forest); color: var(--near-white); border: none; width: 100%; padding: 13px; border-radius: var(--radius-sm); font-size: 14px; font-weight: 600; cursor: pointer; transition: opacity .2s; }
   .btn-forest:hover { opacity: .85; }
   .btn-outline-forest { background: transparent; color: var(--forest); border: 1px solid var(--forest); width: 100%; padding: 13px; border-radius: var(--radius-sm); font-size: 14px; font-weight: 600; cursor: pointer; transition: all .2s; }
@@ -619,6 +642,8 @@ const css = `
   .profile-sidebar-card h3 { font-size: 18px; font-weight: 800; color: var(--forest); margin-bottom: 8px; }
   .chip { display: inline-block; font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 100px; margin-bottom: 14px; }
   .chip-featured { background: var(--sand); color: var(--forest); }
+  .chip-plan-pro { background: var(--sand); color: var(--forest); }
+  .chip-plan-business { background: var(--forest); color: #fff; }
   .sidebar-divider { height: 1px; background: var(--border); margin: 4px 0; }
   .sidebar-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; font-size: 13px; color: var(--dark-text); padding: 12px 0; cursor: default; }
   .sidebar-row + .sidebar-row { border-top: 1px solid var(--border); }
@@ -897,6 +922,20 @@ const providerFromPrice = (p) => {
   const prices = (p.services || []).filter((s) => s.is_active !== false).map((s) => Number(s.price) || 0);
   if (!prices.length) return null;
   return Math.min(...prices);
+};
+
+// Small badge that literally reflects a provider's plan tier ("✓ Pro" /
+// "✓ Business") so customers can see they're on a paid plan. Deliberately
+// NOT worded as "Verified" or "Certified" — VaiBook doesn't vet or inspect
+// paid listings any differently from free ones, so the badge only ever
+// claims what's actually true: which plan they're paying for. Separate
+// from the "⭐ Featured" chip, which signals a provider chose to pay extra
+// to rank higher in search — a provider can have neither, either, or both.
+const planBadge = (p) => {
+  const plan = p?.plan;
+  if (plan === "business") return { label: "✓ Business", bg: "var(--forest)", color: "#fff" };
+  if (plan === "pro") return { label: "✓ Pro", bg: "var(--sand)", color: "var(--forest)" };
+  return null;
 };
 
 // "New to VaiBook" badge window — providers who joined in the last 30 days
@@ -1648,6 +1687,17 @@ function enterProviderPortal(onNav, session, onSignIn) {
   }
 }
 
+// Lets the public pricing section's per-plan CTA land on the signup form
+// with that plan already selected, without threading a new param through
+// onNav (which is just setView — a plain string setter used in dozens of
+// places). Same "stash it, read it once on mount" pattern as
+// vaibook_pending_view above. ProviderSignup reads and clears this once;
+// stale leftovers can't affect a later, unrelated visit to signup.
+function goToSignupWithPlan(onNav, planId) {
+  try { localStorage.setItem("vaibook_signup_plan", planId); } catch (e) { /* ignore */ }
+  onNav("signup");
+}
+
 function AuthChoice({ onNav, session, onSignIn }) {
   return (
     <div className="auth-choice">
@@ -2154,6 +2204,7 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
                   <a onClick={() => goAccount(() => scrollToSection("services", onNav, current))}>Services</a>
                   <a onClick={() => goAccount(() => scrollToSection("how-it-works", onNav, current))}>How it works</a>
                   <a onClick={() => goAccount(() => scrollToSection("browse", onNav, current))}>Browse by district</a>
+                  <a onClick={() => goAccount(() => scrollToSection("pricing", onNav, current))}>Pricing</a>
                   <hr />
                   <button className="nav-dropdown-item mobile-only-item" onClick={() => goAccount(() => onNav("signup"))}>
                     <span className="icn">🏪</span> List your business
@@ -2186,6 +2237,7 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
                 <a onClick={() => go(() => scrollToSection("services", onNav, current))}>Services</a>
                 <a onClick={() => go(() => scrollToSection("how-it-works", onNav, current))}>How it works</a>
                 <a onClick={() => go(() => scrollToSection("browse", onNav, current))}>Browse by district</a>
+                <a onClick={() => go(() => scrollToSection("pricing", onNav, current))}>Pricing</a>
                 <hr />
                 <button className="nav-dropdown-item" onClick={() => go(openInstallAppGuide)}>Add to Home Screen</button>
                 {current === "home" && (
@@ -2253,6 +2305,7 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
               <a onClick={() => go(() => scrollToSection("services", onNav, current))}>Services</a>
               <a onClick={() => go(() => scrollToSection("how-it-works", onNav, current))}>How it works</a>
               <a onClick={() => go(() => scrollToSection("browse", onNav, current))}>Browse by district</a>
+              <a onClick={() => go(() => scrollToSection("pricing", onNav, current))}>Pricing</a>
               <hr />
               <button className="nav-dropdown-item" onClick={() => go(openInstallAppGuide)}>Add to Home Screen</button>
             </div>
@@ -2546,6 +2599,47 @@ function LandingPage({ onNav, session, onSignIn }) {
             <button key={s.name} className="browse-pill" onClick={() => goBrowse(s.name, "All")}>{s.icon} {s.name}</button>
           ))}
         </div>
+      </section>
+
+      {/* PRICING — for prospective providers. "Recommended" on Pro is
+          VaiBook's own editorial call, not a "Most popular" claim — there's
+          no real usage data yet to honestly back that. Every feature line
+          comes straight from PLANS above, which only lists things that are
+          actually built (and, for Starter's booking cap, actually
+          enforced) — nothing here is aspirational. No free-trial language:
+          upgrading is a bank transfer + receipt an admin confirms, not an
+          auto-charging trial. */}
+      <section className="section pricing-section" id="pricing">
+        <div style={{ textAlign: "center", marginBottom: 40 }}>
+          <div className="section-eyebrow" style={{ justifyContent: "center", display: "flex" }}>For business owners</div>
+          <h2 className="section-title">Simple pricing. Start free, grow when you're ready.</h2>
+          <p className="section-sub" style={{ margin: "0 auto" }}>No contracts, no setup fees. Pay only once VaiBook is actually bringing you customers.</p>
+        </div>
+        <div className="pricing-grid">
+          {PLANS.map((p) => (
+            <div className={`pricing-card ${p.recommended ? "recommended" : ""}`} key={p.id}>
+              {p.recommended && <div className="pricing-badge">Recommended</div>}
+              <div className="pricing-name">{p.name}</div>
+              <div className="pricing-price">
+                {p.monthly === 0 ? "Free" : `BZ$${p.monthly}`}
+                {p.monthly > 0 && <span> /month</span>}
+              </div>
+              <div className="pricing-tagline">{p.tagline}</div>
+              <ul className="pricing-features">
+                {p.features.map((f, i) => (
+                  <li key={i}><span className="check">✓</span>{f}</li>
+                ))}
+              </ul>
+              <button
+                className={p.recommended ? "btn-lime pricing-cta" : "btn-sm forest pricing-cta"}
+                onClick={() => goToSignupWithPlan(onNav, p.id)}
+              >
+                {p.monthly === 0 ? "Get started free" : `Choose ${p.name}`}
+              </button>
+            </div>
+          ))}
+        </div>
+        <p className="pricing-foot-note">Every plan includes invoices, refund tracking, and your own booking page. Change plans anytime — email us and we'll switch you at the end of your current billing period.</p>
       </section>
 
       {/* FOOTER */}
@@ -2986,6 +3080,8 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
         setBookingError("You've sent a few booking requests in a short time. Please wait a bit before trying again.");
       } else if (err?.code === "MAINTENANCE_MODE") {
         setBookingError("New bookings are temporarily paused for maintenance. Please try again shortly.");
+      } else if (err?.code === "STARTER_LIMIT_REACHED") {
+        setBookingError(`${selectedProvider?.business_name || "This provider"} has reached their booking limit for this month. Please check back next month, or message them directly to arrange your appointment.`);
       } else {
         setBookingError("Something went wrong sending your request. Please try again.");
       }
@@ -3303,7 +3399,7 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
                       <div className="provider-card-img" style={{ background: "#E8F5EF" }}>{iconForServiceType(p.service_type)}</div>
                     )}
                     <div className="provider-card-body">
-                      <h4>{p.business_name}{p.is_featured && <span style={{ marginLeft: 6, fontSize: 11, fontWeight: 700, color: "var(--forest)", background: "var(--sand)", padding: "2px 7px", borderRadius: 5, verticalAlign: "middle" }}>⭐ Featured</span>}</h4>
+                      <h4>{p.business_name}{(() => { const badge = planBadge(p); return badge && <span style={{ marginLeft: 6, fontSize: 11, fontWeight: 700, color: badge.color, background: badge.bg, padding: "2px 7px", borderRadius: 5, verticalAlign: "middle" }}>{badge.label}</span>; })()}{p.is_featured && <span style={{ marginLeft: 6, fontSize: 11, fontWeight: 700, color: "var(--forest)", background: "var(--sand)", padding: "2px 7px", borderRadius: 5, verticalAlign: "middle" }}>⭐ Featured</span>}</h4>
                       <div className="trade">{p.service_type} · {p.district}</div>
                       <div className="stars">{rating ? <StarRating value={rating} /> : "No reviews yet "}<span style={{ color: "var(--muted)", fontSize: 12 }}>{rating ? ` ${rating} (${p.reviews.length})` : ""}</span></div>
                       {p.whatsapp && <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 4 }}>📞 {p.whatsapp}</div>}
@@ -3345,7 +3441,7 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
                       <div className="provider-card-img" style={{ background: "#E8F5EF" }}>{iconForServiceType(p.service_type)}</div>
                     )}
                     <div className="provider-card-body">
-                      <h4>{p.business_name}</h4>
+                      <h4>{p.business_name}{(() => { const badge = planBadge(p); return badge && <span style={{ marginLeft: 6, fontSize: 11, fontWeight: 700, color: badge.color, background: badge.bg, padding: "2px 7px", borderRadius: 5, verticalAlign: "middle" }}>{badge.label}</span>; })()}{p.is_featured && <span style={{ marginLeft: 6, fontSize: 11, fontWeight: 700, color: "var(--forest)", background: "var(--sand)", padding: "2px 7px", borderRadius: 5, verticalAlign: "middle" }}>⭐ Featured</span>}</h4>
                       <div className="trade">{p.service_type} · {p.district}</div>
                       <div className="stars">{rating ? <StarRating value={rating} /> : "No reviews yet "}<span style={{ color: "var(--muted)", fontSize: 12 }}>{rating ? ` ${rating} (${p.reviews.length})` : ""}</span></div>
                       <div className="provider-card-footer">
@@ -3888,6 +3984,7 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
                       <div className="stars" style={{ marginBottom: 4, display: "block" }}>
                         {rating ? <>{"★".repeat(Math.round(rating))}{"☆".repeat(5 - Math.round(rating))} <span style={{ color: "var(--muted)", fontWeight: 400 }}>{rating} ({selectedProvider.reviews.length})</span></> : <span style={{ color: "var(--muted)" }}>No reviews yet</span>}
                       </div>
+                      {(() => { const badge = planBadge(selectedProvider); return badge && <span className={`chip ${selectedProvider.plan === "business" ? "chip-plan-business" : "chip-plan-pro"}`} style={{ marginRight: selectedProvider.is_featured ? 6 : 0 }}>{badge.label}</span>; })()}
                       {selectedProvider.is_featured && <span className="chip chip-featured">⭐ Featured</span>}
                       <button className="btn-sm forest" style={{ width: "100%", padding: "13px 0", marginTop: 4 }} onClick={() => setProfileTab("services")}>Book now</button>
 
@@ -4256,6 +4353,8 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
         setWalkInError("You've added several appointments in a short time. Please wait a few minutes and try again.");
       } else if (err?.code === "MAINTENANCE_MODE") {
         setWalkInError("New bookings are temporarily paused for maintenance. Please try again shortly.");
+      } else if (err?.code === "STARTER_LIMIT_REACHED") {
+        setWalkInError("You've reached the free Starter plan's 30 bookings/month limit. Upgrade to Pro under My plan & billing for unlimited bookings.");
       } else {
         setWalkInError("Something went wrong saving this appointment. Please try again.");
       }
@@ -4377,6 +4476,9 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
   const [editingStaffEmailId, setEditingStaffEmailId] = useState(null);
   const [editStaffEmailValue, setEditStaffEmailValue] = useState("");
   const isBusinessPlan = (providerProfile?.plan || "starter") === "business";
+  // Loyalty & rewards is Pro-and-above (moved off Business-only per plan
+  // restructure) — staff seats and featured placement stay Business-only.
+  const canUseLoyalty = (providerProfile?.plan || "starter") !== "starter";
 
   const loadStaff = async () => {
     if (!providerId) return;
@@ -5227,7 +5329,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
               ))}
             </div>
 
-            {isBusinessPlan && providerProfile?.loyalty_enabled && (
+            {canUseLoyalty && providerProfile?.loyalty_enabled && (
               <div className="card" style={{ marginTop: 20 }}>
                 <div className="card-title" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <span>Loyalty &amp; rewards</span>
@@ -5787,9 +5889,30 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                   </div>
                 )}
 
-                {currentPlan.monthly === 0 && (
-                  <p style={{ fontSize: 13, color: "var(--forest)", fontWeight: 600, marginTop: 16 }}>You're on the free Starter plan — nothing to pay.</p>
-                )}
+                {currentPlan.monthly === 0 && (() => {
+                  const monthStart = new Date(); monthStart.setDate(1); monthStart.setHours(0, 0, 0, 0);
+                  const usedThisMonth = bookings.filter((b) => new Date(b.created_at) >= monthStart).length;
+                  const STARTER_CAP = 30;
+                  const atCap = usedThisMonth >= STARTER_CAP;
+                  return (
+                    <>
+                      <p style={{ fontSize: 13, color: "var(--forest)", fontWeight: 600, marginTop: 16 }}>You're on the free Starter plan — nothing to pay.</p>
+                      <div style={{ marginTop: 10 }}>
+                        <div style={{ fontSize: 12, color: atCap ? "#B91C1C" : "var(--muted)", fontWeight: 600, marginBottom: 4 }}>
+                          {Math.min(usedThisMonth, STARTER_CAP)} of {STARTER_CAP} bookings used this month
+                        </div>
+                        <div style={{ height: 6, borderRadius: 3, background: "var(--sand)", overflow: "hidden" }}>
+                          <div style={{ height: "100%", width: `${(Math.min(usedThisMonth, STARTER_CAP) / STARTER_CAP) * 100}%`, background: atCap ? "#B91C1C" : "var(--forest)", borderRadius: 3 }} />
+                        </div>
+                        {atCap && (
+                          <p style={{ fontSize: 12, color: "#B91C1C", marginTop: 6 }}>
+                            You've hit this month's limit — new bookings will be turned away until next month, or you upgrade to Pro for unlimited bookings.
+                          </p>
+                        )}
+                      </div>
+                    </>
+                  );
+                })()}
               </div>
 
               {(() => {
@@ -6148,7 +6271,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
 
             <div className="card" style={{ maxWidth: 560, marginTop: 20 }}>
               <div className="card-title">Loyalty &amp; rewards program</div>
-              {isBusinessPlan ? (
+              {canUseLoyalty ? (
                 <>
                   <p style={{ fontSize: 13, color: "var(--muted)", marginBottom: 12 }}>
                     Turn this on to earn your customers points on every completed booking, based on how much they spend. When someone reaches your reward threshold, you'll see it here to redeem yourself, however you like — a discount, a free add-on, whatever you decide.
@@ -6178,7 +6301,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                 </>
               ) : (
                 <p style={{ fontSize: 13, color: "var(--muted)" }}>
-                  Business plan providers can run their own loyalty program — set the earn rate and the reward yourself. <a href="#" onClick={(e) => { e.preventDefault(); setTab("billing"); }}>View plans</a>.
+                  Pro and Business plan providers can run their own loyalty program — set the earn rate and the reward yourself. <a href="#" onClick={(e) => { e.preventDefault(); setTab("billing"); }}>View plans</a>.
                 </p>
               )}
             </div>
@@ -6437,17 +6560,64 @@ const SIGNUP_CSS = `
   }
 `;
 
+// `desc` stays a short one-liner for the compact pickers already using it
+// (signup form, billing tab); `tagline`/`features`/`recommended` are for
+// the public pricing section on the landing page. Every line in
+// `features` is something actually built and enforced — nothing here
+// should overclaim beyond what the app actually does.
+//
+// Loyalty & rewards moved from Business-only to Pro-and-above (both plans
+// share it now — the only differences between Pro and Business are staff
+// seats and featured search placement). The "✓ Pro"/"✓ Business" badge on
+// a provider's listing is likewise real and enforced (see planBadge()) —
+// it only reflects which plan a provider is paying for, nothing more.
 const PLANS = [
-  { id: "starter", name: "Starter", price: "Free", desc: "Up to 10 bookings/month", monthly: 0 },
-  { id: "pro", name: "Pro", price: "BZ$50/mo", desc: "Unlimited bookings + calendar", monthly: 50 },
-  { id: "business", name: "Business", price: "BZ$120/mo", desc: "Multi-staff + analytics", monthly: 120 },
+  {
+    id: "starter", name: "Starter", price: "Free", desc: "Up to 30 bookings/month", monthly: 0,
+    tagline: "Get listed and start taking bookings — no cost, no card required.",
+    features: [
+      "Up to 30 bookings a month",
+      "Your own booking page & calendar",
+      "Customer messaging & notifications",
+      "Client reviews",
+      "Invoices, refunds & sales ledger",
+    ],
+  },
+  {
+    id: "pro", name: "Pro", price: "BZ$50/mo", desc: "Unlimited bookings + loyalty", monthly: 50,
+    tagline: "For busy, growing businesses ready to move past the free plan's limits.",
+    recommended: true,
+    features: [
+      "Everything in Starter",
+      "Unlimited bookings — no monthly cap",
+      "Loyalty & rewards program",
+      "A \"Pro\" badge customers see on your listing",
+    ],
+  },
+  {
+    id: "business", name: "Business", price: "BZ$120/mo", desc: "Multi-staff + analytics", monthly: 120,
+    tagline: "For teams — multiple staff, top placement in search, and a top-tier badge.",
+    features: [
+      "Everything in Pro",
+      "Staff seats with their own logins",
+      "Featured placement in district search",
+      "A \"Business\" badge customers see on your listing",
+    ],
+  },
 ];
 
 const DISTRICTS = ["Belize City", "Cayo", "Corozal", "Orange Walk", "Stann Creek", "Toledo"];
 const SERVICE_TYPES = ["Barber", "Hair Salon", "Nail Tech", "Spa", "Med Spa / Clinic", "Massage", "Skincare Studio", "Hair Removal Studio", "Tattoo & Piercing Studio", "Wellness Center", "Pet Grooming", "Fitness & Recovery", "Physical Therapy", "Photography", "Other"];
 
 function ProviderSignup({ onNav }) {
-  const [plan, setPlan] = useState("pro");
+  const [plan, setPlan] = useState(() => {
+    try {
+      const stashed = localStorage.getItem("vaibook_signup_plan");
+      localStorage.removeItem("vaibook_signup_plan");
+      if (stashed && PLANS.some((p) => p.id === stashed)) return stashed;
+    } catch (e) { /* ignore */ }
+    return "pro";
+  });
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [submitError, setSubmitError] = useState("");
