@@ -469,6 +469,31 @@ const throwKnownGuardErrors = (error) => {
     err.code = 'MAINTENANCE_MODE';
     throw err;
   }
+  if (error.message.includes('STARTER_LIMIT_REACHED')) {
+    const err = new Error('STARTER_LIMIT_REACHED');
+    err.code = 'STARTER_LIMIT_REACHED';
+    throw err;
+  }
+  if (error.message.includes('NOT_VIP_MEMBER')) {
+    const err = new Error('NOT_VIP_MEMBER');
+    err.code = 'NOT_VIP_MEMBER';
+    throw err;
+  }
+  if (error.message.includes('VIP_NOT_OFFERED')) {
+    const err = new Error('VIP_NOT_OFFERED');
+    err.code = 'VIP_NOT_OFFERED';
+    throw err;
+  }
+  if (error.message.includes('NOT_ELIGIBLE_FOR_REVIEW')) {
+    const err = new Error('NOT_ELIGIBLE_FOR_REVIEW');
+    err.code = 'NOT_ELIGIBLE_FOR_REVIEW';
+    throw err;
+  }
+  if (error.message.includes('REVIEW_LOCKED')) {
+    const err = new Error('REVIEW_LOCKED');
+    err.code = 'REVIEW_LOCKED';
+    throw err;
+  }
 };
 
 // Lets a provider add a confirmed booking directly for someone who isn't
@@ -510,7 +535,7 @@ export const cancelBooking = async (bookingId) => {
 export const getCustomerBookings = async (customerId) => {
   const { data, error } = await supabase
     .from('bookings')
-    .select('*, provider_profiles(id, user_id, business_name, service_type, district, latitude, longitude, location_label, whatsapp, tax_id, payment_methods(id, type, name, account_name, account_number)), services(name, price, duration_min), reviews(id, rating, comment), booking_refunds(id, amount, receipt_url, note, created_at)')
+    .select('*, provider_profiles(id, user_id, business_name, service_type, district, latitude, longitude, location_label, whatsapp, tax_id, payment_methods(id, type, name, account_name, account_number)), services(name, price, duration_min), reviews(id, rating, comment, hold_until), booking_refunds(id, amount, receipt_url, note, created_at)')
     .eq('customer_id', customerId)
     .order('booking_date', { ascending: false });
   if (error) console.error(error.message);
@@ -663,6 +688,76 @@ export const adminReviewProviderPayment = async (paymentId, status, note) => {
   return true;
 };
 
+// ── VIP MEMBERSHIP (customer ↔ VaiBook) ─────────────────────────────
+// See supabase_vip_membership.sql. Same hands-off billing model as
+// provider plan payments above: customer uploads a receipt, admin
+// confirms, vip_active/vip_expires_at update server-side.
+export const submitVipPayment = async (customerId, file, { amount, periodLabel }) => {
+  const path = `vip-payments/${customerId}/${Date.now()}-${file.name}`;
+  const { error: uploadError } = await supabase.storage.from('vaibook').upload(path, file);
+  if (uploadError) { console.error('Error uploading VIP receipt:', uploadError.message); return false; }
+
+  const { error } = await supabase.from('vip_payments').insert({
+    customer_id: customerId,
+    amount,
+    period_label: periodLabel,
+    receipt_url: path,
+  });
+  if (error) { console.error('Error submitting VIP payment:', error.message); return false; }
+  return true;
+};
+
+export const getMyVipPayments = async (customerId) => {
+  if (!customerId) return [];
+  const { data, error } = await supabase
+    .from('vip_payments')
+    .select('*')
+    .eq('customer_id', customerId)
+    .order('submitted_at', { ascending: false });
+  if (error) { console.error('Error fetching VIP payments:', error.message); return []; }
+  return data || [];
+};
+
+export const adminListVipPayments = async () => {
+  const { data, error } = await supabase.rpc('admin_list_vip_payments');
+  if (error) { console.error('Error listing VIP payments:', error.message); return []; }
+  return data || [];
+};
+
+export const adminReviewVipPayment = async (paymentId, status, note) => {
+  const { error } = await supabase.rpc('admin_review_vip_payment', {
+    p_payment_id: paymentId,
+    p_status: status,
+    p_note: note || null,
+  });
+  if (error) { console.error('Error reviewing VIP payment:', error.message); return false; }
+  return true;
+};
+
+// Off-hours booking request from a VIP member to a Pro/Business provider
+// that has opted in — see create_vip_booking_safe in
+// supabase_vip_membership.sql for why this is a separate RPC from
+// createBookingSafe rather than a parameter on it. The server re-checks
+// VIP status, the provider's plan/surcharge, and computes total_amount
+// itself — none of that is trusted from the client.
+export const createVipBooking = async (booking) => {
+  const { data, error } = await supabase.rpc('create_vip_booking_safe', {
+    p_order_number: booking.order_number,
+    p_customer_id: booking.customer_id,
+    p_provider_id: booking.provider_id,
+    p_service_id: booking.service_id,
+    p_booking_date: booking.booking_date,
+    p_booking_time: booking.booking_time,
+    p_notes: booking.notes,
+  });
+  if (error) {
+    throwKnownGuardErrors(error);
+    console.error('Error creating VIP booking:', error.message);
+    return null;
+  }
+  return Array.isArray(data) ? data[0] : data;
+};
+
 // ── BOOKING REFUNDS (provider ↔ customer, proof of a direct refund) ────
 // VaiBook doesn't process payments, so a "refund" is the provider sending
 // money back to the customer themselves — this just records proof of it.
@@ -758,10 +853,20 @@ export const submitReview = async (review) => {
     .insert(review)
     .select()
     .single();
-  if (error) console.error(error.message);
+  if (error) {
+    throwKnownGuardErrors(error);
+    console.error(error.message);
+    return null;
+  }
   return data;
 };
 
+// A 1- or 2-star review is held privately for 48 hours (see
+// supabase_review_privacy.sql) — the row itself still comes back from
+// this same select for whoever's allowed to see it early (the reviewer,
+// the provider it's about, admin); everyone else's copy of this query
+// simply won't include it until the hold clears, enforced by RLS, not by
+// this function filtering anything client-side.
 export const getProviderReviews = async (providerId) => {
   const { data, error } = await supabase
     .from('reviews')
@@ -770,6 +875,26 @@ export const getProviderReviews = async (providerId) => {
     .order('created_at', { ascending: false });
   if (error) console.error(error.message);
   return data || [];
+};
+
+// Lets a customer edit their own review, but only while it's still inside
+// its 48-hour hold (see before_review_update() in
+// supabase_review_privacy.sql) — raising the rating to 3+ publishes it
+// right away; trying to edit a review that's already public raises
+// REVIEW_LOCKED.
+export const updateReview = async (reviewId, { rating, comment }) => {
+  const { data, error } = await supabase
+    .from('reviews')
+    .update({ rating, comment })
+    .eq('id', reviewId)
+    .select()
+    .single();
+  if (error) {
+    throwKnownGuardErrors(error);
+    console.error(error.message);
+    return null;
+  }
+  return data;
 };
 
 // ── VIP HELPERS ──────────────────────────────────────────────────
