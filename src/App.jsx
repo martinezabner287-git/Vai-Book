@@ -7424,9 +7424,25 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
     }
   };
 
+  // Changing the plan here (a direct grant — no receipt, no payment
+  // record) only ever touches the plan column itself. That's correct on
+  // its own, but a plan alone doesn't help if the provider is currently
+  // suspended: is_active is a separate field, so "Business" would sit on
+  // their profile while they're still invisible to customers and can't
+  // take bookings. Rather than silently reactivate them (which is exactly
+  // the bug the 2026-09-01 audit fixed on the payment-confirmation side —
+  // a suspension for unrelated reasons shouldn't be quietly undone), ask.
   const changeProviderPlan = async (providerId, plan) => {
+    const provider = providers.find((p) => p.id === providerId);
+    let alsoReactivate = false;
+    if (provider && !provider.is_active && plan !== "starter") {
+      const planName = PLANS.find((pl) => pl.id === plan)?.name || plan;
+      alsoReactivate = window.confirm(
+        `${provider.business_name} is currently suspended, so they still won't show up for customers or take bookings even on ${planName}. Reactivate them too?`
+      );
+    }
     setSavingProviderId(providerId);
-    const updated = await adminUpdateProvider(providerId, { plan });
+    const updated = await adminUpdateProvider(providerId, alsoReactivate ? { plan, is_active: true } : { plan });
     setSavingProviderId(null);
     if (updated) setProviders((prev) => prev.map((p) => (p.id === providerId ? updated : p)));
     else window.alert("Couldn't change that plan. Please try again.");
@@ -7705,6 +7721,12 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
                       >
                         {PLANS.map(pl => <option key={pl.id} value={pl.id}>{pl.name}</option>)}
                       </select>
+                      {(p.plan || "starter") !== "starter" && p.next_payment_due_date && (
+                        <span style={{ fontSize: 11, color: new Date(p.next_payment_due_date) < new Date() ? "#B91C1C" : "var(--muted)" }}>
+                          {new Date(p.next_payment_due_date) < new Date() ? "Overdue since " : "Next due "}
+                          {new Date(p.next_payment_due_date).toLocaleDateString([], { month: "short", day: "numeric", year: "numeric" })}
+                        </span>
+                      )}
 
                       {!isConfirmingDelete && (
                         <div style={{ display: "flex", gap: 8 }}>
