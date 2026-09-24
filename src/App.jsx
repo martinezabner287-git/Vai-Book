@@ -2173,8 +2173,6 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
       </div>
       <button className={`nav-search-toggle ${navSearchActive ? "visible" : ""}`} onClick={() => setMobileSearchOpen(v => !v)} aria-label="Search">🔍</button>
 
-      {session && user && <NotificationBell userId={user.id} providerProfile={providerProfile} onNav={onNav} />}
-
       {(current === "home" || (current === "customer" && !session)) ? (
         <div className="nav-cta">
           {session ? (
@@ -2344,6 +2342,13 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
           )}
         </div>
       )}
+
+      {/* Rendered last (not right after the search toggle) so .nav's
+          justify-content: space-between pins it to the far right edge of
+          the bar, after the avatar/List-your-business/Menu cluster — where
+          it was originally and where it needs to stay, on both desktop and
+          the single-row mobile layout above. */}
+      {session && user && <NotificationBell userId={user.id} providerProfile={providerProfile} onNav={onNav} />}
     </nav>
     <div className="nav-strip">
       <button className="nav-strip-link" onClick={() => scrollToSection("services", onNav, current)}>All Services</button>
