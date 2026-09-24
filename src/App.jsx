@@ -2481,12 +2481,14 @@ function LandingPage({ onNav, session, onSignIn }) {
 
   return (
     <>
-      {/* HERO */}
+      {/* HERO — search bar leads (per explicit request: "before the
+          letters"), then the B2B pitch. Headline text dropped its trailing
+          periods: Plus Jakarta Sans ExtraBold (800) draws its period glyph
+          with a wide left side-bearing that reads as a stray gap at this
+          size (58px) — confirmed on the live site, not a fallback-font or
+          markup issue. Dropping the period is the reliable fix regardless
+          of which browser/font-load path renders it. */}
       <section className="search-hero">
-        <div className="search-hero-eyebrow">For salon &amp; barbershop owners</div>
-        <h1><span className="line1">Seamless Bookings.</span><span className="line2">Guaranteed Arrivals.</span></h1>
-        <p className="search-sub">Upgrade your client experience with frictionless 24/7 booking. Protect your time with automated reminders and customizable deposits routed directly to your local bank.</p>
-        <button className="btn-lime hero-trial-btn" onClick={() => onNav("signup")}>Start Your 14-Day Free Trial</button>
         <div className="hero-search-label">Already have clients booking with a VaiBook salon?</div>
         <div className="search-bar-pill" id="main-search-bar">
           <div className="field">
@@ -2521,6 +2523,10 @@ function LandingPage({ onNav, session, onSignIn }) {
             </div>
           )}
         </div>
+        <div className="search-hero-eyebrow">For salon &amp; barbershop owners</div>
+        <h1><span className="line1">Seamless Bookings</span><span className="line2">Guaranteed Arrivals</span></h1>
+        <p className="search-sub">Upgrade your client experience with frictionless 24/7 booking. Protect your time with automated reminders and customizable deposits routed directly to your local bank.</p>
+        <button className="btn-lime hero-trial-btn" onClick={() => onNav("signup")}>Start Your 14-Day Free Trial</button>
       </section>
 
       {/* HOW IT WORKS */}
@@ -2813,6 +2819,28 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
   const [loadingBookings, setLoadingBookings] = useState(false);
 
   const [selectedProvider, setSelectedProvider] = useState(null);
+
+  // Lets a customer share a specific service (not just the provider as a
+  // whole) with someone else — mirrors the existing QR-code deep link
+  // ("#book-<provider id>") so the shared link lands straight on that
+  // provider's booking page. Native share sheet where the browser
+  // supports it (navigator.share — covers Amazon's own "share" pattern on
+  // mobile); clipboard copy with a brief inline confirmation otherwise.
+  const [copiedServiceId, setCopiedServiceId] = useState(null);
+  const shareService = async (service) => {
+    if (!selectedProvider) return;
+    const url = `${window.location.origin}/#book-${selectedProvider.id}`;
+    const text = `${service.name} at ${selectedProvider.business_name} — book it on VaiBook`;
+    if (navigator.share) {
+      try { await navigator.share({ title: text, url }); } catch (e) { /* user cancelled — not an error */ }
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(`${text}\n${url}`);
+      setCopiedServiceId(service.id);
+      setTimeout(() => setCopiedServiceId((id) => (id === service.id ? null : id)), 1800);
+    } catch (e) { /* clipboard unavailable — nothing more we can do here */ }
+  };
 
   // Per-booking unread message counts, so a waiting message is visible from
   // the list instead of only after opening that booking's chat.
@@ -4116,6 +4144,14 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
                                   <div style={{ fontSize: 12, color: "var(--muted)" }}>{s.duration_min} min · BZ${s.price}</div>
                                 </div>
                                 <div style={{ display: "flex", gap: 6 }}>
+                                  <button
+                                    className="btn-sm ghost"
+                                    onClick={() => shareService(s)}
+                                    aria-label={`Share ${s.name}`}
+                                    title="Share this service"
+                                  >
+                                    {copiedServiceId === s.id ? "Link copied" : "📤 Share"}
+                                  </button>
                                   {isProviderVipEligible(selectedProvider) && isVipMember && (
                                     <button className="btn-sm ghost" onClick={() => startVipBookingForService(s)}>⚡ VIP request</button>
                                   )}
