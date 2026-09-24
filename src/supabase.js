@@ -1039,6 +1039,33 @@ export const sendEmailOtp = async (email, metadata) => {
   return { error };
 };
 
+// ── WEB PUSH NOTIFICATIONS ───────────────────────────────────────
+// Stores the browser's PushSubscription so the send-booking-push Edge
+// Function (triggered by a Database Webhook on bookings INSERT) knows
+// where to deliver it. onConflict on endpoint so re-subscribing on the
+// same device/browser (e.g. after clearing the old one) just updates the
+// row instead of creating a duplicate.
+export const savePushSubscription = async (userId, subscription) => {
+  const json = subscription.toJSON();
+  const { error } = await supabase.from('push_subscriptions').upsert(
+    {
+      user_id: userId,
+      endpoint: json.endpoint,
+      p256dh: json.keys.p256dh,
+      auth: json.keys.auth,
+    },
+    { onConflict: 'endpoint' }
+  );
+  if (error) console.error('Error saving push subscription:', error.message);
+  return { error };
+};
+
+export const deletePushSubscription = async (endpoint) => {
+  const { error } = await supabase.from('push_subscriptions').delete().eq('endpoint', endpoint);
+  if (error) console.error('Error deleting push subscription:', error.message);
+  return { error };
+};
+
 export const verifyEmailOtp = async (email, token) => {
   const { data, error } = await supabase.auth.verifyOtp({ email, token, type: 'email' });
   if (error) console.error('Error verifying email OTP:', error.message);
