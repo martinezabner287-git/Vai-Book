@@ -2399,14 +2399,10 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
           the single-row mobile layout above. */}
       {session && user && <NotificationBell userId={user.id} providerProfile={providerProfile} onNav={onNav} />}
     </nav>
-    <div className="nav-strip">
-      <button className="nav-strip-link" onClick={() => scrollToSection("services", onNav, current)}>All Services</button>
-      {SERVICES.map((s) => (
-        <button key={s.name} className="nav-strip-link" onClick={() => submitNavSearch(s.name)}>{s.name}</button>
-      ))}
-      <button className="nav-strip-link nav-strip-cta" onClick={() => onNav("signup")}>Start Free Trial</button>
-      <span className="nav-strip-district">📍 Serving all districts</span>
-    </div>
+    {/* nav-strip (the 13-category pill row) removed per explicit request —
+        aggressive simplification. Its CSS rules (.nav-strip*) are left in
+        the stylesheet, unused, rather than pulled, in case this is
+        revisited; they cost nothing sitting idle. */}
     </div>
   );
 }
@@ -2481,15 +2477,17 @@ function LandingPage({ onNav, session, onSignIn }) {
 
   return (
     <>
-      {/* HERO — search bar leads (per explicit request: "before the
-          letters"), then the B2B pitch. Headline text dropped its trailing
-          periods: Plus Jakarta Sans ExtraBold (800) draws its period glyph
-          with a wide left side-bearing that reads as a stray gap at this
-          size (58px) — confirmed on the live site, not a fallback-font or
-          markup issue. Dropping the period is the reliable fix regardless
-          of which browser/font-load path renders it. */}
+      {/* HERO — full swing back to customer-facing (per explicit request):
+          hero copy sits above the search bar, which is the primary action
+          again. The B2B eyebrow and trial-signup CTA from the earlier pivot
+          are removed here (they still exist elsewhere — nav CTA, pricing
+          section, signup page). Headline drops its trailing period, same
+          fix as before: Plus Jakarta Sans ExtraBold (800) draws a period
+          glyph with a wide left side-bearing that reads as a stray gap at
+          large display size — confirmed on the live site. */}
       <section className="search-hero">
-        <div className="hero-search-label">Already have clients booking with a VaiBook salon?</div>
+        <h1><span className="line1">Belize's top professionals,</span><span className="line2">booked in seconds</span></h1>
+        <p className="search-sub">Skip the DMs, choose your time, and secure your spot in seconds.</p>
         <div className="search-bar-pill" id="main-search-bar">
           <div className="field">
             <span>🔍</span>
@@ -2523,10 +2521,6 @@ function LandingPage({ onNav, session, onSignIn }) {
             </div>
           )}
         </div>
-        <div className="search-hero-eyebrow">For salon &amp; barbershop owners</div>
-        <h1><span className="line1">Seamless Bookings</span><span className="line2">Guaranteed Arrivals</span></h1>
-        <p className="search-sub">Upgrade your client experience with frictionless 24/7 booking. Protect your time with automated reminders and customizable deposits routed directly to your local bank.</p>
-        <button className="btn-lime hero-trial-btn" onClick={() => onNav("signup")}>Start Your 14-Day Free Trial</button>
       </section>
 
       {/* HOW IT WORKS */}
