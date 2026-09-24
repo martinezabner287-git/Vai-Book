@@ -225,7 +225,19 @@ const css = `
   }
   .nav-logo { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 22px; color: var(--near-white); letter-spacing: -0.5px; }
   .nav-logo span { color: var(--lime); }
-  .nav-cta { display: flex; align-items: center; gap: 18px; position: relative; }
+  /* margin-left: auto — .nav has only 3 real flex children when signed in
+     (nav-search-wrap is position:absolute so it doesn't count, and
+     nav-search-toggle is display:none above the 1180px breakpoint): logo,
+     this block, and the notification bell. justify-content: space-between
+     only pins the FIRST and LAST child to the true edges — a middle child
+     floats and centers itself in whatever space is left, which is exactly
+     what put the avatar/"List your business" behind the floating compact
+     search once scrolled (it was centering, not overlapping by accident).
+     auto-margin claims all free space to this block's left instead,
+     pinning it (and the bell right after it) to the right edge as a
+     group — the same fix already applied to the portal-only avatar div
+     below, needed here too since this is a separate render branch. */
+  .nav-cta { display: flex; align-items: center; gap: 18px; position: relative; margin-left: auto; }
 
   /* NAV STRIP (second row — category shortcuts, Vai Buy-style) */
   .nav-strip {
@@ -264,7 +276,13 @@ const css = `
   .nav-search-input-wrap { display: flex; align-items: center; gap: 8px; background: var(--sand); border-radius: 100px; padding: 9px 16px; }
   .nav-search-input-wrap input { border: none; outline: none; background: transparent; font-size: 13px; width: 100%; font-family: 'Plus Jakarta Sans', sans-serif; color: var(--dark-text); }
   .nav-search-icon { font-size: 14px; color: var(--muted); flex-shrink: 0; }
-  .nav-search-toggle { display: none; background: transparent; border: 1px solid rgba(255,255,255,0.35); width: 38px; height: 38px; border-radius: 50%; align-items: center; justify-content: center; cursor: pointer; font-size: 15px; color: var(--near-white); flex-shrink: 0; opacity: 0; pointer-events: none; transition: opacity .2s ease; }
+  /* margin-left: 12px — now that .nav-cta/the avatar div claim their own
+     margin-left: auto (see .nav-cta above) to stay pinned right, there's
+     no free space left for justify-content to put between this and the
+     logo at the <1180px widths where this button is actually visible, so
+     it needs its own fixed gap rather than relying on the parent's
+     distribution. */
+  .nav-search-toggle { display: none; background: transparent; border: 1px solid rgba(255,255,255,0.35); width: 38px; height: 38px; border-radius: 50%; align-items: center; justify-content: center; cursor: pointer; font-size: 15px; color: var(--near-white); flex-shrink: 0; opacity: 0; pointer-events: none; transition: opacity .2s ease; margin-left: 12px; }
   .nav-search-toggle.visible { opacity: 1; pointer-events: auto; }
   .nav-search-mobile-panel { display: none; }
   @media (max-width: 1180px) {
