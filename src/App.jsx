@@ -437,6 +437,8 @@ const css = `
   .search-submit:hover { opacity: .87; }
   .search-hero-tagline { margin-top: 26px; font-size: 13px; color: rgba(250,250,247,0.6); text-align: center; }
   .search-hero-tagline a { color: var(--lime); font-weight: 600; cursor: pointer; text-decoration: underline; }
+  .hero-trial-btn { display: block; margin: 0 auto 44px; padding: 17px 38px; font-size: 16px; border-radius: 100px; box-shadow: 0 16px 40px rgba(198,241,53,0.22); }
+  .hero-search-label { font-size: 12px; font-weight: 600; letter-spacing: .03em; color: rgba(250,250,247,0.5); text-align: center; margin-bottom: 14px; }
 
   /* SEARCH SUGGESTIONS (autocomplete dropdown, shared by hero + browse search bars) */
   .suggestions-dropdown { position: absolute; top: calc(100% + 8px); left: 0; right: 0; background: white; border: 1px solid var(--border); border-radius: 16px; box-shadow: 0 16px 36px rgba(13,61,46,0.16); z-index: 60; overflow: hidden; text-align: left; }
@@ -491,13 +493,15 @@ const css = `
 
   /* PRICING (public, for prospective providers) */
   .pricing-section { padding: 80px 48px; }
-  .pricing-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; max-width: 1040px; margin: 0 auto; align-items: stretch; }
+  .trial-badge { display: inline-flex; align-items: center; gap: 6px; background: var(--lime); color: var(--forest); font-size: 12.5px; font-weight: 700; padding: 7px 18px; border-radius: 100px; margin: 4px 0 18px; }
+  .pricing-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; max-width: 720px; margin: 0 auto; align-items: stretch; }
   .pricing-card { background: #fff; border: 1px solid var(--border); border-radius: 16px; padding: 32px 28px; display: flex; flex-direction: column; position: relative; }
   .pricing-card.recommended { border: 2px solid var(--forest); box-shadow: 0 16px 36px rgba(13,61,46,0.12); }
   .pricing-badge { position: absolute; top: -13px; left: 50%; transform: translateX(-50%); background: var(--forest); color: var(--lime); font-size: 11px; font-weight: 800; letter-spacing: .4px; text-transform: uppercase; padding: 5px 14px; border-radius: 100px; white-space: nowrap; }
   .pricing-name { font-size: 13px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
   .pricing-price { font-size: 34px; font-weight: 800; color: var(--dark-text); margin: 10px 0 6px; font-family: 'Plus Jakarta Sans', sans-serif; }
   .pricing-price span { font-size: 14px; font-weight: 500; color: var(--muted); }
+  .pricing-price-note { font-size: 12px; color: var(--muted); margin: -4px 0 14px; }
   .pricing-tagline { font-size: 13px; color: var(--muted); margin-bottom: 22px; min-height: 34px; }
   .pricing-features { list-style: none; padding: 0; margin: 0 0 28px; flex: 1; }
   .pricing-features li { display: flex; gap: 9px; align-items: flex-start; font-size: 13.5px; color: var(--dark-text); padding: 7px 0; line-height: 1.4; }
@@ -951,7 +955,7 @@ const providerFromPrice = (p) => {
 // to rank higher in search — a provider can have neither, either, or both.
 const planBadge = (p) => {
   const plan = p?.plan;
-  if (plan === "business") return { label: "✓ Business", bg: "var(--forest)", color: "#fff" };
+  if (plan === "business") return { label: "✓ Team", bg: "var(--forest)", color: "#fff" };
   if (plan === "pro") return { label: "✓ Pro", bg: "var(--sand)", color: "var(--forest)" };
   return null;
 };
@@ -2248,11 +2252,10 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
                   <a onClick={() => goAccount(() => onNav("home"))}>Home</a>
                   <a onClick={() => goAccount(() => scrollToSection("services", onNav, current))}>Services</a>
                   <a onClick={() => goAccount(() => scrollToSection("how-it-works", onNav, current))}>How it works</a>
-                  <a onClick={() => goAccount(() => scrollToSection("browse", onNav, current))}>Browse by district</a>
                   <a onClick={() => goAccount(() => scrollToSection("pricing", onNav, current))}>Pricing</a>
                   <hr />
                   <button className="nav-dropdown-item mobile-only-item" onClick={() => goAccount(() => onNav("signup"))}>
-                    <span className="icn">🏪</span> List your business
+                    <span className="icn">🏪</span> Start Free Trial
                   </button>
                   <button className="nav-dropdown-item for-biz" onClick={() => goAccount(() => enterProviderPortal(onNav, session, onSignIn))}>
                     For businesses <span>→</span>
@@ -2268,7 +2271,7 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
             <button className="nav-login-link" onClick={() => onNav("auth")}>Log in</button>
           )}
           {current === "home" && (
-            <button className="btn-ghost nav-signup-btn" onClick={() => onNav("signup")}>List your business</button>
+            <button className="btn-ghost nav-signup-btn" onClick={() => onNav("signup")}>Start Free Trial</button>
           )}
           {!session && (
           <div style={{ position: "relative" }}>
@@ -2281,14 +2284,13 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
                 <a onClick={() => go(() => onNav("home"))}>Home</a>
                 <a onClick={() => go(() => scrollToSection("services", onNav, current))}>Services</a>
                 <a onClick={() => go(() => scrollToSection("how-it-works", onNav, current))}>How it works</a>
-                <a onClick={() => go(() => scrollToSection("browse", onNav, current))}>Browse by district</a>
                 <a onClick={() => go(() => scrollToSection("pricing", onNav, current))}>Pricing</a>
                 <hr />
                 <button className="nav-dropdown-item" onClick={() => go(openInstallAppGuide)}>Add to Home Screen</button>
                 {current === "home" && (
                   <>
                     <hr />
-                    <button className="nav-dropdown-item mobile-only-item" onClick={() => go(() => onNav("signup"))}>List your business</button>
+                    <button className="nav-dropdown-item mobile-only-item" onClick={() => go(() => onNav("signup"))}>Start Free Trial</button>
                     <button className="nav-dropdown-item" onClick={() => go(() => enterProviderPortal(onNav, session, onSignIn))}>
                       Provider login
                     </button>
@@ -2402,7 +2404,7 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
       {SERVICES.map((s) => (
         <button key={s.name} className="nav-strip-link" onClick={() => submitNavSearch(s.name)}>{s.name}</button>
       ))}
-      <button className="nav-strip-link nav-strip-cta" onClick={() => onNav("signup")}>List your business</button>
+      <button className="nav-strip-link nav-strip-cta" onClick={() => onNav("signup")}>Start Free Trial</button>
       <span className="nav-strip-district">📍 Serving all districts</span>
     </div>
     </div>
@@ -2477,20 +2479,15 @@ function LandingPage({ onNav, session, onSignIn }) {
     submitHeroSearch(s.label);
   };
 
-  const goBrowse = (query, district) => {
-    try {
-      localStorage.setItem("vaibook_pending_search", JSON.stringify({ query, district: district || "All" }));
-    } catch (e) { /* ignore storage errors */ }
-    enterCustomerPortal(onNav, session, onSignIn);
-  };
-
   return (
     <>
       {/* HERO */}
       <section className="search-hero">
-        <div className="search-hero-eyebrow">Booking platform</div>
-        <h1><span className="line1">Book local services.</span><span className="line2">The easy way.</span></h1>
-        <p className="search-sub">Find trusted barbers, nail techs, spas, and more near you in Belize.</p>
+        <div className="search-hero-eyebrow">For salon &amp; barbershop owners</div>
+        <h1><span className="line1">Seamless Bookings.</span><span className="line2">Guaranteed Arrivals.</span></h1>
+        <p className="search-sub">Upgrade your client experience with frictionless 24/7 booking. Protect your time with automated reminders and customizable deposits routed directly to your local bank.</p>
+        <button className="btn-lime hero-trial-btn" onClick={() => onNav("signup")}>Start Your 14-Day Free Trial</button>
+        <div className="hero-search-label">Already have clients booking with a VaiBook salon?</div>
         <div className="search-bar-pill" id="main-search-bar">
           <div className="field">
             <span>🔍</span>
@@ -2523,9 +2520,6 @@ function LandingPage({ onNav, session, onSignIn }) {
               ))}
             </div>
           )}
-        </div>
-        <div className="search-hero-tagline">
-          Own a business? <a onClick={() => onNav("signup")}>List it on VaiBook, free to start</a>
         </div>
       </section>
 
@@ -2625,63 +2619,35 @@ function LandingPage({ onNav, session, onSignIn }) {
         </div>
       </div>
 
-      {/* BROWSE BY DISTRICT */}
-      <section className="section" id="browse" style={{ background: "var(--sand)" }}>
-        <div style={{ textAlign: "center", marginBottom: 48 }}>
-          <div className="section-eyebrow" style={{ justifyContent: "center", display: "flex" }}>Coverage</div>
-          <h2 className="section-title">Browse by district</h2>
-          <p className="section-sub" style={{ margin: "0 auto" }}>VaiBook covers all six districts of Belize. Jump straight to what you need, where you need it.</p>
-        </div>
-        <div className="browse-grid">
-          <div className="browse-col">
-            <h5>Popular</h5>
-            <ul>
-              {SERVICES.map((s) => (
-                <li key={s.name}><a onClick={() => goBrowse(s.name, "All")}>{s.name} in Belize</a></li>
-              ))}
-            </ul>
-          </div>
-          {DISTRICTS.map((d) => (
-            <div className="browse-col" key={d}>
-              <h5>{d}</h5>
-              <ul>
-                {SERVICES.map((s) => (
-                  <li key={s.name}><a onClick={() => goBrowse(s.name, d)}>{s.name} in {d}</a></li>
-                ))}
-              </ul>
-            </div>
-          ))}
-        </div>
-        <div className="browse-pills">
-          {SERVICES.map((s) => (
-            <button key={s.name} className="browse-pill" onClick={() => goBrowse(s.name, "All")}>{s.icon} {s.name}</button>
-          ))}
-        </div>
-      </section>
-
       {/* PRICING — for prospective providers. "Recommended" on Pro is
           VaiBook's own editorial call, not a "Most popular" claim — there's
           no real usage data yet to honestly back that. Every feature line
           comes straight from PLANS above, which only lists things that are
           actually built (and, for Starter's booking cap, actually
-          enforced) — nothing here is aspirational. No free-trial language:
-          upgrading is a bank transfer + receipt an admin confirms, not an
-          auto-charging trial. */}
+          enforced) — nothing here is aspirational.
+          NOTE: the "14-Day Free Trial" badge below is marketing copy the
+          user explicitly asked for — there is no trial mechanism in the
+          backend (no trial_ends_at, no auto-expiry/downgrade). Every
+          signup, trial-badged or not, still goes through the same manual
+          bank-transfer + admin-confirms flow as before. If a real
+          system-enforced trial is wanted, that's separate schema/logic
+          work, not just this copy change. */}
       <section className="section pricing-section" id="pricing">
         <div style={{ textAlign: "center", marginBottom: 40 }}>
           <div className="section-eyebrow" style={{ justifyContent: "center", display: "flex" }}>For business owners</div>
-          <h2 className="section-title">Simple pricing. Start free, grow when you're ready.</h2>
-          <p className="section-sub" style={{ margin: "0 auto" }}>No contracts, no setup fees. Pay only once VaiBook is actually bringing you customers.</p>
+          <div className="trial-badge">✨ Start with a 14-day free trial — no card required</div>
+          <h2 className="section-title">Simple pricing. Grow when you're ready.</h2>
+          <p className="section-sub" style={{ margin: "0 auto" }}>No contracts, no setup fees. Try VaiBook free for 14 days, then pick the plan that fits your shop.</p>
         </div>
         <div className="pricing-grid">
-          {PLANS.map((p) => (
+          {PUBLIC_PLANS.map((p) => (
             <div className={`pricing-card ${p.recommended ? "recommended" : ""}`} key={p.id}>
               {p.recommended && <div className="pricing-badge">Recommended</div>}
               <div className="pricing-name">{p.name}</div>
               <div className="pricing-price">
-                {p.monthly === 0 ? "Free" : `BZ$${p.monthly}`}
-                {p.monthly > 0 && <span> /month</span>}
+                BZ${p.monthly}<span> /month</span>
               </div>
+              {p.priceNote && <div className="pricing-price-note">{p.priceNote}</div>}
               <div className="pricing-tagline">{p.tagline}</div>
               <ul className="pricing-features">
                 {p.features.map((f, i) => (
@@ -2692,7 +2658,7 @@ function LandingPage({ onNav, session, onSignIn }) {
                 className={p.recommended ? "btn-lime pricing-cta" : "btn-sm forest pricing-cta"}
                 onClick={() => goToSignupWithPlan(onNav, p.id)}
               >
-                {p.monthly === 0 ? "Get started free" : `Choose ${p.name}`}
+                Start Your 14-Day Free Trial
               </button>
             </div>
           ))}
@@ -6920,28 +6886,39 @@ const PLANS = [
     ],
   },
   {
-    id: "pro", name: "Pro", price: "BZ$50/mo", desc: "Unlimited bookings + loyalty", monthly: 50,
-    tagline: "For busy, growing businesses ready to move past the free plan's limits.",
+    id: "pro", name: "Pro", price: "BZ$50/mo", desc: "For solo practitioners", monthly: 50,
+    tagline: "For solo practitioners who want frictionless booking, automated reminders, and deposits handled for them.",
     recommended: true,
     features: [
-      "Everything in Starter",
-      "Unlimited bookings — no monthly cap",
+      "24/7 guest booking — no app download for your clients",
+      "Automated appointment reminders to cut no-shows",
+      "Customizable deposits routed to your bank",
+      "Your own booking page & calendar",
       "Loyalty & rewards program",
-      "Accept VIP members' after-hours requests, at your price",
       "A \"Pro\" badge customers see on your listing",
     ],
   },
   {
-    id: "business", name: "Business", price: "BZ$120/mo", desc: "Multi-staff + analytics", monthly: 120,
-    tagline: "For teams — multiple staff, top placement in search, and a top-tier badge.",
+    id: "business", name: "Team", price: "BZ$120/mo", desc: "Base fee + per-seat pricing", monthly: 120,
+    priceNote: "Base fee, plus a per-seat add-on as you bring on staff",
+    tagline: "For teams — a base plan covering your shop, plus staff seats you add as you grow.",
     features: [
       "Everything in Pro",
       "Staff seats with their own logins",
       "Featured placement in district search",
-      "A \"Business\" badge customers see on your listing",
+      "A \"Team\" badge customers see on your listing",
     ],
   },
 ];
+
+// Public-facing plan list for the marketing pricing section and the new
+// provider signup picker — deliberately excludes "starter". Existing
+// providers already on the free Starter plan (and the booking-cap
+// enforcement in create_booking_safe / STARTER_CAP) are untouched: PLANS
+// itself still carries the starter entry so every lookup that resolves an
+// existing provider's plan (billing tab, admin, badges) keeps working.
+// This list only controls what a NEW visitor is offered.
+const PUBLIC_PLANS = PLANS.filter((p) => p.id !== "starter");
 
 // VaiBook VIP — a customer-facing membership (separate from the provider
 // plans above): once active, a customer can request an appointment outside
@@ -6962,7 +6939,7 @@ function ProviderSignup({ onNav }) {
     try {
       const stashed = localStorage.getItem("vaibook_signup_plan");
       localStorage.removeItem("vaibook_signup_plan");
-      if (stashed && PLANS.some((p) => p.id === stashed)) return stashed;
+      if (stashed && PUBLIC_PLANS.some((p) => p.id === stashed)) return stashed;
     } catch (e) { /* ignore */ }
     return "pro";
   });
@@ -7097,7 +7074,7 @@ function ProviderSignup({ onNav }) {
           <div className="form-section-title" style={{ borderBottom: "none", paddingBottom: 0, marginBottom: 12 }}>Choose your plan</div>
         </div>
         <div className="plan-selector">
-          {PLANS.map(p => (
+          {PUBLIC_PLANS.map(p => (
             <div key={p.id} className={`plan-option ${plan === p.id ? "selected" : ""}`} onClick={() => setPlan(p.id)}>
               <div className="plan-name">{p.name}</div>
               <div className="plan-price">{p.price}</div>
