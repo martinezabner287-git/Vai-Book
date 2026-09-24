@@ -316,6 +316,8 @@ const css = `
   .btn-lime:hover { opacity: 0.85; }
   .nav-menu-btn { display: flex; align-items: center; gap: 8px; background: transparent; border: 1px solid rgba(255,255,255,0.35); color: var(--near-white); padding: 9px 18px 9px 22px; border-radius: 100px; font-size: 14px; font-weight: 500; cursor: pointer; transition: all .2s; }
   .nav-menu-btn:hover { border-color: var(--lime); color: var(--lime); }
+  .nav-signup-btn { background: var(--lime); border: none; color: var(--forest); padding: 9px 20px; border-radius: 100px; font-size: 14px; font-weight: 700; cursor: pointer; transition: all .2s; box-shadow: 0 0 0 rgba(198,241,53,0); }
+  .nav-signup-btn:hover { box-shadow: 0 0 14px rgba(198,241,53,0.6); transform: translateY(-1px); }
   .nav-menu-btn .bars { display: flex; flex-direction: column; gap: 3px; }
   .nav-menu-btn .bars span { width: 16px; height: 2px; background: currentColor; border-radius: 2px; }
   .nav-dropdown { position: absolute; top: calc(100% + 12px); right: 0; background: white; border-radius: var(--radius-sm); box-shadow: 0 16px 40px rgba(13,61,46,0.18); border: 1px solid var(--border); min-width: 220px; padding: 10px; z-index: 200; }
@@ -2425,7 +2427,7 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
             <button className="nav-login-link" onClick={() => onNav("auth")}>Log in</button>
           )}
           {current === "home" && (
-            <button className="btn-ghost nav-signup-btn" onClick={() => onNav("signup")}>Provide my service</button>
+            <button className="nav-signup-btn" onClick={() => onNav("signup")}>Provide my service</button>
           )}
           {!session && (
           <div style={{ position: "relative" }}>
