@@ -650,8 +650,10 @@ const css = `
   .profile-header-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
   .profile-name-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
   .profile-name-row h2 { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 26px; font-weight: 800; color: var(--forest); margin: 0; }
-  .profile-icon-btn { background: var(--sand); border: none; cursor: pointer; font-size: 15px; width: 34px; height: 34px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; line-height: 1; transition: background .15s; }
-  .profile-icon-btn:hover { background: var(--border); }
+  .profile-icon-btn { background: #FFFFFF; border: 1px solid var(--border); cursor: pointer; width: 38px; height: 38px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; color: var(--dark-text); transition: background .15s, border-color .15s; }
+  .profile-icon-btn:hover { background: var(--sand); border-color: var(--forest); }
+  .profile-icon-btn svg { width: 18px; height: 18px; }
+  .profile-icon-btn svg.heart-filled { color: var(--clay); }
   .profile-meta { font-size: 13px; color: var(--muted); margin: 8px 0 22px; display: flex; flex-wrap: wrap; align-items: center; gap: 0; }
   .profile-meta .dot { margin: 0 6px; }
   .profile-meta a { color: var(--forest); font-weight: 600; }
@@ -4014,14 +4016,18 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
                       aria-label="Share this business"
                       title={providerLinkCopied ? "Link copied" : "Share"}
                     >
-                      {providerLinkCopied ? "✅" : "📤"}
+                      {providerLinkCopied ? (
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5" /></svg>
+                      ) : (
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 6l-4-4-4 4" /><path d="M12 2v13" /><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" /></svg>
+                      )}
                     </button>
                     <button
                       className="profile-icon-btn"
                       onClick={(e) => toggleFavorite(e, selectedProvider.id)}
                       aria-label={favoriteIds.has(selectedProvider.id) ? "Remove from favorites" : "Add to favorites"}
                     >
-                      {favoriteIds.has(selectedProvider.id) ? "❤️" : "🤍"}
+                      <svg viewBox="0 0 24 24" fill={favoriteIds.has(selectedProvider.id) ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={favoriteIds.has(selectedProvider.id) ? "heart-filled" : ""}><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21.2l7.8-7.8 1-1a5.5 5.5 0 0 0 0-7.8z" /></svg>
                     </button>
                   </div>
                 </div>
