@@ -6,7 +6,7 @@ import L from "leaflet";
 import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
 import markerIcon from "leaflet/dist/images/marker-icon.png";
 import markerShadow from "leaflet/dist/images/marker-shadow.png";
-import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, deleteService, getActiveProviders, getProviderDirectory, createBooking, getProviderBusyWindows, createBookingSafe, cancelBooking, getCustomerBookings, uploadReceipt, submitReview, getProviderReviews, updateReview, sendBookingEmail, updateUserProfile, getPaymentMethods, addPaymentMethod, deletePaymentMethod, createNotification, getNotifications, markNotificationRead, markAllNotificationsRead, getCategoryDefaultFeatures, getProviderFeatureOverrides, setProviderFeatureOverride, getVisitNotes, upsertVisitNote, adminListProviders, adminUpdateProvider, adminDeleteProvider, tagVIP, untagVIP, getVIPClients, getFavoriteProviderIds, getFavoriteProviders, addFavorite, removeFavorite, getBookingMessages, sendBookingMessage, markBookingMessagesRead, getUnreadBookingMessages, getProviderMonthlyTrend, createProviderProfile, getProviderById, createWalkInBooking, submitProviderPayment, getMyProviderPayments, adminListProviderPayments, adminReviewProviderPayment, submitVipPayment, getMyVipPayments, adminListVipPayments, adminReviewVipPayment, createVipBooking, submitBookingRefund, adminListBookingRefunds, openPrivateFile, getProviderStaff, addProviderStaff, updateProviderStaff, deleteProviderStaff, getLoyaltyAccount, getProviderLoyaltyCustomers, redeemLoyaltyReward, getMyStaffProfile, claimStaffSeatByEmail, getStaffBookings, rescheduleBooking, getProviderNotifyEmail, getMaintenanceStatus, setMaintenanceMode, getSiteOfflineStatus, setSiteOffline, sendEmailOtp, verifyEmailOtp } from "./supabase";
+import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, deleteService, getActiveProviders, getProviderDirectory, createBooking, getProviderBusyWindows, createBookingSafe, cancelBooking, getCustomerBookings, uploadReceipt, submitReview, getProviderReviews, updateReview, sendBookingEmail, updateUserProfile, getPaymentMethods, addPaymentMethod, deletePaymentMethod, createNotification, getNotifications, markNotificationRead, markAllNotificationsRead, getCategoryDefaultFeatures, getProviderFeatureOverrides, setProviderFeatureOverride, getVisitNotes, upsertVisitNote, adminListProviders, adminUpdateProvider, adminDeleteProvider, tagVIP, untagVIP, getVIPClients, getFavoriteProviderIds, getFavoriteProviders, addFavorite, removeFavorite, getBookingMessages, sendBookingMessage, markBookingMessagesRead, getUnreadBookingMessages, getProviderMonthlyTrend, createProviderProfile, getProviderById, createWalkInBooking, submitProviderPayment, getMyProviderPayments, adminListProviderPayments, adminReviewProviderPayment, submitVipPayment, getMyVipPayments, adminListVipPayments, adminReviewVipPayment, createVipBooking, submitBookingRefund, adminListBookingRefunds, openPrivateFile, getProviderStaff, addProviderStaff, updateProviderStaff, deleteProviderStaff, getLoyaltyAccount, getProviderLoyaltyCustomers, redeemLoyaltyReward, getMyStaffProfile, claimStaffSeatByEmail, getStaffBookings, rescheduleBooking, getProviderNotifyEmail, getMaintenanceStatus, setMaintenanceMode, getSiteOfflineStatus, setSiteOffline, sendEmailOtp, verifyEmailOtp, savePushSubscription } from "./supabase";
 
 // Leaflet's default marker icons reference image paths that don't resolve
 // correctly under CRA's bundler unless re-pointed at the imported assets.
@@ -662,6 +662,7 @@ const css = `
   .guest-checkout-label { font-size: 12px; font-weight: 700; color: var(--dark-text); margin: 0 0 10px; }
   .guest-checkout-note { font-size: 11px; color: var(--muted); margin: -4px 0 4px; }
   .optional-tag { font-weight: 400; color: var(--muted); }
+  .checkout-liability-note { font-size: 10.5px; color: var(--muted); text-align: center; line-height: 1.5; margin: 10px 0 0; }
 
   .email-auth-overlay { position: fixed; inset: 0; background: rgba(13, 31, 24, 0.6); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
   .email-auth-card { background: #FFFFFF; border-radius: 20px; width: 100%; max-width: 360px; padding: 32px; box-shadow: 0 24px 60px rgba(13,61,46,0.25); position: relative; }
@@ -1732,6 +1733,18 @@ function scrollToSection(id, onNav, current) {
   } else {
     jump();
   }
+}
+
+// Web Push subscription keys are handed to the browser as a base64url
+// string (VAPID public key) but the Push API wants a raw Uint8Array —
+// this is the standard conversion every Web Push tutorial uses.
+function urlBase64ToUint8Array(base64String) {
+  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+  const rawData = window.atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+  for (let i = 0; i < rawData.length; i++) outputArray[i] = rawData.charCodeAt(i);
+  return outputArray;
 }
 
 function enterCustomerPortal(onNav, session, onSignIn) {
@@ -4363,6 +4376,9 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
                           >
                             {submittingBooking ? "Sending request..." : sendingBookingOtp ? "Sending code..." : user?.id ? (bookingForm.isVip ? "Send VIP request" : "Request booking") : "Continue"}
                           </button>
+                          <p className="checkout-liability-note">
+                            VaiBook is a scheduling platform. All payments and deposits are direct transactions between the client and the business. Vai Technologies is not liable for disputes.
+                          </p>
 
                           {showEmailAuthModal && (
                             <EmailAuthModal
@@ -4740,6 +4756,9 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
   // The one real notification preference (see supabase_audit_fixes.sql).
   const [emailOnNewBooking, setEmailOnNewBooking] = useState(true);
   const [savingNotifyPref, setSavingNotifyPref] = useState(false);
+  const [pushEnabled, setPushEnabled] = useState(false);
+  const [subscribingPush, setSubscribingPush] = useState(false);
+  const [pushError, setPushError] = useState("");
 
   // Per-booking unread message counts, so a waiting message is visible from
   // the list instead of only after opening that booking's chat.
@@ -5290,6 +5309,50 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
     } else {
       setEmailOnNewBooking(!next);
       window.alert("Couldn't save that setting. Please try again.");
+    }
+  };
+
+  // Checks whether this browser/device already has an active push
+  // subscription, so the Settings toggle reflects real state (not just
+  // "did they click the button this session") across reloads.
+  useEffect(() => {
+    if (!("serviceWorker" in navigator) || !("PushManager" in window)) return;
+    navigator.serviceWorker.ready.then((reg) => reg.pushManager.getSubscription()).then((sub) => {
+      setPushEnabled(!!sub);
+    }).catch(() => {});
+  }, []);
+
+  const enablePushNotifications = async () => {
+    setPushError("");
+    if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
+      setPushError("Push notifications aren't supported in this browser. On iPhone, add VaiBook to your Home Screen first (Share -> Add to Home Screen), then try again from there.");
+      return;
+    }
+    const vapidKey = process.env.REACT_APP_VAPID_PUBLIC_KEY;
+    if (!vapidKey) {
+      setPushError("Push notifications aren't configured yet.");
+      return;
+    }
+    setSubscribingPush(true);
+    try {
+      const permission = await Notification.requestPermission();
+      if (permission !== "granted") {
+        setPushError("Notifications are blocked. Enable them for this site in your browser settings to turn this on.");
+        return;
+      }
+      const registration = await navigator.serviceWorker.ready;
+      const subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(vapidKey),
+      });
+      const { error } = await savePushSubscription(user.id, subscription);
+      if (error) throw error;
+      setPushEnabled(true);
+    } catch (err) {
+      console.error("Push subscription failed:", err);
+      setPushError("Couldn't turn on push notifications. Please try again.");
+    } finally {
+      setSubscribingPush(false);
     }
   };
 
@@ -7026,6 +7089,23 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                 Everything else — booking requests, cancellations, deposit receipts, completed bookings and new reviews —
                 always shows up in your notification bell 🔔 at the top of the portal.
               </p>
+
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", borderBottom: "1px solid var(--border)", gap: 16, marginTop: 8 }}>
+                <div>
+                  <div style={{ fontSize: 14, fontWeight: 600 }}>Push notifications on this device</div>
+                  <div style={{ fontSize: 12, color: "var(--muted)" }}>
+                    Get a notification the instant a booking request comes in, even with VaiBook closed. Free — no SMS needed.
+                  </div>
+                </div>
+                {pushEnabled ? (
+                  <span style={{ fontSize: 12, fontWeight: 700, color: "var(--forest)", flexShrink: 0 }}>✓ On</span>
+                ) : (
+                  <button className="btn-sm forest" style={{ flexShrink: 0 }} onClick={enablePushNotifications} disabled={subscribingPush}>
+                    {subscribingPush ? "Turning on..." : "Turn on"}
+                  </button>
+                )}
+              </div>
+              {pushError && <p style={{ fontSize: 12, color: "#B91C1C", marginTop: 8 }}>{pushError}</p>}
 
               <div className="card-title" style={{ marginTop: 24 }}>What VaiBook charges</div>
               <p style={{ fontSize: 13, color: "var(--muted)", lineHeight: 1.6 }}>
