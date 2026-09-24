@@ -6,7 +6,7 @@ import L from "leaflet";
 import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
 import markerIcon from "leaflet/dist/images/marker-icon.png";
 import markerShadow from "leaflet/dist/images/marker-shadow.png";
-import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, deleteService, getActiveProviders, getProviderDirectory, createBooking, getProviderBusyWindows, createBookingSafe, cancelBooking, getCustomerBookings, uploadReceipt, submitReview, getProviderReviews, updateReview, sendBookingEmail, updateUserProfile, getPaymentMethods, addPaymentMethod, deletePaymentMethod, createNotification, getNotifications, markNotificationRead, markAllNotificationsRead, getCategoryDefaultFeatures, getProviderFeatureOverrides, setProviderFeatureOverride, getVisitNotes, upsertVisitNote, adminListProviders, adminUpdateProvider, adminDeleteProvider, tagVIP, untagVIP, getVIPClients, getFavoriteProviderIds, getFavoriteProviders, addFavorite, removeFavorite, getBookingMessages, sendBookingMessage, markBookingMessagesRead, getUnreadBookingMessages, getProviderMonthlyTrend, createProviderProfile, getProviderById, createWalkInBooking, submitProviderPayment, getMyProviderPayments, adminListProviderPayments, adminReviewProviderPayment, submitVipPayment, getMyVipPayments, adminListVipPayments, adminReviewVipPayment, createVipBooking, submitBookingRefund, adminListBookingRefunds, openPrivateFile, getProviderStaff, addProviderStaff, updateProviderStaff, deleteProviderStaff, getLoyaltyAccount, getProviderLoyaltyCustomers, redeemLoyaltyReward, getMyStaffProfile, claimStaffSeatByEmail, getStaffBookings, rescheduleBooking, getProviderNotifyEmail, getMaintenanceStatus, setMaintenanceMode, getSiteOfflineStatus, setSiteOffline } from "./supabase";
+import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, deleteService, getActiveProviders, getProviderDirectory, createBooking, getProviderBusyWindows, createBookingSafe, cancelBooking, getCustomerBookings, uploadReceipt, submitReview, getProviderReviews, updateReview, sendBookingEmail, updateUserProfile, getPaymentMethods, addPaymentMethod, deletePaymentMethod, createNotification, getNotifications, markNotificationRead, markAllNotificationsRead, getCategoryDefaultFeatures, getProviderFeatureOverrides, setProviderFeatureOverride, getVisitNotes, upsertVisitNote, adminListProviders, adminUpdateProvider, adminDeleteProvider, tagVIP, untagVIP, getVIPClients, getFavoriteProviderIds, getFavoriteProviders, addFavorite, removeFavorite, getBookingMessages, sendBookingMessage, markBookingMessagesRead, getUnreadBookingMessages, getProviderMonthlyTrend, createProviderProfile, getProviderById, createWalkInBooking, submitProviderPayment, getMyProviderPayments, adminListProviderPayments, adminReviewProviderPayment, submitVipPayment, getMyVipPayments, adminListVipPayments, adminReviewVipPayment, createVipBooking, submitBookingRefund, adminListBookingRefunds, openPrivateFile, getProviderStaff, addProviderStaff, updateProviderStaff, deleteProviderStaff, getLoyaltyAccount, getProviderLoyaltyCustomers, redeemLoyaltyReward, getMyStaffProfile, claimStaffSeatByEmail, getStaffBookings, rescheduleBooking, getProviderNotifyEmail, getMaintenanceStatus, setMaintenanceMode, getSiteOfflineStatus, setSiteOffline, sendEmailOtp, verifyEmailOtp } from "./supabase";
 
 // Leaflet's default marker icons reference image paths that don't resolve
 // correctly under CRA's bundler unless re-pointed at the imported assets.
@@ -657,6 +657,29 @@ const css = `
   .profile-icon-btn:hover { background: var(--sand); border-color: var(--forest); }
   .profile-icon-btn svg { width: 18px; height: 18px; }
   .profile-icon-btn svg.heart-filled { color: var(--clay); }
+
+  .guest-checkout-fields { border-top: 1px solid var(--border, #eee); margin-top: 4px; padding-top: 16px; margin-bottom: 4px; }
+  .guest-checkout-label { font-size: 12px; font-weight: 700; color: var(--dark-text); margin: 0 0 10px; }
+  .guest-checkout-note { font-size: 11px; color: var(--muted); margin: -4px 0 4px; }
+  .optional-tag { font-weight: 400; color: var(--muted); }
+
+  .email-auth-overlay { position: fixed; inset: 0; background: rgba(13, 31, 24, 0.6); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
+  .email-auth-card { background: #FFFFFF; border-radius: 20px; width: 100%; max-width: 360px; padding: 32px; box-shadow: 0 24px 60px rgba(13,61,46,0.25); position: relative; }
+  .email-auth-close { position: absolute; top: 16px; right: 16px; background: none; border: none; cursor: pointer; color: var(--muted); font-size: 20px; line-height: 1; padding: 4px; }
+  .email-auth-brand { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; font-size: 18px; color: var(--forest); margin: 0 0 20px; }
+  .email-auth-brand span { color: var(--lime-dark, #8FAF1C); }
+  .email-auth-title { font-size: 20px; font-weight: 800; color: var(--forest); margin: 0 0 6px; }
+  .email-auth-sub { font-size: 13px; color: var(--muted); margin: 0 0 20px; line-height: 1.5; }
+  .email-auth-sub strong { color: var(--dark-text); }
+  .email-auth-code-row { display: flex; gap: 8px; justify-content: center; margin-bottom: 8px; }
+  .email-auth-code-input { width: 42px; height: 52px; text-align: center; font-size: 20px; font-weight: 700; border-radius: 10px; border: 1px solid var(--border, #ddd); }
+  .email-auth-code-input:focus { outline: none; border-color: var(--forest); box-shadow: 0 0 0 2px rgba(13,61,46,0.15); }
+  .email-auth-error { font-size: 12px; color: #B91C1C; text-align: center; margin: 8px 0 0; }
+  .email-auth-btn { width: 100%; margin-top: 20px; padding: 14px 0; font-size: 14px; border-radius: 12px; background: var(--forest); color: var(--lime); font-weight: 700; border: none; cursor: pointer; }
+  .email-auth-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+  .email-auth-resend { width: 100%; margin-top: 10px; padding: 8px 0; font-size: 12px; font-weight: 600; color: var(--forest); background: none; border: none; cursor: pointer; }
+  .email-auth-resend:disabled { color: var(--muted); cursor: not-allowed; }
+
   .profile-meta { font-size: 13px; color: var(--muted); margin: 8px 0 22px; display: flex; flex-wrap: wrap; align-items: center; gap: 0; }
   .profile-meta .dot { margin: 0 6px; }
   .profile-meta a { color: var(--forest); font-weight: 600; }
@@ -1987,6 +2010,110 @@ function SiteOffline({ message, onSignIn }) {
   );
 }
 
+function EmailAuthModal({ email, onClose, onResend, onVerified }) {
+  // Step-2-only modal: by the time this opens, the caller (guest checkout,
+  // or a "Sign in" entry point elsewhere) has already collected the email
+  // and triggered sendEmailOtp once. This just handles entering + verifying
+  // the 6-digit code, and re-sending it. No password ever exists to check.
+  const [code, setCode] = useState(["", "", "", "", "", ""]);
+  const [verifying, setVerifying] = useState(false);
+  const [resending, setResending] = useState(false);
+  const [error, setError] = useState("");
+  const [resendCooldown, setResendCooldown] = useState(30);
+  const inputRefs = useRef([]);
+
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const t = setTimeout(() => setResendCooldown((s) => s - 1), 1000);
+    return () => clearTimeout(t);
+  }, [resendCooldown]);
+
+  useEffect(() => {
+    setTimeout(() => inputRefs.current[0]?.focus(), 50);
+  }, []);
+
+  const handleCodeChange = (index, value) => {
+    const digit = value.replace(/\D/g, "").slice(-1);
+    const next = [...code];
+    next[index] = digit;
+    setCode(next);
+    if (digit && index < 5) inputRefs.current[index + 1]?.focus();
+  };
+
+  const handleCodeKeyDown = (index, e) => {
+    if (e.key === "Backspace" && !code[index] && index > 0) inputRefs.current[index - 1]?.focus();
+  };
+
+  const handleCodePaste = (e) => {
+    const pasted = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
+    if (!pasted) return;
+    e.preventDefault();
+    const next = ["", "", "", "", "", ""];
+    for (let i = 0; i < pasted.length; i++) next[i] = pasted[i];
+    setCode(next);
+    inputRefs.current[Math.min(pasted.length, 5)]?.focus();
+  };
+
+  const handleVerify = async () => {
+    const joined = code.join("");
+    if (joined.length !== 6) { setError("Enter the 6-digit code."); return; }
+    setError("");
+    setVerifying(true);
+    const { data, error: verifyError } = await verifyEmailOtp(email, joined);
+    setVerifying(false);
+    if (verifyError || !data?.session) {
+      setError("That code didn't work. Check it and try again.");
+      return;
+    }
+    onVerified(data);
+  };
+
+  const handleResend = async () => {
+    if (resendCooldown > 0) return;
+    setResending(true);
+    setError("");
+    await onResend?.();
+    setResending(false);
+    setResendCooldown(30);
+  };
+
+  return (
+    <div className="email-auth-overlay" onClick={onClose}>
+      <div className="email-auth-card" onClick={(e) => e.stopPropagation()}>
+        <button className="email-auth-close" onClick={onClose} aria-label="Close">×</button>
+        <p className="email-auth-brand">vai <span>book</span></p>
+        <h2 className="email-auth-title">Enter the code</h2>
+        <p className="email-auth-sub">We sent a 6-digit code to <strong>{email}</strong>.</p>
+
+        <div className="email-auth-code-row" onPaste={handleCodePaste}>
+          {code.map((digit, i) => (
+            <input
+              key={i}
+              ref={(el) => (inputRefs.current[i] = el)}
+              type="text"
+              inputMode="numeric"
+              maxLength={1}
+              value={digit}
+              onChange={(e) => handleCodeChange(i, e.target.value)}
+              onKeyDown={(e) => handleCodeKeyDown(i, e)}
+              className="email-auth-code-input"
+            />
+          ))}
+        </div>
+
+        {error && <p className="email-auth-error">{error}</p>}
+
+        <button className="email-auth-btn" disabled={verifying} onClick={handleVerify}>
+          {verifying ? "Verifying..." : "Verify & continue"}
+        </button>
+        <button className="email-auth-resend" disabled={resendCooldown > 0 || resending} onClick={handleResend}>
+          {resending ? "Resending..." : resendCooldown > 0 ? `Resend code in ${resendCooldown}s` : "Resend code"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function NotificationBell({ userId, providerProfile, onNav }) {
   const [notifications, setNotifications] = useState([]);
   const [open, setOpen] = useState(false);
@@ -2948,6 +3075,9 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
   const [bookingForm, setBookingForm] = useState({ service_id: "", date: "", time: "10:00", notes: "" });
   const [submittingBooking, setSubmittingBooking] = useState(false);
   const [bookingError, setBookingError] = useState("");
+  const [guestCheckoutForm, setGuestCheckoutForm] = useState({ name: "", email: "", whatsapp: "" });
+  const [showEmailAuthModal, setShowEmailAuthModal] = useState(false);
+  const [sendingBookingOtp, setSendingBookingOtp] = useState(false);
   const [providerHours, setProviderHours] = useState([]);
   const [busyWindows, setBusyWindows] = useState([]);
   const [myLoyalty, setMyLoyalty] = useState(null);
@@ -3219,8 +3349,9 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
     }
   };
 
-  const submitBooking = async () => {
-    if (!user?.id) { setBookingError("Please sign in again to book."); return; }
+  const submitBooking = async (overrideCustomerId) => {
+    const bookingCustomerId = overrideCustomerId || user?.id;
+    if (!bookingCustomerId) { setBookingError("Please sign in again to book."); return; }
     if (!bookingForm.service_id || !bookingForm.date || !bookingForm.time) {
       setBookingError("Please choose a service, date, and time.");
       return;
@@ -3244,7 +3375,7 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
       created = bookingForm.isVip
         ? await createVipBooking({
             order_number,
-            customer_id: user.id,
+            customer_id: bookingCustomerId,
             provider_id: selectedProvider.id,
             service_id: service.id,
             booking_date: bookingForm.date,
@@ -3253,7 +3384,7 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
           })
         : await createBookingSafe({
             order_number,
-            customer_id: user.id,
+            customer_id: bookingCustomerId,
             provider_id: selectedProvider.id,
             service_id: service.id,
             booking_date: bookingForm.date,
@@ -3297,7 +3428,7 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
         await createNotification({
           user_id: selectedProvider.user_id,
           title: bookingForm.isVip ? "New VIP booking request" : "New booking request",
-          body: `${user?.full_name || "A customer"} requested ${service.name} on ${whenLabel}${bookingForm.isVip ? " (VIP — outside your normal hours)" : ""}.`,
+          body: `${user?.full_name || guestCheckoutForm.name || "A customer"} requested ${service.name} on ${whenLabel}${bookingForm.isVip ? " (VIP — outside your normal hours)" : ""}.`,
           type: "booking_requested",
           booking_id: created.id,
         });
@@ -3311,7 +3442,7 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
         await sendBookingEmail({
           to: providerEmail,
           subject: `New${bookingForm.isVip ? " VIP" : ""} booking request — ${service.name}, ${whenLabel}`,
-          html: `<p>Hi ${selectedProvider.business_name || "there"},</p><p><strong>${user?.full_name || "A customer"}</strong> just requested <strong>${service.name}</strong> for <strong>${whenLabel}</strong> (BZ$${finalTotal.toFixed(2)})${bookingForm.isVip ? " — this is a VIP request, outside your normal working hours" : ""}.</p>${bookingForm.notes ? `<p>Their note: "${bookingForm.notes.trim()}"</p>` : ""}<p>Open VaiBook to accept or decline it. You can turn these emails off under Settings → Notifications.</p>`,
+          html: `<p>Hi ${selectedProvider.business_name || "there"},</p><p><strong>${user?.full_name || guestCheckoutForm.name || "A customer"}</strong> just requested <strong>${service.name}</strong> for <strong>${whenLabel}</strong> (BZ$${finalTotal.toFixed(2)})${bookingForm.isVip ? " — this is a VIP request, outside your normal working hours" : ""}.</p>${bookingForm.notes ? `<p>Their note: "${bookingForm.notes.trim()}"</p>` : ""}<p>Open VaiBook to accept or decline it. You can turn these emails off under Settings → Notifications.</p>`,
         });
       }
       setSelectedProvider(null);
@@ -4190,11 +4321,65 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
                           {!bookingForm.isVip && selectedProvider.downpayment_required && (
                             <p style={{ fontSize: 12, color: "var(--clay)", marginBottom: 12 }}>This provider requires a {selectedProvider.downpayment_pct || 50}% deposit after they accept your booking.</p>
                           )}
+
+                          {!user?.id && (
+                            <div className="guest-checkout-fields">
+                              <p className="guest-checkout-label">Your details</p>
+                              <div className="input-group">
+                                <label>Full name</label>
+                                <input type="text" placeholder="Your full name" value={guestCheckoutForm.name} onChange={e => setGuestCheckoutForm(f => ({ ...f, name: e.target.value }))} />
+                              </div>
+                              <div className="input-group">
+                                <label>Email address</label>
+                                <input type="email" placeholder="you@example.com" value={guestCheckoutForm.email} onChange={e => setGuestCheckoutForm(f => ({ ...f, email: e.target.value }))} />
+                              </div>
+                              <div className="input-group">
+                                <label>WhatsApp number <span className="optional-tag">(optional)</span></label>
+                                <input type="tel" placeholder="+501 622 1234" value={guestCheckoutForm.whatsapp} onChange={e => setGuestCheckoutForm(f => ({ ...f, whatsapp: e.target.value }))} />
+                              </div>
+                              <p className="guest-checkout-note">We'll email you a 6-digit code to confirm it's really you — no password, no separate signup.</p>
+                            </div>
+                          )}
+
                           {bookingError && <p style={{ fontSize: 12, color: "#B91C1C", marginBottom: 12 }}>{bookingError}</p>}
 
-                          <button className="btn-sm forest" style={{ width: "100%", padding: "15px 0", fontSize: 15, borderRadius: 12, marginTop: 4 }} disabled={submittingBooking || (bookingForm.isVip && !bookingForm.time)} onClick={submitBooking}>
-                            {submittingBooking ? "Sending request..." : bookingForm.isVip ? "Send VIP request" : "Request booking"}
+                          <button
+                            className="btn-sm forest"
+                            style={{ width: "100%", padding: "15px 0", fontSize: 15, borderRadius: 12, marginTop: 4 }}
+                            disabled={submittingBooking || sendingBookingOtp || (bookingForm.isVip && !bookingForm.time)}
+                            onClick={async () => {
+                              if (user?.id) { submitBooking(); return; }
+                              const guestName = guestCheckoutForm.name.trim();
+                              const guestEmail = guestCheckoutForm.email.trim().toLowerCase();
+                              if (!guestName) { setBookingError("Please enter your full name."); return; }
+                              if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(guestEmail)) { setBookingError("Please enter a valid email address."); return; }
+                              setBookingError("");
+                              setSendingBookingOtp(true);
+                              const { error } = await sendEmailOtp(guestEmail, { full_name: guestName });
+                              setSendingBookingOtp(false);
+                              if (error) { setBookingError("Couldn't send the code. Please try again."); return; }
+                              setShowEmailAuthModal(true);
+                            }}
+                          >
+                            {submittingBooking ? "Sending request..." : sendingBookingOtp ? "Sending code..." : user?.id ? (bookingForm.isVip ? "Send VIP request" : "Request booking") : "Continue"}
                           </button>
+
+                          {showEmailAuthModal && (
+                            <EmailAuthModal
+                              email={guestCheckoutForm.email.trim().toLowerCase()}
+                              onClose={() => setShowEmailAuthModal(false)}
+                              onResend={() => sendEmailOtp(guestCheckoutForm.email.trim().toLowerCase(), { full_name: guestCheckoutForm.name.trim() })}
+                              onVerified={async (data) => {
+                                setShowEmailAuthModal(false);
+                                const uid = data?.user?.id;
+                                const whatsapp = guestCheckoutForm.whatsapp.trim();
+                                if (whatsapp && uid) {
+                                  updateUserProfile(uid, { whatsapp_number: whatsapp }).catch(() => {});
+                                }
+                                submitBooking(uid);
+                              }}
+                            />
+                          )}
                         </div>
                       ) : (
                         (selectedProvider.services || []).filter(s => s.is_active !== false).length === 0 ? (
