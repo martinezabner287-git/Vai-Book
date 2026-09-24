@@ -1018,6 +1018,33 @@ export const updateUserProfile = async (userId, updates) => {
   return data;
 };
 
+// ── PASSWORDLESS EMAIL LOGIN (OTP) ───────────────────────────────
+// No passwords, no separate signup form: a customer verifying a 6-digit
+// code IS the entire account-creation step. shouldCreateUser: true means
+// a brand-new email silently gets an account the moment it's verified —
+// getOrCreateUser (above) already runs on every auth state change and
+// will create the matching row in `users`, picking up `full_name` from
+// the metadata passed here. Returning customers verifying an email that
+// already has an account just get signed into that same account — same
+// call, no branching needed on the frontend for "new vs returning".
+export const sendEmailOtp = async (email, metadata) => {
+  const { error } = await supabase.auth.signInWithOtp({
+    email,
+    options: {
+      shouldCreateUser: true,
+      data: metadata, // e.g. { full_name: "Abner Martinez" } — only applied when the account is first created
+    },
+  });
+  if (error) console.error('Error sending email OTP:', error.message);
+  return { error };
+};
+
+export const verifyEmailOtp = async (email, token) => {
+  const { data, error } = await supabase.auth.verifyOtp({ email, token, type: 'email' });
+  if (error) console.error('Error verifying email OTP:', error.message);
+  return { data, error };
+};
+
 // ── PAYMENT METHOD HELPERS ───────────────────────────────────────
 
 export const getPaymentMethods = async (providerId) => {
