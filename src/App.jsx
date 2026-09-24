@@ -2285,7 +2285,7 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
             <button className="nav-login-link" onClick={() => onNav("auth")}>Log in</button>
           )}
           {current === "home" && (
-            <button className="btn-ghost nav-signup-btn" onClick={() => onNav("signup")}>Start Free Trial</button>
+            <button className="btn-ghost nav-signup-btn" onClick={() => onNav("signup")}>For professionals</button>
           )}
           {!session && (
           <div style={{ position: "relative" }}>
