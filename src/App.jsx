@@ -4002,28 +4002,36 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
                   )}
                 </div>
 
-                <div className="profile-gallery" style={{ gridTemplateColumns: photos.length > 1 ? "2fr 1fr" : "1fr" }}>
-                  {photos.length === 0 ? (
-                    <div className="gallery-hero gallery-fallback">{iconForServiceType(selectedProvider.service_type)}</div>
-                  ) : (
-                    <>
-                      <div className="gallery-hero" style={{ backgroundImage: `url(${photos[0]})` }} onClick={() => setLightboxUrl(photos[0])} />
-                      {photos.length > 1 && (
-                        <div className="gallery-side">
-                          {photos.slice(1, 3).map((url, i) => (
-                            <div key={url} className="gallery-side-img" style={{ backgroundImage: `url(${url})` }} onClick={() => (photos.length > 3 && i === 1 ? setProfileTab("portfolio") : setLightboxUrl(url))}>
-                              {i === 1 && photos.length > 3 && (
-                                <button className="gallery-more-btn" onClick={(e) => { e.stopPropagation(); setProfileTab("portfolio"); }}>See all photos</button>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </>
-                  )}
-                </div>
+                {/* Booking-in-progress hides the gallery, loyalty banner, tab
+                    switcher and sidebar below — a customer who has already
+                    picked a service shouldn't be re-tempted to browse photos
+                    or tab away mid-flow. This is purely presentational: none
+                    of the booking logic (bookingForm/submitBooking/slot
+                    computation) changed, only what's rendered around it. */}
+                {!bookingService && (
+                  <div className="profile-gallery" style={{ gridTemplateColumns: photos.length > 1 ? "2fr 1fr" : "1fr" }}>
+                    {photos.length === 0 ? (
+                      <div className="gallery-hero gallery-fallback">{iconForServiceType(selectedProvider.service_type)}</div>
+                    ) : (
+                      <>
+                        <div className="gallery-hero" style={{ backgroundImage: `url(${photos[0]})` }} onClick={() => setLightboxUrl(photos[0])} />
+                        {photos.length > 1 && (
+                          <div className="gallery-side">
+                            {photos.slice(1, 3).map((url, i) => (
+                              <div key={url} className="gallery-side-img" style={{ backgroundImage: `url(${url})` }} onClick={() => (photos.length > 3 && i === 1 ? setProfileTab("portfolio") : setLightboxUrl(url))}>
+                                {i === 1 && photos.length > 3 && (
+                                  <button className="gallery-more-btn" onClick={(e) => { e.stopPropagation(); setProfileTab("portfolio"); }}>See all photos</button>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
+                )}
 
-                {selectedProvider.loyalty_enabled && (
+                {!bookingService && selectedProvider.loyalty_enabled && (
                   <div style={{ background: "var(--sand)", borderRadius: 8, padding: "10px 14px", marginBottom: 16, fontSize: 13 }}>
                     {(() => {
                       const threshold = Number(selectedProvider.loyalty_reward_threshold) || 0;
@@ -4036,32 +4044,38 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
                   </div>
                 )}
 
-                <div className="profile-body">
+                <div className="profile-body" style={bookingService ? { gridTemplateColumns: "1fr" } : undefined}>
                   <div className="profile-main">
-                    <div className="tab-row">
-                      {[
-                        { id: "services", label: "Services" },
-                        { id: "portfolio", label: "Portfolio" },
-                        { id: "reviews", label: "Reviews" },
-                        { id: "about", label: "About" },
-                      ].map((t) => (
-                        <div key={t.id} className={`tab ${profileTab === t.id ? "active" : ""}`} onClick={() => (t.id === "reviews" ? openReviewsTab() : setProfileTab(t.id))}>
-                          {t.label}
-                        </div>
-                      ))}
-                    </div>
+                    {!bookingService && (
+                      <div className="tab-row">
+                        {[
+                          { id: "services", label: "Services" },
+                          { id: "portfolio", label: "Portfolio" },
+                          { id: "reviews", label: "Reviews" },
+                          { id: "about", label: "About" },
+                        ].map((t) => (
+                          <div key={t.id} className={`tab ${profileTab === t.id ? "active" : ""}`} onClick={() => (t.id === "reviews" ? openReviewsTab() : setProfileTab(t.id))}>
+                            {t.label}
+                          </div>
+                        ))}
+                      </div>
+                    )}
 
                     {profileTab === "services" && (
                       bookingService ? (
-                        <>
-                          <div onClick={backToServices} style={{ fontSize: 12, color: "var(--forest)", fontWeight: 600, cursor: "pointer", marginBottom: 14 }}>← Back to services</div>
-                          <div style={{ background: bookingForm.isVip ? "var(--lime)" : "var(--sand)", borderRadius: 8, padding: "12px 14px", marginBottom: 16, fontSize: 13 }}>
+                        <div style={{ maxWidth: 440, margin: "0 auto" }}>
+                          <div onClick={backToServices} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: "var(--forest)", fontWeight: 700, cursor: "pointer", marginBottom: 20 }}>
+                            <span style={{ fontSize: 16 }}>←</span> Back to services
+                          </div>
+                          <h3 style={{ fontSize: 20, fontWeight: 800, color: "var(--dark-text)", margin: "0 0 4px" }}>Pick a date &amp; time</h3>
+                          <p style={{ fontSize: 13, color: "var(--muted)", margin: "0 0 18px" }}>at {selectedProvider.business_name}</p>
+                          <div style={{ background: bookingForm.isVip ? "var(--lime)" : "var(--sand)", borderRadius: 10, padding: "14px 16px", marginBottom: 20, fontSize: 13 }}>
                             <strong>{bookingService.name}</strong> — BZ${bookingForm.isVip ? (Number(bookingService.price) + Number(selectedProvider.vip_surcharge || 0)).toFixed(2) : bookingService.price} · {bookingService.duration_min} min
                             {bookingForm.isVip && <div style={{ fontSize: 11, marginTop: 4 }}>⚡ VIP request — includes {selectedProvider.business_name}'s BZ${selectedProvider.vip_surcharge} off-hours add-on</div>}
                           </div>
                           <div className="input-group">
                             <label>Date</label>
-                            <input type="date" min={new Date().toISOString().slice(0,10)} value={bookingForm.date} onChange={e => setBookingForm(f => ({ ...f, date: e.target.value, time: "" }))} />
+                            <input type="date" min={new Date().toISOString().slice(0,10)} value={bookingForm.date} onChange={e => setBookingForm(f => ({ ...f, date: e.target.value, time: "" }))} style={{ padding: "13px 14px", fontSize: 15 }} />
                           </div>
                           {bookingForm.isVip ? (
                             <div className="input-group">
@@ -4079,7 +4093,7 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
                               ) : availableSlots.length === 0 ? (
                                 <p style={{ fontSize: 12, color: "var(--clay)" }}>No open slots on this date. Please choose another day.</p>
                               ) : (
-                                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(84px, 1fr))", gap: 8, maxHeight: 180, overflowY: "auto", paddingTop: 4 }}>
+                                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(92px, 1fr))", gap: 9, maxHeight: 220, overflowY: "auto", paddingTop: 4 }}>
                                   {availableSlots.map((t) => (
                                     <button
                                       type="button"
@@ -4087,12 +4101,13 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
                                       onClick={() => setBookingForm(f => ({ ...f, time: t }))}
                                       className="btn-sm"
                                       style={{
-                                        padding: "6px 4px",
-                                        fontSize: 12,
-                                        border: bookingForm.time === t ? "2px solid var(--forest)" : "1px solid var(--border, #ddd)",
+                                        padding: "11px 4px",
+                                        fontSize: 13,
+                                        fontWeight: 700,
+                                        border: bookingForm.time === t ? "1.5px solid var(--forest)" : "1px solid var(--border, #ddd)",
                                         background: bookingForm.time === t ? "var(--forest)" : "#fff",
                                         color: bookingForm.time === t ? "#fff" : "var(--dark-text)",
-                                        borderRadius: 6,
+                                        borderRadius: 10,
                                         cursor: "pointer",
                                       }}
                                     >
@@ -4110,10 +4125,10 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
                           )}
                           {bookingError && <p style={{ fontSize: 12, color: "#B91C1C", marginBottom: 12 }}>{bookingError}</p>}
 
-                          <button className="btn-sm forest" style={{ width: "100%", padding: "10px 0" }} disabled={submittingBooking || (bookingForm.isVip && !bookingForm.time)} onClick={submitBooking}>
+                          <button className="btn-sm forest" style={{ width: "100%", padding: "15px 0", fontSize: 15, borderRadius: 12, marginTop: 4 }} disabled={submittingBooking || (bookingForm.isVip && !bookingForm.time)} onClick={submitBooking}>
                             {submittingBooking ? "Sending request..." : bookingForm.isVip ? "Send VIP request" : "Request booking"}
                           </button>
-                        </>
+                        </div>
                       ) : (
                         (selectedProvider.services || []).filter(s => s.is_active !== false).length === 0 ? (
                           <p style={{ fontSize: 13, color: "var(--muted)" }}>This provider hasn't listed any services yet.</p>
@@ -4232,6 +4247,7 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
                     )}
                   </div>
 
+                  {!bookingService && (
                   <aside className="profile-sidebar">
                     <div className="profile-sidebar-card">
                       <h3>{selectedProvider.business_name}</h3>
@@ -4267,6 +4283,7 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
                       )}
                     </div>
                   </aside>
+                  )}
                 </div>
               </div>
             </div>
