@@ -650,7 +650,8 @@ const css = `
   .profile-header-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
   .profile-name-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
   .profile-name-row h2 { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 26px; font-weight: 800; color: var(--forest); margin: 0; }
-  .profile-heart-btn { background: none; border: none; cursor: pointer; font-size: 19px; padding: 0; line-height: 1; }
+  .profile-icon-btn { background: var(--sand); border: none; cursor: pointer; font-size: 15px; width: 34px; height: 34px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; line-height: 1; transition: background .15s; }
+  .profile-icon-btn:hover { background: var(--border); }
   .profile-meta { font-size: 13px; color: var(--muted); margin: 8px 0 22px; display: flex; flex-wrap: wrap; align-items: center; gap: 0; }
   .profile-meta .dot { margin: 0 6px; }
   .profile-meta a { color: var(--forest); font-weight: 600; }
@@ -2860,6 +2861,26 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
     } catch (e) { /* clipboard unavailable — nothing more we can do here */ }
   };
 
+  // Same share pattern, one level up: shares the provider's whole profile
+  // (not one specific service) — this is the icon-button version that sits
+  // beside the profile heart/favorite button, mirroring the share+heart
+  // icon pair pattern used by marketplace apps like Amazon/Fresha.
+  const [providerLinkCopied, setProviderLinkCopied] = useState(false);
+  const shareProvider = async (provider) => {
+    if (!provider) return;
+    const url = `${window.location.origin}/#book-${provider.id}`;
+    const text = `${provider.business_name} on VaiBook`;
+    if (navigator.share) {
+      try { await navigator.share({ title: text, url }); } catch (e) { /* user cancelled — not an error */ }
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(`${text}\n${url}`);
+      setProviderLinkCopied(true);
+      setTimeout(() => setProviderLinkCopied(false), 1800);
+    } catch (e) { /* clipboard unavailable — nothing more we can do here */ }
+  };
+
   // Per-booking unread message counts, so a waiting message is visible from
   // the list instead of only after opening that booking's chat.
   const [unreadByBooking, setUnreadByBooking] = useState({});
@@ -3988,7 +4009,15 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
                   <div className="profile-name-row">
                     <h2>{selectedProvider.business_name}</h2>
                     <button
-                      className="profile-heart-btn"
+                      className="profile-icon-btn"
+                      onClick={() => shareProvider(selectedProvider)}
+                      aria-label="Share this business"
+                      title={providerLinkCopied ? "Link copied" : "Share"}
+                    >
+                      {providerLinkCopied ? "✅" : "📤"}
+                    </button>
+                    <button
+                      className="profile-icon-btn"
                       onClick={(e) => toggleFavorite(e, selectedProvider.id)}
                       aria-label={favoriteIds.has(selectedProvider.id) ? "Remove from favorites" : "Add to favorites"}
                     >
