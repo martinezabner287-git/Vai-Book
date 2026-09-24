@@ -2679,7 +2679,7 @@ function LandingPage({ onNav, session, onSignIn }) {
           to sell the trial CTA one more time before the page ends. */}
       <section className="for-business-cta">
         <div className="for-business-inner">
-          <h2 className="for-business-headline">Stop Losing Revenue to No-Shows.</h2>
+          <h2 className="for-business-headline">Stop Losing Revenue to No-Shows</h2>
           <p className="for-business-sub">
             Join Belize's top professionals. Get your customized booking link, automate
             24-hour reminders, and secure deposits directly via WhatsApp.
