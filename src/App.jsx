@@ -2269,7 +2269,7 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
                   <a onClick={() => goAccount(() => scrollToSection("pricing", onNav, current))}>Pricing</a>
                   <hr />
                   <button className="nav-dropdown-item mobile-only-item" onClick={() => goAccount(() => onNav("signup"))}>
-                    <span className="icn">🏪</span> Start Free Trial
+                    <span className="icn">🏪</span> Provide my service
                   </button>
                   <button className="nav-dropdown-item for-biz" onClick={() => goAccount(() => enterProviderPortal(onNav, session, onSignIn))}>
                     For businesses <span>→</span>
@@ -2285,7 +2285,7 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
             <button className="nav-login-link" onClick={() => onNav("auth")}>Log in</button>
           )}
           {current === "home" && (
-            <button className="btn-ghost nav-signup-btn" onClick={() => onNav("signup")}>For professionals</button>
+            <button className="btn-ghost nav-signup-btn" onClick={() => onNav("signup")}>Provide my service</button>
           )}
           {!session && (
           <div style={{ position: "relative" }}>
@@ -2304,7 +2304,7 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
                 {current === "home" && (
                   <>
                     <hr />
-                    <button className="nav-dropdown-item mobile-only-item" onClick={() => go(() => onNav("signup"))}>Start Free Trial</button>
+                    <button className="nav-dropdown-item mobile-only-item" onClick={() => go(() => onNav("signup"))}>Provide my service</button>
                     <button className="nav-dropdown-item" onClick={() => go(() => enterProviderPortal(onNav, session, onSignIn))}>
                       Provider login
                     </button>
