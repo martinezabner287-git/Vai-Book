@@ -2140,11 +2140,31 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
 
   const initials = getInitials(user?.full_name);
 
+  // Same check the account cluster below already uses to decide whether
+  // it's rendering the marketing nav-cta (logged-out / home) or an
+  // authenticated portal's avatar-only nav. The floating "compact search"
+  // (nav-search-wrap/toggle + its mobile panel) only makes sense on those
+  // same customer-acquisition pages — nobody needs to search for a barber
+  // from inside their own admin/provider/customer dashboard. Reusing the
+  // condition here also fixes a real layout bug, not just a cosmetic one:
+  // navSearchActive defaults to true on any page without #main-search-bar
+  // (i.e. every portal page), and nav-search-wrap is position:absolute,
+  // centered on the whole nav bar regardless of flexbox. On a portal page
+  // the account cluster is just a lone avatar button (not the wider
+  // nav-cta), so with only [logo, avatar, bell] as real flex children,
+  // justify-content:space-between centers the avatar almost exactly where
+  // that floating search box also centers itself — landing the avatar
+  // visually inside the search input. Not rendering the search UI at all
+  // on portal pages removes the collision outright, rather than trying to
+  // out-position an absolutely-centered overlay with flex ordering.
+  const showNavSearch = current === "home" || (current === "customer" && !session);
+
   return (
     <div className="nav-outer" ref={navRef}>
     <nav className="nav">
       <span className="nav-logo" style={{ cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 8 }} onClick={() => onNav("home")}><VaiBookMark size={24} />vai<span>book</span></span>
 
+      {showNavSearch && (
       <div className={`nav-search-wrap ${navSearchActive ? "visible" : ""}`}>
         <div className="nav-search">
           <div className="nav-search-input-wrap">
@@ -2171,7 +2191,10 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
           )}
         </div>
       </div>
+      )}
+      {showNavSearch && (
       <button className={`nav-search-toggle ${navSearchActive ? "visible" : ""}`} onClick={() => setMobileSearchOpen(v => !v)} aria-label="Search">🔍</button>
+      )}
 
       {(current === "home" || (current === "customer" && !session)) ? (
         <div className="nav-cta">
@@ -2259,7 +2282,13 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
           )}
         </div>
       ) : session && PORTAL_TOOLS_BY_VIEW[current] ? (
-        <div style={{ position: "relative" }}>
+        // marginLeft: auto — on a portal page this is the only other real
+        // flex child besides .nav-logo and the bell (search is hidden
+        // here, see showNavSearch above), and plain space-between would
+        // center a lone middle item instead of hugging it to the right
+        // next to the bell. auto-margin claims all the free space on its
+        // left, pinning this (and the bell after it) to the right edge.
+        <div style={{ position: "relative", marginLeft: "auto" }}>
           <button className="nav-avatar-btn" onClick={() => setAccountOpen((v) => !v)}>
             <span className="nav-avatar-circle">{initials}</span>
             <span className="nav-avatar-caret">▾</span>
