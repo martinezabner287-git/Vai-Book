@@ -461,6 +461,9 @@ const css = `
   .marketing-item-title { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 16px; font-weight: 800; color: var(--forest); }
   .marketing-item-sub { font-size: 13px; color: var(--muted); margin-top: 4px; line-height: 1.45; }
 
+  .platform-preview-section { padding-bottom: 40px; }
+  .platform-preview-img { display: block; width: 100%; max-width: 1100px; margin: 0 auto; border-radius: 20px; box-shadow: 0 24px 60px rgba(13,61,46,0.14); }
+
   /* HOW IT WORKS */
   .section { padding: 80px 48px; }
   .section-eyebrow { font-size: 12px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--clay); margin-bottom: 12px; }
@@ -2532,6 +2535,23 @@ function LandingPage({ onNav, session, onSignIn }) {
             </div>
           )}
         </div>
+      </section>
+
+      {/* PLATFORM PREVIEW — a marketing collage showing the scheduling
+          dashboard + a customer-facing booking screen side by side. This is
+          an illustrative mockup (fictional salon/business names and review
+          counts), not a live screenshot or a real usage claim. */}
+      <section className="section platform-preview-section">
+        <div style={{ textAlign: "center", marginBottom: 28 }}>
+          <div className="section-eyebrow" style={{ justifyContent: "center", display: "flex" }}>See it in action</div>
+          <h2 className="section-title">Built for how your business really runs</h2>
+          <p className="section-sub" style={{ margin: "0 auto" }}>One dashboard for your schedule, one booking page your customers love.</p>
+        </div>
+        <img
+          className="platform-preview-img"
+          src="/vaibook-collage.jpg"
+          alt="VaiBook scheduling dashboard and customer booking screen preview"
+        />
       </section>
 
       {/* HOW IT WORKS */}
