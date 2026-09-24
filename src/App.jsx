@@ -508,6 +508,11 @@ const css = `
   .pricing-features li .check { color: var(--forest); font-weight: 700; flex-shrink: 0; }
   .pricing-cta { width: 100%; text-align: center; }
   .pricing-foot-note { text-align: center; font-size: 13px; color: var(--muted); margin-top: 32px; max-width: 620px; margin-left: auto; margin-right: auto; }
+  .for-business-cta { background: var(--forest); padding: 96px 24px; text-align: center; }
+  .for-business-inner { max-width: 640px; margin: 0 auto; }
+  .for-business-headline { color: #FFFFFF; font-weight: 800; font-size: 40px; line-height: 1.15; margin: 0 0 20px; letter-spacing: -0.01em; }
+  .for-business-sub { color: rgba(245, 239, 224, 0.72); font-size: 17px; line-height: 1.6; margin: 0 0 40px; }
+  .for-business-btn { padding: 17px 36px; font-size: 16px; font-weight: 700; border-radius: 14px; }
   @media (max-width: 900px) {
     .pricing-grid { grid-template-columns: 1fr; max-width: 420px; }
   }
@@ -728,6 +733,9 @@ const css = `
     .grid-3 { grid-template-columns: 1fr; }
     .metric-grid { grid-template-columns: 1fr 1fr; }
     .services-section { padding: 60px 24px; }
+    .for-business-cta { padding: 72px 20px; }
+    .for-business-headline { font-size: 30px; }
+    .for-business-sub { font-size: 15.5px; }
     .footer { padding: 40px 24px 24px; }
     .a2hs-banner { left: 12px; right: 12px; bottom: 12px; padding: 12px; }
     .profile-scroll { padding: 20px; }
@@ -2664,6 +2672,22 @@ function LandingPage({ onNav, session, onSignIn }) {
           ))}
         </div>
         <p className="pricing-foot-note">Every plan includes invoices, refund tracking, and your own booking page. Change plans anytime — email us and we'll switch you at the end of your current billing period.</p>
+      </section>
+
+      {/* FOR BUSINESS — conversion block, right above the footer. Deliberately
+          plain: no icons, no images, just a high-contrast dark-green break
+          to sell the trial CTA one more time before the page ends. */}
+      <section className="for-business-cta">
+        <div className="for-business-inner">
+          <h2 className="for-business-headline">Stop Losing Revenue to No-Shows.</h2>
+          <p className="for-business-sub">
+            Join Belize's top professionals. Get your customized booking link, automate
+            24-hour reminders, and secure deposits directly via WhatsApp.
+          </p>
+          <button className="btn-lime for-business-btn" onClick={() => onNav("signup")}>
+            Start Your 14-Day Free Trial
+          </button>
+        </div>
       </section>
 
       {/* FOOTER */}
