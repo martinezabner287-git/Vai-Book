@@ -1449,6 +1449,20 @@ function TrendChart({ points, kind = "line", color, formatValue }) {
   );
 }
 
+// YYYY-MM-DD in the BROWSER'S LOCAL calendar day — not toISOString().slice(0,10),
+// which is UTC and rolls over to the next date once local time passes
+// (24 - |UTC offset|):00. Belize is UTC-6, so any use of the UTC form for
+// "today" silently became "tomorrow" for every Belize visitor after 6pm,
+// which is exactly when a booking app is busiest — it broke the default
+// booking date, the "today" cutoff that hides already-passed time slots,
+// and the reschedule date picker's minimum, all the same way in each spot.
+const localDateStr = (d = new Date()) => {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+};
+
 const DAYS = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
 const DAY_NAMES = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
 const DEFAULT_HOURS = DAY_NAMES.map((day, i) => ({
@@ -3242,7 +3256,7 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
   const startBookingForService = (service) => {
     setBookingForm({
       service_id: service.id,
-      date: new Date().toISOString().slice(0, 10),
+      date: localDateStr(),
       time: "",
       notes: "",
       isVip: false,
@@ -3258,7 +3272,7 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
   const startVipBookingForService = (service) => {
     setBookingForm({
       service_id: service.id,
-      date: new Date().toISOString().slice(0, 10),
+      date: localDateStr(),
       time: "",
       notes: "",
       isVip: true,
@@ -3331,7 +3345,7 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
     if (!dayHours || !dayHours.is_open || !dayHours.start_time || !dayHours.end_time) return [];
     const startM = timeToMinutes(dayHours.start_time);
     const endM = timeToMinutes(dayHours.end_time);
-    const isToday = bookingForm.date === new Date().toISOString().slice(0, 10);
+    const isToday = bookingForm.date === localDateStr();
     const nowM = isToday ? new Date().getHours() * 60 + new Date().getMinutes() : -1;
     const step = 30;
     const slots = [];
@@ -4288,7 +4302,7 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
                           </div>
                           <div className="input-group">
                             <label>Date</label>
-                            <input type="date" min={new Date().toISOString().slice(0,10)} value={bookingForm.date} onChange={e => setBookingForm(f => ({ ...f, date: e.target.value, time: "" }))} style={{ padding: "13px 14px", fontSize: 15 }} />
+                            <input type="date" min={localDateStr()} value={bookingForm.date} onChange={e => setBookingForm(f => ({ ...f, date: e.target.value, time: "" }))} style={{ padding: "13px 14px", fontSize: 15 }} />
                           </div>
                           {bookingForm.isVip ? (
                             <div className="input-group">
@@ -6165,7 +6179,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                       <div className="form-row">
                         <div className="input-group">
                           <label>New date</label>
-                          <input type="date" value={rescheduleForm.date} min={new Date().toISOString().slice(0, 10)} onChange={e => setRescheduleForm(f => ({ ...f, date: e.target.value }))} />
+                          <input type="date" value={rescheduleForm.date} min={localDateStr()} onChange={e => setRescheduleForm(f => ({ ...f, date: e.target.value }))} />
                         </div>
                         <div className="input-group">
                           <label>New time</label>
