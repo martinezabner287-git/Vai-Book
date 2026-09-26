@@ -52,6 +52,15 @@ export const signInWithGoogle = async () => {
     provider: 'google',
     options: {
       redirectTo: window.location.origin,
+      // Without this, Google silently re-authenticates using whatever
+      // Google account session is already active in the browser, so a
+      // returning visitor can never switch accounts (or even see a
+      // picker) without first fully signing out of Google itself in a
+      // separate tab. Forcing the account chooser every time fixes that
+      // and matches what people expect from a "Log in" button.
+      queryParams: {
+        prompt: 'select_account',
+      },
     },
   });
   if (error) console.error('Google sign in error:', error.message);
