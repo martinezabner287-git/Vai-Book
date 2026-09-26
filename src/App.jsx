@@ -1763,6 +1763,66 @@ function urlBase64ToUint8Array(base64String) {
   return outputArray;
 }
 
+// Shared by both the provider's and the customer's "Push notifications on
+// this device" toggle in Settings — subscribes this browser/device to Web
+// Push for whichever user id owns the screen it's used from, and keeps the
+// toggle's state in sync with whatever this browser already has registered
+// (so a reload doesn't lose the "✓ On" state). Pulled out into one hook
+// instead of writing this twice so provider and customer push behave
+// identically and only need fixing in one place.
+function usePushSubscription(userId) {
+  const [pushEnabled, setPushEnabled] = useState(false);
+  const [subscribingPush, setSubscribingPush] = useState(false);
+  const [pushError, setPushError] = useState("");
+
+  useEffect(() => {
+    if (!("serviceWorker" in navigator) || !("PushManager" in window)) return;
+    navigator.serviceWorker.ready.then((reg) => reg.pushManager.getSubscription()).then((sub) => {
+      setPushEnabled(!!sub);
+    }).catch(() => {});
+  }, []);
+
+  const enablePushNotifications = async () => {
+    setPushError("");
+    if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
+      setPushError("Push notifications aren't supported in this browser. On iPhone, add VaiBook to your Home Screen first (Share -> Add to Home Screen), then try again from there.");
+      return;
+    }
+    const vapidKey = process.env.REACT_APP_VAPID_PUBLIC_KEY;
+    if (!vapidKey) {
+      setPushError("Push notifications aren't configured yet.");
+      return;
+    }
+    if (!userId) {
+      setPushError("Please finish signing in first.");
+      return;
+    }
+    setSubscribingPush(true);
+    try {
+      const permission = await Notification.requestPermission();
+      if (permission !== "granted") {
+        setPushError("Notifications are blocked. Enable them for this site in your browser settings to turn this on.");
+        return;
+      }
+      const registration = await navigator.serviceWorker.ready;
+      const subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(vapidKey),
+      });
+      const { error } = await savePushSubscription(userId, subscription);
+      if (error) throw error;
+      setPushEnabled(true);
+    } catch (err) {
+      console.error("Push subscription failed:", err);
+      setPushError("Couldn't turn on push notifications. Please try again.");
+    } finally {
+      setSubscribingPush(false);
+    }
+  };
+
+  return { pushEnabled, subscribingPush, pushError, enablePushNotifications };
+}
+
 function enterCustomerPortal(onNav, session, onSignIn) {
   if (session) {
     onNav("customer");
@@ -3107,6 +3167,7 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
   const [guestCheckoutForm, setGuestCheckoutForm] = useState({ name: "", email: "", whatsapp: "" });
   const [showEmailAuthModal, setShowEmailAuthModal] = useState(false);
   const [sendingBookingOtp, setSendingBookingOtp] = useState(false);
+  const { pushEnabled, subscribingPush, pushError, enablePushNotifications } = usePushSubscription(user?.id);
   const [providerHours, setProviderHours] = useState([]);
   const [busyWindows, setBusyWindows] = useState([]);
   const [myLoyalty, setMyLoyalty] = useState(null);
@@ -4126,6 +4187,28 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
               )}
             </div>
 
+            {tab === "settings" && (
+              <div className="card" style={{ maxWidth: 480, marginTop: 20 }}>
+                <div className="card-title">Notifications</div>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", gap: 16 }}>
+                  <div>
+                    <div style={{ fontSize: 14, fontWeight: 600 }}>Push notifications on this device</div>
+                    <div style={{ fontSize: 12, color: "var(--muted)" }}>
+                      Get an alert the instant a provider responds to or cancels your booking, even with VaiBook closed.
+                    </div>
+                  </div>
+                  {pushEnabled ? (
+                    <span style={{ fontSize: 12, fontWeight: 700, color: "var(--forest)", flexShrink: 0 }}>✓ On</span>
+                  ) : (
+                    <button className="btn-sm forest" style={{ flexShrink: 0 }} onClick={enablePushNotifications} disabled={subscribingPush}>
+                      {subscribingPush ? "Turning on..." : "Turn on"}
+                    </button>
+                  )}
+                </div>
+                {pushError && <p style={{ fontSize: 12, color: "#B91C1C", marginTop: 4 }}>{pushError}</p>}
+              </div>
+            )}
+
             {tab === "settings" && (() => {
               const pendingVip = vipPayments.find((p) => p.status === "pending");
               return (
@@ -4772,9 +4855,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
   // The one real notification preference (see supabase_audit_fixes.sql).
   const [emailOnNewBooking, setEmailOnNewBooking] = useState(true);
   const [savingNotifyPref, setSavingNotifyPref] = useState(false);
-  const [pushEnabled, setPushEnabled] = useState(false);
-  const [subscribingPush, setSubscribingPush] = useState(false);
-  const [pushError, setPushError] = useState("");
+  const { pushEnabled, subscribingPush, pushError, enablePushNotifications } = usePushSubscription(user?.id);
 
   // Per-booking unread message counts, so a waiting message is visible from
   // the list instead of only after opening that booking's chat.
@@ -5235,10 +5316,17 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
         booking_id: id,
       });
       if (target.users?.email) {
+        // Same "#book-<provider id>" deep link used for QR codes/share
+        // links — lands the customer straight back on this provider's
+        // public booking page so rescheduling is a single tap, not a
+        // "go find them again" chore right after bad news.
+        const rebookUrl = `${window.location.origin}/#book-${target.provider_id}`;
         await sendBookingEmail({
           to: target.users.email,
           subject: `Your booking with ${providerProfile?.business_name || "your provider"} was cancelled`,
-          html: `<p>Hi ${target.users?.full_name || "there"},</p><p>${providerProfile?.business_name || "Your provider"} had to cancel your <strong>${target.services?.name || "appointment"}</strong> on <strong>${formatBookingWhen(target)}</strong>.</p><p>You can book another time on VaiBook whenever suits you.</p>`,
+          html: `<p>Hi ${target.users?.full_name || "there"},</p><p>${providerProfile?.business_name || "Your provider"} had to cancel your <strong>${target.services?.name || "appointment"}</strong> on <strong>${formatBookingWhen(target)}</strong>.</p>` +
+            `<p style="text-align:center;margin:24px 0;"><a href="${rebookUrl}" style="background:#0D3D2E;color:#F5EFE0;padding:12px 28px;border-radius:100px;text-decoration:none;font-weight:700;display:inline-block;">Reschedule now</a></p>` +
+            `<p style="font-size:13px;color:#5b6b62;">Or copy this link: ${rebookUrl}</p>`,
         });
       }
     }
@@ -5325,50 +5413,6 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
     } else {
       setEmailOnNewBooking(!next);
       window.alert("Couldn't save that setting. Please try again.");
-    }
-  };
-
-  // Checks whether this browser/device already has an active push
-  // subscription, so the Settings toggle reflects real state (not just
-  // "did they click the button this session") across reloads.
-  useEffect(() => {
-    if (!("serviceWorker" in navigator) || !("PushManager" in window)) return;
-    navigator.serviceWorker.ready.then((reg) => reg.pushManager.getSubscription()).then((sub) => {
-      setPushEnabled(!!sub);
-    }).catch(() => {});
-  }, []);
-
-  const enablePushNotifications = async () => {
-    setPushError("");
-    if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
-      setPushError("Push notifications aren't supported in this browser. On iPhone, add VaiBook to your Home Screen first (Share -> Add to Home Screen), then try again from there.");
-      return;
-    }
-    const vapidKey = process.env.REACT_APP_VAPID_PUBLIC_KEY;
-    if (!vapidKey) {
-      setPushError("Push notifications aren't configured yet.");
-      return;
-    }
-    setSubscribingPush(true);
-    try {
-      const permission = await Notification.requestPermission();
-      if (permission !== "granted") {
-        setPushError("Notifications are blocked. Enable them for this site in your browser settings to turn this on.");
-        return;
-      }
-      const registration = await navigator.serviceWorker.ready;
-      const subscription = await registration.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(vapidKey),
-      });
-      const { error } = await savePushSubscription(user.id, subscription);
-      if (error) throw error;
-      setPushEnabled(true);
-    } catch (err) {
-      console.error("Push subscription failed:", err);
-      setPushError("Couldn't turn on push notifications. Please try again.");
-    } finally {
-      setSubscribingPush(false);
     }
   };
 
