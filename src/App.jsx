@@ -6,7 +6,7 @@ import L from "leaflet";
 import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
 import markerIcon from "leaflet/dist/images/marker-icon.png";
 import markerShadow from "leaflet/dist/images/marker-shadow.png";
-import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, deleteService, getActiveProviders, getProviderDirectory, createBooking, getProviderBusyWindows, createBookingSafe, cancelBooking, getCustomerBookings, uploadReceipt, submitReview, getProviderReviews, updateReview, sendBookingEmail, updateUserProfile, getPaymentMethods, addPaymentMethod, deletePaymentMethod, createNotification, getNotifications, markNotificationRead, markAllNotificationsRead, getCategoryDefaultFeatures, getProviderFeatureOverrides, setProviderFeatureOverride, getVisitNotes, upsertVisitNote, adminListProviders, adminUpdateProvider, adminDeleteProvider, tagVIP, untagVIP, getVIPClients, getFavoriteProviderIds, getFavoriteProviders, addFavorite, removeFavorite, getBookingMessages, sendBookingMessage, markBookingMessagesRead, getUnreadBookingMessages, getProviderMonthlyTrend, createProviderProfile, getProviderById, createWalkInBooking, submitProviderPayment, getMyProviderPayments, adminListProviderPayments, adminReviewProviderPayment, submitVipPayment, getMyVipPayments, adminListVipPayments, adminReviewVipPayment, createVipBooking, submitBookingRefund, adminListBookingRefunds, openPrivateFile, getProviderStaff, addProviderStaff, updateProviderStaff, deleteProviderStaff, getLoyaltyAccount, getProviderLoyaltyCustomers, redeemLoyaltyReward, getMyStaffProfile, claimStaffSeatByEmail, getStaffBookings, rescheduleBooking, getProviderNotifyEmail, getMaintenanceStatus, setMaintenanceMode, getSiteOfflineStatus, setSiteOffline, sendEmailOtp, verifyEmailOtp, savePushSubscription } from "./supabase";
+import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, deleteService, getActiveProviders, getProviderDirectory, createBooking, getProviderBusyWindows, createBookingSafe, cancelBooking, getCustomerBookings, uploadReceipt, submitReview, getProviderReviews, updateReview, sendBookingEmail, updateUserProfile, getPaymentMethods, addPaymentMethod, deletePaymentMethod, createNotification, getNotifications, markNotificationRead, markAllNotificationsRead, getCategoryDefaultFeatures, getProviderFeatureOverrides, setProviderFeatureOverride, getVisitNotes, upsertVisitNote, adminListProviders, adminUpdateProvider, adminDeleteProvider, tagVIP, untagVIP, getVIPClients, getFavoriteProviderIds, getFavoriteProviders, addFavorite, removeFavorite, getBookingMessages, sendBookingMessage, markBookingMessagesRead, getUnreadBookingMessages, getProviderMonthlyTrend, createProviderProfile, getProviderById, createWalkInBooking, submitProviderPayment, getMyProviderPayments, adminListProviderPayments, adminReviewProviderPayment, submitVipPayment, getMyVipPayments, adminListVipPayments, adminReviewVipPayment, createVipBooking, submitBookingRefund, adminListBookingRefunds, openPrivateFile, getProviderStaff, addProviderStaff, updateProviderStaff, deleteProviderStaff, getLoyaltyAccount, getProviderLoyaltyCustomers, redeemLoyaltyReward, getMyStaffProfile, claimStaffSeatByEmail, getStaffBookings, rescheduleBooking, getProviderNotifyEmail, getMaintenanceStatus, setMaintenanceMode, getSiteOfflineStatus, setSiteOffline, sendEmailOtp, verifyEmailOtp, savePushSubscription, attachBookingServices, getProviderBlocks, insertProviderBlock, deleteProviderBlock } from "./supabase";
 
 // Leaflet's default marker icons reference image paths that don't resolve
 // correctly under CRA's bundler unless re-pointed at the imported assets.
@@ -740,6 +740,36 @@ const css = `
   .btn-sm.forest { background: var(--forest); color: var(--near-white); }
   .btn-sm.lime { background: var(--lime); color: var(--forest); }
   .btn-sm.ghost { background: transparent; border: 1px solid var(--border); color: var(--dark-text); }
+
+  /* MULTI-SERVICE CHECKOUT (tappable service cards + sticky total bar) */
+  .service-card { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 16px; border-radius: 12px; cursor: pointer; transition: background .15s, box-shadow .15s; border: 1.5px solid transparent; margin-bottom: 8px; }
+  .service-card:not(.active):hover { background: var(--sand); }
+  .service-card.active { background: var(--forest); border-color: var(--lime); box-shadow: 0 0 0 1px var(--lime) inset; }
+  .service-card.active .service-card-name, .service-card.active .service-card-meta { color: var(--near-white); }
+  .service-card-check { width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--border); flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 13px; color: transparent; font-weight: 800; }
+  .service-card.active .service-card-check { background: var(--lime); border-color: var(--lime); color: var(--forest); }
+  .multi-fab { position: sticky; bottom: 8px; background: var(--forest); color: var(--near-white); border-radius: 16px; padding: 14px 18px; display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 14px; box-shadow: 0 8px 24px rgba(13,61,46,0.35); z-index: 5; }
+  .multi-fab .totals { font-size: 12px; line-height: 1.4; color: rgba(255,255,255,0.8); }
+  .multi-fab .totals strong { color: var(--lime); font-size: 17px; display: block; }
+  .multi-fab button { background: var(--lime); color: var(--forest); border: none; padding: 13px 18px; border-radius: 10px; font-weight: 800; font-size: 14px; cursor: pointer; white-space: nowrap; }
+
+  /* BOTTOM SHEET (mobile-first — replaces a modal for quick provider actions) */
+  .sheet-overlay { position: fixed; inset: 0; background: rgba(13,61,46,0.55); display: flex; align-items: flex-end; justify-content: center; z-index: 300; }
+  .sheet-panel { background: white; width: 100%; max-width: 520px; border-radius: 20px 20px 0 0; padding: 14px 20px calc(22px + env(safe-area-inset-bottom)); animation: sheetUp .22s ease-out; }
+  @keyframes sheetUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  .sheet-handle { width: 40px; height: 4px; background: var(--border); border-radius: 2px; margin: 0 auto 18px; }
+  .preset-row { display: flex; gap: 8px; margin: 10px 0 20px; }
+  .preset-btn { flex: 1; padding: 16px 0; border-radius: 12px; border: 1.5px solid var(--border); background: #fff; font-weight: 800; font-size: 15px; color: var(--dark-text); cursor: pointer; }
+  .preset-btn.active { border-color: var(--lime); background: var(--forest); color: var(--near-white); }
+  .block-type-row { display: flex; gap: 8px; margin-bottom: 4px; }
+  .block-type-btn { flex: 1; padding: 12px 0; border-radius: 10px; border: 1.5px solid var(--border); background: #fff; font-weight: 700; font-size: 13px; color: var(--dark-text); cursor: pointer; }
+  .block-type-btn.active { border-color: var(--forest); background: var(--sand); color: var(--forest); }
+
+  /* PANIC BUTTON */
+  .panic-btn { width: 100%; background: var(--lime); color: var(--forest); border: none; border-radius: 16px; padding: 22px 16px; font-size: 19px; font-weight: 800; cursor: pointer; box-shadow: 0 6px 0 var(--forest-light); letter-spacing: -0.01em; transition: transform .08s, box-shadow .08s; }
+  .panic-btn:active { transform: translateY(4px); box-shadow: 0 2px 0 var(--forest-light); }
+  .block-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .block-row .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--clay); flex-shrink: 0; }
 
   /* CALENDAR */
   .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
@@ -3186,7 +3216,12 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
     return () => { cancelled = true; };
   }, [deepLinkProviderId]);
 
-  const [bookingForm, setBookingForm] = useState({ service_id: "", date: "", time: "10:00", notes: "" });
+  const [bookingForm, setBookingForm] = useState({ service_id: "", service_ids: [], date: "", time: "10:00", notes: "" });
+  // Multi-service checkout: tapping a service card toggles it in/out of this
+  // set (see the service-card list below) — a totally separate interaction
+  // from the existing single-service "Book" button, which still books that
+  // one service instantly and is untouched.
+  const [selectedServiceIds, setSelectedServiceIds] = useState([]);
   const [submittingBooking, setSubmittingBooking] = useState(false);
   const [bookingError, setBookingError] = useState("");
   const [guestCheckoutForm, setGuestCheckoutForm] = useState({ name: "", email: "", whatsapp: "" });
@@ -3325,6 +3360,7 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
     setProfileTab("services");
     setHoursExpanded(false);
     setBookingService(null);
+    setSelectedServiceIds([]);
     setProviderReviews([]);
     setLightboxUrl(null);
     setSelectedProvider(provider);
@@ -3342,6 +3378,7 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
   const startBookingForService = (service) => {
     setBookingForm({
       service_id: service.id,
+      service_ids: [],
       date: localDateStr(),
       time: "",
       notes: "",
@@ -3351,6 +3388,44 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
     setBookingService(service);
   };
 
+  // ── Multi-service checkout ────────────────────────────────────────
+  // Tapping a service card (not the "Book" button) toggles it into this
+  // running selection instead of jumping straight into the date/time step —
+  // the sticky total bar below the list is what actually advances.
+  const toggleServiceSelect = (service) => {
+    setSelectedServiceIds((ids) => (ids.includes(service.id) ? ids.filter((id) => id !== service.id) : [...ids, service.id]));
+  };
+  const selectedServicesList = (selectedProvider?.services || []).filter((s) => selectedServiceIds.includes(s.id));
+  const multiTotalPrice = selectedServicesList.reduce((sum, s) => sum + (Number(s.price) || 0), 0);
+  const multiTotalDuration = selectedServicesList.reduce((sum, s) => sum + (Number(s.duration_min) || 0), 0);
+
+  // "Next: Pick time" — builds one combined "service" out of everything
+  // selected so the existing date/time step below (which only ever knew
+  // about a single bookingService) can render it unchanged: same name/price/
+  // duration fields, just summed across the whole selection. The real list
+  // of service ids travels separately on bookingForm.service_ids for
+  // submitBooking to use.
+  const proceedToMultiServiceTime = () => {
+    if (selectedServicesList.length === 0) return;
+    const names = selectedServicesList.map((s) => s.name).join(" + ");
+    setBookingForm({
+      service_id: selectedServicesList[0].id,
+      service_ids: selectedServicesList.map((s) => s.id),
+      date: localDateStr(),
+      time: "",
+      notes: "",
+      isVip: false,
+    });
+    setBookingError("");
+    setBookingService({
+      id: selectedServicesList[0].id,
+      name: names,
+      price: multiTotalPrice,
+      duration_min: multiTotalDuration,
+      isMulti: true,
+    });
+  };
+
   // A VIP request is for a time OUTSIDE the provider's normal working
   // hours, so it doesn't use the slot picker built from providerHours —
   // the customer just names a time and the provider accepts or declines,
@@ -3358,6 +3433,7 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
   const startVipBookingForService = (service) => {
     setBookingForm({
       service_id: service.id,
+      service_ids: [],
       date: localDateStr(),
       time: "",
       notes: "",
@@ -3424,8 +3500,16 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
   // provider working hours minus already-busy windows minus times in the past.
   const availableSlots = (() => {
     if (!bookingForm.date) return [];
-    const service = (selectedProvider?.services || []).find((s) => s.id === bookingForm.service_id);
-    const durationMin = Number(service?.duration_min) || 30;
+    // Multi-service checkout: bookingForm.service_ids (set by
+    // proceedToMultiServiceTime) carries the full selection, so the slot
+    // picker only shows times with enough room for ALL of them back-to-back
+    // — never a single service's duration once more than one is selected.
+    const durationMin = (bookingForm.service_ids || []).length > 0
+      ? bookingForm.service_ids.reduce((sum, id) => {
+          const s = (selectedProvider?.services || []).find((sv) => sv.id === id);
+          return sum + (Number(s?.duration_min) || 0);
+        }, 0) || 30
+      : Number((selectedProvider?.services || []).find((s) => s.id === bookingForm.service_id)?.duration_min) || 30;
     const dow = new Date(bookingForm.date + "T00:00:00").getDay();
     const dayHours = providerHours.find((h) => h.day_of_week === dow);
     if (!dayHours || !dayHours.is_open || !dayHours.start_time || !dayHours.end_time) return [];
@@ -3434,11 +3518,21 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
     const isToday = bookingForm.date === localDateStr();
     const nowM = isToday ? new Date().getHours() * 60 + new Date().getMinutes() : -1;
     const step = 30;
+    // "Set-and-forget" daily lunch break — subtracted from every day's
+    // availability the same way a real booking would be, without the
+    // provider having to block it themselves. Treated as just another busy
+    // window for this one calculation, so it never touches busyWindows
+    // (and therefore never shows on the provider's own schedule as a
+    // ghost appointment).
+    const lunchWindow = (selectedProvider?.lunch_break_start && Number(selectedProvider?.lunch_break_minutes) > 0)
+      ? { start_time: selectedProvider.lunch_break_start, end_time: minutesToTime(timeToMinutes(selectedProvider.lunch_break_start) + Number(selectedProvider.lunch_break_minutes)) }
+      : null;
+    const allBusy = lunchWindow ? [...busyWindows, lunchWindow] : busyWindows;
     const slots = [];
     for (let m = startM; m + durationMin <= endM; m += step) {
       if (isToday && m <= nowM) continue;
       const slotEnd = m + durationMin;
-      const busy = busyWindows.some((w) => {
+      const busy = allBusy.some((w) => {
         const wStart = timeToMinutes(w.start_time);
         const wEnd = timeToMinutes(w.end_time);
         return m < wEnd && wStart < slotEnd;
@@ -3450,6 +3544,7 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
 
   const backToServices = () => {
     setBookingService(null);
+    setSelectedServiceIds([]);
     setBookingError("");
   };
 
@@ -3474,10 +3569,20 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
     const service = (selectedProvider.services || []).find((s) => s.id === bookingForm.service_id);
     if (!service) { setBookingError("Please choose a service."); return; }
 
+    // Multi-service checkout: service_ids carries the FULL selection (see
+    // proceedToMultiServiceTime) — service/service_id above is only the
+    // first one, used because create_booking_safe's signature takes a
+    // single primary service. The combined price/duration/label for
+    // everything the customer actually picked are computed here instead.
+    const isMultiService = (bookingForm.service_ids || []).length > 1;
+    const multiServices = isMultiService ? (selectedProvider.services || []).filter((s) => bookingForm.service_ids.includes(s.id)) : [service];
+    const serviceLabel = isMultiService ? multiServices.map((s) => s.name).join(" + ") : service.name;
+    const combinedDuration = multiServices.reduce((sum, s) => sum + (Number(s.duration_min) || 0), 0);
+
     setSubmittingBooking(true);
     setBookingError("");
 
-    const total = Number(service.price) || 0;
+    const total = isMultiService ? multiServices.reduce((sum, s) => sum + (Number(s.price) || 0), 0) : (Number(service.price) || 0);
     const dpPct = selectedProvider.downpayment_required ? (selectedProvider.downpayment_pct || 50) : 0;
     // VIP requests skip the deposit flow entirely — it's a premium
     // off-hours request, not the normal reserve-a-slot flow a deposit
@@ -3531,6 +3636,28 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
       return;
     }
 
+    if (created && isMultiService) {
+      // Attach the full service list + combined duration now that the
+      // primary booking exists — see attachBookingServices' comment for why
+      // this is a separate call rather than something create_booking_safe
+      // does in one shot. A conflict here means the combined duration
+      // doesn't actually fit (a race with another booking, or the picked
+      // slot was only ever valid for the single primary service) — safest
+      // is to undo the booking outright rather than leave a confirmed/
+      // pending row that doesn't reflect what the customer actually paid a
+      // deposit for.
+      try {
+        await attachBookingServices(created.id, bookingForm.service_ids, combinedDuration);
+      } catch (err) {
+        await cancelBooking(created.id);
+        setSubmittingBooking(false);
+        setBookingError("That combined appointment time is no longer available. Please pick another time.");
+        getProviderBusyWindows(selectedProvider.id, bookingForm.date).then((w) => setBusyWindows(w || []));
+        setBookingForm((f) => ({ ...f, time: "" }));
+        return;
+      }
+    }
+
     setSubmittingBooking(false);
 
     if (created) {
@@ -3543,7 +3670,7 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
         await createNotification({
           user_id: selectedProvider.user_id,
           title: bookingForm.isVip ? "New VIP booking request" : "New booking request",
-          body: `${user?.full_name || guestCheckoutForm.name || "A customer"} requested ${service.name} on ${whenLabel}${bookingForm.isVip ? " (VIP — outside your normal hours)" : ""}.`,
+          body: `${user?.full_name || guestCheckoutForm.name || "A customer"} requested ${serviceLabel} on ${whenLabel}${bookingForm.isVip ? " (VIP — outside your normal hours)" : ""}.`,
           type: "booking_requested",
           booking_id: created.id,
         });
@@ -3556,12 +3683,13 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
       if (providerEmail) {
         await sendBookingEmail({
           to: providerEmail,
-          subject: `New${bookingForm.isVip ? " VIP" : ""} booking request — ${service.name}, ${whenLabel}`,
-          html: `<p>Hi ${selectedProvider.business_name || "there"},</p><p><strong>${user?.full_name || guestCheckoutForm.name || "A customer"}</strong> just requested <strong>${service.name}</strong> for <strong>${whenLabel}</strong> (BZ$${finalTotal.toFixed(2)})${bookingForm.isVip ? " — this is a VIP request, outside your normal working hours" : ""}.</p>${bookingForm.notes ? `<p>Their note: "${bookingForm.notes.trim()}"</p>` : ""}<p>Open VaiBook to accept or decline it. You can turn these emails off under Settings → Notifications.</p>`,
+          subject: `New${bookingForm.isVip ? " VIP" : ""} booking request — ${serviceLabel}, ${whenLabel}`,
+          html: `<p>Hi ${selectedProvider.business_name || "there"},</p><p><strong>${user?.full_name || guestCheckoutForm.name || "A customer"}</strong> just requested <strong>${serviceLabel}</strong> for <strong>${whenLabel}</strong> (BZ$${finalTotal.toFixed(2)})${bookingForm.isVip ? " — this is a VIP request, outside your normal working hours" : ""}.</p>${bookingForm.notes ? `<p>Their note: "${bookingForm.notes.trim()}"</p>` : ""}<p>Open VaiBook to accept or decline it. You can turn these emails off under Settings → Notifications.</p>`,
         });
       }
       setSelectedProvider(null);
       setBookingService(null);
+      setSelectedServiceIds([]);
       await loadBookings();
       setTab("bookings");
       setBookingTab("upcoming");
@@ -4535,28 +4663,44 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
                                 )}
                               </div>
                             )}
-                            {(selectedProvider.services || []).filter(s => s.is_active !== false).map(s => (
-                              <div key={s.id} className="service-row">
-                                <div>
-                                  <div style={{ fontWeight: 600, fontSize: 14, color: "var(--dark-text)" }}>{s.name}</div>
-                                  <div style={{ fontSize: 12, color: "var(--muted)" }}>{s.duration_min} min · BZ${s.price}</div>
+                            <p style={{ fontSize: 12, color: "var(--muted)", margin: "0 0 4px" }}>Tap a service to add it — booking more than one? Add them all, then pick one time for the whole visit.</p>
+                            {(selectedProvider.services || []).filter(s => s.is_active !== false).map(s => {
+                              const active = selectedServiceIds.includes(s.id);
+                              return (
+                                <div key={s.id} className={`service-card ${active ? "active" : ""}`} onClick={() => toggleServiceSelect(s)}>
+                                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                                    <span className="service-card-check">✓</span>
+                                    <div>
+                                      <div className="service-card-name" style={{ fontWeight: 600, fontSize: 14, color: "var(--dark-text)" }}>{s.name}</div>
+                                      <div className="service-card-meta" style={{ fontSize: 12, color: "var(--muted)" }}>{s.duration_min} min · BZ${s.price}</div>
+                                    </div>
+                                  </div>
+                                  <div style={{ display: "flex", gap: 6 }} onClick={(e) => e.stopPropagation()}>
+                                    <button
+                                      className="btn-sm ghost"
+                                      onClick={() => shareService(s)}
+                                      aria-label={`Share ${s.name}`}
+                                      title="Share this service"
+                                    >
+                                      {copiedServiceId === s.id ? "Link copied" : "📤 Share"}
+                                    </button>
+                                    {isProviderVipEligible(selectedProvider) && isVipMember && (
+                                      <button className="btn-sm ghost" onClick={() => startVipBookingForService(s)}>⚡ VIP request</button>
+                                    )}
+                                    <button className="btn-sm forest" onClick={() => startBookingForService(s)}>Book</button>
+                                  </div>
                                 </div>
-                                <div style={{ display: "flex", gap: 6 }}>
-                                  <button
-                                    className="btn-sm ghost"
-                                    onClick={() => shareService(s)}
-                                    aria-label={`Share ${s.name}`}
-                                    title="Share this service"
-                                  >
-                                    {copiedServiceId === s.id ? "Link copied" : "📤 Share"}
-                                  </button>
-                                  {isProviderVipEligible(selectedProvider) && isVipMember && (
-                                    <button className="btn-sm ghost" onClick={() => startVipBookingForService(s)}>⚡ VIP request</button>
-                                  )}
-                                  <button className="btn-sm forest" onClick={() => startBookingForService(s)}>Book</button>
+                              );
+                            })}
+                            {selectedServiceIds.length > 0 && (
+                              <div className="multi-fab">
+                                <div className="totals">
+                                  <strong>BZ${multiTotalPrice.toFixed(2)} · {multiTotalDuration} min</strong>
+                                  {selectedServicesList.length} service{selectedServicesList.length === 1 ? "" : "s"} selected
                                 </div>
+                                <button onClick={proceedToMultiServiceTime}>Next: Pick Time →</button>
                               </div>
-                            ))}
+                            )}
                           </div>
                         )
                       )
@@ -4933,11 +5077,89 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
   const [confirmingPaymentId, setConfirmingPaymentId] = useState(null);
   const [depositForm, setDepositForm] = useState({ downpayment_required: false, downpayment_pct: 50, auto_confirm_bookings: false });
   const [savingDeposit, setSavingDeposit] = useState(false);
+  // Set-and-forget daily lunch break — lives only in Settings, never on the
+  // main dashboard, since the whole point is the provider sets it once and
+  // never has to think about it again (see availableSlots in CustomerPortal
+  // for where this actually gets subtracted from the calendar every day).
+  const [lunchForm, setLunchForm] = useState({ enabled: false, lunch_break_start: "13:00", lunch_break_minutes: 30 });
+  const [savingLunch, setSavingLunch] = useState(false);
   const [paymentMethods, setPaymentMethods] = useState([]);
   const [paymentMethodForm, setPaymentMethodForm] = useState({ type: "bank", name: "", account_name: "", account_number: "" });
   const [savingPaymentMethod, setSavingPaymentMethod] = useState(false);
 
   const providerId = providerProfile?.id;
+
+  // ── 1-tap dashboard blocking (walk-in "panic button" + custom block) ──
+  // A block is a standalone row in provider_blocks — never a fake booking —
+  // that just gets merged into busy windows for the customer-facing slot
+  // picker (see getProviderBusyWindows). Nothing here needs a confirmation
+  // step: the whole point is a barber mid-haircut can kill the next slot in
+  // one tap without touching a form.
+  const [blocks, setBlocks] = useState([]);
+  const [loadingBlocks, setLoadingBlocks] = useState(false);
+  const [blockingQuick, setBlockingQuick] = useState(false);
+  const [showBlockSheet, setShowBlockSheet] = useState(false);
+  const [blockSheetType, setBlockSheetType] = useState("walkin");
+  const [blockSheetMinutes, setBlockSheetMinutes] = useState(30);
+  const [savingBlock, setSavingBlock] = useState(false);
+  const [blockError, setBlockError] = useState("");
+
+  const loadBlocks = async () => {
+    if (!providerId) return;
+    setLoadingBlocks(true);
+    const data = await getProviderBlocks(providerId, localDateStr());
+    setBlocks(data || []);
+    setLoadingBlocks(false);
+  };
+
+  useEffect(() => {
+    loadBlocks();
+  }, [providerId]);
+
+  // Builds a { block_date, start_time, end_time } window starting right now
+  // for `minutes` long — shared by both the 1-tap button and the bottom
+  // sheet's presets, since both just block "from now."
+  const buildNowBlock = (minutes) => {
+    const now = new Date();
+    const end = new Date(now.getTime() + minutes * 60000);
+    const toTime = (d) => `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+    return { block_date: localDateStr(now), start_time: toTime(now), end_time: toTime(end) };
+  };
+
+  const quickBlockWalkIn = async () => {
+    if (!providerId || blockingQuick) return;
+    setBlockingQuick(true);
+    const window_ = buildNowBlock(30);
+    await insertProviderBlock({ provider_id: providerId, block_type: "walkin", ...window_ });
+    await loadBlocks();
+    setBlockingQuick(false);
+  };
+
+  const openBlockSheet = () => {
+    setBlockSheetType("walkin");
+    setBlockSheetMinutes(30);
+    setBlockError("");
+    setShowBlockSheet(true);
+  };
+  const closeBlockSheet = () => setShowBlockSheet(false);
+
+  const submitBlockSheet = async () => {
+    if (!providerId) return;
+    setSavingBlock(true);
+    setBlockError("");
+    const window_ = buildNowBlock(blockSheetMinutes);
+    const created = await insertProviderBlock({ provider_id: providerId, block_type: blockSheetType, ...window_ });
+    setSavingBlock(false);
+    if (!created) { setBlockError("Couldn't save that block. Please try again."); return; }
+    setShowBlockSheet(false);
+    await loadBlocks();
+  };
+
+  const removeBlock = async (blockId) => {
+    if (!window.confirm("Remove this block? The time will open back up for booking.")) return;
+    await deleteProviderBlock(blockId);
+    await loadBlocks();
+  };
 
   const loadPaymentMethods = async () => {
     if (!providerId) return;
@@ -5305,6 +5527,11 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
         downpayment_pct: providerProfile.downpayment_pct || 50,
         auto_confirm_bookings: !!providerProfile.auto_confirm_bookings,
       });
+      setLunchForm({
+        enabled: Number(providerProfile.lunch_break_minutes) > 0,
+        lunch_break_start: providerProfile.lunch_break_start ? String(providerProfile.lunch_break_start).slice(0, 5) : "13:00",
+        lunch_break_minutes: providerProfile.lunch_break_minutes || 30,
+      });
       setEmailOnNewBooking(providerProfile.notify_email_new_booking !== false);
     }
   }, [providerProfile]);
@@ -5572,6 +5799,18 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
       auto_confirm_bookings: depositForm.auto_confirm_bookings,
     });
     setSavingDeposit(false);
+  };
+
+  const saveLunchSettings = async () => {
+    if (!providerId) return;
+    setSavingLunch(true);
+    await upsertProviderProfile({
+      id: providerProfile.id,
+      user_id: providerProfile.user_id,
+      lunch_break_start: lunchForm.enabled ? lunchForm.lunch_break_start : null,
+      lunch_break_minutes: lunchForm.enabled ? Number(lunchForm.lunch_break_minutes) || 0 : 0,
+    });
+    setSavingLunch(false);
   };
 
   const toggleDay = (i) => setHours(h => h.map((d, idx) => (idx === i ? { ...d, is_open: !d.is_open } : d)));
@@ -5967,6 +6206,20 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
               <h2>Dashboard</h2>
               <p>{now.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })} · {todaysBookings.length} appointment{todaysBookings.length === 1 ? "" : "s"} today</p>
             </div>
+
+            {/* 1-TAP DASHBOARD BLOCKING — the "panic button". No modal, no
+                confirmation: tapping it blocks the next 30 minutes on the
+                spot, because whoever needs this is mid-haircut with clippers
+                in hand, not free to fill out a form. */}
+            <div style={{ display: "flex", gap: 10, alignItems: "stretch", marginBottom: 20 }}>
+              <button className="panic-btn" style={{ flex: 2 }} onClick={quickBlockWalkIn} disabled={blockingQuick}>
+                {blockingQuick ? "Blocking..." : "🚶 Walk-in (30m)"}
+              </button>
+              <button className="btn-sm ghost" style={{ flex: 1, fontSize: 14, fontWeight: 700 }} onClick={openBlockSheet}>
+                Custom block
+              </button>
+            </div>
+
             <div className="metric-grid">
               <div className="metric"><div className="metric-label">This month earnings</div><div className="metric-value" style={{ color: "var(--forest-light)" }}>BZ${thisMonthEarnings.toFixed(0)}</div><div className="metric-sub">{thisMonthCompletedCount} completed this month</div></div>
               <div className="metric"><div className="metric-label">Bookings today</div><div className="metric-value">{todaysBookings.length}</div><div className="metric-sub">{todaysBookings.filter(b => b.status === "confirmed").length} confirmed, {pendingBookings.length} awaiting your reply</div></div>
@@ -5979,7 +6232,17 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                   <span>Today's appointments</span>
                   <button className="btn-sm ghost" onClick={loadBookings} disabled={loadingBookings}>{loadingBookings ? "Refreshing..." : "Refresh"}</button>
                 </div>
-                {todaysBookings.length === 0 && <p style={{ fontSize: 13, color: "var(--muted)", padding: "16px 0" }}>Nothing booked for today.</p>}
+                {todaysBookings.length === 0 && blocks.filter(bl => bl.block_date === localDateStr()).length === 0 && <p style={{ fontSize: 13, color: "var(--muted)", padding: "16px 0" }}>Nothing booked for today.</p>}
+                {blocks.filter(bl => bl.block_date === localDateStr()).map((bl) => (
+                  <div className="block-row" key={bl.id}>
+                    <div className="dot"></div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: "var(--dark-text)" }}>{bl.block_type === "break" ? "☕ Break" : "🚶 Walk-in hold"}</div>
+                      <div style={{ fontSize: 12, color: "var(--muted)" }}>{formatBookingTime(bl.start_time)} – {formatBookingTime(bl.end_time)} · calendar blocked</div>
+                    </div>
+                    <button className="btn-sm ghost" style={{ fontSize: 11, padding: "5px 10px" }} onClick={() => removeBlock(bl.id)}>Remove</button>
+                  </div>
+                ))}
                 {todaysBookings.map((b) => (
                   <div className="booking-item" key={b.id}>
                     <div className={`booking-dot ${bookingStatusClass(b.status)}`}></div>
@@ -7173,6 +7436,35 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
               )}
               <button className="btn-sm forest" style={{ marginTop: 12 }} onClick={saveDepositSettings} disabled={savingDeposit}>{savingDeposit ? "Saving..." : "Save deposit settings"}</button>
 
+              <div className="card-title" style={{ marginTop: 28 }}>Daily lunch break</div>
+              <p style={{ fontSize: 13, color: "var(--muted)", marginTop: -8, marginBottom: 16 }}>Set it once and forget it — this time is automatically taken off your calendar every day, so you never have to block it yourself.</p>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", borderBottom: lunchForm.enabled ? "1px solid var(--border)" : "none" }}>
+                <span style={{ fontSize: 14 }}>Block my calendar for lunch every day</span>
+                <div className={`toggle ${lunchForm.enabled ? "on" : ""}`} onClick={() => setLunchForm(f => ({ ...f, enabled: !f.enabled }))}></div>
+              </div>
+              {lunchForm.enabled && (
+                <div className="form-row" style={{ marginTop: 12 }}>
+                  <div className="input-group">
+                    <label>Start time</label>
+                    <select value={lunchForm.lunch_break_start} onChange={e => setLunchForm(f => ({ ...f, lunch_break_start: e.target.value }))}>
+                      {Array.from({ length: 28 }, (_, i) => { const m = 6 * 60 + i * 30; const h = String(Math.floor(m / 60)).padStart(2, "0"); const mm = String(m % 60).padStart(2, "0"); return `${h}:${mm}`; }).map(t => {
+                        const [h24, m] = t.split(":").map(Number);
+                        const ampm = h24 >= 12 ? "PM" : "AM";
+                        const h12 = h24 % 12 === 0 ? 12 : h24 % 12;
+                        return <option key={t} value={t}>{`${h12}:${String(m).padStart(2, "0")} ${ampm}`}</option>;
+                      })}
+                    </select>
+                  </div>
+                  <div className="input-group">
+                    <label>Duration</label>
+                    <select value={lunchForm.lunch_break_minutes} onChange={e => setLunchForm(f => ({ ...f, lunch_break_minutes: e.target.value }))}>
+                      {[15, 30, 45, 60, 90].map(m => <option key={m} value={m}>{m} min</option>)}
+                    </select>
+                  </div>
+                </div>
+              )}
+              <button className="btn-sm forest" style={{ marginTop: 12 }} onClick={saveLunchSettings} disabled={savingLunch}>{savingLunch ? "Saving..." : "Save lunch break"}</button>
+
               <div className="card-title" style={{ marginTop: 28 }}>Notifications</div>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", borderBottom: "1px solid var(--border)", gap: 16 }}>
                 <div>
@@ -7219,6 +7511,35 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
           </>
         )}
       </main>
+
+      {/* CUSTOM BLOCK — bottom sheet, not a modal: pick Walk-in or Break,
+          tap a preset duration, done. No time-of-day picker on purpose —
+          it always blocks starting right now, same as the panic button. */}
+      {showBlockSheet && (
+        <div className="sheet-overlay" onClick={closeBlockSheet}>
+          <div className="sheet-panel" onClick={(e) => e.stopPropagation()}>
+            <div className="sheet-handle"></div>
+            <h3 style={{ fontSize: 17, fontWeight: 800, margin: "0 0 4px", color: "var(--dark-text)" }}>Block your calendar</h3>
+            <p style={{ fontSize: 13, color: "var(--muted)", margin: "0 0 16px" }}>Starts right now.</p>
+            <div className="block-type-row">
+              <button className={`block-type-btn ${blockSheetType === "walkin" ? "active" : ""}`} onClick={() => setBlockSheetType("walkin")}>🚶 Walk-in</button>
+              <button className={`block-type-btn ${blockSheetType === "break" ? "active" : ""}`} onClick={() => setBlockSheetType("break")}>☕ Break</button>
+            </div>
+            <div className="preset-row">
+              {[15, 30, 60].map((m) => (
+                <button key={m} className={`preset-btn ${blockSheetMinutes === m ? "active" : ""}`} onClick={() => setBlockSheetMinutes(m)}>
+                  {m < 60 ? `${m}m` : "1h"}
+                </button>
+              ))}
+            </div>
+            {blockError && <p style={{ fontSize: 12, color: "#B91C1C", marginBottom: 12 }}>{blockError}</p>}
+            <button className="btn-sm forest" style={{ width: "100%", padding: "14px 0", fontSize: 15, borderRadius: 12 }} disabled={savingBlock} onClick={submitBlockSheet}>
+              {savingBlock ? "Blocking..." : `Block ${blockSheetMinutes < 60 ? `${blockSheetMinutes}m` : "1h"} now`}
+            </button>
+            <button className="btn-sm ghost" style={{ width: "100%", padding: "12px 0", marginTop: 8 }} onClick={closeBlockSheet}>Cancel</button>
+          </div>
+        </div>
+      )}
     </div>
     </FeatureFlagsProvider>
   );
