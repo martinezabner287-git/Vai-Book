@@ -704,6 +704,64 @@ export const rescheduleBooking = async (bookingId, dateStr, timeStr) => {
   return Array.isArray(data) ? data[0] : data;
 };
 
+// ── RESCHEDULE PROPOSE/CONFIRM ──────────────────────────────────
+// A provider-initiated reschedule no longer moves the booking right away —
+// it stores a *proposed* date/time and the customer has to confirm it.
+// See 4_reschedule_requires_confirmation.sql. All four throw with
+// .code === 'SLOT_TAKEN' (propose/confirm) on a real overlap; the others
+// only fail on genuine errors (not-found, not-yours, nothing pending).
+
+// Provider proposes a new date/time for their own booking.
+export const proposeBookingReschedule = async (bookingId, dateStr, timeStr) => {
+  const { error } = await supabase.rpc('propose_booking_reschedule', {
+    p_booking_id: bookingId,
+    p_date: dateStr,
+    p_time: timeStr,
+  });
+  if (error) {
+    if (error.message && error.message.includes('SLOT_TAKEN')) {
+      const err = new Error('SLOT_TAKEN');
+      err.code = 'SLOT_TAKEN';
+      throw err;
+    }
+    console.error('Error proposing reschedule:', error.message);
+    throw error;
+  }
+};
+
+// Customer confirms the provider's proposed date/time — this is the only
+// point the real booking_date/booking_time actually change.
+export const confirmBookingReschedule = async (bookingId) => {
+  const { error } = await supabase.rpc('confirm_booking_reschedule', { p_booking_id: bookingId });
+  if (error) {
+    if (error.message && error.message.includes('SLOT_TAKEN')) {
+      const err = new Error('SLOT_TAKEN');
+      err.code = 'SLOT_TAKEN';
+      throw err;
+    }
+    console.error('Error confirming reschedule:', error.message);
+    throw error;
+  }
+};
+
+// Customer declines — the original date/time stand, nothing else changes.
+export const declineBookingReschedule = async (bookingId) => {
+  const { error } = await supabase.rpc('decline_booking_reschedule', { p_booking_id: bookingId });
+  if (error) {
+    console.error('Error declining reschedule:', error.message);
+    throw error;
+  }
+};
+
+// Provider withdraws their own proposal before the customer responds.
+export const withdrawBookingReschedule = async (bookingId) => {
+  const { error } = await supabase.rpc('withdraw_booking_reschedule', { p_booking_id: bookingId });
+  if (error) {
+    console.error('Error withdrawing reschedule proposal:', error.message);
+    throw error;
+  }
+};
+
 // ── PROVIDER PLAN PAYMENTS (provider ↔ VaiBook, not tied to a booking) ──
 // See supabase_provider_payments.sql for the table, RLS, and admin RPCs.
 
