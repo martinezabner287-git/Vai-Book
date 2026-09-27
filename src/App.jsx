@@ -8588,11 +8588,35 @@ export default function App() {
   // opening a booking link or the provider portal on purpose should still
   // land there, not get bounced.
   const maybeGoToAdmin = async (email, hadPendingView) => {
-    if (hadPendingView) return;
+    if (hadPendingView) return false;
     const h = window.location.hash.replace("#", "");
-    if (h === "customer" || h === "provider" || parseBookingHash(h)) return;
+    if (h === "customer" || h === "provider" || parseBookingHash(h)) return false;
     const ok = await checkIsAdmin(email);
-    if (ok) setView("admin");
+    if (ok) { setView("admin"); return true; }
+    return false;
+  };
+
+  // A plain refresh re-derives `view` from the URL hash alone (see the
+  // useState initializer above) — but navigating BETWEEN portals in-app
+  // (the account-switcher, "For business" links, etc.) only ever calls
+  // setView, never touches window.location.hash. So someone who signed
+  // in, switched into the provider portal, and hit refresh would have
+  // the hash still pointing at whatever it last was (often empty, or a
+  // stale #customer from earlier in the session) and land back on the
+  // generic homepage or the wrong portal — not where they actually were.
+  // This restores the last portal the account was sitting in, but only
+  // when nothing more specific already claimed the view (an explicit
+  // #admin/#customer/#provider/#book- link, a pending "sign in to do X"
+  // redirect, or this being an admin account).
+  const restoreLastPortalView = (hadPendingView, wasAdmin, canUseProviderPortal) => {
+    if (hadPendingView || wasAdmin) return;
+    const h = window.location.hash.replace("#", "");
+    if (h === "customer" || h === "provider" || h === "admin" || parseBookingHash(h)) return;
+    try {
+      const last = localStorage.getItem("vaibook_last_view");
+      if (last === "provider" && canUseProviderPortal) setView("provider");
+      else if (last === "customer") setView("customer");
+    } catch (e) { /* ignore */ }
   };
 
   useEffect(() => {
@@ -8604,9 +8628,11 @@ export default function App() {
         setUser(u);
         const p = await loadProviderProfile(session.user);
         setProviderProfile(p);
-        setStaffProfile(p ? null : await loadStaffProfile());
+        const sp = p ? null : await loadStaffProfile();
+        setStaffProfile(sp);
         const hadPending = applyPendingView();
-        await maybeGoToAdmin(session.user.email, hadPending);
+        const wasAdmin = await maybeGoToAdmin(session.user.email, hadPending);
+        restoreLastPortalView(hadPending, wasAdmin, !!p || !!sp);
       }
       setLoading(false);
     });
@@ -8648,9 +8674,18 @@ export default function App() {
     return () => { cancelled = true; };
   }, [siteOffline.on, session?.user?.email]);
 
+  // Remembers whichever real portal the account is currently sitting in,
+  // so restoreLastPortalView (above) can put a refresh back where it
+  // belongs instead of always falling back to the homepage.
+  useEffect(() => {
+    if (view !== "provider" && view !== "customer" && view !== "admin") return;
+    try { localStorage.setItem("vaibook_last_view", view); } catch (e) { /* ignore */ }
+  }, [view]);
+
   const handleSignOut = async () => {
     await signOut();
     setView("home");
+    try { localStorage.removeItem("vaibook_last_view"); } catch (e) { /* ignore */ }
   };
 
   if (loading) {
