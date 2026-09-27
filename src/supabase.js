@@ -429,12 +429,70 @@ export const createBooking = async (booking) => {
 
 // Returns the busy time windows (start/end only, no customer identity) for a
 // provider on a given date — used to render live availability and to block
-// out already-taken slots on the booking calendar.
+// out already-taken slots on the booking calendar. Merges in provider_blocks
+// (the 1-tap "Walk-in (30m)" panic button and the Custom Block bottom sheet)
+// so a quick block is instantly reflected in what customers can book —
+// get_busy_windows itself only knows about real bookings.
 export const getProviderBusyWindows = async (providerId, dateStr) => {
-  const { data, error } = await supabase
-    .rpc('get_busy_windows', { p_provider_id: providerId, p_date: dateStr });
-  if (error) { console.error('Error fetching busy windows:', error.message); return []; }
+  const [bookingsResult, blocksResult] = await Promise.all([
+    supabase.rpc('get_busy_windows', { p_provider_id: providerId, p_date: dateStr }),
+    supabase.from('provider_blocks').select('start_time, end_time').eq('provider_id', providerId).eq('block_date', dateStr),
+  ]);
+  if (bookingsResult.error) console.error('Error fetching busy windows:', bookingsResult.error.message);
+  if (blocksResult.error) console.error('Error fetching provider blocks:', blocksResult.error.message);
+  return [...(bookingsResult.data || []), ...(blocksResult.data || [])];
+};
+
+// ── PROVIDER BLOCKS (1-tap walk-in / break blocking) ────────────────
+// See supabase_provider_blocks.sql. A block is just a start/end window on a
+// date, owned by the provider (RLS: provider_id must map to the caller's own
+// provider_profiles row) — it never touches the bookings table, so it can't
+// be confused with a real appointment, and it's simply merged into busy
+// windows above.
+
+export const getProviderBlocks = async (providerId, fromDateStr) => {
+  let query = supabase.from('provider_blocks').select('*').eq('provider_id', providerId).order('block_date', { ascending: true }).order('start_time', { ascending: true });
+  if (fromDateStr) query = query.gte('block_date', fromDateStr);
+  const { data, error } = await query;
+  if (error) { console.error('Error fetching provider blocks:', error.message); return []; }
   return data || [];
+};
+
+export const insertProviderBlock = async (block) => {
+  const { data, error } = await supabase.from('provider_blocks').insert(block).select().single();
+  if (error) { console.error('Error creating provider block:', error.message); return null; }
+  return data;
+};
+
+export const deleteProviderBlock = async (blockId) => {
+  const { error } = await supabase.from('provider_blocks').delete().eq('id', blockId);
+  if (error) { console.error('Error removing provider block:', error.message); return false; }
+  return true;
+};
+
+// ── MULTI-SERVICE CHECKOUT ───────────────────────────────────────────
+// create_booking_safe only takes a single p_service_id (it's the existing,
+// already-hardened atomic slot-reservation RPC — see the note in
+// supabase_multiservice_checkout.sql for why this is a follow-up call
+// rather than a change to that RPC). A multi-service booking is created
+// with its first selected service as the primary service_id + the combined
+// price/deposit, then this attaches the full service list and total
+// duration right after, with its own server-side overlap re-check.
+export const attachBookingServices = async (bookingId, serviceIds, totalDurationMin) => {
+  const { error } = await supabase.rpc('attach_booking_services', {
+    p_booking_id: bookingId,
+    p_service_ids: serviceIds,
+    p_total_duration_min: totalDurationMin,
+  });
+  if (error) {
+    if (error.message && error.message.includes('SLOT_TAKEN_MULTI')) {
+      const err = new Error('SLOT_TAKEN_MULTI');
+      err.code = 'SLOT_TAKEN_MULTI';
+      throw err;
+    }
+    console.error('Error attaching multi-service details:', error.message);
+    throw error;
+  }
 };
 
 // Atomically re-checks for a conflicting booking and inserts, using a
