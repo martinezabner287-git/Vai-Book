@@ -4906,7 +4906,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
   const [responseType, setResponseType] = useState(null);
   const [responseMessage, setResponseMessage] = useState("");
   const [confirmingPaymentId, setConfirmingPaymentId] = useState(null);
-  const [depositForm, setDepositForm] = useState({ downpayment_required: false, downpayment_pct: 50 });
+  const [depositForm, setDepositForm] = useState({ downpayment_required: false, downpayment_pct: 50, auto_confirm_bookings: false });
   const [savingDeposit, setSavingDeposit] = useState(false);
   const [paymentMethods, setPaymentMethods] = useState([]);
   const [paymentMethodForm, setPaymentMethodForm] = useState({ type: "bank", name: "", account_name: "", account_number: "" });
@@ -5278,6 +5278,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
       setDepositForm({
         downpayment_required: !!providerProfile.downpayment_required,
         downpayment_pct: providerProfile.downpayment_pct || 50,
+        auto_confirm_bookings: !!providerProfile.auto_confirm_bookings,
       });
       setEmailOnNewBooking(providerProfile.notify_email_new_booking !== false);
     }
@@ -5540,6 +5541,10 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
       user_id: providerProfile.user_id,
       downpayment_required: depositForm.downpayment_required,
       downpayment_pct: Number(depositForm.downpayment_pct) || 50,
+      // Only meaningful when a deposit ISN'T required — a booking that
+      // needs a deposit always waits for manual accept regardless of
+      // this flag (see auto_confirm_no_deposit_booking() in the DB).
+      auto_confirm_bookings: depositForm.auto_confirm_bookings,
     });
     setSavingDeposit(false);
   };
@@ -7127,6 +7132,18 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                   <select value={depositForm.downpayment_pct} onChange={e => setDepositForm(f => ({ ...f, downpayment_pct: e.target.value }))}>
                     {[25, 50, 75, 100].map(p => <option key={p} value={p}>{p}%</option>)}
                   </select>
+                </div>
+              )}
+
+              {!depositForm.downpayment_required && (
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", borderBottom: "1px solid var(--border)", gap: 16 }}>
+                  <div>
+                    <span style={{ fontSize: 14 }}>Skip review for these bookings</span>
+                    <div style={{ fontSize: 12, color: "var(--muted)" }}>
+                      Since no deposit is required, a booking can either wait in Pending for you to accept it, or book straight in as confirmed. This only applies when a deposit isn't required — a deposit booking always needs your accept.
+                    </div>
+                  </div>
+                  <div className={`toggle ${depositForm.auto_confirm_bookings ? "on" : ""}`} onClick={() => setDepositForm(f => ({ ...f, auto_confirm_bookings: !f.auto_confirm_bookings }))}></div>
                 </div>
               )}
               <button className="btn-sm forest" style={{ marginTop: 12 }} onClick={saveDepositSettings} disabled={savingDeposit}>{savingDeposit ? "Saving..." : "Save deposit settings"}</button>
