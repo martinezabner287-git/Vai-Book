@@ -1823,22 +1823,43 @@ function usePushSubscription(userId) {
   return { pushEnabled, subscribingPush, pushError, enablePushNotifications };
 }
 
-function enterCustomerPortal(onNav, session, onSignIn) {
-  if (session) {
-    onNav("customer");
-  } else {
-    try { localStorage.setItem("vaibook_pending_view", "customer"); } catch (e) { /* ignore */ }
+// Shared by enterCustomerPortal/enterProviderPortal below. Per an explicit
+// requirement, once an account is actively signed into one portal
+// (provider or customer), no click anywhere in the app may carry it into
+// the other one silently — that always has to go through a real sign-out,
+// then signing back in and explicitly choosing which portal to enter (via
+// AuthChoice). "Actively signed into" is tracked by vaibook_last_view
+// (the same localStorage flag the refresh-restore logic already keeps up
+// to date whenever `view` settles on "provider"/"customer"/"admin", and
+// clears on sign-out) rather than the momentary `view` state, so this
+// still catches a switch attempt made from the plain home page or a
+// settings screen, not just from inside the other portal's own UI.
+function switchToPortal(targetPortal, onNav, session, onSignIn, onSignOut) {
+  if (!session) {
+    try { localStorage.setItem("vaibook_pending_view", targetPortal); } catch (e) { /* ignore */ }
     onSignIn();
+    return;
   }
+  let activePortal = null;
+  try { activePortal = localStorage.getItem("vaibook_last_view"); } catch (e) { /* ignore */ }
+  if ((activePortal === "provider" || activePortal === "customer") && activePortal !== targetPortal) {
+    // Signed in and actively parked in the OTHER portal: force a real
+    // sign-out and land on the explicit "which portal?" screen instead of
+    // switching in place. Picking an option there re-runs this same
+    // function with the session now cleared, so it signs back in and
+    // lands exactly where they chose.
+    Promise.resolve(onSignOut && onSignOut()).then(() => onNav("auth"));
+    return;
+  }
+  onNav(targetPortal);
 }
 
-function enterProviderPortal(onNav, session, onSignIn) {
-  if (session) {
-    onNav("provider");
-  } else {
-    try { localStorage.setItem("vaibook_pending_view", "provider"); } catch (e) { /* ignore */ }
-    onSignIn();
-  }
+function enterCustomerPortal(onNav, session, onSignIn, onSignOut) {
+  switchToPortal("customer", onNav, session, onSignIn, onSignOut);
+}
+
+function enterProviderPortal(onNav, session, onSignIn, onSignOut) {
+  switchToPortal("provider", onNav, session, onSignIn, onSignOut);
 }
 
 // Lets the public pricing section's per-plan CTA land on the signup form
@@ -1852,21 +1873,21 @@ function goToSignupWithPlan(onNav, planId) {
   onNav("signup");
 }
 
-function AuthChoice({ onNav, session, onSignIn }) {
+function AuthChoice({ onNav, session, onSignIn, onSignOut }) {
   return (
     <div className="auth-choice">
       <div className="auth-choice-left">
         <button className="auth-back" onClick={() => onNav("home")} aria-label="Back">←</button>
         <div className="auth-choice-body">
           <h1>Sign up / log in</h1>
-          <div className="auth-option-card" onClick={() => enterCustomerPortal(onNav, session, onSignIn)}>
+          <div className="auth-option-card" onClick={() => enterCustomerPortal(onNav, session, onSignIn, onSignOut)}>
             <div>
               <h3>VaiBook for customers</h3>
               <p>Book local services near you</p>
             </div>
             <span className="auth-option-arrow">→</span>
           </div>
-          <div className="auth-option-card" onClick={() => enterProviderPortal(onNav, session, onSignIn)}>
+          <div className="auth-option-card" onClick={() => enterProviderPortal(onNav, session, onSignIn, onSignOut)}>
             <div>
               <h3>VaiBook for professionals</h3>
               <p>Manage and grow your business</p>
@@ -2374,7 +2395,7 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
     } catch (e) { /* ignore storage errors */ }
     setShowNavSuggestions(false);
     setMobileSearchOpen(false);
-    enterCustomerPortal(onNav, session, onSignIn);
+    enterCustomerPortal(onNav, session, onSignIn, onSignOut);
   };
 
   const selectNavSuggestion = (s) => {
@@ -2387,7 +2408,11 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
 
   const openTab = (tabId) => {
     try { localStorage.setItem("vaibook_pending_tab", tabId); } catch (e) { /* ignore */ }
-    onNav("customer");
+    // Routed through enterCustomerPortal (not a bare onNav) so an account
+    // that's actively signed into the provider portal still gets the
+    // forced sign-out + explicit portal choice instead of slipping into
+    // customer settings via this menu.
+    enterCustomerPortal(onNav, session, onSignIn, onSignOut);
   };
 
   const initials = getInitials(user?.full_name);
@@ -2487,7 +2512,7 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
                   <button className="nav-dropdown-item mobile-only-item" onClick={() => goAccount(() => onNav("signup"))}>
                     <span className="icn">🏪</span> Provide my service
                   </button>
-                  <button className="nav-dropdown-item for-biz" onClick={() => goAccount(() => enterProviderPortal(onNav, session, onSignIn))}>
+                  <button className="nav-dropdown-item for-biz" onClick={() => goAccount(() => enterProviderPortal(onNav, session, onSignIn, onSignOut))}>
                     For businesses <span>→</span>
                   </button>
                   <hr />
@@ -2521,7 +2546,7 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
                   <>
                     <hr />
                     <button className="nav-dropdown-item mobile-only-item" onClick={() => go(() => onNav("signup"))}>Provide my service</button>
-                    <button className="nav-dropdown-item" onClick={() => go(() => enterProviderPortal(onNav, session, onSignIn))}>
+                    <button className="nav-dropdown-item" onClick={() => go(() => enterProviderPortal(onNav, session, onSignIn, onSignOut))}>
                       Provider login
                     </button>
                   </>
@@ -2555,11 +2580,11 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
                 <>
                   <hr />
                   {current === "provider" ? (
-                    <button className="nav-dropdown-item" onClick={() => goAccount(() => enterCustomerPortal(onNav, session, onSignIn))}>
+                    <button className="nav-dropdown-item" onClick={() => goAccount(() => enterCustomerPortal(onNav, session, onSignIn, onSignOut))}>
                       <span className="icn">🛍️</span> Switch to customer
                     </button>
                   ) : (
-                    <button className="nav-dropdown-item for-biz" onClick={() => goAccount(() => enterProviderPortal(onNav, session, onSignIn))}>
+                    <button className="nav-dropdown-item for-biz" onClick={() => goAccount(() => enterProviderPortal(onNav, session, onSignIn, onSignOut))}>
                       <span className="icn">🏪</span> Switch to provider
                     </button>
                   )}
@@ -2637,7 +2662,7 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
   );
 }
 
-function LandingPage({ onNav, session, onSignIn }) {
+function LandingPage({ onNav, session, onSignIn, onSignOut }) {
   const [heroQuery, setHeroQuery] = useState("");
   const [heroDistrict, setHeroDistrict] = useState("");
   const [heroDirectory, setHeroDirectory] = useState([]);
@@ -2688,7 +2713,7 @@ function LandingPage({ onNav, session, onSignIn }) {
     try {
       localStorage.setItem("vaibook_pending_search", JSON.stringify({ query: p.business_name, district: "All" }));
     } catch (e) { /* ignore storage errors */ }
-    enterCustomerPortal(onNav, session, onSignIn);
+    enterCustomerPortal(onNav, session, onSignIn, onSignOut);
   };
 
   const submitHeroSearch = (queryOverride) => {
@@ -2696,7 +2721,7 @@ function LandingPage({ onNav, session, onSignIn }) {
     try {
       localStorage.setItem("vaibook_pending_search", JSON.stringify({ query: q, district: heroDistrict || "All" }));
     } catch (e) { /* ignore storage errors */ }
-    enterCustomerPortal(onNav, session, onSignIn);
+    enterCustomerPortal(onNav, session, onSignIn, onSignOut);
   };
 
   const selectHeroSuggestion = (s) => {
@@ -2814,7 +2839,7 @@ function LandingPage({ onNav, session, onSignIn }) {
         </div>
         <div className="services-pills">
           {SERVICES.map((s, i) => (
-            <button className="service-pill" key={i} onClick={() => enterCustomerPortal(onNav, session, onSignIn)}>
+            <button className="service-pill" key={i} onClick={() => enterCustomerPortal(onNav, session, onSignIn, onSignOut)}>
               <span className="icon">{s.icon}</span> {s.name}
             </button>
           ))}
