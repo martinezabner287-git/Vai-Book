@@ -602,7 +602,7 @@ export const cancelBooking = async (bookingId) => {
 export const getCustomerBookings = async (customerId) => {
   const { data, error } = await supabase
     .from('bookings')
-    .select('*, provider_profiles(id, user_id, business_name, service_type, district, latitude, longitude, location_label, whatsapp, tax_id, payment_methods(id, type, name, account_name, account_number)), services(name, price, duration_min), reviews(id, rating, comment, hold_until), booking_refunds(id, amount, receipt_url, note, created_at)')
+    .select('*, provider_profiles(id, user_id, business_name, service_type, district, latitude, longitude, location_label, whatsapp, tax_id, payment_methods(id, type, name, account_name, account_number)), services(name, price, duration_min), reviews(id, rating, comment, hold_until), booking_refunds(id, amount, receipt_url, note, created_at), payments(id, amount, currency, payment_status, transaction_id, created_at)')
     .eq('customer_id', customerId)
     .order('booking_date', { ascending: false });
   if (error) console.error(error.message);
@@ -618,7 +618,7 @@ export const getCustomerBookings = async (customerId) => {
 export const getProviderBookings = async (providerId) => {
   const { data, error } = await supabase
     .from('bookings')
-    .select('*, users(full_name, email, avatar_url), services(name, price, duration_min), booking_refunds(id, amount, receipt_url, note, created_at)')
+    .select('*, users(full_name, email, avatar_url), services(name, price, duration_min), booking_refunds(id, amount, receipt_url, note, created_at), payments(id, amount, currency, payment_status, transaction_id, created_at)')
     .eq('provider_id', providerId)
     .order('booking_date', { ascending: true });
   if (error) console.error(error.message);
@@ -702,6 +702,21 @@ export const rescheduleBooking = async (bookingId, dateStr, timeStr) => {
     return null;
   }
   return Array.isArray(data) ? data[0] : data;
+};
+
+// Standalone lookup for a single booking's payment ledger — the normal
+// path is the `payments` embed already included in getCustomerBookings/
+// getProviderBookings above; this is for anywhere that only has a
+// booking_id on hand (e.g. a future gateway-status poll or webhook result
+// screen) and doesn't want to refetch the whole booking.
+export const getBookingPayments = async (bookingId) => {
+  const { data, error } = await supabase
+    .from('payments')
+    .select('id, amount, currency, payment_status, transaction_id, created_at, updated_at')
+    .eq('booking_id', bookingId)
+    .order('created_at', { ascending: false });
+  if (error) { console.error('Error fetching booking payments:', error.message); return []; }
+  return data || [];
 };
 
 // ── RESCHEDULE PROPOSE/CONFIRM ──────────────────────────────────
