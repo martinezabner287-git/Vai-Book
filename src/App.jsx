@@ -6,7 +6,7 @@ import L from "leaflet";
 import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
 import markerIcon from "leaflet/dist/images/marker-icon.png";
 import markerShadow from "leaflet/dist/images/marker-shadow.png";
-import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, deleteService, getActiveProviders, getProviderDirectory, createBooking, getProviderBusyWindows, createBookingSafe, cancelBooking, getCustomerBookings, uploadReceipt, submitReview, getProviderReviews, updateReview, sendBookingEmail, updateUserProfile, getPaymentMethods, addPaymentMethod, deletePaymentMethod, createNotification, getNotifications, markNotificationRead, markAllNotificationsRead, getCategoryDefaultFeatures, getProviderFeatureOverrides, setProviderFeatureOverride, getVisitNotes, upsertVisitNote, adminListProviders, adminUpdateProvider, adminDeleteProvider, tagVIP, untagVIP, getVIPClients, getFavoriteProviderIds, getFavoriteProviders, addFavorite, removeFavorite, getBookingMessages, sendBookingMessage, markBookingMessagesRead, getUnreadBookingMessages, getProviderMonthlyTrend, createProviderProfile, getProviderById, createWalkInBooking, submitProviderPayment, getMyProviderPayments, adminListProviderPayments, adminReviewProviderPayment, submitVipPayment, getMyVipPayments, adminListVipPayments, adminReviewVipPayment, createVipBooking, submitBookingRefund, adminListBookingRefunds, openPrivateFile, getProviderStaff, addProviderStaff, updateProviderStaff, deleteProviderStaff, getLoyaltyAccount, getProviderLoyaltyCustomers, redeemLoyaltyReward, getMyStaffProfile, claimStaffSeatByEmail, getStaffBookings, rescheduleBooking, getProviderNotifyEmail, getMaintenanceStatus, setMaintenanceMode, getSiteOfflineStatus, setSiteOffline, sendEmailOtp, verifyEmailOtp, savePushSubscription, attachBookingServices, getProviderBlocks, insertProviderBlock, deleteProviderBlock } from "./supabase";
+import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, deleteService, getActiveProviders, getProviderDirectory, createBooking, getProviderBusyWindows, createBookingSafe, cancelBooking, getCustomerBookings, uploadReceipt, submitReview, getProviderReviews, updateReview, sendBookingEmail, updateUserProfile, getPaymentMethods, addPaymentMethod, deletePaymentMethod, createNotification, getNotifications, markNotificationRead, markAllNotificationsRead, getCategoryDefaultFeatures, getProviderFeatureOverrides, setProviderFeatureOverride, getVisitNotes, upsertVisitNote, adminListProviders, adminUpdateProvider, adminDeleteProvider, tagVIP, untagVIP, getVIPClients, getFavoriteProviderIds, getFavoriteProviders, addFavorite, removeFavorite, getBookingMessages, sendBookingMessage, markBookingMessagesRead, getUnreadBookingMessages, getProviderMonthlyTrend, createProviderProfile, getProviderById, createWalkInBooking, submitProviderPayment, getMyProviderPayments, adminListProviderPayments, adminReviewProviderPayment, submitVipPayment, getMyVipPayments, adminListVipPayments, adminReviewVipPayment, createVipBooking, submitBookingRefund, adminListBookingRefunds, openPrivateFile, getProviderStaff, addProviderStaff, updateProviderStaff, deleteProviderStaff, getLoyaltyAccount, getProviderLoyaltyCustomers, redeemLoyaltyReward, getMyStaffProfile, claimStaffSeatByEmail, getStaffBookings, getProviderNotifyEmail, getMaintenanceStatus, setMaintenanceMode, getSiteOfflineStatus, setSiteOffline, sendEmailOtp, verifyEmailOtp, savePushSubscription, attachBookingServices, getProviderBlocks, insertProviderBlock, deleteProviderBlock, proposeBookingReschedule, confirmBookingReschedule, declineBookingReschedule, withdrawBookingReschedule } from "./supabase";
 
 // Leaflet's default marker icons reference image paths that don't resolve
 // correctly under CRA's bundler unless re-pointed at the imported assets.
@@ -3233,6 +3233,8 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
   const [myLoyalty, setMyLoyalty] = useState(null);
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [cancellingId, setCancellingId] = useState(null);
+  const [rescheduleRespondingId, setRescheduleRespondingId] = useState(null);
+  const [rescheduleRespondError, setRescheduleRespondError] = useState({});
   const [profileTab, setProfileTab] = useState("services");
   const [hoursExpanded, setHoursExpanded] = useState(false);
   const [bookingService, setBookingService] = useState(null);
@@ -3716,6 +3718,57 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
     setCancellingId(null);
   };
 
+  const handleConfirmReschedule = async (booking) => {
+    setRescheduleRespondingId(booking.id);
+    setRescheduleRespondError((e) => ({ ...e, [booking.id]: "" }));
+    try {
+      await confirmBookingReschedule(booking.id);
+    } catch (err) {
+      setRescheduleRespondingId(null);
+      setRescheduleRespondError((e) => ({
+        ...e,
+        [booking.id]: err.code === "SLOT_TAKEN"
+          ? "That time just got taken. Ask your provider to propose another one."
+          : "Couldn't confirm that time. Please try again.",
+      }));
+      return;
+    }
+    if (booking.provider_profiles?.user_id) {
+      await createNotification({
+        user_id: booking.provider_profiles.user_id,
+        title: "Customer confirmed the new time",
+        body: `${user?.full_name || "The customer"} confirmed the new time for their ${booking.services?.name || "appointment"}.`,
+        type: "booking_reschedule_confirmed",
+        booking_id: booking.id,
+      });
+    }
+    await loadBookings();
+    setRescheduleRespondingId(null);
+  };
+
+  const handleDeclineReschedule = async (booking) => {
+    setRescheduleRespondingId(booking.id);
+    setRescheduleRespondError((e) => ({ ...e, [booking.id]: "" }));
+    try {
+      await declineBookingReschedule(booking.id);
+    } catch (err) {
+      setRescheduleRespondingId(null);
+      setRescheduleRespondError((e) => ({ ...e, [booking.id]: "Couldn't do that. Please try again." }));
+      return;
+    }
+    if (booking.provider_profiles?.user_id) {
+      await createNotification({
+        user_id: booking.provider_profiles.user_id,
+        title: "Customer kept the original time",
+        body: `${user?.full_name || "The customer"} would like to keep the original time for their ${booking.services?.name || "appointment"}.`,
+        type: "booking_reschedule_declined",
+        booking_id: booking.id,
+      });
+    }
+    await loadBookings();
+    setRescheduleRespondingId(null);
+  };
+
   const handleUploadReceipt = async (bookingId, file) => {
     if (!file) return;
     if (file.size > 10 * 1024 * 1024) {
@@ -4120,6 +4173,24 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
                         <div style={{ fontSize: 13, fontWeight: 600, color: "var(--forest)" }}>💸 You were refunded BZ${b.booking_refunds[0].amount}</div>
                         {b.booking_refunds[0].note && <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 4 }}>{b.booking_refunds[0].note}</p>}
                         {b.booking_refunds[0].receipt_url && <a href="#" onClick={(e) => { e.preventDefault(); openPrivateFile(b.booking_refunds[0].receipt_url); }} style={{ fontSize: 12 }}>View proof</a>}
+                      </div>
+                    )}
+
+                    {b.pending_reschedule_date && (
+                      <div style={{ marginTop: 8, background: "var(--sand)", borderRadius: 10, padding: 12 }}>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: "var(--forest)", marginBottom: 4 }}>New time proposed</div>
+                        <p style={{ fontSize: 12.5, color: "var(--dark-text)", marginBottom: 10 }}>
+                          {b.provider_profiles?.business_name || "Your provider"} would like to move this to <strong>{formatBookingWhen({ booking_date: b.pending_reschedule_date, booking_time: b.pending_reschedule_time })}</strong>. Your original time stays booked until you decide.
+                        </p>
+                        {rescheduleRespondError[b.id] && <p style={{ color: "#B91C1C", fontSize: 12, marginBottom: 8 }}>{rescheduleRespondError[b.id]}</p>}
+                        <div style={{ display: "flex", gap: 8 }}>
+                          <button className="btn-sm lime" disabled={rescheduleRespondingId === b.id} onClick={() => handleConfirmReschedule(b)}>
+                            {rescheduleRespondingId === b.id ? "Confirming..." : "Confirm new time"}
+                          </button>
+                          <button className="btn-sm ghost" disabled={rescheduleRespondingId === b.id} onClick={() => handleDeclineReschedule(b)}>
+                            Keep original time
+                          </button>
+                        </div>
                       </div>
                     )}
 
@@ -5611,36 +5682,48 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
     if (!rescheduleForm.date || !rescheduleForm.time) { setRescheduleError("Pick a new date and time."); return; }
     setSavingReschedule(true);
     setRescheduleError("");
-    let moved = null;
+    const proposedWhen = formatBookingWhen({ booking_date: rescheduleForm.date, booking_time: rescheduleForm.time });
     try {
-      moved = await rescheduleBooking(booking.id, rescheduleForm.date, rescheduleForm.time);
+      await proposeBookingReschedule(booking.id, rescheduleForm.date, rescheduleForm.time);
     } catch (err) {
       setSavingReschedule(false);
       setRescheduleError(err.code === "SLOT_TAKEN"
         ? "You already have a booking overlapping that time. Pick another slot."
-        : "Couldn't move that booking. Please try again.");
+        : "Couldn't propose that time. Please try again.");
       return;
     }
     setSavingReschedule(false);
-    if (!moved) { setRescheduleError("Couldn't move that booking. Please try again."); return; }
 
     if (booking.customer_id) {
       await createNotification({
         user_id: booking.customer_id,
-        title: "Your booking was moved",
-        body: `${providerProfile?.business_name || "Your provider"} moved your ${booking.services?.name || "appointment"} to ${formatBookingWhen(moved)}.`,
-        type: "booking_rescheduled",
+        title: "New time proposed for your booking",
+        body: `${providerProfile?.business_name || "Your provider"} would like to move your ${booking.services?.name || "appointment"} to ${proposedWhen}. Please confirm.`,
+        type: "booking_reschedule_proposed",
         booking_id: booking.id,
       });
       if (booking.users?.email) {
         await sendBookingEmail({
           to: booking.users.email,
-          subject: `Your booking has been moved to ${formatBookingWhen(moved)}`,
-          html: `<p>Hi ${booking.users?.full_name || "there"},</p><p>${providerProfile?.business_name || "Your provider"} moved your <strong>${booking.services?.name || "appointment"}</strong> to <strong>${formatBookingWhen(moved)}</strong>.</p><p>If that doesn't work for you, reply to them directly through the booking chat on VaiBook.</p>`,
+          subject: `${providerProfile?.business_name || "Your provider"} proposed a new time for your booking`,
+          html: `<p>Hi ${booking.users?.full_name || "there"},</p><p>${providerProfile?.business_name || "Your provider"} would like to move your <strong>${booking.services?.name || "appointment"}</strong> to <strong>${proposedWhen}</strong>.</p><p>Nothing has changed yet — open VaiBook and confirm or keep your original time from your bookings list.</p>`,
         });
       }
     }
     setReschedulingId(null);
+    await loadBookings();
+  };
+
+  const [withdrawingId, setWithdrawingId] = useState(null);
+  const withdrawReschedule = async (booking) => {
+    setWithdrawingId(booking.id);
+    try {
+      await withdrawBookingReschedule(booking.id);
+    } catch (err) {
+      setWithdrawingId(null);
+      return;
+    }
+    setWithdrawingId(null);
     await loadBookings();
   };
 
@@ -6496,8 +6579,13 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                           cancellable — otherwise a sick day, or a customer who
                           never pays their deposit, blocks that slot forever and
                           no refund can be recorded against it. */}
-                      {["pending", "awaiting_payment", "confirmed"].includes(b.status) && reschedulingId !== b.id && (
+                      {["pending", "awaiting_payment", "confirmed"].includes(b.status) && reschedulingId !== b.id && !b.pending_reschedule_date && (
                         <button className="btn-sm ghost" disabled={busyId === b.id} onClick={() => openReschedule(b)}>Reschedule</button>
+                      )}
+                      {b.pending_reschedule_date && (
+                        <button className="btn-sm ghost" disabled={withdrawingId === b.id} onClick={() => withdrawReschedule(b)}>
+                          {withdrawingId === b.id ? "Withdrawing..." : "Withdraw proposal"}
+                        </button>
                       )}
                       {["awaiting_payment", "confirmed"].includes(b.status) && (
                         <button className="btn-sm ghost" disabled={busyId === b.id} onClick={() => act(b.id, "cancelled")}>Cancel</button>
@@ -6510,9 +6598,15 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
 
                   {b.notes && <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 6 }}>Customer note: {b.notes}</p>}
 
+                  {b.pending_reschedule_date && (
+                    <p style={{ fontSize: 12, color: "var(--forest)", marginTop: 6, fontWeight: 600 }}>
+                      Waiting on customer to confirm the new time: {formatBookingWhen({ booking_date: b.pending_reschedule_date, booking_time: b.pending_reschedule_time })}
+                    </p>
+                  )}
+
                   {reschedulingId === b.id && (
                     <div style={{ marginTop: 10, background: "var(--sand)", borderRadius: 8, padding: 12 }}>
-                      <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 8 }}>Move this appointment</div>
+                      <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 8 }}>Propose a new time</div>
                       <div className="form-row">
                         <div className="input-group">
                           <label>New date</label>
@@ -6525,11 +6619,11 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                       </div>
                       {rescheduleError && <p style={{ color: "#B91C1C", fontSize: 12, marginBottom: 8 }}>{rescheduleError}</p>}
                       <div style={{ display: "flex", gap: 8 }}>
-                        <button className="btn-sm lime" disabled={savingReschedule} onClick={() => submitReschedule(b)}>{savingReschedule ? "Moving..." : "Save new time"}</button>
+                        <button className="btn-sm lime" disabled={savingReschedule} onClick={() => submitReschedule(b)}>{savingReschedule ? "Sending..." : "Propose new time"}</button>
                         <button className="btn-sm ghost" onClick={closeReschedule}>Cancel</button>
                       </div>
                       <p style={{ fontSize: 11, color: "var(--muted)", marginTop: 8 }}>
-                        The customer is notified and emailed the new time. VaiBook won't let you move it on top of another booking.
+                        The customer is notified and emailed, but the appointment won't move until they confirm the new time. They can also keep the original time instead.
                       </p>
                     </div>
                   )}
