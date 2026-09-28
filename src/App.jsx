@@ -764,8 +764,8 @@ const css = `
   .sheet-panel { background: white; width: 100%; max-width: 520px; border-radius: 20px 20px 0 0; padding: 14px 20px calc(22px + env(safe-area-inset-bottom)); animation: sheetUp .22s ease-out; }
   @keyframes sheetUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
   .sheet-handle { width: 40px; height: 4px; background: var(--border); border-radius: 2px; margin: 0 auto 18px; }
-  .preset-row { display: flex; gap: 8px; margin: 10px 0 20px; }
-  .preset-btn { flex: 1; padding: 16px 0; border-radius: 12px; border: 1.5px solid var(--border); background: #fff; font-weight: 800; font-size: 15px; color: var(--dark-text); cursor: pointer; }
+  .preset-row { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 20px; }
+  .preset-btn { flex: 1 1 21%; min-width: 78px; padding: 16px 0; border-radius: 12px; border: 1.5px solid var(--border); background: #fff; font-weight: 800; font-size: 14px; color: var(--dark-text); cursor: pointer; }
   .preset-btn.active { border-color: var(--lime); background: var(--forest); color: var(--near-white); }
   .block-type-row { display: flex; gap: 8px; margin-bottom: 4px; }
   .block-type-btn { flex: 1; padding: 12px 0; border-radius: 10px; border: 1.5px solid var(--border); background: #fff; font-weight: 700; font-size: 13px; color: var(--dark-text); cursor: pointer; }
@@ -774,6 +774,13 @@ const css = `
   /* PANIC BUTTON */
   .panic-btn { width: 100%; background: var(--lime); color: var(--forest); border: none; border-radius: 16px; padding: 22px 16px; font-size: 19px; font-weight: 800; cursor: pointer; box-shadow: 0 6px 0 var(--forest-light); letter-spacing: -0.01em; transition: transform .08s, box-shadow .08s; }
   .panic-btn:active { transform: translateY(4px); box-shadow: 0 2px 0 var(--forest-light); }
+  .panic-btn:disabled { opacity: .55; cursor: not-allowed; box-shadow: none; }
+  /* Secondary quick action — same touch target size as .panic-btn so it
+     reads as an equally-tappable option, just visually quieter (outline,
+     no fill) so Walk-In stays the obvious primary choice. */
+  .panic-btn-secondary { width: 100%; background: #fff; color: var(--forest); border: 2px solid var(--forest); border-radius: 16px; padding: 20px 16px; font-size: 17px; font-weight: 800; cursor: pointer; letter-spacing: -0.01em; transition: transform .08s, background .15s; }
+  .panic-btn-secondary:active { transform: translateY(2px); background: var(--sand); }
+  .panic-btn-secondary:disabled { opacity: .55; cursor: not-allowed; }
   .block-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); }
   .block-row .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--clay); flex-shrink: 0; }
 
@@ -822,6 +829,8 @@ const css = `
      business / Menu row otherwise overflows below ~430px). */
   .mobile-only-item { display: none; }
   @media (max-width: 480px) {
+    .quick-actions-row { flex-direction: column; }
+    .panic-btn, .panic-btn-secondary { font-size: 17px; padding: 18px 16px; }
     .nav { padding: 14px 16px; }
     .nav-logo { font-size: 18px; }
     .nav-cta { gap: 8px; }
@@ -5211,15 +5220,14 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
   // one tap without touching a form.
   const [blocks, setBlocks] = useState([]);
   const [loadingBlocks, setLoadingBlocks] = useState(false);
-  const [blockingQuick, setBlockingQuick] = useState(false);
   const [resumingNow, setResumingNow] = useState(false);
   const [showBlockSheet, setShowBlockSheet] = useState(false);
   const [blockSheetType, setBlockSheetType] = useState("walkin");
-  // "in30m" | "in1h" | "custom" — the bottom sheet asks "when will you be
-  // back" and works out the end time from that, rather than asking for a
-  // duration. blockSheetResumeAt is only used when mode is "custom", as an
-  // <input type="time"> value ("HH:MM").
-  const [blockSheetResumeMode, setBlockSheetResumeMode] = useState("in30m");
+  // "in15m" | "in30m" | "in1h" | "custom" — the bottom sheet asks "when
+  // will you be back" and works out the end time from that, rather than
+  // asking for a duration. blockSheetResumeAt is only used when mode is
+  // "custom", as an <input type="time"> value ("HH:MM").
+  const [blockSheetResumeMode, setBlockSheetResumeMode] = useState("in15m");
   const [blockSheetResumeAt, setBlockSheetResumeAt] = useState("");
   const [savingBlock, setSavingBlock] = useState(false);
   const [blockError, setBlockError] = useState("");
@@ -5246,8 +5254,8 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
   }, [providerId]);
 
   // Builds a { block_date, start_time, end_time } window starting right now
-  // and ending at `end` (a Date) — shared by the 1-tap walk-in button
-  // (always now+30m) and the bottom sheet's resume-time options.
+  // and ending at `end` (a Date), for whichever resume-time option the
+  // Custom Block sheet's submit picked.
   const buildBlockWindow = (end) => {
     const now = new Date();
     return { block_date: localDateStr(now), start_time: localTimeStr(now), end_time: localTimeStr(end) };
@@ -5262,18 +5270,9 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
     return nowT >= bl.start_time && nowT < bl.end_time;
   }) || null;
 
-  const quickBlockWalkIn = async () => {
-    if (!providerId || blockingQuick) return;
-    setBlockingQuick(true);
-    const window_ = buildBlockWindow(new Date(Date.now() + 30 * 60000));
-    await insertProviderBlock({ provider_id: providerId, block_type: "walkin", ...window_ });
-    await loadBlocks();
-    setBlockingQuick(false);
-  };
-
   const openBlockSheet = () => {
     setBlockSheetType("walkin");
-    setBlockSheetResumeMode("in30m");
+    setBlockSheetResumeMode("in15m");
     setBlockSheetResumeAt(localTimeStr(new Date(Date.now() + 60 * 60000)));
     setBlockError("");
     setShowBlockSheet(true);
@@ -5284,6 +5283,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
   // selected. Returns null if a custom time hasn't been picked yet.
   const resolveBlockSheetEnd = () => {
     const now = new Date();
+    if (blockSheetResumeMode === "in15m") return new Date(now.getTime() + 15 * 60000);
     if (blockSheetResumeMode === "in30m") return new Date(now.getTime() + 30 * 60000);
     if (blockSheetResumeMode === "in1h") return new Date(now.getTime() + 60 * 60000);
     if (!blockSheetResumeAt) return null;
@@ -6463,50 +6463,40 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
               <p>{now.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })} · {todaysBookings.length} appointment{todaysBookings.length === 1 ? "" : "s"} today</p>
             </div>
 
-            {/* WALK-IN SALE — the primary POS action. A customer paying at
-                the counter right now, in one tap into a service list, no
-                form. Sits above the blocking controls since logging revenue
-                is the more common action than pausing the calendar. */}
-            <button
-              className="panic-btn"
-              style={{ width: "100%", marginBottom: 12 }}
-              onClick={openWalkInSheet}
-              disabled={activeServices.length === 0}
-            >
-              🧾 Walk-In Sale
-            </button>
-            {activeServices.length === 0 && (
-              <p style={{ fontSize: 12, color: "var(--muted)", margin: "-6px 0 12px" }}>Add a service under Services to start logging walk-in sales.</p>
-            )}
-
-            {/* RESUME BOOKINGS NOW — only shown while a block is actively
-                covering this exact moment. One tap, no confirmation: coming
-                back early should reopen the calendar just as fast as
-                blocking it did. */}
-            {activeBlock && (
+            {/* ZERO-FRICTION QUICK ACTIONS — exactly two buttons, or one.
+                Normally: Walk-In (primary, revenue) + Custom Block
+                (secondary, pause). The instant a block is active, both
+                collapse into a single massive Resume Bookings Now button —
+                there is never a third option cluttering this row. */}
+            {activeBlock ? (
               <button
                 className="panic-btn"
-                style={{ width: "100%", marginBottom: 12 }}
+                style={{ width: "100%", marginBottom: 20 }}
                 onClick={resumeBookingsNow}
                 disabled={resumingNow}
               >
                 {resumingNow ? "Reopening..." : `✅ Resume Bookings Now (blocked until ${formatBookingTime(activeBlock.end_time)})`}
               </button>
+            ) : (
+              <>
+                <div className="quick-actions-row" style={{ display: "flex", gap: 10, alignItems: "stretch", marginBottom: activeServices.length === 0 ? 4 : 20 }}>
+                  <button
+                    className="panic-btn"
+                    style={{ flex: 3, marginBottom: 0 }}
+                    onClick={openWalkInSheet}
+                    disabled={activeServices.length === 0}
+                  >
+                    🧾 Walk-In
+                  </button>
+                  <button className="panic-btn-secondary" style={{ flex: 2 }} onClick={openBlockSheet}>
+                    ⏸ Custom Block
+                  </button>
+                </div>
+                {activeServices.length === 0 && (
+                  <p style={{ fontSize: 12, color: "var(--muted)", margin: "0 0 20px" }}>Add a service under Services to start logging walk-in sales.</p>
+                )}
+              </>
             )}
-
-            {/* 1-TAP DASHBOARD BLOCKING — pauses the calendar (no revenue
-                involved, unlike Walk-In Sale above). No modal, no
-                confirmation: tapping it blocks the next 30 minutes on the
-                spot, because whoever needs this is mid-haircut with clippers
-                in hand, not free to fill out a form. */}
-            <div style={{ display: "flex", gap: 10, alignItems: "stretch", marginBottom: 20 }}>
-              <button className="btn-sm ghost" style={{ flex: 2, fontSize: 14, fontWeight: 700, padding: "14px 0" }} onClick={quickBlockWalkIn} disabled={blockingQuick}>
-                {blockingQuick ? "Blocking..." : "⏸ Pause calendar (30m)"}
-              </button>
-              <button className="btn-sm ghost" style={{ flex: 1, fontSize: 14, fontWeight: 700 }} onClick={openBlockSheet}>
-                Custom block
-              </button>
-            </div>
 
             <div className="metric-grid">
               <div className="metric"><div className="metric-label">This month earnings</div><div className="metric-value" style={{ color: "var(--forest-light)" }}>BZ${thisMonthEarnings.toFixed(0)}</div><div className="metric-sub">{thisMonthCompletedCount} completed this month</div></div>
@@ -7819,9 +7809,11 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
       </main>
 
       {/* CUSTOM BLOCK — bottom sheet, not a modal: pick Walk-in or Break,
-          then say when you'll be back — "In 30m", "In 1h", or an exact
-          resume time. The block always starts right now, same as the panic
-          button; only the end time is asked for. */}
+          then say when you'll be back — "In 15m", "In 30m", "In 1h", or an
+          exact resume time. The block always starts right now; only the
+          end time is asked for. This is the ONLY pause/break entry point
+          on the dashboard now — the old standalone one-tap 30-min button
+          was removed so there's exactly one place this can happen. */}
       {showBlockSheet && (
         <div className="sheet-overlay" onClick={closeBlockSheet}>
           <div className="sheet-panel" onClick={(e) => e.stopPropagation()}>
@@ -7833,8 +7825,9 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
               <button className={`block-type-btn ${blockSheetType === "break" ? "active" : ""}`} onClick={() => setBlockSheetType("break")}>☕ Break</button>
             </div>
             <div className="preset-row">
-              <button className={`preset-btn ${blockSheetResumeMode === "in30m" ? "active" : ""}`} onClick={() => setBlockSheetResumeMode("in30m")}>In 30m</button>
-              <button className={`preset-btn ${blockSheetResumeMode === "in1h" ? "active" : ""}`} onClick={() => setBlockSheetResumeMode("in1h")}>In 1h</button>
+              <button className={`preset-btn ${blockSheetResumeMode === "in15m" ? "active" : ""}`} onClick={() => setBlockSheetResumeMode("in15m")}>15m</button>
+              <button className={`preset-btn ${blockSheetResumeMode === "in30m" ? "active" : ""}`} onClick={() => setBlockSheetResumeMode("in30m")}>30m</button>
+              <button className={`preset-btn ${blockSheetResumeMode === "in1h" ? "active" : ""}`} onClick={() => setBlockSheetResumeMode("in1h")}>1h</button>
               <button className={`preset-btn ${blockSheetResumeMode === "custom" ? "active" : ""}`} onClick={() => setBlockSheetResumeMode("custom")}>Resume at...</button>
             </div>
             {blockSheetResumeMode === "custom" && (
