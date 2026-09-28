@@ -1483,6 +1483,10 @@ const localDateStr = (d = new Date()) => {
   return `${y}-${m}-${day}`;
 };
 
+// "HH:MM" for a Date, in local time — matches the start_time/end_time format
+// provider_blocks stores, so it can be compared against them directly.
+const localTimeStr = (d = new Date()) => `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+
 const DAYS = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
 const DAY_NAMES = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
 const DEFAULT_HOURS = DAY_NAMES.map((day, i) => ({
@@ -5178,11 +5182,26 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
   const [blocks, setBlocks] = useState([]);
   const [loadingBlocks, setLoadingBlocks] = useState(false);
   const [blockingQuick, setBlockingQuick] = useState(false);
+  const [resumingNow, setResumingNow] = useState(false);
   const [showBlockSheet, setShowBlockSheet] = useState(false);
   const [blockSheetType, setBlockSheetType] = useState("walkin");
-  const [blockSheetMinutes, setBlockSheetMinutes] = useState(30);
+  // "in1h" | "in2h" | "custom" — the bottom sheet asks "when will you be
+  // back" and works out the end time from that, rather than asking for a
+  // duration. blockSheetResumeAt is only used when mode is "custom", as an
+  // <input type="time"> value ("HH:MM").
+  const [blockSheetResumeMode, setBlockSheetResumeMode] = useState("in1h");
+  const [blockSheetResumeAt, setBlockSheetResumeAt] = useState("");
   const [savingBlock, setSavingBlock] = useState(false);
   const [blockError, setBlockError] = useState("");
+
+  // Forces a re-render every 30s purely so "is a block active right now"
+  // (and the Resume Bookings Now button below) stays accurate as the clock
+  // ticks past a block's end time, without needing any user action.
+  const [, setClockTick] = useState(0);
+  useEffect(() => {
+    const t = setInterval(() => setClockTick((x) => x + 1), 30000);
+    return () => clearInterval(t);
+  }, []);
 
   const loadBlocks = async () => {
     if (!providerId) return;
@@ -5197,19 +5216,26 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
   }, [providerId]);
 
   // Builds a { block_date, start_time, end_time } window starting right now
-  // for `minutes` long — shared by both the 1-tap button and the bottom
-  // sheet's presets, since both just block "from now."
-  const buildNowBlock = (minutes) => {
+  // and ending at `end` (a Date) — shared by the 1-tap walk-in button
+  // (always now+30m) and the bottom sheet's resume-time options.
+  const buildBlockWindow = (end) => {
     const now = new Date();
-    const end = new Date(now.getTime() + minutes * 60000);
-    const toTime = (d) => `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
-    return { block_date: localDateStr(now), start_time: toTime(now), end_time: toTime(end) };
+    return { block_date: localDateStr(now), start_time: localTimeStr(now), end_time: localTimeStr(end) };
   };
+
+  // The block (if any) whose window covers this exact moment, today — drives
+  // the "Resume Bookings Now" button. provider_blocks has no end_date, so a
+  // block never spans midnight; "today" is the only day worth checking.
+  const activeBlock = blocks.find((bl) => {
+    if (bl.block_date !== localDateStr()) return false;
+    const nowT = localTimeStr();
+    return nowT >= bl.start_time && nowT < bl.end_time;
+  }) || null;
 
   const quickBlockWalkIn = async () => {
     if (!providerId || blockingQuick) return;
     setBlockingQuick(true);
-    const window_ = buildNowBlock(30);
+    const window_ = buildBlockWindow(new Date(Date.now() + 30 * 60000));
     await insertProviderBlock({ provider_id: providerId, block_type: "walkin", ...window_ });
     await loadBlocks();
     setBlockingQuick(false);
@@ -5217,17 +5243,36 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
 
   const openBlockSheet = () => {
     setBlockSheetType("walkin");
-    setBlockSheetMinutes(30);
+    setBlockSheetResumeMode("in1h");
+    setBlockSheetResumeAt(localTimeStr(new Date(Date.now() + 60 * 60000)));
     setBlockError("");
     setShowBlockSheet(true);
   };
   const closeBlockSheet = () => setShowBlockSheet(false);
 
+  // Works out the actual end-of-block Date from whichever resume option is
+  // selected. Returns null if a custom time hasn't been picked yet.
+  const resolveBlockSheetEnd = () => {
+    const now = new Date();
+    if (blockSheetResumeMode === "in1h") return new Date(now.getTime() + 60 * 60000);
+    if (blockSheetResumeMode === "in2h") return new Date(now.getTime() + 120 * 60000);
+    if (!blockSheetResumeAt) return null;
+    const [h, m] = blockSheetResumeAt.split(":").map(Number);
+    const end = new Date(now);
+    end.setHours(h, m, 0, 0);
+    return end;
+  };
+
   const submitBlockSheet = async () => {
     if (!providerId) return;
+    const end = resolveBlockSheetEnd();
+    if (!end || end <= new Date()) {
+      setBlockError("Pick a resume time later today.");
+      return;
+    }
     setSavingBlock(true);
     setBlockError("");
-    const window_ = buildNowBlock(blockSheetMinutes);
+    const window_ = buildBlockWindow(end);
     const created = await insertProviderBlock({ provider_id: providerId, block_type: blockSheetType, ...window_ });
     setSavingBlock(false);
     if (!created) { setBlockError("Couldn't save that block. Please try again."); return; }
@@ -5239,6 +5284,17 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
     if (!window.confirm("Remove this block? The time will open back up for booking.")) return;
     await deleteProviderBlock(blockId);
     await loadBlocks();
+  };
+
+  // "I'm Back" — resuming early is the whole point of this feature, so it's
+  // one tap and no confirmation dialog, unlike manually removing a block
+  // from the list above.
+  const resumeBookingsNow = async () => {
+    if (!activeBlock || resumingNow) return;
+    setResumingNow(true);
+    await deleteProviderBlock(activeBlock.id);
+    await loadBlocks();
+    setResumingNow(false);
   };
 
   const loadPaymentMethods = async () => {
@@ -6301,6 +6357,21 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
               <h2>Dashboard</h2>
               <p>{now.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })} · {todaysBookings.length} appointment{todaysBookings.length === 1 ? "" : "s"} today</p>
             </div>
+
+            {/* RESUME BOOKINGS NOW — only shown while a block is actively
+                covering this exact moment. One tap, no confirmation: coming
+                back early should reopen the calendar just as fast as
+                blocking it did. */}
+            {activeBlock && (
+              <button
+                className="panic-btn"
+                style={{ width: "100%", marginBottom: 12 }}
+                onClick={resumeBookingsNow}
+                disabled={resumingNow}
+              >
+                {resumingNow ? "Reopening..." : `✅ Resume Bookings Now (blocked until ${formatBookingTime(activeBlock.end_time)})`}
+              </button>
+            )}
 
             {/* 1-TAP DASHBOARD BLOCKING — the "panic button". No modal, no
                 confirmation: tapping it blocks the next 30 minutes on the
@@ -7617,28 +7688,36 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
       </main>
 
       {/* CUSTOM BLOCK — bottom sheet, not a modal: pick Walk-in or Break,
-          tap a preset duration, done. No time-of-day picker on purpose —
-          it always blocks starting right now, same as the panic button. */}
+          then say when you'll be back — "In 1h", "In 2h", or an exact
+          resume time. The block always starts right now, same as the panic
+          button; only the end time is asked for. */}
       {showBlockSheet && (
         <div className="sheet-overlay" onClick={closeBlockSheet}>
           <div className="sheet-panel" onClick={(e) => e.stopPropagation()}>
             <div className="sheet-handle"></div>
-            <h3 style={{ fontSize: 17, fontWeight: 800, margin: "0 0 4px", color: "var(--dark-text)" }}>Block your calendar</h3>
-            <p style={{ fontSize: 13, color: "var(--muted)", margin: "0 0 16px" }}>Starts right now.</p>
+            <h3 style={{ fontSize: 17, fontWeight: 800, margin: "0 0 4px", color: "var(--dark-text)" }}>When will you be back?</h3>
+            <p style={{ fontSize: 13, color: "var(--muted)", margin: "0 0 16px" }}>Blocks your calendar starting right now.</p>
             <div className="block-type-row">
               <button className={`block-type-btn ${blockSheetType === "walkin" ? "active" : ""}`} onClick={() => setBlockSheetType("walkin")}>🚶 Walk-in</button>
               <button className={`block-type-btn ${blockSheetType === "break" ? "active" : ""}`} onClick={() => setBlockSheetType("break")}>☕ Break</button>
             </div>
             <div className="preset-row">
-              {[15, 30, 60].map((m) => (
-                <button key={m} className={`preset-btn ${blockSheetMinutes === m ? "active" : ""}`} onClick={() => setBlockSheetMinutes(m)}>
-                  {m < 60 ? `${m}m` : "1h"}
-                </button>
-              ))}
+              <button className={`preset-btn ${blockSheetResumeMode === "in1h" ? "active" : ""}`} onClick={() => setBlockSheetResumeMode("in1h")}>In 1h</button>
+              <button className={`preset-btn ${blockSheetResumeMode === "in2h" ? "active" : ""}`} onClick={() => setBlockSheetResumeMode("in2h")}>In 2h</button>
+              <button className={`preset-btn ${blockSheetResumeMode === "custom" ? "active" : ""}`} onClick={() => setBlockSheetResumeMode("custom")}>Resume at...</button>
             </div>
+            {blockSheetResumeMode === "custom" && (
+              <div className="input-group" style={{ marginBottom: 12 }}>
+                <label>Resume at</label>
+                <input type="time" value={blockSheetResumeAt} onChange={(e) => setBlockSheetResumeAt(e.target.value)} />
+              </div>
+            )}
             {blockError && <p style={{ fontSize: 12, color: "#B91C1C", marginBottom: 12 }}>{blockError}</p>}
             <button className="btn-sm forest" style={{ width: "100%", padding: "14px 0", fontSize: 15, borderRadius: 12 }} disabled={savingBlock} onClick={submitBlockSheet}>
-              {savingBlock ? "Blocking..." : `Block ${blockSheetMinutes < 60 ? `${blockSheetMinutes}m` : "1h"} now`}
+              {savingBlock ? "Blocking..." : (() => {
+                const end = resolveBlockSheetEnd();
+                return end && end > new Date() ? `Block until ${formatBookingTime(localTimeStr(end))}` : "Block calendar";
+              })()}
             </button>
             <button className="btn-sm ghost" style={{ width: "100%", padding: "12px 0", marginTop: 8 }} onClick={closeBlockSheet}>Cancel</button>
           </div>
