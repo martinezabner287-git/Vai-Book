@@ -503,6 +503,14 @@ const css = `
   .pricing-features li .check { color: var(--forest); font-weight: 700; flex-shrink: 0; }
   .pricing-cta { width: 100%; text-align: center; }
   .pricing-foot-note { text-align: center; font-size: 13px; color: var(--muted); margin-top: 32px; max-width: 620px; margin-left: auto; margin-right: auto; }
+  .vai-creative-banner { position: relative; overflow: hidden; max-width: 780px; margin: 56px auto 0; text-align: center; background: linear-gradient(160deg, var(--forest) 0%, #0A2A20 100%); border: 1px solid rgba(198,241,53,0.25); border-radius: 24px; padding: 52px 40px; box-shadow: 0 24px 60px rgba(13,61,46,0.28); }
+  .vai-creative-banner::before { content: ""; position: absolute; top: -60px; right: -60px; width: 220px; height: 220px; background: radial-gradient(circle, rgba(198,241,53,0.18) 0%, rgba(198,241,53,0) 70%); pointer-events: none; }
+  .vai-creative-eyebrow { display: inline-flex; align-items: center; gap: 6px; background: rgba(198,241,53,0.12); color: var(--lime); font-size: 11px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; padding: 7px 16px; border-radius: 100px; margin-bottom: 18px; border: 1px solid rgba(198,241,53,0.3); }
+  .vai-creative-title { color: #FFFFFF; font-size: 27px; font-weight: 800; margin: 0 0 14px; letter-spacing: -0.01em; position: relative; }
+  .vai-creative-copy { color: rgba(245,239,224,0.78); font-size: 15.5px; line-height: 1.6; max-width: 520px; margin: 0 auto 30px; position: relative; }
+  .vai-creative-btn { display: inline-block; background: var(--lime); color: var(--forest); font-weight: 800; font-size: 15px; padding: 15px 34px; border-radius: 14px; text-decoration: none; box-shadow: 0 10px 26px rgba(198,241,53,0.25); position: relative; }
+  .vai-creative-alt { margin: 14px 0 0; font-size: 12.5px; position: relative; }
+  .vai-creative-alt a { color: rgba(245,239,224,0.65); text-decoration: underline; }
   .for-business-cta { background: var(--forest); padding: 96px 24px; text-align: center; }
   .for-business-inner { max-width: 640px; margin: 0 auto; }
   .for-business-headline { color: #FFFFFF; font-weight: 800; font-size: 40px; line-height: 1.15; margin: 0 0 20px; letter-spacing: -0.01em; }
@@ -602,6 +610,14 @@ const css = `
   .toggle::after { content: ''; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; background: white; border-radius: 50%; transition: transform .2s; }
   .toggle.on::after { transform: translateX(18px); }
   .card-title { font-size: 16px; font-weight: 600; color: var(--forest); margin-bottom: 16px; }
+
+  /* VAI CREATIVE — dashboard promo card (Availability tab). Small and
+     dark against the light dashboard cards around it so it reads as a
+     premium aside, not another form to fill in. */
+  .vai-creative-promo { margin-top: 24px; background: linear-gradient(160deg, var(--forest) 0%, #0A2A20 100%); border: 1px solid rgba(198,241,53,0.22); border-radius: 16px; padding: 22px 26px; display: flex; align-items: center; justify-content: space-between; gap: 18px; flex-wrap: wrap; }
+  .vai-creative-promo-text strong { display: block; font-size: 14.5px; font-weight: 800; color: #FFFFFF; margin-bottom: 4px; }
+  .vai-creative-promo-text span { font-size: 12.5px; color: rgba(245,239,224,0.7); line-height: 1.5; }
+  .vai-creative-promo-btn { flex-shrink: 0; background: var(--lime); color: var(--forest); font-weight: 800; font-size: 13px; padding: 11px 20px; border-radius: 10px; text-decoration: none; white-space: nowrap; }
 
   /* SEARCH BAR */
   .search-bar { position: relative; background: white; border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 20px; display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
@@ -788,6 +804,8 @@ const css = `
     .for-business-cta { padding: 72px 20px; }
     .for-business-headline { font-size: 30px; }
     .for-business-sub { font-size: 15.5px; }
+    .vai-creative-banner { padding: 36px 22px; margin-top: 40px; }
+    .vai-creative-title { font-size: 22px; }
     .footer { padding: 40px 24px 24px; }
     .a2hs-banner { left: 12px; right: 12px; bottom: 12px; padding: 12px; }
     .profile-scroll { padding: 20px; }
@@ -2967,6 +2985,18 @@ function LandingPage({ onNav, session, onSignIn, onSignOut }) {
           ))}
         </div>
         <p className="pricing-foot-note">Every plan includes invoices, refund tracking, and your own booking page. Change plans anytime — email us and we'll switch you at the end of your current billing period.</p>
+
+        {/* VAI CREATIVE — a premium agency add-on, deliberately separated
+            from the Solo/Team self-serve pricing above: no price shown, no
+            "Buy" button, just an inquiry CTA, so it never adds checkout
+            friction to the core SaaS signup. */}
+        <div className="vai-creative-banner">
+          <div className="vai-creative-eyebrow">✨ Vai Creative</div>
+          <h3 className="vai-creative-title">Vai Creative: Content &amp; Growth</h3>
+          <p className="vai-creative-copy">Need fresh content? We bring the cameras to your shop. High-quality Reels, profile photos, and social media management designed to get you more bookings.</p>
+          <a className="vai-creative-btn" href={vaiCreativeWhatsAppUrl("pricing page")} target="_blank" rel="noreferrer">Inquire Now</a>
+          <p className="vai-creative-alt"><a href={vaiCreativeMailtoUrl()}>or email us</a></p>
+        </div>
       </section>
 
       {/* FOR BUSINESS — conversion block, right above the footer. Deliberately
@@ -7010,6 +7040,15 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                 <button className="btn-sm forest" style={{ marginTop: 12 }} onClick={saveLunchSettings} disabled={savingLunch}>{savingLunch ? "Saving..." : "Save lunch break"}</button>
               </div>
             </div>
+
+            {/* VAI CREATIVE — non-intrusive promo, bottom of Availability. */}
+            <div className="vai-creative-promo">
+              <div className="vai-creative-promo-text">
+                <strong>✨ Vai Creative</strong>
+                <span>Stand out from the crowd. Book a professional Vai Creative photo/video shoot for your shop.</span>
+              </div>
+              <a className="vai-creative-promo-btn" href={vaiCreativeWhatsAppUrl("provider dashboard")} target="_blank" rel="noreferrer">Contact Us</a>
+            </div>
           </>
         )}
 
@@ -7990,6 +8029,19 @@ const SIGNUP_CSS = `
 // seats and featured search placement). The "✓ Pro"/"✓ Business" badge on
 // a provider's listing is likewise real and enforced (see planBadge()) —
 // it only reflects which plan a provider is paying for, nothing more.
+// ── VAI CREATIVE — a separate, high-end agency add-on (photo/video shoots,
+// social management), deliberately kept OUT of the self-serve plan grid
+// above so it never shows a price or a "Buy" button next to it — it's an
+// inquiry, not a checkout. Both CTAs below open a prefilled WhatsApp chat;
+// TODO Abner: replace this placeholder number (and the fallback email) with
+// Vai Creative's real contact info before this goes live.
+const VAI_CREATIVE_WHATSAPP = "50100000000"; // digits only: country code + number, no +, no spaces
+const VAI_CREATIVE_EMAIL = "creative@vaibook.bz";
+const vaiCreativeWhatsAppUrl = (source) =>
+  `https://wa.me/${VAI_CREATIVE_WHATSAPP}?text=${encodeURIComponent(`Hi! I'm interested in a Vai Creative photo/video shoot for my shop. (via ${source})`)}`;
+const vaiCreativeMailtoUrl = () =>
+  `mailto:${VAI_CREATIVE_EMAIL}?subject=${encodeURIComponent("Vai Creative inquiry")}&body=${encodeURIComponent("Hi, I'd like to book a Vai Creative photo/video shoot for my shop.")}`;
+
 const PLANS = [
   {
     id: "starter", name: "Starter", price: "Free", desc: "Up to 30 bookings/month", monthly: 0,
