@@ -767,9 +767,6 @@ const css = `
   .preset-row { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 20px; }
   .preset-btn { flex: 1 1 21%; min-width: 78px; padding: 16px 0; border-radius: 12px; border: 1.5px solid var(--border); background: #fff; font-weight: 800; font-size: 14px; color: var(--dark-text); cursor: pointer; }
   .preset-btn.active { border-color: var(--lime); background: var(--forest); color: var(--near-white); }
-  .block-type-row { display: flex; gap: 8px; margin-bottom: 4px; }
-  .block-type-btn { flex: 1; padding: 12px 0; border-radius: 10px; border: 1.5px solid var(--border); background: #fff; font-weight: 700; font-size: 13px; color: var(--dark-text); cursor: pointer; }
-  .block-type-btn.active { border-color: var(--forest); background: var(--sand); color: var(--forest); }
 
   /* PANIC BUTTON */
   .panic-btn { width: 100%; background: var(--lime); color: var(--forest); border: none; border-radius: 16px; padding: 22px 16px; font-size: 19px; font-weight: 800; cursor: pointer; box-shadow: 0 6px 0 var(--forest-light); letter-spacing: -0.01em; transition: transform .08s, box-shadow .08s; }
@@ -5222,7 +5219,6 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
   const [loadingBlocks, setLoadingBlocks] = useState(false);
   const [resumingNow, setResumingNow] = useState(false);
   const [showBlockSheet, setShowBlockSheet] = useState(false);
-  const [blockSheetType, setBlockSheetType] = useState("walkin");
   // "in15m" | "in30m" | "in1h" | "custom" — the bottom sheet asks "when
   // will you be back" and works out the end time from that, rather than
   // asking for a duration. blockSheetResumeAt is only used when mode is
@@ -5271,7 +5267,6 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
   }) || null;
 
   const openBlockSheet = () => {
-    setBlockSheetType("walkin");
     setBlockSheetResumeMode("in15m");
     setBlockSheetResumeAt(localTimeStr(new Date(Date.now() + 60 * 60000)));
     setBlockError("");
@@ -5303,7 +5298,13 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
     setSavingBlock(true);
     setBlockError("");
     const window_ = buildBlockWindow(end);
-    const created = await insertProviderBlock({ provider_id: providerId, block_type: blockSheetType, ...window_ });
+    // Custom Block is now the only pause/break entry point on the
+    // dashboard — "walk-in" is a separate, dedicated revenue action (see
+    // Walk-In above), so every block created here is just "away from the
+    // business" and tagged 'break' (the provider_blocks CHECK constraint
+    // only allows 'walkin' | 'break' — no schema change needed to drop the
+    // now-pointless walk-in/break choice from the UI).
+    const created = await insertProviderBlock({ provider_id: providerId, block_type: "break", ...window_ });
     setSavingBlock(false);
     if (!created) { setBlockError("Couldn't save that block. Please try again."); return; }
     setShowBlockSheet(false);
@@ -6515,7 +6516,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                   <div className="block-row" key={bl.id}>
                     <div className="dot"></div>
                     <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: 13, fontWeight: 700, color: "var(--dark-text)" }}>{bl.block_type === "break" ? "☕ Break" : "🚶 Walk-in hold"}</div>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: "var(--dark-text)" }}>⏸ Away</div>
                       <div style={{ fontSize: 12, color: "var(--muted)" }}>{formatBookingTime(bl.start_time)} – {formatBookingTime(bl.end_time)} · calendar blocked</div>
                     </div>
                     <button className="btn-sm ghost" style={{ fontSize: 11, padding: "5px 10px" }} onClick={() => removeBlock(bl.id)}>Remove</button>
@@ -7808,22 +7809,20 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
         )}
       </main>
 
-      {/* CUSTOM BLOCK — bottom sheet, not a modal: pick Walk-in or Break,
-          then say when you'll be back — "In 15m", "In 30m", "In 1h", or an
-          exact resume time. The block always starts right now; only the
-          end time is asked for. This is the ONLY pause/break entry point
-          on the dashboard now — the old standalone one-tap 30-min button
-          was removed so there's exactly one place this can happen. */}
+      {/* CUSTOM BLOCK — bottom sheet, not a modal: say when you'll be back —
+          "15m", "30m", "1h", or an exact resume time. Purely a pause from
+          the business (lunch, an errand, stepping away) — no "walk-in"
+          option in here, since that word now means the separate revenue
+          action above. The block always starts right now; only the end
+          time is asked for. This is the ONLY pause/break entry point on
+          the dashboard — the old standalone one-tap 30-min button was
+          removed so there's exactly one place this can happen. */}
       {showBlockSheet && (
         <div className="sheet-overlay" onClick={closeBlockSheet}>
           <div className="sheet-panel" onClick={(e) => e.stopPropagation()}>
             <div className="sheet-handle"></div>
             <h3 style={{ fontSize: 17, fontWeight: 800, margin: "0 0 4px", color: "var(--dark-text)" }}>When will you be back?</h3>
             <p style={{ fontSize: 13, color: "var(--muted)", margin: "0 0 16px" }}>Blocks your calendar starting right now.</p>
-            <div className="block-type-row">
-              <button className={`block-type-btn ${blockSheetType === "walkin" ? "active" : ""}`} onClick={() => setBlockSheetType("walkin")}>🚶 Walk-in</button>
-              <button className={`block-type-btn ${blockSheetType === "break" ? "active" : ""}`} onClick={() => setBlockSheetType("break")}>☕ Break</button>
-            </div>
             <div className="preset-row">
               <button className={`preset-btn ${blockSheetResumeMode === "in15m" ? "active" : ""}`} onClick={() => setBlockSheetResumeMode("in15m")}>15m</button>
               <button className={`preset-btn ${blockSheetResumeMode === "in30m" ? "active" : ""}`} onClick={() => setBlockSheetResumeMode("in30m")}>30m</button>
