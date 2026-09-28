@@ -619,6 +619,45 @@ const css = `
   .vai-creative-promo-text span { font-size: 12.5px; color: rgba(245,239,224,0.7); line-height: 1.5; }
   .vai-creative-promo-btn { flex-shrink: 0; background: var(--lime); color: var(--forest); font-weight: 800; font-size: 13px; padding: 11px 20px; border-radius: 10px; text-decoration: none; white-space: nowrap; }
 
+  /* DOPAMINE CARD — dashboard financial snapshot */
+  .dopamine-card { display: flex; align-items: center; background: linear-gradient(160deg, var(--forest) 0%, #0A2A20 100%); border-radius: 20px; padding: 26px 24px; margin-bottom: 20px; box-shadow: 0 16px 40px rgba(13,61,46,0.22); }
+  .dopamine-metric { flex: 1; min-width: 0; }
+  .dopamine-label { font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: rgba(245,239,224,0.6); margin-bottom: 6px; }
+  .dopamine-value { font-size: 32px; font-weight: 800; color: var(--lime); font-family: 'Plus Jakarta Sans', sans-serif; letter-spacing: -0.02em; white-space: nowrap; }
+  .dopamine-value-sm { font-size: 21px; color: #FFFFFF; }
+  .dopamine-pct { font-size: 12.5px; font-weight: 600; color: rgba(245,239,224,0.7); }
+  .dopamine-divider { width: 1px; align-self: stretch; background: rgba(255,255,255,0.14); margin: 0 22px; }
+
+  /* NEXT IN THE CHAIR — spotlight card */
+  .next-chair-card { background: #fff; border: 1.5px solid var(--lime); border-left: 6px solid var(--forest); border-radius: 16px; padding: 16px 20px; margin-bottom: 20px; }
+  .next-chair-label { font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--forest); margin-bottom: 8px; }
+  .next-chair-body { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+  .next-chair-name { font-size: 16px; font-weight: 800; color: var(--dark-text); }
+  .next-chair-meta { font-size: 13px; color: var(--muted); margin-top: 2px; }
+  .next-chair-whatsapp { flex-shrink: 0; width: 46px; height: 46px; border-radius: 50%; background: #25D366; display: flex; align-items: center; justify-content: center; font-size: 21px; text-decoration: none; box-shadow: 0 6px 16px rgba(37,211,102,0.35); }
+
+  /* YOUR SHOPFRONT — chairside link/QR card */
+  .shopfront-card { background: linear-gradient(160deg, var(--forest) 0%, #0A2A20 100%); border: 1px solid rgba(198,241,53,0.2); border-radius: 16px; padding: 20px 22px; margin-bottom: 20px; }
+  .shopfront-label { font-size: 11px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--lime); margin-bottom: 8px; }
+  .shopfront-url { font-size: 12.5px; color: rgba(245,239,224,0.75); word-break: break-all; margin-bottom: 16px; }
+  .shopfront-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+  .shopfront-btn { flex: 1; min-width: 130px; padding: 12px 0; border-radius: 10px; font-weight: 800; font-size: 13.5px; cursor: pointer; border: none; text-align: center; }
+  .shopfront-btn-outline { background: transparent; color: #FFFFFF; border: 1.5px solid rgba(255,255,255,0.3); }
+  .shopfront-btn-lime { background: var(--lime); color: var(--forest); }
+
+  /* REBOOKING RADAR — bottom-of-dashboard retention strip */
+  .rebook-radar { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; background: var(--sand); border-radius: 14px; padding: 16px 20px; margin-top: 20px; }
+  .rebook-radar-text { font-size: 13.5px; font-weight: 600; color: var(--dark-text); }
+  .rebook-radar-btn { flex-shrink: 0; background: var(--forest); color: #FFFFFF; font-weight: 700; font-size: 13px; padding: 10px 18px; border-radius: 10px; border: none; cursor: pointer; }
+
+  /* FULL-SCREEN QR MODAL */
+  .qr-modal-overlay { position: fixed; inset: 0; background: rgba(13,31,24,0.94); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 24px; }
+  .qr-modal-close { position: absolute; top: 20px; right: 20px; background: rgba(255,255,255,0.1); color: #fff; border: none; width: 40px; height: 40px; border-radius: 50%; font-size: 18px; cursor: pointer; }
+  .qr-modal-panel { background: #fff; border-radius: 20px; padding: 28px; text-align: center; max-width: 360px; width: 100%; }
+  .qr-modal-img { width: 100%; max-width: 300px; height: auto; border-radius: 12px; }
+  .qr-modal-business { margin-top: 16px; font-size: 16px; font-weight: 800; color: var(--dark-text); }
+  .qr-modal-hint { margin-top: 4px; font-size: 13px; color: var(--muted); }
+
   /* SEARCH BAR */
   .search-bar { position: relative; background: white; border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 20px; display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
   .search-bar input { border: none; outline: none; font-size: 15px; flex: 1; font-family: 'Plus Jakarta Sans', sans-serif; color: var(--dark-text); background: transparent; }
@@ -828,6 +867,12 @@ const css = `
   @media (max-width: 480px) {
     .quick-actions-row { flex-direction: column; }
     .panic-btn, .panic-btn-secondary { font-size: 17px; padding: 18px 16px; }
+    .dopamine-card { flex-direction: column; align-items: stretch; gap: 16px; }
+    .dopamine-divider { width: auto; height: 1px; margin: 0; }
+    .dopamine-value { font-size: 28px; }
+    .next-chair-body { flex-wrap: wrap; }
+    .shopfront-actions { flex-direction: column; }
+    .rebook-radar { flex-direction: column; align-items: stretch; text-align: center; }
     .nav { padding: 14px 16px; }
     .nav-logo { font-size: 18px; }
     .nav-cta { gap: 8px; }
@@ -1510,6 +1555,12 @@ const localDateStr = (d = new Date()) => {
 // "HH:MM" for a Date, in local time — matches the start_time/end_time format
 // provider_blocks stores, so it can be compared against them directly.
 const localTimeStr = (d = new Date()) => `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+// "HH:MM"/"HH:MM:SS" -> minutes since midnight, for comparing times stored
+// as text (bookings.booking_time, provider_blocks start/end, working_hours).
+const hhmmToMinutes = (t) => {
+  const [h, m] = String(t).slice(0, 5).split(":").map(Number);
+  return (h || 0) * 60 + (m || 0);
+};
 
 const DAYS = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
 const DAY_NAMES = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
@@ -2368,7 +2419,6 @@ const PORTAL_TOOLS_BY_VIEW = {
     { id: "reviews", icon: "⭐", label: "My reviews" },
     { id: "review", icon: "📈", label: "Monthly review" },
     { id: "profile", icon: "👤", label: "Public profile" },
-    { id: "qr", icon: "📱", label: "My QR code" },
     { id: "modules", icon: "🧩", label: "Modules" },
     { id: "settings", icon: "⚙️", label: "Settings" },
   ],
@@ -5223,6 +5273,11 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
   const [blocks, setBlocks] = useState([]);
   const [loadingBlocks, setLoadingBlocks] = useState(false);
   const [resumingNow, setResumingNow] = useState(false);
+  // Full-screen QR (Your Shopfront card) and the Rebooking Radar's
+  // check-in modal — both dashboard-only, no data of their own to load.
+  const [showQrModal, setShowQrModal] = useState(false);
+  const [showCheckInModal, setShowCheckInModal] = useState(false);
+  const [copiedShopfrontLink, setCopiedShopfrontLink] = useState(false);
   const [showBlockSheet, setShowBlockSheet] = useState(false);
   // "in15m" | "in30m" | "in1h" | "custom" — the bottom sheet asks "when
   // will you be back" and works out the end time from that, rather than
@@ -6269,7 +6324,6 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
     { id: "reviews", icon: "⭐", label: "My reviews" },
     { id: "review", icon: "📈", label: "Monthly review" },
     { id: "profile", icon: "👤", label: "Public profile" },
-    { id: "qr", icon: "📱", label: "My QR code" },
     { id: "modules", icon: "🧩", label: "Modules" },
     { id: "settings", icon: "⚙️", label: "Settings" },
   ];
@@ -6325,6 +6379,81 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
     .filter(b => { const d = bookingDateOnly(b.booking_date); return d && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear(); });
   const thisMonthCompletedCount = thisMonthCompleted.length;
   const thisMonthEarnings = thisMonthCompleted.reduce((sum, b) => sum + (Number(b.total_amount) || 0), 0);
+
+  // "Today's Take" — same definition as thisMonthEarnings above (completed
+  // revenue), just scoped to today. Walk-in sales are auto-completed at
+  // creation, so they count the moment they're logged; a real appointment
+  // counts once you mark it done.
+  const todayRevenue = todaysBookings
+    .filter((b) => b.status === "completed" || b.status === "done")
+    .reduce((sum, b) => sum + (Number(b.total_amount) || 0), 0);
+
+  // "Chairs Filled" — how much of today's open hours are actually spoken
+  // for right now. Capacity is today's working hours minus the lunch
+  // break, sliced into the same 30-minute step the booking flow itself
+  // uses; filled time is every minute a live booking or an active block
+  // occupies, rounded to that same slot size.
+  const CHAIR_SLOT_MIN = 30;
+  const todayHoursRow = hours.find((h) => h.day_of_week === now.getDay());
+  let totalChairSlots = 0;
+  if (todayHoursRow && todayHoursRow.is_open && todayHoursRow.start_time && todayHoursRow.end_time) {
+    const openMin = Math.max(0, hhmmToMinutes(todayHoursRow.end_time) - hhmmToMinutes(todayHoursRow.start_time));
+    const lunchMin = lunchForm.enabled ? Number(lunchForm.lunch_break_minutes) || 0 : 0;
+    totalChairSlots = Math.round(Math.max(0, openMin - lunchMin) / CHAIR_SLOT_MIN);
+  }
+  const bookedMinutesToday = todaysBookings
+    .filter((b) => ["pending", "awaiting_payment", "confirmed", "completed", "done"].includes(b.status))
+    .reduce((sum, b) => sum + (Number(b.total_duration_min) || Number(b.services?.duration_min) || 30), 0);
+  const blockedMinutesToday = blocks
+    .filter((bl) => bl.block_date === localDateStr())
+    .reduce((sum, bl) => sum + Math.max(0, hhmmToMinutes(bl.end_time) - hhmmToMinutes(bl.start_time)), 0);
+  const filledChairSlots = totalChairSlots > 0
+    ? Math.min(totalChairSlots, Math.round((bookedMinutesToday + blockedMinutesToday) / CHAIR_SLOT_MIN))
+    : 0;
+  const chairsBookedPct = totalChairSlots > 0 ? Math.round((filledChairSlots / totalChairSlots) * 100) : 0;
+
+  // "Next in the Chair" — the next CONFIRMED appointment still ahead of
+  // right now (pending doesn't count — it isn't locked in yet).
+  const nowMinutes = now.getHours() * 60 + now.getMinutes();
+  const nextBooking = todaysBookings
+    .filter((b) => b.status === "confirmed" && hhmmToMinutes(b.booking_time) >= nowMinutes)
+    .sort((a, b) => hhmmToMinutes(a.booking_time) - hhmmToMinutes(b.booking_time))[0] || null;
+  const nextBookingName = nextBooking ? (nextBooking.users?.full_name || nextBooking.walkin_customer_name || "Customer") : "";
+  const nextBookingPhone = nextBooking ? (nextBooking.users?.phone || nextBooking.walkin_customer_phone || null) : null;
+  const nextBookingWhatsAppUrl = nextBooking && nextBookingPhone
+    ? `https://wa.me/${nextBookingPhone.replace(/[^\d]/g, "")}?text=${encodeURIComponent(`Hey ${nextBookingName}, ready for you at ${formatBookingTime(nextBooking.booking_time)}!`)}`
+    : null;
+
+  // "Your Shopfront" — same booking-link/QR logic the standalone "My QR
+  // code" tab used to have; that tab is gone now, this dashboard card is
+  // the one place it lives.
+  const bookingUrl = `${window.location.origin}/#book-${providerId}`;
+  const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=480x480&margin=12&data=${encodeURIComponent(bookingUrl)}`;
+
+  // "Rebooking Radar" — registered (non-walk-in) customers with 2+ real
+  // visits, no upcoming booking on the books, whose last visit was 3+
+  // weeks ago. Walk-ins are excluded: they have no customer_id, so there's
+  // no reliable identity to track repeat visits by.
+  const REBOOK_QUIET_DAYS = 21;
+  const customerHistory = {};
+  bookings.forEach((b) => {
+    if (!b.customer_id) return;
+    if (!["completed", "done", "confirmed", "pending", "awaiting_payment"].includes(b.status)) return;
+    const d = bookingDateOnly(b.booking_date);
+    if (!d) return;
+    const entry = customerHistory[b.customer_id] || { name: "Customer", phone: null, visits: 0, lastDate: null, hasUpcoming: false };
+    entry.visits += 1;
+    if (b.users?.full_name) entry.name = b.users.full_name;
+    if (b.users?.phone) entry.phone = b.users.phone;
+    if (!entry.lastDate || d > entry.lastDate) entry.lastDate = d;
+    if (d >= bookingDateOnly(localDateStr()) && ["pending", "awaiting_payment", "confirmed"].includes(b.status)) entry.hasUpcoming = true;
+    customerHistory[b.customer_id] = entry;
+  });
+  const quietSince = new Date(now.getTime() - REBOOK_QUIET_DAYS * 24 * 60 * 60 * 1000);
+  const quietRegulars = Object.values(customerHistory)
+    .filter((c) => c.visits >= 2 && !c.hasUpcoming && c.lastDate && c.lastDate < quietSince)
+    .sort((a, b) => a.lastDate - b.lastDate);
+
   // Only bookings that actually reached an outcome count — pending and
   // upcoming ones aren't failures, and including them held the rate down
   // permanently for busy providers.
@@ -6464,7 +6593,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
         </div>
         <div style={{ padding: "12px 16px", marginTop: 4 }}>
           <div style={{ background: "rgba(198,241,53,0.12)", borderRadius: 8, padding: "10px 12px" }}>
-            <div style={{ fontSize: 11, color: "var(--lime)", fontWeight: 600, marginBottom: 4 }}>{providerProfile.is_active ? "ACTIVE PROVIDER" : "PENDING ACTIVATION"}</div>
+            <div style={{ fontSize: 11, color: "var(--lime)", fontWeight: 700, letterSpacing: ".02em", marginBottom: 4 }}>{providerProfile.is_active ? "✓ Verified Vai Partner" : "PENDING ACTIVATION"}</div>
             <div style={{ fontSize: 12, color: "rgba(255,255,255,0.55)" }}>{providerProfile.service_type} · {providerProfile.district}</div>
           </div>
         </div>
@@ -6483,6 +6612,25 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
             <div className="portal-header">
               <h2>Dashboard</h2>
               <p>{now.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })} · {todaysBookings.length} appointment{todaysBookings.length === 1 ? "" : "s"} today</p>
+            </div>
+
+            {/* THE DOPAMINE CARD — instant financial payoff the moment the
+                dashboard opens. Today's Take is completed revenue only
+                (same definition as "This month earnings" below, just for
+                today); Chairs Filled is today's booked+blocked time against
+                today's open hours. */}
+            <div className="dopamine-card">
+              <div className="dopamine-metric">
+                <div className="dopamine-label">Today's Take</div>
+                <div className="dopamine-value">BZ${todayRevenue.toFixed(0)}</div>
+              </div>
+              <div className="dopamine-divider"></div>
+              <div className="dopamine-metric">
+                <div className="dopamine-label">Chairs Filled</div>
+                <div className="dopamine-value dopamine-value-sm">
+                  {filledChairSlots}/{totalChairSlots} <span className="dopamine-pct">({chairsBookedPct}% booked)</span>
+                </div>
+              </div>
             </div>
 
             {/* ZERO-FRICTION QUICK ACTIONS — one or two buttons, never more.
@@ -6532,6 +6680,53 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
               <div className="metric"><div className="metric-label">Total bookings</div><div className="metric-value">{bookings.length}</div><div className="metric-sub">All time</div></div>
               <div className="metric"><div className="metric-label">Completion rate</div><div className="metric-value">{completionRate === null ? "—" : `${completionRate}%`}</div><div className="metric-sub">{completionRate === null ? "No finished bookings yet" : `Of ${settledBookings.length} finished booking${settledBookings.length === 1 ? "" : "s"}`}</div></div>
             </div>
+
+            {/* NEXT IN THE CHAIR — spotlight on the next confirmed
+                appointment, with a one-tap WhatsApp heads-up. The full
+                ordered list still lives in "Today's appointments" below;
+                this just calls out the very next one so it isn't missed
+                among blocks and past bookings. */}
+            {nextBooking && (
+              <div className="next-chair-card">
+                <div className="next-chair-label">⏭ Next in the Chair</div>
+                <div className="next-chair-body">
+                  <div>
+                    <div className="next-chair-name">{nextBookingName}</div>
+                    <div className="next-chair-meta">{nextBooking.services?.name || "Service"} · {formatBookingTime(nextBooking.booking_time)}</div>
+                  </div>
+                  {nextBookingWhatsAppUrl && (
+                    <a className="next-chair-whatsapp" href={nextBookingWhatsAppUrl} target="_blank" rel="noreferrer" aria-label={`Message ${nextBookingName} on WhatsApp`} title="Message on WhatsApp">💬</a>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* YOUR SHOPFRONT — the booking link + QR code, chairside-ready.
+                This used to be its own "My QR code" tab; it lives here now
+                so it's one tap away while the client is literally sitting
+                in front of you, instead of buried in the sidebar. */}
+            <div className="shopfront-card">
+              <div className="shopfront-label">Your Shopfront</div>
+              <div className="shopfront-url">{bookingUrl}</div>
+              <div className="shopfront-actions">
+                <button
+                  className="shopfront-btn shopfront-btn-outline"
+                  onClick={async () => {
+                    try {
+                      await navigator.clipboard.writeText(bookingUrl);
+                      setCopiedShopfrontLink(true);
+                      setTimeout(() => setCopiedShopfrontLink(false), 2000);
+                    } catch (e) { /* clipboard unavailable — link is shown above already */ }
+                  }}
+                >
+                  {copiedShopfrontLink ? "Copied ✓" : "Copy Link"}
+                </button>
+                <button className="shopfront-btn shopfront-btn-lime" onClick={() => setShowQrModal(true)}>
+                  Show QR Code
+                </button>
+              </div>
+            </div>
+
             <div className="grid-2">
               <div className="card">
                 <div className="card-title" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -6577,6 +6772,18 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                 ))}
               </div>
             </div>
+
+            {/* REBOOKING RADAR — a quiet retention nudge, not another
+                inbox to manage: only surfaces when there's actually
+                someone worth reaching out to. */}
+            {quietRegulars.length > 0 && (
+              <div className="rebook-radar">
+                <div className="rebook-radar-text">
+                  🔁 {quietRegulars.length} regular{quietRegulars.length === 1 ? "" : "s"} haven't booked in {REBOOK_QUIET_DAYS / 7}+ weeks.
+                </div>
+                <button className="rebook-radar-btn" onClick={() => setShowCheckInModal(true)}>Send Check-In</button>
+              </div>
+            )}
           </>
         )}
 
@@ -7714,47 +7921,6 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
           </>
         )}
 
-        {tab === "qr" && (() => {
-          const bookingUrl = `${window.location.origin}/#book-${providerId}`;
-          const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=320x320&margin=12&data=${encodeURIComponent(bookingUrl)}`;
-          return (
-            <>
-              <div className="portal-header">
-                <h2>My QR code</h2>
-                <p>Print this and put it up in your shop — customers scan it and go straight to your booking page on VaiBook, no searching needed.</p>
-              </div>
-              <div className="card" style={{ maxWidth: 420 }}>
-                <div style={{ textAlign: "center" }}>
-                  <img
-                    src={qrImageUrl}
-                    alt={`QR code linking to ${providerProfile?.business_name || "your"} booking page`}
-                    loading="lazy"
-                    decoding="async"
-                    style={{ width: 240, height: 240, borderRadius: 12, border: "1px solid var(--border)", background: "#fff", padding: 12 }}
-                  />
-                  <div style={{ marginTop: 16, fontSize: 13, color: "var(--muted)", wordBreak: "break-all" }}>{bookingUrl}</div>
-                  <div style={{ display: "flex", gap: 8, justifyContent: "center", marginTop: 16, flexWrap: "wrap" }}>
-                    <button
-                      className="btn-sm forest"
-                      onClick={async () => {
-                        try { await navigator.clipboard.writeText(bookingUrl); } catch (e) { /* clipboard unavailable — link is shown below already */ }
-                      }}
-                    >
-                      Copy link
-                    </button>
-                    <a className="btn-sm lime" href={qrImageUrl} target="_blank" rel="noreferrer" style={{ textDecoration: "none", display: "inline-flex", alignItems: "center" }}>
-                      Open full-size to save/print
-                    </a>
-                  </div>
-                  <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 16 }}>
-                    On phone or desktop: open the full-size image above, then save or print it like any picture — it never expires or changes, so one printout works forever.
-                  </p>
-                </div>
-              </div>
-            </>
-          );
-        })()}
-
         {tab === "modules" && <ModulesPanel />}
 
         {tab === "settings" && (
@@ -7931,6 +8097,59 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
               {savingWalkInSale ? "Logging sale..." : walkInSaleServiceIds.length > 0 ? `Log sale — BZ${walkInSaleTotal.toFixed(2)}` : "Log sale"}
             </button>
             <button className="btn-sm ghost" style={{ width: "100%", padding: "12px 0", marginTop: 8 }} onClick={closeWalkInSheet}>Cancel</button>
+          </div>
+        </div>
+      )}
+
+      {/* SHOW QR CODE — full-screen so a customer standing next to you can
+          just point their camera at the phone, no pinch-zooming a small
+          card. Same qrserver.com-generated image the old QR tab used. */}
+      {showQrModal && (
+        <div className="qr-modal-overlay" onClick={() => setShowQrModal(false)}>
+          <button className="qr-modal-close" onClick={() => setShowQrModal(false)} aria-label="Close QR code">✕</button>
+          <div className="qr-modal-panel" onClick={(e) => e.stopPropagation()}>
+            <img
+              src={qrImageUrl}
+              alt={`QR code linking to ${providerProfile?.business_name || "your"} booking page`}
+              className="qr-modal-img"
+            />
+            <div className="qr-modal-business">{providerProfile?.business_name || "Book with us"}</div>
+            <p className="qr-modal-hint">Scan to book instantly on VaiBook</p>
+          </div>
+        </div>
+      )}
+
+      {/* SEND CHECK-IN — no bulk SMS/WhatsApp API behind this (VaiBook has
+          no messaging backend), so each quiet regular gets their own
+          prefilled wa.me link, one tap each, instead of a fake "blast". */}
+      {showCheckInModal && (
+        <div className="sheet-overlay" onClick={() => setShowCheckInModal(false)}>
+          <div className="sheet-panel" onClick={(e) => e.stopPropagation()}>
+            <div className="sheet-handle"></div>
+            <h3 style={{ fontSize: 17, fontWeight: 800, margin: "0 0 4px", color: "var(--dark-text)" }}>Send a check-in</h3>
+            <p style={{ fontSize: 13, color: "var(--muted)", margin: "0 0 16px" }}>Tap a customer to open a prefilled WhatsApp message.</p>
+            <div style={{ maxHeight: "50vh", overflowY: "auto" }}>
+              {quietRegulars.map((c, i) => {
+                const daysAgo = Math.round((now.getTime() - c.lastDate.getTime()) / (24 * 60 * 60 * 1000));
+                const msg = `Hi ${c.name}, it's been a while — ready to book your next appointment with ${providerProfile?.business_name || "us"}? You can grab a time right on VaiBook: ${bookingUrl}`;
+                const waUrl = c.phone ? `https://wa.me/${c.phone.replace(/[^\d]/g, "")}?text=${encodeURIComponent(msg)}` : null;
+                return (
+                  <div className="block-row" key={i}>
+                    <div className="dot"></div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: "var(--dark-text)" }}>{c.name}</div>
+                      <div style={{ fontSize: 12, color: "var(--muted)" }}>Last visit {daysAgo} days ago</div>
+                    </div>
+                    {waUrl ? (
+                      <a className="btn-sm forest" style={{ textDecoration: "none" }} href={waUrl} target="_blank" rel="noreferrer">💬 Message</a>
+                    ) : (
+                      <span style={{ fontSize: 11, color: "var(--muted)" }}>No phone on file</span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+            <button className="btn-sm ghost" style={{ width: "100%", padding: "12px 0", marginTop: 16 }} onClick={() => setShowCheckInModal(false)}>Close</button>
           </div>
         </div>
       )}
