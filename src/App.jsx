@@ -5144,6 +5144,11 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
   // The one real notification preference (see supabase_audit_fixes.sql).
   const [emailOnNewBooking, setEmailOnNewBooking] = useState(true);
   const [savingNotifyPref, setSavingNotifyPref] = useState(false);
+  // Not every provider takes walk-ins (some are appointment-only) — this
+  // gates whether the dashboard's Walk-In button shows at all. Defaults to
+  // true so existing providers see no change until they turn it off.
+  const [acceptsWalkins, setAcceptsWalkins] = useState(true);
+  const [savingWalkinPref, setSavingWalkinPref] = useState(false);
   const { pushEnabled, subscribingPush, pushError, enablePushNotifications } = usePushSubscription(user?.id);
 
   // Per-booking unread message counts, so a waiting message is visible from
@@ -5775,6 +5780,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
         lunch_break_minutes: providerProfile.lunch_break_minutes || 30,
       });
       setEmailOnNewBooking(providerProfile.notify_email_new_booking !== false);
+      setAcceptsWalkins(providerProfile.accepts_walkins !== false);
     }
   }, [providerProfile]);
 
@@ -5921,6 +5927,21 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
       onProviderProfileUpdate && onProviderProfileUpdate(saved);
     } else {
       setEmailOnNewBooking(!next);
+      window.alert("Couldn't save that setting. Please try again.");
+    }
+  };
+
+  const toggleAcceptsWalkins = async () => {
+    if (!providerId || savingWalkinPref) return;
+    const next = !acceptsWalkins;
+    setSavingWalkinPref(true);
+    setAcceptsWalkins(next);
+    const saved = await upsertProviderProfile({ id: providerProfile.id, user_id: providerProfile.user_id, accepts_walkins: next });
+    setSavingWalkinPref(false);
+    if (saved) {
+      onProviderProfileUpdate && onProviderProfileUpdate(saved);
+    } else {
+      setAcceptsWalkins(!next);
       window.alert("Couldn't save that setting. Please try again.");
     }
   };
@@ -6464,11 +6485,13 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
               <p>{now.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })} · {todaysBookings.length} appointment{todaysBookings.length === 1 ? "" : "s"} today</p>
             </div>
 
-            {/* ZERO-FRICTION QUICK ACTIONS — exactly two buttons, or one.
+            {/* ZERO-FRICTION QUICK ACTIONS — one or two buttons, never more.
                 Normally: Walk-In (primary, revenue) + Custom Block
-                (secondary, pause). The instant a block is active, both
-                collapse into a single massive Resume Bookings Now button —
-                there is never a third option cluttering this row. */}
+                (secondary, pause) — but Walk-In only shows for providers
+                who take walk-ins (see Settings); appointment-only providers
+                just get Custom Block, full-width. The instant a block is
+                active, everything collapses into a single massive Resume
+                Bookings Now button. */}
             {activeBlock ? (
               <button
                 className="panic-btn"
@@ -6478,7 +6501,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
               >
                 {resumingNow ? "Reopening..." : `✅ Resume Bookings Now (blocked until ${formatBookingTime(activeBlock.end_time)})`}
               </button>
-            ) : (
+            ) : acceptsWalkins ? (
               <>
                 <div className="quick-actions-row" style={{ display: "flex", gap: 10, alignItems: "stretch", marginBottom: activeServices.length === 0 ? 4 : 20 }}>
                   <button
@@ -6497,6 +6520,10 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                   <p style={{ fontSize: 12, color: "var(--muted)", margin: "0 0 20px" }}>Add a service under Services to start logging walk-in sales.</p>
                 )}
               </>
+            ) : (
+              <button className="panic-btn" style={{ width: "100%", marginBottom: 20 }} onClick={openBlockSheet}>
+                ⏸ Custom Block
+              </button>
             )}
 
             <div className="metric-grid">
@@ -7734,6 +7761,22 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
           <>
             <div className="portal-header"><h2>Settings</h2></div>
             <div className="card" style={{ maxWidth: 480 }}>
+              <div className="card-title">Walk-ins</div>
+              <p style={{ fontSize: 13, color: "var(--muted)", marginTop: -8, marginBottom: 16 }}>Not every business takes walk-in customers. Turn this off if you're appointment-only — the Walk-In button will disappear from your dashboard, leaving just Custom Block.</p>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", gap: 16 }}>
+                <div>
+                  <div style={{ fontSize: 14, fontWeight: 600 }}>Accept walk-in customers</div>
+                  <div style={{ fontSize: 12, color: "var(--muted)" }}>Lets you log a walk-in sale from the dashboard as it happens.</div>
+                </div>
+                <div
+                  className={`toggle ${acceptsWalkins ? "on" : ""}`}
+                  style={{ opacity: savingWalkinPref ? 0.5 : 1, flexShrink: 0 }}
+                  onClick={toggleAcceptsWalkins}
+                ></div>
+              </div>
+            </div>
+
+            <div className="card" style={{ maxWidth: 480, marginTop: 20 }}>
               <div className="card-title">Deposit requirement</div>
               <p style={{ fontSize: 13, color: "var(--muted)", marginTop: -8, marginBottom: 16 }}>If turned on, customers must pay a deposit and upload a receipt before their booking is confirmed.</p>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", borderBottom: "1px solid var(--border)" }}>
