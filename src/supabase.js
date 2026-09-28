@@ -618,7 +618,10 @@ export const getCustomerBookings = async (customerId) => {
 export const getProviderBookings = async (providerId) => {
   const { data, error } = await supabase
     .from('bookings')
-    .select('*, users(full_name, email, avatar_url), services(name, price, duration_min), booking_refunds(id, amount, receipt_url, note, created_at), payments(id, amount, currency, payment_status, transaction_id, created_at)')
+    // `phone` added for the dashboard's "Next in the Chair" WhatsApp button
+    // and Rebooking Radar check-ins — the provider's own view of their
+    // bookings is the only place that needs a customer's phone number.
+    .select('*, users(full_name, email, avatar_url, phone), services(name, price, duration_min), booking_refunds(id, amount, receipt_url, note, created_at), payments(id, amount, currency, payment_status, transaction_id, created_at)')
     .eq('provider_id', providerId)
     .order('booking_date', { ascending: true });
   if (error) console.error(error.message);
