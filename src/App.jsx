@@ -454,7 +454,7 @@ const css = `
   .marketing-item-sub { font-size: 13px; color: var(--muted); margin-top: 4px; line-height: 1.45; }
 
   .platform-preview-section { padding-bottom: 40px; }
-  .platform-preview-img { display: block; width: 100%; max-width: 1100px; margin: 0 auto; border-radius: 20px; box-shadow: 0 24px 60px rgba(13,61,46,0.14); }
+  .platform-preview-img { display: block; width: 100%; height: auto; max-width: 1100px; margin: 0 auto; border-radius: 20px; box-shadow: 0 24px 60px rgba(13,61,46,0.14); }
 
   /* HOW IT WORKS */
   .section { padding: 80px 48px; }
