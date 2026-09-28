@@ -6816,6 +6816,35 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                   </div>
                 ))}
                 <button className="btn-sm forest" style={{ marginTop: 12 }} onClick={saveHours} disabled={savingHours}>{savingHours ? "Saving..." : "Save hours"}</button>
+
+                <div className="card-title" style={{ marginTop: 28 }}>Daily lunch break</div>
+                <p style={{ fontSize: 13, color: "var(--muted)", marginTop: -8, marginBottom: 16 }}>Set it once and forget it — this time is automatically taken off your calendar every day, so you never have to block it yourself.</p>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", borderBottom: lunchForm.enabled ? "1px solid var(--border)" : "none" }}>
+                  <span style={{ fontSize: 14 }}>Block my calendar for lunch every day</span>
+                  <div className={`toggle ${lunchForm.enabled ? "on" : ""}`} onClick={() => setLunchForm(f => ({ ...f, enabled: !f.enabled }))}></div>
+                </div>
+                {lunchForm.enabled && (
+                  <div className="form-row" style={{ marginTop: 12 }}>
+                    <div className="input-group">
+                      <label>Start time</label>
+                      <select value={lunchForm.lunch_break_start} onChange={e => setLunchForm(f => ({ ...f, lunch_break_start: e.target.value }))}>
+                        {Array.from({ length: 28 }, (_, i) => { const m = 6 * 60 + i * 30; const h = String(Math.floor(m / 60)).padStart(2, "0"); const mm = String(m % 60).padStart(2, "0"); return `${h}:${mm}`; }).map(t => {
+                          const [h24, m] = t.split(":").map(Number);
+                          const ampm = h24 >= 12 ? "PM" : "AM";
+                          const h12 = h24 % 12 === 0 ? 12 : h24 % 12;
+                          return <option key={t} value={t}>{`${h12}:${String(m).padStart(2, "0")} ${ampm}`}</option>;
+                        })}
+                      </select>
+                    </div>
+                    <div className="input-group">
+                      <label>Duration</label>
+                      <select value={lunchForm.lunch_break_minutes} onChange={e => setLunchForm(f => ({ ...f, lunch_break_minutes: e.target.value }))}>
+                        {[15, 30, 45, 60, 90].map(m => <option key={m} value={m}>{m} min</option>)}
+                      </select>
+                    </div>
+                  </div>
+                )}
+                <button className="btn-sm forest" style={{ marginTop: 12 }} onClick={saveLunchSettings} disabled={savingLunch}>{savingLunch ? "Saving..." : "Save lunch break"}</button>
               </div>
             </div>
           </>
@@ -7539,35 +7568,6 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                 </div>
               )}
               <button className="btn-sm forest" style={{ marginTop: 12 }} onClick={saveDepositSettings} disabled={savingDeposit}>{savingDeposit ? "Saving..." : "Save deposit settings"}</button>
-
-              <div className="card-title" style={{ marginTop: 28 }}>Daily lunch break</div>
-              <p style={{ fontSize: 13, color: "var(--muted)", marginTop: -8, marginBottom: 16 }}>Set it once and forget it — this time is automatically taken off your calendar every day, so you never have to block it yourself.</p>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", borderBottom: lunchForm.enabled ? "1px solid var(--border)" : "none" }}>
-                <span style={{ fontSize: 14 }}>Block my calendar for lunch every day</span>
-                <div className={`toggle ${lunchForm.enabled ? "on" : ""}`} onClick={() => setLunchForm(f => ({ ...f, enabled: !f.enabled }))}></div>
-              </div>
-              {lunchForm.enabled && (
-                <div className="form-row" style={{ marginTop: 12 }}>
-                  <div className="input-group">
-                    <label>Start time</label>
-                    <select value={lunchForm.lunch_break_start} onChange={e => setLunchForm(f => ({ ...f, lunch_break_start: e.target.value }))}>
-                      {Array.from({ length: 28 }, (_, i) => { const m = 6 * 60 + i * 30; const h = String(Math.floor(m / 60)).padStart(2, "0"); const mm = String(m % 60).padStart(2, "0"); return `${h}:${mm}`; }).map(t => {
-                        const [h24, m] = t.split(":").map(Number);
-                        const ampm = h24 >= 12 ? "PM" : "AM";
-                        const h12 = h24 % 12 === 0 ? 12 : h24 % 12;
-                        return <option key={t} value={t}>{`${h12}:${String(m).padStart(2, "0")} ${ampm}`}</option>;
-                      })}
-                    </select>
-                  </div>
-                  <div className="input-group">
-                    <label>Duration</label>
-                    <select value={lunchForm.lunch_break_minutes} onChange={e => setLunchForm(f => ({ ...f, lunch_break_minutes: e.target.value }))}>
-                      {[15, 30, 45, 60, 90].map(m => <option key={m} value={m}>{m} min</option>)}
-                    </select>
-                  </div>
-                </div>
-              )}
-              <button className="btn-sm forest" style={{ marginTop: 12 }} onClick={saveLunchSettings} disabled={savingLunch}>{savingLunch ? "Saving..." : "Save lunch break"}</button>
 
               <div className="card-title" style={{ marginTop: 28 }}>Notifications</div>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", borderBottom: "1px solid var(--border)", gap: 16 }}>
