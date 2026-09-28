@@ -5185,11 +5185,11 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
   const [resumingNow, setResumingNow] = useState(false);
   const [showBlockSheet, setShowBlockSheet] = useState(false);
   const [blockSheetType, setBlockSheetType] = useState("walkin");
-  // "in1h" | "in2h" | "custom" — the bottom sheet asks "when will you be
+  // "in30m" | "in1h" | "custom" — the bottom sheet asks "when will you be
   // back" and works out the end time from that, rather than asking for a
   // duration. blockSheetResumeAt is only used when mode is "custom", as an
   // <input type="time"> value ("HH:MM").
-  const [blockSheetResumeMode, setBlockSheetResumeMode] = useState("in1h");
+  const [blockSheetResumeMode, setBlockSheetResumeMode] = useState("in30m");
   const [blockSheetResumeAt, setBlockSheetResumeAt] = useState("");
   const [savingBlock, setSavingBlock] = useState(false);
   const [blockError, setBlockError] = useState("");
@@ -5243,7 +5243,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
 
   const openBlockSheet = () => {
     setBlockSheetType("walkin");
-    setBlockSheetResumeMode("in1h");
+    setBlockSheetResumeMode("in30m");
     setBlockSheetResumeAt(localTimeStr(new Date(Date.now() + 60 * 60000)));
     setBlockError("");
     setShowBlockSheet(true);
@@ -5254,8 +5254,8 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
   // selected. Returns null if a custom time hasn't been picked yet.
   const resolveBlockSheetEnd = () => {
     const now = new Date();
+    if (blockSheetResumeMode === "in30m") return new Date(now.getTime() + 30 * 60000);
     if (blockSheetResumeMode === "in1h") return new Date(now.getTime() + 60 * 60000);
-    if (blockSheetResumeMode === "in2h") return new Date(now.getTime() + 120 * 60000);
     if (!blockSheetResumeAt) return null;
     const [h, m] = blockSheetResumeAt.split(":").map(Number);
     const end = new Date(now);
@@ -5295,6 +5295,81 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
     await deleteProviderBlock(activeBlock.id);
     await loadBlocks();
     setResumingNow(false);
+  };
+
+  // WALK-IN SALE (POS) — for a customer standing right in front of you,
+  // paying now. Different from "+ Add appointment" below (which schedules
+  // someone in for a date/time and leaves them "confirmed" until you mark
+  // the job done later): this logs the sale as done immediately — tap
+  // their service(s), submit, and it counts toward today's revenue on the
+  // spot, no second "mark complete" step.
+  const [showWalkInSheet, setShowWalkInSheet] = useState(false);
+  const [walkInSaleServiceIds, setWalkInSaleServiceIds] = useState([]);
+  const [savingWalkInSale, setSavingWalkInSale] = useState(false);
+  const [walkInSaleError, setWalkInSaleError] = useState("");
+
+  const openWalkInSheet = () => {
+    setWalkInSaleServiceIds([]);
+    setWalkInSaleError("");
+    setShowWalkInSheet(true);
+  };
+  const closeWalkInSheet = () => setShowWalkInSheet(false);
+  const toggleWalkInSaleService = (id) => {
+    setWalkInSaleServiceIds((ids) => (ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id]));
+  };
+
+  const activeServices = services.filter((s) => s.is_active !== false);
+  const walkInSaleServices = activeServices.filter((s) => walkInSaleServiceIds.includes(s.id));
+  const walkInSaleTotal = walkInSaleServices.reduce((sum, s) => sum + (Number(s.price) || 0), 0);
+  const walkInSaleDuration = walkInSaleServices.reduce((sum, s) => sum + (Number(s.duration_min) || 0), 0);
+
+  const submitWalkInSale = async () => {
+    if (!providerId || walkInSaleServiceIds.length === 0 || savingWalkInSale) return;
+    setSavingWalkInSale(true);
+    setWalkInSaleError("");
+    const now = new Date();
+    const order_number = `VB-${Date.now().toString(36).toUpperCase()}${Math.random().toString(36).slice(2, 5).toUpperCase()}`;
+    let created = null;
+    try {
+      created = await createWalkInBooking({
+        order_number,
+        provider_id: providerId,
+        service_id: walkInSaleServiceIds[0],
+        booking_date: localDateStr(now),
+        booking_time: localTimeStr(now),
+        customer_name: "Walk-in",
+        customer_phone: null,
+        notes: null,
+      });
+      if (created && walkInSaleServiceIds.length > 1) {
+        await attachBookingServices(created.id, walkInSaleServiceIds, walkInSaleDuration);
+      }
+    } catch (err) {
+      setSavingWalkInSale(false);
+      if (err?.code === "RATE_LIMITED") {
+        setWalkInSaleError("You've logged several sales in a short time. Please wait a few minutes and try again.");
+      } else if (err?.code === "MAINTENANCE_MODE") {
+        setWalkInSaleError("New bookings are temporarily paused for maintenance. Please try again shortly.");
+      } else if (err?.code === "STARTER_LIMIT_REACHED") {
+        setWalkInSaleError("You've reached the free Starter plan's 30 bookings/month limit. Upgrade to Pro under My plan & billing for unlimited bookings.");
+      } else {
+        setWalkInSaleError("Something went wrong logging this sale. Please try again.");
+      }
+      return;
+    }
+    if (!created) {
+      setSavingWalkInSale(false);
+      setWalkInSaleError("Something went wrong logging this sale. Please try again.");
+      return;
+    }
+    // The customer is being served right now — count the revenue
+    // immediately rather than waiting on a separate "mark complete" tap.
+    // No notification fires for this: create_walkin_booking never sets a
+    // customer_id, so there's no account to notify.
+    await updateBookingStatus(created.id, "completed");
+    setSavingWalkInSale(false);
+    setShowWalkInSheet(false);
+    await loadBookings();
   };
 
   const loadPaymentMethods = async () => {
@@ -6358,6 +6433,22 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
               <p>{now.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })} · {todaysBookings.length} appointment{todaysBookings.length === 1 ? "" : "s"} today</p>
             </div>
 
+            {/* WALK-IN SALE — the primary POS action. A customer paying at
+                the counter right now, in one tap into a service list, no
+                form. Sits above the blocking controls since logging revenue
+                is the more common action than pausing the calendar. */}
+            <button
+              className="panic-btn"
+              style={{ width: "100%", marginBottom: 12 }}
+              onClick={openWalkInSheet}
+              disabled={activeServices.length === 0}
+            >
+              🧾 Walk-In Sale
+            </button>
+            {activeServices.length === 0 && (
+              <p style={{ fontSize: 12, color: "var(--muted)", margin: "-6px 0 12px" }}>Add a service under Services to start logging walk-in sales.</p>
+            )}
+
             {/* RESUME BOOKINGS NOW — only shown while a block is actively
                 covering this exact moment. One tap, no confirmation: coming
                 back early should reopen the calendar just as fast as
@@ -6373,13 +6464,14 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
               </button>
             )}
 
-            {/* 1-TAP DASHBOARD BLOCKING — the "panic button". No modal, no
+            {/* 1-TAP DASHBOARD BLOCKING — pauses the calendar (no revenue
+                involved, unlike Walk-In Sale above). No modal, no
                 confirmation: tapping it blocks the next 30 minutes on the
                 spot, because whoever needs this is mid-haircut with clippers
                 in hand, not free to fill out a form. */}
             <div style={{ display: "flex", gap: 10, alignItems: "stretch", marginBottom: 20 }}>
-              <button className="panic-btn" style={{ flex: 2 }} onClick={quickBlockWalkIn} disabled={blockingQuick}>
-                {blockingQuick ? "Blocking..." : "🚶 Walk-in (30m)"}
+              <button className="btn-sm ghost" style={{ flex: 2, fontSize: 14, fontWeight: 700, padding: "14px 0" }} onClick={quickBlockWalkIn} disabled={blockingQuick}>
+                {blockingQuick ? "Blocking..." : "⏸ Pause calendar (30m)"}
               </button>
               <button className="btn-sm ghost" style={{ flex: 1, fontSize: 14, fontWeight: 700 }} onClick={openBlockSheet}>
                 Custom block
@@ -7688,7 +7780,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
       </main>
 
       {/* CUSTOM BLOCK — bottom sheet, not a modal: pick Walk-in or Break,
-          then say when you'll be back — "In 1h", "In 2h", or an exact
+          then say when you'll be back — "In 30m", "In 1h", or an exact
           resume time. The block always starts right now, same as the panic
           button; only the end time is asked for. */}
       {showBlockSheet && (
@@ -7702,8 +7794,8 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
               <button className={`block-type-btn ${blockSheetType === "break" ? "active" : ""}`} onClick={() => setBlockSheetType("break")}>☕ Break</button>
             </div>
             <div className="preset-row">
+              <button className={`preset-btn ${blockSheetResumeMode === "in30m" ? "active" : ""}`} onClick={() => setBlockSheetResumeMode("in30m")}>In 30m</button>
               <button className={`preset-btn ${blockSheetResumeMode === "in1h" ? "active" : ""}`} onClick={() => setBlockSheetResumeMode("in1h")}>In 1h</button>
-              <button className={`preset-btn ${blockSheetResumeMode === "in2h" ? "active" : ""}`} onClick={() => setBlockSheetResumeMode("in2h")}>In 2h</button>
               <button className={`preset-btn ${blockSheetResumeMode === "custom" ? "active" : ""}`} onClick={() => setBlockSheetResumeMode("custom")}>Resume at...</button>
             </div>
             {blockSheetResumeMode === "custom" && (
@@ -7720,6 +7812,51 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
               })()}
             </button>
             <button className="btn-sm ghost" style={{ width: "100%", padding: "12px 0", marginTop: 8 }} onClick={closeBlockSheet}>Cancel</button>
+          </div>
+        </div>
+      )}
+
+      {/* WALK-IN SALE — bottom sheet: tap the service(s) this customer is
+          getting right now, see the running total, submit. Creates the
+          booking as done and paid on the spot — no date/time/name form,
+          unlike "+ Add appointment" in the Bookings tab. */}
+      {showWalkInSheet && (
+        <div className="sheet-overlay" onClick={closeWalkInSheet}>
+          <div className="sheet-panel" onClick={(e) => e.stopPropagation()}>
+            <div className="sheet-handle"></div>
+            <h3 style={{ fontSize: 17, fontWeight: 800, margin: "0 0 4px", color: "var(--dark-text)" }}>Walk-In Sale</h3>
+            <p style={{ fontSize: 13, color: "var(--muted)", margin: "0 0 16px" }}>Tap what they're getting today.</p>
+            <div style={{ maxHeight: "45vh", overflowY: "auto", marginBottom: 12 }}>
+              {activeServices.map((s) => {
+                const active = walkInSaleServiceIds.includes(s.id);
+                return (
+                  <div key={s.id} className={`service-card ${active ? "active" : ""}`} onClick={() => toggleWalkInSaleService(s.id)}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                      <span className="service-card-check">✓</span>
+                      <div>
+                        <div className="service-card-name" style={{ fontWeight: 600, fontSize: 14, color: "var(--dark-text)" }}>{s.name}</div>
+                        <div className="service-card-meta" style={{ fontSize: 12, color: "var(--muted)" }}>{s.duration_min} min · BZ${s.price}</div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            {walkInSaleServiceIds.length > 0 && (
+              <p style={{ fontSize: 14, fontWeight: 700, color: "var(--dark-text)", margin: "0 0 12px" }}>
+                Total: BZ${walkInSaleTotal.toFixed(2)} · {walkInSaleDuration} min · {walkInSaleServiceIds.length} service{walkInSaleServiceIds.length === 1 ? "" : "s"}
+              </p>
+            )}
+            {walkInSaleError && <p style={{ fontSize: 12, color: "#B91C1C", marginBottom: 12 }}>{walkInSaleError}</p>}
+            <button
+              className="btn-sm forest"
+              style={{ width: "100%", padding: "14px 0", fontSize: 15, borderRadius: 12 }}
+              disabled={savingWalkInSale || walkInSaleServiceIds.length === 0}
+              onClick={submitWalkInSale}
+            >
+              {savingWalkInSale ? "Logging sale..." : walkInSaleServiceIds.length > 0 ? `Log sale — BZ${walkInSaleTotal.toFixed(2)}` : "Log sale"}
+            </button>
+            <button className="btn-sm ghost" style={{ width: "100%", padding: "12px 0", marginTop: 8 }} onClick={closeWalkInSheet}>Cancel</button>
           </div>
         </div>
       )}
