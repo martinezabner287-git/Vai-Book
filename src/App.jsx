@@ -1,6 +1,6 @@
 
 import { useState, useEffect, useLayoutEffect, useRef, useContext, createContext, lazy, Suspense } from "react";
-import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, deleteService, getActiveProviders, getProviderDirectory, createBooking, getProviderBusyWindows, createBookingSafe, cancelBooking, getCustomerBookings, uploadReceipt, submitReview, getProviderReviews, updateReview, sendBookingEmail, updateUserProfile, getPaymentMethods, addPaymentMethod, deletePaymentMethod, createNotification, getNotifications, markNotificationRead, markAllNotificationsRead, getCategoryDefaultFeatures, getProviderFeatureOverrides, setProviderFeatureOverride, getVisitNotes, upsertVisitNote, adminListProviders, adminUpdateProvider, adminDeleteProvider, tagVIP, untagVIP, getVIPClients, getFavoriteProviderIds, getFavoriteProviders, addFavorite, removeFavorite, getBookingMessages, sendBookingMessage, markBookingMessagesRead, getUnreadBookingMessages, getProviderMonthlyTrend, createProviderProfile, getProviderById, createWalkInBooking, submitProviderPayment, getMyProviderPayments, adminListProviderPayments, adminReviewProviderPayment, submitVipPayment, getMyVipPayments, adminListVipPayments, adminReviewVipPayment, createVipBooking, submitBookingRefund, adminListBookingRefunds, openPrivateFile, getProviderStaff, addProviderStaff, updateProviderStaff, deleteProviderStaff, getLoyaltyAccount, getProviderLoyaltyCustomers, redeemLoyaltyReward, getMyStaffProfile, claimStaffSeatByEmail, getStaffBookings, getProviderNotifyEmail, getMaintenanceStatus, setMaintenanceMode, getSiteOfflineStatus, setSiteOffline, sendEmailOtp, verifyEmailOtp, savePushSubscription, attachBookingServices, getProviderBlocks, insertProviderBlock, deleteProviderBlock, proposeBookingReschedule, confirmBookingReschedule, declineBookingReschedule, withdrawBookingReschedule } from "./supabase";
+import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, deleteService, getActiveProviders, getProviderDirectory, createBooking, getProviderBusyWindows, createBookingSafe, cancelBooking, getCustomerBookings, uploadReceipt, submitReview, getProviderReviews, updateReview, sendBookingEmail, updateUserProfile, getPaymentMethods, addPaymentMethod, deletePaymentMethod, createNotification, getNotifications, markNotificationRead, markAllNotificationsRead, getCategoryDefaultFeatures, getProviderFeatureOverrides, setProviderFeatureOverride, getVisitNotes, upsertVisitNote, adminListProviders, adminUpdateProvider, adminDeleteProvider, getFavoriteProviderIds, getFavoriteProviders, addFavorite, removeFavorite, getBookingMessages, sendBookingMessage, markBookingMessagesRead, getUnreadBookingMessages, getProviderMonthlyTrend, createProviderProfile, getProviderById, createWalkInBooking, submitProviderPayment, getMyProviderPayments, adminListProviderPayments, adminReviewProviderPayment, submitVipPayment, getMyVipPayments, adminListVipPayments, adminReviewVipPayment, createVipBooking, submitBookingRefund, adminListBookingRefunds, openPrivateFile, getProviderStaff, addProviderStaff, updateProviderStaff, deleteProviderStaff, getLoyaltyAccount, getProviderLoyaltyCustomers, redeemLoyaltyReward, getMyStaffProfile, claimStaffSeatByEmail, getStaffBookings, getProviderNotifyEmail, getMaintenanceStatus, setMaintenanceMode, getSiteOfflineStatus, setSiteOffline, sendEmailOtp, verifyEmailOtp, savePushSubscription, attachBookingServices, getProviderBlocks, insertProviderBlock, deleteProviderBlock, proposeBookingReschedule, confirmBookingReschedule, declineBookingReschedule, withdrawBookingReschedule } from "./supabase";
 import { compressImageFile } from "./imageUtils";
 import { bookingRequestSchema, rescheduleProposalSchema, validate } from "./validation";
 
@@ -557,6 +557,31 @@ const css = `
   .avatar-info .name { font-size: 13px; font-weight: 600; color: var(--near-white); }
   .avatar-info .role { font-size: 11px; color: rgba(255,255,255,0.4); }
 
+  /* PROVIDER PORTAL — TOP NAV (replaces the persistent left sidebar with a
+     single top bar: logo, daily-use links, and an avatar dropdown holding
+     everything else. Customer/Staff portals are untouched and still use
+     .portal-layout/.sidebar above.) */
+  .provider-shell { min-height: 100vh; background: #F0F4F2; }
+  .provider-topbar { position: sticky; top: 0; z-index: 150; height: 64px; background: var(--forest); display: flex; align-items: center; gap: 24px; padding: 0 24px; }
+  .provider-topbar-left { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+  .provider-status-pill { font-size: 10px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--lime); background: rgba(198,241,53,0.12); padding: 4px 9px; border-radius: 100px; white-space: nowrap; }
+  .provider-status-pill.pending { color: rgba(255,255,255,0.6); background: rgba(255,255,255,0.08); }
+  .provider-topnav-links { display: flex; align-items: center; gap: 4px; flex: 1; }
+  .provider-nav-link { background: none; border: none; color: rgba(255,255,255,0.65); font-family: 'Plus Jakarta Sans', sans-serif; font-size: 14px; font-weight: 600; padding: 21px 14px; cursor: pointer; border-bottom: 2px solid transparent; transition: color .2s, border-color .2s; }
+  .provider-nav-link:hover { color: #FFFFFF; }
+  .provider-nav-link.active { color: var(--lime); border-bottom-color: var(--lime); }
+  .provider-hamburger { display: none; background: none; border: 1px solid rgba(255,255,255,0.3); color: #FFFFFF; width: 38px; height: 38px; border-radius: 8px; font-size: 16px; cursor: pointer; flex-shrink: 0; }
+  .provider-topbar-right { flex-shrink: 0; margin-left: auto; }
+  .provider-avatar-wrap { position: relative; }
+  .provider-avatar-btn { background: none; border: none; cursor: pointer; padding: 0; display: flex; align-items: center; }
+  .provider-avatar-btn .avatar { flex-shrink: 0; }
+  .provider-account-dropdown { top: calc(100% + 10px); min-width: 240px; }
+  .provider-dropdown-header { padding: 6px 14px 10px; }
+  .provider-dropdown-header .name { font-size: 14px; font-weight: 700; color: var(--dark-text); }
+  .provider-dropdown-header .sub { font-size: 11.5px; color: var(--muted); margin-top: 2px; }
+  .provider-dropdown-group-label { font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); padding: 10px 14px 4px; }
+  .provider-mobile-nav { display: none; }
+
   /* PORTAL CONTENT */
   .portal-content { background: #F0F4F2; padding: 32px; overflow-y: auto; }
   .portal-header { margin-bottom: 28px; }
@@ -855,6 +880,14 @@ const css = `
     .portal-layout { grid-template-columns: 1fr; }
     .sidebar { display: none; }
     .portal-content { padding: 20px; }
+    .provider-topbar { padding: 0 16px; gap: 12px; }
+    .provider-topbar-left .nav-logo { font-size: 16px; }
+    .provider-status-pill { display: none; }
+    .provider-topnav-links { display: none; }
+    .provider-hamburger { display: flex; align-items: center; justify-content: center; }
+    .provider-mobile-nav { display: flex; flex-direction: column; position: absolute; top: 64px; left: 0; right: 0; background: var(--forest); border-top: 1px solid rgba(255,255,255,0.1); box-shadow: 0 16px 30px rgba(0,0,0,0.25); z-index: 149; padding: 8px; }
+    .provider-mobile-nav-item { background: none; border: none; color: rgba(255,255,255,0.75); font-family: 'Plus Jakarta Sans', sans-serif; font-size: 15px; font-weight: 600; text-align: left; padding: 13px 12px; border-radius: 8px; cursor: pointer; }
+    .provider-mobile-nav-item.active { color: var(--lime); background: rgba(198,241,53,0.1); }
     .grid-2 { grid-template-columns: 1fr; }
     .grid-3 { grid-template-columns: 1fr; }
     .metric-grid { grid-template-columns: 1fr 1fr; }
@@ -2425,7 +2458,6 @@ const PORTAL_TOOLS_BY_VIEW = {
   provider: [
     { id: "dashboard", icon: "📊", label: "Dashboard" },
     { id: "bookings", icon: "📅", label: "Bookings" },
-    { id: "vip", icon: "⭐", label: "VIP clients" },
     { id: "calendar", icon: "🗓️", label: "Availability" },
     { id: "services", icon: "✂️", label: "My services" },
     { id: "earnings", icon: "💰", label: "Earnings" },
@@ -5310,6 +5342,11 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
     setLaunchBannerDismissed(true);
     try { if (providerId) localStorage.setItem(`vaibook_launch_graphic_seen_${providerId}`, "1"); } catch (e) { /* localStorage unavailable — banner just won't persist as dismissed */ }
   };
+  // TOP NAV REDESIGN — the persistent left sidebar is gone; these drive the
+  // new top bar's mobile hamburger (Dashboard/Bookings/Clients) and the
+  // avatar's grouped "everything else" dropdown, both closed by default.
+  const [providerMobileNavOpen, setProviderMobileNavOpen] = useState(false);
+  const [providerMenuOpen, setProviderMenuOpen] = useState(false);
   const [showBlockSheet, setShowBlockSheet] = useState(false);
   // "in15m" | "in30m" | "in1h" | "custom" — the bottom sheet asks "when
   // will you be back" and works out the end time from that, rather than
@@ -5772,23 +5809,6 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
     await loadBookings();
   };
 
-  const [vipClients, setVipClients] = useState([]);
-  const [loadingVip, setLoadingVip] = useState(false);
-  const [togglingVipId, setTogglingVipId] = useState(null);
-  const vipCustomerIds = new Set(vipClients.map((v) => v.customer_id));
-
-  const loadVIPClients = async () => {
-    if (!providerId) return;
-    setLoadingVip(true);
-    const data = await getVIPClients(providerId);
-    setVipClients(data || []);
-    setLoadingVip(false);
-  };
-
-  useEffect(() => {
-    loadVIPClients();
-  }, [providerId]);
-
   const [monthlyTrend, setMonthlyTrend] = useState([]);
   const [loadingTrend, setLoadingTrend] = useState(false);
 
@@ -5803,20 +5823,6 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
   useEffect(() => {
     loadMonthlyTrend();
   }, [providerId]);
-
-  const toggleVIP = async (customerId) => {
-    if (!providerId || !customerId || togglingVipId === customerId) return;
-    setTogglingVipId(customerId);
-    const isVip = vipCustomerIds.has(customerId);
-    if (isVip) {
-      const ok = await untagVIP(providerId, customerId);
-      if (ok) setVipClients((prev) => prev.filter((v) => v.customer_id !== customerId));
-    } else {
-      await tagVIP(providerId, customerId);
-      loadVIPClients();
-    }
-    setTogglingVipId(null);
-  };
 
   useEffect(() => {
     (async () => {
@@ -6344,20 +6350,45 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
     await deleteService(serviceId);
   };
 
-  const sideItems = [
-    { id: "dashboard", icon: "📊", label: "Dashboard" },
-    { id: "bookings", icon: "📅", label: "Bookings" },
-    { id: "vip", icon: "⭐", label: "VIP clients" },
-    { id: "calendar", icon: "🗓️", label: "Availability" },
-    { id: "services", icon: "✂️", label: "My services" },
-    { id: "earnings", icon: "💰", label: "Earnings" },
-    { id: "billing", icon: "🧾", label: "My plan & billing" },
-    { id: "staff", icon: "👥", label: "My staff" },
-    { id: "reviews", icon: "⭐", label: "My reviews" },
-    { id: "review", icon: "📈", label: "Monthly review" },
-    { id: "profile", icon: "👤", label: "Public profile" },
-    { id: "modules", icon: "🧩", label: "Modules" },
-    { id: "settings", icon: "⚙️", label: "Settings" },
+  // TOP NAV REDESIGN — same destinations the old sidebar had, regrouped:
+  // the 3 daily-use ones live in the top bar itself, the rest move into the
+  // avatar dropdown in three labeled groups. The old "VIP clients"
+  // (manually-starred subset) feature is gone entirely — "Clients" is now a
+  // real directory built straight from booking history (see `allClients`
+  // below), not a curated list. "Earnings" and "Monthly review" (not part
+  // of the original 3-group spec) were folded into Operations rather than
+  // dropped.
+  const PROVIDER_TOP_NAV = [
+    { id: "dashboard", label: "Dashboard" },
+    { id: "bookings", label: "Bookings" },
+    { id: "clients", label: "Clients" },
+  ];
+  const PROVIDER_MENU_GROUPS = [
+    {
+      label: "Operations",
+      items: [
+        { id: "services", icon: "✂️", label: "My services" },
+        { id: "calendar", icon: "🗓️", label: "Availability" },
+        { id: "staff", icon: "👥", label: "My staff" },
+        { id: "earnings", icon: "💰", label: "Earnings" },
+        { id: "review", icon: "📈", label: "Monthly review" },
+      ],
+    },
+    {
+      label: "Growth",
+      items: [
+        { id: "reviews", icon: "⭐", label: "My reviews" },
+        { id: "modules", icon: "🧩", label: "Add-ons" },
+      ],
+    },
+    {
+      label: "Account",
+      items: [
+        { id: "profile", icon: "👤", label: "Public profile" },
+        { id: "billing", icon: "🧾", label: "My plan & billing" },
+        { id: "settings", icon: "⚙️", label: "Settings" },
+      ],
+    },
   ];
   const providerCategoryKey = providerProfile?.category_key || categoryForServiceType(providerProfile?.service_type);
 
@@ -6486,9 +6517,10 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
     if (!["completed", "done", "confirmed", "pending", "awaiting_payment"].includes(b.status)) return;
     const d = bookingDateOnly(b.booking_date);
     if (!d) return;
-    const entry = customerHistory[b.customer_id] || { name: "Customer", phone: null, visits: 0, lastDate: null, hasUpcoming: false };
+    const entry = customerHistory[b.customer_id] || { id: b.customer_id, name: "Customer", email: null, phone: null, visits: 0, lastDate: null, hasUpcoming: false };
     entry.visits += 1;
     if (b.users?.full_name) entry.name = b.users.full_name;
+    if (b.users?.email) entry.email = b.users.email;
     if (b.users?.phone) entry.phone = b.users.phone;
     if (!entry.lastDate || d > entry.lastDate) entry.lastDate = d;
     if (d >= bookingDateOnly(localDateStr()) && ["pending", "awaiting_payment", "confirmed"].includes(b.status)) entry.hasUpcoming = true;
@@ -6498,6 +6530,16 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
   const quietRegulars = Object.values(customerHistory)
     .filter((c) => c.visits >= 2 && !c.hasUpcoming && c.lastDate && c.lastDate < quietSince)
     .sort((a, b) => a.lastDate - b.lastDate);
+
+  // "Clients" tab — replaces the old manually-starred "VIP clients" list
+  // with a real directory: every registered customer who has ever actually
+  // booked with this provider (walk-ins have no account/customer_id, so
+  // they can't appear here), most recent visit first.
+  const allClients = Object.values(customerHistory).sort((a, b) => (b.lastDate?.getTime() || 0) - (a.lastDate?.getTime() || 0));
+  const [clientSearch, setClientSearch] = useState("");
+  const filteredClients = clientSearch.trim()
+    ? allClients.filter((c) => c.name.toLowerCase().includes(clientSearch.trim().toLowerCase()))
+    : allClients;
 
   // Only bookings that actually reached an outcome count — pending and
   // upcoming ones aren't failures, and including them held the rate down
@@ -6622,34 +6664,95 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
 
   return (
     <FeatureFlagsProvider providerId={providerId} categoryKey={providerCategoryKey}>
-    <div className="portal-layout">
-      <aside className="sidebar">
-        <div style={{ padding: "0 16px 20px", borderBottom: "1px solid rgba(255,255,255,0.08)", marginBottom: 20 }}>
+    <div className="provider-shell">
+      <header className="provider-topbar">
+        <div className="provider-topbar-left">
           <span className="nav-logo" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 18, color: "var(--near-white)", display: "inline-flex", alignItems: "center", gap: 7 }}><VaiBookMark size={19} />vai<span style={{ color: "var(--lime)" }}>book</span></span>
-          <div style={{ fontSize: 11, color: "rgba(255,255,255,0.35)", marginTop: 4 }}>Provider portal</div>
+          <span className={`provider-status-pill ${providerProfile.is_active ? "" : "pending"}`}>
+            {providerProfile.is_active ? "✓ Verified" : "Pending"}
+          </span>
         </div>
-        <div className="sidebar-section">
-          <div className="sidebar-label">Provider tools</div>
-          {sideItems.map(item => (
-            <div key={item.id} className={`sidebar-item ${tab === item.id ? "active" : ""}`} onClick={() => setTab(item.id)}>
-              <span className="icon">{item.icon}</span>{item.label}
-            </div>
+
+        {/* Daily-use links, front and center — everything else lives in the
+            avatar dropdown on the right. */}
+        <nav className="provider-topnav-links">
+          {PROVIDER_TOP_NAV.map((item) => (
+            <button
+              key={item.id}
+              className={`provider-nav-link ${tab === item.id ? "active" : ""}`}
+              onClick={() => setTab(item.id)}
+            >
+              {item.label}
+            </button>
           ))}
-        </div>
-        <div style={{ padding: "12px 16px", marginTop: 4 }}>
-          <div style={{ background: "rgba(198,241,53,0.12)", borderRadius: 8, padding: "10px 12px" }}>
-            <div style={{ fontSize: 11, color: "var(--lime)", fontWeight: 700, letterSpacing: ".02em", marginBottom: 4 }}>{providerProfile.is_active ? "✓ Verified Vai Partner" : "PENDING ACTIVATION"}</div>
-            <div style={{ fontSize: 12, color: "rgba(255,255,255,0.55)" }}>{providerProfile.service_type} · {providerProfile.district}</div>
+        </nav>
+
+        {/* Mobile-only: the same 3 links collapse behind a hamburger since
+            there's no room for them inline on a phone screen. */}
+        <button
+          className="provider-hamburger"
+          onClick={() => setProviderMobileNavOpen((v) => !v)}
+          aria-label="Menu"
+          aria-expanded={providerMobileNavOpen}
+        >
+          ☰
+        </button>
+
+        <div className="provider-topbar-right">
+          <div className="provider-avatar-wrap" onMouseLeave={() => setProviderMenuOpen(false)}>
+            <button
+              className="provider-avatar-btn"
+              onClick={() => setProviderMenuOpen((v) => !v)}
+              aria-label="Account menu"
+              aria-expanded={providerMenuOpen}
+            >
+              <span className="avatar">{(providerProfile.business_name || "V")[0].toUpperCase()}</span>
+            </button>
+            {providerMenuOpen && (
+              <div className="nav-dropdown provider-account-dropdown">
+                <div className="provider-dropdown-header">
+                  <div className="name">{providerProfile.business_name || "Your business"}</div>
+                  <div className="sub">{providerProfile.service_type} · {providerProfile.district}</div>
+                </div>
+                <hr />
+                {PROVIDER_MENU_GROUPS.map((group, gi) => (
+                  <div key={group.label}>
+                    <div className="provider-dropdown-group-label">{group.label}</div>
+                    {group.items.map((item) => (
+                      <button
+                        key={item.id}
+                        className="nav-dropdown-item"
+                        onClick={() => { setTab(item.id); setProviderMenuOpen(false); }}
+                      >
+                        <span className="icn">{item.icon}</span>{item.label}
+                      </button>
+                    ))}
+                    {gi < PROVIDER_MENU_GROUPS.length - 1 && <hr />}
+                  </div>
+                ))}
+                <hr />
+                <button className="nav-dropdown-item" onClick={onSignOut}>
+                  <span className="icn">↪</span>Sign out
+                </button>
+              </div>
+            )}
           </div>
         </div>
-        <div className="sidebar-avatar">
-          <div className="avatar">{(providerProfile.business_name || "V")[0].toUpperCase()}</div>
-          <div className="avatar-info">
-            <div className="name">{providerProfile.business_name || "Your business"}</div>
-            <div className="role" style={{ cursor: "pointer" }} onClick={onSignOut}>Sign out</div>
+
+        {providerMobileNavOpen && (
+          <div className="provider-mobile-nav">
+            {PROVIDER_TOP_NAV.map((item) => (
+              <button
+                key={item.id}
+                className={`provider-mobile-nav-item ${tab === item.id ? "active" : ""}`}
+                onClick={() => { setTab(item.id); setProviderMobileNavOpen(false); }}
+              >
+                {item.label}
+              </button>
+            ))}
           </div>
-        </div>
-      </aside>
+        )}
+      </header>
 
       <main className="portal-content">
         {tab === "dashboard" && (
@@ -6848,31 +6951,42 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
           </>
         )}
 
-        {tab === "vip" && (
+        {tab === "clients" && (
           <>
-            <div className="portal-header"><h2>VIP clients</h2><p>Customers you've flagged for extra attention — tap the star next to a customer's name on any booking to add or remove them.</p></div>
+            <div className="portal-header"><h2>Clients</h2><p>Everyone who's booked with you, most recent visit first.</p></div>
             <div className="card">
               <div className="card-title" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <span>All VIP clients</span>
-                <button className="btn-sm forest" onClick={loadVIPClients} disabled={loadingVip}>{loadingVip ? "Refreshing..." : "Refresh"}</button>
+                <span>All clients ({allClients.length})</span>
+                <button className="btn-sm forest" onClick={loadBookings} disabled={loadingBookings}>{loadingBookings ? "Refreshing..." : "Refresh"}</button>
               </div>
-              {vipClients.length === 0 && (
-                <p style={{ fontSize: 13, color: "var(--muted)", padding: "16px 0" }}>{loadingVip ? "Loading..." : "No VIP clients yet."}</p>
+              {allClients.length > 0 && (
+                <div className="input-group" style={{ marginBottom: 12 }}>
+                  <input placeholder="Search by name..." value={clientSearch} onChange={(e) => setClientSearch(e.target.value)} />
+                </div>
               )}
-              {vipClients.map((v) => (
-                <div key={v.customer_id} className="booking-item" style={{ alignItems: "center" }}>
+              {allClients.length === 0 && (
+                <p style={{ fontSize: 13, color: "var(--muted)", padding: "16px 0" }}>
+                  {loadingBookings ? "Loading..." : "No clients yet — they'll show up here as soon as someone books with you. (Walk-in sales don't have an account, so they won't appear.)"}
+                </p>
+              )}
+              {allClients.length > 0 && filteredClients.length === 0 && (
+                <p style={{ fontSize: 13, color: "var(--muted)", padding: "16px 0" }}>No clients match "{clientSearch}".</p>
+              )}
+              {filteredClients.map((c) => (
+                <div key={c.id} className="booking-item" style={{ alignItems: "center" }}>
                   <div className="booking-info" style={{ flex: 1 }}>
-                    <div className="title">⭐ {v.users?.full_name || "Customer"}</div>
-                    <div className="meta">{v.users?.email}</div>
+                    <div className="title">
+                      {c.name}
+                      {c.hasUpcoming && (
+                        <span style={{ marginLeft: 8, fontSize: 11, fontWeight: 700, color: "var(--forest)", background: "var(--lime)", padding: "2px 7px", borderRadius: 5, verticalAlign: "middle" }}>Upcoming</span>
+                      )}
+                    </div>
+                    <div className="meta">
+                      {c.email || c.phone || "No contact on file"}
+                      {" · "}{c.visits} visit{c.visits === 1 ? "" : "s"}
+                      {c.lastDate && ` · last ${c.lastDate.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`}
+                    </div>
                   </div>
-                  <button
-                    className="btn-sm"
-                    style={{ background: "transparent", border: "1px solid var(--muted)", color: "var(--muted)" }}
-                    disabled={togglingVipId === v.customer_id}
-                    onClick={() => toggleVIP(v.customer_id)}
-                  >
-                    Remove
-                  </button>
                 </div>
               ))}
             </div>
@@ -7029,16 +7143,6 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                           <span style={{ marginLeft: 8, fontSize: 11, fontWeight: 700, color: "var(--forest)", background: "var(--lime)", padding: "2px 7px", borderRadius: 999 }}>
                             💬 {unreadByBooking[b.id]} new
                           </span>
-                        )}
-                        {b.customer_id && (
-                          <button
-                            onClick={() => toggleVIP(b.customer_id)}
-                            disabled={togglingVipId === b.customer_id}
-                            title={vipCustomerIds.has(b.customer_id) ? "Remove VIP tag" : "Mark this customer as VIP"}
-                            style={{ background: "none", border: "none", cursor: "pointer", fontSize: 13, marginLeft: 6, padding: 0, verticalAlign: "middle" }}
-                          >
-                            {vipCustomerIds.has(b.customer_id) ? "⭐" : "☆"}
-                          </button>
                         )}
                       </div>
                       {isBusinessPlan && staff.length > 0 && (
@@ -9765,7 +9869,12 @@ export default function App() {
       <style>{css}</style>
       <MaintenanceBanner />
       <InstallAppGuide />
-      {view !== "auth" && <Nav onNav={setView} current={view} {...authProps} />}
+      {/* The Provider Portal now has its own top bar (logo, nav links, avatar
+          menu) replacing the persistent sidebar, so the global site nav
+          would just be a redundant second header above it. Every other
+          view — including the Staff Portal, which still uses the old
+          sidebar layout — keeps the global nav as before. */}
+      {view !== "auth" && !(view === "provider" && providerProfile) && <Nav onNav={setView} current={view} {...authProps} />}
       {view === "home" && <LandingPage onNav={setView} {...authProps} />}
       {view === "customer" && (
         <CustomerPortal
