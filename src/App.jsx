@@ -11,6 +11,10 @@ const BELIZE_CENTER = [17.25, -88.77];
 // components actually renders — see the comment atop MapWidgets.jsx.
 const ProviderMiniMap = lazy(() => import("./MapWidgets").then((m) => ({ default: m.ProviderMiniMap })));
 const ProviderLocationMap = lazy(() => import("./MapWidgets").then((m) => ({ default: m.ProviderLocationMap })));
+// Pulls in the `qrcode` package, so it's code-split and only fetched the
+// moment a provider actually opens their launch graphic — not on every
+// dashboard load.
+const WelcomePlaqueGenerator = lazy(() => import("./WelcomePlaqueGenerator"));
 function MapLoadingFallback({ height }) {
   return (
     <div style={{ height, width: "100%", display: "flex", alignItems: "center", justifyContent: "center", background: "var(--sand)", fontSize: 12.5, color: "var(--muted)" }}>
@@ -657,6 +661,17 @@ const css = `
   .qr-modal-img { width: 100%; max-width: 300px; height: auto; border-radius: 12px; }
   .qr-modal-business { margin-top: 16px; font-size: 16px; font-weight: 800; color: var(--dark-text); }
   .qr-modal-hint { margin-top: 4px; font-size: 13px; color: var(--muted); }
+
+  /* ELITE WELCOME — "you're live" banner + launch graphic modal */
+  .launch-banner { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; background: linear-gradient(160deg, var(--forest) 0%, #0A2A20 100%); border: 1px solid rgba(198,241,53,0.3); border-radius: 16px; padding: 18px 22px; margin-bottom: 20px; }
+  .launch-banner-title { font-size: 15px; font-weight: 800; color: #FFFFFF; }
+  .launch-banner-sub { font-size: 12.5px; color: rgba(245,239,224,0.7); margin-top: 3px; }
+  .plaque-modal-panel { background: transparent; max-width: 420px; width: 100%; }
+  .plaque-loading { background: #fff; border-radius: 16px; padding: 60px 24px; text-align: center; font-size: 14px; color: var(--muted); }
+  .plaque-generator { display: flex; flex-direction: column; align-items: center; gap: 16px; }
+  .plaque-canvas { width: 100%; max-width: 420px; aspect-ratio: 1 / 1; border-radius: 16px; box-shadow: 0 24px 60px rgba(0,0,0,0.45); }
+  .plaque-actions { display: flex; flex-direction: column; gap: 10px; width: 100%; }
+  .plaque-actions .btn-sm { width: 100%; padding: 13px 0; font-size: 13.5px; }
 
   /* SEARCH BAR */
   .search-bar { position: relative; background: white; border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 20px; display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
@@ -5278,6 +5293,23 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
   const [showQrModal, setShowQrModal] = useState(false);
   const [showCheckInModal, setShowCheckInModal] = useState(false);
   const [copiedShopfrontLink, setCopiedShopfrontLink] = useState(false);
+  // "Elite Welcome" launch graphic — the "you're live!" banner dismisses
+  // permanently per provider via localStorage (no DB column for this; it's
+  // a one-time nudge, not something worth a schema change to track).
+  const [showLaunchGraphic, setShowLaunchGraphic] = useState(false);
+  const [launchBannerDismissed, setLaunchBannerDismissed] = useState(true);
+  useEffect(() => {
+    if (!providerId) return;
+    try {
+      setLaunchBannerDismissed(localStorage.getItem(`vaibook_launch_graphic_seen_${providerId}`) === "1");
+    } catch (e) {
+      setLaunchBannerDismissed(false);
+    }
+  }, [providerId]);
+  const dismissLaunchBanner = () => {
+    setLaunchBannerDismissed(true);
+    try { if (providerId) localStorage.setItem(`vaibook_launch_graphic_seen_${providerId}`, "1"); } catch (e) { /* localStorage unavailable — banner just won't persist as dismissed */ }
+  };
   const [showBlockSheet, setShowBlockSheet] = useState(false);
   // "in15m" | "in30m" | "in1h" | "custom" — the bottom sheet asks "when
   // will you be back" and works out the end time from that, rather than
@@ -6609,6 +6641,22 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
       <main className="portal-content">
         {tab === "dashboard" && (
           <>
+            {/* ELITE WELCOME — one-time "you're live" nudge, only for an
+                active provider who hasn't dismissed it. Dismissing (with
+                or without downloading) hides it for good. */}
+            {providerProfile.is_active && !launchBannerDismissed && (
+              <div className="launch-banner">
+                <div>
+                  <div className="launch-banner-title">🎉 You're live on VaiBook!</div>
+                  <div className="launch-banner-sub">Grab your official launch graphic to share on Instagram.</div>
+                </div>
+                <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
+                  <button className="btn-sm ghost" onClick={dismissLaunchBanner}>Dismiss</button>
+                  <button className="btn-sm lime" onClick={() => setShowLaunchGraphic(true)}>Get My Launch Graphic</button>
+                </div>
+              </div>
+            )}
+
             <div className="portal-header">
               <h2>Dashboard</h2>
               <p>{now.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })} · {todaysBookings.length} appointment{todaysBookings.length === 1 ? "" : "s"} today</p>
@@ -8097,6 +8145,20 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
               {savingWalkInSale ? "Logging sale..." : walkInSaleServiceIds.length > 0 ? `Log sale — BZ${walkInSaleTotal.toFixed(2)}` : "Log sale"}
             </button>
             <button className="btn-sm ghost" style={{ width: "100%", padding: "12px 0", marginTop: 8 }} onClick={closeWalkInSheet}>Cancel</button>
+          </div>
+        </div>
+      )}
+
+      {/* ELITE WELCOME — the launch graphic modal. Lazy-loaded (pulls in
+          the qrcode package) so it only costs bandwidth the moment a
+          provider actually opens it. */}
+      {showLaunchGraphic && (
+        <div className="qr-modal-overlay" onClick={() => setShowLaunchGraphic(false)}>
+          <button className="qr-modal-close" onClick={() => setShowLaunchGraphic(false)} aria-label="Close launch graphic">✕</button>
+          <div className="plaque-modal-panel" onClick={(e) => e.stopPropagation()}>
+            <Suspense fallback={<div className="plaque-loading">Preparing your launch graphic...</div>}>
+              <WelcomePlaqueGenerator businessName={providerProfile.business_name} bookingUrl={bookingUrl} />
+            </Suspense>
           </div>
         </div>
       )}
