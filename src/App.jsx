@@ -554,19 +554,14 @@ const css = `
   .footer-links li:hover { color: var(--near-white); }
   .footer-bottom { border-top: 1px solid rgba(255,255,255,0.08); padding-top: 24px; font-size: 12px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
 
-  /* PORTAL LAYOUTS */
-  .portal-layout { display: grid; grid-template-columns: 240px 1fr; min-height: calc(100vh - 64px); }
-  .sidebar { background: var(--forest); padding: 28px 0; display: flex; flex-direction: column; }
-  .sidebar-section { padding: 0 16px; margin-bottom: 32px; }
-  .sidebar-label { font-size: 10px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: rgba(255,255,255,0.35); padding: 0 12px; margin-bottom: 8px; }
-  .sidebar-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: var(--radius-sm); cursor: pointer; color: rgba(255,255,255,0.65); font-size: 14px; font-weight: 500; transition: all .2s; margin-bottom: 2px; }
-  .sidebar-item:hover, .sidebar-item.active { background: rgba(198,241,53,0.12); color: var(--near-white); }
-  .sidebar-item.active { color: var(--lime); }
-  .sidebar-item .icon { font-size: 16px; width: 20px; text-align: center; }
-  .sidebar-avatar { padding: 16px; border-top: 1px solid rgba(255,255,255,0.08); margin-top: auto; display: flex; align-items: center; gap: 12px; }
+  /* PORTAL LAYOUTS — the persistent left sidebar (Customer + Admin portals;
+     the Provider Portal was already converted to its own top bar earlier)
+     was removed entirely: no <aside>, no reserved-width column. This is a
+     single-column, full-width content area now — every link that sidebar
+     held lives in the top header's avatar dropdown instead (Nav component,
+     PORTAL_TOOLS_BY_VIEW). */
+  .portal-layout { display: block; min-height: calc(100vh - 64px); width: 100%; }
   .avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--lime); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; color: var(--forest); flex-shrink: 0; }
-  .avatar-info .name { font-size: 13px; font-weight: 600; color: var(--near-white); }
-  .avatar-info .role { font-size: 11px; color: rgba(255,255,255,0.4); }
 
   /* PROVIDER PORTAL — TOP NAV (replaces the persistent left sidebar with a
      single top bar: logo, daily-use links, and an avatar dropdown holding
@@ -594,7 +589,7 @@ const css = `
   .provider-mobile-nav { display: none; }
 
   /* PORTAL CONTENT */
-  .portal-content { background: #F0F4F2; padding: 32px; overflow-y: auto; }
+  .portal-content { background: #F0F4F2; padding: 32px; overflow-y: auto; width: 100%; max-width: 100%; }
   .portal-header { margin-bottom: 28px; }
   .portal-header h2 { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 26px; font-weight: 700; color: var(--forest); }
   .portal-header p { font-size: 14px; color: var(--muted); margin-top: 4px; }
@@ -888,8 +883,6 @@ const css = `
     .hero-card-wrap { display: none; }
     .section { padding: 60px 24px; }
     .marketing-strip { padding: 32px 24px; }
-    .portal-layout { grid-template-columns: 1fr; }
-    .sidebar { display: none; }
     .portal-content { padding: 20px; }
     .provider-topbar { padding: 0 16px; gap: 12px; }
     .provider-topbar-left .nav-logo { font-size: 16px; }
@@ -2481,12 +2474,15 @@ const PORTAL_TOOLS_BY_VIEW = {
     { id: "settings", icon: "⚙️", label: "Settings" },
   ],
   admin: [
+    { id: "overview", icon: "🎛️", label: "Command Center" },
     { id: "pending", icon: "⏳", label: "Pending" },
     { id: "active", icon: "✅", label: "Active" },
     { id: "rejected", icon: "✖", label: "Rejected" },
     { id: "providers", icon: "🏪", label: "Providers" },
     { id: "payments", icon: "🧾", label: "Payments" },
+    { id: "vip", icon: "⚡", label: "VIP Memberships" },
     { id: "refunds", icon: "↩️", label: "Refunds" },
+    { id: "security", icon: "🚨", label: "Emergency" },
   ],
 };
 
@@ -3204,7 +3200,6 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
   }, []);
   const displayName = user?.full_name || session?.user?.email || "there";
   const firstName = displayName.split(" ")[0].split("@")[0];
-  const initial = displayName[0]?.toUpperCase() || "?";
   const [bookingTab, setBookingTab] = useState("upcoming");
   const [bookingSearch, setBookingSearch] = useState("");
   const [bookingSort, setBookingSort] = useState("newest");
@@ -3510,16 +3505,6 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
       }
     } catch (e) { /* ignore malformed/missing storage */ }
   }, []);
-
-  const sideItems = [
-    { id: "home", icon: "🏠", label: "Home" },
-    { id: "browse", icon: "🔍", label: "Find services" },
-    { id: "favorites", icon: "❤️", label: "Favorites" },
-    { id: "bookings", icon: "📅", label: "My bookings" },
-    { id: "payments", icon: "💳", label: "Payments" },
-    { id: "reviews", icon: "⭐", label: "My reviews" },
-    { id: "settings", icon: "⚙️", label: "Settings" },
-  ];
 
   const openBooking = (provider) => {
     setBookingError("");
@@ -4073,28 +4058,11 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
 
   return (
     <div className="portal-layout">
-      <aside className="sidebar">
-        <div style={{ padding: "0 16px 20px", borderBottom: "1px solid rgba(255,255,255,0.08)", marginBottom: 20 }}>
-          <span className="nav-logo" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 18, color: "var(--near-white)", display: "inline-flex", alignItems: "center", gap: 7 }}><VaiBookMark size={19} />vai<span style={{ color: "var(--lime)" }}>book</span></span>
-          <div style={{ fontSize: 11, color: "rgba(255,255,255,0.35)", marginTop: 4 }}>Customer portal</div>
-        </div>
-        <div className="sidebar-section">
-          <div className="sidebar-label">Menu</div>
-          {sideItems.map(item => (
-            <div key={item.id} className={`sidebar-item ${tab === item.id ? "active" : ""}`} onClick={() => setTab(item.id)}>
-              <span className="icon">{item.icon}</span>{item.label}
-            </div>
-          ))}
-        </div>
-        <div className="sidebar-avatar">
-          <div className="avatar">{initial}</div>
-          <div className="avatar-info">
-            <div className="name">{displayName}</div>
-            <div className="role" style={{ cursor: "pointer" }} onClick={onSignOut}>Sign out</div>
-          </div>
-        </div>
-      </aside>
-
+      {/* The persistent left sidebar was removed — every link it held
+          (Home, Find services, Favorites, My bookings, Payments, My
+          reviews, Settings, Sign out) now lives exclusively in the top
+          header's avatar dropdown (see PORTAL_TOOLS_BY_VIEW.customer and
+          the Nav component), so nothing here was left unreachable. */}
       <main className="portal-content">
         {tab === "home" && (
           <>
@@ -9513,65 +9481,16 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
   const liveBusinessNames = new Set(providers.map((p) => (p.business_name || "").trim().toLowerCase()));
   const isApplicationLive = (app) => liveBusinessNames.has((app.business_name || "").trim().toLowerCase());
 
-  const sideItems = [
-    { id: "pending", icon: "\u23f3", label: "Pending" },
-    { id: "active", icon: "\u2705", label: "Active" },
-    { id: "rejected", icon: "\u2716", label: "Rejected" },
-  ];
-
   const planLabel = (id) => (PLANS.find(p => p.id === id)?.name) || id;
 
   return (
     <div className="portal-layout">
-      <aside className="sidebar">
-        <div style={{ padding: "0 16px 20px", borderBottom: "1px solid rgba(255,255,255,0.08)", marginBottom: 20 }}>
-          <span className="nav-logo" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 18, color: "var(--near-white)", display: "inline-flex", alignItems: "center", gap: 7 }}><VaiBookMark size={19} />vai<span style={{ color: "var(--lime)" }}>book</span></span>
-          <div style={{ fontSize: 11, color: "rgba(255,255,255,0.35)", marginTop: 4 }}>Admin portal</div>
-        </div>
-        <div className="sidebar-section">
-          <div className="sidebar-label">Overview</div>
-          <div className={`sidebar-item ${tab === "overview" ? "active" : ""}`} onClick={() => setTab("overview")}>
-            <span className="icon">{"🎛️"}</span>Command Center
-          </div>
-        </div>
-        <div className="sidebar-section">
-          <div className="sidebar-label">Applications</div>
-          {sideItems.map(item => (
-            <div key={item.id} className={`sidebar-item ${tab === item.id ? "active" : ""}`} onClick={() => setTab(item.id)}>
-              <span className="icon">{item.icon}</span>{item.label} ({counts[item.id]})
-            </div>
-          ))}
-        </div>
-        <div className="sidebar-section">
-          <div className="sidebar-label">Manage</div>
-          <div className={`sidebar-item ${tab === "providers" ? "active" : ""}`} onClick={() => setTab("providers")}>
-            <span className="icon">{"🏪"}</span>Providers ({providers.length})
-          </div>
-          <div className={`sidebar-item ${tab === "payments" ? "active" : ""}`} onClick={() => setTab("payments")}>
-            <span className="icon">{"🧾"}</span>Payments ({payments.filter(p => p.status === "pending").length})
-          </div>
-          <div className={`sidebar-item ${tab === "vip" ? "active" : ""}`} onClick={() => setTab("vip")}>
-            <span className="icon">{"⚡"}</span>VIP Memberships ({vipPayments.filter(p => p.status === "pending").length})
-          </div>
-          <div className={`sidebar-item ${tab === "refunds" ? "active" : ""}`} onClick={() => setTab("refunds")}>
-            <span className="icon">{"💸"}</span>Refunds ({refunds.length})
-          </div>
-        </div>
-        <div className="sidebar-section">
-          <div className="sidebar-label">System</div>
-          <div className={`sidebar-item ${tab === "security" ? "active" : ""}`} onClick={() => setTab("security")}>
-            <span className="icon">{"🚨"}</span>Emergency{siteOffline.on ? " (OFFLINE)" : maintenance.on ? " (PAUSED)" : ""}
-          </div>
-        </div>
-        <div className="sidebar-avatar">
-          <div className="avatar">{(user?.full_name || session.user.email)[0].toUpperCase()}</div>
-          <div className="avatar-info">
-            <div className="name">{user?.full_name || session.user.email}</div>
-            <div className="role" style={{ cursor: "pointer" }} onClick={onSignOut}>Sign out</div>
-          </div>
-        </div>
-      </aside>
-
+      {/* The persistent left sidebar was removed — every link and live badge
+          count it held (Pending/Active/Rejected, Providers, Payments, VIP
+          Memberships, Refunds, Emergency, Sign out) now lives exclusively in
+          the top header's avatar dropdown (PORTAL_TOOLS_BY_VIEW.admin) plus
+          the Command Center's quick-jump status strip below, so nothing here
+          was left unreachable or invisible. */}
       <main className="portal-content">
         {tab === "overview" && (
           <AdminDashboard
@@ -9588,6 +9507,11 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
             onApprove={(id) => act(id, "active")}
             onDeny={(id) => act(id, "rejected")}
             onManage={() => setTab("providers")}
+            paymentsPending={payments.filter((p) => p.status === "pending").length}
+            vipPending={vipPayments.filter((p) => p.status === "pending").length}
+            refundsCount={refunds.length}
+            emergencyLabel={siteOffline.on ? "Offline" : maintenance.on ? "Paused" : null}
+            onJump={setTab}
           />
         )}
 
