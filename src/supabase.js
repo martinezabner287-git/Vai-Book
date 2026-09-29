@@ -1040,33 +1040,11 @@ export const updateReview = async (reviewId, { rating, comment }) => {
   return data;
 };
 
-// ── VIP HELPERS ──────────────────────────────────────────────────
-
-export const tagVIP = async (providerId, customerId) => {
-  const { error } = await supabase
-    .from('vip_clients')
-    .upsert({ provider_id: providerId, customer_id: customerId });
-  if (error) console.error(error.message);
-};
-
-export const getVIPClients = async (providerId) => {
-  const { data, error } = await supabase
-    .from('vip_clients')
-    .select('*, users(full_name, email, avatar_url)')
-    .eq('provider_id', providerId);
-  if (error) console.error(error.message);
-  return data || [];
-};
-
-export const untagVIP = async (providerId, customerId) => {
-  const { error } = await supabase
-    .from('vip_clients')
-    .delete()
-    .eq('provider_id', providerId)
-    .eq('customer_id', customerId);
-  if (error) { console.error('Error removing VIP tag:', error.message); return false; }
-  return true;
-};
+// The old "VIP clients" (starred-customer) feature and its tagVIP/untagVIP/
+// getVIPClients helpers were removed — the Provider Portal's "Clients" tab
+// now lists every real customer straight from booking history instead of a
+// manually-starred subset. The `vip_clients` table itself was left alone in
+// the database (nothing here drops it), it's just unused by the app now.
 
 // ── FAVORITES (customers) ────────────────────────────────────────
 
