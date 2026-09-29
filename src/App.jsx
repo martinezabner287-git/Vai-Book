@@ -603,11 +603,48 @@ const css = `
   .lp-dark .carousel-badge { background: rgba(198,241,53,0.14); color: var(--lime); border: 1px solid rgba(198,241,53,0.3); box-shadow: none; }
   .lp-dark .carousel-arrow { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.16); color: var(--lime); box-shadow: none; }
 
-  /* TRUST STRIP — was a light sand band; now a subtle dark divider instead
-     of a jarring light island mid-page. */
+  /* TRUST STRIP — the features strip itself (.marketing-strip) was
+     removed from LandingPage's JSX per explicit request; these overrides
+     are left idle rather than deleted, same convention as other retired
+     CSS in this file, in case it's reused elsewhere later. */
   .lp-dark .marketing-strip { background: rgba(255,255,255,0.03); border-top: 1px solid rgba(255,255,255,0.07); border-bottom: 1px solid rgba(255,255,255,0.07); }
   .lp-dark .marketing-item-title { color: #FFFFFF; }
   .lp-dark .marketing-item-sub { color: rgba(245,239,224,0.55); }
+
+  /* TRENDING NEAR YOU — the Fresha-style "dopamine hit" card: full image
+     top with a bottom gradient overlay, then shop name / district /
+     rating / an optional "High demand" scarcity pill / a full-width lime
+     "Book Now" CTA. Unscoped (not under .lp-dark) since this markup only
+     ever renders inside LandingPage — no other page uses these classes. */
+  .tny-heading { margin-bottom: 20px; }
+  .tny-row {
+    display: flex; gap: 16px; overflow-x: auto; padding-bottom: 6px;
+    scroll-snap-type: x mandatory; scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch; scrollbar-width: none;
+  }
+  .tny-row::-webkit-scrollbar { display: none; }
+  .tny-card {
+    flex: 0 0 230px; scroll-snap-align: start; background: rgba(255,255,255,0.04);
+    border-radius: 20px; overflow: hidden; cursor: pointer;
+    transition: transform .15s ease, background .2s ease;
+  }
+  .tny-card:hover { transform: translateY(-4px); background: rgba(255,255,255,0.07); }
+  .tny-card-img { position: relative; height: 160px; background: linear-gradient(160deg, #1E6B50 0%, #0E241B 100%); overflow: hidden; }
+  .tny-card-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .tny-card-img-fallback { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 40px; }
+  .tny-card-img-overlay { position: absolute; left: 0; right: 0; bottom: 0; height: 65%; background: linear-gradient(180deg, rgba(8,31,23,0) 0%, rgba(8,31,23,0.9) 100%); pointer-events: none; }
+  .tny-scarcity {
+    position: absolute; top: 10px; left: 10px; z-index: 2;
+    background: rgba(198,241,53,0.18); color: var(--lime); border: 1px solid rgba(198,241,53,0.4);
+    font-size: 10px; font-weight: 800; letter-spacing: .03em; text-transform: uppercase;
+    padding: 4px 9px; border-radius: 100px; box-shadow: 0 0 14px rgba(198,241,53,0.4);
+  }
+  .tny-card-body { padding: 14px 16px 16px; }
+  .tny-card-body h4 { font-size: 15px; font-weight: 800; color: #FFFFFF; margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tny-card-loc { font-size: 12px; color: rgba(245,239,224,0.5); margin-bottom: 8px; }
+  .tny-card-rating { font-size: 12.5px; font-weight: 700; color: var(--lime); margin-bottom: 12px; }
+  .tny-card-rating-new { color: rgba(245,239,224,0.45); font-weight: 600; }
+  .tny-book-btn { width: 100%; background: var(--lime); color: var(--forest); font-weight: 800; font-size: 13px; padding: 10px 0; border-radius: 100px; border: none; cursor: pointer; }
 
   /* STATS BAR */
   .marketing-strip { background: var(--sand); padding: 40px 48px; display: flex; justify-content: space-around; gap: 32px; flex-wrap: wrap; }
@@ -1266,6 +1303,8 @@ const css = `
        page's 24px gutter so the first/last pill still lines up with the
        heading above it, but the scroll region itself runs to the screen edge. */
     .lp-dark .services-pills { margin: 0 -24px; padding: 0 24px 6px; }
+    .tny-row { margin: 0 -24px; padding: 0 24px 6px; }
+    .tny-card { flex-basis: 200px; }
     .for-business-cta { padding: 72px 20px; }
     .for-business-headline { font-size: 30px; }
     .for-business-sub { font-size: 15.5px; }
@@ -3289,6 +3328,23 @@ function LandingPage({ onNav, session, onSignIn, onSignOut }) {
     getActiveProviders().then((data) => { setDiscoverProviders(data || []); setLoadingDiscover(false); });
   }, []);
 
+  // "Trending near you" — a real (not guessed) district, from the
+  // browser's own geolocation matched to the nearest of Belize's 6
+  // districts (see nearestDistrict/DISTRICT_CENTERS above). Permission
+  // is the browser's own native prompt; declining or it failing just
+  // leaves this null and the section below falls back to a
+  // sitewide-trending, non-district-specific heading — never a fabricated
+  // district guess.
+  const [geoDistrict, setGeoDistrict] = useState(null);
+  useEffect(() => {
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(
+      (pos) => setGeoDistrict(nearestDistrict(pos.coords.latitude, pos.coords.longitude)),
+      () => { /* declined or unavailable — silent, no error UI on a marketing page */ },
+      { timeout: 6000, maximumAge: 600000 }
+    );
+  }, []);
+
   const heroSuggestions = buildSuggestions(heroDirectory, heroQuery);
 
   // Recommended: highest-rated first, 2+ reviews required so one 5-star
@@ -3319,6 +3375,21 @@ function LandingPage({ onNav, session, onSignIn, onSignOut }) {
       return (b.reviews || []).length - (a.reviews || []).length;
     })
     .slice(0, 8);
+
+  // "Trending near you" — same ranking as trendingProviders above, but
+  // narrowed to a real known district (geolocation first, the hero's own
+  // district picker as a fallback signal) when there's enough real data
+  // there to justify naming it in the heading. Falls back to the
+  // sitewide trending list — never an empty section — when there's no
+  // known district yet, or too few providers in it (a 1-card "trending in
+  // Toledo" row would look broken, not impressive, same reasoning as the
+  // Discover rows' own 2-provider threshold below).
+  const trendingDistrict = geoDistrict || heroDistrict || null;
+  const districtTrending = trendingDistrict
+    ? trendingProviders.filter((p) => p.district === trendingDistrict)
+    : [];
+  const trendingNearYou = districtTrending.length >= 2 ? districtTrending : trendingProviders;
+  const trendingNearYouHeading = districtTrending.length >= 2 ? `Trending in ${trendingDistrict} 🔥` : "Trending Near You 🔥";
 
   const goToProvider = (p) => {
     try {
@@ -3389,20 +3460,71 @@ function LandingPage({ onNav, session, onSignIn, onSignOut }) {
         </div>
       </section>
 
-      {/* TRENDING LOCAL — replaces the old "Simple Process" 4-step section
-          (generic instructional cards don't belong on a premium dark
-          landing page). Same real trendingProviders data and threshold
-          that used to render as the Discover block's third row below —
-          promoted up here as its own headline moment instead of duplicated,
-          so it's the first thing under the hero and the Discover block
-          further down only carries Recommended + New. Every card is a
-          real provider (business name, district, live rating, real
-          portfolio photo when they have one) — never placeholder shops. */}
-      {trendingProviders.length >= 2 && (
-        <section className="section" id="trending-local">
-          <div className="section-eyebrow">Getting noticed</div>
-          <h2 className="section-title" style={{ marginBottom: 20 }}>Trending Local</h2>
-          <ProviderCarousel providers={trendingProviders} badgeFor={(p) => (p.is_featured ? "Featured" : null)} onCardClick={goToProvider} ctaLabel="Book" />
+      {/* SERVICES */}
+      <section className="services-section" id="services">
+        <div style={{ textAlign: "center", marginBottom: 40 }}>
+          <div className="section-eyebrow" style={{ justifyContent: "center", display: "flex" }}>What's on VaiBook</div>
+          <h2 className="section-title">Every local service. One platform.</h2>
+          <p className="section-sub" style={{ margin: "0 auto" }}>From a fresh fade to a relaxing facial — all bookable in your district.</p>
+        </div>
+        <div className="services-pills">
+          {SERVICES.map((s, i) => (
+            <button className="service-pill" key={i} onClick={() => enterCustomerPortal(onNav, session, onSignIn, onSignOut)}>
+              <span className="icon">{s.icon}</span> {s.name}
+            </button>
+          ))}
+        </div>
+      </section>
+
+      {/* TRENDING NEAR YOU — replaces the old "Trending Local" carousel
+          (moved from under the hero to here, below the category pills,
+          and redesigned as the dopamine/social-proof moment: full image
+          card, gradient overlay, rating, and a "Book Now" CTA baked right
+          into the card instead of a plain link-out).
+          The heading only ever names a district VaiBook actually knows —
+          from the visitor's own browser geolocation (permission-gated,
+          see the geoDistrict effect above) or the hero search's district
+          picker — and only when that district has ≥2 real trending
+          providers to back it up; otherwise it falls back to the
+          sitewide trending list under a generic heading. Never a
+          fabricated "Trending in Corozal" claim with nothing there. */}
+      {trendingNearYou.length >= 2 && (
+        <section className="section tny-section" id="trending-near-you">
+          <h2 className="section-title tny-heading">{trendingNearYouHeading}</h2>
+          <div className="tny-row">
+            {trendingNearYou.map((p) => {
+              const rating = providerRating(p);
+              return (
+                <div className="tny-card" key={p.id} onClick={() => goToProvider(p)}>
+                  <div className="tny-card-img">
+                    {p.portfolio_urls && p.portfolio_urls.length > 0 ? (
+                      <img src={p.portfolio_urls[0]} alt="" />
+                    ) : (
+                      <div className="tny-card-img-fallback">{iconForServiceType(p.service_type)}</div>
+                    )}
+                    <div className="tny-card-img-overlay" />
+                    {/* "High demand" is a real signal, not decoration — it
+                        only shows on providers who actually opted into
+                        Featured placement, the same honest proxy the
+                        trending sort itself ranks on above. */}
+                    {p.is_featured && <span className="tny-scarcity">🔥 High demand</span>}
+                  </div>
+                  <div className="tny-card-body">
+                    <h4>{p.business_name}</h4>
+                    <div className="tny-card-loc">{p.district}</div>
+                    {rating ? (
+                      <div className="tny-card-rating">⭐ {rating} ({p.reviews.length})</div>
+                    ) : (
+                      <div className="tny-card-rating tny-card-rating-new">New on VaiBook</div>
+                    )}
+                    <button className="tny-book-btn" onClick={(e) => { e.stopPropagation(); goToProvider(p); }}>
+                      Book Now
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </section>
       )}
 
@@ -3412,7 +3534,7 @@ function LandingPage({ onNav, session, onSignIn, onSignOut }) {
           would look broken rather than impressive, so this grows in on its
           own as more providers join instead of needing to be toggled on.
           Trending itself now lives in its own section above (Trending
-          Local) instead of as a third row here, so the same providers
+          Near You) instead of as a third row here, so the same providers
           never show up twice on one page load. */}
       {!loadingDiscover && (recommendedProviders.length >= 2 || newProviders.length >= 2) && (
         <section className="section" id="discover">
@@ -3433,49 +3555,13 @@ function LandingPage({ onNav, session, onSignIn, onSignOut }) {
         </section>
       )}
 
-      {/* SERVICES */}
-      <section className="services-section" id="services">
-        <div style={{ textAlign: "center", marginBottom: 40 }}>
-          <div className="section-eyebrow" style={{ justifyContent: "center", display: "flex" }}>What's on VaiBook</div>
-          <h2 className="section-title">Every local service. One platform.</h2>
-          <p className="section-sub" style={{ margin: "0 auto" }}>From a fresh fade to a relaxing facial — all bookable in your district.</p>
-        </div>
-        <div className="services-pills">
-          {SERVICES.map((s, i) => (
-            <button className="service-pill" key={i} onClick={() => enterCustomerPortal(onNav, session, onSignIn, onSignOut)}>
-              <span className="icon">{s.icon}</span> {s.name}
-            </button>
-          ))}
-        </div>
-      </section>
-
-      {/* MARKETING STRIP — sells what VaiBook does, not raw usage numbers.
-          A brand-new platform's real counts (bookings, providers, districts)
-          look thin and undercut trust, so this highlights capabilities
-          instead. Placed right before Coverage/Browse by district so it
-          leads into "here's where we actually operate". */}
-      <div className="marketing-strip">
-        <div className="marketing-item">
-          <div className="marketing-item-icon">⚡</div>
-          <div className="marketing-item-title">Instant booking</div>
-          <div className="marketing-item-sub">Book in a few taps — no back-and-forth calls or texts.</div>
-        </div>
-        <div className="marketing-item">
-          <div className="marketing-item-icon">✅</div>
-          <div className="marketing-item-title">Verified providers</div>
-          <div className="marketing-item-sub">Every business is reviewed before it goes live on VaiBook.</div>
-        </div>
-        <div className="marketing-item">
-          <div className="marketing-item-icon">🔒</div>
-          <div className="marketing-item-title">Secure payments</div>
-          <div className="marketing-item-sub">Pay safely and keep every booking in one place.</div>
-        </div>
-        <div className="marketing-item">
-          <div className="marketing-item-icon">📍</div>
-          <div className="marketing-item-title">All of Belize</div>
-          <div className="marketing-item-sub">Serving every district, with more providers joining weekly.</div>
-        </div>
-      </div>
+      {/* The old static "Instant booking / Verified providers / Secure
+          payments / All of Belize" features strip (.marketing-strip) has
+          been removed per explicit request — that real estate now goes to
+          Trending Near You above. Its CSS is left in place, unused, same
+          convention as other retired sections in this file (e.g.
+          .nav-strip, .step-card): cheap to leave idle, in case it's
+          wanted again, and it costs nothing sitting unreferenced. */}
 
       <SiteFooter />
     </div>
@@ -9286,6 +9372,30 @@ const PUBLIC_PLANS = PLANS.filter((p) => p.id !== "starter");
 
 
 const DISTRICTS = ["Belize City", "Cayo", "Corozal", "Orange Walk", "Stann Creek", "Toledo"];
+
+// Approximate district-town centroids, used only to turn a real browser
+// geolocation fix into "closest of Belize's 6 districts" — a plain
+// nearest-neighbor comparison, no geocoding API/network call needed, so
+// it costs nothing and never blocks the page if the visitor declines the
+// permission prompt. See LandingPage's "Trending near you" section: this
+// is what lets that heading name a real district instead of a guess.
+const DISTRICT_CENTERS = {
+  "Belize City": [17.5046, -88.1962],
+  "Cayo": [17.1554, -89.0637],
+  "Corozal": [18.4000, -88.3936],
+  "Orange Walk": [18.0833, -88.5500],
+  "Stann Creek": [16.9707, -88.2306],
+  "Toledo": [16.1500, -88.7667],
+};
+function nearestDistrict(lat, lng) {
+  let best = null, bestDist = Infinity;
+  for (const name of Object.keys(DISTRICT_CENTERS)) {
+    const [dlat, dlng] = DISTRICT_CENTERS[name];
+    const d = (lat - dlat) ** 2 + (lng - dlng) ** 2;
+    if (d < bestDist) { bestDist = d; best = name; }
+  }
+  return best;
+}
 const SERVICE_TYPES = ["Barber", "Hair Salon", "Nail Tech", "Spa", "Med Spa / Clinic", "Massage", "Skincare Studio", "Hair Removal Studio", "Tattoo & Piercing Studio", "Wellness Center", "Pet Grooming", "Fitness & Recovery", "Physical Therapy", "Photography", "Other"];
 
 function ProviderSignup({ onNav }) {
