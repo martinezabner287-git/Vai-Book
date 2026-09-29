@@ -441,11 +441,18 @@ const css = `
     .search-hero h1 { font-size: clamp(28px, 8vw, 36px); }
   }
   .search-sub { font-size: 17px; color: rgba(250,250,247,0.72); max-width: 560px; margin: 0 auto 40px; line-height: 1.5; text-align: center; }
-  .search-bar-pill { position: relative; max-width: 760px; margin: 0 auto; background: white; border-radius: 100px; box-shadow: 0 20px 50px rgba(0,0,0,0.28); display: flex; align-items: center; padding: 8px; gap: 4px; }
+  .search-bar-pill {
+    position: relative; max-width: 760px; margin: 0 auto;
+    background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.16);
+    border-radius: 100px; box-shadow: 0 20px 50px rgba(0,0,0,0.22);
+    display: flex; align-items: center; padding: 8px; gap: 4px;
+  }
   .search-bar-pill .field { flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; padding: 10px 18px; }
-  .search-bar-pill .field input, .search-bar-pill .field select { border: none; outline: none; background: transparent; font-size: 14px; width: 100%; color: var(--dark-text); font-family: 'Plus Jakarta Sans', sans-serif; }
-  .search-bar-pill .sep { width: 1px; height: 28px; background: var(--border); flex-shrink: 0; }
-  .search-submit { background: var(--forest); color: var(--near-white); border: none; border-radius: 100px; padding: 14px 30px; font-weight: 600; font-size: 15px; cursor: pointer; white-space: nowrap; transition: opacity .2s; font-family: 'Plus Jakarta Sans', sans-serif; }
+  .search-bar-pill .field input, .search-bar-pill .field select { border: none; outline: none; background: transparent; font-size: 14px; width: 100%; color: #FFFFFF; font-family: 'Plus Jakarta Sans', sans-serif; }
+  .search-bar-pill .field input::placeholder { color: rgba(245,239,224,0.45); }
+  .search-bar-pill select option { background: #0D3D2E; color: #FFFFFF; }
+  .search-bar-pill .sep { width: 1px; height: 28px; background: rgba(255,255,255,0.18); flex-shrink: 0; }
+  .search-submit { background: var(--lime); color: var(--forest); border: none; border-radius: 100px; padding: 14px 30px; font-weight: 700; font-size: 15px; cursor: pointer; white-space: nowrap; transition: opacity .2s; font-family: 'Plus Jakarta Sans', sans-serif; }
   .search-submit:hover { opacity: .87; }
   .search-hero-tagline { margin-top: 26px; font-size: 13px; color: rgba(250,250,247,0.6); text-align: center; }
   .search-hero-tagline a { color: var(--lime); font-weight: 600; cursor: pointer; text-decoration: underline; }
@@ -557,6 +564,50 @@ const css = `
   }
   .psm-submit:disabled { opacity: 0.7; cursor: default; }
   .psm-note { text-align: center; font-size: 12.5px; color: rgba(245,239,224,0.45); margin: 18px 0 0; }
+
+  /* LANDING PAGE — "Zero Friction" dark mode (see the .lp-dark wrapper on
+     LandingPage's root, App.jsx). Same technique as .cx-account-page
+     below: an ancestor class overrides only the single-purpose shared
+     classes this page actually uses (.section-eyebrow/title/sub,
+     .service-pill, .carousel-card and friends, .marketing-strip) rather
+     than their base definitions, so ProviderLandingPage's still-light
+     pricing/platform-preview sections and the Customer/Provider/Admin
+     portals — which reuse several of these exact class names — are
+     completely unaffected. */
+  .lp-dark { background: #081F17; }
+  .lp-dark .section-eyebrow { color: var(--lime); }
+  .lp-dark .section-title { color: #FFFFFF; }
+  .lp-dark .section-sub { color: rgba(245,239,224,0.62); }
+
+  /* CATEGORY PILLS — centered/wrapping row → horizontal-scrolling row of
+     dark translucent pills, purpose-built for a mobile thumb swipe. */
+  .lp-dark .services-pills {
+    flex-wrap: nowrap; overflow-x: auto; justify-content: flex-start;
+    max-width: 100%; margin: 0; padding-bottom: 6px;
+    scroll-snap-type: x mandatory; scrollbar-width: none;
+  }
+  .lp-dark .services-pills::-webkit-scrollbar { display: none; }
+  .lp-dark .services-pills .service-pill { flex: 0 0 auto; scroll-snap-align: start; }
+  .lp-dark .service-pill { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.14); color: #FFFFFF; }
+  .lp-dark .service-pill:hover { border-color: var(--lime); color: var(--lime); background: rgba(198,241,53,0.08); box-shadow: none; }
+
+  /* TRENDING LOCAL / DISCOVER CAROUSEL CARDS — dark, borderless variant of
+     the shared .carousel-card (also used, unscoped and still light, by
+     the Customer Portal's own browse/favorites carousels elsewhere). */
+  .lp-dark .carousel-card { background: rgba(255,255,255,0.04); border: none; }
+  .lp-dark .carousel-card:hover { box-shadow: 0 14px 34px rgba(0,0,0,0.35); }
+  .lp-dark .carousel-card-img { background: linear-gradient(160deg, #1E6B50 0%, #0E241B 100%); }
+  .lp-dark .carousel-card-body h4 { color: #FFFFFF; }
+  .lp-dark .carousel-card-body .loc,
+  .lp-dark .carousel-card-body .meta { color: rgba(245,239,224,0.55); }
+  .lp-dark .carousel-badge { background: rgba(198,241,53,0.14); color: var(--lime); border: 1px solid rgba(198,241,53,0.3); box-shadow: none; }
+  .lp-dark .carousel-arrow { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.16); color: var(--lime); box-shadow: none; }
+
+  /* TRUST STRIP — was a light sand band; now a subtle dark divider instead
+     of a jarring light island mid-page. */
+  .lp-dark .marketing-strip { background: rgba(255,255,255,0.03); border-top: 1px solid rgba(255,255,255,0.07); border-bottom: 1px solid rgba(255,255,255,0.07); }
+  .lp-dark .marketing-item-title { color: #FFFFFF; }
+  .lp-dark .marketing-item-sub { color: rgba(245,239,224,0.55); }
 
   /* STATS BAR */
   .marketing-strip { background: var(--sand); padding: 40px 48px; display: flex; justify-content: space-around; gap: 32px; flex-wrap: wrap; }
@@ -1042,6 +1093,11 @@ const css = `
   .carousel-card-body h4 { font-size: 14px; font-weight: 700; color: var(--dark-text); margin-bottom: 2px; }
   .carousel-card-body .loc { font-size: 12px; color: var(--muted); margin-bottom: 6px; }
   .carousel-card-body .meta { font-size: 12px; color: var(--muted); }
+  /* Only rendered when ProviderCarousel is given a ctaLabel (currently
+     just the Trending Local row) — a plain lime pill, so it already reads
+     correctly on both the light carousel cards elsewhere and the dark
+     ones on the home page without needing its own scoped variant. */
+  .carousel-cta { margin-top: 10px; width: 100%; background: var(--lime); color: var(--forest); font-weight: 800; font-size: 12.5px; padding: 9px 0; border-radius: 100px; border: none; cursor: pointer; }
   .carousel-arrow { position: absolute; top: 50%; right: -14px; transform: translateY(-50%); width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--border); background: var(--near-white); box-shadow: 0 2px 10px rgba(0,0,0,0.12); cursor: pointer; font-size: 15px; color: var(--forest); display: flex; align-items: center; justify-content: center; }
 
   /* PROVIDER PROFILE MODAL (Services / Portfolio / Reviews / About) — a
@@ -1205,6 +1261,11 @@ const css = `
     .grid-3 { grid-template-columns: 1fr; }
     .metric-grid { grid-template-columns: 1fr 1fr; }
     .services-section { padding: 60px 24px; }
+    /* Full-bleed edge-to-edge scroll on mobile, same technique as the
+       Home Feed's .cx-dropzone-row — the row's own padding restores the
+       page's 24px gutter so the first/last pill still lines up with the
+       heading above it, but the scroll region itself runs to the screen edge. */
+    .lp-dark .services-pills { margin: 0 -24px; padding: 0 24px 6px; }
     .for-business-cta { padding: 72px 20px; }
     .for-business-headline { font-size: 30px; }
     .for-business-sub { font-size: 15.5px; }
@@ -1484,7 +1545,7 @@ const isRecentlyJoined = (p, days = 30) => {
 // page's Recommended / New to VaiBook / Trending sections. `badgeFor` is an
 // optional (provider) => string|null that puts a pill in the top-left
 // corner of a card (e.g. "New", "Featured").
-function ProviderCarousel({ providers, badgeFor, onCardClick }) {
+function ProviderCarousel({ providers, badgeFor, onCardClick, ctaLabel }) {
   const rowRef = useRef(null);
   const scrollNext = () => {
     if (rowRef.current) rowRef.current.scrollBy({ left: 260, behavior: "smooth" });
@@ -1498,13 +1559,20 @@ function ProviderCarousel({ providers, badgeFor, onCardClick }) {
           return (
             <div className="carousel-card" key={p.id} onClick={() => onCardClick(p)}>
               {badge && <span className="carousel-badge">{badge}</span>}
-              <button
-                className="carousel-heart"
-                onClick={(e) => { e.stopPropagation(); onCardClick(p); }}
-                aria-label="Save this provider"
-              >
-                🤍
-              </button>
+              {/* The Trending Local row (ctaLabel="Book") gets a visible CTA
+                  instead of the heart icon — a save/favorite action reads
+                  as an odd primary interaction on a "here's who to book
+                  right now" row, so this swaps it for the action that row
+                  is actually selling. */}
+              {ctaLabel ? null : (
+                <button
+                  className="carousel-heart"
+                  onClick={(e) => { e.stopPropagation(); onCardClick(p); }}
+                  aria-label="Save this provider"
+                >
+                  🤍
+                </button>
+              )}
               {p.portfolio_urls && p.portfolio_urls.length > 0 ? (
                 <div className="carousel-card-img" style={{ background: `center/cover no-repeat url(${p.portfolio_urls[0]})` }} />
               ) : (
@@ -1517,6 +1585,11 @@ function ProviderCarousel({ providers, badgeFor, onCardClick }) {
                   {p.service_type}
                   {rating ? <> · ⭐ {rating} ({p.reviews.length})</> : null}
                 </div>
+                {ctaLabel && (
+                  <button className="carousel-cta" onClick={(e) => { e.stopPropagation(); onCardClick(p); }}>
+                    {ctaLabel}
+                  </button>
+                )}
               </div>
             </div>
           );
@@ -3041,7 +3114,7 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
                   <hr />
                   <a onClick={() => goAccount(() => onNav("home"))}>Home</a>
                   <a onClick={() => goAccount(() => scrollToSection("services", onNav, current))}>Services</a>
-                  <a onClick={() => goAccount(() => scrollToSection("how-it-works", onNav, current))}>How it works</a>
+                  <a onClick={() => goAccount(() => scrollToSection("trending-local", onNav, current))}>Trending</a>
                   <a onClick={() => goAccount(() => scrollToProvidersSection("pricing", onNav, current))}>Pricing</a>
                   <hr />
                   <button className="nav-dropdown-item mobile-only-item" onClick={() => goAccount(onOpenProviderSignup)}>
@@ -3076,7 +3149,7 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
               <div className="nav-dropdown" onMouseLeave={closeMenu}>
                 <a onClick={() => go(() => onNav("home"))}>Home</a>
                 <a onClick={() => go(() => scrollToSection("services", onNav, current))}>Services</a>
-                <a onClick={() => go(() => scrollToSection("how-it-works", onNav, current))}>How it works</a>
+                <a onClick={() => go(() => scrollToSection("trending-local", onNav, current))}>Trending</a>
                 <a onClick={() => go(() => scrollToProvidersSection("pricing", onNav, current))}>Pricing</a>
                 <hr />
                 <button className="nav-dropdown-item" onClick={() => go(openInstallAppGuide)}>Add to Home Screen</button>
@@ -3149,7 +3222,7 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
             <div className="nav-dropdown" onMouseLeave={closeMenu}>
               <a onClick={() => go(() => onNav("home"))}>Home</a>
               <a onClick={() => go(() => scrollToSection("services", onNav, current))}>Services</a>
-              <a onClick={() => go(() => scrollToSection("how-it-works", onNav, current))}>How it works</a>
+              <a onClick={() => go(() => scrollToSection("trending-local", onNav, current))}>Trending</a>
               <a onClick={() => go(() => scrollToSection("browse", onNav, current))}>Browse by district</a>
               <a onClick={() => go(() => scrollToProvidersSection("pricing", onNav, current))}>Pricing</a>
               <hr />
@@ -3269,7 +3342,7 @@ function LandingPage({ onNav, session, onSignIn, onSignOut }) {
   };
 
   return (
-    <>
+    <div className="lp-dark">
       {/* HERO — full swing back to customer-facing (per explicit request):
           hero copy sits above the search bar, which is the primary action
           again. The B2B eyebrow and trial-signup CTA from the earlier pivot
@@ -3316,33 +3389,32 @@ function LandingPage({ onNav, session, onSignIn, onSignOut }) {
         </div>
       </section>
 
-      {/* HOW IT WORKS */}
-      <section className="section" id="how-it-works">
-        <div className="section-eyebrow">Simple process</div>
-        <h2 className="section-title">From search to booked in under 2 minutes</h2>
-        <p className="section-sub">No more messaging back and forth just to get a haircut. Pick your time, confirm, show up.</p>
-        <div className="steps-grid">
-          {[
-            { n: "1", icon: "🔍", title: "Find your provider", desc: "Search by service type and district. See real ratings from real customers." },
-            { n: "2", icon: "📅", title: "Pick your slot", desc: "View live availability. No more 'are you free Friday?' messages." },
-            { n: "3", icon: "💳", title: "Pay your deposit", desc: "Pay your provider directly and upload your receipt in-app. They confirm it to lock in your appointment." },
-            { n: "4", icon: "⭐", title: "Rate & review", desc: "After your appointment, leave a verified review. Build the community." },
-          ].map((s, i) => (
-            <div className="step-card" key={i} data-n={s.n}>
-              <div className="step-icon">{s.icon}</div>
-              <h3>{s.title}</h3>
-              <p>{s.desc}</p>
-            </div>
-          ))}
-        </div>
-      </section>
+      {/* TRENDING LOCAL — replaces the old "Simple Process" 4-step section
+          (generic instructional cards don't belong on a premium dark
+          landing page). Same real trendingProviders data and threshold
+          that used to render as the Discover block's third row below —
+          promoted up here as its own headline moment instead of duplicated,
+          so it's the first thing under the hero and the Discover block
+          further down only carries Recommended + New. Every card is a
+          real provider (business name, district, live rating, real
+          portfolio photo when they have one) — never placeholder shops. */}
+      {trendingProviders.length >= 2 && (
+        <section className="section" id="trending-local">
+          <div className="section-eyebrow">Getting noticed</div>
+          <h2 className="section-title" style={{ marginBottom: 20 }}>Trending Local</h2>
+          <ProviderCarousel providers={trendingProviders} badgeFor={(p) => (p.is_featured ? "Featured" : null)} onCardClick={goToProvider} ctaLabel="Book" />
+        </section>
+      )}
 
       {/* DISCOVER — Fresha-style horizontal carousels. Each row only
           renders once it has at least 2 real providers to show — a thin
           market showing 1 card (or the same provider) across three rows
           would look broken rather than impressive, so this grows in on its
-          own as more providers join instead of needing to be toggled on. */}
-      {!loadingDiscover && (recommendedProviders.length >= 2 || newProviders.length >= 2 || trendingProviders.length >= 2) && (
+          own as more providers join instead of needing to be toggled on.
+          Trending itself now lives in its own section above (Trending
+          Local) instead of as a third row here, so the same providers
+          never show up twice on one page load. */}
+      {!loadingDiscover && (recommendedProviders.length >= 2 || newProviders.length >= 2) && (
         <section className="section" id="discover">
           {recommendedProviders.length >= 2 && (
             <div style={{ marginBottom: 44 }}>
@@ -3352,17 +3424,10 @@ function LandingPage({ onNav, session, onSignIn, onSignOut }) {
             </div>
           )}
           {newProviders.length >= 2 && (
-            <div style={{ marginBottom: 44 }}>
+            <div>
               <div className="section-eyebrow">Just joined</div>
               <h2 className="section-title" style={{ marginBottom: 20 }}>New to VaiBook</h2>
               <ProviderCarousel providers={newProviders} badgeFor={(p) => (isRecentlyJoined(p) ? "New" : null)} onCardClick={goToProvider} />
-            </div>
-          )}
-          {trendingProviders.length >= 2 && (
-            <div>
-              <div className="section-eyebrow">Getting noticed</div>
-              <h2 className="section-title" style={{ marginBottom: 20 }}>Trending</h2>
-              <ProviderCarousel providers={trendingProviders} badgeFor={(p) => (p.is_featured ? "Featured" : null)} onCardClick={goToProvider} />
             </div>
           )}
         </section>
@@ -3413,7 +3478,7 @@ function LandingPage({ onNav, session, onSignIn, onSignOut }) {
       </div>
 
       <SiteFooter />
-    </>
+    </div>
   );
 }
 
