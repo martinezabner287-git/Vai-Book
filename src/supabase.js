@@ -79,14 +79,32 @@ export const getSession = async () => {
 // ── USER HELPERS ─────────────────────────────────────────────────
 
 export const getOrCreateUser = async (authUser) => {
-  // Check if user profile exists
-  const { data: existing } = await supabase
+  // Check if user profile exists.
+  //
+  // FIXED (P0 — same bug class as getProviderProfile below): this used to
+  // ignore the error entirely, so a real query failure (network blip, or
+  // the client's session/JWT not fully attached yet right after an OAuth
+  // redirect) looked identical to "this account's users row doesn't exist
+  // yet" — `existing` comes back falsy either way. That silently sent an
+  // ALREADY-REGISTERED account down the insert path below on every
+  // transient hiccup: the insert then fails on the primary-key conflict,
+  // gets logged, and this returns undefined instead of their real row —
+  // which is exactly the kind of failure that can cascade into "my data
+  // is gone" symptoms elsewhere (setUser(undefined) upstream). Only a
+  // genuine "no rows" (PGRST116) means this is really a brand-new user;
+  // any other error just means the check itself failed and must not be
+  // treated as "doesn't exist".
+  const { data: existing, error: lookupError } = await supabase
     .from('users')
     .select('*')
     .eq('id', authUser.id)
     .single();
 
   if (existing) return existing;
+  if (lookupError && lookupError.code !== 'PGRST116') {
+    console.error('Error checking for existing user (not creating a new one):', lookupError.message);
+    throw lookupError;
+  }
 
   // Create new user profile
   const { data: newUser, error } = await supabase
@@ -108,13 +126,27 @@ export const getOrCreateUser = async (authUser) => {
 
 // ── PROVIDER HELPERS ─────────────────────────────────────────────
 
+// PGRST116 ("no rows") is the ONLY error code that means "this account
+// genuinely has no business" — anything else (a network blip, or the
+// client's session/JWT not fully attached yet right after an OAuth
+// redirect, which is exactly when this tends to fire) is a real query
+// failure, not an answer. Those used to be swallowed the same way real
+// "no data" was (logged, then `data` — undefined either way — handed
+// back), so a transient hiccup here looked identical to "you don't own a
+// business" to every caller and could flash the onboarding screen at an
+// actual registered provider. Throwing on a genuine error lets callers
+// (see loadProviderProfile in App.jsx) tell "confirmed: no business" apart
+// from "couldn't confirm — don't assume" and react accordingly.
 export const getProviderProfile = async (userId) => {
   const { data, error } = await supabase
     .from('provider_profiles')
     .select('*, services(*), working_hours(*)')
     .eq('user_id', userId)
     .single();
-  if (error && error.code !== 'PGRST116') console.error(error.message);
+  if (error && error.code !== 'PGRST116') {
+    console.error('Error fetching provider profile:', error.message);
+    throw error;
+  }
   return data;
 };
 
