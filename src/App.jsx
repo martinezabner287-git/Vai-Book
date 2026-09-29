@@ -195,6 +195,56 @@ const css = `
     --border: #D9E4DF;
     --radius: 12px;
     --radius-sm: 8px;
+
+    /* THEME TOKENS — a separate, additive design-token layer for the
+       light/dark toggle (App.jsx sets data-theme on <html>, localStorage-
+       backed). Deliberately NEW variable names, not a redefinition of
+       --forest/--near-white/etc. above: those are consumed unscoped by
+       most of the app (Provider/Admin/Customer portals, every modal),
+       which is still light-only today, and flipping their root values
+       would repaint all of it, not just the page(s) that have opted into
+       theming. Only selectors that explicitly use these new tokens — for
+       now, LandingPage's .lp-theme tree — respond to the toggle; every
+       other page is completely unaffected, by construction, so the
+       rollout can continue page by page later without risk to what's
+       already shipped. Default (no [data-theme] override) is dark — this
+       site's existing premium look — for a first-time visitor.
+       --accent-neon/--accent-neon-text are the literal brand lime, kept
+       IDENTICAL in both themes per the brief ("maintain the exact same
+       neon lime for primary buttons and hover states"). --accent-text is
+       a separate token for lime used as plain TEXT directly on the page
+       background (an eyebrow label, a rating line): lime-on-near-white
+       fails contrast, so in light mode that specific usage swaps to the
+       deep forest accent instead — brand color stays reserved for
+       surfaces (buttons, borders, glowing badges) where it's actually
+       legible in both themes. */
+    --bg-primary: #081F17;
+    --bg-elevated: rgba(255,255,255,0.04);
+    --bg-elevated-hover: rgba(255,255,255,0.07);
+    --text-primary: #FFFFFF;
+    --text-secondary: rgba(245,239,224,0.62);
+    --text-tertiary: rgba(245,239,224,0.5);
+    --border-subtle: rgba(255,255,255,0.14);
+    --card-border: transparent;
+    --card-shadow: 0 14px 34px rgba(0,0,0,0.35);
+    --accent-neon: var(--lime);
+    --accent-neon-text: var(--forest);
+    --accent-text: var(--lime);
+  }
+
+  :root[data-theme="light"] {
+    /* Premium off-white, never pure #fff — and rich charcoal-forest text,
+       never pure black, per the brief. */
+    --bg-primary: #F6F5F0;
+    --bg-elevated: #FFFFFF;
+    --bg-elevated-hover: #FDFCF8;
+    --text-primary: #17281F;
+    --text-secondary: rgba(23,40,31,0.6);
+    --text-tertiary: rgba(23,40,31,0.46);
+    --border-subtle: rgba(23,40,31,0.12);
+    --card-border: rgba(23,40,31,0.10);
+    --card-shadow: 0 10px 28px rgba(23,40,31,0.08);
+    --accent-text: var(--forest);
   }
 
   body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--near-white); color: var(--dark-text); }
@@ -316,6 +366,17 @@ const css = `
   .nav-signup-btn:hover { box-shadow: 0 0 14px rgba(198,241,53,0.6); transform: translateY(-1px); }
   .nav-menu-btn .bars { display: flex; flex-direction: column; gap: 3px; }
   .nav-menu-btn .bars span { width: 16px; height: 2px; background: currentColor; border-radius: 2px; }
+  /* THEME TOGGLE — the nav bar itself is a fixed dark-green gradient in
+     every theme (same reasoning as the hero staying unthemed below), so
+     this button uses the nav's own always-dark chrome colors
+     (--near-white/--lime), not the light/dark THEME TOKENS — those only
+     apply to the page content the nav sits on top of. */
+  .theme-toggle {
+    display: flex; align-items: center; justify-content: center;
+    width: 34px; height: 34px; background: transparent; border: 1px solid rgba(255,255,255,0.25);
+    border-radius: 50%; color: var(--near-white); cursor: pointer; transition: all .2s; flex-shrink: 0;
+  }
+  .theme-toggle:hover { border-color: var(--lime); color: var(--lime); background: rgba(198,241,53,0.08); }
   .nav-dropdown { position: absolute; top: calc(100% + 12px); right: 0; background: white; border-radius: var(--radius-sm); box-shadow: 0 16px 40px rgba(13,61,46,0.18); border: 1px solid var(--border); min-width: 220px; padding: 10px; z-index: 200; }
   .nav-dropdown a, .nav-dropdown button.nav-dropdown-item { display: block; width: 100%; text-align: left; background: none; border: none; padding: 11px 14px; border-radius: 8px; font-size: 14px; font-weight: 500; color: var(--dark-text); cursor: pointer; text-decoration: none; }
   .nav-dropdown a:hover, .nav-dropdown button.nav-dropdown-item:hover { background: var(--sand); }
@@ -565,57 +626,68 @@ const css = `
   .psm-submit:disabled { opacity: 0.7; cursor: default; }
   .psm-note { text-align: center; font-size: 12.5px; color: rgba(245,239,224,0.45); margin: 18px 0 0; }
 
-  /* LANDING PAGE — "Zero Friction" dark mode (see the .lp-dark wrapper on
-     LandingPage's root, App.jsx). Same technique as .cx-account-page
-     below: an ancestor class overrides only the single-purpose shared
-     classes this page actually uses (.section-eyebrow/title/sub,
-     .service-pill, .carousel-card and friends, .marketing-strip) rather
-     than their base definitions, so ProviderLandingPage's still-light
-     pricing/platform-preview sections and the Customer/Provider/Admin
-     portals — which reuse several of these exact class names — are
-     completely unaffected. */
-  .lp-dark { background: #081F17; }
-  .lp-dark .section-eyebrow { color: var(--lime); }
-  .lp-dark .section-title { color: #FFFFFF; }
-  .lp-dark .section-sub { color: rgba(245,239,224,0.62); }
+  /* LANDING PAGE — themed surface (see the .lp-theme wrapper on
+     LandingPage's root, App.jsx), driven entirely by the THEME TOKENS
+     defined on :root / :root[data-theme="light"] above — toggling theme
+     repaints this whole block for free, nothing here hardcodes a color.
+     Same ancestor-scoping technique as .cx-account-page below: an
+     ancestor class overrides only the single-purpose shared classes this
+     page actually uses (.section-eyebrow/title/sub, .service-pill,
+     .carousel-card and friends, .marketing-strip) rather than their base
+     definitions, so ProviderLandingPage's still-light pricing/platform-
+     preview sections and the Customer/Provider/Admin portals — which
+     reuse several of these exact class names — are completely
+     unaffected, in either theme. */
+  .lp-theme { background: var(--bg-primary); color: var(--text-primary); }
+  .lp-theme .section-eyebrow { color: var(--accent-text); }
+  .lp-theme .section-title { color: var(--text-primary); }
+  .lp-theme .section-sub { color: var(--text-secondary); }
 
   /* CATEGORY PILLS — centered/wrapping row → horizontal-scrolling row of
-     dark translucent pills, purpose-built for a mobile thumb swipe. */
-  .lp-dark .services-pills {
+     translucent pills, purpose-built for a mobile thumb swipe. */
+  .lp-theme .services-pills {
     flex-wrap: nowrap; overflow-x: auto; justify-content: flex-start;
     max-width: 100%; margin: 0; padding-bottom: 6px;
     scroll-snap-type: x mandatory; scrollbar-width: none;
   }
-  .lp-dark .services-pills::-webkit-scrollbar { display: none; }
-  .lp-dark .services-pills .service-pill { flex: 0 0 auto; scroll-snap-align: start; }
-  .lp-dark .service-pill { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.14); color: #FFFFFF; }
-  .lp-dark .service-pill:hover { border-color: var(--lime); color: var(--lime); background: rgba(198,241,53,0.08); box-shadow: none; }
+  .lp-theme .services-pills::-webkit-scrollbar { display: none; }
+  .lp-theme .services-pills .service-pill { flex: 0 0 auto; scroll-snap-align: start; }
+  .lp-theme .service-pill { background: var(--bg-elevated); border-color: var(--border-subtle); color: var(--text-primary); }
+  .lp-theme .service-pill:hover { border-color: var(--accent-neon); color: var(--accent-text); background: rgba(198,241,53,0.08); box-shadow: none; }
 
-  /* TRENDING LOCAL / DISCOVER CAROUSEL CARDS — dark, borderless variant of
-     the shared .carousel-card (also used, unscoped and still light, by
-     the Customer Portal's own browse/favorites carousels elsewhere). */
-  .lp-dark .carousel-card { background: rgba(255,255,255,0.04); border: none; }
-  .lp-dark .carousel-card:hover { box-shadow: 0 14px 34px rgba(0,0,0,0.35); }
-  .lp-dark .carousel-card-img { background: linear-gradient(160deg, #1E6B50 0%, #0E241B 100%); }
-  .lp-dark .carousel-card-body h4 { color: #FFFFFF; }
-  .lp-dark .carousel-card-body .loc,
-  .lp-dark .carousel-card-body .meta { color: rgba(245,239,224,0.55); }
-  .lp-dark .carousel-badge { background: rgba(198,241,53,0.14); color: var(--lime); border: 1px solid rgba(198,241,53,0.3); box-shadow: none; }
-  .lp-dark .carousel-arrow { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.16); color: var(--lime); box-shadow: none; }
+  /* TRENDING / DISCOVER CAROUSEL CARDS — themed, borderless-in-dark /
+     subtly-bordered-in-light variant of the shared .carousel-card (also
+     used, unscoped and still permanently light, by the Customer Portal's
+     own browse/favorites carousels elsewhere). The card's image area
+     (.carousel-card-img's fallback gradient, badges sitting on top of it)
+     deliberately stays the same green regardless of theme, same as the
+     hero — a photo/media surface reads as a brand accent, not "page
+     chrome", so it doesn't need to repaint with the rest of the page. */
+  .lp-theme .carousel-card { background: var(--bg-elevated); border: 1px solid var(--card-border); }
+  .lp-theme .carousel-card:hover { box-shadow: var(--card-shadow); background: var(--bg-elevated-hover); }
+  .lp-theme .carousel-card-body h4 { color: var(--text-primary); }
+  .lp-theme .carousel-card-body .loc,
+  .lp-theme .carousel-card-body .meta { color: var(--text-tertiary); }
+  .lp-theme .carousel-arrow { background: var(--bg-elevated); border-color: var(--border-subtle); color: var(--accent-text); box-shadow: none; }
 
   /* TRUST STRIP — the features strip itself (.marketing-strip) was
      removed from LandingPage's JSX per explicit request; these overrides
      are left idle rather than deleted, same convention as other retired
      CSS in this file, in case it's reused elsewhere later. */
-  .lp-dark .marketing-strip { background: rgba(255,255,255,0.03); border-top: 1px solid rgba(255,255,255,0.07); border-bottom: 1px solid rgba(255,255,255,0.07); }
-  .lp-dark .marketing-item-title { color: #FFFFFF; }
-  .lp-dark .marketing-item-sub { color: rgba(245,239,224,0.55); }
+  .lp-theme .marketing-strip { background: var(--bg-elevated); border-top: 1px solid var(--border-subtle); border-bottom: 1px solid var(--border-subtle); }
+  .lp-theme .marketing-item-title { color: var(--text-primary); }
+  .lp-theme .marketing-item-sub { color: var(--text-tertiary); }
 
   /* TRENDING NEAR YOU — the Fresha-style "dopamine hit" card: full image
      top with a bottom gradient overlay, then shop name / district /
      rating / an optional "High demand" scarcity pill / a full-width lime
-     "Book Now" CTA. Unscoped (not under .lp-dark) since this markup only
-     ever renders inside LandingPage — no other page uses these classes. */
+     "Book Now" CTA. Unscoped (not under .lp-theme) since this markup only
+     ever renders inside LandingPage — no other page uses these classes —
+     but still themed via the shared CSS variables, same as everything
+     else on this page. The image area (fallback gradient/overlay) and the
+     scarcity pill both sit on top of the photo, not the page background,
+     so — like the carousel cards above — they stay a fixed green/lime
+     regardless of theme rather than needing their own light variant. */
   .tny-heading { margin-bottom: 20px; }
   .tny-row {
     display: flex; gap: 16px; overflow-x: auto; padding-bottom: 6px;
@@ -624,11 +696,11 @@ const css = `
   }
   .tny-row::-webkit-scrollbar { display: none; }
   .tny-card {
-    flex: 0 0 230px; scroll-snap-align: start; background: rgba(255,255,255,0.04);
-    border-radius: 20px; overflow: hidden; cursor: pointer;
-    transition: transform .15s ease, background .2s ease;
+    flex: 0 0 230px; scroll-snap-align: start; background: var(--bg-elevated);
+    border: 1px solid var(--card-border); border-radius: 20px; overflow: hidden; cursor: pointer;
+    transition: transform .15s ease, background .2s ease, box-shadow .2s ease;
   }
-  .tny-card:hover { transform: translateY(-4px); background: rgba(255,255,255,0.07); }
+  .tny-card:hover { transform: translateY(-4px); background: var(--bg-elevated-hover); box-shadow: var(--card-shadow); }
   .tny-card-img { position: relative; height: 160px; background: linear-gradient(160deg, #1E6B50 0%, #0E241B 100%); overflow: hidden; }
   .tny-card-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
   .tny-card-img-fallback { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 40px; }
@@ -640,11 +712,11 @@ const css = `
     padding: 4px 9px; border-radius: 100px; box-shadow: 0 0 14px rgba(198,241,53,0.4);
   }
   .tny-card-body { padding: 14px 16px 16px; }
-  .tny-card-body h4 { font-size: 15px; font-weight: 800; color: #FFFFFF; margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .tny-card-loc { font-size: 12px; color: rgba(245,239,224,0.5); margin-bottom: 8px; }
-  .tny-card-rating { font-size: 12.5px; font-weight: 700; color: var(--lime); margin-bottom: 12px; }
-  .tny-card-rating-new { color: rgba(245,239,224,0.45); font-weight: 600; }
-  .tny-book-btn { width: 100%; background: var(--lime); color: var(--forest); font-weight: 800; font-size: 13px; padding: 10px 0; border-radius: 100px; border: none; cursor: pointer; }
+  .tny-card-body h4 { font-size: 15px; font-weight: 800; color: var(--text-primary); margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tny-card-loc { font-size: 12px; color: var(--text-tertiary); margin-bottom: 8px; }
+  .tny-card-rating { font-size: 12.5px; font-weight: 700; color: var(--accent-text); margin-bottom: 12px; }
+  .tny-card-rating-new { color: var(--text-tertiary); font-weight: 600; }
+  .tny-book-btn { width: 100%; background: var(--accent-neon); color: var(--accent-neon-text); font-weight: 800; font-size: 13px; padding: 10px 0; border-radius: 100px; border: none; cursor: pointer; }
 
   /* STATS BAR */
   .marketing-strip { background: var(--sand); padding: 40px 48px; display: flex; justify-content: space-around; gap: 32px; flex-wrap: wrap; }
@@ -1302,7 +1374,7 @@ const css = `
        Home Feed's .cx-dropzone-row — the row's own padding restores the
        page's 24px gutter so the first/last pill still lines up with the
        heading above it, but the scroll region itself runs to the screen edge. */
-    .lp-dark .services-pills { margin: 0 -24px; padding: 0 24px 6px; }
+    .lp-theme .services-pills { margin: 0 -24px; padding: 0 24px 6px; }
     .tny-row { margin: 0 -24px; padding: 0 24px 6px; }
     .tny-card { flex-basis: 200px; }
     .for-business-cta { padding: 72px 20px; }
@@ -1431,6 +1503,35 @@ function VaiBookMark({ size = 26, style }) {
       <rect x="6" y="62" width="26" height="32" rx="6" fill="#3F6B4A" />
       <rect x="37" y="38" width="26" height="56" rx="6" fill="#5C8A68" />
       <rect x="68" y="6" width="26" height="88" rx="6" fill="var(--lime, #C6F135)" />
+    </svg>
+  );
+}
+
+// Sleek, minimal line-icon sun/moon for the nav's theme toggle — plain
+// inline SVG rather than an emoji glyph, which renders inconsistently
+// across OS/browsers and reads as decorative rather than a crisp control
+// (the "Apple/Stripe" premium bar this feature was explicitly asked to
+// clear). Shows the icon for the mode a click switches TO, same
+// convention as a physical light switch.
+function SunIcon({ size = 17 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
+      <circle cx="12" cy="12" r="4.5" />
+      <line x1="12" y1="1.5" x2="12" y2="4" />
+      <line x1="12" y1="20" x2="12" y2="22.5" />
+      <line x1="4" y1="12" x2="1.5" y2="12" />
+      <line x1="22.5" y1="12" x2="20" y2="12" />
+      <line x1="5.6" y1="5.6" x2="3.9" y2="3.9" />
+      <line x1="20.1" y1="20.1" x2="18.4" y2="18.4" />
+      <line x1="5.6" y1="18.4" x2="3.9" y2="20.1" />
+      <line x1="20.1" y1="3.9" x2="18.4" y2="5.6" />
+    </svg>
+  );
+}
+function MoonIcon({ size = 17 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M20.7 14.3a8.5 8.5 0 1 1-11-11 7 7 0 0 0 11 11z" />
     </svg>
   );
 }
@@ -2985,7 +3086,7 @@ function setPortalTab(tabId) {
   window.dispatchEvent(new CustomEvent("vaibook-set-portal-tab", { detail: { tab: tabId } }));
 }
 
-function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignOut, onOpenProviderSignup }) {
+function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignOut, onOpenProviderSignup, theme, onToggleTheme }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
   const closeMenu = () => setMenuOpen(false);
@@ -3119,6 +3220,21 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
       {showNavSearch && (
       <button className={`nav-search-toggle ${navSearchActive ? "visible" : ""}`} onClick={() => setMobileSearchOpen(v => !v)} aria-label="Search">🔍</button>
       )}
+
+      {/* THEME TOGGLE — global control (always visible, whatever page or
+          auth state), but its visual effect is currently scoped to the
+          B2C Landing Page's own themed surfaces (.lp-theme) — see the
+          theme CSS variables above. Other pages will pick it up as they
+          get themed in a later pass; toggling elsewhere today just
+          changes nothing yet rather than breaking anything. */}
+      <button
+        className="theme-toggle"
+        onClick={onToggleTheme}
+        aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+        title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+      >
+        {theme === "dark" ? <SunIcon /> : <MoonIcon />}
+      </button>
 
       {(current === "home" || current === "providers" || (current === "customer" && !session)) ? (
         <div className="nav-cta">
@@ -3413,7 +3529,7 @@ function LandingPage({ onNav, session, onSignIn, onSignOut }) {
   };
 
   return (
-    <div className="lp-dark">
+    <div className="lp-theme">
       {/* HERO — full swing back to customer-facing (per explicit request):
           hero copy sits above the search bar, which is the primary action
           again. The B2B eyebrow and trial-signup CTA from the earlier pivot
@@ -10516,6 +10632,27 @@ export default function App() {
   // page or the real ProviderSignup application form.
   const [showProviderSignup, setShowProviderSignup] = useState(false);
 
+  // Light/dark theme — one global preference (localStorage-backed, same
+  // "read once on mount" pattern as the other stashed-preference reads in
+  // this file) applied as a data-theme attribute on <html> so plain CSS
+  // variables can key off it with a single `:root[data-theme="light"]`
+  // block (see the css template's THEME TOKENS section) rather than a
+  // React-tree class needing to reach every themed component. Defaults to
+  // dark — this app's existing look — for a visitor with no saved
+  // preference yet.
+  const [theme, setTheme] = useState(() => {
+    try {
+      const saved = localStorage.getItem("vaibook_theme");
+      if (saved === "light" || saved === "dark") return saved;
+    } catch (e) { /* ignore storage errors */ }
+    return "dark";
+  });
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", theme);
+    try { localStorage.setItem("vaibook_theme", theme); } catch (e) { /* ignore storage errors */ }
+  }, [theme]);
+  const toggleTheme = () => setTheme((t) => (t === "dark" ? "light" : "dark"));
+
   // Site-wide offline takeover (see SiteOffline / AdminPortal's Emergency
   // tab). Checked independently of the session/loading flow below so it
   // still shows up even if, say, Google sign-in itself is having issues —
@@ -10728,6 +10865,7 @@ export default function App() {
     onSignIn: signInWithGoogle, onSignOut: handleSignOut,
     onUserUpdate: setUser, onProviderProfileUpdate: setProviderProfile,
     onOpenProviderSignup: () => setShowProviderSignup(true),
+    theme, onToggleTheme: toggleTheme,
   };
 
   return (
