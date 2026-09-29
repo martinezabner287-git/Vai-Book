@@ -709,6 +709,46 @@ const css = `
   .search-bar input { border: none; outline: none; font-size: 15px; flex: 1; font-family: 'Plus Jakarta Sans', sans-serif; color: var(--dark-text); background: transparent; }
   .search-bar .search-icon { color: var(--muted); font-size: 18px; }
 
+  /* CUSTOMER DASHBOARD — "Zero Friction / Anti-AI" redesign. Dark,
+     high-contrast, one job per screen: what's next, who to rebook, where
+     to look next. No white metric cards, no boxed-shadow form fields. */
+
+  /* Next Appointment hero — the single biggest thing on the page. */
+  .cx-hero { position: relative; overflow: hidden; background: linear-gradient(160deg, var(--forest) 0%, #081F17 100%); border-radius: 22px; padding: 34px 30px; margin-bottom: 24px; box-shadow: 0 20px 50px rgba(8,31,23,0.3); }
+  .cx-hero::after { content: ''; position: absolute; top: -60px; right: -60px; width: 220px; height: 220px; background: radial-gradient(circle, rgba(198,241,53,0.16) 0%, rgba(198,241,53,0) 70%); pointer-events: none; }
+  .cx-hero-eyebrow { font-size: 11.5px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--lime); margin-bottom: 10px; }
+  .cx-hero-service { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 28px; font-weight: 800; color: #FFFFFF; line-height: 1.15; }
+  .cx-hero-provider { font-size: 15px; color: rgba(245,239,224,0.75); margin-top: 4px; }
+  .cx-hero-countdown { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 52px; font-weight: 800; color: var(--lime); letter-spacing: -0.02em; margin-top: 18px; text-shadow: 0 0 30px rgba(198,241,53,0.45); }
+  .cx-hero-when { font-size: 13px; color: rgba(245,239,224,0.6); margin-top: 4px; }
+  .cx-hero-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 24px; }
+  .cx-btn-neon { display: inline-flex; align-items: center; gap: 6px; background: var(--lime); color: var(--forest); font-weight: 800; font-size: 14px; padding: 13px 22px; border-radius: 100px; border: none; cursor: pointer; text-decoration: none; box-shadow: 0 0 0 rgba(198,241,53,0.5); transition: box-shadow .2s, transform .15s; }
+  .cx-btn-neon:hover { box-shadow: 0 0 24px rgba(198,241,53,0.55); transform: translateY(-1px); }
+  .cx-btn-ghost { background: transparent; color: #FFFFFF; font-weight: 700; font-size: 13.5px; padding: 12px 20px; border-radius: 100px; border: 1.5px solid rgba(255,255,255,0.28); cursor: pointer; transition: border-color .2s, background .2s; }
+  .cx-btn-ghost:hover { border-color: rgba(255,255,255,0.55); background: rgba(255,255,255,0.06); }
+
+  /* Quick Rebook — large photo cards, one tap back into booking. */
+  .cx-section-heading { font-size: 13px; font-weight: 800; letter-spacing: .04em; color: var(--forest); margin-bottom: 14px; }
+  .cx-rebook { margin-bottom: 28px; }
+  .cx-rebook-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 14px; }
+  .cx-rebook-card { background: #0E241B; border-radius: 16px; overflow: hidden; cursor: pointer; transition: transform .15s, box-shadow .2s; }
+  .cx-rebook-card:hover { transform: translateY(-3px); box-shadow: 0 14px 30px rgba(13,61,46,0.25); }
+  .cx-rebook-card-img { height: 110px; background: linear-gradient(160deg, #1E6B50 0%, #0E241B 100%); display: flex; align-items: center; justify-content: center; font-size: 32px; }
+  .cx-rebook-card-body { padding: 14px; }
+  .cx-rebook-card-name { font-size: 14px; font-weight: 700; color: #FFFFFF; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .cx-rebook-card-type { font-size: 11.5px; color: rgba(245,239,224,0.55); margin-top: 2px; margin-bottom: 10px; }
+  .cx-rebook-card-btn { width: 100%; background: var(--lime); color: var(--forest); font-weight: 800; font-size: 12.5px; padding: 9px 0; border-radius: 8px; border: none; cursor: pointer; }
+
+  /* Search / Discover — dark premium pills, no boxed shadows. */
+  .cx-discover { margin-bottom: 8px; }
+  .cx-discover-search { position: relative; background: #0E241B; border-radius: 100px; padding: 15px 22px; display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+  .cx-discover-search input { border: none; outline: none; font-size: 14.5px; flex: 1; font-family: 'Plus Jakarta Sans', sans-serif; color: #FFFFFF; background: transparent; }
+  .cx-discover-search input::placeholder { color: rgba(245,239,224,0.45); }
+  .cx-discover-search .search-icon { color: rgba(245,239,224,0.55); font-size: 17px; }
+  .cx-discover-pills { display: flex; gap: 10px; flex-wrap: wrap; }
+  .cx-discover-pill { display: inline-flex; align-items: center; gap: 7px; background: #0E241B; color: rgba(245,239,224,0.85); font-weight: 600; font-size: 13px; padding: 10px 18px; border-radius: 100px; border: 1px solid rgba(255,255,255,0.08); cursor: pointer; transition: border-color .2s, color .2s, box-shadow .2s; }
+  .cx-discover-pill:hover { border-color: var(--lime); color: var(--lime); box-shadow: 0 0 16px rgba(198,241,53,0.25); }
+
   /* PROVIDER GRID */
   .provider-card { background: var(--near-white); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; cursor: pointer; transition: box-shadow .2s; }
   .provider-card:hover { box-shadow: 0 4px 20px rgba(13,61,46,0.1); }
@@ -910,6 +950,24 @@ const css = `
     .profile-gallery { height: 220px; }
     .profile-name-row h2 { font-size: 21px; }
     .reviews-grid { grid-template-columns: 1fr; }
+
+    /* Customer dashboard — 95% of bookings happen from a phone, so this
+       is the layout that actually matters most. Rebook cards become a
+       snap-scrolling horizontal row (native app feel) instead of wrapping
+       into a cramped grid; the hero shrinks its type scale to fit without
+       needing to scroll to see the countdown + action buttons together. */
+    .cx-hero { padding: 26px 22px; border-radius: 18px; }
+    .cx-hero-service { font-size: 22px; }
+    .cx-hero-countdown { font-size: 40px; margin-top: 14px; }
+    .cx-hero-actions { margin-top: 20px; }
+    .cx-btn-neon, .cx-btn-ghost { flex: 1; justify-content: center; text-align: center; }
+    .cx-rebook-row { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; gap: 12px; margin: 0 -20px; padding: 0 20px 4px; }
+    .cx-rebook-row::-webkit-scrollbar { display: none; }
+    .cx-rebook-card { flex: 0 0 148px; scroll-snap-align: start; }
+    .cx-discover-search { padding: 13px 18px; }
+    .cx-discover-pills { flex-wrap: nowrap; overflow-x: auto; margin: 0 -20px; padding: 0 20px 4px; }
+    .cx-discover-pills::-webkit-scrollbar { display: none; }
+    .cx-discover-pill { flex-shrink: 0; }
   }
 
   /* NAV — keep the top row on one line without pushing "Menu"/the avatar
@@ -1665,6 +1723,23 @@ function formatBookingWhen(b) {
   const datePart = formatBookingDate(b?.booking_date, { month: "short", day: "numeric" });
   const timePart = formatBookingTime(b?.booking_time);
   return timePart ? `${datePart}, ${timePart}` : datePart;
+}
+// "2d 4h" / "5h 12m" / "38m" / "Starting now" — the customer dashboard's
+// "Next Appointment" hero countdown. Pure function (takes `now` as a plain
+// timestamp) so the component just re-renders it off a ticking state value
+// instead of this needing its own timer.
+function formatCountdown(target, now) {
+  if (!target) return "";
+  const diffMs = target.getTime() - now;
+  if (diffMs <= 0) return "Starting now";
+  const mins = Math.round(diffMs / 60000);
+  if (mins < 60) return `${mins}m`;
+  const hrs = Math.floor(mins / 60);
+  const remMins = mins % 60;
+  if (hrs < 24) return remMins ? `${hrs}h ${remMins}m` : `${hrs}h`;
+  const days = Math.floor(hrs / 24);
+  const remHrs = hrs % 24;
+  return remHrs ? `${days}d ${remHrs}h` : `${days}d`;
 }
 function isSameLocalDay(dateStr, d) {
   const bd = bookingDateOnly(dateStr);
@@ -3349,6 +3424,15 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
     return () => clearInterval(t);
   }, [user?.id]);
 
+  // Ticks the "Next Appointment" hero's countdown every 30s — cheap enough
+  // to re-render on, and frequent enough that "in 12m" doesn't visibly go
+  // stale while someone's actually looking at it.
+  const [nowTick, setNowTick] = useState(() => Date.now());
+  useEffect(() => {
+    const t = setInterval(() => setNowTick(Date.now()), 30000);
+    return () => clearInterval(t);
+  }, []);
+
   // A QR code / booking-link deep link ("#book-<id>") jumps straight to
   // that provider's booking view, same modal as clicking them from search —
   // no account needed just to look, same as browsing normally.
@@ -4029,6 +4113,31 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
   const totalSpent = completedBookings.reduce((sum, b) => sum + (Number(b.total_amount) || 0), 0);
   const reviewedBookings = bookings.filter((b) => b.reviews && b.reviews.length > 0);
 
+  // ── Dashboard redesign: "Next Appointment" hero ──────────────────────
+  // Earliest upcoming by actual date/time, not just first-in-list — the
+  // `bookings` query orders newest-booked-first, which isn't the same as
+  // "what's happening soonest."
+  const nextAppointment = upcomingBookings
+    .filter((b) => bookingDateTime(b.booking_date, b.booking_time))
+    .sort((a, b) => bookingDateTime(a.booking_date, a.booking_time) - bookingDateTime(b.booking_date, b.booking_time))[0] || null;
+  const nextAppointmentAt = nextAppointment ? bookingDateTime(nextAppointment.booking_date, nextAppointment.booking_time) : null;
+  const nextAppointmentProvider = nextAppointment?.provider_profiles;
+  const nextAppointmentHasMap = nextAppointmentProvider?.latitude != null && nextAppointmentProvider?.longitude != null;
+
+  // ── Dashboard redesign: "Quick Rebook" ────────────────────────────────
+  // Most recently visited providers, deduped, in booking-history order
+  // (already newest-first). Cross-referenced against the live `providers`
+  // list for a photo/rating — a past booking's own provider_profiles embed
+  // is a slim snapshot (see getCustomerBookings) with no portfolio_urls.
+  const rebookProviders = [];
+  bookings.forEach((b) => {
+    const pid = b.provider_profiles?.id;
+    if (!pid || b.status === "rejected" || b.status === "cancelled") return;
+    if (rebookProviders.some((p) => p.id === pid)) return;
+    const live = providers.find((p) => p.id === pid);
+    rebookProviders.push(live || b.provider_profiles);
+  });
+
   const filteredProviders = providers.filter((p) => {
     if (!providerSearch.trim()) return true;
     const q = providerSearch.trim().toLowerCase();
@@ -4066,71 +4175,102 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
       <main className="portal-content">
         {tab === "home" && (
           <>
-            <div className="portal-header">
-              <h2>Good to see you, {firstName} 👋</h2>
-              <p>{upcomingBookings.length === 0 ? "No upcoming bookings right now." : `You have ${upcomingBookings.length} upcoming booking${upcomingBookings.length === 1 ? "" : "s"}.`}</p>
-            </div>
-            <div className="metric-grid">
-              <div className="metric"><div className="metric-label">Total bookings</div><div className="metric-value">{bookings.length}</div><div className="metric-sub">All time</div></div>
-              <div className="metric"><div className="metric-label">Total spent</div><div className="metric-value" style={{ color: "var(--clay)" }}>BZ${totalSpent.toFixed(0)}</div><div className="metric-sub">{completedBookings.length} completed</div></div>
-              <div className="metric"><div className="metric-label">Providers found</div><div className="metric-value">{providers.length}</div><div className="metric-sub">Active on VaiBook</div></div>
-              <div className="metric"><div className="metric-label">Reviews left</div><div className="metric-value">{reviewedBookings.length}</div><div className="metric-sub">Of {completedBookings.length} completed</div></div>
-            </div>
-            <div className="grid-2">
-              <div className="card">
-                <div className="card-title">Upcoming bookings</div>
-                {upcomingBookings.length === 0 && <p style={{ fontSize: 13, color: "var(--muted)", padding: "16px 0" }}>{loadingBookings ? "Loading..." : "Nothing booked yet — find a provider to get started."}</p>}
-                {upcomingBookings.slice(0, 2).map((b) => (
-                  <div className="booking-item" key={b.id}>
-                    <div className={`booking-dot ${bookingStatusClass(b.status)}`}></div>
-                    <div className="booking-info">
-                      <div className="title">{b.services?.name || "Service"}</div>
-                      <div className="meta">{b.provider_profiles?.business_name || "Provider"} · {formatBookingWhen(b)}</div>
-                    </div>
-                    <div>
-                      <span className="booking-amount">BZ${b.total_amount ?? "—"}</span>
-                      <span className={`status-pill ${bookingStatusClass(b.status)}`}>{statusLabel(b.status)}</span>
-                    </div>
+            {/* NEXT APPOINTMENT — replaces the generic greeting + 4 metric
+                cards. This is the one thing a customer actually opens the
+                app to check, so it's the biggest, first thing they see. */}
+            <div className="cx-hero">
+              {nextAppointment ? (
+                <>
+                  <div className="cx-hero-eyebrow">Your next appointment</div>
+                  <div className="cx-hero-service">{nextAppointment.services?.name || "Appointment"}</div>
+                  <div className="cx-hero-provider">{nextAppointmentProvider?.business_name || "Provider"}</div>
+                  <div className="cx-hero-countdown">{formatCountdown(nextAppointmentAt, nowTick)}</div>
+                  <div className="cx-hero-when">{formatBookingWhen(nextAppointment)}</div>
+                  <div className="cx-hero-actions">
+                    {nextAppointmentHasMap && (
+                      <a
+                        className="cx-btn-neon"
+                        href={directionsUrl(nextAppointmentProvider.latitude, nextAppointmentProvider.longitude)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        📍 Get Directions
+                      </a>
+                    )}
+                    <button className="cx-btn-ghost" onClick={() => setTab("bookings")}>
+                      {upcomingBookings.length > 1 ? `View all (${upcomingBookings.length})` : "View details"}
+                    </button>
                   </div>
-                ))}
-                <button className="btn-sm forest" style={{ marginTop: 16 }} onClick={() => setTab("bookings")}>View all bookings</button>
-              </div>
-              <div className="card">
-                <div className="card-title">Quick book</div>
-                <p style={{ fontSize: 13, color: "var(--muted)", marginBottom: 16 }}>What do you need today, {firstName}?</p>
-                <div className="search-bar" style={{ padding: "10px 16px", marginBottom: 16 }}>
-                  <span className="search-icon">🔍</span>
-                  <input
-                    placeholder="Search barbers, nail techs, spas..."
-                    value={providerSearch}
-                    onChange={e => { setProviderSearch(e.target.value); setShowBrowseSuggestions(true); }}
-                    onFocus={() => setShowBrowseSuggestions(true)}
-                    onBlur={() => setTimeout(() => setShowBrowseSuggestions(false), 150)}
-                    onKeyDown={e => { if (e.key === "Enter") { setShowBrowseSuggestions(false); setTab("browse"); } }}
-                  />
-                  {showBrowseSuggestions && browseSuggestions.length > 0 && (
-                    <div className="suggestions-dropdown">
-                      {browseSuggestions.map((s) => (
-                        <div key={s.key} className="suggestion-item" onMouseDown={() => { selectBrowseSuggestion(s); setTab("browse"); }}>
-                          <span className="suggestion-icon">{s.icon}</span>
-                          <span className="suggestion-label">{s.label}</span>
-                          <span className="suggestion-sub">{s.sublabel}</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-                  {SERVICES.slice(0,4).map((s, i) => (
-                    <div key={i} onClick={() => setTab("browse")} style={{ background: "var(--sand)", borderRadius: 8, padding: "12px 14px", cursor: "pointer", display: "flex", alignItems: "center", gap: 8, transition: "background .2s" }}
-                      onMouseEnter={e => e.currentTarget.style.background = "#E8EDE0"}
-                      onMouseLeave={e => e.currentTarget.style.background = "var(--sand)"}
-                    >
-                      <span style={{ fontSize: 22 }}>{s.icon}</span>
-                      <span style={{ fontSize: 13, fontWeight: 600, color: "var(--forest)" }}>{s.name}</span>
+                </>
+              ) : (
+                <>
+                  <div className="cx-hero-eyebrow">No upcoming appointments</div>
+                  <div className="cx-hero-service">Ready when you are, {firstName}.</div>
+                  <div className="cx-hero-actions">
+                    <button className="cx-btn-neon" onClick={() => setTab("browse")}>Find a provider</button>
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* QUICK REBOOK — large photo cards of recently visited shops,
+                one tap straight into the booking flow for that provider. */}
+            {rebookProviders.length > 0 && (
+              <div className="cx-rebook">
+                <div className="cx-section-heading">Quick Rebook</div>
+                <div className="cx-rebook-row">
+                  {rebookProviders.slice(0, 4).map((p) => (
+                    <div className="cx-rebook-card" key={p.id} onClick={() => openBooking(p)}>
+                      <div
+                        className="cx-rebook-card-img"
+                        style={p.portfolio_urls && p.portfolio_urls.length > 0 ? { background: `center/cover no-repeat url(${p.portfolio_urls[0]})` } : undefined}
+                      >
+                        {(!p.portfolio_urls || p.portfolio_urls.length === 0) && <span>{iconForServiceType(p.service_type)}</span>}
+                      </div>
+                      <div className="cx-rebook-card-body">
+                        <div className="cx-rebook-card-name">{p.business_name}</div>
+                        <div className="cx-rebook-card-type">{p.service_type}</div>
+                        <button className="cx-rebook-card-btn" onClick={(e) => { e.stopPropagation(); openBooking(p); }}>Book Again</button>
+                      </div>
                     </div>
                   ))}
                 </div>
+              </div>
+            )}
+
+            {/* SEARCH / DISCOVER — same search + category shortcuts as
+                before, restyled as dark premium pills instead of a boxed,
+                shadowed form card. */}
+            <div className="cx-discover">
+              <div className="cx-section-heading">Find your next service</div>
+              <div className="cx-discover-search">
+                <span className="search-icon">🔍</span>
+                <input
+                  placeholder="Search barbers, nail techs, spas..."
+                  value={providerSearch}
+                  onChange={e => { setProviderSearch(e.target.value); setShowBrowseSuggestions(true); }}
+                  onFocus={() => setShowBrowseSuggestions(true)}
+                  onBlur={() => setTimeout(() => setShowBrowseSuggestions(false), 150)}
+                  onKeyDown={e => { if (e.key === "Enter") { setShowBrowseSuggestions(false); setTab("browse"); } }}
+                />
+                {showBrowseSuggestions && browseSuggestions.length > 0 && (
+                  <div className="suggestions-dropdown">
+                    {browseSuggestions.map((s) => (
+                      <div key={s.key} className="suggestion-item" onMouseDown={() => { selectBrowseSuggestion(s); setTab("browse"); }}>
+                        <span className="suggestion-icon">{s.icon}</span>
+                        <span className="suggestion-label">{s.label}</span>
+                        <span className="suggestion-sub">{s.sublabel}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <div className="cx-discover-pills">
+                {SERVICES.slice(0, 6).map((s, i) => (
+                  <button key={i} className="cx-discover-pill" onClick={() => { setProviderSearch(s.name); setShowBrowseSuggestions(false); setTab("browse"); }}>
+                    <span>{s.icon}</span>{s.name}
+                  </button>
+                ))}
               </div>
             </div>
           </>
