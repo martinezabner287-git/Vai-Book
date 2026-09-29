@@ -1,6 +1,6 @@
 
 import { useState, useEffect, useLayoutEffect, useRef, useContext, createContext, lazy, Suspense } from "react";
-import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, deleteService, getActiveProviders, getProviderDirectory, createBooking, getProviderBusyWindows, createBookingSafe, cancelBooking, getCustomerBookings, uploadReceipt, submitReview, getProviderReviews, updateReview, sendBookingEmail, updateUserProfile, getPaymentMethods, addPaymentMethod, deletePaymentMethod, createNotification, getNotifications, markNotificationRead, markAllNotificationsRead, getCategoryDefaultFeatures, getProviderFeatureOverrides, setProviderFeatureOverride, getVisitNotes, upsertVisitNote, adminListProviders, adminUpdateProvider, adminDeleteProvider, getFavoriteProviderIds, getFavoriteProviders, addFavorite, removeFavorite, getBookingMessages, sendBookingMessage, markBookingMessagesRead, getUnreadBookingMessages, getProviderMonthlyTrend, createProviderProfile, getProviderById, createWalkInBooking, submitProviderPayment, getMyProviderPayments, adminListProviderPayments, adminReviewProviderPayment, submitVipPayment, getMyVipPayments, adminListVipPayments, adminReviewVipPayment, createVipBooking, submitBookingRefund, adminListBookingRefunds, openPrivateFile, getProviderStaff, addProviderStaff, updateProviderStaff, deleteProviderStaff, getLoyaltyAccount, getProviderLoyaltyCustomers, redeemLoyaltyReward, getMyStaffProfile, claimStaffSeatByEmail, getStaffBookings, getProviderNotifyEmail, getMaintenanceStatus, setMaintenanceMode, getSiteOfflineStatus, setSiteOffline, sendEmailOtp, verifyEmailOtp, savePushSubscription, attachBookingServices, getProviderBlocks, insertProviderBlock, deleteProviderBlock, proposeBookingReschedule, confirmBookingReschedule, declineBookingReschedule, withdrawBookingReschedule } from "./supabase";
+import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, deleteService, getActiveProviders, getProviderDirectory, createBooking, getProviderBusyWindows, createBookingSafe, cancelBooking, getCustomerBookings, uploadReceipt, submitReview, getProviderReviews, updateReview, sendBookingEmail, updateUserProfile, getPaymentMethods, addPaymentMethod, deletePaymentMethod, createNotification, getNotifications, markNotificationRead, markAllNotificationsRead, getCategoryDefaultFeatures, getProviderFeatureOverrides, setProviderFeatureOverride, getVisitNotes, upsertVisitNote, adminListProviders, adminUpdateProvider, adminDeleteProvider, getFavoriteProviderIds, getFavoriteProviders, addFavorite, removeFavorite, getBookingMessages, sendBookingMessage, markBookingMessagesRead, getUnreadBookingMessages, getProviderMonthlyTrend, createProviderProfile, getProviderById, createWalkInBooking, submitProviderPayment, getMyProviderPayments, adminListProviderPayments, adminReviewProviderPayment, submitBookingRefund, adminListBookingRefunds, openPrivateFile, getProviderStaff, addProviderStaff, updateProviderStaff, deleteProviderStaff, getLoyaltyAccount, getProviderLoyaltyCustomers, redeemLoyaltyReward, getMyStaffProfile, claimStaffSeatByEmail, getStaffBookings, getProviderNotifyEmail, getMaintenanceStatus, setMaintenanceMode, getSiteOfflineStatus, setSiteOffline, sendEmailOtp, verifyEmailOtp, savePushSubscription, attachBookingServices, getProviderBlocks, insertProviderBlock, deleteProviderBlock, proposeBookingReschedule, confirmBookingReschedule, declineBookingReschedule, withdrawBookingReschedule } from "./supabase";
 import AdminDashboard from "./AdminDashboard";
 import { compressImageFile } from "./imageUtils";
 import { bookingRequestSchema, rescheduleProposalSchema, validate } from "./validation";
@@ -1214,11 +1214,6 @@ const planBadge = (p) => {
   return null;
 };
 
-// Whether a provider currently accepts VIP off-hours requests — mirrors
-// the enforce_vip_surcharge_plan trigger's own condition (Pro/Business
-// plan with a positive vip_surcharge set), so the UI never offers
-// something the database would reject.
-const isProviderVipEligible = (p) => (p?.plan === "pro" || p?.plan === "business") && Number(p?.vip_surcharge) > 0;
 
 // "New to VaiBook" badge window — providers who joined in the last 30 days
 // get the pill; older ones can still appear in the row (as the most
@@ -2570,7 +2565,6 @@ const PORTAL_TOOLS_BY_VIEW = {
     { id: "rejected", icon: "✖", label: "Rejected" },
     { id: "providers", icon: "🏪", label: "Providers" },
     { id: "payments", icon: "🧾", label: "Payments" },
-    { id: "vip", icon: "⚡", label: "VIP Memberships" },
     { id: "refunds", icon: "↩️", label: "Refunds" },
     { id: "security", icon: "🚨", label: "Emergency" },
   ],
@@ -3321,56 +3315,6 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
     }
   };
 
-  // VaiBook VIP membership — same hands-off bank-transfer-and-confirm
-  // billing as a provider plan payment, just customer-side. `user` already
-  // carries vip_active/vip_expires_at (getOrCreateUser selects '*').
-  const isVipMember = !!(user?.vip_active && user?.vip_expires_at && new Date(user.vip_expires_at) > new Date());
-  const [vipPayments, setVipPayments] = useState([]);
-  const [loadingVipPayments, setLoadingVipPayments] = useState(false);
-  const [vipPaymentForm, setVipPaymentForm] = useState({ receipt: null });
-  const [vipPaymentFileKey, setVipPaymentFileKey] = useState(0);
-  const [submittingVipPayment, setSubmittingVipPayment] = useState(false);
-  const [vipPaymentError, setVipPaymentError] = useState("");
-  const [refreshingVipStatus, setRefreshingVipStatus] = useState(false);
-
-  const loadMyVipPayments = async () => {
-    if (!user?.id) return;
-    setLoadingVipPayments(true);
-    const data = await getMyVipPayments(user.id);
-    setVipPayments(data || []);
-    setLoadingVipPayments(false);
-  };
-
-  const submitVipMembershipPayment = async () => {
-    if (!vipPaymentForm.receipt) { setVipPaymentError("Please attach a receipt image or PDF."); return; }
-    setSubmittingVipPayment(true);
-    setVipPaymentError("");
-    const ok = await submitVipPayment(user.id, vipPaymentForm.receipt, {
-      amount: VIP_MEMBERSHIP.monthly,
-      periodLabel: new Date().toLocaleDateString([], { month: "long", year: "numeric" }),
-    });
-    setSubmittingVipPayment(false);
-    if (ok) {
-      setVipPaymentForm({ receipt: null });
-      setVipPaymentFileKey((k) => k + 1);
-      loadMyVipPayments();
-    } else {
-      setVipPaymentError("Something went wrong uploading your receipt. Please try again.");
-    }
-  };
-
-  // No webhook tells this screen the moment admin confirms a payment, so
-  // this just re-fetches the user's own row on demand rather than polling.
-  const refreshVipStatus = async () => {
-    if (!session?.user) return;
-    setRefreshingVipStatus(true);
-    const refreshed = await getOrCreateUser(session.user);
-    if (refreshed) onUserUpdate && onUserUpdate(refreshed);
-    setRefreshingVipStatus(false);
-  };
-
-  useEffect(() => { loadMyVipPayments(); }, [user?.id]);
-
   const [providers, setProviders] = useState([]);
   const [loadingProviders, setLoadingProviders] = useState(false);
   const [providerSearch, setProviderSearch] = useState("");
@@ -3632,7 +3576,6 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
       date: localDateStr(),
       time: "",
       notes: "",
-      isVip: false,
     });
     setBookingError("");
     setBookingService(service);
@@ -3664,7 +3607,6 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
       date: localDateStr(),
       time: "",
       notes: "",
-      isVip: false,
     });
     setBookingError("");
     setBookingService({
@@ -3674,23 +3616,6 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
       duration_min: multiTotalDuration,
       isMulti: true,
     });
-  };
-
-  // A VIP request is for a time OUTSIDE the provider's normal working
-  // hours, so it doesn't use the slot picker built from providerHours —
-  // the customer just names a time and the provider accepts or declines,
-  // same as any other booking request.
-  const startVipBookingForService = (service) => {
-    setBookingForm({
-      service_id: service.id,
-      service_ids: [],
-      date: localDateStr(),
-      time: "",
-      notes: "",
-      isVip: true,
-    });
-    setBookingError("");
-    setBookingService(service);
   };
 
   // Reload the provider's busy windows whenever the chosen date changes so the
@@ -3842,35 +3767,22 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
 
     const total = isMultiService ? multiServices.reduce((sum, s) => sum + (Number(s.price) || 0), 0) : (Number(service.price) || 0);
     const dpPct = selectedProvider.downpayment_required ? (selectedProvider.downpayment_pct || 50) : 0;
-    // VIP requests skip the deposit flow entirely — it's a premium
-    // off-hours request, not the normal reserve-a-slot flow a deposit
-    // protects.
-    const downpayment = (!bookingForm.isVip && dpPct) ? Math.round(total * dpPct) / 100 : null;
+    const downpayment = dpPct ? Math.round(total * dpPct) / 100 : null;
     const order_number = `VB-${Date.now().toString(36).toUpperCase()}${Math.random().toString(36).slice(2, 5).toUpperCase()}`;
 
     let created = null;
     try {
-      created = bookingForm.isVip
-        ? await createVipBooking({
-            order_number,
-            customer_id: bookingCustomerId,
-            provider_id: selectedProvider.id,
-            service_id: service.id,
-            booking_date: bookingForm.date,
-            booking_time: bookingForm.time,
-            notes: bookingForm.notes ? bookingForm.notes.trim() : null,
-          })
-        : await createBookingSafe({
-            order_number,
-            customer_id: bookingCustomerId,
-            provider_id: selectedProvider.id,
-            service_id: service.id,
-            booking_date: bookingForm.date,
-            booking_time: bookingForm.time,
-            total_amount: total,
-            downpayment_amount: downpayment,
-            notes: bookingForm.notes ? bookingForm.notes.trim() : null,
-          });
+      created = await createBookingSafe({
+        order_number,
+        customer_id: bookingCustomerId,
+        provider_id: selectedProvider.id,
+        service_id: service.id,
+        booking_date: bookingForm.date,
+        booking_time: bookingForm.time,
+        total_amount: total,
+        downpayment_amount: downpayment,
+        notes: bookingForm.notes ? bookingForm.notes.trim() : null,
+      });
     } catch (err) {
       setSubmittingBooking(false);
       if (err?.code === "SLOT_TAKEN") {
@@ -3884,10 +3796,6 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
         setBookingError("New bookings are temporarily paused for maintenance. Please try again shortly.");
       } else if (err?.code === "STARTER_LIMIT_REACHED") {
         setBookingError(`${selectedProvider?.business_name || "This provider"} has reached their booking limit for this month. Please check back next month, or message them directly to arrange your appointment.`);
-      } else if (err?.code === "NOT_VIP_MEMBER") {
-        setBookingError("Your VaiBook VIP membership isn't active. Check Settings to renew it, then try again.");
-      } else if (err?.code === "VIP_NOT_OFFERED") {
-        setBookingError(`${selectedProvider?.business_name || "This provider"} isn't accepting VIP requests right now.`);
       } else {
         setBookingError("Something went wrong sending your request. Please try again.");
       }
@@ -3919,16 +3827,13 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
     setSubmittingBooking(false);
 
     if (created) {
-      // For a VIP request, total_amount (service price + the provider's
-      // VIP add-on) is computed server-side, not the plain service price
-      // used above for a normal booking's downpayment math.
       const finalTotal = Number(created.total_amount) || total;
       const whenLabel = `${formatBookingDate(bookingForm.date)} at ${formatBookingTime(bookingForm.time)}`;
       if (selectedProvider.user_id) {
         await createNotification({
           user_id: selectedProvider.user_id,
-          title: bookingForm.isVip ? "New VIP booking request" : "New booking request",
-          body: `${user?.full_name || guestCheckoutForm.name || "A customer"} requested ${serviceLabel} on ${whenLabel}${bookingForm.isVip ? " (VIP — outside your normal hours)" : ""}.`,
+          title: "New booking request",
+          body: `${user?.full_name || guestCheckoutForm.name || "A customer"} requested ${serviceLabel} on ${whenLabel}.`,
           type: "booking_requested",
           booking_id: created.id,
         });
@@ -3941,8 +3846,8 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
       if (providerEmail) {
         await sendBookingEmail({
           to: providerEmail,
-          subject: `New${bookingForm.isVip ? " VIP" : ""} booking request — ${serviceLabel}, ${whenLabel}`,
-          html: `<p>Hi ${selectedProvider.business_name || "there"},</p><p><strong>${user?.full_name || guestCheckoutForm.name || "A customer"}</strong> just requested <strong>${serviceLabel}</strong> for <strong>${whenLabel}</strong> (BZ$${finalTotal.toFixed(2)})${bookingForm.isVip ? " — this is a VIP request, outside your normal working hours" : ""}.</p>${bookingForm.notes ? `<p>Their note: "${bookingForm.notes.trim()}"</p>` : ""}<p>Open VaiBook to accept or decline it. You can turn these emails off under Settings → Notifications.</p>`,
+          subject: `New booking request — ${serviceLabel}, ${whenLabel}`,
+          html: `<p>Hi ${selectedProvider.business_name || "there"},</p><p><strong>${user?.full_name || guestCheckoutForm.name || "A customer"}</strong> just requested <strong>${serviceLabel}</strong> for <strong>${whenLabel}</strong> (BZ$${finalTotal.toFixed(2)}).</p>${bookingForm.notes ? `<p>Their note: "${bookingForm.notes.trim()}"</p>` : ""}<p>Open VaiBook to accept or decline it. You can turn these emails off under Settings → Notifications.</p>`,
         });
       }
       setSelectedProvider(null);
@@ -4453,9 +4358,6 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
                       <div className="booking-info">
                         <div className="title">
                           {b.services?.name || "Service"}
-                          {b.is_vip && (
-                            <span style={{ marginLeft: 8, fontSize: 11, fontWeight: 700, color: "var(--forest)", background: "var(--lime)", padding: "2px 7px", borderRadius: 5, verticalAlign: "middle" }}>⚡ VIP</span>
-                          )}
                         </div>
                         <div className="meta">
                           {b.provider_profiles?.business_name || "Provider"} · {formatBookingWhen(b)}
@@ -4749,49 +4651,6 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
               </div>
             )}
 
-            {tab === "settings" && (() => {
-              const pendingVip = vipPayments.find((p) => p.status === "pending");
-              return (
-                <div className="card" style={{ maxWidth: 480, marginTop: 20 }}>
-                  <div className="card-title">{VIP_MEMBERSHIP.label}</div>
-                  {isVipMember ? (
-                    <>
-                      <p style={{ fontSize: 13, color: "var(--forest)", fontWeight: 600, marginBottom: 4 }}>✓ Active</p>
-                      <p style={{ fontSize: 12, color: "var(--muted)", marginBottom: 12 }}>
-                        Valid through {new Date(user.vip_expires_at).toLocaleDateString([], { month: "long", day: "numeric", year: "numeric" })}. You can request an appointment outside normal hours with any participating Pro/Business provider — look for "⚡ VIP request" next to a service on their profile.
-                      </p>
-                    </>
-                  ) : (
-                    <p style={{ fontSize: 13, color: "var(--muted)", marginBottom: 12 }}>
-                      VIP members can request a last-minute or after-hours appointment with participating providers — the provider sets the add-on price and still has to accept the request, but you're not stuck waiting for their next open slot. BZ${VIP_MEMBERSHIP.monthly}/month.
-                    </p>
-                  )}
-
-                  {pendingVip ? (
-                    <p style={{ fontSize: 13, color: "#B45309", background: "#FEF3C7", borderRadius: 8, padding: "10px 14px" }}>
-                      Your payment from {new Date(pendingVip.submitted_at).toLocaleDateString()} is awaiting confirmation.
-                    </p>
-                  ) : (
-                    <div style={{ paddingTop: isVipMember ? 12 : 0, borderTop: isVipMember ? "1px solid var(--border)" : "none" }}>
-                      <p style={{ fontSize: 13, marginBottom: 10 }}>
-                        {isVipMember ? `Renew for another 30 days: send BZ$${VIP_MEMBERSHIP.monthly}, then upload the receipt.` : `Send BZ$${VIP_MEMBERSHIP.monthly} by bank transfer or mobile wallet, then upload the receipt — admin confirms it and you're VIP for 30 days.`}
-                      </p>
-                      <div className="input-group">
-                        <label>Receipt (image or PDF)</label>
-                        <input key={vipPaymentFileKey} type="file" accept="image/*,application/pdf" onChange={e => setVipPaymentForm({ receipt: e.target.files?.[0] || null })} />
-                      </div>
-                      {vipPaymentError && <p style={{ fontSize: 12, color: "#B91C1C", marginBottom: 8 }}>{vipPaymentError}</p>}
-                      <button className="btn-sm forest" disabled={submittingVipPayment} onClick={submitVipMembershipPayment}>
-                        {submittingVipPayment ? "Uploading..." : isVipMember ? "Submit renewal payment" : "Submit payment"}
-                      </button>
-                    </div>
-                  )}
-                  <p style={{ fontSize: 11, color: "var(--muted)", marginTop: 12 }}>
-                    Just paid and don't see it reflected yet? <span style={{ color: "var(--forest)", fontWeight: 600, cursor: "pointer" }} onClick={refreshVipStatus}>{refreshingVipStatus ? "Checking..." : "Refresh status"}</span>
-                  </p>
-                </div>
-              );
-            })()}
           </>
         )}
       </main>
@@ -4919,58 +4778,49 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
                           </div>
                           <h3 style={{ fontSize: 20, fontWeight: 800, color: "var(--dark-text)", margin: "0 0 4px" }}>Pick a date &amp; time</h3>
                           <p style={{ fontSize: 13, color: "var(--muted)", margin: "0 0 18px" }}>at {selectedProvider.business_name}</p>
-                          <div style={{ background: bookingForm.isVip ? "var(--lime)" : "var(--sand)", borderRadius: 10, padding: "14px 16px", marginBottom: 20, fontSize: 13 }}>
-                            <strong>{bookingService.name}</strong> — BZ${bookingForm.isVip ? (Number(bookingService.price) + Number(selectedProvider.vip_surcharge || 0)).toFixed(2) : bookingService.price} · {bookingService.duration_min} min
-                            {bookingForm.isVip && <div style={{ fontSize: 11, marginTop: 4 }}>⚡ VIP request — includes {selectedProvider.business_name}'s BZ${selectedProvider.vip_surcharge} off-hours add-on</div>}
+                          <div style={{ background: "var(--sand)", borderRadius: 10, padding: "14px 16px", marginBottom: 20, fontSize: 13 }}>
+                            <strong>{bookingService.name}</strong> — BZ${bookingService.price} · {bookingService.duration_min} min
                           </div>
                           <div className="input-group">
                             <label>Date</label>
                             <input type="date" min={localDateStr()} value={bookingForm.date} onChange={e => setBookingForm(f => ({ ...f, date: e.target.value, time: "" }))} style={{ padding: "13px 14px", fontSize: 15 }} />
                           </div>
-                          {bookingForm.isVip ? (
-                            <div className="input-group">
-                              <label>Requested time</label>
-                              <input type="time" value={bookingForm.time} onChange={e => setBookingForm(f => ({ ...f, time: e.target.value }))} />
-                              <p style={{ fontSize: 11, color: "var(--muted)", marginTop: 4 }}>This is outside {selectedProvider.business_name}'s normal hours, so pick whatever time you actually need — they'll confirm directly with you.</p>
-                            </div>
-                          ) : (
-                            <div className="input-group">
-                              <label>Available times</label>
-                              {loadingSlots ? (
-                                <p style={{ fontSize: 12, color: "var(--muted)" }}>Checking live availability...</p>
-                              ) : !providerHours.length ? (
-                                <p style={{ fontSize: 12, color: "var(--muted)" }}>This provider hasn't set their working hours yet — try again later or send a note with your preferred time.</p>
-                              ) : availableSlots.length === 0 ? (
-                                <p style={{ fontSize: 12, color: "var(--clay)" }}>No open slots on this date. Please choose another day.</p>
-                              ) : (
-                                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(92px, 1fr))", gap: 9, maxHeight: 220, overflowY: "auto", paddingTop: 4 }}>
-                                  {availableSlots.map((t) => (
-                                    <button
-                                      type="button"
-                                      key={t}
-                                      onClick={() => setBookingForm(f => ({ ...f, time: t }))}
-                                      className="btn-sm"
-                                      style={{
-                                        padding: "11px 4px",
-                                        fontSize: 13,
-                                        fontWeight: 700,
-                                        border: bookingForm.time === t ? "1.5px solid var(--forest)" : "1px solid var(--border, #ddd)",
-                                        background: bookingForm.time === t ? "var(--forest)" : "#fff",
-                                        color: bookingForm.time === t ? "#fff" : "var(--dark-text)",
-                                        borderRadius: 10,
-                                        cursor: "pointer",
-                                      }}
-                                    >
-                                      {formatTimeLabel(t)}
-                                    </button>
-                                  ))}
-                                </div>
-                              )}
-                            </div>
-                          )}
+                          <div className="input-group">
+                            <label>Available times</label>
+                            {loadingSlots ? (
+                              <p style={{ fontSize: 12, color: "var(--muted)" }}>Checking live availability...</p>
+                            ) : !providerHours.length ? (
+                              <p style={{ fontSize: 12, color: "var(--muted)" }}>This provider hasn't set their working hours yet — try again later or send a note with your preferred time.</p>
+                            ) : availableSlots.length === 0 ? (
+                              <p style={{ fontSize: 12, color: "var(--clay)" }}>No open slots on this date. Please choose another day.</p>
+                            ) : (
+                              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(92px, 1fr))", gap: 9, maxHeight: 220, overflowY: "auto", paddingTop: 4 }}>
+                                {availableSlots.map((t) => (
+                                  <button
+                                    type="button"
+                                    key={t}
+                                    onClick={() => setBookingForm(f => ({ ...f, time: t }))}
+                                    className="btn-sm"
+                                    style={{
+                                      padding: "11px 4px",
+                                      fontSize: 13,
+                                      fontWeight: 700,
+                                      border: bookingForm.time === t ? "1.5px solid var(--forest)" : "1px solid var(--border, #ddd)",
+                                      background: bookingForm.time === t ? "var(--forest)" : "#fff",
+                                      color: bookingForm.time === t ? "#fff" : "var(--dark-text)",
+                                      borderRadius: 10,
+                                      cursor: "pointer",
+                                    }}
+                                  >
+                                    {formatTimeLabel(t)}
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+                          </div>
                           <div className="input-group"><label>Notes (optional)</label><textarea placeholder="Anything the provider should know?" value={bookingForm.notes} onChange={e => setBookingForm(f => ({ ...f, notes: e.target.value }))} style={{ minHeight: 60 }} /></div>
 
-                          {!bookingForm.isVip && selectedProvider.downpayment_required && (
+                          {selectedProvider.downpayment_required && (
                             <p style={{ fontSize: 12, color: "var(--clay)", marginBottom: 12 }}>This provider requires a {selectedProvider.downpayment_pct || 50}% deposit after they accept your booking.</p>
                           )}
 
@@ -4998,7 +4848,7 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
                           <button
                             className="btn-sm forest"
                             style={{ width: "100%", padding: "15px 0", fontSize: 15, borderRadius: 12, marginTop: 4 }}
-                            disabled={submittingBooking || sendingBookingOtp || (bookingForm.isVip && !bookingForm.time)}
+                            disabled={submittingBooking || sendingBookingOtp}
                             onClick={async () => {
                               if (user?.id) { submitBooking(); return; }
                               const guestName = guestCheckoutForm.name.trim();
@@ -5013,7 +4863,7 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
                               setShowEmailAuthModal(true);
                             }}
                           >
-                            {submittingBooking ? "Sending request..." : sendingBookingOtp ? "Sending code..." : user?.id ? (bookingForm.isVip ? "Send VIP request" : "Request booking") : "Continue"}
+                            {submittingBooking ? "Sending request..." : sendingBookingOtp ? "Sending code..." : user?.id ? "Request booking" : "Continue"}
                           </button>
                           <p className="checkout-liability-note">
                             VaiBook is a scheduling platform. All payments and deposits are direct transactions between the client and the business. Vai Technologies is not liable for disputes.
@@ -5041,15 +4891,6 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
                           <p style={{ fontSize: 13, color: "var(--muted)" }}>This provider hasn't listed any services yet.</p>
                         ) : (
                           <div>
-                            {isProviderVipEligible(selectedProvider) && (
-                              <div style={{ background: "var(--lime)", borderRadius: 8, padding: "12px 14px", marginBottom: 14, fontSize: 13 }}>
-                                {isVipMember ? (
-                                  <>⚡ <strong>VIP appointments available</strong> — {selectedProvider.business_name} will take requests outside normal hours for a BZ${selectedProvider.vip_surcharge} add-on. Tap "VIP request" on any service below.</>
-                                ) : (
-                                  <>⚡ {selectedProvider.business_name} accepts VIP off-hours requests. <span style={{ fontWeight: 700 }}>Become a VaiBook VIP member</span> (see Settings) to unlock this.</>
-                                )}
-                              </div>
-                            )}
                             <p style={{ fontSize: 12, color: "var(--muted)", margin: "0 0 4px" }}>Tap a service to add it — booking more than one? Add them all, then pick one time for the whole visit.</p>
                             {(selectedProvider.services || []).filter(s => s.is_active !== false).map(s => {
                               const active = selectedServiceIds.includes(s.id);
@@ -5071,9 +4912,6 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
                                     >
                                       {copiedServiceId === s.id ? "Link copied" : "📤 Share"}
                                     </button>
-                                    {isProviderVipEligible(selectedProvider) && isVipMember && (
-                                      <button className="btn-sm ghost" onClick={() => startVipBookingForService(s)}>⚡ VIP request</button>
-                                    )}
                                     <button className="btn-sm forest" onClick={() => startBookingForService(s)}>Book</button>
                                   </div>
                                 </div>
@@ -5446,12 +5284,6 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
   const [loyaltyCustomers, setLoyaltyCustomers] = useState([]);
   const [loadingLoyaltyCustomers, setLoadingLoyaltyCustomers] = useState(false);
 
-  // VIP appointments (Pro/Business) — a single flat add-on price the
-  // provider charges on top of whatever service a VIP member books,
-  // for a time outside their normal working hours. A blank/zero value
-  // means the provider hasn't opted in.
-  const [vipSurchargeForm, setVipSurchargeForm] = useState("");
-  const [savingVipSurcharge, setSavingVipSurcharge] = useState(false);
   const [redeemingId, setRedeemingId] = useState(null);
   const [savingProfile, setSavingProfile] = useState(false);
   const [photos, setPhotos] = useState([]);
@@ -5917,8 +5749,8 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
   const [editingStaffEmailId, setEditingStaffEmailId] = useState(null);
   const [editStaffEmailValue, setEditStaffEmailValue] = useState("");
   const isBusinessPlan = (providerProfile?.plan || "starter") === "business";
-  // Loyalty & rewards and VIP appointments are both Pro-and-above (staff
-  // seats and featured placement stay Business-only).
+  // Loyalty & rewards is Pro-and-above (staff seats and featured placement
+  // stay Business-only).
   const isProOrAbove = (providerProfile?.plan || "starter") !== "starter";
 
   const loadStaff = async () => {
@@ -6024,7 +5856,6 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
         threshold: providerProfile.loyalty_reward_threshold ?? 100,
         description: providerProfile.loyalty_reward_description || "",
       });
-      setVipSurchargeForm(providerProfile.vip_surcharge != null ? String(providerProfile.vip_surcharge) : "");
       setPhotos(providerProfile.portfolio_urls || []);
       setServices(providerProfile.services || []);
       if (providerProfile.latitude != null && providerProfile.longitude != null) {
@@ -6410,25 +6241,6 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
       onProviderProfileUpdate && onProviderProfileUpdate(updated);
     }
     setSavingLoyalty(false);
-  };
-
-  // A blank or zero input turns VIP appointments back off (stored as null,
-  // same "absence means not offering it" convention as vip_surcharge
-  // elsewhere) rather than needing a separate toggle.
-  const saveVipSurcharge = async () => {
-    if (!providerId) return;
-    setSavingVipSurcharge(true);
-    const amount = Number(vipSurchargeForm) || 0;
-    const updated = await upsertProviderProfile({
-      id: providerProfile.id,
-      user_id: providerProfile.user_id,
-      vip_surcharge: amount > 0 ? amount : null,
-    });
-    if (updated) {
-      setVipSurchargeForm(updated.vip_surcharge != null ? String(updated.vip_surcharge) : "");
-      onProviderProfileUpdate && onProviderProfileUpdate(updated);
-    }
-    setSavingVipSurcharge(false);
   };
 
   const loadLoyaltyCustomers = async () => {
@@ -7297,9 +7109,6 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                     <div className="booking-info">
                       <div className="title">
                         {b.services?.name || "Service"}
-                        {b.is_vip && (
-                          <span style={{ marginLeft: 8, fontSize: 11, fontWeight: 700, color: "var(--forest)", background: "var(--lime)", padding: "2px 7px", borderRadius: 5, verticalAlign: "middle" }}>⚡ VIP</span>
-                        )}
                         {b.created_by_provider && (
                           <span style={{ marginLeft: 8, fontSize: 11, fontWeight: 600, color: "var(--forest)", background: "var(--sand)", padding: "2px 7px", borderRadius: 5, verticalAlign: "middle" }}>Walk-in</span>
                         )}
@@ -8206,28 +8015,6 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
             </div>
 
             <div className="card" style={{ maxWidth: 560, marginTop: 20 }}>
-              <div className="card-title">VIP appointments</div>
-              {isProOrAbove ? (
-                <>
-                  <p style={{ fontSize: 13, color: "var(--muted)", marginBottom: 12 }}>
-                    VaiBook's VIP membership lets customers request an appointment with you outside your normal working hours — for a last-minute cut, an after-hours visit, whatever you're willing to take. Set one flat add-on price below and it's added on top of whatever service they book. Leave it blank to not offer this. You still see every VIP request as a normal booking request and can decline it like any other.
-                  </p>
-                  <div className="input-group">
-                    <label>VIP add-on price (BZ$, on top of the service price)</label>
-                    <input type="number" min="0" step="1" placeholder="e.g. 50" value={vipSurchargeForm} onChange={e => setVipSurchargeForm(e.target.value)} />
-                  </div>
-                  <button className="btn-sm forest" onClick={saveVipSurcharge} disabled={savingVipSurcharge}>
-                    {savingVipSurcharge ? "Saving..." : Number(vipSurchargeForm) > 0 ? "Save VIP price" : "Save (VIP off)"}
-                  </button>
-                </>
-              ) : (
-                <p style={{ fontSize: 13, color: "var(--muted)" }}>
-                  Pro and Business plan providers can accept VIP members' after-hours requests, at a price you set. <a href="#" onClick={(e) => { e.preventDefault(); setTab("billing"); }}>View plans</a>.
-                </p>
-              )}
-            </div>
-
-            <div className="card" style={{ maxWidth: 560, marginTop: 20 }}>
               <div className="card-title">Photos</div>
               <p style={{ color: "var(--muted)", fontSize: 13, marginTop: -8, marginBottom: 16 }}>Show off your work. Customers see these on your public profile.</p>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginBottom: 16 }}>
@@ -8915,16 +8702,6 @@ const PLANS = [
 // This list only controls what a NEW visitor is offered.
 const PUBLIC_PLANS = PLANS.filter((p) => p.id !== "starter");
 
-// VaiBook VIP — a customer-facing membership (separate from the provider
-// plans above): once active, a customer can request an appointment outside
-// a Pro/Business provider's normal hours, at that provider's own VIP price
-// (set under their "VIP appointments" profile card). Billed the same
-// hands-off way as provider plans — bank transfer + receipt, admin
-// confirms, 30 days of VIP status per confirmed payment.
-// PRICE NOT FINALIZED — change VIP_MEMBERSHIP.monthly here once decided;
-// every place that shows the price (Settings, admin) reads from this one
-// constant.
-const VIP_MEMBERSHIP = { monthly: 25, label: "VaiBook VIP" };
 
 const DISTRICTS = ["Belize City", "Cayo", "Corozal", "Orange Walk", "Stann Creek", "Toledo"];
 const SERVICE_TYPES = ["Barber", "Hair Salon", "Nail Tech", "Spa", "Med Spa / Clinic", "Massage", "Skincare Studio", "Hair Removal Studio", "Tattoo & Piercing Studio", "Wellness Center", "Pet Grooming", "Fitness & Recovery", "Physical Therapy", "Photography", "Other"];
@@ -9294,10 +9071,6 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
   const [loadingPayments, setLoadingPayments] = useState(false);
   const [reviewingPaymentId, setReviewingPaymentId] = useState(null);
 
-  const [vipPayments, setVipPayments] = useState([]);
-  const [loadingVipPayments, setLoadingVipPayments] = useState(false);
-  const [reviewingVipPaymentId, setReviewingVipPaymentId] = useState(null);
-
   const [refunds, setRefunds] = useState([]);
   const [loadingRefunds, setLoadingRefunds] = useState(false);
 
@@ -9428,35 +9201,6 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
     }
   };
 
-  const loadVipPayments = async () => {
-    setLoadingVipPayments(true);
-    const data = await adminListVipPayments();
-    setVipPayments(data);
-    setLoadingVipPayments(false);
-  };
-
-  const reviewVipPayment = async (payment, status) => {
-    const paymentId = payment.id || payment;
-    const label = payment.customer_name || payment.customer_email || "this customer";
-    if (status === "confirmed" && !window.confirm(`Confirm this VIP payment from ${label}? Their VIP membership activates (or extends 30 days) immediately.`)) return;
-
-    let note = null;
-    if (status === "rejected") {
-      note = window.prompt(`Why is this payment being rejected? ${label} will see this note.`, "");
-      if (note === null) return;   // cancelled the prompt
-      note = note.trim() || null;
-    }
-
-    setReviewingVipPaymentId(paymentId);
-    const ok = await adminReviewVipPayment(paymentId, status, note);
-    setReviewingVipPaymentId(null);
-    if (ok) {
-      await loadVipPayments();
-    } else {
-      window.alert("That didn't save. Please try again.");
-    }
-  };
-
   const loadRefunds = async () => {
     setLoadingRefunds(true);
     const data = await adminListBookingRefunds();
@@ -9465,7 +9209,7 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
   };
 
   useEffect(() => {
-    if (isAdmin) { loadApps(); loadProviders(); loadPayments(); loadVipPayments(); loadRefunds(); loadMaintenance(); loadSiteOffline(); }
+    if (isAdmin) { loadApps(); loadProviders(); loadPayments(); loadRefunds(); loadMaintenance(); loadSiteOffline(); }
   }, [isAdmin]);
 
   const toggleMaintenance = async () => {
@@ -9657,10 +9401,10 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
   return (
     <div className="portal-layout">
       {/* The persistent left sidebar was removed — every link and live badge
-          count it held (Pending/Active/Rejected, Providers, Payments, VIP
-          Memberships, Refunds, Emergency, Sign out) now lives exclusively in
-          the top header's avatar dropdown (PORTAL_TOOLS_BY_VIEW.admin) plus
-          the Command Center's quick-jump status strip below, so nothing here
+          count it held (Pending/Active/Rejected, Providers, Payments,
+          Refunds, Emergency, Sign out) now lives exclusively in the top
+          header's avatar dropdown (PORTAL_TOOLS_BY_VIEW.admin) plus the
+          Command Center's quick-jump status strip below, so nothing here
           was left unreachable or invisible. */}
       <main className="portal-content">
         {tab === "overview" && (
@@ -9679,7 +9423,6 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
             onDeny={(id) => act(id, "rejected")}
             onManage={() => setTab("providers")}
             paymentsPending={payments.filter((p) => p.status === "pending").length}
-            vipPending={vipPayments.filter((p) => p.status === "pending").length}
             refundsCount={refunds.length}
             emergencyLabel={siteOffline.on ? "Offline" : maintenance.on ? "Paused" : null}
             onJump={setTab}
@@ -9904,52 +9647,6 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
                         <div style={{ display: "flex", gap: 8 }}>
                           <button className="btn-sm lime" disabled={reviewingPaymentId === pmt.id} onClick={() => reviewPayment(pmt, "confirmed")}>Confirm</button>
                           <button className="btn-sm" style={{ background: "transparent", border: "1px solid var(--muted)", color: "var(--muted)" }} disabled={reviewingPaymentId === pmt.id} onClick={() => reviewPayment(pmt, "rejected")}>Reject</button>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </>
-          );
-        })()}
-
-        {tab === "vip" && (() => {
-          const statusColor = { pending: "#B45309", confirmed: "var(--forest)", rejected: "#B91C1C" };
-          const statusBg = { pending: "#FEF3C7", confirmed: "#E7F5EC", rejected: "#FEE2E2" };
-          return (
-            <>
-              <div className="portal-header">
-                <h2>VIP memberships</h2>
-                <p>Customer VaiBook VIP membership receipts — confirm the ones that check out. Confirming activates (or extends 30 days from whichever is later) their VIP status immediately.</p>
-              </div>
-              <div className="card">
-                <div className="card-title" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <span>All submissions</span>
-                  <button className="btn-sm forest" onClick={loadVipPayments} disabled={loadingVipPayments}>{loadingVipPayments ? "Refreshing..." : "Refresh"}</button>
-                </div>
-                {vipPayments.length === 0 && (
-                  <p style={{ fontSize: 13, color: "var(--muted)", padding: "16px 0" }}>{loadingVipPayments ? "Loading..." : "No VIP payments submitted yet."}</p>
-                )}
-                {vipPayments.map((pmt) => (
-                  <div key={pmt.id} className="booking-item" style={{ alignItems: "flex-start" }}>
-                    <div className="booking-info" style={{ flex: 1 }}>
-                      <div className="title">{pmt.customer_name || "Customer"} <span style={{ fontWeight: 500, color: "var(--muted)", fontSize: 12 }}>— {pmt.customer_email}</span></div>
-                      <div className="meta">{pmt.period_label} · BZ${pmt.amount}</div>
-                      <div className="meta" style={{ fontSize: 11 }}>Submitted {new Date(pmt.submitted_at).toLocaleDateString()}</div>
-                      {pmt.receipt_url && <a href="#" onClick={(e) => { e.preventDefault(); openPrivateFile(pmt.receipt_url); }} style={{ fontSize: 12 }}>View receipt</a>}
-                      {pmt.reviewed_at && (
-                        <div className="meta" style={{ fontSize: 11, marginTop: 4 }}>Reviewed {new Date(pmt.reviewed_at).toLocaleDateString()} by {pmt.reviewed_by}</div>
-                      )}
-                    </div>
-                    <div style={{ display: "flex", flexDirection: "column", gap: 8, alignItems: "flex-end", flexShrink: 0 }}>
-                      <span style={{ fontSize: 12, fontWeight: 600, color: statusColor[pmt.status] || "var(--muted)", background: statusBg[pmt.status] || "var(--sand)", padding: "3px 8px", borderRadius: 6, whiteSpace: "nowrap" }}>
-                        {pmt.status.charAt(0).toUpperCase() + pmt.status.slice(1)}
-                      </span>
-                      {pmt.status === "pending" && (
-                        <div style={{ display: "flex", gap: 8 }}>
-                          <button className="btn-sm lime" disabled={reviewingVipPaymentId === pmt.id} onClick={() => reviewVipPayment(pmt, "confirmed")}>Confirm</button>
-                          <button className="btn-sm" style={{ background: "transparent", border: "1px solid var(--muted)", color: "var(--muted)" }} disabled={reviewingVipPaymentId === pmt.id} onClick={() => reviewVipPayment(pmt, "rejected")}>Reject</button>
                         </div>
                       )}
                     </div>
