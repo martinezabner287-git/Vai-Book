@@ -709,44 +709,60 @@ const css = `
   .search-bar input { border: none; outline: none; font-size: 15px; flex: 1; font-family: 'Plus Jakarta Sans', sans-serif; color: var(--dark-text); background: transparent; }
   .search-bar .search-icon { color: var(--muted); font-size: 18px; }
 
-  /* CUSTOMER DASHBOARD — "Zero Friction / Anti-AI" redesign. Dark,
-     high-contrast, one job per screen: what's next, who to rebook, where
-     to look next. No white metric cards, no boxed-shadow form fields. */
+  /* CUSTOMER DASHBOARD — "addictive premium consumer app" redesign (v2).
+     Dark, tight, native-app feel: a digital-ticket VIP Pass, one-tap
+     Rebook rows, glass/neon discovery pills. No metric cards, no boxed
+     pastel tiles. */
 
-  /* Next Appointment hero — the single biggest thing on the page. */
-  .cx-hero { position: relative; overflow: hidden; background: linear-gradient(160deg, var(--forest) 0%, #081F17 100%); border-radius: 22px; padding: 34px 30px; margin-bottom: 24px; box-shadow: 0 20px 50px rgba(8,31,23,0.3); }
+  /* VIP PASS — the next appointment as a digital ticket/boarding pass. */
+  .cx-hero { position: relative; overflow: hidden; background: linear-gradient(160deg, var(--forest) 0%, #081F17 100%); border-radius: 22px; padding: 30px 28px; margin-bottom: 24px; box-shadow: 0 20px 50px rgba(8,31,23,0.3); }
   .cx-hero::after { content: ''; position: absolute; top: -60px; right: -60px; width: 220px; height: 220px; background: radial-gradient(circle, rgba(198,241,53,0.16) 0%, rgba(198,241,53,0) 70%); pointer-events: none; }
   .cx-hero-eyebrow { font-size: 11.5px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--lime); margin-bottom: 10px; }
-  .cx-hero-service { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 28px; font-weight: 800; color: #FFFFFF; line-height: 1.15; }
-  .cx-hero-provider { font-size: 15px; color: rgba(245,239,224,0.75); margin-top: 4px; }
-  .cx-hero-countdown { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 52px; font-weight: 800; color: var(--lime); letter-spacing: -0.02em; margin-top: 18px; text-shadow: 0 0 30px rgba(198,241,53,0.45); }
-  .cx-hero-when { font-size: 13px; color: rgba(245,239,224,0.6); margin-top: 4px; }
-  .cx-hero-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 24px; }
+  .cx-hero-service { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 26px; font-weight: 800; color: #FFFFFF; line-height: 1.15; }
+  .cx-hero-provider { font-size: 14.5px; color: rgba(245,239,224,0.75); margin-top: 4px; }
+  .cx-hero-countdown { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 48px; font-weight: 800; color: var(--lime); letter-spacing: -0.02em; margin-top: 16px; text-shadow: 0 0 30px rgba(198,241,53,0.45); }
+  .cx-hero-when { font-size: 12.5px; color: rgba(245,239,224,0.6); margin-top: 4px; }
+  /* The perforated tear line — a dashed rule stretched to the card's true
+     edge (negative-margined out to cancel the card's own padding), with
+     two circles punched at each end. Because .cx-hero clips overflow,
+     each circle gets sliced to a clean semicircle exactly at the card's
+     rounded edge — the classic ticket-stub notch, done in pure CSS. */
+  .cx-hero-divider { position: relative; border-top: 2px dashed rgba(255,255,255,0.18); margin: 20px -28px 0; }
+  .cx-hero-divider::before, .cx-hero-divider::after { content: ''; position: absolute; top: -14px; width: 28px; height: 28px; border-radius: 50%; background: #F0F4F2; }
+  .cx-hero-divider::before { left: -14px; }
+  .cx-hero-divider::after { right: -14px; }
+  .cx-hero-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 22px; }
   .cx-btn-neon { display: inline-flex; align-items: center; gap: 6px; background: var(--lime); color: var(--forest); font-weight: 800; font-size: 14px; padding: 13px 22px; border-radius: 100px; border: none; cursor: pointer; text-decoration: none; box-shadow: 0 0 0 rgba(198,241,53,0.5); transition: box-shadow .2s, transform .15s; }
   .cx-btn-neon:hover { box-shadow: 0 0 24px rgba(198,241,53,0.55); transform: translateY(-1px); }
-  .cx-btn-ghost { background: transparent; color: #FFFFFF; font-weight: 700; font-size: 13.5px; padding: 12px 20px; border-radius: 100px; border: 1.5px solid rgba(255,255,255,0.28); cursor: pointer; transition: border-color .2s, background .2s; }
+  .cx-btn-ghost { display: inline-flex; align-items: center; gap: 6px; background: transparent; color: #FFFFFF; font-weight: 700; font-size: 13.5px; padding: 12px 18px; border-radius: 100px; border: 1.5px solid rgba(255,255,255,0.28); cursor: pointer; text-decoration: none; transition: border-color .2s, background .2s; }
   .cx-btn-ghost:hover { border-color: rgba(255,255,255,0.55); background: rgba(255,255,255,0.06); }
+  /* Purely decorative ticket-stub texture — not a scannable/real barcode,
+     just the visual cue that sells "this is a pass," like an airline's
+     boarding-pass footer. */
+  .cx-hero-barcode { height: 20px; margin-top: 18px; border-radius: 2px; opacity: .3; background: repeating-linear-gradient(90deg, rgba(255,255,255,0.9) 0 2px, transparent 2px 6px); }
 
-  /* Quick Rebook — large photo cards, one tap back into booking. */
+  /* BOOK AGAIN — sleek horizontal rows, one tap to rebook. */
   .cx-section-heading { font-size: 13px; font-weight: 800; letter-spacing: .04em; color: var(--forest); margin-bottom: 14px; }
   .cx-rebook { margin-bottom: 28px; }
-  .cx-rebook-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 14px; }
-  .cx-rebook-card { background: #0E241B; border-radius: 16px; overflow: hidden; cursor: pointer; transition: transform .15s, box-shadow .2s; }
-  .cx-rebook-card:hover { transform: translateY(-3px); box-shadow: 0 14px 30px rgba(13,61,46,0.25); }
-  .cx-rebook-card-img { height: 110px; background: linear-gradient(160deg, #1E6B50 0%, #0E241B 100%); display: flex; align-items: center; justify-content: center; font-size: 32px; }
-  .cx-rebook-card-body { padding: 14px; }
-  .cx-rebook-card-name { font-size: 14px; font-weight: 700; color: #FFFFFF; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .cx-rebook-card-type { font-size: 11.5px; color: rgba(245,239,224,0.55); margin-top: 2px; margin-bottom: 10px; }
-  .cx-rebook-card-btn { width: 100%; background: var(--lime); color: var(--forest); font-weight: 800; font-size: 12.5px; padding: 9px 0; border-radius: 8px; border: none; cursor: pointer; }
+  .cx-rebook-list { display: flex; flex-direction: column; gap: 10px; }
+  .cx-rebook-row { display: flex; align-items: center; gap: 14px; background: #0E241B; border-radius: 16px; padding: 10px 12px 10px 10px; cursor: pointer; transition: transform .12s, box-shadow .2s; }
+  .cx-rebook-row:hover { transform: translateY(-2px); box-shadow: 0 12px 26px rgba(13,61,46,0.22); }
+  .cx-rebook-thumb { flex-shrink: 0; width: 54px; height: 54px; border-radius: 12px; background: linear-gradient(160deg, #1E6B50 0%, #0E241B 100%); display: flex; align-items: center; justify-content: center; font-size: 24px; }
+  .cx-rebook-info { flex: 1; min-width: 0; }
+  .cx-rebook-name { font-size: 14.5px; font-weight: 700; color: #FFFFFF; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .cx-rebook-type { font-size: 12px; color: rgba(245,239,224,0.55); margin-top: 2px; }
+  .cx-rebook-btn { flex-shrink: 0; background: var(--lime); color: var(--forest); font-weight: 800; font-size: 13px; padding: 10px 18px; border-radius: 100px; border: none; cursor: pointer; box-shadow: 0 0 0 rgba(198,241,53,0.5); transition: box-shadow .2s; }
+  .cx-rebook-btn:hover { box-shadow: 0 0 18px rgba(198,241,53,0.5); }
 
-  /* Search / Discover — dark premium pills, no boxed shadows. */
+  /* SLEEK DISCOVERY — frosted glass at rest, neon on hover/focus. */
   .cx-discover { margin-bottom: 8px; }
-  .cx-discover-search { position: relative; background: #0E241B; border-radius: 100px; padding: 15px 22px; display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+  .cx-discover-search { position: relative; background: rgba(14,36,27,0.94); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); box-shadow: inset 0 1px 0 rgba(255,255,255,0.06); border-radius: 100px; padding: 15px 22px; display: flex; align-items: center; gap: 12px; margin-bottom: 14px; transition: border-color .2s; }
+  .cx-discover-search:focus-within { border-color: rgba(198,241,53,0.5); }
   .cx-discover-search input { border: none; outline: none; font-size: 14.5px; flex: 1; font-family: 'Plus Jakarta Sans', sans-serif; color: #FFFFFF; background: transparent; }
   .cx-discover-search input::placeholder { color: rgba(245,239,224,0.45); }
   .cx-discover-search .search-icon { color: rgba(245,239,224,0.55); font-size: 17px; }
   .cx-discover-pills { display: flex; gap: 10px; flex-wrap: wrap; }
-  .cx-discover-pill { display: inline-flex; align-items: center; gap: 7px; background: #0E241B; color: rgba(245,239,224,0.85); font-weight: 600; font-size: 13px; padding: 10px 18px; border-radius: 100px; border: 1px solid rgba(255,255,255,0.08); cursor: pointer; transition: border-color .2s, color .2s, box-shadow .2s; }
+  .cx-discover-pill { display: inline-flex; align-items: center; gap: 7px; background: rgba(14,36,27,0.94); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); box-shadow: inset 0 1px 0 rgba(255,255,255,0.06); color: rgba(245,239,224,0.85); font-weight: 600; font-size: 13px; padding: 10px 18px; border-radius: 100px; border: 1px solid rgba(255,255,255,0.1); cursor: pointer; transition: border-color .2s, color .2s, box-shadow .2s; }
   .cx-discover-pill:hover { border-color: var(--lime); color: var(--lime); box-shadow: 0 0 16px rgba(198,241,53,0.25); }
 
   /* PROVIDER GRID */
@@ -952,18 +968,17 @@ const css = `
     .reviews-grid { grid-template-columns: 1fr; }
 
     /* Customer dashboard — 95% of bookings happen from a phone, so this
-       is the layout that actually matters most. Rebook cards become a
-       snap-scrolling horizontal row (native app feel) instead of wrapping
-       into a cramped grid; the hero shrinks its type scale to fit without
-       needing to scroll to see the countdown + action buttons together. */
-    .cx-hero { padding: 26px 22px; border-radius: 18px; }
-    .cx-hero-service { font-size: 22px; }
-    .cx-hero-countdown { font-size: 40px; margin-top: 14px; }
-    .cx-hero-actions { margin-top: 20px; }
-    .cx-btn-neon, .cx-btn-ghost { flex: 1; justify-content: center; text-align: center; }
-    .cx-rebook-row { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; gap: 12px; margin: 0 -20px; padding: 0 20px 4px; }
-    .cx-rebook-row::-webkit-scrollbar { display: none; }
-    .cx-rebook-card { flex: 0 0 148px; scroll-snap-align: start; }
+       is the layout that actually matters most: tight padding, native-app
+       tap targets, no horizontal overflow. Rebook rows are already
+       full-width and stack fine as-is; only the ticket notches/divider
+       and discovery pills need their own tuned spacing at this width. */
+    .cx-hero { padding: 24px 20px; border-radius: 18px; }
+    .cx-hero-service { font-size: 21px; }
+    .cx-hero-countdown { font-size: 38px; margin-top: 12px; }
+    .cx-hero-divider { margin: 18px -20px 0; }
+    .cx-hero-actions { margin-top: 20px; gap: 8px; }
+    .cx-btn-neon, .cx-btn-ghost { font-size: 13px; padding: 11px 16px; }
+    .cx-rebook-thumb { width: 46px; height: 46px; border-radius: 10px; font-size: 20px; }
     .cx-discover-search { padding: 13px 18px; }
     .cx-discover-pills { flex-wrap: nowrap; overflow-x: auto; margin: 0 -20px; padding: 0 20px 4px; }
     .cx-discover-pills::-webkit-scrollbar { display: none; }
@@ -4113,7 +4128,7 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
   const totalSpent = completedBookings.reduce((sum, b) => sum + (Number(b.total_amount) || 0), 0);
   const reviewedBookings = bookings.filter((b) => b.reviews && b.reviews.length > 0);
 
-  // ── Dashboard redesign: "Next Appointment" hero ──────────────────────
+  // ── Dashboard redesign: "VIP Pass" next-appointment ticket ────────────
   // Earliest upcoming by actual date/time, not just first-in-list — the
   // `bookings` query orders newest-booked-first, which isn't the same as
   // "what's happening soonest."
@@ -4123,6 +4138,12 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
   const nextAppointmentAt = nextAppointment ? bookingDateTime(nextAppointment.booking_date, nextAppointment.booking_time) : null;
   const nextAppointmentProvider = nextAppointment?.provider_profiles;
   const nextAppointmentHasMap = nextAppointmentProvider?.latitude != null && nextAppointmentProvider?.longitude != null;
+  // "Check In" — a real action (opens WhatsApp with a pre-filled arrival
+  // message to the provider), not a cosmetic button that does nothing.
+  // Only appears when the provider actually has a WhatsApp number on file.
+  const nextAppointmentCheckInUrl = nextAppointmentProvider?.whatsapp
+    ? `https://wa.me/${nextAppointmentProvider.whatsapp.replace(/[^\d]/g, "")}?text=${encodeURIComponent(`Hi! I'm checking in for my ${nextAppointment.services?.name || "appointment"} at ${formatBookingTime(nextAppointment.booking_time)}.`)}`
+    : null;
 
   // ── Dashboard redesign: "Quick Rebook" ────────────────────────────────
   // Most recently visited providers, deduped, in booking-history order
@@ -4175,17 +4196,20 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
       <main className="portal-content">
         {tab === "home" && (
           <>
-            {/* NEXT APPOINTMENT — replaces the generic greeting + 4 metric
-                cards. This is the one thing a customer actually opens the
-                app to check, so it's the biggest, first thing they see. */}
+            {/* VIP PASS — replaces the generic greeting + 4 metric cards.
+                Styled like a digital ticket/boarding pass: header info,
+                a perforated tear line, then actions below it. This is the
+                one thing a customer actually opens the app to check, so
+                it's the biggest, first thing they see. */}
             <div className="cx-hero">
               {nextAppointment ? (
                 <>
-                  <div className="cx-hero-eyebrow">Your next appointment</div>
+                  <div className="cx-hero-eyebrow">🎟️ Your VIP Pass</div>
                   <div className="cx-hero-service">{nextAppointment.services?.name || "Appointment"}</div>
                   <div className="cx-hero-provider">{nextAppointmentProvider?.business_name || "Provider"}</div>
                   <div className="cx-hero-countdown">{formatCountdown(nextAppointmentAt, nowTick)}</div>
                   <div className="cx-hero-when">{formatBookingWhen(nextAppointment)}</div>
+                  <div className="cx-hero-divider" />
                   <div className="cx-hero-actions">
                     {nextAppointmentHasMap && (
                       <a
@@ -4197,10 +4221,16 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
                         📍 Get Directions
                       </a>
                     )}
+                    {nextAppointmentCheckInUrl && (
+                      <a className="cx-btn-ghost" href={nextAppointmentCheckInUrl} target="_blank" rel="noopener noreferrer">
+                        ✅ Check In
+                      </a>
+                    )}
                     <button className="cx-btn-ghost" onClick={() => setTab("bookings")}>
                       {upcomingBookings.length > 1 ? `View all (${upcomingBookings.length})` : "View details"}
                     </button>
                   </div>
+                  <div className="cx-hero-barcode" />
                 </>
               ) : (
                 <>
@@ -4213,25 +4243,26 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
               )}
             </div>
 
-            {/* QUICK REBOOK — large photo cards of recently visited shops,
-                one tap straight into the booking flow for that provider. */}
+            {/* BOOK AGAIN — sleek horizontal rows for recently visited
+                shops, one tap straight into the booking flow. No detour
+                through the full provider profile. */}
             {rebookProviders.length > 0 && (
               <div className="cx-rebook">
-                <div className="cx-section-heading">Quick Rebook</div>
-                <div className="cx-rebook-row">
+                <div className="cx-section-heading">Book Again</div>
+                <div className="cx-rebook-list">
                   {rebookProviders.slice(0, 4).map((p) => (
-                    <div className="cx-rebook-card" key={p.id} onClick={() => openBooking(p)}>
+                    <div className="cx-rebook-row" key={p.id} onClick={() => openBooking(p)}>
                       <div
-                        className="cx-rebook-card-img"
+                        className="cx-rebook-thumb"
                         style={p.portfolio_urls && p.portfolio_urls.length > 0 ? { background: `center/cover no-repeat url(${p.portfolio_urls[0]})` } : undefined}
                       >
                         {(!p.portfolio_urls || p.portfolio_urls.length === 0) && <span>{iconForServiceType(p.service_type)}</span>}
                       </div>
-                      <div className="cx-rebook-card-body">
-                        <div className="cx-rebook-card-name">{p.business_name}</div>
-                        <div className="cx-rebook-card-type">{p.service_type}</div>
-                        <button className="cx-rebook-card-btn" onClick={(e) => { e.stopPropagation(); openBooking(p); }}>Book Again</button>
+                      <div className="cx-rebook-info">
+                        <div className="cx-rebook-name">{p.business_name}</div>
+                        <div className="cx-rebook-type">{p.service_type}</div>
                       </div>
+                      <button className="cx-rebook-btn" onClick={(e) => { e.stopPropagation(); openBooking(p); }}>Rebook</button>
                     </div>
                   ))}
                 </div>
