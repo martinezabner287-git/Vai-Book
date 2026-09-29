@@ -281,18 +281,17 @@ const css = `
   }
   .nav-logo { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 22px; color: var(--near-white); letter-spacing: -0.5px; }
   .nav-logo span { color: var(--lime); }
-  /* margin-left: auto — .nav has only 3 real flex children when signed in
+  /* margin-left: auto — .nav has only 2 real flex children when signed in
      (nav-search-wrap is position:absolute so it doesn't count, and
-     nav-search-toggle is display:none above the 1180px breakpoint): logo,
-     this block, and the notification bell. justify-content: space-between
-     only pins the FIRST and LAST child to the true edges — a middle child
-     floats and centers itself in whatever space is left, which is exactly
-     what put the avatar/"List your business" behind the floating compact
-     search once scrolled (it was centering, not overlapping by accident).
-     auto-margin claims all free space to this block's left instead,
-     pinning it (and the bell right after it) to the right edge as a
-     group — the same fix already applied to the portal-only avatar div
-     below, needed here too since this is a separate render branch. */
+     nav-search-toggle is display:none above the 1180px breakpoint): logo
+     and this block. justify-content: space-between only pins the FIRST
+     and LAST child to the true edges — a middle child floats and centers
+     itself in whatever space is left, which is exactly what put the
+     avatar/"List your business" behind the floating compact search once
+     scrolled (it was centering, not overlapping by accident). auto-margin
+     claims all free space to this block's left instead, pinning it to the
+     right edge — the same fix already applied to the portal-only avatar
+     div below, needed here too since this is a separate render branch. */
   .nav-cta { display: flex; align-items: center; gap: 18px; position: relative; margin-left: auto; }
 
   /* NAV STRIP (second row — category shortcuts, Vai Buy-style) */
@@ -347,11 +346,18 @@ const css = `
     .nav-search-mobile-panel { display: block; position: absolute; top: 100%; left: 0; right: 0; background: white; border-bottom: 1px solid var(--border); padding: 14px 20px 18px; box-shadow: 0 12px 24px rgba(13,61,46,0.08); }
   }
 
-  /* NOTIFICATION BELL */
-  .notif-bell-btn { position: relative; background: transparent; border: 1px solid rgba(255,255,255,0.35); width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 16px; flex-shrink: 0; }
-  .notif-bell-btn:hover { border-color: var(--lime); }
+  /* NOTIFICATIONS — the standalone bell (.notif-bell-btn) is gone; alerts
+     now surface via .nav-avatar-badge (on the avatar itself) and the
+     "Notifications" row + .notif-inline-list inside .nav-account-dropdown
+     (see notifRow in Nav()). .notif-badge stays — it's reused by the
+     per-booking message thread's own unread dot. .notif-item/.notif-title/
+     .notif-body/.notif-time/.notif-empty/.notif-dropdown-header are reused
+     as-is for the inline list; .notif-dropdown (the old floating panel)
+     is unused now but left in place, same as other retired-but-harmless
+     rules in this file. */
   .notif-badge { position: absolute; top: -4px; right: -4px; background: var(--clay); color: white; font-size: 10px; font-weight: 700; min-width: 16px; height: 16px; border-radius: 8px; display: flex; align-items: center; justify-content: center; padding: 0 3px; }
   .notif-dropdown { position: absolute; top: calc(100% + 10px); right: 0; width: 320px; max-height: 420px; overflow-y: auto; background: white; border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 16px 36px rgba(13,61,46,0.16); z-index: 150; }
+  .notif-inline-list { max-height: 280px; overflow-y: auto; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); margin: 2px 0 8px; }
   .notif-dropdown-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid var(--border); font-size: 13px; }
   .notif-dropdown-header a { color: var(--forest); font-weight: 600; cursor: pointer; font-size: 12px; }
   .notif-empty { padding: 24px 16px; font-size: 13px; color: var(--muted); text-align: center; margin: 0; }
@@ -426,9 +432,15 @@ const css = `
   .nav-avatar-circle { width: 30px; height: 30px; border-radius: 50%; background: var(--lime); color: var(--forest); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; flex-shrink: 0; }
   .profile-avatar-circle { width: 84px; height: 84px; border-radius: 50%; background: var(--lime); color: var(--forest); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 30px; }
   .nav-avatar-caret { font-size: 10px; color: rgba(250,250,247,0.7); }
+  /* Wraps just the avatar circle (not the whole nav-avatar-btn, which also
+     has the caret) so the unread badge sits pinned to the circle's own
+     top-right corner regardless of button padding/caret width. */
+  .nav-avatar-wrap { position: relative; display: inline-flex; flex-shrink: 0; }
+  .nav-avatar-badge { position: absolute; top: -3px; right: -3px; background: var(--lime); color: var(--forest); font-size: 10px; font-weight: 800; min-width: 16px; height: 16px; border-radius: 8px; display: flex; align-items: center; justify-content: center; padding: 0 3px; border: 1.5px solid var(--forest); box-shadow: 0 0 6px rgba(198,241,53,0.6); line-height: 1; }
   .nav-account-dropdown { position: absolute; top: calc(100% + 12px); right: 0; background: white; border-radius: var(--radius-sm); box-shadow: 0 16px 40px rgba(13,61,46,0.18); border: 1px solid var(--border); min-width: 250px; padding: 10px; z-index: 200; }
   .nav-account-name { padding: 10px 14px 14px; font-weight: 700; font-size: 16px; color: var(--dark-text); }
   .nav-account-dropdown button.nav-dropdown-item { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; background: none; border: none; padding: 11px 14px; border-radius: 8px; font-size: 14px; font-weight: 500; color: var(--dark-text); cursor: pointer; }
+  .nav-dropdown-badge { margin-left: auto; background: var(--lime); color: var(--forest); font-size: 11px; font-weight: 800; min-width: 18px; height: 18px; border-radius: 9px; display: flex; align-items: center; justify-content: center; padding: 0 5px; flex-shrink: 0; }
   .nav-account-dropdown button.nav-dropdown-item:hover { background: var(--sand); }
   .nav-account-dropdown button.nav-dropdown-item .icn { width: 18px; text-align: center; }
   .nav-account-dropdown button.nav-dropdown-item.for-biz { justify-content: space-between; font-weight: 600; }
@@ -449,6 +461,19 @@ const css = `
   .cx-account-dropdown button.nav-dropdown-item:hover,
   .cx-account-dropdown a:hover { background: rgba(255,255,255,0.08); }
   .cx-account-dropdown hr { border-top-color: rgba(255,255,255,0.1); }
+  /* The inline notification list (notifRow in Nav()) reuses .notif-item/
+     .notif-title/etc., which default to light-page colors — retint them
+     here the same way the rest of this dropdown is retinted above. */
+  .cx-account-dropdown .notif-inline-list,
+  .cx-account-dropdown .notif-dropdown-header,
+  .cx-account-dropdown .notif-item { border-color: rgba(255,255,255,0.1); }
+  .cx-account-dropdown .notif-dropdown-header a { color: var(--lime); }
+  .cx-account-dropdown .notif-item:hover { background: rgba(255,255,255,0.08); }
+  .cx-account-dropdown .notif-item.unread { background: rgba(198,241,53,0.08); }
+  .cx-account-dropdown .notif-title { color: #FFFFFF; }
+  .cx-account-dropdown .notif-body,
+  .cx-account-dropdown .notif-time,
+  .cx-account-dropdown .notif-empty { color: rgba(245,239,224,0.6); }
 
   /* HERO */
   .hero {
@@ -1571,7 +1596,6 @@ const css = `
     .nav-menu-btn { padding: 8px 12px 8px 14px; font-size: 13px; gap: 6px; }
     .nav-menu-btn .bars span { width: 13px; }
     .nav-avatar-btn { padding: 3px 8px 3px 3px; gap: 6px; }
-    .notif-bell-btn { width: 34px; height: 34px; font-size: 14px; }
     .nav-dropdown .mobile-only-item { display: block; }
     .nav-account-dropdown .mobile-only-item { display: flex; }
     .carousel-arrow { display: none; }
@@ -2103,8 +2127,8 @@ function VisitNotesButton({ booking }) {
 // A collapsible message thread tied to one specific booking. Works the
 // same in both portals — only `currentRole`/`recipientUserId` differ
 // depending on which side is rendering it. Polls every 15s (same pattern
-// as NotificationBell) rather than a realtime subscription, to match how
-// the rest of the app is built.
+// as the notification list in Nav()) rather than a realtime subscription,
+// to match how the rest of the app is built.
 function BookingChat({ bookingId, currentUserId, currentRole, recipientUserId }) {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState([]);
@@ -2994,10 +3018,10 @@ const NOTIF_DESTINATIONS = {
 // Site-wide banner for the admin-only emergency maintenance switch (see
 // supabase_security_hardening.sql / AdminPortal's "Emergency" tab). Polls
 // rather than subscribing, matching how the rest of the app already
-// checks for updates (e.g. NotificationBell below) — this is a rare
-// admin action, not something that needs to be instant, and the flag is
-// also enforced server-side regardless of whether this banner has caught
-// up yet.
+// checks for updates (e.g. the notification list in Nav()) — this is a
+// rare admin action, not something that needs to be instant, and the flag
+// is also enforced server-side regardless of whether this banner has
+// caught up yet.
 function MaintenanceBanner() {
   const [status, setStatus] = useState({ on: false, message: "" });
 
@@ -3157,79 +3181,10 @@ function EmailAuthModal({ email, onClose, onResend, onVerified }) {
   );
 }
 
-function NotificationBell({ userId, providerProfile, onNav }) {
-  const [notifications, setNotifications] = useState([]);
-  const [open, setOpen] = useState(false);
-
-  const load = async () => {
-    const data = await getNotifications(userId);
-    setNotifications(data || []);
-  };
-
-  useEffect(() => {
-    if (!userId) return;
-    load();
-    const interval = setInterval(load, 30000);
-    return () => clearInterval(interval);
-  }, [userId]);
-
-  const unreadCount = notifications.filter((n) => !n.read).length;
-
-  const openNotification = async (n) => {
-    if (!n.read) {
-      setNotifications((prev) => prev.map((x) => (x.id === n.id ? { ...x, read: true } : x)));
-      await markNotificationRead(n.id);
-    }
-    setOpen(false);
-
-    // "message" notifications can belong to either portal depending on who
-    // sent it — best guess without more context is: send them to whichever
-    // portal this account actually has (a dual customer+provider account
-    // is the one case this can guess wrong).
-    const dest = NOTIF_DESTINATIONS[n.type]
-      || (n.type === "message" ? { view: providerProfile ? "provider" : "customer", tab: "bookings" } : null);
-    if (!dest || !onNav) return;
-    onNav(dest.view);
-    // The target portal only starts listening for a tab switch once it has
-    // mounted — give the nav change one render cycle before dispatching.
-    setTimeout(() => setPortalTab(dest.tab), 60);
-  };
-
-  const markAllRead = async () => {
-    setNotifications((prev) => prev.map((x) => ({ ...x, read: true })));
-    await markAllNotificationsRead(userId);
-  };
-
-  if (!userId) return null;
-
-  return (
-    <div style={{ position: "relative" }}>
-      <button className="notif-bell-btn" onClick={() => setOpen((v) => !v)} aria-label="Notifications">
-        🔔
-        {unreadCount > 0 && <span className="notif-badge">{unreadCount > 9 ? "9+" : unreadCount}</span>}
-      </button>
-      {open && (
-        <div className="notif-dropdown" onMouseLeave={() => setOpen(false)}>
-          <div className="notif-dropdown-header">
-            <strong>Notifications</strong>
-            {unreadCount > 0 && <a onClick={markAllRead}>Mark all read</a>}
-          </div>
-          {notifications.length === 0 ? (
-            <p className="notif-empty">No notifications yet.</p>
-          ) : (
-            notifications.map((n) => (
-              <div key={n.id} className={`notif-item ${n.read ? "" : "unread"}`} onClick={() => openNotification(n)}>
-                <div className="notif-title">{n.title}</div>
-                {n.body && <div className="notif-body">{n.body}</div>}
-                <div className="notif-time">{timeAgo(n.created_at)}</div>
-              </div>
-            ))
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
+// NotificationBell (the standalone bell icon that used to sit at the far
+// right of the nav) was retired in favor of folding alerts into the avatar
+// dropdown — see the notifications state/handlers inside Nav() below, and
+// the .nav-avatar-badge / "Notifications" dropdown row it renders.
 
 const PORTAL_TOOLS_BY_VIEW = {
   customer: [
@@ -3275,7 +3230,88 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
   const [menuOpen, setMenuOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
   const closeMenu = () => setMenuOpen(false);
-  const closeAccount = () => setAccountOpen(false);
+  const closeAccount = () => { setAccountOpen(false); setNotifListOpen(false); };
+
+  // NOTIFICATIONS — previously a standalone bell icon in the nav
+  // (NotificationBell), now folded into the avatar dropdown per the
+  // minimalist-nav redesign: a lime unread badge on the avatar itself
+  // (.nav-avatar-badge, position:absolute on a position:relative
+  // .nav-avatar-wrap), plus a "Notifications" row at the top of the
+  // dropdown (styled as a plain .nav-dropdown-item so it automatically
+  // matches Settings/Bookings/Log Out) that expands the same list inline
+  // — preserving the ability to open/mark-read individual notifications
+  // that the old bell's own dropdown offered.
+  const [notifications, setNotifications] = useState([]);
+  const [notifListOpen, setNotifListOpen] = useState(false);
+  const userId = user?.id;
+
+  useEffect(() => {
+    if (!userId) return;
+    const load = async () => {
+      const data = await getNotifications(userId);
+      setNotifications(data || []);
+    };
+    load();
+    const interval = setInterval(load, 30000);
+    return () => clearInterval(interval);
+  }, [userId]);
+
+  const unreadCount = notifications.filter((n) => !n.read).length;
+
+  const openNotification = async (n) => {
+    if (!n.read) {
+      setNotifications((prev) => prev.map((x) => (x.id === n.id ? { ...x, read: true } : x)));
+      await markNotificationRead(n.id);
+    }
+    setNotifListOpen(false);
+    setAccountOpen(false);
+    // "message" notifications can belong to either portal depending on who
+    // sent it — best guess without more context is: send them to whichever
+    // portal this account actually has (a dual customer+provider account
+    // is the one case this can guess wrong).
+    const dest = NOTIF_DESTINATIONS[n.type]
+      || (n.type === "message" ? { view: providerProfile ? "provider" : "customer", tab: "bookings" } : null);
+    if (!dest) return;
+    onNav(dest.view);
+    // The target portal only starts listening for a tab switch once it has
+    // mounted — give the nav change one render cycle before dispatching.
+    setTimeout(() => setPortalTab(dest.tab), 60);
+  };
+
+  const markAllRead = async () => {
+    setNotifications((prev) => prev.map((x) => ({ ...x, read: true })));
+    await markAllNotificationsRead(userId);
+  };
+
+  // Rendered as the first item in both .nav-account-dropdown blocks below.
+  const notifRow = session && user && (
+    <>
+      <button className="nav-dropdown-item" onClick={() => setNotifListOpen((v) => !v)}>
+        <span className="icn">🔔</span> Notifications
+        {unreadCount > 0 && <span className="nav-dropdown-badge">{unreadCount > 9 ? "9+" : unreadCount}</span>}
+      </button>
+      {notifListOpen && (
+        <div className="notif-inline-list">
+          <div className="notif-dropdown-header">
+            <strong>Notifications</strong>
+            {unreadCount > 0 && <a onClick={markAllRead}>Mark all read</a>}
+          </div>
+          {notifications.length === 0 ? (
+            <p className="notif-empty">No notifications yet.</p>
+          ) : (
+            notifications.map((n) => (
+              <div key={n.id} className={`notif-item ${n.read ? "" : "unread"}`} onClick={() => openNotification(n)}>
+                <div className="notif-title">{n.title}</div>
+                {n.body && <div className="notif-body">{n.body}</div>}
+                <div className="notif-time">{timeAgo(n.created_at)}</div>
+              </div>
+            ))
+          )}
+        </div>
+      )}
+      <hr />
+    </>
+  );
 
   // Pinned search — lives in the nav itself so it's reachable from any page,
   // but should only actually show once the page's own "main" search bar
@@ -3420,12 +3456,16 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
           {session ? (
             <div style={{ position: "relative" }}>
               <button className="nav-avatar-btn" onClick={() => setAccountOpen((v) => !v)}>
-                <span className="nav-avatar-circle">{initials}</span>
+                <span className="nav-avatar-wrap">
+                  <span className="nav-avatar-circle">{initials}</span>
+                  {unreadCount > 0 && <span className="nav-avatar-badge">{unreadCount > 9 ? "9+" : unreadCount}</span>}
+                </span>
                 <span className="nav-avatar-caret">▾</span>
               </button>
               {accountOpen && (
                 <div className="nav-account-dropdown" onMouseLeave={closeAccount}>
                   <div className="nav-account-name">{user?.full_name || "My account"}</div>
+                  {notifRow}
                   <button className="nav-dropdown-item" onClick={() => goAccount(() => openTab("settings"))}>
                     <span className="icn">👤</span> Profile
                   </button>
@@ -3503,19 +3543,23 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
         </div>
       ) : session && PORTAL_TOOLS_BY_VIEW[current] ? (
         // marginLeft: auto — on a portal page this is the only other real
-        // flex child besides .nav-logo and the bell (search is hidden
-        // here, see showNavSearch above), and plain space-between would
-        // center a lone middle item instead of hugging it to the right
-        // next to the bell. auto-margin claims all the free space on its
-        // left, pinning this (and the bell after it) to the right edge.
+        // flex child besides .nav-logo (search is hidden here, see
+        // showNavSearch above), and plain space-between would center a
+        // lone middle item instead of hugging it to the right. auto-margin
+        // claims all the free space on its left, pinning this to the
+        // right edge.
         <div style={{ position: "relative", marginLeft: "auto" }}>
           <button className="nav-avatar-btn" onClick={() => setAccountOpen((v) => !v)}>
-            <span className="nav-avatar-circle">{initials}</span>
+            <span className="nav-avatar-wrap">
+              <span className="nav-avatar-circle">{initials}</span>
+              {unreadCount > 0 && <span className="nav-avatar-badge">{unreadCount > 9 ? "9+" : unreadCount}</span>}
+            </span>
             <span className="nav-avatar-caret">▾</span>
           </button>
           {accountOpen && (
             <div className={`nav-account-dropdown${current === "customer" ? " cx-account-dropdown" : ""}`} onMouseLeave={closeAccount}>
               <div className="nav-account-name">{user?.full_name || "My account"}</div>
+              {notifRow}
               {PORTAL_TOOLS_BY_VIEW[current].map((item) => (
                 <button key={item.id} className="nav-dropdown-item" onClick={() => goAccount(() => setPortalTab(item.id))}>
                   <span className="icn">{item.icon}</span> {item.label}
@@ -3594,12 +3638,10 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
         </div>
       )}
 
-      {/* Rendered last (not right after the search toggle) so .nav's
-          justify-content: space-between pins it to the far right edge of
-          the bar, after the avatar/List-your-business/Menu cluster — where
-          it was originally and where it needs to stay, on both desktop and
-          the single-row mobile layout above. */}
-      {session && user && <NotificationBell userId={user.id} providerProfile={providerProfile} onNav={onNav} />}
+      {/* Standalone notification bell removed — alerts now live on the
+          avatar itself (.nav-avatar-badge) and inside its dropdown
+          (notifRow, rendered above as the first item in each
+          .nav-account-dropdown), so nothing extra renders here. */}
     </nav>
     {/* nav-strip (the 13-category pill row) removed per explicit request —
         aggressive simplification. Its CSS rules (.nav-strip*) are left in
@@ -9090,7 +9132,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
               </div>
               <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 12, lineHeight: 1.6 }}>
                 Everything else — booking requests, cancellations, deposit receipts, completed bookings and new reviews —
-                always shows up in your notification bell 🔔 at the top of the portal.
+                always shows up under Notifications in your account menu.
               </p>
 
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", borderBottom: "1px solid var(--border)", gap: 16, marginTop: 8 }}>
