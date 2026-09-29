@@ -1315,10 +1315,27 @@ export const getProviderApplications = async () => {
   return data || [];
 };
 
+// "Velvet Rope" trial logic: trial_start_date/trial_end_date are stamped
+// here, and ONLY here — the moment an admin actually flips an application
+// to "active" (the "Activate" button in AdminPortal). Signing up never sets
+// them, so a pending applicant has no trial clock running before they're
+// approved. If an application is ever reset back to "pending" (the "Reset"
+// button), the dates are cleared, so a later re-activation starts a fresh
+// 14-day window instead of resuming a stale one.
 export const updateApplicationStatus = async (id, status) => {
+  const patch = { status };
+  if (status === 'active') {
+    const start = new Date();
+    const end = new Date(start.getTime() + 14 * 24 * 60 * 60 * 1000);
+    patch.trial_start_date = start.toISOString();
+    patch.trial_end_date = end.toISOString();
+  } else if (status === 'pending') {
+    patch.trial_start_date = null;
+    patch.trial_end_date = null;
+  }
   const { data, error } = await supabase
     .from('provider_applications')
-    .update({ status })
+    .update(patch)
     .eq('id', id)
     .select()
     .single();
