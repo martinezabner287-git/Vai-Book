@@ -2,6 +2,7 @@
 import { useState, useEffect, useLayoutEffect, useRef, useContext, createContext, lazy, Suspense } from "react";
 import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, deleteService, getActiveProviders, getProviderDirectory, createBooking, getProviderBusyWindows, createBookingSafe, cancelBooking, getCustomerBookings, uploadReceipt, submitReview, getProviderReviews, updateReview, sendBookingEmail, updateUserProfile, getPaymentMethods, addPaymentMethod, deletePaymentMethod, createNotification, getNotifications, markNotificationRead, markAllNotificationsRead, getCategoryDefaultFeatures, getProviderFeatureOverrides, setProviderFeatureOverride, getVisitNotes, upsertVisitNote, adminListProviders, adminUpdateProvider, adminDeleteProvider, getFavoriteProviderIds, getFavoriteProviders, addFavorite, removeFavorite, getBookingMessages, sendBookingMessage, markBookingMessagesRead, getUnreadBookingMessages, getProviderMonthlyTrend, createProviderProfile, getProviderById, createWalkInBooking, submitProviderPayment, getMyProviderPayments, adminListProviderPayments, adminReviewProviderPayment, submitBookingRefund, adminListBookingRefunds, openPrivateFile, getProviderStaff, addProviderStaff, updateProviderStaff, deleteProviderStaff, getLoyaltyAccount, getProviderLoyaltyCustomers, redeemLoyaltyReward, getMyStaffProfile, claimStaffSeatByEmail, getStaffBookings, getProviderNotifyEmail, getMaintenanceStatus, setMaintenanceMode, getSiteOfflineStatus, setSiteOffline, sendEmailOtp, verifyEmailOtp, savePushSubscription, attachBookingServices, getProviderBlocks, insertProviderBlock, deleteProviderBlock, proposeBookingReschedule, confirmBookingReschedule, declineBookingReschedule, withdrawBookingReschedule } from "./supabase";
 import AdminDashboard from "./AdminDashboard";
+import ProviderSignupModal from "./ProviderSignupModal";
 import { compressImageFile } from "./imageUtils";
 import { bookingRequestSchema, rescheduleProposalSchema, validate } from "./validation";
 
@@ -508,6 +509,54 @@ const css = `
     .provider-hero { padding: 96px 20px 72px; }
     .provider-hero-cta.btn-lime { width: 100%; padding: 18px 0; }
   }
+
+  /* PROVIDER SIGNUP MODAL — the "direct-to-app" frictionless overlay
+     (see ProviderSignupModal.jsx). Sleek dark card over a dimmed backdrop,
+     same visual language as .provider-hero (near-black forest gradient +
+     lime accents) so it reads as a continuation of that CTA, not a
+     separate light-mode form popping in. Reuses the shared .input-group
+     classes for the fields, dark-scoped the same way .cx-account-page
+     does for the customer portal, so this needed no new form-field CSS. */
+  .psm-overlay {
+    position: fixed; inset: 0; z-index: 500; background: rgba(6,20,15,0.72);
+    backdrop-filter: blur(3px); display: flex; align-items: center; justify-content: center; padding: 20px;
+  }
+  .psm-modal {
+    position: relative; width: 100%; max-width: 420px; max-height: 92vh; overflow-y: auto;
+    background: linear-gradient(165deg, #0A2A20 0%, #0D3D2E 100%);
+    border: 1px solid rgba(198,241,53,0.18); border-radius: 24px;
+    padding: 40px 32px 32px; box-shadow: 0 30px 70px rgba(0,0,0,0.45);
+  }
+  .psm-close {
+    position: absolute; top: 16px; right: 16px; background: rgba(255,255,255,0.08); border: none;
+    color: rgba(245,239,224,0.7); width: 30px; height: 30px; border-radius: 50%; font-size: 13px;
+    cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background .2s, color .2s;
+  }
+  .psm-close:hover { background: rgba(255,255,255,0.16); color: #FFFFFF; }
+  .psm-eyebrow {
+    display: inline-block; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 11px; font-weight: 700;
+    letter-spacing: .12em; text-transform: uppercase; color: var(--lime);
+    background: rgba(198,241,53,0.1); border: 1px solid rgba(198,241,53,0.28);
+    padding: 6px 14px; border-radius: 100px; margin-bottom: 16px;
+  }
+  .psm-headline {
+    font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; color: #FFFFFF;
+    font-size: 26px; line-height: 1.2; margin: 0 0 8px;
+  }
+  .psm-sub { font-size: 14px; color: rgba(245,239,224,0.6); line-height: 1.5; margin: 0 0 24px; }
+  .psm-form { display: flex; flex-direction: column; }
+  .psm-modal .input-group label { color: rgba(245,239,224,0.75); }
+  .psm-modal .input-group input {
+    background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.14); color: #FFFFFF;
+  }
+  .psm-modal .input-group input::placeholder { color: rgba(245,239,224,0.35); }
+  .psm-modal .input-group input:focus { border-color: var(--lime); box-shadow: 0 0 0 3px rgba(198,241,53,0.15); }
+  .psm-submit {
+    width: 100%; margin-top: 6px; padding: 16px 0; font-size: 15.5px; font-weight: 800;
+    border-radius: 14px; box-shadow: 0 14px 34px rgba(198,241,53,0.24);
+  }
+  .psm-submit:disabled { opacity: 0.7; cursor: default; }
+  .psm-note { text-align: center; font-size: 12.5px; color: rgba(245,239,224,0.45); margin: 18px 0 0; }
 
   /* STATS BAR */
   .marketing-strip { background: var(--sand); padding: 40px 48px; display: flex; justify-content: space-around; gap: 32px; flex-wrap: wrap; }
@@ -2359,17 +2408,6 @@ function enterProviderPortal(onNav, session, onSignIn, onSignOut) {
   switchToPortal("provider", onNav, session, onSignIn, onSignOut);
 }
 
-// Lets the public pricing section's per-plan CTA land on the signup form
-// with that plan already selected, without threading a new param through
-// onNav (which is just setView — a plain string setter used in dozens of
-// places). Same "stash it, read it once on mount" pattern as
-// vaibook_pending_view above. ProviderSignup reads and clears this once;
-// stale leftovers can't affect a later, unrelated visit to signup.
-function goToSignupWithPlan(onNav, planId) {
-  try { localStorage.setItem("vaibook_signup_plan", planId); } catch (e) { /* ignore */ }
-  onNav("signup");
-}
-
 function AuthChoice({ onNav, session, onSignIn, onSignOut }) {
   return (
     <div className="auth-choice">
@@ -2835,7 +2873,7 @@ function setPortalTab(tabId) {
   window.dispatchEvent(new CustomEvent("vaibook-set-portal-tab", { detail: { tab: tabId } }));
 }
 
-function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignOut }) {
+function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignOut, onOpenProviderSignup }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
   const closeMenu = () => setMenuOpen(false);
@@ -3006,7 +3044,7 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
                   <a onClick={() => goAccount(() => scrollToSection("how-it-works", onNav, current))}>How it works</a>
                   <a onClick={() => goAccount(() => scrollToProvidersSection("pricing", onNav, current))}>Pricing</a>
                   <hr />
-                  <button className="nav-dropdown-item mobile-only-item" onClick={() => goAccount(() => onNav("providers"))}>
+                  <button className="nav-dropdown-item mobile-only-item" onClick={() => goAccount(onOpenProviderSignup)}>
                     <span className="icn">🏪</span> Provide my service
                   </button>
                   <button className="nav-dropdown-item for-biz" onClick={() => goAccount(() => enterProviderPortal(onNav, session, onSignIn, onSignOut))}>
@@ -3023,7 +3061,7 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
             <button className="nav-login-link" onClick={() => onNav("auth")}>Log in</button>
           )}
           {current === "home" && (
-            <button className="nav-signup-btn" onClick={() => onNav("providers")}>Provide my service</button>
+            <button className="nav-signup-btn" onClick={onOpenProviderSignup}>Provide my service</button>
           )}
           {current === "providers" && (
             <button className="nav-signup-btn" onClick={() => onNav("home")}>Find a Professional</button>
@@ -3045,7 +3083,7 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
                 {current === "home" && (
                   <>
                     <hr />
-                    <button className="nav-dropdown-item mobile-only-item" onClick={() => go(() => onNav("providers"))}>Provide my service</button>
+                    <button className="nav-dropdown-item mobile-only-item" onClick={() => go(onOpenProviderSignup)}>Provide my service</button>
                     <button className="nav-dropdown-item" onClick={() => go(() => enterProviderPortal(onNav, session, onSignIn, onSignOut))}>
                       Provider login
                     </button>
@@ -3430,11 +3468,15 @@ function SiteFooter() {
 // agency upsell, and the platform/dashboard preview — now lives here on
 // its own route instead, so a customer looking for a haircut never sees
 // SaaS pricing, and a shop owner evaluating VaiBook never has to scroll
-// past a consumer search bar to find it. Reached via the nav's "Provide
-// my service" CTA (see Nav()), goToSignupWithPlan, or #providers
-// directly. The actual application form is still ProviderSignup (view
-// "signup") — every CTA here hands off to that, same as before.
-function ProviderLandingPage({ onNav, session, onSignIn, onSignOut }) {
+// past a consumer search bar to find it. Reached only via the nav's
+// "Pricing" link (scrollToProvidersSection) or a direct #providers visit
+// — the nav's main "Provide my service" CTA and every "Apply to Join"
+// button on this page now short-circuit straight to ProviderSignupModal
+// (see onOpenProviderSignup below) instead of landing here or on the real
+// application form (ProviderSignup, view "signup"), per the frictionless
+// direct-to-app funnel. This page still exists for anyone who scrolls in
+// from "Pricing" wanting the full pitch before they commit.
+function ProviderLandingPage({ onNav, session, onSignIn, onSignOut, onOpenProviderSignup }) {
   return (
     <>
       {/* HERO — deliberately dark/high-status rather than reusing the
@@ -3446,7 +3488,7 @@ function ProviderLandingPage({ onNav, session, onSignIn, onSignOut }) {
         <h1 className="provider-hero-title">The operating system for top-tier shops.</h1>
         <p className="provider-hero-sub">No generic templates. No friction.</p>
         <div className="trial-badge">✨ Apply today — approved shops get 14 days free</div>
-        <button className="btn-lime provider-hero-cta" onClick={() => onNav("signup")}>
+        <button className="btn-lime provider-hero-cta" onClick={onOpenProviderSignup}>
           Apply to Join (14 Days Free)
         </button>
         <p className="provider-hero-note">No contracts, no setup fees — cancel anytime.</p>
@@ -3518,7 +3560,7 @@ function ProviderLandingPage({ onNav, session, onSignIn, onSignOut }) {
               </ul>
               <button
                 className={p.recommended ? "btn-lime pricing-cta" : "btn-sm forest pricing-cta"}
-                onClick={() => goToSignupWithPlan(onNav, p.id)}
+                onClick={onOpenProviderSignup}
               >
                 Apply to Join
               </button>
@@ -3563,7 +3605,7 @@ function ProviderLandingPage({ onNav, session, onSignIn, onSignOut }) {
             Join Belize's top professionals. Get your customized booking link, automate
             24-hour reminders, and secure deposits directly via WhatsApp.
           </p>
-          <button className="btn-lime for-business-btn" onClick={() => onNav("signup")}>
+          <button className="btn-lime for-business-btn" onClick={onOpenProviderSignup}>
             Apply to Join
           </button>
         </div>
@@ -10292,6 +10334,13 @@ export default function App() {
     return () => window.removeEventListener("hashchange", onHashChange);
   }, []);
 
+  // Direct-to-app provider signup modal — one global instance, opened from
+  // anywhere (nav CTA, pricing cards, etc. — see onOpenProviderSignup
+  // below) so every "provide my service" / "apply to join" entry point
+  // pops the same frictionless overlay instead of routing to a marketing
+  // page or the real ProviderSignup application form.
+  const [showProviderSignup, setShowProviderSignup] = useState(false);
+
   // Site-wide offline takeover (see SiteOffline / AdminPortal's Emergency
   // tab). Checked independently of the session/loading flow below so it
   // still shows up even if, say, Google sign-in itself is having issues —
@@ -10499,13 +10548,25 @@ export default function App() {
     return <SiteOffline message={siteOffline.message} onSignIn={signInWithGoogle} />;
   }
 
-  const authProps = { session, user, providerProfile, onSignIn: signInWithGoogle, onSignOut: handleSignOut, onUserUpdate: setUser, onProviderProfileUpdate: setProviderProfile };
+  const authProps = {
+    session, user, providerProfile,
+    onSignIn: signInWithGoogle, onSignOut: handleSignOut,
+    onUserUpdate: setUser, onProviderProfileUpdate: setProviderProfile,
+    onOpenProviderSignup: () => setShowProviderSignup(true),
+  };
 
   return (
     <>
       <style>{css}</style>
       <MaintenanceBanner />
       <InstallAppGuide />
+      {/* Rendered once, globally, so it can pop over whatever page/view is
+          currently showing — see the showProviderSignup state above. */}
+      <ProviderSignupModal
+        open={showProviderSignup}
+        onClose={() => setShowProviderSignup(false)}
+        onEnterDashboard={() => { setShowProviderSignup(false); setView("provider"); }}
+      />
       {/* The Provider Portal now has its own top bar (logo, nav links, avatar
           menu) replacing the persistent sidebar, so the global site nav
           would just be a redundant second header above it. Every other
