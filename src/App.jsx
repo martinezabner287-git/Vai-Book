@@ -3,6 +3,8 @@ import { useState, useEffect, useLayoutEffect, useRef, useContext, createContext
 import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, deleteService, getActiveProviders, getProviderDirectory, createBooking, getProviderBusyWindows, createBookingSafe, cancelBooking, getCustomerBookings, uploadReceipt, submitReview, getProviderReviews, updateReview, sendBookingEmail, updateUserProfile, getPaymentMethods, addPaymentMethod, deletePaymentMethod, createNotification, getNotifications, markNotificationRead, markAllNotificationsRead, getCategoryDefaultFeatures, getProviderFeatureOverrides, setProviderFeatureOverride, getVisitNotes, upsertVisitNote, adminListProviders, adminUpdateProvider, adminDeleteProvider, getFavoriteProviderIds, getFavoriteProviders, addFavorite, removeFavorite, getBookingMessages, sendBookingMessage, markBookingMessagesRead, getUnreadBookingMessages, getProviderMonthlyTrend, createProviderProfile, getProviderById, createWalkInBooking, submitProviderPayment, getMyProviderPayments, adminListProviderPayments, adminReviewProviderPayment, submitBookingRefund, adminListBookingRefunds, openPrivateFile, getProviderStaff, addProviderStaff, updateProviderStaff, deleteProviderStaff, getLoyaltyAccount, getProviderLoyaltyCustomers, redeemLoyaltyReward, getMyStaffProfile, claimStaffSeatByEmail, getStaffBookings, getProviderNotifyEmail, getMaintenanceStatus, setMaintenanceMode, getSiteOfflineStatus, setSiteOffline, sendEmailOtp, verifyEmailOtp, savePushSubscription, attachBookingServices, getProviderBlocks, insertProviderBlock, deleteProviderBlock, proposeBookingReschedule, confirmBookingReschedule, declineBookingReschedule, withdrawBookingReschedule } from "./supabase";
 import AdminDashboard from "./AdminDashboard";
 import ProviderSignupModal from "./ProviderSignupModal";
+import { useTheme } from "./ThemeContext";
+import ThemeToggle from "./ThemeToggle";
 import { compressImageFile } from "./imageUtils";
 import { bookingRequestSchema, rescheduleProposalSchema, validate } from "./validation";
 
@@ -1093,6 +1095,29 @@ const css = `
      explicit override or, for the handful of inline styles CSS can't
      reach, a direct fix at the JSX call site. */
   .cx-account-page {
+    /* Local tokens for the handful of literal colors below, so the same
+       rules can be re-pointed for Light Mode (see the
+       :root[data-theme="light"] .cx-account-page block right after this
+       one) without duplicating every selector. Defaults here are this
+       section's original, always-dark values — i.e. what you get under
+       :root[data-theme="dark"] (the app default) unchanged from before
+       the toggle existed. */
+    --cxp-heading: #FFFFFF;
+    --cxp-text-dim: rgba(245,239,224,0.55);
+    --cxp-text-dim-2: rgba(245,239,224,0.75);
+    --cxp-text-dim-3: rgba(245,239,224,0.35);
+    --cxp-card-bg: #0E241B;
+    --cxp-card-shadow: 0 10px 26px rgba(0,0,0,0.22);
+    --cxp-hairline: rgba(255,255,255,0.08);
+    --cxp-tint-1: rgba(255,255,255,0.05);
+    --cxp-tint-2: rgba(255,255,255,0.06);
+    --cxp-tint-3: rgba(255,255,255,0.1);
+    --cxp-tint-4: rgba(255,255,255,0.12);
+    --cxp-tint-5: rgba(255,255,255,0.14);
+    --cxp-tint-6: rgba(255,255,255,0.28);
+    --cxp-disabled-bg: rgba(255,255,255,0.03);
+    --cxp-disabled-text: rgba(245,239,224,0.4);
+    --cxp-star-off: rgba(255,255,255,0.18);
     --sand: #14301F;
     --dark-text: #F5EFE0;
     --muted: rgba(245,239,224,0.55);
@@ -1100,83 +1125,188 @@ const css = `
     background: #081F17;
   }
 
-  /* Page header */
-  .cx-account-page .portal-header h2 { color: #FFFFFF; }
-  .cx-account-page .portal-header p { color: rgba(245,239,224,0.55); }
+  /* Light Mode: reverts this whole section back to the ordinary light
+     surface (same near-white/dark-text/sand/border the rest of the app's
+     unscoped pages already use), so toggling to light makes Customer
+     account pages match Provider/Admin/Customer-Home instead of staying
+     dark. --forest/--near-white/--lime still untouched (see note above) —
+     only the same single-purpose tokens, plus this section's own --cxp-*
+     literals, get a light equivalent. */
+  :root[data-theme="light"] .cx-account-page {
+    --sand: #F5EFE0;
+    --dark-text: #0D1F18;
+    --muted: #6B7F76;
+    --border: #D9E4DF;
+    --cxp-heading: #0D1F18;
+    --cxp-text-dim: #6B7F76;
+    --cxp-text-dim-2: #4A5A52;
+    --cxp-text-dim-3: #9AA69F;
+    --cxp-card-bg: #FFFFFF;
+    --cxp-card-shadow: 0 8px 22px rgba(13,61,46,0.08);
+    --cxp-hairline: #EDEAE0;
+    --cxp-tint-1: #F3F1EA;
+    --cxp-tint-2: #F3F1EA;
+    --cxp-tint-3: #EDEAE0;
+    --cxp-tint-4: #D9E4DF;
+    --cxp-tint-5: #D9E4DF;
+    --cxp-tint-6: #C7D2CC;
+    --cxp-disabled-bg: #F5F5F0;
+    --cxp-disabled-text: #9AA69F;
+    --cxp-star-off: #D9D9D9;
+    background: #F0F4F2;
+  }
 
-  /* Cards + metrics — the same dark, borderless card everywhere */
+  /* Page header */
+  .cx-account-page .portal-header h2 { color: var(--cxp-heading); }
+  .cx-account-page .portal-header p { color: var(--cxp-text-dim); }
+
+  /* Cards + metrics — the same borderless card everywhere */
   .cx-account-page .card,
   .cx-account-page .metric,
   .cx-account-page .provider-card {
-    background: #0E241B;
+    background: var(--cxp-card-bg);
     border: none;
-    box-shadow: 0 10px 26px rgba(0,0,0,0.22);
+    box-shadow: var(--cxp-card-shadow);
   }
-  .cx-account-page .card-title { color: #FFFFFF; }
-  .cx-account-page .metric-value { color: var(--lime); }
-  .cx-account-page .booking-amount { color: var(--lime); }
-  .cx-account-page .price-tag { color: var(--lime); }
+  .cx-account-page .card-title { color: var(--cxp-heading); }
+  .cx-account-page .metric-value { color: var(--accent-text); }
+  .cx-account-page .booking-amount { color: var(--accent-text); }
+  .cx-account-page .price-tag { color: var(--accent-text); }
   .cx-account-page .booking-info .title,
-  .cx-account-page .provider-card-body h4 { color: #FFFFFF; }
-  .cx-account-page .booking-item { border-bottom-color: rgba(255,255,255,0.08); }
-  .cx-account-page .avail-badge { background: rgba(198,241,53,0.15); color: var(--lime); }
-  .cx-account-page .cx-plan-badge { background: rgba(198,241,53,0.15); color: var(--lime); font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 5px; vertical-align: middle; margin-left: 6px; }
+  .cx-account-page .provider-card-body h4 { color: var(--cxp-heading); }
+  .cx-account-page .booking-item { border-bottom-color: var(--cxp-hairline); }
+  .cx-account-page .avail-badge { background: rgba(198,241,53,0.15); color: var(--accent-text); }
+  .cx-account-page .cx-plan-badge { background: rgba(198,241,53,0.15); color: var(--accent-text); font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 5px; vertical-align: middle; margin-left: 6px; }
 
-  /* Status pills — same pill, dark-mode-appropriate tints */
-  .cx-account-page .status-pill.confirmed { background: rgba(34,197,94,0.18); color: #4ADE80; }
-  .cx-account-page .status-pill.pending { background: rgba(245,158,11,0.18); color: #FBBF24; }
-  .cx-account-page .status-pill.done { background: rgba(255,255,255,0.08); color: rgba(245,239,224,0.55); }
-  .cx-account-page .status-pill.rejected { background: rgba(239,68,68,0.18); color: #F87171; }
-  .cx-account-page .status-pill.awaiting { background: rgba(59,130,246,0.18); color: #60A5FA; }
+  /* Status pills — semi-transparent tints read fine on both a near-black
+     and a near-white card, so these stay constant across themes (same
+     "functional status color, not a surface" logic as the lime/forest
+     brand fills below). */
+  .cx-account-page .status-pill.confirmed { background: rgba(34,197,94,0.18); color: #16A34A; }
+  :root[data-theme="dark"] .cx-account-page .status-pill.confirmed { color: #4ADE80; }
+  .cx-account-page .status-pill.pending { background: rgba(245,158,11,0.18); color: #B45309; }
+  :root[data-theme="dark"] .cx-account-page .status-pill.pending { color: #FBBF24; }
+  .cx-account-page .status-pill.done { background: var(--cxp-tint-3); color: var(--cxp-text-dim); }
+  .cx-account-page .status-pill.rejected { background: rgba(239,68,68,0.18); color: #DC2626; }
+  :root[data-theme="dark"] .cx-account-page .status-pill.rejected { color: #F87171; }
+  .cx-account-page .status-pill.awaiting { background: rgba(59,130,246,0.18); color: #2563EB; }
+  :root[data-theme="dark"] .cx-account-page .status-pill.awaiting { color: #60A5FA; }
 
   /* Filter tabs (Upcoming / Completed / Cancelled, provider profile tabs) */
-  .cx-account-page .tab-row { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.1); }
+  .cx-account-page .tab-row { background: var(--cxp-tint-1); border-color: var(--cxp-tint-3); }
   .cx-account-page .tab.active { background: var(--lime); color: #0E241B; }
 
-  /* Inputs, selects, textareas — dark + integrated, neon focus ring */
-  .cx-account-page .input-group label { color: rgba(245,239,224,0.75); }
+  /* Inputs, selects, textareas — integrated card look, neon focus ring */
+  .cx-account-page .input-group label { color: var(--cxp-text-dim-2); }
   .cx-account-page .input-group input,
   .cx-account-page .input-group select,
   .cx-account-page .input-group textarea {
-    background: rgba(255,255,255,0.06);
-    border-color: rgba(255,255,255,0.14);
-    color: #FFFFFF;
+    background: var(--cxp-tint-2);
+    border-color: var(--cxp-tint-5);
+    color: var(--cxp-heading);
   }
   .cx-account-page .input-group input::placeholder,
-  .cx-account-page .input-group textarea::placeholder { color: rgba(245,239,224,0.35); }
+  .cx-account-page .input-group textarea::placeholder { color: var(--cxp-text-dim-3); }
   .cx-account-page .input-group input:focus,
   .cx-account-page .input-group select:focus,
   .cx-account-page .input-group textarea:focus {
     border-color: var(--lime);
     box-shadow: 0 0 0 3px rgba(198,241,53,0.15);
   }
-  .cx-account-page .input-group input:disabled { background: rgba(255,255,255,0.03); color: rgba(245,239,224,0.4); }
-  .cx-account-page select option { background: #0E241B; color: #FFFFFF; }
+  .cx-account-page .input-group input:disabled { background: var(--cxp-disabled-bg); color: var(--cxp-disabled-text); }
+  .cx-account-page select option { background: var(--cxp-card-bg); color: var(--cxp-heading); }
 
   /* Buttons — .btn-sm.lime/.forest and .btn-primary/.btn-ghost already
      work unmodified on dark (see the note above); only the plain
-     "ghost" outline variant needs its border/hover brightened to read
-     clearly against the new dark card/page backgrounds. */
-  .cx-account-page .btn-sm.ghost { border-color: rgba(255,255,255,0.28); color: #FFFFFF; }
+     "ghost" outline variant needs its border/hover adjusted to read
+     clearly against the card/page background in either theme. */
+  .cx-account-page .btn-sm.ghost { border-color: var(--cxp-tint-6); color: var(--cxp-heading); }
   .cx-account-page .btn-sm.ghost:hover { border-color: var(--lime); color: var(--lime); }
 
   /* Search bar + autocomplete (Browse tab, and the pinned nav search
      when it's showing over an account page) */
   .cx-account-page .search-bar,
   .cx-account-page .suggestions-dropdown {
-    background: #0E241B;
-    border-color: rgba(255,255,255,0.12);
+    background: var(--cxp-card-bg);
+    border-color: var(--cxp-tint-4);
   }
-  .cx-account-page .search-bar input { color: #FFFFFF; }
+  .cx-account-page .search-bar input { color: var(--cxp-heading); }
   .cx-account-page .suggestion-item:hover,
-  .cx-account-page .suggestion-item.active { background: rgba(255,255,255,0.06); }
+  .cx-account-page .suggestion-item.active { background: var(--cxp-tint-2); }
 
   /* Star rating / review picker */
-  .cx-account-page .star-picker span { color: rgba(255,255,255,0.18); }
+  .cx-account-page .star-picker span { color: var(--cxp-star-off); }
   .cx-account-page .star-picker span.on { color: #F59E0B; }
 
   /* Profile avatar circle already pairs lime + forest text — dark-safe
      as-is, no override needed. */
+
+  /* ── PROVIDER / ADMIN / CUSTOMER-HOME — global toggle, dark scope ──
+     Same technique as .cx-account-page just above, applied to the two
+     other page shells that weren't already dark: .provider-shell
+     (Provider Portal, once signed in) and the plain .portal-content
+     (Admin Portal, and the Customer Portal Home tab — both render that
+     same unscoped class). Gated behind :root[data-theme="dark"] because,
+     unlike .cx-account-page, these shells are LIGHT by default today, so
+     the override only needs to apply for the non-default theme.
+
+     Scope: page background, the shared .card/.metric/.provider-card
+     surface, and the handful of headings/labels that use var(--forest)
+     as plain text (illegible once the page behind them goes dark, since
+     --forest itself stays a fixed brand color — see the note atop
+     .cx-account-page for why it's never remapped). --forest/--lime/
+     --near-white stay untouched, so every branded fill (.btn-forest,
+     .tab.active, provider-topbar, pricing badges, chat bubbles, the
+     booking calendar, etc.) still renders exactly as it does today in
+     both themes. Deeper nested surfaces — modal panels, the booking
+     calendar's day cells, chat bubbles — keep their original white for
+     now; a full pixel-level retrofit of every one of those was a larger
+     scope than this pass. */
+  :root[data-theme="dark"] .provider-shell,
+  :root[data-theme="dark"] .portal-content {
+    --sand: #14301F;
+    --dark-text: #F5EFE0;
+    --muted: rgba(245,239,224,0.6);
+    --border: rgba(255,255,255,0.12);
+  }
+  :root[data-theme="dark"] .provider-shell { background: #0A211A; }
+  :root[data-theme="dark"] .portal-content { background: #0A211A; }
+  :root[data-theme="dark"] .provider-shell .card,
+  :root[data-theme="dark"] .provider-shell .card-sm,
+  :root[data-theme="dark"] .provider-shell .metric,
+  :root[data-theme="dark"] .provider-shell .provider-card,
+  :root[data-theme="dark"] .provider-shell .carousel-card,
+  :root[data-theme="dark"] .portal-content .card,
+  :root[data-theme="dark"] .portal-content .card-sm,
+  :root[data-theme="dark"] .portal-content .metric,
+  :root[data-theme="dark"] .portal-content .provider-card,
+  :root[data-theme="dark"] .portal-content .carousel-card {
+    background: #12291F;
+    border: none;
+    box-shadow: 0 10px 26px rgba(0,0,0,0.22);
+  }
+  :root[data-theme="dark"] .provider-shell .portal-header h2,
+  :root[data-theme="dark"] .portal-content .portal-header h2,
+  :root[data-theme="dark"] .provider-shell .card-title,
+  :root[data-theme="dark"] .portal-content .card-title {
+    color: #FFFFFF;
+  }
+  :root[data-theme="dark"] .provider-shell .metric-value,
+  :root[data-theme="dark"] .provider-shell .booking-amount,
+  :root[data-theme="dark"] .provider-shell .price-tag,
+  :root[data-theme="dark"] .provider-shell .next-chair-label,
+  :root[data-theme="dark"] .provider-shell .cx-section-heading,
+  :root[data-theme="dark"] .provider-shell .chip-featured,
+  :root[data-theme="dark"] .provider-shell .chip-plan-pro,
+  :root[data-theme="dark"] .portal-content .metric-value,
+  :root[data-theme="dark"] .portal-content .booking-amount,
+  :root[data-theme="dark"] .portal-content .price-tag,
+  :root[data-theme="dark"] .portal-content .next-chair-label,
+  :root[data-theme="dark"] .portal-content .cx-section-heading,
+  :root[data-theme="dark"] .portal-content .chip-featured,
+  :root[data-theme="dark"] .portal-content .chip-plan-pro {
+    color: var(--lime);
+  }
 
   /* PROVIDER GRID */
   .provider-card { background: var(--near-white); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; cursor: pointer; transition: box-shadow .2s; }
@@ -1513,29 +1643,6 @@ function VaiBookMark({ size = 26, style }) {
 // (the "Apple/Stripe" premium bar this feature was explicitly asked to
 // clear). Shows the icon for the mode a click switches TO, same
 // convention as a physical light switch.
-function SunIcon({ size = 17 }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
-      <circle cx="12" cy="12" r="4.5" />
-      <line x1="12" y1="1.5" x2="12" y2="4" />
-      <line x1="12" y1="20" x2="12" y2="22.5" />
-      <line x1="4" y1="12" x2="1.5" y2="12" />
-      <line x1="22.5" y1="12" x2="20" y2="12" />
-      <line x1="5.6" y1="5.6" x2="3.9" y2="3.9" />
-      <line x1="20.1" y1="20.1" x2="18.4" y2="18.4" />
-      <line x1="5.6" y1="18.4" x2="3.9" y2="20.1" />
-      <line x1="20.1" y1="3.9" x2="18.4" y2="5.6" />
-    </svg>
-  );
-}
-function MoonIcon({ size = 17 }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-      <path d="M20.7 14.3a8.5 8.5 0 1 1-11-11 7 7 0 0 0 11 11z" />
-    </svg>
-  );
-}
-
 // ── DATA ────────────────────────────────────────────────────────
 // VaiBook is scoped to the self-care niche (like Fresha/Mangomint), not a
 // general local-services directory — this list is the merged set of
@@ -3086,7 +3193,7 @@ function setPortalTab(tabId) {
   window.dispatchEvent(new CustomEvent("vaibook-set-portal-tab", { detail: { tab: tabId } }));
 }
 
-function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignOut, onOpenProviderSignup, theme, onToggleTheme }) {
+function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignOut, onOpenProviderSignup }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
   const closeMenu = () => setMenuOpen(false);
@@ -3222,19 +3329,13 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
       )}
 
       {/* THEME TOGGLE — global control (always visible, whatever page or
-          auth state), but its visual effect is currently scoped to the
-          B2C Landing Page's own themed surfaces (.lp-theme) — see the
-          theme CSS variables above. Other pages will pick it up as they
-          get themed in a later pass; toggling elsewhere today just
-          changes nothing yet rather than breaking anything. */}
-      <button
-        className="theme-toggle"
-        onClick={onToggleTheme}
-        aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-        title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-      >
-        {theme === "dark" ? <SunIcon /> : <MoonIcon />}
-      </button>
+          auth state), reads ThemeContext directly rather than being
+          threaded down as a prop. Now themes the Landing Page, Customer
+          Portal, and Admin Portal (see the .lp-theme / .cx-account-page /
+          .portal-content dark-mode CSS). Provider Portal doesn't render
+          this shared Nav once a provider is signed in — see the matching
+          <ThemeToggle/> in its own topbar below. */}
+      <ThemeToggle />
 
       {(current === "home" || current === "providers" || (current === "customer" && !session)) ? (
         <div className="nav-cta">
@@ -3356,6 +3457,8 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
                   )}
                 </>
               )}
+              <hr />
+              <ThemeToggle variant="menu" onAfterToggle={closeAccount} />
               <hr />
               <button className="nav-dropdown-item" onClick={() => goAccount(openInstallAppGuide)}>
                 <span className="icn">📲</span> Add to Home Screen
@@ -7463,7 +7566,11 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
           ☰
         </button>
 
-        <div className="provider-topbar-right">
+        <div className="provider-topbar-right" style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          {/* Provider Portal has its own topbar and never renders the
+              shared Nav once a provider is signed in (see App()'s render
+              condition), so this is its only theme toggle. */}
+          <ThemeToggle />
           <div className="provider-avatar-wrap" onMouseLeave={() => setProviderMenuOpen(false)}>
             <button
               className="provider-avatar-btn"
@@ -10632,26 +10739,10 @@ export default function App() {
   // page or the real ProviderSignup application form.
   const [showProviderSignup, setShowProviderSignup] = useState(false);
 
-  // Light/dark theme — one global preference (localStorage-backed, same
-  // "read once on mount" pattern as the other stashed-preference reads in
-  // this file) applied as a data-theme attribute on <html> so plain CSS
-  // variables can key off it with a single `:root[data-theme="light"]`
-  // block (see the css template's THEME TOKENS section) rather than a
-  // React-tree class needing to reach every themed component. Defaults to
-  // dark — this app's existing look — for a visitor with no saved
-  // preference yet.
-  const [theme, setTheme] = useState(() => {
-    try {
-      const saved = localStorage.getItem("vaibook_theme");
-      if (saved === "light" || saved === "dark") return saved;
-    } catch (e) { /* ignore storage errors */ }
-    return "dark";
-  });
-  useEffect(() => {
-    document.documentElement.setAttribute("data-theme", theme);
-    try { localStorage.setItem("vaibook_theme", theme); } catch (e) { /* ignore storage errors */ }
-  }, [theme]);
-  const toggleTheme = () => setTheme((t) => (t === "dark" ? "light" : "dark"));
+  // Light/dark theme now lives in ThemeContext (src/ThemeContext.jsx),
+  // provided once at the app root in index.js, so it's reachable from
+  // anywhere via useTheme() instead of being threaded through authProps.
+  // Nav, ThemeToggle, and the Provider Portal topbar all read it directly.
 
   // Site-wide offline takeover (see SiteOffline / AdminPortal's Emergency
   // tab). Checked independently of the session/loading flow below so it
@@ -10865,7 +10956,6 @@ export default function App() {
     onSignIn: signInWithGoogle, onSignOut: handleSignOut,
     onUserUpdate: setUser, onProviderProfileUpdate: setProviderProfile,
     onOpenProviderSignup: () => setShowProviderSignup(true),
-    theme, onToggleTheme: toggleTheme,
   };
 
   return (
