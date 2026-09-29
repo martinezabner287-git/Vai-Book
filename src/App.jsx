@@ -8451,6 +8451,176 @@ const SIGNUP_CSS = `
   }
 `;
 
+// PROVIDER LANDING — the premium, dark/neon marketing preamble that sits
+// above the (light-mode, unchanged) application form below it. Written
+// mobile-first on purpose: every rule here is the phone layout by default,
+// and the @media (min-width: 860px) block is what adds the wider desktop
+// treatment, not the other way around.
+const PROVIDER_LANDING_CSS = `
+  .pl-root { background: #081F17; overflow: hidden; }
+
+  /* HERO */
+  .pl-hero {
+    position: relative;
+    padding: 64px 20px 56px;
+    background: radial-gradient(circle at 50% 0%, #123F2E 0%, #081F17 62%);
+    text-align: center;
+  }
+  .pl-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--lime);
+    background: rgba(198,241,53,0.1);
+    border: 1px solid rgba(198,241,53,0.35);
+    padding: 7px 14px;
+    border-radius: 100px;
+    margin-bottom: 22px;
+  }
+  .pl-hero h1 {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 800;
+    font-size: 34px;
+    line-height: 1.12;
+    letter-spacing: -0.01em;
+    color: #FFFFFF;
+    max-width: 640px;
+    margin: 0 auto 18px;
+  }
+  .pl-hero-sub {
+    font-size: 15.5px;
+    line-height: 1.6;
+    color: rgba(245,239,224,0.68);
+    max-width: 460px;
+    margin: 0 auto 30px;
+  }
+  .pl-cta {
+    display: inline-block;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 16.5px;
+    font-weight: 800;
+    color: #081F17;
+    background: var(--lime);
+    border: none;
+    padding: 19px 40px;
+    border-radius: 100px;
+    cursor: pointer;
+    box-shadow: 0 0 0 1px rgba(198,241,53,0.4), 0 18px 40px rgba(198,241,53,0.28);
+    transition: transform .15s ease, box-shadow .15s ease;
+  }
+  .pl-cta:hover { transform: translateY(-2px); box-shadow: 0 0 0 1px rgba(198,241,53,0.55), 0 22px 48px rgba(198,241,53,0.38); }
+
+  /* PHONE MOCKUP — a CSS-drawn placeholder standing in for the real
+     dashboard, not a screenshot, so it never goes stale as that UI evolves. */
+  .pl-phone-stage { position: relative; margin: 52px auto 0; width: 260px; height: 360px; }
+  .pl-phone-glow { position: absolute; inset: -30px; background: radial-gradient(circle, rgba(198,241,53,0.35) 0%, rgba(198,241,53,0) 70%); filter: blur(6px); }
+  .pl-phone {
+    position: relative;
+    width: 260px;
+    height: 360px;
+    background: linear-gradient(160deg, #0D3D2E 0%, #061711 100%);
+    border: 3px solid rgba(255,255,255,0.12);
+    border-radius: 34px;
+    box-shadow: 0 40px 80px rgba(0,0,0,0.55);
+    transform: rotate(-6deg);
+    padding: 20px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .pl-phone::before {
+    content: '';
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 64px;
+    height: 6px;
+    border-radius: 4px;
+    background: rgba(255,255,255,0.18);
+  }
+  .pl-phone-card { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 14px; margin-top: 14px; }
+  .pl-phone-label { font-size: 9px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: rgba(245,239,224,0.5); margin-bottom: 6px; }
+  .pl-phone-value { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 24px; font-weight: 800; color: var(--lime); }
+  .pl-phone-row { display: flex; align-items: center; justify-content: space-between; }
+  .pl-phone-chip { font-size: 10px; font-weight: 700; color: #081F17; background: var(--lime); padding: 3px 8px; border-radius: 100px; }
+  .pl-phone-name { font-size: 13px; font-weight: 700; color: #FFFFFF; margin-top: 10px; }
+  .pl-phone-meta { font-size: 11px; color: rgba(245,239,224,0.55); margin-top: 2px; }
+
+  /* FEATURES — alternating full-width rows, not a grid. */
+  .pl-features { background: #081F17; padding: 64px 0 24px; }
+  .pl-feature-row {
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+    align-items: center;
+    padding: 40px 24px;
+    border-top: 1px solid rgba(255,255,255,0.08);
+  }
+  .pl-feature-row:first-child { border-top: none; }
+  .pl-feature-visual { width: 100%; max-width: 320px; flex-shrink: 0; }
+  .pl-feature-text { max-width: 460px; text-align: center; }
+  .pl-feature-kicker { font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--lime); margin-bottom: 10px; }
+  .pl-feature-text h3 { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 26px; font-weight: 800; color: #FFFFFF; margin-bottom: 12px; line-height: 1.2; }
+  .pl-feature-text p { font-size: 15px; line-height: 1.6; color: rgba(245,239,224,0.65); }
+
+  /* Feature 1 visual — the "2-Tap" idea: two big numbered taps collapsing
+     into a logged sale, echoing the real Walk-In flow. */
+  .pl-tap-demo { display: flex; align-items: center; justify-content: center; gap: 14px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 20px; padding: 28px 16px; }
+  .pl-tap-circle { width: 56px; height: 56px; border-radius: 50%; background: rgba(198,241,53,0.12); border: 1.5px solid var(--lime); color: var(--lime); font-weight: 800; font-size: 20px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .pl-tap-arrow { color: rgba(245,239,224,0.35); font-size: 18px; }
+  .pl-tap-result { background: var(--lime); color: #081F17; font-weight: 800; font-size: 13px; padding: 10px 14px; border-radius: 12px; white-space: nowrap; }
+
+  /* Feature 2 visual — a stylized (non-functional, decorative) QR block. */
+  .pl-qr-demo { display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 20px; padding: 28px; }
+  .pl-qr-card { background: #FAFAF7; border-radius: 14px; padding: 16px; display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; width: 132px; height: 132px; box-shadow: 0 0 0 1px rgba(198,241,53,0.3), 0 0 30px rgba(198,241,53,0.25); }
+  .pl-qr-card span { background: #0D3D2E; border-radius: 2px; }
+  .pl-qr-card span.off { background: transparent; }
+
+  /* SOCIAL PROOF */
+  .pl-social { background: linear-gradient(180deg, #081F17 0%, #0D3D2E 100%); padding: 56px 24px 0; text-align: center; }
+  .pl-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: .04em;
+    color: var(--lime);
+    background: rgba(198,241,53,0.1);
+    border: 1px solid rgba(198,241,53,0.4);
+    padding: 9px 18px;
+    border-radius: 100px;
+    margin-bottom: 20px;
+    box-shadow: 0 0 24px rgba(198,241,53,0.35);
+  }
+  .pl-social p { font-size: 16px; font-weight: 600; color: #FFFFFF; max-width: 420px; margin: 0 auto 36px; line-height: 1.5; }
+  .pl-ticker-mask { overflow: hidden; border-top: 1px solid rgba(255,255,255,0.08); padding: 22px 0; }
+  .pl-ticker-track { display: flex; width: max-content; gap: 40px; animation: pl-scroll 22s linear infinite; }
+  .pl-ticker-track span { font-size: 13px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: rgba(245,239,224,0.4); white-space: nowrap; }
+  @keyframes pl-scroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+  @media (prefers-reduced-motion: reduce) {
+    .pl-ticker-track { animation: none; }
+  }
+
+  @media (min-width: 860px) {
+    .pl-hero { padding: 100px 24px 80px; text-align: left; }
+    .pl-hero-inner { display: flex; align-items: center; justify-content: center; gap: 72px; max-width: 1080px; margin: 0 auto; }
+    .pl-hero-copy { flex: 1; max-width: 480px; }
+    .pl-hero h1 { font-size: 48px; margin: 0 0 20px; }
+    .pl-hero-sub { margin: 0 0 34px; }
+    .pl-phone-stage { margin: 0; flex-shrink: 0; }
+    .pl-feature-row { flex-direction: row; text-align: left; padding: 56px 48px; gap: 64px; max-width: 1080px; margin: 0 auto; }
+    .pl-feature-row.reverse { flex-direction: row-reverse; }
+    .pl-feature-text { text-align: left; }
+    .pl-feature-visual { max-width: 380px; }
+  }
+`;
+
 // `desc` stays a short one-liner for the compact pickers already using it
 // (signup form, billing tab); `tagline`/`features`/`recommended` are for
 // the public pricing section on the landing page. Every line in
@@ -8663,7 +8833,97 @@ function ProviderSignup({ onNav }) {
   }
 
   return (
-    <div className="signup-wrap">
+    <>
+      <style>{PROVIDER_LANDING_CSS}</style>
+      <div className="pl-root">
+        {/* HERO — the pitch runs first; the actual application form (below,
+            unchanged, still light-mode) starts the moment someone scrolls
+            or taps the CTA. */}
+        <section className="pl-hero">
+          <div className="pl-hero-inner">
+            <div className="pl-hero-copy">
+              <span className="pl-eyebrow">✓ Invite-only for top-tier shops</span>
+              <h1>The operating system for top-tier shops.</h1>
+              <p className="pl-hero-sub">No clunky sidebars. No confusing features. Just a lightning-fast booking engine built to pack your chairs and manage your money.</p>
+              <button className="pl-cta" onClick={() => document.getElementById("signup-form")?.scrollIntoView({ behavior: "smooth" })}>
+                Start Booking Today
+              </button>
+            </div>
+            <div className="pl-phone-stage">
+              <div className="pl-phone-glow"></div>
+              {/* Illustrative mockup of the real Dashboard's "Dopamine Card" +
+                  "Next in the Chair" — not a live screenshot, so it never
+                  drifts out of sync with that UI. */}
+              <div className="pl-phone">
+                <div className="pl-phone-card">
+                  <div className="pl-phone-label">Today's Take</div>
+                  <div className="pl-phone-value">BZ$482</div>
+                </div>
+                <div className="pl-phone-card">
+                  <div className="pl-phone-row">
+                    <div className="pl-phone-label" style={{ marginBottom: 0 }}>Next in the Chair</div>
+                    <span className="pl-phone-chip">2:30 PM</span>
+                  </div>
+                  <div className="pl-phone-name">Maria S.</div>
+                  <div className="pl-phone-meta">Signature Fade</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* FEATURES — alternating full-width rows, not a 3-column grid. */}
+        <section className="pl-features">
+          <div className="pl-feature-row">
+            <div className="pl-feature-visual">
+              <div className="pl-tap-demo">
+                <span className="pl-tap-circle">1</span>
+                <span className="pl-tap-arrow">→</span>
+                <span className="pl-tap-circle">2</span>
+                <span className="pl-tap-arrow">→</span>
+                <span className="pl-tap-result">+ BZ$45 logged</span>
+              </div>
+            </div>
+            <div className="pl-feature-text">
+              <div className="pl-feature-kicker">Zero friction</div>
+              <h3>The 2-Tap Walk-In.</h3>
+              <p>Log walk-in revenue instantly without leaving the home screen.</p>
+            </div>
+          </div>
+
+          <div className="pl-feature-row reverse">
+            <div className="pl-feature-visual">
+              <div className="pl-qr-demo">
+                <div className="pl-qr-card">
+                  {Array.from({ length: 25 }).map((_, i) => (
+                    <span key={i} className={[0,1,2,3,4,5,9,10,14,15,19,20,21,22,23,24].includes(i) || i % 7 === 0 ? "" : "off"}></span>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <div className="pl-feature-text">
+              <div className="pl-feature-kicker">Zero friction</div>
+              <h3>Chair-Side QR Booking.</h3>
+              <p>Let clients scan your screen before they leave the chair. Never lose a rebooking.</p>
+            </div>
+          </div>
+        </section>
+
+        {/* SOCIAL PROOF */}
+        <section className="pl-social">
+          <span className="pl-badge">✓ Verified Vai Partner</span>
+          <p>Join the elite network of independent barbers and salons across Belize.</p>
+          <div className="pl-ticker-mask">
+            <div className="pl-ticker-track">
+              {[...DISTRICTS, ...DISTRICTS].map((d, i) => (
+                <span key={i}>{d}</span>
+              ))}
+            </div>
+          </div>
+        </section>
+      </div>
+
+    <div className="signup-wrap" id="signup-form">
       <style>{SIGNUP_CSS}</style>
       <div className="signup-box">
         <div className="signup-header">
@@ -8743,6 +9003,7 @@ function ProviderSignup({ onNav }) {
         </p>
       </div>
     </div>
+    </>
   );
 }
 
