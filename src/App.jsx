@@ -2791,43 +2791,44 @@ function usePushSubscription(userId) {
   return { pushEnabled, subscribingPush, pushError, enablePushNotifications };
 }
 
-// Shared by enterCustomerPortal/enterProviderPortal below. Per an explicit
-// requirement, once an account is actively signed into one portal
-// (provider or customer), no click anywhere in the app may carry it into
-// the other one silently — that always has to go through a real sign-out,
-// then signing back in and explicitly choosing which portal to enter (via
-// AuthChoice). "Actively signed into" is tracked by vaibook_last_view
-// (the same localStorage flag the refresh-restore logic already keeps up
-// to date whenever `view` settles on "provider"/"customer"/"admin", and
-// clears on sign-out) rather than the momentary `view` state, so this
-// still catches a switch attempt made from the plain home page or a
-// settings screen, not just from inside the other portal's own UI.
-function switchToPortal(targetPortal, onNav, session, onSignIn, onSignOut) {
+// Shared by enterCustomerPortal/enterProviderPortal below.
+//
+// FIXED (P0 — providers getting bounced to "List a business"/"No provider
+// profile yet" when switching portals): this used to force a full
+// Supabase sign-out + re-authenticate through Google (account picker and
+// all) any time vaibook_last_view didn't already match the target portal,
+// on the theory that switching portals should always require an explicit,
+// deliberate re-choice (see AuthChoice). That theory is still right — the
+// click itself already IS the deliberate choice, nothing here ever fires
+// automatically — but forcing a real sign-out to enforce it was the bug:
+// it sent an already-authenticated account back through Google's account
+// picker (prompt: 'select_account', see signInWithGoogle) purely to
+// re-derive state (providerProfile/staffProfile) that App() already has
+// loaded in memory for this session. Any hiccup in that unnecessary
+// round-trip — the wrong Google account getting picked, or a timing race
+// in the profile reload right after the redirect — landed a real business
+// owner on the "no provider profile yet" screen even though their
+// business was never touched. Trusting the already-loaded profile state
+// instead removes that failure path entirely: no session ever needs to be
+// torn down just to look at a different portal of the SAME signed-in
+// account. A genuinely profile-less account still correctly sees
+// ProviderPortal's own "No provider profile yet" screen (or StaffPortal,
+// if it's a staff seat) — that's real, not a bug.
+function switchToPortal(targetPortal, onNav, session, onSignIn) {
   if (!session) {
     try { localStorage.setItem("vaibook_pending_view", targetPortal); } catch (e) { /* ignore */ }
     onSignIn();
     return;
   }
-  let activePortal = null;
-  try { activePortal = localStorage.getItem("vaibook_last_view"); } catch (e) { /* ignore */ }
-  if ((activePortal === "provider" || activePortal === "customer") && activePortal !== targetPortal) {
-    // Signed in and actively parked in the OTHER portal: force a real
-    // sign-out and land on the explicit "which portal?" screen instead of
-    // switching in place. Picking an option there re-runs this same
-    // function with the session now cleared, so it signs back in and
-    // lands exactly where they chose.
-    Promise.resolve(onSignOut && onSignOut()).then(() => onNav("auth"));
-    return;
-  }
   onNav(targetPortal);
 }
 
-function enterCustomerPortal(onNav, session, onSignIn, onSignOut) {
-  switchToPortal("customer", onNav, session, onSignIn, onSignOut);
+function enterCustomerPortal(onNav, session, onSignIn) {
+  switchToPortal("customer", onNav, session, onSignIn);
 }
 
-function enterProviderPortal(onNav, session, onSignIn, onSignOut) {
-  switchToPortal("provider", onNav, session, onSignIn, onSignOut);
+function enterProviderPortal(onNav, session, onSignIn) {
+  switchToPortal("provider", onNav, session, onSignIn);
 }
 
 function AuthChoice({ onNav, session, onSignIn, onSignOut }) {
@@ -2837,14 +2838,14 @@ function AuthChoice({ onNav, session, onSignIn, onSignOut }) {
         <button className="auth-back" onClick={() => onNav("home")} aria-label="Back">←</button>
         <div className="auth-choice-body">
           <h1>Sign up / log in</h1>
-          <div className="auth-option-card" onClick={() => enterCustomerPortal(onNav, session, onSignIn, onSignOut)}>
+          <div className="auth-option-card" onClick={() => enterCustomerPortal(onNav, session, onSignIn)}>
             <div>
               <h3>VaiBook for customers</h3>
               <p>Book local services near you</p>
             </div>
             <span className="auth-option-arrow">→</span>
           </div>
-          <div className="auth-option-card" onClick={() => enterProviderPortal(onNav, session, onSignIn, onSignOut)}>
+          <div className="auth-option-card" onClick={() => enterProviderPortal(onNav, session, onSignIn)}>
             <div>
               <h3>VaiBook for professionals</h3>
               <p>Manage and grow your business</p>
@@ -3364,7 +3365,7 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
     } catch (e) { /* ignore storage errors */ }
     setShowNavSuggestions(false);
     setMobileSearchOpen(false);
-    enterCustomerPortal(onNav, session, onSignIn, onSignOut);
+    enterCustomerPortal(onNav, session, onSignIn);
   };
 
   const selectNavSuggestion = (s) => {
@@ -3377,11 +3378,11 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
 
   const openTab = (tabId) => {
     try { localStorage.setItem("vaibook_pending_tab", tabId); } catch (e) { /* ignore */ }
-    // Routed through enterCustomerPortal (not a bare onNav) so an account
-    // that's actively signed into the provider portal still gets the
-    // forced sign-out + explicit portal choice instead of slipping into
-    // customer settings via this menu.
-    enterCustomerPortal(onNav, session, onSignIn, onSignOut);
+    // Routed through enterCustomerPortal (not a bare onNav) so this still
+    // works correctly for a dual-role account currently parked in the
+    // provider portal — it lands them in customer settings under the
+    // same signed-in account rather than assuming they're already there.
+    enterCustomerPortal(onNav, session, onSignIn);
   };
 
   const initials = getInitials(user?.full_name);
@@ -3494,7 +3495,7 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
                   <button className="nav-dropdown-item mobile-only-item" onClick={() => goAccount(onOpenProviderSignup)}>
                     <span className="icn">🏪</span> Provide my service
                   </button>
-                  <button className="nav-dropdown-item for-biz" onClick={() => goAccount(() => enterProviderPortal(onNav, session, onSignIn, onSignOut))}>
+                  <button className="nav-dropdown-item for-biz" onClick={() => goAccount(() => enterProviderPortal(onNav, session, onSignIn))}>
                     For businesses <span>→</span>
                   </button>
                   <hr />
@@ -3531,7 +3532,7 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
                   <>
                     <hr />
                     <button className="nav-dropdown-item mobile-only-item" onClick={() => go(onOpenProviderSignup)}>Provide my service</button>
-                    <button className="nav-dropdown-item" onClick={() => go(() => enterProviderPortal(onNav, session, onSignIn, onSignOut))}>
+                    <button className="nav-dropdown-item" onClick={() => go(() => enterProviderPortal(onNav, session, onSignIn))}>
                       Provider login
                     </button>
                   </>
@@ -3569,11 +3570,11 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
                 <>
                   <hr />
                   {current === "provider" ? (
-                    <button className="nav-dropdown-item" onClick={() => goAccount(() => enterCustomerPortal(onNav, session, onSignIn, onSignOut))}>
+                    <button className="nav-dropdown-item" onClick={() => goAccount(() => enterCustomerPortal(onNav, session, onSignIn))}>
                       <span className="icn">🛍️</span> Switch to customer
                     </button>
                   ) : (
-                    <button className="nav-dropdown-item for-biz" onClick={() => goAccount(() => enterProviderPortal(onNav, session, onSignIn, onSignOut))}>
+                    <button className="nav-dropdown-item for-biz" onClick={() => goAccount(() => enterProviderPortal(onNav, session, onSignIn))}>
                       <span className="icn">🏪</span> Switch to provider
                     </button>
                   )}
@@ -3734,7 +3735,7 @@ function LandingPage({ onNav, session, onSignIn, onSignOut }) {
     try {
       localStorage.setItem("vaibook_pending_search", JSON.stringify({ query: p.business_name, district: "All" }));
     } catch (e) { /* ignore storage errors */ }
-    enterCustomerPortal(onNav, session, onSignIn, onSignOut);
+    enterCustomerPortal(onNav, session, onSignIn);
   };
 
   const submitHeroSearch = (queryOverride) => {
@@ -3742,7 +3743,7 @@ function LandingPage({ onNav, session, onSignIn, onSignOut }) {
     try {
       localStorage.setItem("vaibook_pending_search", JSON.stringify({ query: q, district: heroDistrict || "All" }));
     } catch (e) { /* ignore storage errors */ }
-    enterCustomerPortal(onNav, session, onSignIn, onSignOut);
+    enterCustomerPortal(onNav, session, onSignIn);
   };
 
   const selectHeroSuggestion = (s) => {
@@ -3808,7 +3809,7 @@ function LandingPage({ onNav, session, onSignIn, onSignOut }) {
         </div>
         <div className="services-pills">
           {SERVICES.map((s, i) => (
-            <button className="service-pill badge-pill" key={i} onClick={() => enterCustomerPortal(onNav, session, onSignIn, onSignOut)}>
+            <button className="service-pill badge-pill" key={i} onClick={() => enterCustomerPortal(onNav, session, onSignIn)}>
               <span className="icon">{s.icon}</span> {s.name}
             </button>
           ))}
@@ -10888,11 +10889,49 @@ export default function App() {
   const [staffProfile, setStaffProfile] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // getOrCreateUser can now throw on a real query failure (see
+  // supabase.js) rather than silently treating it as "no users row yet"
+  // and attempting to insert a duplicate. Catch it here so a transient
+  // hiccup never overwrites the current `user` state with undefined —
+  // the next auth event (a token refresh, another tab action) naturally
+  // retries this whole flow if it was transient.
+  const safeGetOrCreateUser = async (authUser) => {
+    try {
+      return await getOrCreateUser(authUser);
+    } catch (err) {
+      console.error('Could not load/create user row this cycle:', err?.message);
+      return undefined;
+    }
+  };
+
   // If this account doesn't have a provider profile yet, check whether an
   // admin already activated an application submitted with this email — if
   // so, create the provider profile now so the portal has something to show.
-  const loadProviderProfile = async (authUser) => {
-    let p = await getProviderProfile(authUser.id);
+  //
+  // FIXED (P0 — registered providers occasionally seeing "no provider
+  // profile yet"): getProviderProfile now THROWS on a real query failure
+  // (network blip, or the client's session/JWT not fully attached yet —
+  // most likely right after an OAuth redirect, exactly when this runs)
+  // rather than returning null the same way it does for "confirmed: no
+  // business". Previously any such failure was indistinguishable from a
+  // genuinely business-less account, and the caller would happily
+  // overwrite a real providerProfile already in state with null. This
+  // retries once (most transient failures clear immediately), and on a
+  // second failure returns `undefined` — distinct from `null` — so the
+  // caller below knows to leave the existing provider/staff state alone
+  // instead of concluding the business is gone.
+  const loadProviderProfile = async (authUser, attempt = 0) => {
+    let p;
+    try {
+      p = await getProviderProfile(authUser.id);
+    } catch (err) {
+      if (attempt < 1) {
+        await new Promise((resolve) => setTimeout(resolve, 800));
+        return loadProviderProfile(authUser, attempt + 1);
+      }
+      console.error('Could not confirm provider profile after retry — leaving existing state as-is:', err?.message);
+      return undefined;
+    }
     if (!p) {
       const app = await getActiveApplicationByEmail(authUser.email);
       if (app) {
@@ -10911,7 +10950,14 @@ export default function App() {
           trial_end_date: app.trial_end_date || null,
         });
         if (created) {
-          p = await getProviderProfile(authUser.id);
+          try {
+            p = await getProviderProfile(authUser.id);
+          } catch (err) {
+            // The profile really was just created a moment ago — a failure
+            // re-reading it is "unknown", not "doesn't exist".
+            console.error('Created provider profile but could not re-read it:', err?.message);
+            return undefined;
+          }
         }
       }
     }
@@ -10984,12 +11030,19 @@ export default function App() {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       setSession(session);
       if (session) {
-        const u = await getOrCreateUser(session.user);
-        setUser(u);
+        const u = await safeGetOrCreateUser(session.user);
+        if (u !== undefined) setUser(u);
         const p = await loadProviderProfile(session.user);
-        setProviderProfile(p);
-        const sp = p ? null : await loadStaffProfile();
-        setStaffProfile(sp);
+        // p === undefined means the check itself failed after a retry (see
+        // loadProviderProfile) — not that there's no business. Skip the
+        // state update entirely rather than risk overwriting a real
+        // profile with null.
+        let sp = null;
+        if (p !== undefined) {
+          setProviderProfile(p);
+          sp = p ? null : await loadStaffProfile();
+          setStaffProfile(sp);
+        }
         const hadPending = applyPendingView();
         const wasAdmin = await maybeGoToAdmin(session.user.email, hadPending);
         restoreLastPortalView(hadPending, wasAdmin, !!p || !!sp);
@@ -11004,14 +11057,48 @@ export default function App() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       setSession(session);
       if (session) {
-        const u = await getOrCreateUser(session.user);
-        setUser(u);
+        const u = await safeGetOrCreateUser(session.user);
+        if (u !== undefined) setUser(u);
         const p = await loadProviderProfile(session.user);
-        setProviderProfile(p);
-        setStaffProfile(p ? null : await loadStaffProfile());
+        // Same "unknown, don't overwrite" guard as the initial-session
+        // check above — this is the more important spot for it, since
+        // this handler fires repeatedly through a session (including
+        // TOKEN_REFRESHED roughly hourly), each time with a REAL, already
+        // -correct providerProfile in state that a transient query hiccup
+        // must not stomp on.
+        if (p !== undefined) {
+          setProviderProfile(p);
+          setStaffProfile(p ? null : await loadStaffProfile());
+        }
         const hadPending = applyPendingView();
         if (event === "SIGNED_IN") {
-          await maybeGoToAdmin(session.user.email, hadPending);
+          const wasAdmin = await maybeGoToAdmin(session.user.email, hadPending);
+          // FIXED (P0, requirement #1): a registered business owner must
+          // never land on the customer dashboard just because they signed
+          // in through a generic, customer-facing entry point (the plain
+          // "Log in" link, the nav/hero search bar, a service pill) rather
+          // than explicitly picking "VaiBook for professionals" on
+          // AuthChoice — those generic entry points can't know who's about
+          // to sign in, so they always stage vaibook_pending_view as
+          // "customer" (or nothing) before kicking off Google auth. This
+          // is the one place that actually knows the account's real
+          // identity (p, just loaded above), so it's the right place to
+          // correct course. Deliberately scoped to:
+          //  - a genuine fresh sign-in only (event === "SIGNED_IN"), never
+          //    a background TOKEN_REFRESHED, so a provider who deliberately
+          //    switched to the customer view mid-session is never yanked
+          //    back out of it;
+          //  - !hadPending, so an explicit AuthChoice pick — including a
+          //    dual-role account deliberately choosing "VaiBook for
+          //    customers" — is always respected, never overridden;
+          //  - !wasAdmin, admin already wins;
+          //  - not mid booking-deep-link, so opening a #book-... link
+          //    someone sent them is never hijacked into the provider
+          //    portal just because they also happen to own a business.
+          if (p && !wasAdmin && !hadPending) {
+            const h = window.location.hash.replace("#", "");
+            if (!parseBookingHash(h)) setView("provider");
+          }
         }
       } else {
         setUser(null);
