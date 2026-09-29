@@ -541,16 +541,6 @@ const throwKnownGuardErrors = (error) => {
     err.code = 'STARTER_LIMIT_REACHED';
     throw err;
   }
-  if (error.message.includes('NOT_VIP_MEMBER')) {
-    const err = new Error('NOT_VIP_MEMBER');
-    err.code = 'NOT_VIP_MEMBER';
-    throw err;
-  }
-  if (error.message.includes('VIP_NOT_OFFERED')) {
-    const err = new Error('VIP_NOT_OFFERED');
-    err.code = 'VIP_NOT_OFFERED';
-    throw err;
-  }
   if (error.message.includes('NOT_ELIGIBLE_FOR_REVIEW')) {
     const err = new Error('NOT_ELIGIBLE_FOR_REVIEW');
     err.code = 'NOT_ELIGIBLE_FOR_REVIEW';
@@ -829,76 +819,6 @@ export const adminReviewProviderPayment = async (paymentId, status, note) => {
   });
   if (error) { console.error('Error reviewing payment:', error.message); return false; }
   return true;
-};
-
-// ── VIP MEMBERSHIP (customer ↔ VaiBook) ─────────────────────────────
-// See supabase_vip_membership.sql. Same hands-off billing model as
-// provider plan payments above: customer uploads a receipt, admin
-// confirms, vip_active/vip_expires_at update server-side.
-export const submitVipPayment = async (customerId, file, { amount, periodLabel }) => {
-  const path = `vip-payments/${customerId}/${Date.now()}-${file.name}`;
-  const { error: uploadError } = await supabase.storage.from('vaibook').upload(path, file);
-  if (uploadError) { console.error('Error uploading VIP receipt:', uploadError.message); return false; }
-
-  const { error } = await supabase.from('vip_payments').insert({
-    customer_id: customerId,
-    amount,
-    period_label: periodLabel,
-    receipt_url: path,
-  });
-  if (error) { console.error('Error submitting VIP payment:', error.message); return false; }
-  return true;
-};
-
-export const getMyVipPayments = async (customerId) => {
-  if (!customerId) return [];
-  const { data, error } = await supabase
-    .from('vip_payments')
-    .select('*')
-    .eq('customer_id', customerId)
-    .order('submitted_at', { ascending: false });
-  if (error) { console.error('Error fetching VIP payments:', error.message); return []; }
-  return data || [];
-};
-
-export const adminListVipPayments = async () => {
-  const { data, error } = await supabase.rpc('admin_list_vip_payments');
-  if (error) { console.error('Error listing VIP payments:', error.message); return []; }
-  return data || [];
-};
-
-export const adminReviewVipPayment = async (paymentId, status, note) => {
-  const { error } = await supabase.rpc('admin_review_vip_payment', {
-    p_payment_id: paymentId,
-    p_status: status,
-    p_note: note || null,
-  });
-  if (error) { console.error('Error reviewing VIP payment:', error.message); return false; }
-  return true;
-};
-
-// Off-hours booking request from a VIP member to a Pro/Business provider
-// that has opted in — see create_vip_booking_safe in
-// supabase_vip_membership.sql for why this is a separate RPC from
-// createBookingSafe rather than a parameter on it. The server re-checks
-// VIP status, the provider's plan/surcharge, and computes total_amount
-// itself — none of that is trusted from the client.
-export const createVipBooking = async (booking) => {
-  const { data, error } = await supabase.rpc('create_vip_booking_safe', {
-    p_order_number: booking.order_number,
-    p_customer_id: booking.customer_id,
-    p_provider_id: booking.provider_id,
-    p_service_id: booking.service_id,
-    p_booking_date: booking.booking_date,
-    p_booking_time: booking.booking_time,
-    p_notes: booking.notes,
-  });
-  if (error) {
-    throwKnownGuardErrors(error);
-    console.error('Error creating VIP booking:', error.message);
-    return null;
-  }
-  return Array.isArray(data) ? data[0] : data;
 };
 
 // ── BOOKING REFUNDS (provider ↔ customer, proof of a direct refund) ────
