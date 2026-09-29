@@ -22,8 +22,8 @@
 //   onApprove(id)  — approve a pending application and start its trial
 //   onDeny(id)     — reject a pending application
 //   onManage(providerId) — open full management (plan change / suspend / edit) for a live provider
-//   paymentsPending, vipPending, refundsCount — counts that used to live as badges on the
-//     now-removed sidebar (Payments / VIP Memberships / Refunds). Surfaced here as a small
+//   paymentsPending, refundsCount — counts that used to live as badges on the
+//     now-removed sidebar (Payments / Refunds). Surfaced here as a small
 //     status strip so removing that sidebar didn't remove the at-a-glance visibility.
 //   emergencyLabel — "Paused" / "Offline" / null, mirrors the sidebar's old Emergency badge
 //   onJump(tabId)  — switch the admin portal to another tab (used by the status strip)
@@ -48,13 +48,12 @@ export default function AdminDashboard({
   onDeny,
   onManage,
   paymentsPending = 0,
-  vipPending = 0,
   refundsCount = 0,
   emergencyLabel = null,
   onJump,
 }) {
   const jump = (tabId) => onJump && onJump(tabId);
-  const hasAlerts = paymentsPending > 0 || vipPending > 0 || refundsCount > 0 || emergencyLabel;
+  const hasAlerts = paymentsPending > 0 || refundsCount > 0 || emergencyLabel;
 
   return (
     <div className="acc-root">
@@ -66,8 +65,8 @@ export default function AdminDashboard({
       </div>
 
       {/* Quick-jump status strip — these used to be badge counts on the
-          sidebar (Payments / VIP Memberships / Refunds / Emergency); now
-          that the sidebar's gone, this is where that same visibility lives. */}
+          sidebar (Payments / Refunds / Emergency); now that the sidebar's
+          gone, this is where that same visibility lives. */}
       {hasAlerts && (
         <div className="acc-alerts">
           {emergencyLabel && (
@@ -75,9 +74,6 @@ export default function AdminDashboard({
           )}
           {paymentsPending > 0 && (
             <button className="acc-alert-pill" onClick={() => jump("payments")}>🧾 {paymentsPending} payment{paymentsPending === 1 ? "" : "s"} to review</button>
-          )}
-          {vipPending > 0 && (
-            <button className="acc-alert-pill" onClick={() => jump("vip")}>⚡ {vipPending} VIP payment{vipPending === 1 ? "" : "s"} to review</button>
           )}
           {refundsCount > 0 && (
             <button className="acc-alert-pill" onClick={() => jump("refunds")}>💸 {refundsCount} refund{refundsCount === 1 ? "" : "s"} pending</button>
