@@ -6459,7 +6459,20 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
   // "Your Shopfront" — same booking-link/QR logic the standalone "My QR
   // code" tab used to have; that tab is gone now, this dashboard card is
   // the one place it lives.
-  const bookingUrl = `${window.location.origin}/#book-${providerId}`;
+  //
+  // The link/QR feeding this card (and the Elite Welcome launch graphic,
+  // which is meant to be downloaded, printed and posted permanently) must
+  // always point at VaiBook's real, stable domain — never at whatever host
+  // happens to be serving the page right now. Left as window.location.origin,
+  // a provider who opened their dashboard from a Vercel *preview* deployment
+  // (a branch/PR build, not the live site) would get a QR encoding that
+  // temporary preview URL: it can go stale or vanish the moment that preview
+  // is torn down, so a code printed from it would eventually stop working.
+  // Localhost is kept as-is purely so local development can still generate
+  // a working link while testing.
+  const CANONICAL_SITE_ORIGIN = "https://vai-book.vercel.app";
+  const siteOrigin = window.location.hostname === "localhost" ? window.location.origin : CANONICAL_SITE_ORIGIN;
+  const bookingUrl = `${siteOrigin}/#book-${providerId}`;
   const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=480x480&margin=12&data=${encodeURIComponent(bookingUrl)}`;
 
   // "Rebooking Radar" — registered (non-walk-in) customers with 2+ real
