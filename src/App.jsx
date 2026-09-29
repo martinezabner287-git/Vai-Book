@@ -232,6 +232,12 @@ const css = `
     --accent-neon: var(--lime);
     --accent-neon-text: var(--forest);
     --accent-text: var(--lime);
+    /* Near-black glass, verbatim from .cx-discover-search/.cx-discover-pill
+       (Customer Portal Home) — see the GLOBAL PREMIUM UI COMPONENTS note
+       below for why .card-premium/.btn-neon/.badge-pill/.search-glass
+       exist as their own shared classes. */
+    --glass-bg: rgba(14,36,27,0.94);
+    --glass-border: rgba(255,255,255,0.1);
   }
 
   :root[data-theme="light"] {
@@ -247,6 +253,8 @@ const css = `
     --card-border: rgba(23,40,31,0.10);
     --card-shadow: 0 10px 28px rgba(23,40,31,0.08);
     --accent-text: var(--forest);
+    --glass-bg: rgba(255,255,255,0.85);
+    --glass-border: rgba(23,40,31,0.12);
   }
 
   body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--near-white); color: var(--dark-text); }
@@ -1614,6 +1622,76 @@ const css = `
   .a2hs-steps li { display: flex; align-items: flex-start; gap: 12px; font-size: 14px; color: var(--dark-text); line-height: 1.4; }
   .a2hs-step-num { flex-shrink: 0; width: 22px; height: 22px; border-radius: 50%; background: var(--forest); color: white; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
   .a2hs-glyph { font-size: 13px; }
+
+  /* ── GLOBAL PREMIUM UI COMPONENTS ──────────────────────────────────
+     Single source of truth for the "premium dark SaaS" look that
+     started on the Customer Portal Home tab — its glass-morphism
+     cards/pills/search (.cx-drop-card, .cx-discover-pill,
+     .cx-discover-search) and neon-glow button (.cx-btn-neon) — so any
+     other page (starting with the Landing Page) gets the *identical*
+     look via one shared class instead of a second, slightly-different
+     copy of the same CSS. Dark-mode values below are copied verbatim
+     from those .cx-* originals, so anywhere both appear on screen in
+     dark mode they're pixel-identical. .cx-* itself is untouched and
+     stays exactly as shipped (Customer Home is intentionally always
+     dark, not wired to the toggle — see the note by .cx-account-page) —
+     these are the reusable, theme-aware versions of the same design,
+     for pages (like the Landing Page) that DO respond to the toggle.
+
+     Deliberately placed at the very end of this stylesheet: these
+     classes are meant to be layered onto existing component classes
+     (e.g. className="carousel-card card-premium") without editing
+     every one of those older rules, and CSS resolves same-specificity
+     conflicts (one class vs. one class) by source order — last
+     declared wins. Living here, after everything else, is what makes
+     that layering actually take effect. */
+
+  .card-premium {
+    background: var(--bg-elevated) !important;
+    border: 1px solid var(--card-border) !important;
+    border-radius: 16px !important;
+    transition: transform .15s ease, box-shadow .2s ease, background .2s ease !important;
+  }
+  .card-premium:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--card-shadow) !important;
+    background: var(--bg-elevated-hover) !important;
+  }
+
+  .btn-neon {
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    background: var(--accent-neon) !important; color: var(--accent-neon-text) !important;
+    font-weight: 800; font-size: 14px; padding: 13px 22px;
+    border-radius: 100px !important; border: none; cursor: pointer; text-decoration: none;
+    box-shadow: 0 0 0 rgba(198,241,53,0.5);
+    transition: box-shadow .2s ease, transform .15s ease;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+  }
+  .btn-neon:hover { box-shadow: 0 0 24px rgba(198,241,53,0.55) !important; transform: translateY(-1px); }
+
+  .badge-pill {
+    display: inline-flex; align-items: center; gap: 7px;
+    background: var(--glass-bg) !important;
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.06);
+    color: var(--text-secondary) !important; font-weight: 600; font-size: 13px;
+    padding: 10px 18px; border-radius: 100px !important; border: 1px solid var(--glass-border) !important;
+    cursor: pointer; transition: border-color .2s ease, color .2s ease, box-shadow .2s ease, background .2s ease;
+  }
+  .badge-pill:hover { border-color: var(--lime) !important; color: var(--accent-text) !important; box-shadow: 0 0 16px rgba(198,241,53,0.25); }
+
+  .search-glass {
+    position: relative;
+    background: var(--glass-bg) !important;
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border: 1px solid var(--glass-border) !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.06) !important;
+    border-radius: 100px;
+    transition: border-color .2s ease;
+  }
+  .search-glass:focus-within { border-color: rgba(198,241,53,0.5) !important; }
+  .search-glass input, .search-glass select { color: var(--text-primary) !important; }
+  .search-glass input::placeholder { color: var(--text-tertiary) !important; }
 `;
 
 // ── BRAND MARK ─────────────────────────────────────────────────
@@ -1804,7 +1882,7 @@ function ProviderCarousel({ providers, badgeFor, onCardClick, ctaLabel }) {
           const rating = providerRating(p);
           const badge = badgeFor ? badgeFor(p) : null;
           return (
-            <div className="carousel-card" key={p.id} onClick={() => onCardClick(p)}>
+            <div className="carousel-card card-premium" key={p.id} onClick={() => onCardClick(p)}>
               {badge && <span className="carousel-badge">{badge}</span>}
               {/* The Trending Local row (ctaLabel="Book") gets a visible CTA
                   instead of the heart icon — a save/favorite action reads
@@ -1833,7 +1911,7 @@ function ProviderCarousel({ providers, badgeFor, onCardClick, ctaLabel }) {
                   {rating ? <> · ⭐ {rating} ({p.reviews.length})</> : null}
                 </div>
                 {ctaLabel && (
-                  <button className="carousel-cta" onClick={(e) => { e.stopPropagation(); onCardClick(p); }}>
+                  <button className="carousel-cta btn-neon" onClick={(e) => { e.stopPropagation(); onCardClick(p); }}>
                     {ctaLabel}
                   </button>
                 )}
@@ -3644,7 +3722,7 @@ function LandingPage({ onNav, session, onSignIn, onSignOut }) {
       <section className="search-hero">
         <h1><span className="line1">Elevate your standard.</span><span className="line2">Book Belize's elite self-care professionals.</span></h1>
         <p className="search-sub">Bypass the waitlist and book top-tier self-care artists in seconds.</p>
-        <div className="search-bar-pill" id="main-search-bar">
+        <div className="search-bar-pill search-glass" id="main-search-bar">
           <div className="field">
             <span>🔍</span>
             <input
@@ -3664,7 +3742,7 @@ function LandingPage({ onNav, session, onSignIn, onSignOut }) {
               {DISTRICTS.map(d => <option key={d} value={d}>{d}</option>)}
             </select>
           </div>
-          <button className="search-submit" onClick={() => { setShowHeroSuggestions(false); submitHeroSearch(); }}>Search</button>
+          <button className="search-submit btn-neon" onClick={() => { setShowHeroSuggestions(false); submitHeroSearch(); }}>Search</button>
           {showHeroSuggestions && heroSuggestions.length > 0 && (
             <div className="suggestions-dropdown">
               {heroSuggestions.map((s) => (
@@ -3688,7 +3766,7 @@ function LandingPage({ onNav, session, onSignIn, onSignOut }) {
         </div>
         <div className="services-pills">
           {SERVICES.map((s, i) => (
-            <button className="service-pill" key={i} onClick={() => enterCustomerPortal(onNav, session, onSignIn, onSignOut)}>
+            <button className="service-pill badge-pill" key={i} onClick={() => enterCustomerPortal(onNav, session, onSignIn, onSignOut)}>
               <span className="icon">{s.icon}</span> {s.name}
             </button>
           ))}
@@ -3714,7 +3792,7 @@ function LandingPage({ onNav, session, onSignIn, onSignOut }) {
             {trendingNearYou.map((p) => {
               const rating = providerRating(p);
               return (
-                <div className="tny-card" key={p.id} onClick={() => goToProvider(p)}>
+                <div className="tny-card card-premium" key={p.id} onClick={() => goToProvider(p)}>
                   <div className="tny-card-img">
                     {p.portfolio_urls && p.portfolio_urls.length > 0 ? (
                       <img src={p.portfolio_urls[0]} alt="" />
@@ -3736,7 +3814,7 @@ function LandingPage({ onNav, session, onSignIn, onSignOut }) {
                     ) : (
                       <div className="tny-card-rating tny-card-rating-new">New on VaiBook</div>
                     )}
-                    <button className="tny-book-btn" onClick={(e) => { e.stopPropagation(); goToProvider(p); }}>
+                    <button className="tny-book-btn btn-neon" onClick={(e) => { e.stopPropagation(); goToProvider(p); }}>
                       Book Now
                     </button>
                   </div>
@@ -4943,7 +5021,7 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
             <div className="cx-hero">
               {nextAppointment ? (
                 <>
-                  <div className="cx-hero-eyebrow">🎟️ Your VIP Pass</div>
+                  <div className="cx-hero-eyebrow">🎟️ Secured Spot</div>
                   <div className="cx-hero-service">{nextAppointment.services?.name || "Appointment"}</div>
                   <div className="cx-hero-provider">{nextAppointmentProvider?.business_name || "Provider"}</div>
                   <div className="cx-hero-countdown">{formatCountdown(nextAppointmentAt, nowTick)}</div>
