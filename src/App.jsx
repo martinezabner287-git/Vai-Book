@@ -765,6 +765,41 @@ const css = `
   .cx-discover-pill { display: inline-flex; align-items: center; gap: 7px; background: rgba(14,36,27,0.94); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); box-shadow: inset 0 1px 0 rgba(255,255,255,0.06); color: rgba(245,239,224,0.85); font-weight: 600; font-size: 13px; padding: 10px 18px; border-radius: 100px; border: 1px solid rgba(255,255,255,0.1); cursor: pointer; transition: border-color .2s, color .2s, box-shadow .2s; }
   .cx-discover-pill:hover { border-color: var(--lime); color: var(--lime); box-shadow: 0 0 16px rgba(198,241,53,0.25); }
 
+  /* LAST-MINUTE DROPS — horizontal scroll, hidden scrollbar, compact
+     "snag it" cards. Only ever populated with real same-day openings
+     (see the lastMinuteDrops effect) — never a placeholder time. */
+  .cx-dropzone { margin-bottom: 28px; }
+  .cx-dropzone-loading { font-size: 12.5px; color: rgba(13,61,46,0.55); }
+  .cx-dropzone-row { display: flex; gap: 12px; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; padding-bottom: 2px; }
+  .cx-dropzone-row::-webkit-scrollbar { display: none; }
+  .cx-drop-card { flex: 0 0 132px; scroll-snap-align: start; background: #0E241B; border-radius: 16px; padding: 14px 12px; display: flex; flex-direction: column; align-items: center; text-align: center; transition: transform .15s, box-shadow .2s; }
+  .cx-drop-card:hover { transform: translateY(-3px); box-shadow: 0 14px 30px rgba(13,61,46,0.25); }
+  .cx-drop-avatar { width: 48px; height: 48px; border-radius: 50%; background: linear-gradient(160deg, #1E6B50 0%, #0E241B 100%); display: flex; align-items: center; justify-content: center; font-size: 20px; margin-bottom: 10px; flex-shrink: 0; }
+  .cx-drop-shop { font-size: 12.5px; font-weight: 700; color: #FFFFFF; line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+  .cx-drop-time { font-size: 11px; font-weight: 700; color: var(--lime); margin-top: 4px; margin-bottom: 10px; }
+  .cx-drop-claim { width: 100%; background: var(--lime); color: var(--forest); font-weight: 800; font-size: 12.5px; padding: 9px 0; border-radius: 100px; border: none; cursor: pointer; box-shadow: 0 0 0 rgba(198,241,53,0.5); transition: box-shadow .2s; }
+  .cx-drop-claim:hover { box-shadow: 0 0 16px rgba(198,241,53,0.5); }
+
+  /* THE LOOKBOOK — CSS-columns masonry (no JS layout math needed): each
+     photo keeps its natural aspect ratio so the feed reads as a curated
+     gallery instead of a uniform directory grid. Name is always legible;
+     the "Book this look" CTA shows on hover for pointer devices and stays
+     visible by default everywhere else (touch has no hover). */
+  .cx-lookbook { margin-top: 8px; }
+  .cx-lookbook-grid { column-count: 2; column-gap: 12px; }
+  .cx-lookbook-item { position: relative; break-inside: avoid; margin-bottom: 12px; border-radius: 16px; overflow: hidden; cursor: pointer; background: #0E241B; }
+  .cx-lookbook-item img { display: block; width: 100%; height: auto; }
+  .cx-lookbook-overlay { position: absolute; left: 0; right: 0; bottom: 0; padding: 28px 12px 12px; background: linear-gradient(180deg, rgba(8,31,23,0) 0%, rgba(8,31,23,0.88) 100%); display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
+  .cx-lookbook-name { font-size: 12.5px; font-weight: 700; color: #FFFFFF; text-shadow: 0 1px 4px rgba(0,0,0,0.4); }
+  .cx-lookbook-book { background: var(--lime); color: var(--forest); font-weight: 800; font-size: 11.5px; padding: 7px 14px; border-radius: 100px; border: none; cursor: pointer; }
+  @media (hover: hover) {
+    .cx-lookbook-book { opacity: 0; transform: translateY(4px); transition: opacity .18s, transform .18s; }
+    .cx-lookbook-item:hover .cx-lookbook-book { opacity: 1; transform: translateY(0); }
+  }
+  @media (min-width: 640px) {
+    .cx-lookbook-grid { column-count: 3; }
+  }
+
   /* PROVIDER GRID */
   .provider-card { background: var(--near-white); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; cursor: pointer; transition: box-shadow .2s; }
   .provider-card:hover { box-shadow: 0 4px 20px rgba(13,61,46,0.1); }
@@ -983,6 +1018,8 @@ const css = `
     .cx-discover-pills { flex-wrap: nowrap; overflow-x: auto; margin: 0 -20px; padding: 0 20px 4px; }
     .cx-discover-pills::-webkit-scrollbar { display: none; }
     .cx-discover-pill { flex-shrink: 0; }
+    .cx-dropzone-row { margin: 0 -20px; padding: 0 20px 4px; }
+    .cx-lookbook-book { opacity: 1; transform: none; }
   }
 
   /* NAV — keep the top row on one line without pushing "Menu"/the avatar
@@ -1755,6 +1792,47 @@ function isSameLocalDay(dateStr, d) {
   const bd = bookingDateOnly(dateStr);
   if (!bd || !d) return false;
   return bd.getFullYear() === d.getFullYear() && bd.getMonth() === d.getMonth() && bd.getDate() === d.getDate();
+}
+
+// ── HOME FEED — "Last-Minute Drops" ─────────────────────────────
+// Standalone (not reused from the booking modal's own slot picker on
+// purpose — that logic is load-bearing for real checkout and this is a
+// separate, lower-stakes "is there anything open today" read used only to
+// decide what to show on the home feed; keeping them apart means a change
+// to one can never accidentally break the other).
+const minutesToHHMM = (m) => `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
+
+// Every real opening for `provider` on `dateStr`, exactly like the booking
+// modal's own picker: working hours minus busy windows (real bookings +
+// provider_blocks) minus the daily lunch break minus anything already in
+// the past today. Never returns a slot that wasn't actually computed from
+// that provider's real data — there is no placeholder/fallback path here.
+function computeDaySlots({ hours, busy, dateStr, durationMin, lunchBreakStart, lunchBreakMinutes, step = 30 }) {
+  if (!dateStr || !durationMin) return [];
+  const dow = new Date(`${dateStr}T00:00:00`).getDay();
+  const dayHours = (hours || []).find((h) => h.day_of_week === dow);
+  if (!dayHours || !dayHours.is_open || !dayHours.start_time || !dayHours.end_time) return [];
+  const startM = hhmmToMinutes(dayHours.start_time);
+  const endM = hhmmToMinutes(dayHours.end_time);
+  const isToday = dateStr === localDateStr();
+  const now = new Date();
+  const nowM = isToday ? now.getHours() * 60 + now.getMinutes() : -1;
+  const lunchWindow = lunchBreakStart && Number(lunchBreakMinutes) > 0
+    ? { start_time: lunchBreakStart, end_time: minutesToHHMM(hhmmToMinutes(lunchBreakStart) + Number(lunchBreakMinutes)) }
+    : null;
+  const allBusy = lunchWindow ? [...(busy || []), lunchWindow] : (busy || []);
+  const slots = [];
+  for (let m = startM; m + durationMin <= endM; m += step) {
+    if (isToday && m <= nowM) continue;
+    const slotEnd = m + durationMin;
+    const isBusy = allBusy.some((w) => {
+      const wStart = hhmmToMinutes(w.start_time);
+      const wEnd = hhmmToMinutes(w.end_time);
+      return m < wEnd && wStart < slotEnd;
+    });
+    if (!isBusy) slots.push(minutesToHHMM(m));
+  }
+  return slots;
 }
 
 // Renders the actual score rather than five hardcoded stars — a 2-star
@@ -3445,6 +3523,14 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
   const [lightboxUrl, setLightboxUrl] = useState(null);
   const [showBrowseSuggestions, setShowBrowseSuggestions] = useState(false);
 
+  // HOME FEED — "Last-Minute Drops": real same-day openings, computed from
+  // each candidate provider's actual working hours + actual busy windows
+  // (bookings + provider_blocks), never a placeholder time. See
+  // computeDaySlots above.
+  const [lastMinuteDrops, setLastMinuteDrops] = useState([]);
+  const [loadingLastMinute, setLoadingLastMinute] = useState(false);
+  const lastMinuteComputedForRef = useRef("");
+
   const [uploadingReceiptId, setUploadingReceiptId] = useState(null);
   const [reviewingId, setReviewingId] = useState(null);
   const [reviewForm, setReviewForm] = useState({ rating: 5, comment: "" });
@@ -3514,6 +3600,66 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
     loadProviders();
   }, [districtFilter]);
 
+  // HOME FEED — "Last-Minute Drops": for a capped set of candidate
+  // providers, fetch their REAL working hours + REAL busy windows (same
+  // data source the booking modal itself uses) and keep only the ones with
+  // a genuine opening left today. Capped at a bounded candidate set (12)
+  // so this stays a handful of parallel requests regardless of how many
+  // providers are on the network, not one request per provider on the
+  // whole platform. Recomputes when the visible provider list or the
+  // calendar day changes (a ref, not state, so it doesn't itself trigger a
+  // re-render loop).
+  useEffect(() => {
+    if (tab !== "home" || providers.length === 0) return;
+    const today = localDateStr();
+    const key = `${today}:${providers.map((p) => p.id).slice(0, 12).join(",")}`;
+    if (lastMinuteComputedForRef.current === key) return;
+    lastMinuteComputedForRef.current = key;
+
+    const candidates = providers
+      .map((p) => {
+        const activeServices = (p.services || []).filter((s) => s.is_active !== false);
+        if (activeServices.length === 0) return null;
+        // The shortest active service gives same-day availability the best
+        // chance of actually fitting before closing — a fair, provider-
+        // agnostic way to pick which service this card represents.
+        const repService = activeServices.slice().sort((a, b) => (Number(a.duration_min) || 30) - (Number(b.duration_min) || 30))[0];
+        return { provider: p, repService };
+      })
+      .filter(Boolean)
+      .slice(0, 12);
+
+    if (candidates.length === 0) { setLastMinuteDrops([]); return; }
+
+    let cancelled = false;
+    setLoadingLastMinute(true);
+    Promise.all(
+      candidates.map(({ provider, repService }) =>
+        Promise.all([getWorkingHours(provider.id), getProviderBusyWindows(provider.id, today)]).then(([hours, busy]) => {
+          const slots = computeDaySlots({
+            hours,
+            busy,
+            dateStr: today,
+            durationMin: Number(repService.duration_min) || 30,
+            lunchBreakStart: provider.lunch_break_start,
+            lunchBreakMinutes: provider.lunch_break_minutes,
+          });
+          if (slots.length === 0) return null;
+          return { provider, service: repService, time: slots[0] };
+        })
+      )
+    ).then((results) => {
+      if (cancelled) return;
+      const drops = results
+        .filter(Boolean)
+        .sort((a, b) => hhmmToMinutes(a.time) - hhmmToMinutes(b.time))
+        .slice(0, 8);
+      setLastMinuteDrops(drops);
+      setLoadingLastMinute(false);
+    });
+    return () => { cancelled = true; };
+  }, [tab, providers]);
+
   const loadBookings = async () => {
     if (!user?.id) return;
     setLoadingBookings(true);
@@ -3567,6 +3713,22 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
         getLoyaltyAccount(provider.id, user.id).then((acc) => setMyLoyalty(acc));
       }
     }
+  };
+
+  // "Claim" on a Last-Minute Drop card — same entry point as any other
+  // booking, just pre-landed on the exact service + real open slot the
+  // home feed already found, so there's no re-picking a time that was
+  // only ever going to be the same one.
+  const claimLastMinuteDrop = (drop) => {
+    openBooking(drop.provider);
+    setBookingForm({
+      service_id: drop.service.id,
+      service_ids: [],
+      date: localDateStr(),
+      time: drop.time,
+      notes: "",
+    });
+    setBookingService(drop.service);
   };
 
   const startBookingForService = (service) => {
@@ -4091,6 +4253,32 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
     return Math.min(...prices);
   };
 
+  // HOME FEED — "The Lookbook": every photo already on file comes straight
+  // from provider.portfolio_urls (the same photos shown on each provider's
+  // own profile gallery) — round-robin across providers rather than
+  // provider-by-provider, so one shop with a big gallery can't crowd out
+  // everyone else's work, capped at a sensible feed length.
+  const lookbookPhotos = (() => {
+    const byProvider = providers
+      .map((p) => ({ provider: p, urls: p.portfolio_urls || [] }))
+      .filter((x) => x.urls.length > 0);
+    const photos = [];
+    let round = 0;
+    while (photos.length < 24) {
+      let addedAny = false;
+      for (const { provider, urls } of byProvider) {
+        if (round < urls.length) {
+          photos.push({ url: urls[round], provider });
+          addedAny = true;
+          if (photos.length >= 24) break;
+        }
+      }
+      if (!addedAny) break;
+      round += 1;
+    }
+    return photos;
+  })();
+
   return (
     <div className="portal-layout">
       {/* The persistent left sidebar was removed — every link it held
@@ -4147,6 +4335,36 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
                 </>
               )}
             </div>
+
+            {/* LAST-MINUTE DROPS — real same-day openings only (see the
+                lastMinuteDrops effect above): a provider only shows up
+                here because computeDaySlots found it an actual free slot
+                today from its real working hours and real busy windows.
+                Horizontal scroll, hidden scrollbar, compact "snag it" cards. */}
+            {(loadingLastMinute || lastMinuteDrops.length > 0) && (
+              <div className="cx-dropzone">
+                <div className="cx-section-heading">Snag a Spot Today 🔥</div>
+                {loadingLastMinute && lastMinuteDrops.length === 0 ? (
+                  <div className="cx-dropzone-loading">Checking who's free today…</div>
+                ) : (
+                  <div className="cx-dropzone-row">
+                    {lastMinuteDrops.map((drop) => (
+                      <div className="cx-drop-card" key={drop.provider.id}>
+                        <div
+                          className="cx-drop-avatar"
+                          style={drop.provider.portfolio_urls && drop.provider.portfolio_urls.length > 0 ? { background: `center/cover no-repeat url(${drop.provider.portfolio_urls[0]})` } : undefined}
+                        >
+                          {(!drop.provider.portfolio_urls || drop.provider.portfolio_urls.length === 0) && <span>{iconForServiceType(drop.provider.service_type)}</span>}
+                        </div>
+                        <div className="cx-drop-shop">{drop.provider.business_name}</div>
+                        <div className="cx-drop-time">Today at {formatBookingTime(drop.time)}</div>
+                        <button className="cx-drop-claim" onClick={() => claimLastMinuteDrop(drop)}>Claim</button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* BOOK AGAIN — sleek horizontal rows for recently visited
                 shops, one tap straight into the booking flow. No detour
@@ -4209,6 +4427,27 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
                 ))}
               </div>
             </div>
+
+            {/* THE LOOKBOOK — real portfolio photos (provider.portfolio_urls),
+                interleaved across providers, masonry-style via CSS columns
+                so it never looks like a rigid directory grid. Tap/hover
+                reveals the shop name + a direct "Book this look". */}
+            {lookbookPhotos.length > 0 && (
+              <div className="cx-lookbook">
+                <div className="cx-section-heading">Get Inspired</div>
+                <div className="cx-lookbook-grid">
+                  {lookbookPhotos.map((photo, i) => (
+                    <div className="cx-lookbook-item" key={`${photo.provider.id}-${i}`} onClick={() => openBooking(photo.provider)}>
+                      <img src={photo.url} alt={`${photo.provider.business_name} — recent work`} loading="lazy" />
+                      <div className="cx-lookbook-overlay">
+                        <span className="cx-lookbook-name">{photo.provider.business_name}</span>
+                        <button className="cx-lookbook-book" onClick={(e) => { e.stopPropagation(); openBooking(photo.provider); }}>Book this look</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </>
         )}
 
