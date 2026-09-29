@@ -364,6 +364,20 @@ const css = `
   .nav-account-dropdown a:hover { background: var(--sand); }
   .nav-account-dropdown hr { border: none; border-top: 1px solid var(--border); margin: 8px 4px; }
 
+  /* Customer-only dark variant of the same dropdown (Provider's own
+     account dropdown reuses .nav-account-dropdown unmodified — this
+     only applies when the signed-in view is the customer portal, see
+     the accountOpen dropdown in Nav()). No default browser <ul>/<li>
+     styling to begin with (it's already div/button-based), so this is
+     purely the color treatment matching the rest of the dark pages. */
+  .cx-account-dropdown { background: #0E241B; border: none; box-shadow: 0 20px 50px rgba(0,0,0,0.4); }
+  .cx-account-dropdown .nav-account-name { color: rgba(245,239,224,0.5); }
+  .cx-account-dropdown button.nav-dropdown-item,
+  .cx-account-dropdown a { color: #FFFFFF; }
+  .cx-account-dropdown button.nav-dropdown-item:hover,
+  .cx-account-dropdown a:hover { background: rgba(255,255,255,0.08); }
+  .cx-account-dropdown hr { border-top-color: rgba(255,255,255,0.1); }
+
   /* HERO */
   .hero {
     background: var(--forest);
@@ -799,6 +813,117 @@ const css = `
   @media (min-width: 640px) {
     .cx-lookbook-grid { column-count: 3; }
   }
+
+  /* ── CUSTOMER ACCOUNT PAGES — global dark standardization ──────────
+     Every Customer Portal tab except Home (Browse, Favorites, My
+     bookings, Payments, My reviews, Settings) gets this ONE treatment,
+     switched on by the single ".cx-account-page" class on <main> (see
+     CustomerPortal's render). Deliberately built as overrides of the
+     EXISTING shared classes (.card, .metric, .status-pill, .input-group,
+     .tab-row, .provider-card, .search-bar, etc.) rather than new
+     one-off classes, so every page reuses the same rules instead of
+     each page getting its own custom CSS — and scoped under
+     .cx-account-page specifically so none of this touches the Provider
+     or Admin portals, which still use these exact class names with the
+     original light theme.
+
+     --forest and --near-white are deliberately left untouched here: both
+     are dual-purpose in this codebase (used as TEXT color in some
+     places, and as a lime-paired BUTTON background in others — e.g.
+     .btn-sm.lime/.btn-primary pair a lime background with var(--forest)
+     text, and .btn-ghost already pairs var(--near-white) text with a
+     transparent background for dark surfaces). Remapping either
+     globally would fix some spots and silently break others. Only the
+     genuinely single-purpose tokens (--sand/--dark-text/--muted/--border,
+     all used as plain background or secondary-text roles) are remapped;
+     everywhere --forest was used as bare text-on-dark it gets an
+     explicit override or, for the handful of inline styles CSS can't
+     reach, a direct fix at the JSX call site. */
+  .cx-account-page {
+    --sand: #14301F;
+    --dark-text: #F5EFE0;
+    --muted: rgba(245,239,224,0.55);
+    --border: rgba(255,255,255,0.12);
+    background: #081F17;
+  }
+
+  /* Page header */
+  .cx-account-page .portal-header h2 { color: #FFFFFF; }
+  .cx-account-page .portal-header p { color: rgba(245,239,224,0.55); }
+
+  /* Cards + metrics — the same dark, borderless card everywhere */
+  .cx-account-page .card,
+  .cx-account-page .metric,
+  .cx-account-page .provider-card {
+    background: #0E241B;
+    border: none;
+    box-shadow: 0 10px 26px rgba(0,0,0,0.22);
+  }
+  .cx-account-page .card-title { color: #FFFFFF; }
+  .cx-account-page .metric-value { color: var(--lime); }
+  .cx-account-page .booking-amount { color: var(--lime); }
+  .cx-account-page .price-tag { color: var(--lime); }
+  .cx-account-page .booking-info .title,
+  .cx-account-page .provider-card-body h4 { color: #FFFFFF; }
+  .cx-account-page .booking-item { border-bottom-color: rgba(255,255,255,0.08); }
+  .cx-account-page .avail-badge { background: rgba(198,241,53,0.15); color: var(--lime); }
+  .cx-account-page .cx-plan-badge { background: rgba(198,241,53,0.15); color: var(--lime); font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 5px; vertical-align: middle; margin-left: 6px; }
+
+  /* Status pills — same pill, dark-mode-appropriate tints */
+  .cx-account-page .status-pill.confirmed { background: rgba(34,197,94,0.18); color: #4ADE80; }
+  .cx-account-page .status-pill.pending { background: rgba(245,158,11,0.18); color: #FBBF24; }
+  .cx-account-page .status-pill.done { background: rgba(255,255,255,0.08); color: rgba(245,239,224,0.55); }
+  .cx-account-page .status-pill.rejected { background: rgba(239,68,68,0.18); color: #F87171; }
+  .cx-account-page .status-pill.awaiting { background: rgba(59,130,246,0.18); color: #60A5FA; }
+
+  /* Filter tabs (Upcoming / Completed / Cancelled, provider profile tabs) */
+  .cx-account-page .tab-row { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.1); }
+  .cx-account-page .tab.active { background: var(--lime); color: #0E241B; }
+
+  /* Inputs, selects, textareas — dark + integrated, neon focus ring */
+  .cx-account-page .input-group label { color: rgba(245,239,224,0.75); }
+  .cx-account-page .input-group input,
+  .cx-account-page .input-group select,
+  .cx-account-page .input-group textarea {
+    background: rgba(255,255,255,0.06);
+    border-color: rgba(255,255,255,0.14);
+    color: #FFFFFF;
+  }
+  .cx-account-page .input-group input::placeholder,
+  .cx-account-page .input-group textarea::placeholder { color: rgba(245,239,224,0.35); }
+  .cx-account-page .input-group input:focus,
+  .cx-account-page .input-group select:focus,
+  .cx-account-page .input-group textarea:focus {
+    border-color: var(--lime);
+    box-shadow: 0 0 0 3px rgba(198,241,53,0.15);
+  }
+  .cx-account-page .input-group input:disabled { background: rgba(255,255,255,0.03); color: rgba(245,239,224,0.4); }
+  .cx-account-page select option { background: #0E241B; color: #FFFFFF; }
+
+  /* Buttons — .btn-sm.lime/.forest and .btn-primary/.btn-ghost already
+     work unmodified on dark (see the note above); only the plain
+     "ghost" outline variant needs its border/hover brightened to read
+     clearly against the new dark card/page backgrounds. */
+  .cx-account-page .btn-sm.ghost { border-color: rgba(255,255,255,0.28); color: #FFFFFF; }
+  .cx-account-page .btn-sm.ghost:hover { border-color: var(--lime); color: var(--lime); }
+
+  /* Search bar + autocomplete (Browse tab, and the pinned nav search
+     when it's showing over an account page) */
+  .cx-account-page .search-bar,
+  .cx-account-page .suggestions-dropdown {
+    background: #0E241B;
+    border-color: rgba(255,255,255,0.12);
+  }
+  .cx-account-page .search-bar input { color: #FFFFFF; }
+  .cx-account-page .suggestion-item:hover,
+  .cx-account-page .suggestion-item.active { background: rgba(255,255,255,0.06); }
+
+  /* Star rating / review picker */
+  .cx-account-page .star-picker span { color: rgba(255,255,255,0.18); }
+  .cx-account-page .star-picker span.on { color: #F59E0B; }
+
+  /* Profile avatar circle already pairs lime + forest text — dark-safe
+     as-is, no override needed. */
 
   /* PROVIDER GRID */
   .provider-card { background: var(--near-white); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; cursor: pointer; transition: box-shadow .2s; }
@@ -2883,7 +3008,7 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
             <span className="nav-avatar-caret">▾</span>
           </button>
           {accountOpen && (
-            <div className="nav-account-dropdown" onMouseLeave={closeAccount}>
+            <div className={`nav-account-dropdown${current === "customer" ? " cx-account-dropdown" : ""}`} onMouseLeave={closeAccount}>
               <div className="nav-account-name">{user?.full_name || "My account"}</div>
               {PORTAL_TOOLS_BY_VIEW[current].map((item) => (
                 <button key={item.id} className="nav-dropdown-item" onClick={() => goAccount(() => setPortalTab(item.id))}>
@@ -4286,7 +4411,15 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
           reviews, Settings, Sign out) now lives exclusively in the top
           header's avatar dropdown (see PORTAL_TOOLS_BY_VIEW.customer and
           the Nav component), so nothing here was left unreachable. */}
-      <main className="portal-content">
+      {/* Every account page except Home shares one dark "account page"
+          treatment (see the .cx-account-page CSS block) — same dark card
+          style, inputs, and buttons the Home dashboard established,
+          applied via ONE class switch here rather than per-tab custom
+          CSS, so Settings/Bookings/Payments/Reviews/Browse/Favorites all
+          read as the same app instead of drifting back to the old light
+          theme one page at a time. Home keeps its own light-canvas +
+          dark-card look exactly as shipped — untouched. */}
+      <main className={`portal-content${tab === "home" ? "" : " cx-account-page"}`}>
         {tab === "home" && (
           <>
             {/* VIP PASS — replaces the generic greeting + 4 metric cards.
@@ -4477,7 +4610,7 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
             </div>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 20 }}>
               {["All", ...DISTRICTS].map((f, i) => (
-                <button key={i} className="btn-sm" style={{ background: f === districtFilter ? "var(--forest)" : "white", color: f === districtFilter ? "white" : "var(--muted)", border: "1px solid var(--border)" }} onClick={() => setDistrictFilter(f)}>{f}</button>
+                <button key={i} className="btn-sm" style={{ background: f === districtFilter ? "var(--lime)" : "rgba(255,255,255,0.06)", color: f === districtFilter ? "var(--forest)" : "var(--muted)", border: "1px solid var(--border)" }} onClick={() => setDistrictFilter(f)}>{f}</button>
               ))}
             </div>
             {loadingProviders && <p style={{ fontSize: 13, color: "var(--muted)" }}>Loading providers...</p>}
@@ -4500,10 +4633,10 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
                     {p.portfolio_urls && p.portfolio_urls.length > 0 ? (
                       <div className="provider-card-img" style={{ background: `center/cover no-repeat url(${p.portfolio_urls[0]})` }} />
                     ) : (
-                      <div className="provider-card-img" style={{ background: "#E8F5EF" }}>{iconForServiceType(p.service_type)}</div>
+                      <div className="provider-card-img" style={{ background: "linear-gradient(160deg, #1E6B50 0%, #0E241B 100%)" }}>{iconForServiceType(p.service_type)}</div>
                     )}
                     <div className="provider-card-body">
-                      <h4>{p.business_name}{(() => { const badge = planBadge(p); return badge && <span style={{ marginLeft: 6, fontSize: 11, fontWeight: 700, color: badge.color, background: badge.bg, padding: "2px 7px", borderRadius: 5, verticalAlign: "middle" }}>{badge.label}</span>; })()}{p.is_featured && <span style={{ marginLeft: 6, fontSize: 11, fontWeight: 700, color: "var(--forest)", background: "var(--sand)", padding: "2px 7px", borderRadius: 5, verticalAlign: "middle" }}>⭐ Featured</span>}</h4>
+                      <h4>{p.business_name}{(() => { const badge = planBadge(p); return badge && <span className="cx-plan-badge">{badge.label}</span>; })()}{p.is_featured && <span style={{ marginLeft: 6, fontSize: 11, fontWeight: 700, color: "var(--lime)", background: "rgba(198,241,53,0.15)", padding: "2px 7px", borderRadius: 5, verticalAlign: "middle" }}>⭐ Featured</span>}</h4>
                       <div className="trade">{p.service_type} · {p.district}</div>
                       <div className="stars">{rating ? <StarRating value={rating} /> : "No reviews yet "}<span style={{ color: "var(--muted)", fontSize: 12 }}>{rating ? ` ${rating} (${p.reviews.length})` : ""}</span></div>
                       {p.whatsapp && <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 4 }}>📞 {p.whatsapp}</div>}
@@ -4542,10 +4675,10 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
                     {p.portfolio_urls && p.portfolio_urls.length > 0 ? (
                       <div className="provider-card-img" style={{ background: `center/cover no-repeat url(${p.portfolio_urls[0]})` }} />
                     ) : (
-                      <div className="provider-card-img" style={{ background: "#E8F5EF" }}>{iconForServiceType(p.service_type)}</div>
+                      <div className="provider-card-img" style={{ background: "linear-gradient(160deg, #1E6B50 0%, #0E241B 100%)" }}>{iconForServiceType(p.service_type)}</div>
                     )}
                     <div className="provider-card-body">
-                      <h4>{p.business_name}{(() => { const badge = planBadge(p); return badge && <span style={{ marginLeft: 6, fontSize: 11, fontWeight: 700, color: badge.color, background: badge.bg, padding: "2px 7px", borderRadius: 5, verticalAlign: "middle" }}>{badge.label}</span>; })()}{p.is_featured && <span style={{ marginLeft: 6, fontSize: 11, fontWeight: 700, color: "var(--forest)", background: "var(--sand)", padding: "2px 7px", borderRadius: 5, verticalAlign: "middle" }}>⭐ Featured</span>}</h4>
+                      <h4>{p.business_name}{(() => { const badge = planBadge(p); return badge && <span className="cx-plan-badge">{badge.label}</span>; })()}{p.is_featured && <span style={{ marginLeft: 6, fontSize: 11, fontWeight: 700, color: "var(--lime)", background: "rgba(198,241,53,0.15)", padding: "2px 7px", borderRadius: 5, verticalAlign: "middle" }}>⭐ Featured</span>}</h4>
                       <div className="trade">{p.service_type} · {p.district}</div>
                       <div className="stars">{rating ? <StarRating value={rating} /> : "No reviews yet "}<span style={{ color: "var(--muted)", fontSize: 12 }}>{rating ? ` ${rating} (${p.reviews.length})` : ""}</span></div>
                       <div className="provider-card-footer">
@@ -4621,8 +4754,8 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
                     )}
 
                     {["cancelled", "rejected"].includes(b.status) && b.booking_refunds && b.booking_refunds.length > 0 && (
-                      <div style={{ marginTop: 8, background: "#E7F5EC", borderRadius: 8, padding: 12 }}>
-                        <div style={{ fontSize: 13, fontWeight: 600, color: "var(--forest)" }}>💸 You were refunded BZ${b.booking_refunds[0].amount}</div>
+                      <div style={{ marginTop: 8, background: "rgba(34,197,94,0.12)", borderRadius: 8, padding: 12 }}>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: "#4ADE80" }}>💸 You were refunded BZ${b.booking_refunds[0].amount}</div>
                         {b.booking_refunds[0].note && <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 4 }}>{b.booking_refunds[0].note}</p>}
                         {b.booking_refunds[0].receipt_url && <a href="#" onClick={(e) => { e.preventDefault(); openPrivateFile(b.booking_refunds[0].receipt_url); }} style={{ fontSize: 12 }}>View proof</a>}
                       </div>
@@ -4630,7 +4763,7 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
 
                     {b.pending_reschedule_date && (
                       <div style={{ marginTop: 8, background: "var(--sand)", borderRadius: 10, padding: 12 }}>
-                        <div style={{ fontSize: 13, fontWeight: 700, color: "var(--forest)", marginBottom: 4 }}>New time proposed</div>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: "var(--lime)", marginBottom: 4 }}>New time proposed</div>
                         <p style={{ fontSize: 12.5, color: "var(--dark-text)", marginBottom: 10 }}>
                           {b.provider_profiles?.business_name || "Your provider"} would like to move this to <strong>{formatBookingWhen({ booking_date: b.pending_reschedule_date, booking_time: b.pending_reschedule_time })}</strong>. Your original time stays booked until you decide.
                         </p>
@@ -4659,7 +4792,7 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
 
                     {b.status === "awaiting_payment" && b.payments && b.payments.find((p) => p.payment_status === "pending") && (
                       <p style={{ fontSize: 11, color: "var(--muted)", marginTop: 6 }}>
-                        Payment status: <strong style={{ color: "var(--forest)" }}>pending</strong> — BZ${b.payments.find((p) => p.payment_status === "pending").amount}
+                        Payment status: <strong style={{ color: "var(--lime)" }}>pending</strong> — BZ${b.payments.find((p) => p.payment_status === "pending").amount}
                       </p>
                     )}
                     {b.status === "awaiting_payment" && b.payment_status === "unpaid" && (
@@ -4688,7 +4821,7 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
 
                     {b.status === "confirmed" && b.provider_profiles?.payment_methods && b.provider_profiles.payment_methods.length > 0 && (
                       <details style={{ marginTop: 8 }}>
-                        <summary style={{ fontSize: 12, color: "var(--forest)", cursor: "pointer", fontWeight: 600 }}>Payment details</summary>
+                        <summary style={{ fontSize: 12, color: "var(--lime)", cursor: "pointer", fontWeight: 600 }}>Payment details</summary>
                         <div style={{ background: "var(--sand)", borderRadius: 10, padding: "10px 12px", marginTop: 8, fontSize: 12.5, lineHeight: 1.6 }}>
                           {b.provider_profiles.payment_methods.map((m) => (
                             <div key={m.id} style={{ marginBottom: 6 }}>
@@ -4733,7 +4866,9 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
                             <span key={n} className={n <= reviewForm.rating ? "on" : ""} onClick={() => setReviewForm(f => ({ ...f, rating: n }))}>★</span>
                           ))}
                         </div>
-                        <textarea placeholder="How was it?" value={reviewForm.comment} onChange={e => setReviewForm(f => ({ ...f, comment: e.target.value }))} style={{ width: "100%", minHeight: 60, marginBottom: 8 }} />
+                        <div className="input-group" style={{ marginBottom: 0 }}>
+                          <textarea placeholder="How was it?" value={reviewForm.comment} onChange={e => setReviewForm(f => ({ ...f, comment: e.target.value }))} style={{ width: "100%", minHeight: 60, marginBottom: 8 }} />
+                        </div>
                         <div style={{ display: "flex", gap: 8 }}>
                           <button className="btn-sm forest" disabled={submittingReview} onClick={() => submitBookingReview(b)}>{submittingReview ? "Submitting..." : "Submit review"}</button>
                           <button className="btn-sm ghost" onClick={() => setReviewingId(null)}>Cancel</button>
@@ -4746,7 +4881,7 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
                         {reviewIsHeld && (
                           <>
                             {" "}
-                            <span style={{ color: "var(--forest)" }}>
+                            <span style={{ color: "var(--lime)" }}>
                               — not public yet, so you can still change it until {new Date(b.reviews[0].hold_until).toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}.
                             </span>{" "}
                             <button className="btn-sm ghost" style={{ marginLeft: 4, fontSize: 11, padding: "3px 8px" }} onClick={() => openReview(b.id, b.reviews[0])}>Edit review</button>
@@ -4811,7 +4946,7 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
                   <div className="card-title" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                     Profile
                     {!editingProfile && (
-                      <span style={{ color: "var(--forest)", fontWeight: 600, fontSize: 13, cursor: "pointer" }} onClick={startEditProfile}>Edit</span>
+                      <span style={{ color: "var(--lime)", fontWeight: 600, fontSize: 13, cursor: "pointer" }} onClick={startEditProfile}>Edit</span>
                     )}
                   </div>
                   <div style={{ display: "flex", justifyContent: "center", margin: "8px 0 20px" }}>
@@ -4879,7 +5014,7 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
                     </div>
                   </div>
                   {pushEnabled ? (
-                    <span style={{ fontSize: 12, fontWeight: 700, color: "var(--forest)", flexShrink: 0 }}>✓ On</span>
+                    <span style={{ fontSize: 12, fontWeight: 700, color: "var(--lime)", flexShrink: 0 }}>✓ On</span>
                   ) : (
                     <button className="btn-sm forest" style={{ flexShrink: 0 }} onClick={enablePushNotifications} disabled={subscribingPush}>
                       {subscribingPush ? "Turning on..." : "Turn on"}
