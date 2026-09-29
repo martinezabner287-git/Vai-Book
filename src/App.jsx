@@ -3539,8 +3539,8 @@ function LandingPage({ onNav, session, onSignIn, onSignOut }) {
           glyph with a wide left side-bearing that reads as a stray gap at
           large display size — confirmed on the live site. */}
       <section className="search-hero">
-        <h1><span className="line1">Belize's top professionals,</span><span className="line2">booked in seconds</span></h1>
-        <p className="search-sub">Skip the DMs, choose your time, and secure your spot in seconds.</p>
+        <h1><span className="line1">Elevate your standard.</span><span className="line2">Book Belize's elite self-care professionals.</span></h1>
+        <p className="search-sub">Bypass the waitlist and book top-tier self-care artists in seconds.</p>
         <div className="search-bar-pill" id="main-search-bar">
           <div className="field">
             <span>🔍</span>
