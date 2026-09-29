@@ -465,6 +465,50 @@ const css = `
     .search-submit { width: 100%; }
   }
 
+  /* PROVIDER HERO (B2B "/providers" route) — deliberately darker and more
+     "high-status" than the consumer .search-hero: near-black forest
+     gradient instead of the bright emerald one, no search pill, a single
+     centered stack (eyebrow → headline → subhead → trial badge → massive
+     lime CTA → trust note). This is what makes the two routes read as
+     visually distinct businesses (consumer marketplace vs. B2B SaaS)
+     rather than the same page with different copy. */
+  .provider-hero {
+    position: relative; overflow: hidden; padding: 128px 24px 104px; text-align: center;
+    background: linear-gradient(165deg, #081F17 0%, #0D3D2E 55%, #14503A 100%);
+  }
+  .provider-hero::before {
+    content: '';
+    position: absolute; inset: -25%;
+    background: radial-gradient(circle at 50% 0%, rgba(198,241,53,0.16), transparent 62%);
+    z-index: 0;
+  }
+  .provider-hero > * { position: relative; z-index: 1; }
+  .provider-hero-eyebrow {
+    display: inline-block; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 12px; font-weight: 700;
+    letter-spacing: .16em; text-transform: uppercase; color: var(--lime);
+    background: rgba(198,241,53,0.1); border: 1px solid rgba(198,241,53,0.28);
+    padding: 8px 20px; border-radius: 100px; margin-bottom: 24px;
+  }
+  .provider-hero-title {
+    font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; color: var(--near-white);
+    font-size: clamp(34px, 5vw, 60px); line-height: 1.08; letter-spacing: -1px;
+    max-width: 780px; margin: 0 auto 18px;
+  }
+  .provider-hero-sub {
+    font-size: 18px; font-weight: 500; color: rgba(250,250,247,0.7);
+    max-width: 480px; margin: 0 auto 26px; line-height: 1.5;
+  }
+  .provider-hero .trial-badge { margin: 0 auto 28px; }
+  .provider-hero-cta.btn-lime {
+    display: inline-block; padding: 20px 44px; font-size: 17px; font-weight: 800;
+    border-radius: 100px; box-shadow: 0 18px 44px rgba(198,241,53,0.28);
+  }
+  .provider-hero-note { margin-top: 18px; font-size: 13px; color: rgba(250,250,247,0.5); }
+  @media (max-width: 640px) {
+    .provider-hero { padding: 96px 20px 72px; }
+    .provider-hero-cta.btn-lime { width: 100%; padding: 18px 0; }
+  }
+
   /* STATS BAR */
   .marketing-strip { background: var(--sand); padding: 40px 48px; display: flex; justify-content: space-around; gap: 32px; flex-wrap: wrap; }
   .marketing-item { text-align: center; max-width: 230px; }
@@ -2190,6 +2234,20 @@ function scrollToSection(id, onNav, current) {
   }
 }
 
+// Same jump-to-section pattern as scrollToSection above, but for the B2B
+// provider landing page (pricing now lives there, not on the consumer
+// home page — see ProviderLandingPage) — every nav "Pricing" link should
+// land on that page's pricing section, from anywhere in the app.
+function scrollToProvidersSection(id, onNav, current) {
+  const jump = () => document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+  if (current !== "providers") {
+    onNav("providers");
+    setTimeout(jump, 60);
+  } else {
+    jump();
+  }
+}
+
 // Web Push subscription keys are handed to the browser as a base64url
 // string (VAPID public key) but the Push API wants a raw Uint8Array —
 // this is the standard conversion every Web Push tutorial uses.
@@ -2912,7 +2970,7 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
       <button className={`nav-search-toggle ${navSearchActive ? "visible" : ""}`} onClick={() => setMobileSearchOpen(v => !v)} aria-label="Search">🔍</button>
       )}
 
-      {(current === "home" || (current === "customer" && !session)) ? (
+      {(current === "home" || current === "providers" || (current === "customer" && !session)) ? (
         <div className="nav-cta">
           {session ? (
             <div style={{ position: "relative" }}>
@@ -2946,9 +3004,9 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
                   <a onClick={() => goAccount(() => onNav("home"))}>Home</a>
                   <a onClick={() => goAccount(() => scrollToSection("services", onNav, current))}>Services</a>
                   <a onClick={() => goAccount(() => scrollToSection("how-it-works", onNav, current))}>How it works</a>
-                  <a onClick={() => goAccount(() => scrollToSection("pricing", onNav, current))}>Pricing</a>
+                  <a onClick={() => goAccount(() => scrollToProvidersSection("pricing", onNav, current))}>Pricing</a>
                   <hr />
-                  <button className="nav-dropdown-item mobile-only-item" onClick={() => goAccount(() => onNav("signup"))}>
+                  <button className="nav-dropdown-item mobile-only-item" onClick={() => goAccount(() => onNav("providers"))}>
                     <span className="icn">🏪</span> Provide my service
                   </button>
                   <button className="nav-dropdown-item for-biz" onClick={() => goAccount(() => enterProviderPortal(onNav, session, onSignIn, onSignOut))}>
@@ -2965,7 +3023,10 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
             <button className="nav-login-link" onClick={() => onNav("auth")}>Log in</button>
           )}
           {current === "home" && (
-            <button className="nav-signup-btn" onClick={() => onNav("signup")}>Provide my service</button>
+            <button className="nav-signup-btn" onClick={() => onNav("providers")}>Provide my service</button>
+          )}
+          {current === "providers" && (
+            <button className="nav-signup-btn" onClick={() => onNav("home")}>Find a Professional</button>
           )}
           {!session && (
           <div style={{ position: "relative" }}>
@@ -2978,13 +3039,13 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
                 <a onClick={() => go(() => onNav("home"))}>Home</a>
                 <a onClick={() => go(() => scrollToSection("services", onNav, current))}>Services</a>
                 <a onClick={() => go(() => scrollToSection("how-it-works", onNav, current))}>How it works</a>
-                <a onClick={() => go(() => scrollToSection("pricing", onNav, current))}>Pricing</a>
+                <a onClick={() => go(() => scrollToProvidersSection("pricing", onNav, current))}>Pricing</a>
                 <hr />
                 <button className="nav-dropdown-item" onClick={() => go(openInstallAppGuide)}>Add to Home Screen</button>
                 {current === "home" && (
                   <>
                     <hr />
-                    <button className="nav-dropdown-item mobile-only-item" onClick={() => go(() => onNav("signup"))}>Provide my service</button>
+                    <button className="nav-dropdown-item mobile-only-item" onClick={() => go(() => onNav("providers"))}>Provide my service</button>
                     <button className="nav-dropdown-item" onClick={() => go(() => enterProviderPortal(onNav, session, onSignIn, onSignOut))}>
                       Provider login
                     </button>
@@ -3052,7 +3113,7 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
               <a onClick={() => go(() => scrollToSection("services", onNav, current))}>Services</a>
               <a onClick={() => go(() => scrollToSection("how-it-works", onNav, current))}>How it works</a>
               <a onClick={() => go(() => scrollToSection("browse", onNav, current))}>Browse by district</a>
-              <a onClick={() => go(() => scrollToSection("pricing", onNav, current))}>Pricing</a>
+              <a onClick={() => go(() => scrollToProvidersSection("pricing", onNav, current))}>Pricing</a>
               <hr />
               <button className="nav-dropdown-item" onClick={() => go(openInstallAppGuide)}>Add to Home Screen</button>
             </div>
@@ -3313,6 +3374,84 @@ function LandingPage({ onNav, session, onSignIn, onSignOut }) {
         </div>
       </div>
 
+      <SiteFooter />
+    </>
+  );
+}
+
+// ── SITE FOOTER — shared by the consumer home page and the B2B provider
+// landing page. Pulled out once both pages needed it, rather than each
+// page carrying its own copy of the same static markup. ─────────────
+function SiteFooter() {
+  return (
+    <footer className="footer">
+      <div className="footer-top">
+        <div className="footer-brand">
+          <span className="nav-logo" style={{ display: "inline-flex", alignItems: "center", gap: 8 }}><VaiBookMark size={20} />vai<span>book</span></span>
+          <p>Local services. Booked easily. Built for Belize.</p>
+        </div>
+        <div className="footer-links">
+          <h5>Services</h5>
+          <ul>
+            {SERVICES.map((s) => <li key={s.name}>{s.name}</li>)}
+          </ul>
+        </div>
+        <div className="footer-links">
+          <h5>Company</h5>
+          <ul>
+            <li>About Vai</li><li>How it works</li><li>Districts</li><li>Blog</li>
+          </ul>
+        </div>
+        <div className="footer-links">
+          <h5>Support</h5>
+          <ul>
+            <li>Help center</li><li>Contact us</li><li>Privacy policy</li><li>Terms</li>
+          </ul>
+        </div>
+        <div className="footer-links">
+          <h5>More from Vai Plaza</h5>
+          <ul>
+            <li><a href="https://vaibuyandsell.bz/shop?category=Home%20%26%20Living" target="_blank" rel="noopener noreferrer" style={{ color: "inherit", textDecoration: "none" }}>Vai Buy — buy &amp; sell</a></li>
+            {/* Vai Media entry goes here once its link/handle is confirmed */}
+          </ul>
+        </div>
+      </div>
+      <div className="footer-bottom">
+        <span>© 2026 VaiBook. Built in Belize 🇧🇿</span>
+        <span>A product of Vai Plaza</span>
+      </div>
+    </footer>
+  );
+}
+
+// ── B2B PROVIDER LANDING PAGE ("/#providers") ────────────────────────
+// Everything business-facing that used to live mixed into the consumer
+// home page (LandingPage above) — the pricing cards, the Vai Media
+// agency upsell, and the platform/dashboard preview — now lives here on
+// its own route instead, so a customer looking for a haircut never sees
+// SaaS pricing, and a shop owner evaluating VaiBook never has to scroll
+// past a consumer search bar to find it. Reached via the nav's "Provide
+// my service" CTA (see Nav()), goToSignupWithPlan, or #providers
+// directly. The actual application form is still ProviderSignup (view
+// "signup") — every CTA here hands off to that, same as before.
+function ProviderLandingPage({ onNav, session, onSignIn, onSignOut }) {
+  return (
+    <>
+      {/* HERO — deliberately dark/high-status rather than reusing the
+          consumer search-hero, so the two routes read as visually
+          distinct the instant either one loads, not just different copy
+          on the same page. */}
+      <section className="provider-hero">
+        <div className="provider-hero-eyebrow">For shop &amp; studio owners</div>
+        <h1 className="provider-hero-title">The operating system for top-tier shops.</h1>
+        <p className="provider-hero-sub">No generic templates. No friction.</p>
+        <div className="trial-badge">✨ Apply today — approved shops get 14 days free</div>
+        <button className="btn-lime provider-hero-cta" onClick={() => onNav("signup")}>
+          Apply to Join (14 Days Free)
+        </button>
+        <p className="provider-hero-note">No contracts, no setup fees — cancel anytime.</p>
+      </section>
+
       {/* PLATFORM PREVIEW — a marketing collage showing the scheduling
           dashboard + a customer-facing booking screen side by side. This is
           an illustrative mockup (fictional salon/business names and review
@@ -3353,7 +3492,6 @@ function LandingPage({ onNav, session, onSignIn, onSignOut }) {
       <section className="section pricing-section" id="pricing">
         <div style={{ textAlign: "center", marginBottom: 40 }}>
           <div className="section-eyebrow" style={{ justifyContent: "center", display: "flex" }}>For business owners</div>
-          <div className="trial-badge">✨ Apply today — approved shops get 14 days free</div>
           <h2 className="section-title">Simple pricing. Grow when you're ready.</h2>
           <p className="section-sub" style={{ margin: "0 auto" }}>No contracts, no setup fees. Apply for access, and once you're approved your 14-day free trial starts automatically.</p>
         </div>
@@ -3431,44 +3569,7 @@ function LandingPage({ onNav, session, onSignIn, onSignOut }) {
         </div>
       </section>
 
-      {/* FOOTER */}
-      <footer className="footer">
-        <div className="footer-top">
-          <div className="footer-brand">
-            <span className="nav-logo" style={{ display: "inline-flex", alignItems: "center", gap: 8 }}><VaiBookMark size={20} />vai<span>book</span></span>
-            <p>Local services. Booked easily. Built for Belize.</p>
-          </div>
-          <div className="footer-links">
-            <h5>Services</h5>
-            <ul>
-              {SERVICES.map((s) => <li key={s.name}>{s.name}</li>)}
-            </ul>
-          </div>
-          <div className="footer-links">
-            <h5>Company</h5>
-            <ul>
-              <li>About Vai</li><li>How it works</li><li>Districts</li><li>Blog</li>
-            </ul>
-          </div>
-          <div className="footer-links">
-            <h5>Support</h5>
-            <ul>
-              <li>Help center</li><li>Contact us</li><li>Privacy policy</li><li>Terms</li>
-            </ul>
-          </div>
-          <div className="footer-links">
-            <h5>More from Vai Plaza</h5>
-            <ul>
-              <li><a href="https://vaibuyandsell.bz/shop?category=Home%20%26%20Living" target="_blank" rel="noopener noreferrer" style={{ color: "inherit", textDecoration: "none" }}>Vai Buy — buy &amp; sell</a></li>
-              {/* Vai Media entry goes here once its link/handle is confirmed */}
-            </ul>
-          </div>
-        </div>
-        <div className="footer-bottom">
-          <span>© 2026 VaiBook. Built in Belize 🇧🇿</span>
-          <span>A product of Vai Plaza</span>
-        </div>
-      </footer>
+      <SiteFooter />
     </>
   );
 }
@@ -10163,7 +10264,7 @@ export default function App() {
   const [view, setView] = useState(() => {
     const h = window.location.hash.replace("#", "");
     if (parseBookingHash(h)) return "customer";
-    return h === "admin" || h === "customer" || h === "provider" ? h : "home";
+    return h === "admin" || h === "customer" || h === "provider" || h === "providers" ? h : "home";
   });
 
   // Which provider a QR-code / booking-link deep link pointed at, if any —
@@ -10183,7 +10284,7 @@ export default function App() {
       if (bookingId) {
         setDeepLinkProviderId(bookingId);
         setView("customer");
-      } else if (h === "admin" || h === "customer" || h === "provider") {
+      } else if (h === "admin" || h === "customer" || h === "provider" || h === "providers") {
         setView(h);
       }
     };
@@ -10412,6 +10513,7 @@ export default function App() {
           sidebar layout — keeps the global nav as before. */}
       {view !== "auth" && !(view === "provider" && providerProfile) && <Nav onNav={setView} current={view} {...authProps} />}
       {view === "home" && <LandingPage onNav={setView} {...authProps} />}
+      {view === "providers" && <ProviderLandingPage onNav={setView} {...authProps} />}
       {view === "customer" && (
         <CustomerPortal
           onNav={setView}
