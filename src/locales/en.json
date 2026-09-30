@@ -7,8 +7,7 @@
     "anyDistrict": "Any district",
     "searchButton": "Search",
     "trustedProfessionals_one": "{{count}} trusted professional ready to book across Belize",
-    "trustedProfessionals_other": "{{count}} trusted professionals ready to book across Belize",
-    "getTheApp": "Get the app"
+    "trustedProfessionals_other": "{{count}} trusted professionals ready to book across Belize"
   },
   "nav": {
     "searchPlaceholder": "Search barbers, haircuts, nail techs...",
@@ -40,7 +39,6 @@
     "providerLogin": "Provider login",
     "forCustomersHeading": "For customers",
     "logInOrSignUp": "Log in or sign up",
-    "downloadTheApp": "Download the app",
     "helpAndSupport": "Help and support"
   },
   "landing": {
