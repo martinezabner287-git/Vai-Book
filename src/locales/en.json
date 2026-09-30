@@ -38,6 +38,8 @@
     "switchToProvider": "Switch to provider",
     "providerLogin": "Provider login",
     "forCustomersHeading": "For customers",
+    "forBusinessesHeading": "For businesses",
+    "forCustomers": "For customers",
     "logInOrSignUp": "Log in or sign up",
     "helpAndSupport": "Help and support"
   },
