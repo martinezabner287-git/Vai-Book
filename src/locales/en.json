@@ -84,6 +84,16 @@
     "forProfessionals": "VaiBook for professionals",
     "manageAndGrow": "Manage and grow your business"
   },
+  "help": {
+    "title": "Get support",
+    "sub": "Tell us a bit about what you need and we'll get back to you by email.",
+    "forCustomers": "For customers",
+    "forCustomersDesc": "Help with booking, payments, or an appointment with a provider.",
+    "customerSubject": "Customer support request",
+    "forProfessionals": "For professionals",
+    "forProfessionalsDesc": "Support with running your business on VaiBook — billing, your dashboard, or your listing.",
+    "forProfessionalsSubject": "Business support request"
+  },
   "services": {
     "barbers": {
       "name": "Barbers",
