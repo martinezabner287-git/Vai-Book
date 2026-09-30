@@ -7400,21 +7400,61 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
   }
 
   // Signed in but no provider profile yet
+  //
+  // STILL P0, round 2: the routing/switching fix (see switchToPortal and
+  // loadProviderProfile's comments) stopped the app from mishandling a
+  // REAL provider profile, but it can't help when getProviderProfile is
+  // correctly, genuinely finding no row — because the Google account
+  // that's actually signed in isn't the one the business is registered
+  // under. signInWithGoogle forces the account picker on every sign-in
+  // (prompt: 'select_account'), which makes this an easy mistake for
+  // anyone with more than one Google account. That's almost certainly
+  // what's still happening, and no amount of app-side routing logic can
+  // detect "your business" for an identity it genuinely has no record of
+  // — so this screen now leads with the actual signed-in email and a
+  // one-click way to try a different Google account, instead of reading
+  // like the business itself is gone.
   if (!providerProfile) {
+    const switchGoogleAccount = async () => {
+      // Land straight back on the provider portal once they've picked
+      // the right account, the same way switching portals while
+      // signed-out stages a destination (see switchToPortal) — otherwise
+      // they'd land on the generic homepage after re-authenticating.
+      try { localStorage.setItem("vaibook_pending_view", "provider"); } catch (e) { /* ignore */ }
+      await onSignOut();
+      onSignIn();
+    };
     return (
       <div style={{ minHeight: "100vh", background: "var(--forest)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
-        <div style={{ textAlign: "center", maxWidth: 380 }}>
+        <div style={{ textAlign: "center", maxWidth: 400 }}>
           <div style={{ fontSize: 40, marginBottom: 12 }}>✂️</div>
-          <h2 style={{ color: "var(--near-white)", fontFamily: "'Plus Jakarta Sans', sans-serif", marginBottom: 8 }}>No provider profile yet</h2>
-          <p style={{ color: "rgba(255,255,255,0.6)", fontSize: 14, marginBottom: 24 }}>
-            Apply to list your business. Once our team approves your application, your provider portal — and 14-day free trial — activate automatically.
+          <h2 style={{ color: "var(--near-white)", fontFamily: "'Plus Jakarta Sans', sans-serif", marginBottom: 8 }}>No business found on this account</h2>
+          <p style={{ color: "rgba(255,255,255,0.65)", fontSize: 14, marginBottom: 4 }}>
+            Signed in as
           </p>
-          <p style={{ color: "rgba(255,255,255,0.45)", fontSize: 12, marginBottom: 20, lineHeight: 1.6 }}>
+          <p style={{ color: "var(--near-white)", fontWeight: 700, fontSize: 15, marginBottom: 16, wordBreak: "break-all" }}>
+            {session?.user?.email || "unknown account"}
+          </p>
+          <p style={{ color: "rgba(255,255,255,0.6)", fontSize: 14, marginBottom: 20, lineHeight: 1.5 }}>
+            If that's not the Google account your business is registered under — easy to pick the wrong one, since Google's account picker shows up every time you sign in — that's almost always why this screen appears. Try a different account before assuming anything's wrong with your data.
+          </p>
+          <button className="btn-lime" style={{ width: "100%", padding: "13px 0", marginBottom: 12, fontWeight: 700 }} onClick={switchGoogleAccount}>
+            Try a different Google account
+          </button>
+          <p style={{ color: "rgba(255,255,255,0.45)", fontSize: 12, marginTop: 20, marginBottom: 8, lineHeight: 1.6 }}>
+            Definitely the right account, and definitely a new business? Apply below — once approved, your provider portal and 14-day free trial activate automatically.
+          </p>
+          <button
+            style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.3)", color: "var(--near-white)", padding: "10px 20px", borderRadius: 8, cursor: "pointer", fontSize: 13 }}
+            onClick={() => onNav("signup")}
+          >
+            List your business
+          </button>
+          <p style={{ color: "rgba(255,255,255,0.45)", fontSize: 12, marginTop: 20, marginBottom: 0, lineHeight: 1.6 }}>
             Work here as staff? Ask the owner to check that your seat is still active and registered to this exact
             email address — that's what opens your own staff view.
           </p>
-          <button className="btn-lime" style={{ padding: "12px 24px" }} onClick={() => onNav("signup")}>List your business</button>
-          <div style={{ marginTop: 20 }}>
+          <div style={{ marginTop: 16 }}>
             <a style={{ color: "rgba(255,255,255,0.4)", fontSize: 13, cursor: "pointer" }} onClick={onSignOut}>Sign out</a>
           </div>
         </div>
