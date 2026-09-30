@@ -413,15 +413,20 @@ const css = `
     font-size: 12px; font-weight: 800; letter-spacing: .04em; font-family: 'Plus Jakarta Sans', sans-serif;
   }
   .lang-toggle:hover { border-color: var(--lime); color: var(--lime); background: rgba(198,241,53,0.08); }
-  .nav-dropdown { position: absolute; top: calc(100% + 12px); right: 0; background: white; border-radius: var(--radius-sm); box-shadow: 0 16px 40px rgba(13,61,46,0.18); border: 1px solid var(--border); min-width: 240px; padding: 10px; z-index: 200; }
-  .nav-dropdown a, .nav-dropdown button.nav-dropdown-item { display: block; width: 100%; text-align: left; background: none; border: none; padding: 11px 14px; border-radius: 8px; font-size: 14px; font-weight: 500; color: var(--dark-text); cursor: pointer; text-decoration: none; }
+  .nav-dropdown { position: absolute; top: calc(100% + 12px); right: 0; background: white; border-radius: 20px; box-shadow: 0 20px 50px rgba(13,61,46,0.20); border: 1px solid var(--border); min-width: 300px; max-width: calc(100vw - 32px); padding: 22px; z-index: 200; }
+  .nav-dropdown a, .nav-dropdown button.nav-dropdown-item { display: block; width: 100%; text-align: left; background: none; border: none; padding: 12px 8px; border-radius: 10px; font-size: 16px; font-weight: 500; color: var(--dark-text); cursor: pointer; text-decoration: none; }
   .nav-dropdown a:hover, .nav-dropdown button.nav-dropdown-item:hover { background: var(--sand); }
-  .nav-dropdown hr { border: none; border-top: 1px solid var(--border); margin: 8px 4px; }
-  /* Fresha-style section label inside a dropdown ("For customers" /
-     "For businesses") — a quiet all-caps heading, not itself clickable. */
-  .nav-dropdown-heading { padding: 8px 14px 4px; font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+  .nav-dropdown hr { border: none; border-top: 1px solid var(--border); margin: 14px 0; }
+  /* Fresha-style section label inside a dropdown ("For customers") — a
+     real heading (not a small all-caps caption), matching the reference
+     screenshot: bold, near-black, roomy margin below before the list. */
+  .nav-dropdown-heading { padding: 0 8px 12px; font-size: 20px; font-weight: 800; color: var(--dark-text); }
+  /* The one emphasized action in the menu (screenshot shows it in a
+     distinct accent color) — using the brand's own forest green here
+     rather than copying Fresha's literal purple. */
+  .nav-dropdown a.nav-dropdown-primary-link { color: var(--forest); font-weight: 700; }
   .nav-dropdown button.nav-dropdown-item.for-biz,
-  .nav-dropdown a.for-biz { display: flex; align-items: center; justify-content: space-between; font-weight: 700; }
+  .nav-dropdown a.for-biz { display: flex; align-items: center; justify-content: space-between; font-weight: 800; font-size: 17px; }
 
   /* AUTH CHOICE */
   .auth-choice { min-height: 100vh; display: grid; grid-template-columns: 1fr 1fr; background: var(--near-white); }
@@ -3667,22 +3672,23 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
             </button>
             {menuOpen && (
               <div className="nav-dropdown">
-                <a onClick={() => go(() => onNav("home"))}>{t("nav.home")}</a>
-                <a onClick={() => go(() => scrollToSection("services", onNav, current))}>{t("nav.services")}</a>
-                <a onClick={() => go(() => scrollToSection("trending-local", onNav, current))}>{t("nav.trending")}</a>
+                {/* Page-specific quick links — desktop gets these as
+                    .nav-link-inline buttons in the nav bar itself (see
+                    above), so they only need to live here as a mobile
+                    fallback (.mobile-only-item). Everything else below
+                    matches the reference screenshot's clean "For
+                    customers" menu 1:1, with no site-nav links cluttering
+                    it — Home/Services/Trending are just a scroll away on
+                    the homepage itself. */}
                 {current === "providers" && (
-                  <a className="mobile-only-item" onClick={() => go(() => scrollToProvidersSection("features", onNav, current))}>{t("nav.features")}</a>
+                  <>
+                    <a className="mobile-only-item" onClick={() => go(() => scrollToProvidersSection("features", onNav, current))}>{t("nav.features")}</a>
+                    <a className="mobile-only-item" onClick={() => go(() => scrollToProvidersSection("pricing", onNav, current))}>{t("nav.pricing")}</a>
+                    <hr className="mobile-only-item" />
+                  </>
                 )}
-                <a onClick={() => go(() => scrollToProvidersSection("pricing", onNav, current))}>{t("nav.pricing")}</a>
-                <hr />
-                {/* FRESHA-STYLE SECTION — a "For customers" heading over the
-                    account/utility items (login, install, help, language),
-                    then a divider and a single clear "For businesses" link
-                    that hands off to ProviderLandingPage's own nav/CTAs
-                    (see that component) rather than duplicating a provider
-                    login/signup shortcut in here too. */}
                 <div className="nav-dropdown-heading">{t("nav.forCustomersHeading")}</div>
-                <a onClick={() => go(() => onNav("auth"))}>{t("nav.logInOrSignUp")}</a>
+                <a className="nav-dropdown-primary-link" onClick={() => go(() => onNav("auth"))}>{t("nav.logInOrSignUp")}</a>
                 <button className="nav-dropdown-item" onClick={() => go(openInstallAppGuide)}>{t("nav.downloadTheApp")}</button>
                 <a href={`mailto:${SUPPORT_EMAIL}`} onClick={closeMenu}>{t("nav.helpAndSupport")}</a>
                 <LanguageSelector variant="menu" onAfterChange={closeMenu} />
