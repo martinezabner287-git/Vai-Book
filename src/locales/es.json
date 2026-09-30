@@ -5,7 +5,10 @@
     "subtitle": "Sáltate la lista de espera y reserva artistas de primer nivel en segundos.",
     "searchPlaceholder": "¿Qué servicio necesitas?",
     "anyDistrict": "Cualquier distrito",
-    "searchButton": "Buscar"
+    "searchButton": "Buscar",
+    "trustedProfessionals_one": "{{count}} profesional de confianza listo para reservar en Belice",
+    "trustedProfessionals_other": "{{count}} profesionales de confianza listos para reservar en Belice",
+    "getTheApp": "Descargar la app"
   },
   "nav": {
     "searchPlaceholder": "Busca barberos, cortes, manicuristas...",
@@ -23,6 +26,7 @@
     "home": "Inicio",
     "services": "Servicios",
     "trending": "Tendencias",
+    "features": "Funciones",
     "pricing": "Precios",
     "provideMyService": "Ofrecer mi servicio",
     "forBusinesses": "Para negocios",
@@ -33,7 +37,11 @@
     "browseByDistrict": "Explorar por distrito",
     "switchToCustomer": "Cambiar a cliente",
     "switchToProvider": "Cambiar a proveedor",
-    "providerLogin": "Acceso de proveedor"
+    "providerLogin": "Acceso de proveedor",
+    "forCustomersHeading": "Para clientes",
+    "logInOrSignUp": "Iniciar sesión o registrarse",
+    "downloadTheApp": "Descargar la app",
+    "helpAndSupport": "Ayuda y soporte"
   },
   "landing": {
     "whatsOnVaiBook": "Qué encontrarás en VaiBook",
@@ -136,6 +144,7 @@
     "sub": "Sin plantillas genéricas. Sin fricción.",
     "trialBadge": "✨ Aplica hoy — los negocios aprobados obtienen 14 días gratis",
     "applyToJoin14": "Aplicar para unirte (14 días gratis)",
+    "seePricing": "Ver precios",
     "note": "Sin contratos, sin cuotas de instalación — cancela cuando quieras.",
     "seeItInAction": "Míralo en acción",
     "builtForHow": "Hecho para cómo realmente funciona tu negocio",
