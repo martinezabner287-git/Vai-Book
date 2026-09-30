@@ -5,6 +5,8 @@ import AdminDashboard from "./AdminDashboard";
 import ProviderSignupModal from "./ProviderSignupModal";
 import { useTheme } from "./ThemeContext";
 import ThemeToggle from "./ThemeToggle";
+import LanguageSelector from "./LanguageSelector";
+import { useTranslation } from "react-i18next";
 import { compressImageFile } from "./imageUtils";
 import { bookingRequestSchema, rescheduleProposalSchema, validate } from "./validation";
 
@@ -393,6 +395,17 @@ const css = `
     border-radius: 50%; color: var(--near-white); cursor: pointer; transition: all .2s; flex-shrink: 0;
   }
   .theme-toggle:hover { border-color: var(--lime); color: var(--lime); background: rgba(198,241,53,0.08); }
+  /* LANGUAGE SELECTOR — same always-dark nav chrome treatment as the theme
+     toggle right above (see its comment): a pill instead of a circle since
+     this shows two letters (EN/ES), not a single icon glyph. */
+  .lang-toggle {
+    display: flex; align-items: center; justify-content: center;
+    min-width: 40px; height: 34px; padding: 0 12px; background: transparent;
+    border: 1px solid rgba(255,255,255,0.25); border-radius: 100px;
+    color: var(--near-white); cursor: pointer; transition: all .2s; flex-shrink: 0;
+    font-size: 12px; font-weight: 800; letter-spacing: .04em; font-family: 'Plus Jakarta Sans', sans-serif;
+  }
+  .lang-toggle:hover { border-color: var(--lime); color: var(--lime); background: rgba(198,241,53,0.08); }
   .nav-dropdown { position: absolute; top: calc(100% + 12px); right: 0; background: white; border-radius: var(--radius-sm); box-shadow: 0 16px 40px rgba(13,61,46,0.18); border: 1px solid var(--border); min-width: 220px; padding: 10px; z-index: 200; }
   .nav-dropdown a, .nav-dropdown button.nav-dropdown-item { display: block; width: 100%; text-align: left; background: none; border: none; padding: 11px 14px; border-radius: 8px; font-size: 14px; font-weight: 500; color: var(--dark-text); cursor: pointer; text-decoration: none; }
   .nav-dropdown a:hover, .nav-dropdown button.nav-dropdown-item:hover { background: var(--sand); }
@@ -800,6 +813,12 @@ const css = `
   .pricing-card { background: #fff; border: 1px solid var(--border); border-radius: 16px; padding: 32px 28px; display: flex; flex-direction: column; position: relative; }
   .pricing-card.recommended { border: 2px solid var(--forest); box-shadow: 0 16px 36px rgba(13,61,46,0.12); }
   .pricing-badge { position: absolute; top: -13px; left: 50%; transform: translateX(-50%); background: var(--forest); color: var(--lime); font-size: 11px; font-weight: 800; letter-spacing: .4px; text-transform: uppercase; padding: 5px 14px; border-radius: 100px; white-space: nowrap; }
+  /* Per-card trial badge (Task: "add a prominent 14-Day Free Trial badge to
+     both active plans") — separate from the top-of-card .pricing-badge
+     ribbon (which only shows on the recommended plan) so the two never
+     collide; sits inline under the plan name instead of absolutely
+     positioned, since every card gets one, not just one card. */
+  .pricing-trial-badge { display: inline-flex; align-items: center; gap: 5px; background: var(--lime); color: var(--forest); font-size: 11px; font-weight: 800; letter-spacing: .2px; padding: 5px 12px; border-radius: 100px; margin: 8px 0 2px; white-space: nowrap; }
   .pricing-name { font-size: 13px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
   .pricing-price { font-size: 34px; font-weight: 800; color: var(--dark-text); margin: 10px 0 6px; font-family: 'Plus Jakarta Sans', sans-serif; }
   .pricing-price span { font-size: 14px; font-weight: 500; color: var(--muted); }
@@ -1339,6 +1358,36 @@ const css = `
   :root[data-theme="dark"] .portal-content .chip-featured,
   :root[data-theme="dark"] .portal-content .chip-plan-pro {
     color: var(--lime);
+  }
+
+  /* FIX (dark-mode text contrast) — these surfaces read var(--dark-text)/
+     var(--muted) for their text, which the block above already correctly
+     flips to near-white inside .provider-shell/.portal-content. But each
+     of these also has its own hardcoded #fff/white BACKGROUND that never
+     moved with it, so in dark mode it was near-white text on a background
+     that stayed white — unreadable. This is exactly the "deeper nested
+     surfaces... larger scope than this pass" gap called out above; closing
+     it for the ones users actually hit constantly (account dropdown menu,
+     every form field, the QR/next-appointment cards, mobile action sheets)
+     rather than attempting a full pixel-level pass over every modal. */
+  :root[data-theme="dark"] .provider-shell .nav-dropdown,
+  :root[data-theme="dark"] .portal-content .nav-dropdown,
+  :root[data-theme="dark"] .provider-shell .next-chair-card,
+  :root[data-theme="dark"] .provider-shell .sheet-panel,
+  :root[data-theme="dark"] .portal-content .sheet-panel,
+  :root[data-theme="dark"] .provider-shell .qr-modal-panel {
+    background: #12291F;
+    border-color: rgba(255,255,255,0.12);
+    box-shadow: 0 16px 40px rgba(0,0,0,0.35);
+  }
+  :root[data-theme="dark"] .provider-shell .input-group input,
+  :root[data-theme="dark"] .provider-shell .input-group select,
+  :root[data-theme="dark"] .provider-shell .input-group textarea,
+  :root[data-theme="dark"] .portal-content .input-group input,
+  :root[data-theme="dark"] .portal-content .input-group select,
+  :root[data-theme="dark"] .portal-content .input-group textarea {
+    background: #0E241B;
+    border-color: rgba(255,255,255,0.12);
   }
 
   /* PROVIDER GRID */
@@ -2738,6 +2787,31 @@ function urlBase64ToUint8Array(base64String) {
 // (so a reload doesn't lose the "✓ On" state). Pulled out into one hook
 // instead of writing this twice so provider and customer push behave
 // identically and only need fixing in one place.
+// FIXED (dropdown glitch): the avatar/account dropdowns used to close only
+// via onMouseLeave, which on a trackpad or a slightly diagonal mouse path
+// fires the instant the cursor crosses the gap between the avatar button
+// and the dropdown panel — so opening it often felt like it "didn't take"
+// and needed a second or third click. A real click-outside listener is the
+// standard fix: it closes the menu only when the user actually clicks
+// somewhere else, and stays open no matter how the mouse wanders over it.
+// `mousedown` (not `click`) so this fires and closes any OTHER open menu
+// before a click on a different toggle button's own onClick handler runs.
+// The toggle button itself must stopPropagation() in its onClick (done at
+// each call site below) — otherwise the same click that OPENS the menu
+// would immediately bubble to this document listener and close it again.
+function useClickOutside(active, onOutsideClick) {
+  const ref = useRef(null);
+  useEffect(() => {
+    if (!active) return;
+    const handleClick = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) onOutsideClick();
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [active, onOutsideClick]);
+  return ref;
+}
+
 function usePushSubscription(userId) {
   const [pushEnabled, setPushEnabled] = useState(false);
   const [subscribingPush, setSubscribingPush] = useState(false);
@@ -3232,6 +3306,12 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
   const [accountOpen, setAccountOpen] = useState(false);
   const closeMenu = () => setMenuOpen(false);
   const closeAccount = () => { setAccountOpen(false); setNotifListOpen(false); };
+  // FIXED (dropdown glitch) — see useClickOutside above. Declared once here
+  // (hooks can't be conditional) and the same ref/handler is attached to
+  // whichever of the render branches below actually renders, since only
+  // one is ever mounted at a time.
+  const accountRef = useClickOutside(accountOpen, closeAccount);
+  const menuRef = useClickOutside(menuOpen, closeMenu);
 
   // NOTIFICATIONS — previously a standalone bell icon in the nav
   // (NotificationBell), now folded into the avatar dropdown per the
@@ -3451,12 +3531,15 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
           this shared Nav once a provider is signed in — see the matching
           <ThemeToggle/> in its own topbar below. */}
       <ThemeToggle />
+      {/* LANGUAGE SELECTOR — same always-visible, no-props-threaded pattern
+          as the theme toggle right above. */}
+      <LanguageSelector />
 
       {(current === "home" || current === "providers" || (current === "customer" && !session)) ? (
         <div className="nav-cta">
           {session ? (
-            <div style={{ position: "relative" }}>
-              <button className="nav-avatar-btn" onClick={() => setAccountOpen((v) => !v)}>
+            <div style={{ position: "relative" }} ref={accountRef}>
+              <button className="nav-avatar-btn" onClick={(e) => { e.stopPropagation(); setAccountOpen((v) => !v); }}>
                 <span className="nav-avatar-wrap">
                   <span className="nav-avatar-circle">{initials}</span>
                   {unreadCount > 0 && <span className="nav-avatar-badge">{unreadCount > 9 ? "9+" : unreadCount}</span>}
@@ -3464,7 +3547,7 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
                 <span className="nav-avatar-caret">▾</span>
               </button>
               {accountOpen && (
-                <div className="nav-account-dropdown" onMouseLeave={closeAccount}>
+                <div className="nav-account-dropdown">
                   <div className="nav-account-name">{user?.full_name || "My account"}</div>
                   {notifRow}
                   <button className="nav-dropdown-item" onClick={() => goAccount(() => openTab("settings"))}>
@@ -3515,13 +3598,13 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
             <button className="nav-signup-btn" onClick={() => onNav("home")}>Find a Professional</button>
           )}
           {!session && (
-          <div style={{ position: "relative" }}>
-            <button className="nav-menu-btn" onClick={() => setMenuOpen((v) => !v)}>
+          <div style={{ position: "relative" }} ref={menuRef}>
+            <button className="nav-menu-btn" onClick={(e) => { e.stopPropagation(); setMenuOpen((v) => !v); }}>
               Menu
               <span className="bars"><span /><span /></span>
             </button>
             {menuOpen && (
-              <div className="nav-dropdown" onMouseLeave={closeMenu}>
+              <div className="nav-dropdown">
                 <a onClick={() => go(() => onNav("home"))}>Home</a>
                 <a onClick={() => go(() => scrollToSection("services", onNav, current))}>Services</a>
                 <a onClick={() => go(() => scrollToSection("trending-local", onNav, current))}>Trending</a>
@@ -3549,8 +3632,8 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
         // lone middle item instead of hugging it to the right. auto-margin
         // claims all the free space on its left, pinning this to the
         // right edge.
-        <div style={{ position: "relative", marginLeft: "auto" }}>
-          <button className="nav-avatar-btn" onClick={() => setAccountOpen((v) => !v)}>
+        <div style={{ position: "relative", marginLeft: "auto" }} ref={accountRef}>
+          <button className="nav-avatar-btn" onClick={(e) => { e.stopPropagation(); setAccountOpen((v) => !v); }}>
             <span className="nav-avatar-wrap">
               <span className="nav-avatar-circle">{initials}</span>
               {unreadCount > 0 && <span className="nav-avatar-badge">{unreadCount > 9 ? "9+" : unreadCount}</span>}
@@ -3558,7 +3641,7 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
             <span className="nav-avatar-caret">▾</span>
           </button>
           {accountOpen && (
-            <div className={`nav-account-dropdown${current === "customer" ? " cx-account-dropdown" : ""}`} onMouseLeave={closeAccount}>
+            <div className={`nav-account-dropdown${current === "customer" ? " cx-account-dropdown" : ""}`}>
               <div className="nav-account-name">{user?.full_name || "My account"}</div>
               {notifRow}
               {PORTAL_TOOLS_BY_VIEW[current].map((item) => (
@@ -3582,6 +3665,7 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
               )}
               <hr />
               <ThemeToggle variant="menu" onAfterToggle={closeAccount} />
+              <LanguageSelector variant="menu" />
               <hr />
               <button className="nav-dropdown-item" onClick={() => goAccount(openInstallAppGuide)}>
                 <span className="icn">📲</span> Add to Home Screen
@@ -3594,13 +3678,13 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
           )}
         </div>
       ) : (
-        <div style={{ position: "relative" }}>
-          <button className="nav-menu-btn" onClick={() => setMenuOpen((v) => !v)}>
+        <div style={{ position: "relative" }} ref={menuRef}>
+          <button className="nav-menu-btn" onClick={(e) => { e.stopPropagation(); setMenuOpen((v) => !v); }}>
             Menu
             <span className="bars"><span /><span /></span>
           </button>
           {menuOpen && (
-            <div className="nav-dropdown" onMouseLeave={closeMenu}>
+            <div className="nav-dropdown">
               <a onClick={() => go(() => onNav("home"))}>Home</a>
               <a onClick={() => go(() => scrollToSection("services", onNav, current))}>Services</a>
               <a onClick={() => go(() => scrollToSection("trending-local", onNav, current))}>Trending</a>
@@ -3653,6 +3737,7 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
 }
 
 function LandingPage({ onNav, session, onSignIn, onSignOut }) {
+  const { t } = useTranslation();
   const [heroQuery, setHeroQuery] = useState("");
   const [heroDistrict, setHeroDistrict] = useState("");
   const [heroDirectory, setHeroDirectory] = useState([]);
@@ -3763,13 +3848,13 @@ function LandingPage({ onNav, session, onSignIn, onSignOut }) {
           glyph with a wide left side-bearing that reads as a stray gap at
           large display size — confirmed on the live site. */}
       <section className="search-hero">
-        <h1><span className="line1">Elevate your standard.</span><span className="line2">Book Belize's elite self-care professionals.</span></h1>
-        <p className="search-sub">Bypass the waitlist and book top-tier self-care artists in seconds.</p>
+        <h1><span className="line1">{t("hero.titleLine1")}</span><span className="line2">{t("hero.titleLine2")}</span></h1>
+        <p className="search-sub">{t("hero.subtitle")}</p>
         <div className="search-bar-pill search-glass" id="main-search-bar">
           <div className="field">
             <span>🔍</span>
             <input
-              placeholder="What service do you need?"
+              placeholder={t("hero.searchPlaceholder")}
               value={heroQuery}
               onChange={e => { setHeroQuery(e.target.value); setShowHeroSuggestions(true); }}
               onFocus={() => setShowHeroSuggestions(true)}
@@ -3781,11 +3866,11 @@ function LandingPage({ onNav, session, onSignIn, onSignOut }) {
           <div className="field">
             <span>📍</span>
             <select value={heroDistrict} onChange={e => setHeroDistrict(e.target.value)}>
-              <option value="">Any district</option>
+              <option value="">{t("hero.anyDistrict")}</option>
               {DISTRICTS.map(d => <option key={d} value={d}>{d}</option>)}
             </select>
           </div>
-          <button className="search-submit btn-neon" onClick={() => { setShowHeroSuggestions(false); submitHeroSearch(); }}>Search</button>
+          <button className="search-submit btn-neon" onClick={() => { setShowHeroSuggestions(false); submitHeroSearch(); }}>{t("hero.searchButton")}</button>
           {showHeroSuggestions && heroSuggestions.length > 0 && (
             <div className="suggestions-dropdown">
               {heroSuggestions.map((s) => (
@@ -4033,6 +4118,7 @@ function ProviderLandingPage({ onNav, session, onSignIn, onSignOut, onOpenProvid
             <div className={`pricing-card ${p.recommended ? "recommended" : ""}`} key={p.id}>
               {p.recommended && <div className="pricing-badge">Recommended</div>}
               <div className="pricing-name">{p.name}</div>
+              <div className="pricing-trial-badge">✨ 14-Day Free Trial</div>
               <div className="pricing-price">
                 BZ${p.monthly}<span> /month</span>
               </div>
@@ -6356,6 +6442,10 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
   // avatar's grouped "everything else" dropdown, both closed by default.
   const [providerMobileNavOpen, setProviderMobileNavOpen] = useState(false);
   const [providerMenuOpen, setProviderMenuOpen] = useState(false);
+  // FIXED (dropdown glitch) — same onMouseLeave-only closing bug as the
+  // shared Nav's account dropdown (see useClickOutside above); replaced
+  // with a real click-outside listener here too.
+  const providerMenuRef = useClickOutside(providerMenuOpen, () => setProviderMenuOpen(false));
   const [showBlockSheet, setShowBlockSheet] = useState(false);
   // "in15m" | "in30m" | "in1h" | "custom" — the bottom sheet asks "when
   // will you be back" and works out the end time from that, rather than
@@ -7730,12 +7820,14 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
         <div className="provider-topbar-right" style={{ display: "flex", alignItems: "center", gap: 10 }}>
           {/* Provider Portal has its own topbar and never renders the
               shared Nav once a provider is signed in (see App()'s render
-              condition), so this is its only theme toggle. */}
+              condition), so this is its only theme toggle and language
+              selector. */}
           <ThemeToggle />
-          <div className="provider-avatar-wrap" onMouseLeave={() => setProviderMenuOpen(false)}>
+          <LanguageSelector />
+          <div className="provider-avatar-wrap" ref={providerMenuRef}>
             <button
               className="provider-avatar-btn"
-              onClick={() => setProviderMenuOpen((v) => !v)}
+              onClick={(e) => { e.stopPropagation(); setProviderMenuOpen((v) => !v); }}
               aria-label="Account menu"
               aria-expanded={providerMenuOpen}
             >
@@ -8162,7 +8254,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                       <div className="title">
                         {b.services?.name || "Service"}
                         {b.created_by_provider && (
-                          <span style={{ marginLeft: 8, fontSize: 11, fontWeight: 600, color: "var(--forest)", background: "var(--sand)", padding: "2px 7px", borderRadius: 5, verticalAlign: "middle" }}>Walk-in</span>
+                          <span style={{ marginLeft: 8, fontSize: 11, fontWeight: 600, color: "var(--accent-text)", background: "var(--sand)", padding: "2px 7px", borderRadius: 5, verticalAlign: "middle" }}>Walk-in</span>
                         )}
                       </div>
                       <div className="meta">
@@ -8224,7 +8316,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                   {b.notes && <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 6 }}>Customer note: {b.notes}</p>}
 
                   {b.pending_reschedule_date && (
-                    <p style={{ fontSize: 12, color: "var(--forest)", marginTop: 6, fontWeight: 600 }}>
+                    <p style={{ fontSize: 12, color: "var(--accent-text)", marginTop: 6, fontWeight: 600 }}>
                       Waiting on customer to confirm the new time: {formatBookingWhen({ booking_date: b.pending_reschedule_date, booking_time: b.pending_reschedule_time })}
                     </p>
                   )}
@@ -8487,7 +8579,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                     <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 2 }}>{s.duration_min} min</div>
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                    <span style={{ fontWeight: 700, color: "var(--forest)" }}>BZ${s.price}</span>
+                    <span style={{ fontWeight: 700, color: "var(--accent-text)" }}>BZ${s.price}</span>
                     <button className="btn-sm ghost" style={{ fontSize: 12 }} onClick={() => handleDeleteService(s.id)}>Remove</button>
                   </div>
                 </div>
@@ -8638,7 +8730,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                   const atCap = usedThisMonth >= STARTER_CAP;
                   return (
                     <>
-                      <p style={{ fontSize: 13, color: "var(--forest)", fontWeight: 600, marginTop: 16 }}>You're on the free Starter plan — nothing to pay.</p>
+                      <p style={{ fontSize: 13, color: "var(--accent-text)", fontWeight: 600, marginTop: 16 }}>You're on the free Starter plan — nothing to pay.</p>
                       <div style={{ marginTop: 10 }}>
                         <div style={{ fontSize: 12, color: atCap ? "#B91C1C" : "var(--muted)", fontWeight: 600, marginBottom: 4 }}>
                           {Math.min(usedThisMonth, STARTER_CAP)} of {STARTER_CAP} bookings used this month
@@ -8690,10 +8782,10 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                           <div style={{ flex: 1 }}>
                             <div style={{ fontSize: 14, fontWeight: 700 }}>
                               {pl.name} <span style={{ fontWeight: 500, color: "var(--muted)" }}>— {pl.price}</span>
-                              {pl.id === currentPlan.id && <span style={{ marginLeft: 8, fontSize: 11, fontWeight: 700, color: "var(--forest)" }}>YOUR PLAN</span>}
+                              {pl.id === currentPlan.id && <span style={{ marginLeft: 8, fontSize: 11, fontWeight: 700, color: "var(--accent-text)" }}>YOUR PLAN</span>}
                             </div>
                             {pl.monthly > 0 && (
-                              <div style={{ fontSize: 11.5, fontWeight: 700, color: "var(--forest)", marginTop: 2 }}>
+                              <div style={{ fontSize: 11.5, fontWeight: 700, color: "var(--accent-text)", marginTop: 2 }}>
                                 Just BZ${(Math.floor((pl.monthly / 30) * 100) / 100).toFixed(2)} a day.
                               </div>
                             )}
@@ -8878,7 +8970,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                         <StarRating value={r.rating} />
                         <span>{r.users?.full_name || "Customer"}</span>
                         {isHeld && (
-                          <span style={{ fontSize: 11, fontWeight: 700, color: "var(--forest)", background: "var(--sand)", padding: "2px 8px", borderRadius: 999 }}>
+                          <span style={{ fontSize: 11, fontWeight: 700, color: "var(--accent-text)", background: "var(--sand)", padding: "2px 8px", borderRadius: 999 }}>
                             🔒 Only you can see this — goes public {new Date(r.hold_until).toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
                           </span>
                         )}
@@ -9184,7 +9276,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                   </div>
                 </div>
                 {pushEnabled ? (
-                  <span style={{ fontSize: 12, fontWeight: 700, color: "var(--forest)", flexShrink: 0 }}>✓ On</span>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: "var(--accent-text)", flexShrink: 0 }}>✓ On</span>
                 ) : (
                   <button className="btn-sm forest" style={{ flexShrink: 0 }} onClick={enablePushNotifications} disabled={subscribingPush}>
                     {subscribingPush ? "Turning on..." : "Turn on"}
