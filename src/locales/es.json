@@ -38,6 +38,8 @@
     "switchToProvider": "Cambiar a proveedor",
     "providerLogin": "Acceso de proveedor",
     "forCustomersHeading": "Para clientes",
+    "forBusinessesHeading": "Para negocios",
+    "forCustomers": "Para clientes",
     "logInOrSignUp": "Iniciar sesión o registrarse",
     "helpAndSupport": "Ayuda y soporte"
   },
