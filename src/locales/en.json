@@ -89,10 +89,81 @@
     "sub": "Tell us a bit about what you need and we'll get back to you by email.",
     "forCustomers": "For customers",
     "forCustomersDesc": "Help with booking, payments, or an appointment with a provider.",
-    "customerSubject": "Customer support request",
     "forProfessionals": "For professionals",
     "forProfessionalsDesc": "Support with running your business on VaiBook — billing, your dashboard, or your listing.",
-    "forProfessionalsSubject": "Business support request"
+    "backToHelp": "Back to Help & support",
+    "contact": {
+      "title": "Email us",
+      "sub": "Tell us what's going on and we'll reply from support@vaibook.bz.",
+      "topicLabel": "How can we help?",
+      "topicPlaceholder": "Please select",
+      "topics": {
+        "booking": "A booking or appointment",
+        "charge": "A charge or payment",
+        "providerIssue": "A problem with a business on VaiBook",
+        "account": "My account or login",
+        "planBilling": "My plan or billing",
+        "dashboard": "My dashboard or listing",
+        "other": "Something else"
+      },
+      "emailLabel": "Your email",
+      "emailHint": "So we know where to reply.",
+      "descriptionLabel": "Tell us more",
+      "descriptionPlaceholder": "What's going on?",
+      "validation": "Please choose a topic, and fill in your email and a short description.",
+      "send": "Send message",
+      "sendHint": "This opens your email app with a message already addressed to us — just hit send there.",
+      "emailSubjectPrefix": "VaiBook support request",
+      "emailBodyFrom": "From"
+    },
+    "faq": {
+      "title": "Frequently asked questions",
+      "sub": "Answers for businesses running on VaiBook. Can't find it here? Email us.",
+      "searchPlaceholder": "Search the FAQ",
+      "noResults": "No matching questions — try a different search, or email us below.",
+      "stillNeedHelp": "Still need help?",
+      "emailUs": "Email us",
+      "trial": {
+        "q": "How does the free trial work?",
+        "a": "Every new business starts on a free Trial plan — up to 30 bookings a month, no card required. There's no automatic cutoff date; you stay on Trial until you choose to upgrade from the Billing tab in your dashboard."
+      },
+      "plans": {
+        "q": "What plans does VaiBook offer?",
+        "a": "Three: Trial (free, up to 30 bookings a month), Solo (for solo practitioners), and Team (a base fee plus per-seat pricing for shops with staff). Full pricing and features are on the Billing tab in your dashboard."
+      },
+      "staff": {
+        "q": "Can I add staff to my account?",
+        "a": "Yes, on the Team plan — each staff member gets their own login to manage their own bookings and block their own time, while you keep visibility across the whole shop."
+      },
+      "walkins": {
+        "q": "What's the difference between Walk-In and New Appointment?",
+        "a": "Walk-In instantly logs a sale for a customer standing in front of you right now — pick the services and it's recorded as done. New Appointment schedules something ahead of time instead."
+      },
+      "chairsFilled": {
+        "q": "What does \"Chairs Filled\" mean on my dashboard?",
+        "a": "It shows how much of today's available time is booked. By default it's shop-wide across your whole team, but you can scope it to a single staff member from the dropdown on that dashboard card."
+      },
+      "billing": {
+        "q": "How does billing work?",
+        "a": "VaiBook currently bills by manual bank transfer — you send payment, then upload the receipt from the Billing tab, and it's confirmed by hand. There's no auto-charge or stored card."
+      },
+      "changePlan": {
+        "q": "How do I change or renew my plan?",
+        "a": "Open Billing from your dashboard, pick a plan, and submit payment for it the same way as a renewal — it's confirmed on our end once the receipt comes in."
+      },
+      "findMe": {
+        "q": "How do customers find my business?",
+        "a": "Customers search or browse by service category and district on VaiBook's homepage. Team-plan shops also get featured placement in their district's search results."
+      },
+      "language": {
+        "q": "Is VaiBook available in Spanish?",
+        "a": "Yes — switch languages anytime from the Menu, and the whole app follows your choice, not just the homepage."
+      },
+      "blocks": {
+        "q": "How do I block off time when I'm not available?",
+        "a": "Use Custom Block on your dashboard to mark yourself away for a stretch of time — lunch, an errand, anything — so customers can't book over it."
+      }
+    }
   },
   "services": {
     "barbers": {
