@@ -241,6 +241,29 @@ const ADMIN_DASHBOARD_CSS = `
   .acc-btn-deny:disabled { opacity: .5; cursor: default; }
   .acc-btn-manage { background: transparent; border: 1px solid var(--border); color: var(--forest); font-size: 12px; font-weight: 700; padding: 7px 14px; border-radius: 8px; cursor: pointer; }
 
+  /* FIX (dark-mode text contrast) — .acc-list/.acc-empty had a hardcoded
+     white background while their var(--dark-text)/var(--muted) text
+     already correctly went near-white inside dark-mode .portal-content
+     (see App.jsx's dark-mode CSS), so it was unreadable in Admin dark mode.
+     Darkening the background then exposes a second issue: the section
+     heading/pills/manage button use var(--forest) as plain text, a fixed
+     dark-green brand color that's illegible on a dark card — same reasoning
+     as the .metric-value/.card-title overrides in App.jsx's dark-mode
+     block, applied here too. */
+  :root[data-theme="dark"] .portal-content .acc-list,
+  :root[data-theme="dark"] .portal-content .acc-empty {
+    background: #12291F;
+    border-color: rgba(255,255,255,0.12);
+  }
+  :root[data-theme="dark"] .portal-content .acc-section-head h3 {
+    color: #FFFFFF;
+  }
+  :root[data-theme="dark"] .portal-content .acc-plan-pill,
+  :root[data-theme="dark"] .portal-content .acc-addon-pill,
+  :root[data-theme="dark"] .portal-content .acc-btn-manage {
+    color: var(--lime);
+  }
+
   @media (max-width: 720px) {
     .acc-metrics { grid-template-columns: 1fr; }
     .acc-row { flex-direction: column; align-items: flex-start; }
