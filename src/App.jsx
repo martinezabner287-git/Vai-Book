@@ -3689,7 +3689,7 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
                 )}
                 <div className="nav-dropdown-heading">{t("nav.forCustomersHeading")}</div>
                 <a className="nav-dropdown-primary-link" onClick={() => go(() => onNav("auth"))}>{t("nav.logInOrSignUp")}</a>
-                <button className="nav-dropdown-item" onClick={() => go(openInstallAppGuide)}>{t("nav.downloadTheApp")}</button>
+                <button className="nav-dropdown-item" onClick={() => go(openInstallAppGuide)}>{t("nav.addToHomeScreen")}</button>
                 <a href={`mailto:${SUPPORT_EMAIL}`} onClick={closeMenu}>{t("nav.helpAndSupport")}</a>
                 <LanguageSelector variant="menu" onAfterChange={closeMenu} />
                 {current !== "providers" && (
@@ -3969,7 +3969,7 @@ function LandingPage({ onNav, session, onSignIn, onSignOut }) {
           </p>
         )}
         <button className="hero-get-app-btn" onClick={openInstallAppGuide}>
-          {t("hero.getTheApp")} <span aria-hidden="true">⊞</span>
+          {t("nav.addToHomeScreen")} <span aria-hidden="true">⊞</span>
         </button>
       </section>
 
