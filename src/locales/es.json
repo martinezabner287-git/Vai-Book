@@ -7,8 +7,7 @@
     "anyDistrict": "Cualquier distrito",
     "searchButton": "Buscar",
     "trustedProfessionals_one": "{{count}} profesional de confianza listo para reservar en Belice",
-    "trustedProfessionals_other": "{{count}} profesionales de confianza listos para reservar en Belice",
-    "getTheApp": "Descargar la app"
+    "trustedProfessionals_other": "{{count}} profesionales de confianza listos para reservar en Belice"
   },
   "nav": {
     "searchPlaceholder": "Busca barberos, cortes, manicuristas...",
@@ -40,7 +39,6 @@
     "providerLogin": "Acceso de proveedor",
     "forCustomersHeading": "Para clientes",
     "logInOrSignUp": "Iniciar sesión o registrarse",
-    "downloadTheApp": "Descargar la app",
     "helpAndSupport": "Ayuda y soporte"
   },
   "landing": {
