@@ -8735,13 +8735,13 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                     <div style={{ marginTop: 10, background: "#E7F5EC", border: "1px solid var(--forest)", borderRadius: 8, padding: "10px 14px" }}>
                       <p style={{ fontSize: 13, fontWeight: 700, color: "var(--forest)", margin: 0 }}>🎉 You're in your 14-day free trial of {currentPlan.name} — nothing to pay yet.</p>
                       <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 4, marginBottom: 0 }}>
-                        Just BZ${(Math.floor((currentPlan.monthly / 30) * 100) / 100).toFixed(2)} a day once your trial ends and billing starts — pick your plan below and upload a receipt whenever you're ready.
+                        Just BZ${(Math.round((currentPlan.monthly / 30) * 100) / 100).toFixed(2)} a day once your trial ends and billing starts — pick your plan below and upload a receipt whenever you're ready.
                       </p>
                     </div>
                   ) : (
                     <div style={{ marginTop: 6 }}>
                       <span style={{ display: "inline-block", background: "var(--forest)", color: "var(--lime)", fontSize: 12, fontWeight: 800, padding: "4px 10px", borderRadius: 100 }}>
-                        Just BZ${(Math.floor((currentPlan.monthly / 30) * 100) / 100).toFixed(2)} a day.
+                        Just BZ${(Math.round((currentPlan.monthly / 30) * 100) / 100).toFixed(2)} a day.
                       </span>
                       <div style={{ fontSize: 11, color: "var(--muted)", fontStyle: "italic", marginTop: 4 }}>(Pays for itself with a single haircut.)</div>
                     </div>
@@ -8835,7 +8835,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                             </div>
                             {pl.monthly > 0 && (
                               <div style={{ fontSize: 11.5, fontWeight: 700, color: "var(--accent-text)", marginTop: 2 }}>
-                                Just BZ${(Math.floor((pl.monthly / 30) * 100) / 100).toFixed(2)} a day.
+                                Just BZ${(Math.round((pl.monthly / 30) * 100) / 100).toFixed(2)} a day.
                               </div>
                             )}
                             <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 2 }}>{pl.desc}</div>
