@@ -3680,20 +3680,38 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
                     customers" menu 1:1, with no site-nav links cluttering
                     it — Home/Services/Trending are just a scroll away on
                     the homepage itself. */}
-                {current === "providers" && (
+                {current === "providers" ? (
                   <>
+                    {/* MIRROR of the "For customers" menu below, for the
+                        business marketing page — same shape as Fresha's
+                        own business-side menu: "For businesses" heading,
+                        an emphasized direct provider login, the same
+                        utility rows, then a "For customers →" link back
+                        to the consumer side at the bottom. No "Home" or
+                        "Blog" item here (unlike Fresha's) — this page has
+                        no sub-pages of its own to return to, and there's
+                        no blog to link, so copying those would just be
+                        dead links. */}
                     <a className="mobile-only-item" onClick={() => go(() => scrollToProvidersSection("features", onNav, current))}>{t("nav.features")}</a>
                     <a className="mobile-only-item" onClick={() => go(() => scrollToProvidersSection("pricing", onNav, current))}>{t("nav.pricing")}</a>
                     <hr className="mobile-only-item" />
+                    <div className="nav-dropdown-heading">{t("nav.forBusinessesHeading")}</div>
+                    <a className="nav-dropdown-primary-link" onClick={() => go(() => enterProviderPortal(onNav, session, onSignIn))}>{t("nav.logInOrSignUp")}</a>
+                    <button className="nav-dropdown-item" onClick={() => go(openInstallAppGuide)}>{t("nav.addToHomeScreen")}</button>
+                    <a href={`mailto:${SUPPORT_EMAIL}`} onClick={closeMenu}>{t("nav.helpAndSupport")}</a>
+                    <LanguageSelector variant="menu" onAfterChange={closeMenu} />
+                    <hr />
+                    <button className="nav-dropdown-item for-biz" onClick={() => go(() => onNav("home"))}>
+                      {t("nav.forCustomers")} <span>→</span>
+                    </button>
                   </>
-                )}
-                <div className="nav-dropdown-heading">{t("nav.forCustomersHeading")}</div>
-                <a className="nav-dropdown-primary-link" onClick={() => go(() => onNav("auth"))}>{t("nav.logInOrSignUp")}</a>
-                <button className="nav-dropdown-item" onClick={() => go(openInstallAppGuide)}>{t("nav.addToHomeScreen")}</button>
-                <a href={`mailto:${SUPPORT_EMAIL}`} onClick={closeMenu}>{t("nav.helpAndSupport")}</a>
-                <LanguageSelector variant="menu" onAfterChange={closeMenu} />
-                {current !== "providers" && (
+                ) : (
                   <>
+                    <div className="nav-dropdown-heading">{t("nav.forCustomersHeading")}</div>
+                    <a className="nav-dropdown-primary-link" onClick={() => go(() => onNav("auth"))}>{t("nav.logInOrSignUp")}</a>
+                    <button className="nav-dropdown-item" onClick={() => go(openInstallAppGuide)}>{t("nav.addToHomeScreen")}</button>
+                    <a href={`mailto:${SUPPORT_EMAIL}`} onClick={closeMenu}>{t("nav.helpAndSupport")}</a>
+                    <LanguageSelector variant="menu" onAfterChange={closeMenu} />
                     <hr />
                     <button className="nav-dropdown-item for-biz" onClick={() => go(() => onNav("providers"))}>
                       {t("nav.forBusinesses")} <span>→</span>
