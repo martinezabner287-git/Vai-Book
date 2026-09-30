@@ -1018,6 +1018,15 @@ const css = `
   .launch-banner { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; background: linear-gradient(160deg, var(--forest) 0%, #0A2A20 100%); border: 1px solid rgba(198,241,53,0.3); border-radius: 16px; padding: 18px 22px; margin-bottom: 20px; }
   .launch-banner-title { font-size: 15px; font-weight: 800; color: #FFFFFF; }
   .launch-banner-sub { font-size: 12.5px; color: rgba(245,239,224,0.7); margin-top: 3px; }
+  /* FIX: this banner is a fixed dark-green gradient in every theme (it
+     isn't part of the .provider-shell/.portal-content dark-mode scope),
+     but its "Dismiss" button reused the generic .btn-sm.ghost class, which
+     is styled for light card backgrounds (color: var(--dark-text) — a
+     dark, near-black text). Dark text on a dark-green banner was nearly
+     invisible regardless of light/dark mode. Scoped override forces
+     light text/border here specifically. */
+  .launch-banner .btn-sm.ghost { background: transparent; border: 1px solid rgba(255,255,255,0.4); color: #FFFFFF; }
+  .launch-banner .btn-sm.ghost:hover { border-color: var(--lime); color: var(--lime); }
   .plaque-modal-panel { background: transparent; max-width: 420px; width: 100%; }
   .plaque-loading { background: #fff; border-radius: 16px; padding: 60px 24px; text-align: center; font-size: 14px; color: var(--muted); }
   .plaque-generator { display: flex; flex-direction: column; align-items: center; gap: 16px; }
@@ -3302,6 +3311,7 @@ function setPortalTab(tabId) {
 }
 
 function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignOut, onOpenProviderSignup }) {
+  const { t } = useTranslation();
   const [menuOpen, setMenuOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
   const closeMenu = () => setMenuOpen(false);
@@ -3368,17 +3378,17 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
   const notifRow = session && user && (
     <>
       <button className="nav-dropdown-item" onClick={() => setNotifListOpen((v) => !v)}>
-        <span className="icn">🔔</span> Notifications
+        <span className="icn">🔔</span> {t("nav.notifications")}
         {unreadCount > 0 && <span className="nav-dropdown-badge">{unreadCount > 9 ? "9+" : unreadCount}</span>}
       </button>
       {notifListOpen && (
         <div className="notif-inline-list">
           <div className="notif-dropdown-header">
-            <strong>Notifications</strong>
-            {unreadCount > 0 && <a onClick={markAllRead}>Mark all read</a>}
+            <strong>{t("nav.notifications")}</strong>
+            {unreadCount > 0 && <a onClick={markAllRead}>{t("nav.markAllRead")}</a>}
           </div>
           {notifications.length === 0 ? (
-            <p className="notif-empty">No notifications yet.</p>
+            <p className="notif-empty">{t("nav.noNotifications")}</p>
           ) : (
             notifications.map((n) => (
               <div key={n.id} className={`notif-item ${n.read ? "" : "unread"}`} onClick={() => openNotification(n)}>
@@ -3497,7 +3507,7 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
           <div className="nav-search-input-wrap">
             <span className="nav-search-icon">🔍</span>
             <input
-              placeholder="Search barbers, haircuts, nail techs..."
+              placeholder={t("nav.searchPlaceholder")}
               value={navQuery}
               onChange={e => { setNavQuery(e.target.value); setShowNavSuggestions(true); }}
               onFocus={() => setShowNavSuggestions(true)}
@@ -3520,7 +3530,7 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
       </div>
       )}
       {showNavSearch && (
-      <button className={`nav-search-toggle ${navSearchActive ? "visible" : ""}`} onClick={() => setMobileSearchOpen(v => !v)} aria-label="Search">🔍</button>
+      <button className={`nav-search-toggle ${navSearchActive ? "visible" : ""}`} onClick={() => setMobileSearchOpen(v => !v)} aria-label={t("nav.searchAriaLabel")}>🔍</button>
       )}
 
       {/* THEME TOGGLE — global control (always visible, whatever page or
@@ -3548,75 +3558,75 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
               </button>
               {accountOpen && (
                 <div className="nav-account-dropdown">
-                  <div className="nav-account-name">{user?.full_name || "My account"}</div>
+                  <div className="nav-account-name">{user?.full_name || t("nav.myAccount")}</div>
                   {notifRow}
                   <button className="nav-dropdown-item" onClick={() => goAccount(() => openTab("settings"))}>
-                    <span className="icn">👤</span> Profile
+                    <span className="icn">👤</span> {t("nav.profile")}
                   </button>
                   <button className="nav-dropdown-item" onClick={() => goAccount(() => openTab("bookings"))}>
-                    <span className="icn">📅</span> My bookings
+                    <span className="icn">📅</span> {t("nav.myBookings")}
                   </button>
                   <button className="nav-dropdown-item" onClick={() => goAccount(() => openTab("payments"))}>
-                    <span className="icn">💳</span> Payments
+                    <span className="icn">💳</span> {t("nav.payments")}
                   </button>
                   <button className="nav-dropdown-item" onClick={() => goAccount(() => openTab("reviews"))}>
-                    <span className="icn">⭐</span> My reviews
+                    <span className="icn">⭐</span> {t("nav.myReviews")}
                   </button>
                   <button className="nav-dropdown-item" onClick={() => goAccount(() => openTab("settings"))}>
-                    <span className="icn">⚙️</span> Settings
+                    <span className="icn">⚙️</span> {t("nav.settings")}
                   </button>
                   <hr />
                   <button className="nav-dropdown-item" onClick={() => goAccount(onSignOut)}>
-                    <span className="icn">↪</span> Log out
+                    <span className="icn">↪</span> {t("nav.logOut")}
                   </button>
                   <hr />
-                  <a onClick={() => goAccount(() => onNav("home"))}>Home</a>
-                  <a onClick={() => goAccount(() => scrollToSection("services", onNav, current))}>Services</a>
-                  <a onClick={() => goAccount(() => scrollToSection("trending-local", onNav, current))}>Trending</a>
-                  <a onClick={() => goAccount(() => scrollToProvidersSection("pricing", onNav, current))}>Pricing</a>
+                  <a onClick={() => goAccount(() => onNav("home"))}>{t("nav.home")}</a>
+                  <a onClick={() => goAccount(() => scrollToSection("services", onNav, current))}>{t("nav.services")}</a>
+                  <a onClick={() => goAccount(() => scrollToSection("trending-local", onNav, current))}>{t("nav.trending")}</a>
+                  <a onClick={() => goAccount(() => scrollToProvidersSection("pricing", onNav, current))}>{t("nav.pricing")}</a>
                   <hr />
                   <button className="nav-dropdown-item mobile-only-item" onClick={() => goAccount(onOpenProviderSignup)}>
-                    <span className="icn">🏪</span> Provide my service
+                    <span className="icn">🏪</span> {t("nav.provideMyService")}
                   </button>
                   <button className="nav-dropdown-item for-biz" onClick={() => goAccount(() => enterProviderPortal(onNav, session, onSignIn))}>
-                    For businesses <span>→</span>
+                    {t("nav.forBusinesses")} <span>→</span>
                   </button>
                   <hr />
                   <button className="nav-dropdown-item" onClick={() => goAccount(openInstallAppGuide)}>
-                    <span className="icn">📲</span> Add to Home Screen
+                    <span className="icn">📲</span> {t("nav.addToHomeScreen")}
                   </button>
                 </div>
               )}
             </div>
           ) : (
-            <button className="nav-login-link" onClick={() => onNav("auth")}>Log in</button>
+            <button className="nav-login-link" onClick={() => onNav("auth")}>{t("nav.logIn")}</button>
           )}
           {current === "home" && (
-            <button className="nav-signup-btn" onClick={onOpenProviderSignup}>Provide my service</button>
+            <button className="nav-signup-btn" onClick={onOpenProviderSignup}>{t("nav.provideMyService")}</button>
           )}
           {current === "providers" && (
-            <button className="nav-signup-btn" onClick={() => onNav("home")}>Find a Professional</button>
+            <button className="nav-signup-btn" onClick={() => onNav("home")}>{t("nav.findAProfessional")}</button>
           )}
           {!session && (
           <div style={{ position: "relative" }} ref={menuRef}>
             <button className="nav-menu-btn" onClick={(e) => { e.stopPropagation(); setMenuOpen((v) => !v); }}>
-              Menu
+              {t("nav.menu")}
               <span className="bars"><span /><span /></span>
             </button>
             {menuOpen && (
               <div className="nav-dropdown">
-                <a onClick={() => go(() => onNav("home"))}>Home</a>
-                <a onClick={() => go(() => scrollToSection("services", onNav, current))}>Services</a>
-                <a onClick={() => go(() => scrollToSection("trending-local", onNav, current))}>Trending</a>
-                <a onClick={() => go(() => scrollToProvidersSection("pricing", onNav, current))}>Pricing</a>
+                <a onClick={() => go(() => onNav("home"))}>{t("nav.home")}</a>
+                <a onClick={() => go(() => scrollToSection("services", onNav, current))}>{t("nav.services")}</a>
+                <a onClick={() => go(() => scrollToSection("trending-local", onNav, current))}>{t("nav.trending")}</a>
+                <a onClick={() => go(() => scrollToProvidersSection("pricing", onNav, current))}>{t("nav.pricing")}</a>
                 <hr />
-                <button className="nav-dropdown-item" onClick={() => go(openInstallAppGuide)}>Add to Home Screen</button>
+                <button className="nav-dropdown-item" onClick={() => go(openInstallAppGuide)}>{t("nav.addToHomeScreen")}</button>
                 {current === "home" && (
                   <>
                     <hr />
-                    <button className="nav-dropdown-item mobile-only-item" onClick={() => go(onOpenProviderSignup)}>Provide my service</button>
+                    <button className="nav-dropdown-item mobile-only-item" onClick={() => go(onOpenProviderSignup)}>{t("nav.provideMyService")}</button>
                     <button className="nav-dropdown-item" onClick={() => go(() => enterProviderPortal(onNav, session, onSignIn))}>
-                      Provider login
+                      {t("nav.providerLogin")}
                     </button>
                   </>
                 )}
@@ -3642,7 +3652,7 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
           </button>
           {accountOpen && (
             <div className={`nav-account-dropdown${current === "customer" ? " cx-account-dropdown" : ""}`}>
-              <div className="nav-account-name">{user?.full_name || "My account"}</div>
+              <div className="nav-account-name">{user?.full_name || t("nav.myAccount")}</div>
               {notifRow}
               {PORTAL_TOOLS_BY_VIEW[current].map((item) => (
                 <button key={item.id} className="nav-dropdown-item" onClick={() => goAccount(() => setPortalTab(item.id))}>
@@ -3654,11 +3664,11 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
                   <hr />
                   {current === "provider" ? (
                     <button className="nav-dropdown-item" onClick={() => goAccount(() => enterCustomerPortal(onNav, session, onSignIn))}>
-                      <span className="icn">🛍️</span> Switch to customer
+                      <span className="icn">🛍️</span> {t("nav.switchToCustomer")}
                     </button>
                   ) : (
                     <button className="nav-dropdown-item for-biz" onClick={() => goAccount(() => enterProviderPortal(onNav, session, onSignIn))}>
-                      <span className="icn">🏪</span> Switch to provider
+                      <span className="icn">🏪</span> {t("nav.switchToProvider")}
                     </button>
                   )}
                 </>
@@ -3668,11 +3678,11 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
               <LanguageSelector variant="menu" />
               <hr />
               <button className="nav-dropdown-item" onClick={() => goAccount(openInstallAppGuide)}>
-                <span className="icn">📲</span> Add to Home Screen
+                <span className="icn">📲</span> {t("nav.addToHomeScreen")}
               </button>
               <hr />
               <button className="nav-dropdown-item" onClick={() => goAccount(onSignOut)}>
-                <span className="icn">↪</span> Log out
+                <span className="icn">↪</span> {t("nav.logOut")}
               </button>
             </div>
           )}
@@ -3680,18 +3690,18 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
       ) : (
         <div style={{ position: "relative" }} ref={menuRef}>
           <button className="nav-menu-btn" onClick={(e) => { e.stopPropagation(); setMenuOpen((v) => !v); }}>
-            Menu
+            {t("nav.menu")}
             <span className="bars"><span /><span /></span>
           </button>
           {menuOpen && (
             <div className="nav-dropdown">
-              <a onClick={() => go(() => onNav("home"))}>Home</a>
-              <a onClick={() => go(() => scrollToSection("services", onNav, current))}>Services</a>
-              <a onClick={() => go(() => scrollToSection("trending-local", onNav, current))}>Trending</a>
-              <a onClick={() => go(() => scrollToSection("browse", onNav, current))}>Browse by district</a>
-              <a onClick={() => go(() => scrollToProvidersSection("pricing", onNav, current))}>Pricing</a>
+              <a onClick={() => go(() => onNav("home"))}>{t("nav.home")}</a>
+              <a onClick={() => go(() => scrollToSection("services", onNav, current))}>{t("nav.services")}</a>
+              <a onClick={() => go(() => scrollToSection("trending-local", onNav, current))}>{t("nav.trending")}</a>
+              <a onClick={() => go(() => scrollToSection("browse", onNav, current))}>{t("nav.browseByDistrict")}</a>
+              <a onClick={() => go(() => scrollToProvidersSection("pricing", onNav, current))}>{t("nav.pricing")}</a>
               <hr />
-              <button className="nav-dropdown-item" onClick={() => go(openInstallAppGuide)}>Add to Home Screen</button>
+              <button className="nav-dropdown-item" onClick={() => go(openInstallAppGuide)}>{t("nav.addToHomeScreen")}</button>
             </div>
           )}
         </div>
@@ -3703,7 +3713,7 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
             <span className="nav-search-icon">🔍</span>
             <input
               autoFocus
-              placeholder="Search barbers, haircuts, nail techs..."
+              placeholder={t("nav.searchPlaceholder")}
               value={navQuery}
               onChange={e => setNavQuery(e.target.value)}
               onKeyDown={e => { if (e.key === "Enter") submitNavSearch(); }}
@@ -3814,7 +3824,7 @@ function LandingPage({ onNav, session, onSignIn, onSignOut }) {
     ? trendingProviders.filter((p) => p.district === trendingDistrict)
     : [];
   const trendingNearYou = districtTrending.length >= 2 ? districtTrending : trendingProviders;
-  const trendingNearYouHeading = districtTrending.length >= 2 ? `Trending in ${trendingDistrict} 🔥` : "Trending Near You 🔥";
+  const trendingNearYouHeading = districtTrending.length >= 2 ? t("landing.trendingIn", { district: trendingDistrict }) : t("landing.trendingNearYou");
 
   const goToProvider = (p) => {
     try {
@@ -3888,9 +3898,9 @@ function LandingPage({ onNav, session, onSignIn, onSignOut }) {
       {/* SERVICES */}
       <section className="services-section" id="services">
         <div style={{ textAlign: "center", marginBottom: 40 }}>
-          <div className="section-eyebrow" style={{ justifyContent: "center", display: "flex" }}>What's on VaiBook</div>
-          <h2 className="section-title">Every local service. One platform.</h2>
-          <p className="section-sub" style={{ margin: "0 auto" }}>From a fresh fade to a relaxing facial — all bookable in your district.</p>
+          <div className="section-eyebrow" style={{ justifyContent: "center", display: "flex" }}>{t("landing.whatsOnVaiBook")}</div>
+          <h2 className="section-title">{t("landing.everyLocalService")}</h2>
+          <p className="section-sub" style={{ margin: "0 auto" }}>{t("landing.fromFreshFade")}</p>
         </div>
         <div className="services-pills">
           {SERVICES.map((s, i) => (
@@ -3932,7 +3942,7 @@ function LandingPage({ onNav, session, onSignIn, onSignOut }) {
                         only shows on providers who actually opted into
                         Featured placement, the same honest proxy the
                         trending sort itself ranks on above. */}
-                    {p.is_featured && <span className="tny-scarcity">🔥 High demand</span>}
+                    {p.is_featured && <span className="tny-scarcity">{t("landing.highDemand")}</span>}
                   </div>
                   <div className="tny-card-body">
                     <h4>{p.business_name}</h4>
@@ -3940,10 +3950,10 @@ function LandingPage({ onNav, session, onSignIn, onSignOut }) {
                     {rating ? (
                       <div className="tny-card-rating">⭐ {rating} ({p.reviews.length})</div>
                     ) : (
-                      <div className="tny-card-rating tny-card-rating-new">New on VaiBook</div>
+                      <div className="tny-card-rating tny-card-rating-new">{t("landing.newOnVaiBook")}</div>
                     )}
                     <button className="tny-book-btn btn-neon" onClick={(e) => { e.stopPropagation(); goToProvider(p); }}>
-                      Book Now
+                      {t("landing.bookNow")}
                     </button>
                   </div>
                 </div>
@@ -3965,16 +3975,16 @@ function LandingPage({ onNav, session, onSignIn, onSignOut }) {
         <section className="section" id="discover">
           {recommendedProviders.length >= 2 && (
             <div style={{ marginBottom: 44 }}>
-              <div className="section-eyebrow">Loved by customers</div>
-              <h2 className="section-title" style={{ marginBottom: 20 }}>Recommended</h2>
+              <div className="section-eyebrow">{t("landing.lovedByCustomers")}</div>
+              <h2 className="section-title" style={{ marginBottom: 20 }}>{t("landing.recommended")}</h2>
               <ProviderCarousel providers={recommendedProviders} onCardClick={goToProvider} />
             </div>
           )}
           {newProviders.length >= 2 && (
             <div>
-              <div className="section-eyebrow">Just joined</div>
-              <h2 className="section-title" style={{ marginBottom: 20 }}>New to VaiBook</h2>
-              <ProviderCarousel providers={newProviders} badgeFor={(p) => (isRecentlyJoined(p) ? "New" : null)} onCardClick={goToProvider} />
+              <div className="section-eyebrow">{t("landing.justJoined")}</div>
+              <h2 className="section-title" style={{ marginBottom: 20 }}>{t("landing.newToVaiBook")}</h2>
+              <ProviderCarousel providers={newProviders} badgeFor={(p) => (isRecentlyJoined(p) ? t("landing.newBadge") : null)} onCardClick={goToProvider} />
             </div>
           )}
         </section>
@@ -3997,42 +4007,43 @@ function LandingPage({ onNav, session, onSignIn, onSignOut }) {
 // landing page. Pulled out once both pages needed it, rather than each
 // page carrying its own copy of the same static markup. ─────────────
 function SiteFooter() {
+  const { t } = useTranslation();
   return (
     <footer className="footer">
       <div className="footer-top">
         <div className="footer-brand">
           <span className="nav-logo" style={{ display: "inline-flex", alignItems: "center", gap: 8 }}><VaiBookMark size={20} />vai<span>book</span></span>
-          <p>Local services. Booked easily. Built for Belize.</p>
+          <p>{t("footer.tagline")}</p>
         </div>
         <div className="footer-links">
-          <h5>Services</h5>
+          <h5>{t("footer.services")}</h5>
           <ul>
             {SERVICES.map((s) => <li key={s.name}>{s.name}</li>)}
           </ul>
         </div>
         <div className="footer-links">
-          <h5>Company</h5>
+          <h5>{t("footer.company")}</h5>
           <ul>
-            <li>About Vai</li><li>How it works</li><li>Districts</li><li>Blog</li>
+            <li>{t("footer.aboutVai")}</li><li>{t("footer.howItWorks")}</li><li>{t("footer.districts")}</li><li>{t("footer.blog")}</li>
           </ul>
         </div>
         <div className="footer-links">
-          <h5>Support</h5>
+          <h5>{t("footer.support")}</h5>
           <ul>
-            <li>Help center</li><li>Contact us</li><li>Privacy policy</li><li>Terms</li>
+            <li>{t("footer.helpCenter")}</li><li>{t("footer.contactUs")}</li><li>{t("footer.privacyPolicy")}</li><li>{t("footer.terms")}</li>
           </ul>
         </div>
         <div className="footer-links">
-          <h5>More from Vai Plaza</h5>
+          <h5>{t("footer.moreFromVaiPlaza")}</h5>
           <ul>
-            <li><a href="https://vaibuyandsell.bz/shop?category=Home%20%26%20Living" target="_blank" rel="noopener noreferrer" style={{ color: "inherit", textDecoration: "none" }}>Vai Buy — buy &amp; sell</a></li>
+            <li><a href="https://vaibuyandsell.bz/shop?category=Home%20%26%20Living" target="_blank" rel="noopener noreferrer" style={{ color: "inherit", textDecoration: "none" }}>{t("footer.vaiBuy")}</a></li>
             {/* Vai Media entry goes here once its link/handle is confirmed */}
           </ul>
         </div>
       </div>
       <div className="footer-bottom">
-        <span>© 2026 VaiBook. Built in Belize 🇧🇿</span>
-        <span>A product of Vai Plaza</span>
+        <span>{t("footer.copyright")}</span>
+        <span>{t("footer.productOf")}</span>
       </div>
     </footer>
   );
@@ -4053,6 +4064,7 @@ function SiteFooter() {
 // direct-to-app funnel. This page still exists for anyone who scrolls in
 // from "Pricing" wanting the full pitch before they commit.
 function ProviderLandingPage({ onNav, session, onSignIn, onSignOut, onOpenProviderSignup }) {
+  const { t } = useTranslation();
   return (
     <>
       {/* HERO — deliberately dark/high-status rather than reusing the
@@ -4060,14 +4072,14 @@ function ProviderLandingPage({ onNav, session, onSignIn, onSignOut, onOpenProvid
           distinct the instant either one loads, not just different copy
           on the same page. */}
       <section className="provider-hero">
-        <div className="provider-hero-eyebrow">For shop &amp; studio owners</div>
-        <h1 className="provider-hero-title">The operating system for top-tier shops.</h1>
-        <p className="provider-hero-sub">No generic templates. No friction.</p>
-        <div className="trial-badge">✨ Apply today — approved shops get 14 days free</div>
+        <div className="provider-hero-eyebrow">{t("providerLanding.eyebrow")}</div>
+        <h1 className="provider-hero-title">{t("providerLanding.title")}</h1>
+        <p className="provider-hero-sub">{t("providerLanding.sub")}</p>
+        <div className="trial-badge">{t("providerLanding.trialBadge")}</div>
         <button className="btn-lime provider-hero-cta" onClick={onOpenProviderSignup}>
-          Apply to Join (14 Days Free)
+          {t("providerLanding.applyToJoin14")}
         </button>
-        <p className="provider-hero-note">No contracts, no setup fees — cancel anytime.</p>
+        <p className="provider-hero-note">{t("providerLanding.note")}</p>
       </section>
 
       {/* PLATFORM PREVIEW — a marketing collage showing the scheduling
@@ -4076,9 +4088,9 @@ function ProviderLandingPage({ onNav, session, onSignIn, onSignOut, onOpenProvid
           counts), not a live screenshot or a real usage claim. */}
       <section className="section platform-preview-section">
         <div style={{ textAlign: "center", marginBottom: 28 }}>
-          <div className="section-eyebrow" style={{ justifyContent: "center", display: "flex" }}>See it in action</div>
-          <h2 className="section-title">Built for how your business really runs</h2>
-          <p className="section-sub" style={{ margin: "0 auto" }}>One dashboard for your schedule, one booking page your customers love.</p>
+          <div className="section-eyebrow" style={{ justifyContent: "center", display: "flex" }}>{t("providerLanding.seeItInAction")}</div>
+          <h2 className="section-title">{t("providerLanding.builtForHow")}</h2>
+          <p className="section-sub" style={{ margin: "0 auto" }}>{t("providerLanding.oneDashboard")}</p>
         </div>
         <picture>
           <source srcSet="/platform-preview.webp" type="image/webp" />
@@ -4109,23 +4121,28 @@ function ProviderLandingPage({ onNav, session, onSignIn, onSignOut, onOpenProvid
           work, not just this copy change. */}
       <section className="section pricing-section" id="pricing">
         <div style={{ textAlign: "center", marginBottom: 40 }}>
-          <div className="section-eyebrow" style={{ justifyContent: "center", display: "flex" }}>For business owners</div>
-          <h2 className="section-title">Simple pricing. Grow when you're ready.</h2>
-          <p className="section-sub" style={{ margin: "0 auto" }}>No contracts, no setup fees. Apply for access, and once you're approved your 14-day free trial starts automatically.</p>
+          <div className="section-eyebrow" style={{ justifyContent: "center", display: "flex" }}>{t("providerLanding.forBusinessOwners")}</div>
+          <h2 className="section-title">{t("providerLanding.simplePricing")}</h2>
+          <p className="section-sub" style={{ margin: "0 auto" }}>{t("providerLanding.noContractsApply")}</p>
         </div>
         <div className="pricing-grid">
           {PUBLIC_PLANS.map((p) => (
             <div className={`pricing-card ${p.recommended ? "recommended" : ""}`} key={p.id}>
-              {p.recommended && <div className="pricing-badge">Recommended</div>}
+              {p.recommended && <div className="pricing-badge">{t("providerLanding.recommended")}</div>}
+              {/* Plan name/tagline/features/priceNote come straight from the
+                  PLANS data array (shared with billing/admin logic across the
+                  whole app) — translating those would mean restructuring that
+                  core array, not just this page's copy, so they stay English
+                  for now; everything else on this page is translated. */}
               <div className="pricing-name">{p.name}</div>
-              <div className="pricing-trial-badge">✨ 14-Day Free Trial</div>
+              <div className="pricing-trial-badge">{t("providerLanding.trialBadgeShort")}</div>
               <div className="pricing-price">
                 {p.monthly > 0 ? p.price : <>BZ$0<span> /month</span></>}
               </div>
-              {p.monthly > 0 && <div className="pricing-price-note">Billed BZ${p.monthly.toFixed(2)} / month</div>}
+              {p.monthly > 0 && <div className="pricing-price-note">{t("providerLanding.billedPerMonth", { amount: p.monthly.toFixed(2) })}</div>}
               {p.priceNote && <div className="pricing-price-note">{p.priceNote}</div>}
               {p.monthly > 0 && (
-                <div className="pricing-daily-note">(Pays for itself with a single haircut.)</div>
+                <div className="pricing-daily-note">{t("providerLanding.paysForItself")}</div>
               )}
               <div className="pricing-tagline">{p.tagline}</div>
               <ul className="pricing-features">
@@ -4137,12 +4154,12 @@ function ProviderLandingPage({ onNav, session, onSignIn, onSignOut, onOpenProvid
                 className={p.recommended ? "btn-lime pricing-cta" : "btn-sm forest pricing-cta"}
                 onClick={onOpenProviderSignup}
               >
-                Apply to Join
+                {t("providerLanding.applyToJoin")}
               </button>
             </div>
           ))}
         </div>
-        <p className="pricing-foot-note">Every plan includes invoices, refund tracking, and your own booking page. Change plans anytime — email us and we'll switch you at the end of your current billing period.</p>
+        <p className="pricing-foot-note">{t("providerLanding.pricingFootNote")}</p>
 
         {/* VAI MEDIA — a premium agency add-on, deliberately separated
             from the Solo/Team self-serve pricing above: no price shown (the
@@ -4150,23 +4167,23 @@ function ProviderLandingPage({ onNav, session, onSignIn, onSignOut, onOpenProvid
             an inquiry CTA, so it never adds checkout friction to the core
             SaaS signup. */}
         <div className="vai-media-banner">
-          <div className="vai-media-eyebrow">✨ Vai Media</div>
-          <h3 className="vai-media-title">Vai Media: Cinematic Growth</h3>
-          <p className="vai-media-copy">Need fresh content? We bring the cinema camera to your shop. High-converting Instagram/TikTok Reels and social media management designed to pack your chairs.</p>
+          <div className="vai-media-eyebrow">{t("providerLanding.vaiMediaEyebrow")}</div>
+          <h3 className="vai-media-title">{t("providerLanding.vaiMediaTitle")}</h3>
+          <p className="vai-media-copy">{t("providerLanding.vaiMediaCopy")}</p>
           <div className="vai-media-tiers">
             <div className="vai-media-tier">
-              <div className="vai-media-tier-name">The Profile Launch</div>
-              <div className="vai-media-tier-desc">3 professional, algorithm-ready Reels to launch your shop.</div>
+              <div className="vai-media-tier-name">{t("providerLanding.tier1Name")}</div>
+              <div className="vai-media-tier-desc">{t("providerLanding.tier1Desc")}</div>
               <div className="vai-media-tier-price">BZ$XXX</div>
             </div>
             <div className="vai-media-tier">
-              <div className="vai-media-tier-name">The Growth Partner</div>
-              <div className="vai-media-tier-desc">Monthly cinematic video shoots and full social media management.</div>
+              <div className="vai-media-tier-name">{t("providerLanding.tier2Name")}</div>
+              <div className="vai-media-tier-desc">{t("providerLanding.tier2Desc")}</div>
               <div className="vai-media-tier-price">BZ$XXX/mo</div>
             </div>
           </div>
-          <a className="vai-media-btn" href={vaiMediaWhatsAppUrl("pricing page")} target="_blank" rel="noreferrer">Apply for Vai Media</a>
-          <p className="vai-media-alt"><a href={vaiMediaMailtoUrl()}>or email us</a></p>
+          <a className="vai-media-btn" href={vaiMediaWhatsAppUrl("pricing page")} target="_blank" rel="noreferrer">{t("providerLanding.applyForVaiMedia")}</a>
+          <p className="vai-media-alt"><a href={vaiMediaMailtoUrl()}>{t("providerLanding.orEmailUs")}</a></p>
         </div>
       </section>
 
@@ -4175,13 +4192,12 @@ function ProviderLandingPage({ onNav, session, onSignIn, onSignOut, onOpenProvid
           to sell the trial CTA one more time before the page ends. */}
       <section className="for-business-cta">
         <div className="for-business-inner">
-          <h2 className="for-business-headline">Stop Losing Revenue to No-Shows</h2>
+          <h2 className="for-business-headline">{t("providerLanding.stopLosing")}</h2>
           <p className="for-business-sub">
-            Join Belize's top professionals. Get your customized booking link, automate
-            24-hour reminders, and secure deposits directly via WhatsApp.
+            {t("providerLanding.forBusinessSub")}
           </p>
           <button className="btn-lime for-business-btn" onClick={onOpenProviderSignup}>
-            Apply to Join
+            {t("providerLanding.applyToJoin")}
           </button>
         </div>
       </section>
@@ -8752,7 +8768,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                   return (
                     <>
                       <p style={{ fontSize: 13, color: "var(--accent-text)", fontWeight: 600, marginTop: 16 }}>
-                        You're in your 14-day free trial — nothing to pay yet. Pick Pro or Team below whenever you're ready; every provider on VaiBook ends up on a paid plan once the trial's over.
+                        You're in your 14-day free trial — nothing to pay yet. Pick Solo or Team below whenever you're ready; every provider on VaiBook ends up on a paid plan once the trial's over.
                       </p>
                       <div style={{ marginTop: 10 }}>
                         <div style={{ fontSize: 12, color: atCap ? "#B91C1C" : "var(--muted)", fontWeight: 600, marginBottom: 4 }}>
@@ -8830,7 +8846,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
 
                     {chosenPlan.monthly === 0 ? (
                       <p style={{ fontSize: 13, color: "var(--muted)", marginTop: 8 }}>
-                        Starter is free — there's nothing to upload. To move down to Starter, email VaiBook and we'll switch you at the end of your paid period.
+                        Your trial is free — there's nothing to upload. To move back to the free trial, email VaiBook and we'll switch you at the end of your paid period.
                       </p>
                     ) : (
                       <div style={{ marginTop: 8, paddingTop: 16, borderTop: "1px solid var(--border)" }}>
@@ -9834,7 +9850,14 @@ const vaiMediaMailtoUrl = () =>
 
 const PLANS = [
   {
-    id: "starter", name: "Starter", price: "Free", desc: "Up to 30 bookings/month", monthly: 0,
+    // Renamed "Starter" -> "Trial" (display name only — `id` stays
+    // "starter" so STARTER_CAP booking-limit enforcement, the
+    // `providerProfile?.plan || "starter"` no-plan-set fallback used
+    // everywhere, and admin tooling all keep working unchanged). Per
+    // explicit instruction: "Starter" as a plan name/concept should never
+    // be user-visible — every provider is on a real (trial-then-paid)
+    // plan, never something that reads as a permanent free tier.
+    id: "starter", name: "Trial", price: "Free", desc: "Up to 30 bookings/month", monthly: 0,
     tagline: "Get listed and start taking bookings — no cost, no card required.",
     features: [
       "Up to 30 bookings a month",
