@@ -13,6 +13,10 @@ import { bookingRequestSchema, rescheduleProposalSchema, validate } from "./vali
 // Default map center: Belize (roughly Belmopan) for providers who haven't set a pin yet.
 const BELIZE_CENTER = [17.25, -88.77];
 
+// Contact address for the nav's "Help and support" link (Menu dropdown).
+// Same domain-handle pattern as VAI_MEDIA_EMAIL further down.
+const SUPPORT_EMAIL = "support@vaibook.bz";
+
 // react-leaflet + leaflet only ever gets fetched when one of these two
 // components actually renders — see the comment atop MapWidgets.jsx.
 const ProviderMiniMap = lazy(() => import("./MapWidgets").then((m) => ({ default: m.ProviderMiniMap })));
@@ -374,6 +378,9 @@ const css = `
   .notif-time { font-size: 11px; color: var(--muted); margin-top: 4px; }
   .nav-login-link { background: none; border: none; color: var(--near-white); font-size: 14px; font-weight: 500; cursor: pointer; padding: 4px; }
   .nav-login-link:hover { color: var(--lime); }
+  .nav-link-inline { color: var(--near-white); font-size: 14px; font-weight: 500; cursor: pointer; padding: 4px; text-decoration: none; white-space: nowrap; }
+  .nav-link-inline:hover { color: var(--lime); }
+  @media (max-width: 860px) { .nav-link-inline { display: none; } }
   .btn-ghost { background: transparent; border: 1px solid rgba(255,255,255,0.35); color: var(--near-white); padding: 9px 20px; border-radius: 100px; font-size: 14px; font-weight: 500; cursor: pointer; transition: all .2s; }
   .btn-ghost:hover { border-color: var(--lime); color: var(--lime); }
   .btn-lime { background: var(--lime); border: none; color: var(--forest); padding: 8px 20px; border-radius: var(--radius-sm); font-size: 14px; font-weight: 600; cursor: pointer; transition: opacity .2s; }
@@ -406,10 +413,15 @@ const css = `
     font-size: 12px; font-weight: 800; letter-spacing: .04em; font-family: 'Plus Jakarta Sans', sans-serif;
   }
   .lang-toggle:hover { border-color: var(--lime); color: var(--lime); background: rgba(198,241,53,0.08); }
-  .nav-dropdown { position: absolute; top: calc(100% + 12px); right: 0; background: white; border-radius: var(--radius-sm); box-shadow: 0 16px 40px rgba(13,61,46,0.18); border: 1px solid var(--border); min-width: 220px; padding: 10px; z-index: 200; }
+  .nav-dropdown { position: absolute; top: calc(100% + 12px); right: 0; background: white; border-radius: var(--radius-sm); box-shadow: 0 16px 40px rgba(13,61,46,0.18); border: 1px solid var(--border); min-width: 240px; padding: 10px; z-index: 200; }
   .nav-dropdown a, .nav-dropdown button.nav-dropdown-item { display: block; width: 100%; text-align: left; background: none; border: none; padding: 11px 14px; border-radius: 8px; font-size: 14px; font-weight: 500; color: var(--dark-text); cursor: pointer; text-decoration: none; }
   .nav-dropdown a:hover, .nav-dropdown button.nav-dropdown-item:hover { background: var(--sand); }
   .nav-dropdown hr { border: none; border-top: 1px solid var(--border); margin: 8px 4px; }
+  /* Fresha-style section label inside a dropdown ("For customers" /
+     "For businesses") — a quiet all-caps heading, not itself clickable. */
+  .nav-dropdown-heading { padding: 8px 14px 4px; font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+  .nav-dropdown button.nav-dropdown-item.for-biz,
+  .nav-dropdown a.for-biz { display: flex; align-items: center; justify-content: space-between; font-weight: 700; }
 
   /* AUTH CHOICE */
   .auth-choice { min-height: 100vh; display: grid; grid-template-columns: 1fr 1fr; background: var(--near-white); }
@@ -565,6 +577,18 @@ const css = `
   .search-submit:hover { opacity: .87; }
   .search-hero-tagline { margin-top: 26px; font-size: 13px; color: rgba(250,250,247,0.6); text-align: center; }
   .search-hero-tagline a { color: var(--lime); font-weight: 600; cursor: pointer; text-decoration: underline; }
+  /* Real, non-fabricated live-stat line under the search bar (count comes
+     straight from the same active-providers fetch the Discover rows use —
+     never a made-up number) + a "Get the app" pill, echoing the two small
+     trust/utility elements Fresha places under its own hero search bar. */
+  .hero-stat-line { margin-top: 22px; font-size: 14px; font-weight: 600; color: rgba(250,250,247,0.75); text-align: center; }
+  .hero-stat-line strong { color: var(--lime); font-weight: 800; }
+  .hero-get-app-btn {
+    display: flex; align-items: center; gap: 8px; margin: 18px auto 0; background: #FFFFFF; color: var(--forest);
+    border: none; border-radius: 100px; padding: 11px 22px; font-size: 14px; font-weight: 700; cursor: pointer;
+    box-shadow: 0 10px 26px rgba(0,0,0,0.18); transition: transform .15s;
+  }
+  .hero-get-app-btn:hover { transform: translateY(-1px); }
   .hero-trial-btn { display: block; margin: 0 auto 44px; padding: 17px 38px; font-size: 16px; border-radius: 100px; box-shadow: 0 16px 40px rgba(198,241,53,0.22); }
   .hero-search-label { font-size: 12px; font-weight: 600; letter-spacing: .03em; color: rgba(250,250,247,0.5); text-align: center; margin-bottom: 14px; }
 
@@ -616,13 +640,20 @@ const css = `
     max-width: 480px; margin: 0 auto 26px; line-height: 1.5;
   }
   .provider-hero .trial-badge { margin: 0 auto 28px; }
+  .provider-hero-ctas { display: flex; align-items: center; justify-content: center; gap: 14px; flex-wrap: wrap; }
   .provider-hero-cta.btn-lime {
     display: inline-block; padding: 20px 44px; font-size: 17px; font-weight: 800;
     border-radius: 100px; box-shadow: 0 18px 44px rgba(198,241,53,0.28);
   }
+  .provider-hero-cta-secondary.btn-ghost { padding: 20px 32px; font-size: 16px; font-weight: 700; }
   .provider-hero-note { margin-top: 18px; font-size: 13px; color: rgba(250,250,247,0.5); }
+  /* The dashboard screenshot living inside the dark hero, Fresha-style —
+     platform-preview-img already carries its own white rounded corners +
+     shadow, which is exactly what reads well floating on this gradient. */
+  .provider-hero-screenshot { margin-top: 56px; }
   @media (max-width: 640px) {
     .provider-hero { padding: 96px 20px 72px; }
+    .provider-hero-screenshot { margin-top: 36px; }
     .provider-hero-cta.btn-lime { width: 100%; padding: 18px 0; }
   }
 
@@ -3618,7 +3649,15 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
             <button className="nav-signup-btn" onClick={onOpenProviderSignup}>{t("nav.provideMyService")}</button>
           )}
           {current === "providers" && (
-            <button className="nav-signup-btn" onClick={() => onNav("home")}>{t("nav.findAProfessional")}</button>
+            <>
+              {/* Business-nav links, Fresha's "Business types / Features /
+                  Pricing" pattern — only shown on the business marketing
+                  page itself, scrolling within it rather than duplicating
+                  these as separate routes. */}
+              <a className="nav-link-inline" onClick={() => scrollToProvidersSection("features", onNav, current)}>{t("nav.features")}</a>
+              <a className="nav-link-inline" onClick={() => scrollToProvidersSection("pricing", onNav, current)}>{t("nav.pricing")}</a>
+              <button className="nav-signup-btn" onClick={() => onNav("home")}>{t("nav.findAProfessional")}</button>
+            </>
           )}
           {!session && (
           <div style={{ position: "relative" }} ref={menuRef}>
@@ -3631,15 +3670,27 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
                 <a onClick={() => go(() => onNav("home"))}>{t("nav.home")}</a>
                 <a onClick={() => go(() => scrollToSection("services", onNav, current))}>{t("nav.services")}</a>
                 <a onClick={() => go(() => scrollToSection("trending-local", onNav, current))}>{t("nav.trending")}</a>
+                {current === "providers" && (
+                  <a className="mobile-only-item" onClick={() => go(() => scrollToProvidersSection("features", onNav, current))}>{t("nav.features")}</a>
+                )}
                 <a onClick={() => go(() => scrollToProvidersSection("pricing", onNav, current))}>{t("nav.pricing")}</a>
                 <hr />
-                <button className="nav-dropdown-item" onClick={() => go(openInstallAppGuide)}>{t("nav.addToHomeScreen")}</button>
-                {current === "home" && (
+                {/* FRESHA-STYLE SECTION — a "For customers" heading over the
+                    account/utility items (login, install, help, language),
+                    then a divider and a single clear "For businesses" link
+                    that hands off to ProviderLandingPage's own nav/CTAs
+                    (see that component) rather than duplicating a provider
+                    login/signup shortcut in here too. */}
+                <div className="nav-dropdown-heading">{t("nav.forCustomersHeading")}</div>
+                <a onClick={() => go(() => onNav("auth"))}>{t("nav.logInOrSignUp")}</a>
+                <button className="nav-dropdown-item" onClick={() => go(openInstallAppGuide)}>{t("nav.downloadTheApp")}</button>
+                <a href={`mailto:${SUPPORT_EMAIL}`} onClick={closeMenu}>{t("nav.helpAndSupport")}</a>
+                <LanguageSelector variant="menu" onAfterChange={closeMenu} />
+                {current !== "providers" && (
                   <>
                     <hr />
-                    <button className="nav-dropdown-item mobile-only-item" onClick={() => go(onOpenProviderSignup)}>{t("nav.provideMyService")}</button>
-                    <button className="nav-dropdown-item" onClick={() => go(() => enterProviderPortal(onNav, session, onSignIn))}>
-                      {t("nav.providerLogin")}
+                    <button className="nav-dropdown-item for-biz" onClick={() => go(() => onNav("providers"))}>
+                      {t("nav.forBusinesses")} <span>→</span>
                     </button>
                   </>
                 )}
@@ -3906,6 +3957,14 @@ function LandingPage({ onNav, session, onSignIn, onSignOut }) {
             </div>
           )}
         </div>
+        {!loadingDiscover && discoverProviders.length > 0 && (
+          <p className="hero-stat-line">
+            {t("hero.trustedProfessionals", { count: discoverProviders.length })}
+          </p>
+        )}
+        <button className="hero-get-app-btn" onClick={openInstallAppGuide}>
+          {t("hero.getTheApp")} <span aria-hidden="true">⊞</span>
+        </button>
       </section>
 
       {/* SERVICES */}
@@ -4089,26 +4148,27 @@ function ProviderLandingPage({ onNav, session, onSignIn, onSignOut, onOpenProvid
         <h1 className="provider-hero-title">{t("providerLanding.title")}</h1>
         <p className="provider-hero-sub">{t("providerLanding.sub")}</p>
         <div className="trial-badge">{t("providerLanding.trialBadge")}</div>
-        <button className="btn-lime provider-hero-cta" onClick={onOpenProviderSignup}>
-          {t("providerLanding.applyToJoin14")}
-        </button>
-        <p className="provider-hero-note">{t("providerLanding.note")}</p>
-      </section>
-
-      {/* PLATFORM PREVIEW — a marketing collage showing the scheduling
-          dashboard + a customer-facing booking screen side by side. This is
-          an illustrative mockup (fictional salon/business names and review
-          counts), not a live screenshot or a real usage claim. */}
-      <section className="section platform-preview-section">
-        <div style={{ textAlign: "center", marginBottom: 28 }}>
-          <div className="section-eyebrow" style={{ justifyContent: "center", display: "flex" }}>{t("providerLanding.seeItInAction")}</div>
-          <h2 className="section-title">{t("providerLanding.builtForHow")}</h2>
-          <p className="section-sub" style={{ margin: "0 auto" }}>{t("providerLanding.oneDashboard")}</p>
+        <div className="provider-hero-ctas">
+          <button className="btn-lime provider-hero-cta" onClick={onOpenProviderSignup}>
+            {t("providerLanding.applyToJoin14")}
+          </button>
+          <button className="btn-ghost provider-hero-cta-secondary" onClick={() => document.getElementById("pricing")?.scrollIntoView({ behavior: "smooth" })}>
+            {t("providerLanding.seePricing")}
+          </button>
         </div>
+        <p className="provider-hero-note">{t("providerLanding.note")}</p>
+
+        {/* PLATFORM PREVIEW — moved inside the hero itself (Fresha's own
+            business-page hero puts its scheduling-calendar screenshot right
+            under the CTAs, in the same panel, rather than a separate plain
+            section below). A marketing collage showing the scheduling
+            dashboard + a customer-facing booking screen side by side — an
+            illustrative mockup (fictional salon/business names and review
+            counts), not a live screenshot or a real usage claim. */}
         <picture>
           <source srcSet="/platform-preview.webp" type="image/webp" />
           <img
-            className="platform-preview-img"
+            className="platform-preview-img provider-hero-screenshot"
             src="/platform-preview.jpg"
             alt="VaiBook scheduling dashboard and customer booking screen preview"
             width={1600}
@@ -4117,6 +4177,17 @@ function ProviderLandingPage({ onNav, session, onSignIn, onSignOut, onOpenProvid
             decoding="async"
           />
         </picture>
+      </section>
+
+      {/* FEATURES INTRO — the copy that used to caption the screenshot
+          above now introduces the page's feature/pricing content on its
+          own, since the screenshot lives in the hero now. */}
+      <section className="section platform-preview-section" id="features">
+        <div style={{ textAlign: "center" }}>
+          <div className="section-eyebrow" style={{ justifyContent: "center", display: "flex" }}>{t("providerLanding.seeItInAction")}</div>
+          <h2 className="section-title">{t("providerLanding.builtForHow")}</h2>
+          <p className="section-sub" style={{ margin: "0 auto" }}>{t("providerLanding.oneDashboard")}</p>
+        </div>
       </section>
 
       {/* PRICING — for prospective providers. "Recommended" on Pro is
