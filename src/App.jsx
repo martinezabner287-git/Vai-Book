@@ -4120,14 +4120,12 @@ function ProviderLandingPage({ onNav, session, onSignIn, onSignOut, onOpenProvid
               <div className="pricing-name">{p.name}</div>
               <div className="pricing-trial-badge">✨ 14-Day Free Trial</div>
               <div className="pricing-price">
-                BZ${p.monthly}<span> /month</span>
+                {p.monthly > 0 ? p.price : <>BZ$0<span> /month</span></>}
               </div>
+              {p.monthly > 0 && <div className="pricing-price-note">Billed BZ${p.monthly.toFixed(2)} / month</div>}
               {p.priceNote && <div className="pricing-price-note">{p.priceNote}</div>}
               {p.monthly > 0 && (
-                <>
-                  <div className="pricing-daily-rate">Just BZ${(Math.floor((p.monthly / 30) * 100) / 100).toFixed(2)} a day.</div>
-                  <div className="pricing-daily-note">(Pays for itself with a single haircut.)</div>
-                </>
+                <div className="pricing-daily-note">(Pays for itself with a single haircut.)</div>
               )}
               <div className="pricing-tagline">{p.tagline}</div>
               <ul className="pricing-features">
@@ -6610,7 +6608,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
       } else if (err?.code === "MAINTENANCE_MODE") {
         setWalkInSaleError("New bookings are temporarily paused for maintenance. Please try again shortly.");
       } else if (err?.code === "STARTER_LIMIT_REACHED") {
-        setWalkInSaleError("You've reached the free Starter plan's 30 bookings/month limit. Upgrade to Pro under My plan & billing for unlimited bookings.");
+        setWalkInSaleError("You've reached your trial's 30 bookings/month limit. Upgrade to Solo under My plan & billing for unlimited bookings.");
       } else {
         setWalkInSaleError("Something went wrong logging this sale. Please try again.");
       }
@@ -6725,7 +6723,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
       } else if (err?.code === "MAINTENANCE_MODE") {
         setWalkInError("New bookings are temporarily paused for maintenance. Please try again shortly.");
       } else if (err?.code === "STARTER_LIMIT_REACHED") {
-        setWalkInError("You've reached the free Starter plan's 30 bookings/month limit. Upgrade to Pro under My plan & billing for unlimited bookings.");
+        setWalkInError("You've reached your trial's 30 bookings/month limit. Upgrade to Solo under My plan & billing for unlimited bookings.");
       } else {
         setWalkInError("Something went wrong saving this appointment. Please try again.");
       }
@@ -8699,6 +8697,16 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
           const currentPlan = PLANS.find((p) => p.id === (providerProfile?.plan || "starter")) || PLANS[0];
           const statusColor = { pending: "#B45309", confirmed: "var(--forest)", rejected: "#B91C1C" };
           const statusBg = { pending: "#FEF3C7", confirmed: "#E7F5EC", rejected: "#FEE2E2" };
+          // FIX ("every provider is providing a service, they must be
+          // paying"): VaiBook has no backend trial-date tracking (no
+          // trial_ends_at column) — this is copy-only, the same
+          // marketing-copy-not-enforcement approach already used for the
+          // pricing page's "14-Day Free Trial" badge. `next_payment_due_date`
+          // is never set anywhere in this codebase except by an admin (or
+          // directly in Supabase), so its absence is a safe, already-existing
+          // signal for "hasn't been billed yet" — used here only to decide
+          // which copy to show, no new field and no changed gating logic.
+          const inTrial = currentPlan.monthly > 0 && !providerProfile?.next_payment_due_date;
           return (
             <>
               <div className="portal-header"><h2>My plan &amp; billing</h2><p>This is your VaiBook subscription — separate from what customers pay you for bookings.</p></div>
@@ -8707,12 +8715,21 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                 <div className="card-title">Current plan</div>
                 <div style={{ fontSize: 20, fontWeight: 700 }}>{currentPlan.name} <span style={{ fontSize: 14, fontWeight: 500, color: "var(--muted)" }}>— {currentPlan.price}</span></div>
                 {currentPlan.monthly > 0 && (
-                  <div style={{ marginTop: 6 }}>
-                    <span style={{ display: "inline-block", background: "var(--forest)", color: "var(--lime)", fontSize: 12, fontWeight: 800, padding: "4px 10px", borderRadius: 100 }}>
-                      Just BZ${(Math.floor((currentPlan.monthly / 30) * 100) / 100).toFixed(2)} a day.
-                    </span>
-                    <div style={{ fontSize: 11, color: "var(--muted)", fontStyle: "italic", marginTop: 4 }}>(Pays for itself with a single haircut.)</div>
-                  </div>
+                  inTrial ? (
+                    <div style={{ marginTop: 10, background: "#E7F5EC", border: "1px solid var(--forest)", borderRadius: 8, padding: "10px 14px" }}>
+                      <p style={{ fontSize: 13, fontWeight: 700, color: "var(--forest)", margin: 0 }}>🎉 You're in your 14-day free trial of {currentPlan.name} — nothing to pay yet.</p>
+                      <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 4, marginBottom: 0 }}>
+                        Just BZ${(Math.floor((currentPlan.monthly / 30) * 100) / 100).toFixed(2)} a day once your trial ends and billing starts — pick your plan below and upload a receipt whenever you're ready.
+                      </p>
+                    </div>
+                  ) : (
+                    <div style={{ marginTop: 6 }}>
+                      <span style={{ display: "inline-block", background: "var(--forest)", color: "var(--lime)", fontSize: 12, fontWeight: 800, padding: "4px 10px", borderRadius: 100 }}>
+                        Just BZ${(Math.floor((currentPlan.monthly / 30) * 100) / 100).toFixed(2)} a day.
+                      </span>
+                      <div style={{ fontSize: 11, color: "var(--muted)", fontStyle: "italic", marginTop: 4 }}>(Pays for itself with a single haircut.)</div>
+                    </div>
+                  )
                 )}
                 <p style={{ fontSize: 13, color: "var(--muted)", marginTop: 4 }}>{currentPlan.desc}</p>
 
@@ -8734,7 +8751,9 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                   const atCap = usedThisMonth >= STARTER_CAP;
                   return (
                     <>
-                      <p style={{ fontSize: 13, color: "var(--accent-text)", fontWeight: 600, marginTop: 16 }}>You're on the free Starter plan — nothing to pay.</p>
+                      <p style={{ fontSize: 13, color: "var(--accent-text)", fontWeight: 600, marginTop: 16 }}>
+                        You're in your 14-day free trial — nothing to pay yet. Pick Pro or Team below whenever you're ready; every provider on VaiBook ends up on a paid plan once the trial's over.
+                      </p>
                       <div style={{ marginTop: 10 }}>
                         <div style={{ fontSize: 12, color: atCap ? "#B91C1C" : "var(--muted)", fontWeight: 600, marginBottom: 4 }}>
                           {Math.min(usedThisMonth, STARTER_CAP)} of {STARTER_CAP} bookings used this month
@@ -8744,7 +8763,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                         </div>
                         {atCap && (
                           <p style={{ fontSize: 12, color: "#B91C1C", marginTop: 6 }}>
-                            You've hit this month's limit — new bookings will be turned away until next month, or you upgrade to Pro for unlimited bookings.
+                            You've hit this month's limit — new bookings will be turned away until next month, or you upgrade to Solo for unlimited bookings.
                           </p>
                         )}
                       </div>
@@ -8817,8 +8836,8 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                       <div style={{ marginTop: 8, paddingTop: 16, borderTop: "1px solid var(--border)" }}>
                         <p style={{ fontSize: 13, marginBottom: 12 }}>
                           {isUpgrade
-                            ? `Send BZ$${chosenPlan.monthly} for the ${chosenPlan.name} plan, then upload the receipt — you'll move onto ${chosenPlan.name} once admin confirms it.`
-                            : `Send BZ$${chosenPlan.monthly} for your ${chosenPlan.name} plan, then upload the receipt so admin can confirm it and keep your account active.`}
+                            ? `Send BZ$${chosenPlan.monthly.toFixed(2)} for the ${chosenPlan.name} plan, then upload the receipt — you'll move onto ${chosenPlan.name} once admin confirms it.`
+                            : `Send BZ$${chosenPlan.monthly.toFixed(2)} for your ${chosenPlan.name} plan, then upload the receipt so admin can confirm it and keep your account active.`}
                         </p>
                         <div className="input-group">
                           <label>Which period is this for?</label>
@@ -8873,7 +8892,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
               <div className="card" style={{ maxWidth: 560 }}>
                 <div className="card-title">This is a Business plan feature</div>
                 <p style={{ fontSize: 13, color: "var(--muted)", marginBottom: 12 }}>
-                  Staff seats let you add your team and each person gets their own login to see just their own bookings. Upgrade to the Business plan (BZ${PLANS.find(p => p.id === "business")?.monthly}/mo) to turn this on.
+                  Staff seats let you add your team and each person gets their own login to see just their own bookings. Upgrade to the Team plan (BZ${(PLANS.find(p => p.id === "business")?.monthly || 0).toFixed(2)}/mo) to turn this on.
                 </p>
                 <button className="btn-sm lime" onClick={() => setTab("billing")}>View plans & billing</button>
               </div>
@@ -9826,7 +9845,14 @@ const PLANS = [
     ],
   },
   {
-    id: "pro", name: "Pro", price: "BZ$50/mo", desc: "For solo practitioners", monthly: 50,
+    // Renamed "Pro" -> "Solo" (display name only — `id` stays "pro" so
+    // existing providers' stored plan value, admin tooling, and every
+    // `PLANS.find(p => p.id === "pro")` lookup keep working unchanged).
+    // Repriced to BZ$1.99/day per the user's explicit pricing update
+    // (was BZ$50/mo ~= BZ$1.67/day). monthly is set to exactly 59.7 so
+    // the existing (monthly/30) day-rate math lands on 1.99 everywhere
+    // it's computed, not just in this label.
+    id: "pro", name: "Solo", price: "BZ$1.99/day", desc: "For solo practitioners", monthly: 59.7,
     tagline: "For solo practitioners who want frictionless booking, automated reminders, and deposits handled for them.",
     recommended: true,
     features: [
@@ -9835,15 +9861,18 @@ const PLANS = [
       "Customizable deposits routed to your bank",
       "Your own booking page & calendar",
       "Loyalty & rewards program",
-      "A \"Pro\" badge customers see on your listing",
+      "A \"Solo\" badge customers see on your listing",
     ],
   },
   {
-    id: "business", name: "Team", price: "BZ$120/mo", desc: "Base fee + per-seat pricing", monthly: 120,
+    // Repriced to BZ$4.99/day per the user's explicit pricing update
+    // (was BZ$120/mo ~= BZ$4.00/day). monthly = 149.7 so (monthly/30)
+    // lands on exactly 4.99 wherever that math runs.
+    id: "business", name: "Team", price: "BZ$4.99/day for 1 month", desc: "Base fee + per-seat pricing", monthly: 149.7,
     priceNote: "Base fee, plus a per-seat add-on as you bring on staff",
     tagline: "For teams — a base plan covering your shop, plus staff seats you add as you grow.",
     features: [
-      "Everything in Pro",
+      "Everything in Solo",
       "Staff seats with their own logins",
       "Featured placement in district search",
       "A \"Team\" badge customers see on your listing",
