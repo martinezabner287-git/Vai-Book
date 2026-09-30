@@ -21,7 +21,22 @@ const SUPPORT_EMAIL = "support@vaibook.bz";
 // the app it's coming from, without needing a real ticketing system —
 // same lightweight "just mailto, but a little smarter" approach as
 // vaiMediaMailtoUrl further down.
-const helpMailtoUrl = (subject) => `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent(subject)}`;
+const helpMailtoUrl = (subject, body) =>
+  `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent(subject)}${body ? `&body=${encodeURIComponent(body)}` : ""}`;
+
+// The combined list of "what's this about" reasons for the Email Us form —
+// deliberately one shared list covering both customer and business
+// questions rather than two separate flows, since it all lands in the same
+// inbox at VaiBook's end regardless of which "For customers"/"For
+// professionals" card someone started from.
+const CONTACT_REASONS = ["booking", "charge", "providerIssue", "account", "planBilling", "dashboard", "other"];
+
+// Real, accurate answers about how VaiBook actually behaves today — every
+// one of these matches the app's real logic elsewhere in this file (the
+// 14-day trial has no backend enforcement, billing is manual bank-transfer,
+// Chairs Filled is shop-wide unless staff-scoped, etc.). Nothing aspirational
+// here — if a feature isn't built, it isn't answered as if it were.
+const FAQ_ITEMS = ["trial", "plans", "staff", "walkins", "chairsFilled", "billing", "changePlan", "findMe", "language", "blocks"];
 
 // react-leaflet + leaflet only ever gets fetched when one of these two
 // components actually renders — see the comment atop MapWidgets.jsx.
@@ -476,6 +491,7 @@ const css = `
     flex: 1 1 320px; max-width: 380px; text-align: left; text-decoration: none; color: inherit;
     background: var(--bg-elevated); border: 1px solid var(--border-subtle); border-radius: 20px;
     padding: 28px; display: flex; flex-direction: column; transition: transform .15s, box-shadow .15s;
+    font: inherit; cursor: pointer; appearance: none; -webkit-appearance: none;
   }
   .help-card:hover { transform: translateY(-3px); box-shadow: 0 16px 40px rgba(13,61,46,0.16); }
   .help-card-icon { width: 52px; height: 52px; border-radius: 14px; background: var(--forest); color: var(--lime); display: flex; align-items: center; justify-content: center; font-size: 24px; margin-bottom: 18px; }
@@ -484,6 +500,68 @@ const css = `
   .help-card-arrow { width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--border-subtle); display: flex; align-items: center; justify-content: center; font-size: 17px; align-self: flex-end; color: var(--text-primary); }
   @media (max-width: 640px) {
     .help-center-page { padding: 80px 20px 72px; }
+  }
+
+  /* HELP — EMAIL US / FAQ — the two destinations the cards above lead to.
+     Same theme-aware-variable approach as .help-center-page so both are
+     correct in dark mode automatically. */
+  .help-back-link {
+    display: inline-flex; align-items: center; gap: 6px; background: none; border: none; cursor: pointer;
+    font: inherit; font-size: 14px; font-weight: 700; color: var(--text-secondary); padding: 0; margin: 0 0 20px;
+  }
+  .help-back-link:hover { color: var(--forest); }
+  .help-form-page, .help-faq-page { max-width: 640px; margin: 0 auto; padding: 60px 24px 96px; }
+  .help-form-card {
+    background: var(--bg-elevated); border: 1px solid var(--border-subtle); border-radius: 20px;
+    padding: 28px; display: flex; flex-direction: column; gap: 20px;
+  }
+  .help-form-group { display: flex; flex-direction: column; gap: 6px; }
+  .help-form-group label { font-size: 13px; font-weight: 700; color: var(--text-primary); }
+  .help-form-group input, .help-form-group select, .help-form-group textarea {
+    background: var(--bg-primary); border: 1px solid var(--border-subtle); border-radius: 12px;
+    padding: 12px 14px; font-size: 14px; color: var(--text-primary); font-family: inherit; resize: vertical;
+  }
+  .help-form-group input:focus, .help-form-group select:focus, .help-form-group textarea:focus {
+    outline: none; border-color: var(--forest);
+  }
+  .help-form-hint { font-size: 12px; color: var(--text-tertiary); }
+  .help-form-charcount { align-self: flex-end; }
+  .help-form-error { font-size: 13px; font-weight: 700; color: #DC5A4A; margin: -8px 0 0; }
+  .help-form-submit {
+    background: var(--forest); color: var(--lime); border: none; border-radius: 100px;
+    padding: 14px 24px; font-size: 15px; font-weight: 800; cursor: pointer; transition: opacity .15s;
+  }
+  .help-form-submit:hover { opacity: 0.9; }
+  .help-form-footnote { font-size: 12px; color: var(--text-tertiary); text-align: center; margin: 0; }
+  .help-faq-search {
+    display: flex; align-items: center; gap: 10px; background: var(--bg-elevated);
+    border: 1px solid var(--border-subtle); border-radius: 14px; padding: 12px 16px; margin-bottom: 24px;
+  }
+  .help-faq-search input { flex: 1; border: none; background: none; outline: none; font-size: 15px; color: var(--text-primary); font-family: inherit; }
+  .help-faq-search-icon { font-size: 15px; opacity: 0.6; }
+  .help-faq-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 36px; }
+  .help-faq-empty { font-size: 14px; color: var(--text-tertiary); text-align: center; padding: 24px 0; }
+  .help-faq-item { background: var(--bg-elevated); border: 1px solid var(--border-subtle); border-radius: 14px; overflow: hidden; }
+  .help-faq-question {
+    width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    background: none; border: none; cursor: pointer; font: inherit; text-align: left;
+    padding: 16px 18px; font-size: 15px; font-weight: 700; color: var(--text-primary);
+  }
+  .help-faq-item.open .help-faq-question { color: var(--forest); }
+  .help-faq-chevron { font-size: 18px; flex-shrink: 0; color: var(--text-tertiary); }
+  .help-faq-answer { margin: 0; padding: 0 18px 18px; font-size: 14px; line-height: 1.6; color: var(--text-secondary); }
+  .help-faq-cta {
+    text-align: center; padding: 28px 20px; border-radius: 16px; background: var(--bg-elevated);
+    border: 1px solid var(--border-subtle);
+  }
+  .help-faq-cta p { margin: 0 0 14px; font-size: 14px; color: var(--text-secondary); font-weight: 600; }
+  .help-faq-cta-btn {
+    background: var(--forest); color: var(--lime); border: none; border-radius: 100px;
+    padding: 11px 22px; font-size: 14px; font-weight: 800; cursor: pointer; transition: opacity .15s;
+  }
+  .help-faq-cta-btn:hover { opacity: 0.9; }
+  @media (max-width: 640px) {
+    .help-form-page, .help-faq-page { padding: 44px 20px 72px; }
   }
 
   /* ACCOUNT DROPDOWN */
@@ -3029,11 +3107,14 @@ function AuthChoice({ onNav, session, onSignIn, onSignOut }) {
 // layout from AuthChoice's full-screen split panel (per explicit request,
 // "in a different format") — a simple centered page with two cards, using
 // VaiBook's own icon-block style (like the SERVICES pills) instead of stock
-// photography, since there isn't a real photo library to draw from. There's
-// no knowledge base or ticketing system behind this yet, so both cards just
-// route to a real inbox with a pre-filled subject line telling you which
-// side it's coming from — honest about being "email support," not a
-// help-center product VaiBook doesn't have.
+// photography, since there isn't a real photo library to draw from.
+//
+// The two cards now lead to two different real destinations rather than
+// both firing an instant mailto (per explicit instruction: "customer
+// support is the one with the email. and the one for professionals is with
+// the faq") — "For customers" opens a proper contact form (HelpContactForm,
+// below), "For professionals" opens a searchable FAQ (HelpFAQ, below) that
+// only answers with real, already-built app behavior.
 function HelpCenter({ onNav }) {
   const { t } = useTranslation();
   return (
@@ -3041,18 +3122,140 @@ function HelpCenter({ onNav }) {
       <h1 className="help-title">{t("help.title")}</h1>
       <p className="help-sub">{t("help.sub")}</p>
       <div className="help-cards">
-        <a className="help-card" href={helpMailtoUrl(t("help.customerSubject"))}>
+        <button type="button" className="help-card" onClick={() => onNav("help-contact")}>
           <div className="help-card-icon">🛍️</div>
           <h3>{t("help.forCustomers")}</h3>
           <p>{t("help.forCustomersDesc")}</p>
           <span className="help-card-arrow">→</span>
-        </a>
-        <a className="help-card" href={helpMailtoUrl(t("help.forProfessionalsSubject"))}>
+        </button>
+        <button type="button" className="help-card" onClick={() => onNav("help-faq")}>
           <div className="help-card-icon">🏪</div>
           <h3>{t("help.forProfessionals")}</h3>
           <p>{t("help.forProfessionalsDesc")}</p>
           <span className="help-card-arrow">→</span>
-        </a>
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// HELP — EMAIL US — reached from the "For customers" card above. A real
+// contact form instead of an instant mailto, but still honest about what it
+// is: there's no ticketing backend behind VaiBook to receive a form post, so
+// submitting composes a pre-filled email and hands it to the visitor's own
+// mail client, addressed to support@vaibook.bz. Deliberately no fake
+// "attach a screenshot" dropzone (unlike the Fresha reference) since nothing
+// on VaiBook's end could actually receive an attachment yet, and one shared
+// topic dropdown rather than Fresha's redundant two-dropdown structure.
+function HelpContactForm({ onNav }) {
+  const { t } = useTranslation();
+  const [topic, setTopic] = useState("");
+  const [email, setEmail] = useState("");
+  const [description, setDescription] = useState("");
+  const [error, setError] = useState("");
+  const DESCRIPTION_MAX = 1000;
+
+  const handleSend = () => {
+    if (!topic || !email.trim() || !description.trim()) {
+      setError(t("help.contact.validation"));
+      return;
+    }
+    setError("");
+    const topicLabel = t(`help.contact.topics.${topic}`);
+    const subject = `${t("help.contact.emailSubjectPrefix")} — ${topicLabel}`;
+    const body = `${t("help.contact.emailBodyFrom")}: ${email.trim()}\n\n${description.trim()}`;
+    window.location.href = helpMailtoUrl(subject, body);
+  };
+
+  return (
+    <div className="lp-theme help-form-page">
+      <button type="button" className="help-back-link" onClick={() => onNav("help")}>← {t("help.backToHelp")}</button>
+      <h1 className="help-title">{t("help.contact.title")}</h1>
+      <p className="help-sub">{t("help.contact.sub")}</p>
+
+      <div className="help-form-card">
+        <div className="help-form-group">
+          <label>{t("help.contact.topicLabel")}</label>
+          <select value={topic} onChange={(e) => setTopic(e.target.value)}>
+            <option value="">{t("help.contact.topicPlaceholder")}</option>
+            {CONTACT_REASONS.map((r) => (
+              <option key={r} value={r}>{t(`help.contact.topics.${r}`)}</option>
+            ))}
+          </select>
+        </div>
+        <div className="help-form-group">
+          <label>{t("help.contact.emailLabel")}</label>
+          <input type="email" placeholder="you@email.com" value={email} onChange={(e) => setEmail(e.target.value)} />
+          <span className="help-form-hint">{t("help.contact.emailHint")}</span>
+        </div>
+        <div className="help-form-group">
+          <label>{t("help.contact.descriptionLabel")}</label>
+          <textarea
+            rows={6}
+            maxLength={DESCRIPTION_MAX}
+            placeholder={t("help.contact.descriptionPlaceholder")}
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+          />
+          <span className="help-form-hint help-form-charcount">{description.length}/{DESCRIPTION_MAX}</span>
+        </div>
+        {error && <p className="help-form-error">{error}</p>}
+        <button type="button" className="help-form-submit" onClick={handleSend}>{t("help.contact.send")}</button>
+        <p className="help-form-footnote">{t("help.contact.sendHint")}</p>
+      </div>
+    </div>
+  );
+}
+
+// HELP — FAQ — reached from the "For professionals" card above. A real,
+// client-side-searchable FAQ rather than a mailto — every answer here
+// describes real, already-built VaiBook behavior (see the FAQ_ITEMS comment
+// near the top of this file for the honesty reasoning); nothing aspirational.
+// Still ends with a link into HelpContactForm above, since there's no
+// separate professional-only inbox on the other end.
+function HelpFAQ({ onNav }) {
+  const { t } = useTranslation();
+  const [query, setQuery] = useState("");
+  const [openId, setOpenId] = useState(null);
+
+  const q = query.trim().toLowerCase();
+  const items = FAQ_ITEMS.filter((id) => {
+    if (!q) return true;
+    const question = t(`help.faq.${id}.q`).toLowerCase();
+    const answer = t(`help.faq.${id}.a`).toLowerCase();
+    return question.includes(q) || answer.includes(q);
+  });
+
+  return (
+    <div className="lp-theme help-faq-page">
+      <button type="button" className="help-back-link" onClick={() => onNav("help")}>← {t("help.backToHelp")}</button>
+      <h1 className="help-title">{t("help.faq.title")}</h1>
+      <p className="help-sub">{t("help.faq.sub")}</p>
+
+      <div className="help-faq-search">
+        <span className="help-faq-search-icon" aria-hidden="true">🔍</span>
+        <input placeholder={t("help.faq.searchPlaceholder")} value={query} onChange={(e) => setQuery(e.target.value)} />
+      </div>
+
+      <div className="help-faq-list">
+        {items.length === 0 && <p className="help-faq-empty">{t("help.faq.noResults")}</p>}
+        {items.map((id) => {
+          const isOpen = openId === id;
+          return (
+            <div key={id} className={`help-faq-item ${isOpen ? "open" : ""}`}>
+              <button type="button" className="help-faq-question" onClick={() => setOpenId(isOpen ? null : id)}>
+                <span>{t(`help.faq.${id}.q`)}</span>
+                <span className="help-faq-chevron" aria-hidden="true">{isOpen ? "−" : "+"}</span>
+              </button>
+              {isOpen && <p className="help-faq-answer">{t(`help.faq.${id}.a`)}</p>}
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="help-faq-cta">
+        <p>{t("help.faq.stillNeedHelp")}</p>
+        <button type="button" className="help-faq-cta-btn" onClick={() => onNav("help-contact")}>{t("help.faq.emailUs")}</button>
       </div>
     </div>
   );
@@ -11630,6 +11833,8 @@ export default function App() {
       {view === "admin" && <AdminPortal onNav={setView} {...authProps} />}
       {view === "auth" && <AuthChoice onNav={setView} {...authProps} />}
       {view === "help" && <HelpCenter onNav={setView} />}
+      {view === "help-contact" && <HelpContactForm onNav={setView} />}
+      {view === "help-faq" && <HelpFAQ onNav={setView} />}
     </>
   );
 }
