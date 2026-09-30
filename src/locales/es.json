@@ -84,6 +84,16 @@
     "forProfessionals": "VaiBook para profesionales",
     "manageAndGrow": "Administra y haz crecer tu negocio"
   },
+  "help": {
+    "title": "Obtén ayuda",
+    "sub": "Cuéntanos qué necesitas y te responderemos por correo.",
+    "forCustomers": "Para clientes",
+    "forCustomersDesc": "Ayuda con reservas, pagos o una cita con un proveedor.",
+    "customerSubject": "Solicitud de soporte para clientes",
+    "forProfessionals": "Para profesionales",
+    "forProfessionalsDesc": "Soporte para administrar tu negocio en VaiBook — facturación, tu panel o tu perfil.",
+    "forProfessionalsSubject": "Solicitud de soporte para negocios"
+  },
   "services": {
     "barbers": {
       "name": "Barberías",
