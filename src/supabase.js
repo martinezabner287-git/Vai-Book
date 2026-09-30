@@ -137,17 +137,52 @@ export const getOrCreateUser = async (authUser) => {
 // actual registered provider. Throwing on a genuine error lets callers
 // (see loadProviderProfile in App.jsx) tell "confirmed: no business" apart
 // from "couldn't confirm — don't assume" and react accordingly.
+// STILL P0 after the first round of fixes (routing/switching logic — see
+// the switchToPortal/loadProviderProfile comments elsewhere in this file
+// and in App.jsx): providers were still landing on "no provider profile
+// yet" after that fix shipped. That fix was correct as far as it went —
+// it stopped the APP from mishandling a real profile — but it can't help
+// if this query is correctly, genuinely finding zero rows because the
+// signed-in identity doesn't match the one on file. The most likely real
+// cause: signInWithGoogle forces Google's account picker on every sign-in
+// (`prompt: 'select_account'`), so anyone with more than one Google
+// account (very plausible for an owner and staff sharing a device, or
+// someone with a personal + business account) can easily pick the wrong
+// one and land on a genuinely different, profile-less identity. That's a
+// UX problem this function can't fix — see the "Try a different Google
+// account" recovery button on ProviderPortal's no-profile screen in
+// App.jsx, which is the actual fix for that. What THIS function can and
+// now does harden defensively: it used to run `.single()`, which throws
+// its own error whether zero rows OR more than one came back (both
+// surfaced as the same PGRST116-ish shape in practice), so a genuine
+// data-integrity problem (two rows for one user_id, which shouldn't be
+// possible given upsertProviderProfile's `onConflict: 'user_id'`, but
+// "shouldn't be possible" isn't "provably impossible" without inspecting
+// the schema's constraints directly) would have been indistinguishable
+// from "no business" too. Querying as a plain array sidesteps that
+// entirely: an empty array is unambiguously "no business", any real
+// Postgres/network error is unambiguously a failure worth throwing, and
+// more than one row is caught explicitly and logged loudly rather than
+// silently mistaken for either of the other two cases.
 export const getProviderProfile = async (userId) => {
   const { data, error } = await supabase
     .from('provider_profiles')
     .select('*, services(*), working_hours(*)')
-    .eq('user_id', userId)
-    .single();
-  if (error && error.code !== 'PGRST116') {
+    .eq('user_id', userId);
+  if (error) {
     console.error('Error fetching provider profile:', error.message);
     throw error;
   }
-  return data;
+  if (!data || data.length === 0) return null;
+  if (data.length > 1) {
+    // Should be impossible given the unique constraint upsertProviderProfile
+    // relies on — but if it ever happens, telling a real owner "no
+    // business" is strictly worse than showing them (most likely) the
+    // right one, so return a row rather than null. Logged loudly because
+    // this needs a database-level fix, not a client-side workaround.
+    console.error(`Data integrity: ${data.length} provider_profiles rows found for user_id ${userId} (expected at most 1). Returning the first — this needs to be fixed at the database level.`);
+  }
+  return data[0];
 };
 
 export const upsertProviderProfile = async (profile) => {
