@@ -13,9 +13,15 @@ import { bookingRequestSchema, rescheduleProposalSchema, validate } from "./vali
 // Default map center: Belize (roughly Belmopan) for providers who haven't set a pin yet.
 const BELIZE_CENTER = [17.25, -88.77];
 
-// Contact address for the nav's "Help and support" link (Menu dropdown).
-// Same domain-handle pattern as VAI_MEDIA_EMAIL further down.
+// Contact address for the Help & Support page. Same domain-handle pattern
+// as VAI_MEDIA_EMAIL further down.
 const SUPPORT_EMAIL = "support@vaibook.bz";
+
+// Pre-fills the subject line so a support email already says which side of
+// the app it's coming from, without needing a real ticketing system —
+// same lightweight "just mailto, but a little smarter" approach as
+// vaiMediaMailtoUrl further down.
+const helpMailtoUrl = (subject) => `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent(subject)}`;
 
 // react-leaflet + leaflet only ever gets fetched when one of these two
 // components actually renders — see the comment atop MapWidgets.jsx.
@@ -454,6 +460,30 @@ const css = `
   @media (max-width: 768px) {
     .auth-choice { grid-template-columns: 1fr; }
     .auth-choice-panel { display: none; }
+  }
+
+  /* HELP & SUPPORT — deliberately a different shape from AuthChoice's
+     full-screen split panel: a simple centered page, using theme-aware
+     variables (--bg-elevated/--text-primary/etc., same ones .lp-theme's
+     other children use) so it's correct in dark mode automatically,
+     rather than the hardcoded white/near-black colors most of the
+     marketing-page components below use. */
+  .help-center-page { max-width: 880px; margin: 0 auto; padding: 100px 24px 96px; text-align: center; }
+  .help-title { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; font-size: clamp(30px, 4vw, 44px); color: var(--text-primary); margin: 0 0 12px; letter-spacing: -0.5px; }
+  .help-sub { font-size: 16px; color: var(--text-secondary); margin: 0 0 44px; }
+  .help-cards { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; }
+  .help-card {
+    flex: 1 1 320px; max-width: 380px; text-align: left; text-decoration: none; color: inherit;
+    background: var(--bg-elevated); border: 1px solid var(--border-subtle); border-radius: 20px;
+    padding: 28px; display: flex; flex-direction: column; transition: transform .15s, box-shadow .15s;
+  }
+  .help-card:hover { transform: translateY(-3px); box-shadow: 0 16px 40px rgba(13,61,46,0.16); }
+  .help-card-icon { width: 52px; height: 52px; border-radius: 14px; background: var(--forest); color: var(--lime); display: flex; align-items: center; justify-content: center; font-size: 24px; margin-bottom: 18px; }
+  .help-card h3 { font-size: 20px; font-weight: 800; margin: 0 0 8px; color: var(--text-primary); }
+  .help-card p { font-size: 14px; color: var(--text-tertiary); margin: 0 0 22px; line-height: 1.5; flex: 1; }
+  .help-card-arrow { width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--border-subtle); display: flex; align-items: center; justify-content: center; font-size: 17px; align-self: flex-end; color: var(--text-primary); }
+  @media (max-width: 640px) {
+    .help-center-page { padding: 80px 20px 72px; }
   }
 
   /* ACCOUNT DROPDOWN */
@@ -2994,6 +3024,40 @@ function AuthChoice({ onNav, session, onSignIn, onSignOut }) {
   );
 }
 
+// HELP & SUPPORT — reached from "Help and support" in either version of the
+// Menu dropdown (customer-side and business-side). Deliberately a different
+// layout from AuthChoice's full-screen split panel (per explicit request,
+// "in a different format") — a simple centered page with two cards, using
+// VaiBook's own icon-block style (like the SERVICES pills) instead of stock
+// photography, since there isn't a real photo library to draw from. There's
+// no knowledge base or ticketing system behind this yet, so both cards just
+// route to a real inbox with a pre-filled subject line telling you which
+// side it's coming from — honest about being "email support," not a
+// help-center product VaiBook doesn't have.
+function HelpCenter({ onNav }) {
+  const { t } = useTranslation();
+  return (
+    <div className="lp-theme help-center-page">
+      <h1 className="help-title">{t("help.title")}</h1>
+      <p className="help-sub">{t("help.sub")}</p>
+      <div className="help-cards">
+        <a className="help-card" href={helpMailtoUrl(t("help.customerSubject"))}>
+          <div className="help-card-icon">🛍️</div>
+          <h3>{t("help.forCustomers")}</h3>
+          <p>{t("help.forCustomersDesc")}</p>
+          <span className="help-card-arrow">→</span>
+        </a>
+        <a className="help-card" href={helpMailtoUrl(t("help.forProfessionalsSubject"))}>
+          <div className="help-card-icon">🏪</div>
+          <h3>{t("help.forProfessionals")}</h3>
+          <p>{t("help.forProfessionalsDesc")}</p>
+          <span className="help-card-arrow">→</span>
+        </a>
+      </div>
+    </div>
+  );
+}
+
 function openInstallAppGuide() {
   window.dispatchEvent(new Event("vaibook-open-install-guide"));
 }
@@ -3698,7 +3762,7 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
                     <div className="nav-dropdown-heading">{t("nav.forBusinessesHeading")}</div>
                     <a className="nav-dropdown-primary-link" onClick={() => go(() => enterProviderPortal(onNav, session, onSignIn))}>{t("nav.logInOrSignUp")}</a>
                     <button className="nav-dropdown-item" onClick={() => go(openInstallAppGuide)}>{t("nav.addToHomeScreen")}</button>
-                    <a href={`mailto:${SUPPORT_EMAIL}`} onClick={closeMenu}>{t("nav.helpAndSupport")}</a>
+                    <a onClick={() => go(() => onNav("help"))}>{t("nav.helpAndSupport")}</a>
                     <LanguageSelector variant="menu" onAfterChange={closeMenu} />
                     <hr />
                     <button className="nav-dropdown-item for-biz" onClick={() => go(() => onNav("home"))}>
@@ -3710,7 +3774,7 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
                     <div className="nav-dropdown-heading">{t("nav.forCustomersHeading")}</div>
                     <a className="nav-dropdown-primary-link" onClick={() => go(() => onNav("auth"))}>{t("nav.logInOrSignUp")}</a>
                     <button className="nav-dropdown-item" onClick={() => go(openInstallAppGuide)}>{t("nav.addToHomeScreen")}</button>
-                    <a href={`mailto:${SUPPORT_EMAIL}`} onClick={closeMenu}>{t("nav.helpAndSupport")}</a>
+                    <a onClick={() => go(() => onNav("help"))}>{t("nav.helpAndSupport")}</a>
                     <LanguageSelector variant="menu" onAfterChange={closeMenu} />
                     <hr />
                     <button className="nav-dropdown-item for-biz" onClick={() => go(() => onNav("providers"))}>
@@ -11565,6 +11629,7 @@ export default function App() {
       {view === "signup" && <ProviderSignup onNav={setView} {...authProps} />}
       {view === "admin" && <AdminPortal onNav={setView} {...authProps} />}
       {view === "auth" && <AuthChoice onNav={setView} {...authProps} />}
+      {view === "help" && <HelpCenter onNav={setView} />}
     </>
   );
 }
