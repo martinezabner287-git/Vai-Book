@@ -89,10 +89,81 @@
     "sub": "Cuéntanos qué necesitas y te responderemos por correo.",
     "forCustomers": "Para clientes",
     "forCustomersDesc": "Ayuda con reservas, pagos o una cita con un proveedor.",
-    "customerSubject": "Solicitud de soporte para clientes",
     "forProfessionals": "Para profesionales",
     "forProfessionalsDesc": "Soporte para administrar tu negocio en VaiBook — facturación, tu panel o tu perfil.",
-    "forProfessionalsSubject": "Solicitud de soporte para negocios"
+    "backToHelp": "Volver a Ayuda y soporte",
+    "contact": {
+      "title": "Escríbenos",
+      "sub": "Cuéntanos qué pasa y te responderemos desde support@vaibook.bz.",
+      "topicLabel": "¿En qué podemos ayudarte?",
+      "topicPlaceholder": "Selecciona una opción",
+      "topics": {
+        "booking": "Una reserva o cita",
+        "charge": "Un cobro o pago",
+        "providerIssue": "Un problema con un negocio en VaiBook",
+        "account": "Mi cuenta o inicio de sesión",
+        "planBilling": "Mi plan o facturación",
+        "dashboard": "Mi panel o mi perfil",
+        "other": "Otra cosa"
+      },
+      "emailLabel": "Tu correo",
+      "emailHint": "Para saber a dónde responderte.",
+      "descriptionLabel": "Cuéntanos más",
+      "descriptionPlaceholder": "¿Qué está pasando?",
+      "validation": "Elige un tema y completa tu correo y una breve descripción.",
+      "send": "Enviar mensaje",
+      "sendHint": "Esto abre tu app de correo con un mensaje ya dirigido a nosotros — solo debes enviarlo desde ahí.",
+      "emailSubjectPrefix": "Solicitud de soporte de VaiBook",
+      "emailBodyFrom": "De"
+    },
+    "faq": {
+      "title": "Preguntas frecuentes",
+      "sub": "Respuestas para negocios que usan VaiBook. ¿No encuentras lo que buscas? Escríbenos.",
+      "searchPlaceholder": "Buscar en las preguntas frecuentes",
+      "noResults": "No hay resultados — prueba otra búsqueda o escríbenos.",
+      "stillNeedHelp": "¿Sigues necesitando ayuda?",
+      "emailUs": "Escríbenos",
+      "trial": {
+        "q": "¿Cómo funciona la prueba gratuita?",
+        "a": "Todo negocio nuevo comienza con el plan de Prueba gratis — hasta 30 reservas al mes, sin tarjeta. No hay una fecha límite automática; te quedas en Prueba hasta que decidas actualizar desde la pestaña de Facturación en tu panel."
+      },
+      "plans": {
+        "q": "¿Qué planes ofrece VaiBook?",
+        "a": "Tres: Prueba (gratis, hasta 30 reservas al mes), Solo (para profesionales independientes) y Equipo (una tarifa base más un costo por asiento para negocios con personal). Los precios y detalles completos están en la pestaña de Facturación de tu panel."
+      },
+      "staff": {
+        "q": "¿Puedo agregar personal a mi cuenta?",
+        "a": "Sí, con el plan Equipo — cada miembro del personal tiene su propio inicio de sesión para gestionar sus reservas y bloquear su propio horario, mientras tú mantienes visibilidad de todo el negocio."
+      },
+      "walkins": {
+        "q": "¿Cuál es la diferencia entre Cliente sin cita y Nueva cita?",
+        "a": "Cliente sin cita registra al instante una venta para alguien que está frente a ti en ese momento — eliges los servicios y queda registrado como hecho. Nueva cita agenda algo con anticipación."
+      },
+      "chairsFilled": {
+        "q": "¿Qué significa \"Sillas ocupadas\" en mi panel?",
+        "a": "Muestra qué tanto de tu tiempo disponible hoy está reservado. Por defecto abarca todo el negocio, pero puedes verlo para un solo miembro del personal desde el menú desplegable de esa tarjeta."
+      },
+      "billing": {
+        "q": "¿Cómo funciona la facturación?",
+        "a": "Por ahora VaiBook factura por transferencia bancaria manual — envías el pago, subes el comprobante desde la pestaña de Facturación, y se confirma manualmente. No hay cobro automático ni tarjeta guardada."
+      },
+      "changePlan": {
+        "q": "¿Cómo cambio o renuevo mi plan?",
+        "a": "Abre Facturación desde tu panel, elige un plan y envía el pago igual que una renovación — se confirma de nuestro lado en cuanto llega el comprobante."
+      },
+      "findMe": {
+        "q": "¿Cómo me encuentran los clientes?",
+        "a": "Los clientes buscan o exploran por categoría de servicio y distrito en la página principal de VaiBook. Los negocios con plan Equipo también aparecen destacados en los resultados de su distrito."
+      },
+      "language": {
+        "q": "¿VaiBook está disponible en español?",
+        "a": "Sí — cambia el idioma cuando quieras desde el menú, y toda la app sigue tu elección, no solo la página principal."
+      },
+      "blocks": {
+        "q": "¿Cómo bloqueo horarios en los que no estoy disponible?",
+        "a": "Usa Bloqueo personalizado en tu panel para marcarte como no disponible durante un rato — almuerzo, un mandado, lo que sea — para que los clientes no puedan reservar en ese horario."
+      }
+    }
   },
   "services": {
     "barbers": {
