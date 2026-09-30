@@ -6815,7 +6815,11 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
   const submitPayment = async () => {
     if (!paymentForm.receipt) { setPaymentError("Please attach a receipt image or PDF."); return; }
     if (!paymentForm.periodLabel.trim()) { setPaymentError("Please say which period this payment covers."); return; }
-    const plan = PLANS.find((p) => p.id === (payingForPlan || providerProfile?.plan || "starter"));
+    // Same "starter defaults to pro" fallback as the picker's chosenPlan
+    // above — keeps this in sync with whichever plan looked selected on
+    // screen even if the provider never explicitly clicked a radio button.
+    const effectivePlan = providerProfile?.plan && providerProfile.plan !== "starter" ? providerProfile.plan : "pro";
+    const plan = PLANS.find((p) => p.id === (payingForPlan || effectivePlan));
     if (!plan || plan.monthly <= 0) { setPaymentError("Pick the plan you're paying for first."); return; }
     setSubmittingPayment(true);
     setPaymentError("");
@@ -8750,7 +8754,17 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
               </div>
 
               {(() => {
-                const chosenPlan = PLANS.find((p) => p.id === (payingForPlan || currentPlan.id)) || currentPlan;
+                // FIX (Task 1, "keep only Pro and Team"): a Starter provider
+                // opening this card used to see Starter re-listed here too
+                // (marked "YOUR PLAN") right below the "You're on the free
+                // Starter plan" summary above — Starter's already covered by
+                // that summary, so it shouldn't also be a selectable row in
+                // the upgrade picker. Restricting the picker to PUBLIC_PLANS
+                // (Pro/Team only) matches the public pricing page; a Starter
+                // user's default selection falls back to "pro" instead of
+                // "starter" so a Pro/Team radio is pre-selected on first
+                // open rather than showing nothing checked.
+                const chosenPlan = PLANS.find((p) => p.id === (payingForPlan || (currentPlan.monthly === 0 ? "pro" : currentPlan.id))) || currentPlan;
                 const isUpgrade = chosenPlan.id !== currentPlan.id;
                 return (
                   <div className="card" style={{ maxWidth: 560, marginTop: 20 }}>
@@ -8760,7 +8774,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                       Admin confirms it, and your plan switches over as soon as they do — that's how an upgrade takes effect.
                     </p>
 
-                    {PLANS.map((pl) => {
+                    {PUBLIC_PLANS.map((pl) => {
                       const selected = chosenPlan.id === pl.id;
                       return (
                         <label
