@@ -5,7 +5,10 @@
     "subtitle": "Bypass the waitlist and book top-tier self-care artists in seconds.",
     "searchPlaceholder": "What service do you need?",
     "anyDistrict": "Any district",
-    "searchButton": "Search"
+    "searchButton": "Search",
+    "trustedProfessionals_one": "{{count}} trusted professional ready to book across Belize",
+    "trustedProfessionals_other": "{{count}} trusted professionals ready to book across Belize",
+    "getTheApp": "Get the app"
   },
   "nav": {
     "searchPlaceholder": "Search barbers, haircuts, nail techs...",
@@ -23,6 +26,7 @@
     "home": "Home",
     "services": "Services",
     "trending": "Trending",
+    "features": "Features",
     "pricing": "Pricing",
     "provideMyService": "Provide my service",
     "forBusinesses": "For businesses",
@@ -33,7 +37,11 @@
     "browseByDistrict": "Browse by district",
     "switchToCustomer": "Switch to customer",
     "switchToProvider": "Switch to provider",
-    "providerLogin": "Provider login"
+    "providerLogin": "Provider login",
+    "forCustomersHeading": "For customers",
+    "logInOrSignUp": "Log in or sign up",
+    "downloadTheApp": "Download the app",
+    "helpAndSupport": "Help and support"
   },
   "landing": {
     "whatsOnVaiBook": "What's on VaiBook",
@@ -136,6 +144,7 @@
     "sub": "No generic templates. No friction.",
     "trialBadge": "✨ Apply today — approved shops get 14 days free",
     "applyToJoin14": "Apply to Join (14 Days Free)",
+    "seePricing": "See pricing",
     "note": "No contracts, no setup fees — cancel anytime.",
     "seeItInAction": "See it in action",
     "builtForHow": "Built for how your business really runs",
