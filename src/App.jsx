@@ -3,8 +3,6 @@ import { useState, useEffect, useLayoutEffect, useRef, useContext, createContext
 import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, deleteService, getActiveProviders, getProviderDirectory, createBooking, getProviderBusyWindows, createBookingSafe, cancelBooking, getCustomerBookings, uploadReceipt, submitReview, getProviderReviews, updateReview, sendBookingEmail, updateUserProfile, getPaymentMethods, addPaymentMethod, deletePaymentMethod, createNotification, getNotifications, markNotificationRead, markAllNotificationsRead, getCategoryDefaultFeatures, getProviderFeatureOverrides, setProviderFeatureOverride, getVisitNotes, upsertVisitNote, adminListProviders, adminUpdateProvider, adminDeleteProvider, getFavoriteProviderIds, getFavoriteProviders, addFavorite, removeFavorite, getBookingMessages, sendBookingMessage, markBookingMessagesRead, getUnreadBookingMessages, getProviderMonthlyTrend, createProviderProfile, getProviderById, createWalkInBooking, submitProviderPayment, getMyProviderPayments, adminListProviderPayments, adminReviewProviderPayment, submitBookingRefund, adminListBookingRefunds, openPrivateFile, getProviderStaff, addProviderStaff, updateProviderStaff, deleteProviderStaff, getLoyaltyAccount, getProviderLoyaltyCustomers, redeemLoyaltyReward, getMyStaffProfile, claimStaffSeatByEmail, getStaffBookings, getProviderNotifyEmail, getMaintenanceStatus, setMaintenanceMode, getSiteOfflineStatus, setSiteOffline, sendEmailOtp, verifyEmailOtp, savePushSubscription, attachBookingServices, getProviderBlocks, insertProviderBlock, deleteProviderBlock, proposeBookingReschedule, confirmBookingReschedule, declineBookingReschedule, withdrawBookingReschedule } from "./supabase";
 import AdminDashboard from "./AdminDashboard";
 import ProviderSignupModal from "./ProviderSignupModal";
-import { useTheme } from "./ThemeContext";
-import ThemeToggle from "./ThemeToggle";
 import LanguageSelector from "./LanguageSelector";
 import { useTranslation } from "react-i18next";
 import { compressImageFile } from "./imageUtils";
@@ -502,16 +500,15 @@ const css = `
     .help-center-page { padding: 80px 20px 72px; }
   }
 
-  /* .help-shell is the actual full-bleed, full-height colored surface for
-     all three Help pages (Center/Contact/FAQ) — .lp-theme's background
-     only paints the element it's on, and body's own background is NOT
-     theme-aware (see the note above it), so putting .lp-theme directly on
-     the narrow, content-height "page" divs left the light body color
-     showing through as an ugly visible border around a floating dark card
-     in dark mode. Nesting the centered/max-width content INSIDE this
-     full-width, min-height:100vh shell (same shape as LandingPage's own
-     bare `.lp-theme` root) closes that gap on all four sides. */
-  .help-shell { min-height: 100vh; }
+  /* .help-shell is the full-bleed, full-height surface behind all three
+     Help pages (Center/Contact/FAQ) — nesting the centered/max-width
+     content inside it (rather than putting the page classes directly on
+     the themed element) means this surface covers the whole screen, not
+     just a content-height box, so there's no gap on any side. Plain
+     white, not the --bg-primary token's off-white — per explicit
+     request ("no background color") the page should read as clean white
+     behind the white cards, not a tinted surface. */
+  .help-shell { min-height: 100vh; background: #FFFFFF; }
 
   /* HELP — EMAIL US / FAQ — the two destinations the cards above lead to.
      Same theme-aware-variable approach as .help-center-page so both are
@@ -3866,16 +3863,9 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
       <button className={`nav-search-toggle ${navSearchActive ? "visible" : ""}`} onClick={() => setMobileSearchOpen(v => !v)} aria-label={t("nav.searchAriaLabel")}>🔍</button>
       )}
 
-      {/* THEME TOGGLE — global control (always visible, whatever page or
-          auth state), reads ThemeContext directly rather than being
-          threaded down as a prop. Now themes the Landing Page, Customer
-          Portal, and Admin Portal (see the .lp-theme / .cx-account-page /
-          .portal-content dark-mode CSS). Provider Portal doesn't render
-          this shared Nav once a provider is signed in — see the matching
-          <ThemeToggle/> in its own topbar below. */}
-      <ThemeToggle />
-      {/* LANGUAGE SELECTOR — same always-visible, no-props-threaded pattern
-          as the theme toggle right above. */}
+      {/* LANGUAGE SELECTOR — always-visible, no-props-threaded pattern.
+          (The theme toggle that used to sit next to this was removed —
+          dark mode is gone, the app is light-mode-only now.) */}
       <LanguageSelector />
 
       {(current === "home" || current === "providers" || (current === "customer" && !session)) ? (
@@ -4046,7 +4036,6 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
                 </>
               )}
               <hr />
-              <ThemeToggle variant="menu" onAfterToggle={closeAccount} />
               <LanguageSelector variant="menu" />
               <hr />
               <button className="nav-dropdown-item" onClick={() => goAccount(openInstallAppGuide)}>
@@ -8249,9 +8238,9 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
         <div className="provider-topbar-right" style={{ display: "flex", alignItems: "center", gap: 10 }}>
           {/* Provider Portal has its own topbar and never renders the
               shared Nav once a provider is signed in (see App()'s render
-              condition), so this is its only theme toggle and language
-              selector. */}
-          <ThemeToggle />
+              condition), so this is its only language selector. (The
+              theme toggle that used to sit here was removed along with
+              dark mode.) */}
           <LanguageSelector />
           <div className="provider-avatar-wrap" ref={providerMenuRef}>
             <button
@@ -11507,11 +11496,6 @@ export default function App() {
   // pops the same frictionless overlay instead of routing to a marketing
   // page or the real ProviderSignup application form.
   const [showProviderSignup, setShowProviderSignup] = useState(false);
-
-  // Light/dark theme now lives in ThemeContext (src/ThemeContext.jsx),
-  // provided once at the app root in index.js, so it's reachable from
-  // anywhere via useTheme() instead of being threaded through authProps.
-  // Nav, ThemeToggle, and the Provider Portal topbar all read it directly.
 
   // Site-wide offline takeover (see SiteOffline / AdminPortal's Emergency
   // tab). Checked independently of the session/loading flow below so it
