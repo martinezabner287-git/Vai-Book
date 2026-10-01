@@ -2,11 +2,10 @@ import { useTranslation } from "react-i18next";
 
 // ── LANGUAGE SELECTOR (EN/ES) ─────────────────────────────────────────
 //
-// Same drop-anywhere pattern as ThemeToggle.jsx: reads/writes the shared
-// i18n instance directly via useTranslation(), so it needs no props
-// threaded down through authProps — it can sit in the Landing Page Nav
-// right next to the theme toggle, or inside an account dropdown, with no
-// extra wiring.
+// Drop-anywhere component: reads/writes the shared i18n instance directly
+// via useTranslation(), so it needs no props threaded down through
+// authProps — it can sit in the Landing Page Nav, inside an account
+// dropdown, or in the Provider Portal topbar, with no extra wiring.
 //
 // `variant`:
 //   "icon" — compact EN/ES pill button (nav bars / topbars, dark chrome)
