@@ -282,6 +282,7 @@ const css = `
     --glass-border: rgba(23,40,31,0.12);
   }
 
+  html, body { max-width: 100%; overflow-x: hidden; }
   body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--near-white); color: var(--dark-text); }
 
   /* NAV — carries its own visible dark-to-green fade over its own (short)
@@ -722,7 +723,19 @@ const css = `
   .suggestion-sub { font-size: 11px; color: var(--muted); margin-left: auto; flex-shrink: 0; padding-left: 12px; }
   @media (max-width: 640px) {
     .search-hero { padding: 80px 20px 64px; }
-    .search-bar-pill { flex-direction: column; border-radius: 20px; align-items: stretch; }
+    .search-bar-pill { flex-direction: column; align-items: stretch; }
+    /* .search-glass (declared later in this stylesheet, under GLOBAL
+       PREMIUM UI COMPONENTS, specifically so it always wins layering onto
+       older component classes) unconditionally re-asserts its own
+       border-radius: 100px. On a single-class selector that beats the
+       plain .search-bar-pill rule above (border-radius: 20px) by source
+       order, so the stacked mobile bar stayed a full capsule shape — its
+       rounded ends visibly overlapping/clashing with the Search button
+       nested inside, which is what read as "the search bar and button
+       are all jumbled together". This compound selector outranks the
+       single-class .search-glass rule on specificity instead, so it wins
+       regardless of where either rule sits in the file. */
+    .search-bar-pill.search-glass { border-radius: 20px; }
     .search-bar-pill .sep { display: none; }
     .search-submit { width: 100%; }
   }
@@ -1733,8 +1746,49 @@ const css = `
   @media (max-width: 768px) {
     .nav { padding: 14px 20px; }
     .nav-strip { padding: 10px 20px; gap: 20px; }
+    /* NAV — "Provide my service"/"List your business" moves out of the bar
+       and into the Menu dropdown below this width (it's already duplicated
+       there as a .mobile-only-item), which is what actually keeps the row
+       — language toggle + log in/avatar + this button — from squishing or
+       overflowing on phone-width screens. See the matching .mobile-only-item
+       override right below, and the icon-only Menu button at 480px further
+       down for the narrowest phones. */
+    .nav-signup-btn { display: none; }
+    .nav-dropdown .mobile-only-item { display: block; }
+    .nav-account-dropdown .mobile-only-item { display: flex; }
     .hero { grid-template-columns: 1fr; padding: 60px 24px; min-height: auto; }
     .hero-card-wrap { display: none; }
+    /* HERO CTAs — stacked and full-width instead of a tight side-by-side
+       row, so each is an easy, unambiguous thumb target rather than two
+       medium buttons fighting for a narrow row. */
+    .hero-actions { flex-direction: column; align-items: stretch; }
+    .hero-actions .btn-primary, .hero-actions .btn-outline-white { width: 100%; text-align: center; }
+    /* FOOTER — the 5-across flex row (brand + 4 link columns) wraps, but
+       unevenly (each column is only as wide as its own content), which is
+       what reads as "not wrapping properly" on a phone. A real 2-column
+       grid below this width makes every row line up cleanly; the brand
+       block spans both columns since its description paragraph needs the
+       room. */
+    .footer-top { display: grid; grid-template-columns: 1fr 1fr; gap: 28px 24px; }
+    .footer-brand { grid-column: 1 / -1; }
+    .footer-brand p { max-width: none; }
+    /* TOUCH TARGETS — forms and primary buttons meet the ~44px minimum tap
+       size on mobile. Nav-bar controls (avatar/lang toggle/login link/menu
+       button) only get the height bump, never width:100%, since they still
+       share one horizontal row; standalone form fields and CTA buttons get
+       both. Chips/pills (.service-pill, .cx-discover-pill) keep their
+       compact shape — they're meant to be scanned and tapped in a row, not
+       stretched — but still clear 44px tall. */
+    .nav-login-link, .nav-menu-btn, .nav-avatar-btn, .lang-toggle { min-height: 44px; }
+    .btn-primary, .btn-outline-white, .btn-ghost, .btn-lime, .btn-forest, .btn-outline-forest,
+    .search-submit, .help-form-submit, .for-business-btn,
+    .provider-hero-cta.btn-lime, .provider-hero-cta-secondary.btn-ghost,
+    .auth-option-card, .service-card { min-height: 44px; }
+    .input-group input, .input-group select, .input-group textarea,
+    .help-form-group input, .help-form-group select, .help-form-group textarea,
+    .search-bar-pill .field input, .search-bar-pill .field select { min-height: 44px; }
+    .service-pill, .cx-discover-pill { min-height: 44px; }
+    .help-form-submit { width: 100%; }
     .section { padding: 60px 24px; }
     .marketing-strip { padding: 32px 24px; }
     .portal-content { padding: 20px; }
@@ -1793,8 +1847,11 @@ const css = `
   }
 
   /* NAV — keep the top row on one line without pushing "Menu"/the avatar
-     off-screen on phone-width viewports (the 3-button Log in / List your
-     business / Menu row otherwise overflows below ~430px). */
+     off-screen on phone-width viewports (Log in + the language toggle +
+     Menu, the narrowest realistic combination, still won't fit every
+     label at full size below ~480px). Below this width the Menu button
+     drops its "Menu" text and shows just the bars icon, and the language
+     toggle shrinks slightly, freeing the room login-link/avatar needs. */
   .mobile-only-item { display: none; }
   @media (max-width: 480px) {
     .quick-actions-row { flex-direction: column; }
@@ -1810,13 +1867,18 @@ const css = `
     .nav-cta { gap: 8px; }
     .nav-signup-btn { display: none; }
     .nav-login-link { font-size: 13px; padding: 4px 2px; }
-    .nav-menu-btn { padding: 8px 12px 8px 14px; font-size: 13px; gap: 6px; }
+    .nav-menu-btn { padding: 10px 12px; font-size: 13px; gap: 6px; min-width: 44px; justify-content: center; }
+    .nav-menu-btn-label { display: none; }
     .nav-menu-btn .bars span { width: 13px; }
     .nav-avatar-btn { padding: 3px 8px 3px 3px; gap: 6px; }
+    .lang-toggle { min-width: 34px; padding: 0 8px; }
     .nav-dropdown .mobile-only-item { display: block; }
     .nav-account-dropdown .mobile-only-item { display: flex; }
     .carousel-arrow { display: none; }
     .carousel-card { flex-basis: 200px; }
+    /* FOOTER — one column at phone width; 2-up (set at 768px) can still
+       feel tight once link labels get long or the app is in Spanish. */
+    .footer-top { grid-template-columns: 1fr; }
   }
 
   .a2hs-banner {
@@ -3945,7 +4007,7 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
           {!session && (
           <div style={{ position: "relative" }} ref={menuRef}>
             <button className="nav-menu-btn" onClick={(e) => { e.stopPropagation(); setMenuOpen((v) => !v); }}>
-              {t("nav.menu")}
+              <span className="nav-menu-btn-label">{t("nav.menu")}</span>
               <span className="bars"><span /><span /></span>
             </button>
             {menuOpen && (
@@ -4066,7 +4128,7 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
           <LanguageSelector />
           <div style={{ position: "relative" }} ref={menuRef}>
           <button className="nav-menu-btn" onClick={(e) => { e.stopPropagation(); setMenuOpen((v) => !v); }}>
-            {t("nav.menu")}
+            <span className="nav-menu-btn-label">{t("nav.menu")}</span>
             <span className="bars"><span /><span /></span>
           </button>
           {menuOpen && (
