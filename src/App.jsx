@@ -502,6 +502,17 @@ const css = `
     .help-center-page { padding: 80px 20px 72px; }
   }
 
+  /* .help-shell is the actual full-bleed, full-height colored surface for
+     all three Help pages (Center/Contact/FAQ) — .lp-theme's background
+     only paints the element it's on, and body's own background is NOT
+     theme-aware (see the note above it), so putting .lp-theme directly on
+     the narrow, content-height "page" divs left the light body color
+     showing through as an ugly visible border around a floating dark card
+     in dark mode. Nesting the centered/max-width content INSIDE this
+     full-width, min-height:100vh shell (same shape as LandingPage's own
+     bare `.lp-theme` root) closes that gap on all four sides. */
+  .help-shell { min-height: 100vh; }
+
   /* HELP — EMAIL US / FAQ — the two destinations the cards above lead to.
      Same theme-aware-variable approach as .help-center-page so both are
      correct in dark mode automatically. */
@@ -3118,22 +3129,24 @@ function AuthChoice({ onNav, session, onSignIn, onSignOut }) {
 function HelpCenter({ onNav }) {
   const { t } = useTranslation();
   return (
-    <div className="lp-theme help-center-page">
-      <h1 className="help-title">{t("help.title")}</h1>
-      <p className="help-sub">{t("help.sub")}</p>
-      <div className="help-cards">
-        <button type="button" className="help-card" onClick={() => onNav("help-contact")}>
-          <div className="help-card-icon">🛍️</div>
-          <h3>{t("help.forCustomers")}</h3>
-          <p>{t("help.forCustomersDesc")}</p>
-          <span className="help-card-arrow">→</span>
-        </button>
-        <button type="button" className="help-card" onClick={() => onNav("help-faq")}>
-          <div className="help-card-icon">🏪</div>
-          <h3>{t("help.forProfessionals")}</h3>
-          <p>{t("help.forProfessionalsDesc")}</p>
-          <span className="help-card-arrow">→</span>
-        </button>
+    <div className="lp-theme help-shell">
+      <div className="help-center-page">
+        <h1 className="help-title">{t("help.title")}</h1>
+        <p className="help-sub">{t("help.sub")}</p>
+        <div className="help-cards">
+          <button type="button" className="help-card" onClick={() => onNav("help-contact")}>
+            <div className="help-card-icon">🛍️</div>
+            <h3>{t("help.forCustomers")}</h3>
+            <p>{t("help.forCustomersDesc")}</p>
+            <span className="help-card-arrow">→</span>
+          </button>
+          <button type="button" className="help-card" onClick={() => onNav("help-faq")}>
+            <div className="help-card-icon">🏪</div>
+            <h3>{t("help.forProfessionals")}</h3>
+            <p>{t("help.forProfessionalsDesc")}</p>
+            <span className="help-card-arrow">→</span>
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -3168,40 +3181,42 @@ function HelpContactForm({ onNav }) {
   };
 
   return (
-    <div className="lp-theme help-form-page">
-      <button type="button" className="help-back-link" onClick={() => onNav("help")}>← {t("help.backToHelp")}</button>
-      <h1 className="help-title">{t("help.contact.title")}</h1>
-      <p className="help-sub">{t("help.contact.sub")}</p>
+    <div className="lp-theme help-shell">
+      <div className="help-form-page">
+        <button type="button" className="help-back-link" onClick={() => onNav("help")}>← {t("help.backToHelp")}</button>
+        <h1 className="help-title">{t("help.contact.title")}</h1>
+        <p className="help-sub">{t("help.contact.sub")}</p>
 
-      <div className="help-form-card">
-        <div className="help-form-group">
-          <label>{t("help.contact.topicLabel")}</label>
-          <select value={topic} onChange={(e) => setTopic(e.target.value)}>
-            <option value="">{t("help.contact.topicPlaceholder")}</option>
-            {CONTACT_REASONS.map((r) => (
-              <option key={r} value={r}>{t(`help.contact.topics.${r}`)}</option>
-            ))}
-          </select>
+        <div className="help-form-card">
+          <div className="help-form-group">
+            <label>{t("help.contact.topicLabel")}</label>
+            <select value={topic} onChange={(e) => setTopic(e.target.value)}>
+              <option value="">{t("help.contact.topicPlaceholder")}</option>
+              {CONTACT_REASONS.map((r) => (
+                <option key={r} value={r}>{t(`help.contact.topics.${r}`)}</option>
+              ))}
+            </select>
+          </div>
+          <div className="help-form-group">
+            <label>{t("help.contact.emailLabel")}</label>
+            <input type="email" placeholder="you@email.com" value={email} onChange={(e) => setEmail(e.target.value)} />
+            <span className="help-form-hint">{t("help.contact.emailHint")}</span>
+          </div>
+          <div className="help-form-group">
+            <label>{t("help.contact.descriptionLabel")}</label>
+            <textarea
+              rows={6}
+              maxLength={DESCRIPTION_MAX}
+              placeholder={t("help.contact.descriptionPlaceholder")}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+            />
+            <span className="help-form-hint help-form-charcount">{description.length}/{DESCRIPTION_MAX}</span>
+          </div>
+          {error && <p className="help-form-error">{error}</p>}
+          <button type="button" className="help-form-submit" onClick={handleSend}>{t("help.contact.send")}</button>
+          <p className="help-form-footnote">{t("help.contact.sendHint")}</p>
         </div>
-        <div className="help-form-group">
-          <label>{t("help.contact.emailLabel")}</label>
-          <input type="email" placeholder="you@email.com" value={email} onChange={(e) => setEmail(e.target.value)} />
-          <span className="help-form-hint">{t("help.contact.emailHint")}</span>
-        </div>
-        <div className="help-form-group">
-          <label>{t("help.contact.descriptionLabel")}</label>
-          <textarea
-            rows={6}
-            maxLength={DESCRIPTION_MAX}
-            placeholder={t("help.contact.descriptionPlaceholder")}
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-          />
-          <span className="help-form-hint help-form-charcount">{description.length}/{DESCRIPTION_MAX}</span>
-        </div>
-        {error && <p className="help-form-error">{error}</p>}
-        <button type="button" className="help-form-submit" onClick={handleSend}>{t("help.contact.send")}</button>
-        <p className="help-form-footnote">{t("help.contact.sendHint")}</p>
       </div>
     </div>
   );
@@ -3227,35 +3242,37 @@ function HelpFAQ({ onNav }) {
   });
 
   return (
-    <div className="lp-theme help-faq-page">
-      <button type="button" className="help-back-link" onClick={() => onNav("help")}>← {t("help.backToHelp")}</button>
-      <h1 className="help-title">{t("help.faq.title")}</h1>
-      <p className="help-sub">{t("help.faq.sub")}</p>
+    <div className="lp-theme help-shell">
+      <div className="help-faq-page">
+        <button type="button" className="help-back-link" onClick={() => onNav("help")}>← {t("help.backToHelp")}</button>
+        <h1 className="help-title">{t("help.faq.title")}</h1>
+        <p className="help-sub">{t("help.faq.sub")}</p>
 
-      <div className="help-faq-search">
-        <span className="help-faq-search-icon" aria-hidden="true">🔍</span>
-        <input placeholder={t("help.faq.searchPlaceholder")} value={query} onChange={(e) => setQuery(e.target.value)} />
-      </div>
+        <div className="help-faq-search">
+          <span className="help-faq-search-icon" aria-hidden="true">🔍</span>
+          <input placeholder={t("help.faq.searchPlaceholder")} value={query} onChange={(e) => setQuery(e.target.value)} />
+        </div>
 
-      <div className="help-faq-list">
-        {items.length === 0 && <p className="help-faq-empty">{t("help.faq.noResults")}</p>}
-        {items.map((id) => {
-          const isOpen = openId === id;
-          return (
-            <div key={id} className={`help-faq-item ${isOpen ? "open" : ""}`}>
-              <button type="button" className="help-faq-question" onClick={() => setOpenId(isOpen ? null : id)}>
-                <span>{t(`help.faq.${id}.q`)}</span>
-                <span className="help-faq-chevron" aria-hidden="true">{isOpen ? "−" : "+"}</span>
-              </button>
-              {isOpen && <p className="help-faq-answer">{t(`help.faq.${id}.a`)}</p>}
-            </div>
-          );
-        })}
-      </div>
+        <div className="help-faq-list">
+          {items.length === 0 && <p className="help-faq-empty">{t("help.faq.noResults")}</p>}
+          {items.map((id) => {
+            const isOpen = openId === id;
+            return (
+              <div key={id} className={`help-faq-item ${isOpen ? "open" : ""}`}>
+                <button type="button" className="help-faq-question" onClick={() => setOpenId(isOpen ? null : id)}>
+                  <span>{t(`help.faq.${id}.q`)}</span>
+                  <span className="help-faq-chevron" aria-hidden="true">{isOpen ? "−" : "+"}</span>
+                </button>
+                {isOpen && <p className="help-faq-answer">{t(`help.faq.${id}.a`)}</p>}
+              </div>
+            );
+          })}
+        </div>
 
-      <div className="help-faq-cta">
-        <p>{t("help.faq.stillNeedHelp")}</p>
-        <button type="button" className="help-faq-cta-btn" onClick={() => onNav("help-contact")}>{t("help.faq.emailUs")}</button>
+        <div className="help-faq-cta">
+          <p>{t("help.faq.stillNeedHelp")}</p>
+          <button type="button" className="help-faq-cta-btn" onClick={() => onNav("help-contact")}>{t("help.faq.emailUs")}</button>
+        </div>
       </div>
     </div>
   );
