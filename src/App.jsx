@@ -3863,13 +3863,17 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
       <button className={`nav-search-toggle ${navSearchActive ? "visible" : ""}`} onClick={() => setMobileSearchOpen(v => !v)} aria-label={t("nav.searchAriaLabel")}>🔍</button>
       )}
 
-      {/* LANGUAGE SELECTOR — always-visible, no-props-threaded pattern.
-          (The theme toggle that used to sit next to this was removed —
-          dark mode is gone, the app is light-mode-only now.) */}
-      <LanguageSelector />
-
       {(current === "home" || current === "providers" || (current === "customer" && !session)) ? (
         <div className="nav-cta">
+          {/* LANGUAGE SELECTOR — moved here, as the first child of the
+              right-side cluster, so it sits immediately to the left of the
+              avatar/account dropdown (or the login link, on pages where
+              there's no session yet) instead of floating as its own
+              top-level nav child. .nav-cta's existing `gap: 18px` and
+              `align-items: center` give it the same vertical alignment and
+              spacing as every other item in this cluster, with no extra
+              CSS needed. */}
+          <LanguageSelector />
           {session ? (
             <div style={{ position: "relative" }} ref={accountRef}>
               <button className="nav-avatar-btn" onClick={(e) => { e.stopPropagation(); setAccountOpen((v) => !v); }}>
@@ -3998,13 +4002,18 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
           )}
         </div>
       ) : session && PORTAL_TOOLS_BY_VIEW[current] ? (
-        // marginLeft: auto — on a portal page this is the only other real
-        // flex child besides .nav-logo (search is hidden here, see
-        // showNavSearch above), and plain space-between would center a
-        // lone middle item instead of hugging it to the right. auto-margin
-        // claims all the free space on its left, pinning this to the
-        // right edge.
-        <div style={{ position: "relative", marginLeft: "auto" }} ref={accountRef}>
+        // .nav-cta (reused here, not just on the branch above) — on a
+        // portal page this is the only other real flex child besides
+        // .nav-logo (search is hidden here, see showNavSearch above), and
+        // plain space-between would center a lone middle item instead of
+        // hugging it to the right. .nav-cta's own `margin-left: auto`
+        // claims all the free space to its left, pinning the whole
+        // cluster — language selector + avatar together — to the right
+        // edge, with the same `gap: 18px` spacing between them as the
+        // branch above.
+        <div className="nav-cta">
+          <LanguageSelector />
+          <div style={{ position: "relative" }} ref={accountRef}>
           <button className="nav-avatar-btn" onClick={(e) => { e.stopPropagation(); setAccountOpen((v) => !v); }}>
             <span className="nav-avatar-wrap">
               <span className="nav-avatar-circle">{initials}</span>
@@ -4047,9 +4056,15 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
               </button>
             </div>
           )}
+          </div>
         </div>
       ) : (
-        <div style={{ position: "relative" }} ref={menuRef}>
+        <div className="nav-cta">
+          {/* Same right-side cluster shape as the two branches above —
+              language selector immediately left of the primary control,
+              here the Menu button since this fallback has no avatar. */}
+          <LanguageSelector />
+          <div style={{ position: "relative" }} ref={menuRef}>
           <button className="nav-menu-btn" onClick={(e) => { e.stopPropagation(); setMenuOpen((v) => !v); }}>
             {t("nav.menu")}
             <span className="bars"><span /><span /></span>
@@ -4065,6 +4080,7 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
               <button className="nav-dropdown-item" onClick={() => go(openInstallAppGuide)}>{t("nav.addToHomeScreen")}</button>
             </div>
           )}
+          </div>
         </div>
       )}
 
