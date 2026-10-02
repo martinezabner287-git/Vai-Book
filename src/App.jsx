@@ -7279,6 +7279,11 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
   // Bumping this key remounts the file input so it stops showing the name
   // of a file that's already been submitted.
   const [paymentFileKey, setPaymentFileKey] = useState(0);
+  // Team plan seat count, for the per-seat pricing picker below. Starts at
+  // null so it defaults to this provider's actual current staff count
+  // (`staff.length`, loaded further down) until the provider explicitly
+  // types a different number — see teamPlanTotal below.
+  const [teamSeatsOverride, setTeamSeatsOverride] = useState(null);
 
   const loadPayments = async () => {
     if (!providerId) return;
@@ -7304,11 +7309,15 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
     const effectivePlan = providerProfile?.plan && providerProfile.plan !== "starter" ? providerProfile.plan : "pro";
     const plan = PLANS.find((p) => p.id === (payingForPlan || effectivePlan));
     if (!plan || plan.monthly <= 0) { setPaymentError(t("providerPortal.billing.pickPlanFirst")); return; }
+    // Team is the one plan whose real price isn't just plan.monthly — it's
+    // the base fee plus whatever's owed for seats beyond the free ones
+    // (teamPlanTotal, computed above from the seat-count picker below).
+    const amountDue = plan.id === "business" ? teamPlanTotal : plan.monthly;
     setSubmittingPayment(true);
     setPaymentError("");
     const ok = await submitProviderPayment(providerId, paymentForm.receipt, {
       plan: plan.id,
-      amount: plan.monthly,
+      amount: amountDue,
       periodLabel: paymentForm.periodLabel.trim(),
     });
     setSubmittingPayment(false);
@@ -7341,6 +7350,16 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
   // Loyalty & rewards is Pro-and-above (staff seats and featured placement
   // stay Business-only).
   const isProOrAbove = (providerProfile?.plan || "starter") !== "starter";
+
+  // Team plan per-seat pricing (see TEAM_FREE_SEATS/TEAM_PER_SEAT_PRICE near
+  // the PLANS array). Defaults to this provider's actual current staff
+  // count until they type a different number in the billing picker below —
+  // covers both "I already have staff, just paying/renewing" and "I'm
+  // upgrading fresh and telling you how many seats I'll need."
+  const teamSeats = teamSeatsOverride !== null ? teamSeatsOverride : staff.length;
+  const teamExtraSeats = Math.max(0, teamSeats - TEAM_FREE_SEATS);
+  const teamBaseFee = PLANS.find((p) => p.id === "business")?.monthly ?? 149.7;
+  const teamPlanTotal = teamBaseFee + teamExtraSeats * TEAM_PER_SEAT_PRICE;
 
   const loadStaff = async () => {
     if (!providerId) return;
@@ -9364,6 +9383,38 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                       );
                     })}
 
+                    {chosenPlan.id === "business" && (
+                      <div style={{ marginTop: 4, marginBottom: 4, padding: "12px 14px", border: "1px solid var(--border)", borderRadius: 10 }}>
+                        <div className="input-group" style={{ marginBottom: 6 }}>
+                          <label>{t("providerPortal.billing.teamSeatsLabel")}</label>
+                          <input
+                            type="number"
+                            min={0}
+                            step={1}
+                            value={teamSeats}
+                            onChange={(e) => {
+                              const n = parseInt(e.target.value, 10);
+                              setTeamSeatsOverride(Number.isNaN(n) || n < 0 ? 0 : n);
+                            }}
+                            style={{ maxWidth: 120 }}
+                          />
+                        </div>
+                        <p style={{ fontSize: 12, color: "var(--muted)", margin: 0 }}>
+                          {t("providerPortal.billing.teamSeatsHint", { free: TEAM_FREE_SEATS, rate: TEAM_PER_SEAT_PRICE })}
+                        </p>
+                        {teamExtraSeats > 0 && (
+                          <p style={{ fontSize: 12.5, fontWeight: 700, color: "var(--accent-text)", marginTop: 6, marginBottom: 0 }}>
+                            {t("providerPortal.billing.teamSeatsBreakdown", {
+                              base: teamBaseFee.toFixed(2),
+                              extra: teamExtraSeats,
+                              rate: TEAM_PER_SEAT_PRICE,
+                              total: teamPlanTotal.toFixed(2),
+                            })}
+                          </p>
+                        )}
+                      </div>
+                    )}
+
                     {chosenPlan.monthly === 0 ? (
                       <p style={{ fontSize: 13, color: "var(--muted)", marginTop: 8 }}>
                         {t("providerPortal.billing.freeTrialNote")}
@@ -9372,8 +9423,8 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                       <div style={{ marginTop: 8, paddingTop: 16, borderTop: "1px solid var(--border)" }}>
                         <p style={{ fontSize: 13, marginBottom: 12 }}>
                           {isUpgrade
-                            ? t("providerPortal.billing.sendForUpgrade", { amount: chosenPlan.monthly.toFixed(2), plan: chosenPlan.name })
-                            : t("providerPortal.billing.sendForRenewal", { amount: chosenPlan.monthly.toFixed(2), plan: chosenPlan.name })}
+                            ? t("providerPortal.billing.sendForUpgrade", { amount: (chosenPlan.id === "business" ? teamPlanTotal : chosenPlan.monthly).toFixed(2), plan: chosenPlan.name })
+                            : t("providerPortal.billing.sendForRenewal", { amount: (chosenPlan.id === "business" ? teamPlanTotal : chosenPlan.monthly).toFixed(2), plan: chosenPlan.name })}
                         </p>
                         <div className="input-group">
                           <label>{t("providerPortal.billing.whichPeriod")}</label>
@@ -10364,6 +10415,17 @@ const vaiMediaWhatsAppUrl = (source) =>
 const vaiMediaMailtoUrl = () =>
   `mailto:${VAI_MEDIA_EMAIL}?subject=${encodeURIComponent("Vai Media inquiry")}&body=${encodeURIComponent("Hi, I'd like to book a Vai Media photo/video shoot for my shop.")}`;
 
+// Team plan per-seat pricing. The plan picker previously advertised
+// "Base fee + per-seat pricing" with nothing behind it — submitPayment
+// always charged the flat base fee no matter how many staff seats a
+// provider had. These two constants are the actual numbers now: the first
+// TEAM_FREE_SEATS staff seats are covered by the base fee, each one after
+// that adds TEAM_PER_SEAT_PRICE/month. See the seat-count picker in
+// ProviderPortal's billing card (search "teamSeats") for where this is
+// actually computed and charged.
+const TEAM_FREE_SEATS = 2;
+const TEAM_PER_SEAT_PRICE = 20;
+
 const PLANS = [
   {
     // Renamed "Starter" -> "Trial" (display name only — `id` stays
@@ -10407,8 +10469,8 @@ const PLANS = [
     // Repriced to BZ$4.99/day per the user's explicit pricing update
     // (was BZ$120/mo ~= BZ$4.00/day). monthly = 149.7 so (monthly/30)
     // lands on exactly 4.99 wherever that math runs.
-    id: "business", name: "Team", price: "BZ$4.99/day for 1 month", desc: "Base fee + per-seat pricing", monthly: 149.7,
-    priceNote: "Base fee, plus a per-seat add-on as you bring on staff",
+    id: "business", name: "Team", price: "BZ$4.99/day for 1 month", desc: `Base fee + BZ$${TEAM_PER_SEAT_PRICE}/seat after your first ${TEAM_FREE_SEATS}`, monthly: 149.7,
+    priceNote: `Base fee includes your first ${TEAM_FREE_SEATS} staff seats — BZ$${TEAM_PER_SEAT_PRICE}/month for each seat after that`,
     tagline: "For teams — a base plan covering your shop, plus staff seats you add as you grow.",
     features: [
       "Everything in Solo",
