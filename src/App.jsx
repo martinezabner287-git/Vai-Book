@@ -460,6 +460,11 @@ const css = `
   .auth-option-card h3 { font-size: 16px; font-weight: 700; color: var(--dark-text); margin-bottom: 4px; }
   .auth-option-card p { font-size: 13px; color: var(--muted); }
   .auth-option-arrow { font-size: 18px; color: var(--forest); flex-shrink: 0; }
+  .auth-provider-fork-heading { font-size: 13px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .03em; margin-bottom: 10px; }
+  .auth-option-card-sm { padding: 14px 18px; margin-bottom: 10px; }
+  .auth-option-card-sm h3 { font-size: 14px; }
+  .auth-provider-fork-back { display: inline-block; font-size: 13px; color: var(--muted); cursor: pointer; margin-top: 2px; }
+  .auth-provider-fork-back:hover { color: var(--forest); }
   .auth-choice-panel { position: relative; overflow: hidden; background: var(--forest); display: flex; align-items: center; justify-content: center; }
   .auth-choice-panel::before {
     content: '';
@@ -3142,6 +3147,25 @@ function enterProviderPortal(onNav, session, onSignIn) {
 
 function AuthChoice({ onNav, session, onSignIn, onSignOut }) {
   const { t } = useTranslation();
+  // GAP FIX: this card used to go straight to Google sign-in, as if
+  // "For professionals" on a page titled "Sign up / log in" could only
+  // mean "I already have an approved business." A brand-new provider has
+  // no provider_profiles row yet, so that sign-in just dead-ended them on
+  // ProviderPortal's "No business found on this account" screen —
+  // technically correct, but only after a confusing detour through an
+  // account picker that had nothing to do with actually signing up.
+  // Clicking the card now reveals the real fork instead of assuming an
+  // answer: "already listed" still goes through the same sign-in as
+  // before; "new business" routes to view "signup" — the real,
+  // admin-reviewed application form (ProviderSignup/submitProviderApplication)
+  // — with no sign-in required first. Deliberately NOT onOpenProviderSignup:
+  // that opens ProviderSignupModal, which per its own file header is a
+  // front-end-only mockup with no backend wiring at all (submitting it
+  // creates no auth user, no provider row, nothing — see
+  // ProviderSignupModal.jsx). Routing "new business" through the mockup
+  // would make this fork look fixed while actually leaving new providers
+  // right back at a dead end, just a prettier one.
+  const [showProviderFork, setShowProviderFork] = useState(false);
   return (
     <div className="auth-choice">
       <div className="auth-choice-left">
@@ -3155,13 +3179,34 @@ function AuthChoice({ onNav, session, onSignIn, onSignOut }) {
             </div>
             <span className="auth-option-arrow">→</span>
           </div>
-          <div className="auth-option-card" onClick={() => enterProviderPortal(onNav, session, onSignIn)}>
-            <div>
-              <h3>{t("auth.forProfessionals")}</h3>
-              <p>{t("auth.manageAndGrow")}</p>
+          {!showProviderFork ? (
+            <div className="auth-option-card" onClick={() => setShowProviderFork(true)}>
+              <div>
+                <h3>{t("auth.forProfessionals")}</h3>
+                <p>{t("auth.manageAndGrow")}</p>
+              </div>
+              <span className="auth-option-arrow">→</span>
             </div>
-            <span className="auth-option-arrow">→</span>
-          </div>
+          ) : (
+            <div className="auth-provider-fork">
+              <div className="auth-provider-fork-heading">{t("auth.forProfessionals")}</div>
+              <div className="auth-option-card auth-option-card-sm" onClick={() => enterProviderPortal(onNav, session, onSignIn)}>
+                <div>
+                  <h3>{t("auth.alreadyListed")}</h3>
+                  <p>{t("auth.alreadyListedDesc")}</p>
+                </div>
+                <span className="auth-option-arrow">→</span>
+              </div>
+              <div className="auth-option-card auth-option-card-sm" onClick={() => onNav("signup")}>
+                <div>
+                  <h3>{t("auth.newBusiness")}</h3>
+                  <p>{t("auth.newBusinessDesc")}</p>
+                </div>
+                <span className="auth-option-arrow">→</span>
+              </div>
+              <a className="auth-provider-fork-back" onClick={() => setShowProviderFork(false)}>{t("auth.back")}</a>
+            </div>
+          )}
         </div>
       </div>
       <div className="auth-choice-panel">
@@ -4036,7 +4081,7 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
                     <a className="mobile-only-item" onClick={() => go(() => scrollToProvidersSection("pricing", onNav, current))}>{t("nav.pricing")}</a>
                     <hr className="mobile-only-item" />
                     <div className="nav-dropdown-heading">{t("nav.forBusinessesHeading")}</div>
-                    <a className="nav-dropdown-primary-link" onClick={() => go(() => enterProviderPortal(onNav, session, onSignIn))}>{t("nav.logInOrSignUp")}</a>
+                    <a className="nav-dropdown-primary-link" onClick={() => go(() => onNav("auth"))}>{t("nav.logInOrSignUp")}</a>
                     <button className="nav-dropdown-item" onClick={() => go(openInstallAppGuide)}>{t("nav.addToHomeScreen")}</button>
                     <a onClick={() => go(() => onNav("help"))}>{t("nav.helpAndSupport")}</a>
                     <LanguageSelector variant="menu" onAfterChange={closeMenu} />
