@@ -558,6 +558,7 @@
       "sending": "Sending...",
       "adding": "Adding...",
       "remove": "Remove",
+      "edit": "Edit",
       "loading": "Loading...",
       "close": "Close",
       "on": "On",
@@ -801,7 +802,9 @@
       "serviceName": "Service name",
       "serviceNamePlaceholder": "e.g. Full Colour Treatment",
       "price": "Price (BZ$)",
-      "adding": "Adding..."
+      "adding": "Adding...",
+      "descriptionLabel": "Description (optional)",
+      "descriptionPlaceholder": "e.g. What's included, what to expect, anything customers should know before booking."
     },
     "earnings": {
       "subtitle": "Customers pay you directly — track your income here.",
