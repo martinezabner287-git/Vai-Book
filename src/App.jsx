@@ -3208,13 +3208,21 @@ function AuthChoice({ onNav, session, onSignIn, onSignOut }) {
         <button className="auth-back" onClick={() => onNav("home")} aria-label={t("auth.back")}>←</button>
         <div className="auth-choice-body">
           <h1>{t("auth.signUpLogIn")}</h1>
-          <div className="auth-option-card" onClick={() => enterCustomerPortal(onNav, session, onSignIn)}>
-            <div>
-              <h3>{t("auth.forCustomers")}</h3>
-              <p>{t("auth.bookLocalServices")}</p>
+          {/* Hidden once the professional fork is showing, per explicit
+              request — "once the click for professionals the following
+              page shouldn't have the [for customers]" — so that screen
+              is just the two real provider options, not those plus an
+              unrelated customer card. The back link below still returns
+              to both cards. */}
+          {!showProviderFork && (
+            <div className="auth-option-card" onClick={() => enterCustomerPortal(onNav, session, onSignIn)}>
+              <div>
+                <h3>{t("auth.forCustomers")}</h3>
+                <p>{t("auth.bookLocalServices")}</p>
+              </div>
+              <span className="auth-option-arrow">→</span>
             </div>
-            <span className="auth-option-arrow">→</span>
-          </div>
+          )}
           {!showProviderFork ? (
             <div className="auth-option-card" onClick={() => setShowProviderFork(true)}>
               <div>
