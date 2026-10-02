@@ -82,7 +82,11 @@
     "forCustomers": "VaiBook para clientes",
     "bookLocalServices": "Reserva servicios locales cerca de ti",
     "forProfessionals": "VaiBook para profesionales",
-    "manageAndGrow": "Administra y haz crecer tu negocio"
+    "manageAndGrow": "Administra y haz crecer tu negocio",
+    "alreadyListed": "Ya tengo un negocio en VaiBook",
+    "alreadyListedDesc": "Inicia sesión con Google para administrarlo",
+    "newBusiness": "Negocio nuevo",
+    "newBusinessDesc": "Solicita inscribirlo — aún no necesitas una cuenta"
   },
   "help": {
     "title": "Obtén ayuda",
