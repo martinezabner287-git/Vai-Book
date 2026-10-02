@@ -1,63 +1,38 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect } from "react";
 
 // ── GLOBAL THEME CONTEXT ──────────────────────────────────────────────
 //
-// One global light/dark preference, available anywhere in the tree via
-// useTheme() instead of being threaded through props (authProps, Nav,
-// ProviderPortal, etc.) page by page. Applied as a `data-theme` attribute
-// on <html> so plain CSS can key off it with a single
-// `:root[data-theme="light"]` block (see App.jsx's css template's THEME
-// TOKENS section, and the .cx-account-page / .provider-shell /
-// .portal-content dark-mode blocks) rather than a React-tree class
-// needing to reach every themed component.
+// Dark mode has been removed (explicit instruction: "let us remove dark
+// mode. let us just keep it in light mode") — this now just pins
+// `data-theme="light"` on <html> permanently, so the existing
+// `:root[data-theme="light"]` CSS block (see App.jsx's css template's
+// THEME TOKENS section) is the only one that ever applies. No toggle, no
+// localStorage preference, no system `prefers-color-scheme` detection —
+// every visitor always sees the light theme.
 //
-// Init order: localStorage (an explicit earlier choice) → the OS/browser's
-// prefers-color-scheme (a first-time visitor's system setting) → "dark"
-// (this app's original, always-shipped look, used only when neither of
-// the above is available — e.g. matchMedia unsupported).
-const STORAGE_KEY = "vaibook_theme";
-
-function getInitialTheme() {
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved === "light" || saved === "dark") return saved;
-  } catch (e) { /* ignore storage errors (private browsing, disabled storage) */ }
-  try {
-    if (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches === false) {
-      // Only trust an explicit "light" system preference here — a
-      // "dark" or unsupported/undetermined match both fall through to
-      // this app's own default below, since "dark" is already that
-      // default and an indeterminate query shouldn't be treated as a
-      // real signal either way.
-      return "light";
-    }
-  } catch (e) { /* matchMedia not available */ }
-  return "dark";
-}
-
+// The `:root[data-theme="dark"]` blocks still in App.jsx's CSS (the
+// THEME TOKENS default, plus the .cx-account-page / .provider-shell /
+// .portal-content dark-mode rules) are now dead/unreachable — left in
+// place rather than hunting down and deleting every one across an
+// 11,000+ line stylesheet, since an attribute that's never set to "dark"
+// means they simply never match. Harmless, just inert.
 const ThemeContext = createContext(null);
 
 export function ThemeProvider({ children }) {
-  const [theme, setTheme] = useState(getInitialTheme);
-
   useEffect(() => {
-    document.documentElement.setAttribute("data-theme", theme);
-    try { localStorage.setItem(STORAGE_KEY, theme); } catch (e) { /* ignore storage errors */ }
-  }, [theme]);
-
-  const toggleTheme = () => setTheme((t) => (t === "dark" ? "light" : "dark"));
+    document.documentElement.setAttribute("data-theme", "light");
+  }, []);
 
   return (
-    <ThemeContext.Provider value={{ theme, setTheme, toggleTheme }}>
+    <ThemeContext.Provider value={{ theme: "light" }}>
       {children}
     </ThemeContext.Provider>
   );
 }
 
 // Throws if used outside a <ThemeProvider> rather than silently falling
-// back — every consumer (ThemeToggle, Nav, etc.) sits under the provider
-// wrapping <App/> in index.js, so a null context here means a real
-// wiring mistake, not a legitimate standalone-usage case.
+// back — a null context here means a real wiring mistake, not a
+// legitimate standalone-usage case.
 export function useTheme() {
   const ctx = useContext(ThemeContext);
   if (!ctx) throw new Error("useTheme() must be used inside a <ThemeProvider>");

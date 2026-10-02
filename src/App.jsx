@@ -1,15 +1,40 @@
 
 import { useState, useEffect, useLayoutEffect, useRef, useContext, createContext, lazy, Suspense } from "react";
-import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, deleteService, getActiveProviders, getProviderDirectory, createBooking, getProviderBusyWindows, createBookingSafe, cancelBooking, getCustomerBookings, uploadReceipt, submitReview, getProviderReviews, updateReview, sendBookingEmail, updateUserProfile, getPaymentMethods, addPaymentMethod, deletePaymentMethod, createNotification, getNotifications, markNotificationRead, markAllNotificationsRead, getCategoryDefaultFeatures, getProviderFeatureOverrides, setProviderFeatureOverride, getVisitNotes, upsertVisitNote, adminListProviders, adminUpdateProvider, adminDeleteProvider, getFavoriteProviderIds, getFavoriteProviders, addFavorite, removeFavorite, getBookingMessages, sendBookingMessage, markBookingMessagesRead, getUnreadBookingMessages, getProviderMonthlyTrend, createProviderProfile, getProviderById, createWalkInBooking, submitProviderPayment, getMyProviderPayments, adminListProviderPayments, adminReviewProviderPayment, submitBookingRefund, adminListBookingRefunds, openPrivateFile, getProviderStaff, addProviderStaff, updateProviderStaff, deleteProviderStaff, getLoyaltyAccount, getProviderLoyaltyCustomers, redeemLoyaltyReward, getMyStaffProfile, claimStaffSeatByEmail, getStaffBookings, getProviderNotifyEmail, getMaintenanceStatus, setMaintenanceMode, getSiteOfflineStatus, setSiteOffline, sendEmailOtp, verifyEmailOtp, savePushSubscription, attachBookingServices, getProviderBlocks, insertProviderBlock, deleteProviderBlock, proposeBookingReschedule, confirmBookingReschedule, declineBookingReschedule, withdrawBookingReschedule } from "./supabase";
+import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, deleteService, getActiveProviders, getProviderDirectory, createBooking, getProviderBusyWindows, createBookingSafe, cancelBooking, getCustomerBookings, uploadReceipt, submitReview, getProviderReviews, updateReview, sendBookingEmail, updateUserProfile, getPaymentMethods, addPaymentMethod, deletePaymentMethod, createNotification, getNotifications, markNotificationRead, markAllNotificationsRead, getCategoryDefaultFeatures, getProviderFeatureOverrides, setProviderFeatureOverride, getVisitNotes, upsertVisitNote, adminListProviders, adminUpdateProvider, adminDeleteProvider, getFavoriteProviderIds, getFavoriteProviders, addFavorite, removeFavorite, getBookingMessages, sendBookingMessage, markBookingMessagesRead, getUnreadBookingMessages, getProviderMonthlyTrend, createProviderProfile, getProviderById, createWalkInBooking, submitProviderPayment, getMyProviderPayments, adminListProviderPayments, adminReviewProviderPayment, submitBookingRefund, adminListBookingRefunds, openPrivateFile, getProviderStaff, addProviderStaff, updateProviderStaff, deleteProviderStaff, getLoyaltyAccount, getProviderLoyaltyCustomers, redeemLoyaltyReward, getMyStaffProfile, claimStaffSeatByEmail, getStaffBookings, getProviderNotifyEmail, getMaintenanceStatus, setMaintenanceMode, getSiteOfflineStatus, setSiteOffline, sendEmailOtp, verifyEmailOtp, savePushSubscription, attachBookingServices, getProviderBlocks, insertProviderBlock, deleteProviderBlock, proposeBookingReschedule, confirmBookingReschedule, declineBookingReschedule, withdrawBookingReschedule, establishSoloSession, getServerSoloSessionToken, getLocalSoloSessionToken, clearLocalSoloSessionToken, subscribeToSoloSessionReplacement } from "./supabase";
 import AdminDashboard from "./AdminDashboard";
 import ProviderSignupModal from "./ProviderSignupModal";
-import { useTheme } from "./ThemeContext";
-import ThemeToggle from "./ThemeToggle";
+import LanguageSelector from "./LanguageSelector";
+import { useTranslation } from "react-i18next";
 import { compressImageFile } from "./imageUtils";
 import { bookingRequestSchema, rescheduleProposalSchema, validate } from "./validation";
 
 // Default map center: Belize (roughly Belmopan) for providers who haven't set a pin yet.
 const BELIZE_CENTER = [17.25, -88.77];
+
+// Contact address for the Help & Support page. Same domain-handle pattern
+// as VAI_MEDIA_EMAIL further down.
+const SUPPORT_EMAIL = "support@vaibook.bz";
+
+// Pre-fills the subject line so a support email already says which side of
+// the app it's coming from, without needing a real ticketing system —
+// same lightweight "just mailto, but a little smarter" approach as
+// vaiMediaMailtoUrl further down.
+const helpMailtoUrl = (subject, body) =>
+  `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent(subject)}${body ? `&body=${encodeURIComponent(body)}` : ""}`;
+
+// The combined list of "what's this about" reasons for the Email Us form —
+// deliberately one shared list covering both customer and business
+// questions rather than two separate flows, since it all lands in the same
+// inbox at VaiBook's end regardless of which "For customers"/"For
+// professionals" card someone started from.
+const CONTACT_REASONS = ["booking", "charge", "providerIssue", "account", "planBilling", "dashboard", "other"];
+
+// Real, accurate answers about how VaiBook actually behaves today — every
+// one of these matches the app's real logic elsewhere in this file (the
+// 14-day trial has no backend enforcement, billing is manual bank-transfer,
+// Chairs Filled is shop-wide unless staff-scoped, etc.). Nothing aspirational
+// here — if a feature isn't built, it isn't answered as if it were.
+const FAQ_ITEMS = ["trial", "plans", "staff", "walkins", "chairsFilled", "billing", "changePlan", "findMe", "language", "blocks"];
 
 // react-leaflet + leaflet only ever gets fetched when one of these two
 // components actually renders — see the comment atop MapWidgets.jsx.
@@ -257,6 +282,7 @@ const css = `
     --glass-border: rgba(23,40,31,0.12);
   }
 
+  html, body { max-width: 100%; overflow-x: hidden; }
   body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--near-white); color: var(--dark-text); }
 
   /* NAV — carries its own visible dark-to-green fade over its own (short)
@@ -372,6 +398,9 @@ const css = `
   .notif-time { font-size: 11px; color: var(--muted); margin-top: 4px; }
   .nav-login-link { background: none; border: none; color: var(--near-white); font-size: 14px; font-weight: 500; cursor: pointer; padding: 4px; }
   .nav-login-link:hover { color: var(--lime); }
+  .nav-link-inline { color: var(--near-white); font-size: 14px; font-weight: 500; cursor: pointer; padding: 4px; text-decoration: none; white-space: nowrap; }
+  .nav-link-inline:hover { color: var(--lime); }
+  @media (max-width: 860px) { .nav-link-inline { display: none; } }
   .btn-ghost { background: transparent; border: 1px solid rgba(255,255,255,0.35); color: var(--near-white); padding: 9px 20px; border-radius: 100px; font-size: 14px; font-weight: 500; cursor: pointer; transition: all .2s; }
   .btn-ghost:hover { border-color: var(--lime); color: var(--lime); }
   .btn-lime { background: var(--lime); border: none; color: var(--forest); padding: 8px 20px; border-radius: var(--radius-sm); font-size: 14px; font-weight: 600; cursor: pointer; transition: opacity .2s; }
@@ -393,10 +422,31 @@ const css = `
     border-radius: 50%; color: var(--near-white); cursor: pointer; transition: all .2s; flex-shrink: 0;
   }
   .theme-toggle:hover { border-color: var(--lime); color: var(--lime); background: rgba(198,241,53,0.08); }
-  .nav-dropdown { position: absolute; top: calc(100% + 12px); right: 0; background: white; border-radius: var(--radius-sm); box-shadow: 0 16px 40px rgba(13,61,46,0.18); border: 1px solid var(--border); min-width: 220px; padding: 10px; z-index: 200; }
-  .nav-dropdown a, .nav-dropdown button.nav-dropdown-item { display: block; width: 100%; text-align: left; background: none; border: none; padding: 11px 14px; border-radius: 8px; font-size: 14px; font-weight: 500; color: var(--dark-text); cursor: pointer; text-decoration: none; }
+  /* LANGUAGE SELECTOR — same always-dark nav chrome treatment as the theme
+     toggle right above (see its comment): a pill instead of a circle since
+     this shows two letters (EN/ES), not a single icon glyph. */
+  .lang-toggle {
+    display: flex; align-items: center; justify-content: center;
+    min-width: 40px; height: 34px; padding: 0 12px; background: transparent;
+    border: 1px solid rgba(255,255,255,0.25); border-radius: 100px;
+    color: var(--near-white); cursor: pointer; transition: all .2s; flex-shrink: 0;
+    font-size: 12px; font-weight: 800; letter-spacing: .04em; font-family: 'Plus Jakarta Sans', sans-serif;
+  }
+  .lang-toggle:hover { border-color: var(--lime); color: var(--lime); background: rgba(198,241,53,0.08); }
+  .nav-dropdown { position: absolute; top: calc(100% + 12px); right: 0; background: white; border-radius: 20px; box-shadow: 0 20px 50px rgba(13,61,46,0.20); border: 1px solid var(--border); min-width: 300px; max-width: calc(100vw - 32px); padding: 22px; z-index: 200; }
+  .nav-dropdown a, .nav-dropdown button.nav-dropdown-item { display: block; width: 100%; text-align: left; background: none; border: none; padding: 12px 8px; border-radius: 10px; font-size: 16px; font-weight: 500; color: var(--dark-text); cursor: pointer; text-decoration: none; }
   .nav-dropdown a:hover, .nav-dropdown button.nav-dropdown-item:hover { background: var(--sand); }
-  .nav-dropdown hr { border: none; border-top: 1px solid var(--border); margin: 8px 4px; }
+  .nav-dropdown hr { border: none; border-top: 1px solid var(--border); margin: 14px 0; }
+  /* Fresha-style section label inside a dropdown ("For customers") — a
+     real heading (not a small all-caps caption), matching the reference
+     screenshot: bold, near-black, roomy margin below before the list. */
+  .nav-dropdown-heading { padding: 0 8px 12px; font-size: 20px; font-weight: 800; color: var(--dark-text); }
+  /* The one emphasized action in the menu (screenshot shows it in a
+     distinct accent color) — using the brand's own forest green here
+     rather than copying Fresha's literal purple. */
+  .nav-dropdown a.nav-dropdown-primary-link { color: var(--forest); font-weight: 700; }
+  .nav-dropdown button.nav-dropdown-item.for-biz,
+  .nav-dropdown a.for-biz { display: flex; align-items: center; justify-content: space-between; font-weight: 800; font-size: 17px; }
 
   /* AUTH CHOICE */
   .auth-choice { min-height: 100vh; display: grid; grid-template-columns: 1fr 1fr; background: var(--near-white); }
@@ -424,6 +474,103 @@ const css = `
   @media (max-width: 768px) {
     .auth-choice { grid-template-columns: 1fr; }
     .auth-choice-panel { display: none; }
+  }
+
+  /* HELP & SUPPORT — deliberately a different shape from AuthChoice's
+     full-screen split panel: a simple centered page, using theme-aware
+     variables (--bg-elevated/--text-primary/etc., same ones .lp-theme's
+     other children use) so it's correct in dark mode automatically,
+     rather than the hardcoded white/near-black colors most of the
+     marketing-page components below use. */
+  .help-center-page { max-width: 880px; margin: 0 auto; padding: 100px 24px 96px; text-align: center; }
+  .help-title { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; font-size: clamp(30px, 4vw, 44px); color: var(--text-primary); margin: 0 0 12px; letter-spacing: -0.5px; }
+  .help-sub { font-size: 16px; color: var(--text-secondary); margin: 0 0 44px; }
+  .help-cards { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; }
+  .help-card {
+    flex: 1 1 320px; max-width: 380px; text-align: left; text-decoration: none; color: inherit;
+    background: var(--bg-elevated); border: 1px solid var(--border-subtle); border-radius: 20px;
+    padding: 28px; display: flex; flex-direction: column; transition: transform .15s, box-shadow .15s;
+    font: inherit; cursor: pointer; appearance: none; -webkit-appearance: none;
+  }
+  .help-card:hover { transform: translateY(-3px); box-shadow: 0 16px 40px rgba(13,61,46,0.16); }
+  .help-card-icon { width: 52px; height: 52px; border-radius: 14px; background: var(--forest); color: var(--lime); display: flex; align-items: center; justify-content: center; font-size: 24px; margin-bottom: 18px; }
+  .help-card h3 { font-size: 20px; font-weight: 800; margin: 0 0 8px; color: var(--text-primary); }
+  .help-card p { font-size: 14px; color: var(--text-tertiary); margin: 0 0 22px; line-height: 1.5; flex: 1; }
+  .help-card-arrow { width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--border-subtle); display: flex; align-items: center; justify-content: center; font-size: 17px; align-self: flex-end; color: var(--text-primary); }
+  @media (max-width: 640px) {
+    .help-center-page { padding: 80px 20px 72px; }
+  }
+
+  /* .help-shell is the full-bleed, full-height surface behind all three
+     Help pages (Center/Contact/FAQ) — nesting the centered/max-width
+     content inside it (rather than putting the page classes directly on
+     the themed element) means this surface covers the whole screen, not
+     just a content-height box, so there's no gap on any side. Plain
+     white, not the --bg-primary token's off-white — per explicit
+     request ("no background color") the page should read as clean white
+     behind the white cards, not a tinted surface. */
+  .help-shell { min-height: 100vh; background: #FFFFFF; }
+
+  /* HELP — EMAIL US / FAQ — the two destinations the cards above lead to.
+     Same theme-aware-variable approach as .help-center-page so both are
+     correct in dark mode automatically. */
+  .help-back-link {
+    display: inline-flex; align-items: center; gap: 6px; background: none; border: none; cursor: pointer;
+    font: inherit; font-size: 14px; font-weight: 700; color: var(--text-secondary); padding: 0; margin: 0 0 20px;
+  }
+  .help-back-link:hover { color: var(--forest); }
+  .help-form-page, .help-faq-page { max-width: 640px; margin: 0 auto; padding: 60px 24px 96px; }
+  .help-form-card {
+    background: var(--bg-elevated); border: 1px solid var(--border-subtle); border-radius: 20px;
+    padding: 28px; display: flex; flex-direction: column; gap: 20px;
+  }
+  .help-form-group { display: flex; flex-direction: column; gap: 6px; }
+  .help-form-group label { font-size: 13px; font-weight: 700; color: var(--text-primary); }
+  .help-form-group input, .help-form-group select, .help-form-group textarea {
+    background: var(--bg-primary); border: 1px solid var(--border-subtle); border-radius: 12px;
+    padding: 12px 14px; font-size: 14px; color: var(--text-primary); font-family: inherit; resize: vertical;
+  }
+  .help-form-group input:focus, .help-form-group select:focus, .help-form-group textarea:focus {
+    outline: none; border-color: var(--forest);
+  }
+  .help-form-hint { font-size: 12px; color: var(--text-tertiary); }
+  .help-form-charcount { align-self: flex-end; }
+  .help-form-error { font-size: 13px; font-weight: 700; color: #DC5A4A; margin: -8px 0 0; }
+  .help-form-submit {
+    background: var(--forest); color: var(--lime); border: none; border-radius: 100px;
+    padding: 14px 24px; font-size: 15px; font-weight: 800; cursor: pointer; transition: opacity .15s;
+  }
+  .help-form-submit:hover { opacity: 0.9; }
+  .help-form-footnote { font-size: 12px; color: var(--text-tertiary); text-align: center; margin: 0; }
+  .help-faq-search {
+    display: flex; align-items: center; gap: 10px; background: var(--bg-elevated);
+    border: 1px solid var(--border-subtle); border-radius: 14px; padding: 12px 16px; margin-bottom: 24px;
+  }
+  .help-faq-search input { flex: 1; border: none; background: none; outline: none; font-size: 15px; color: var(--text-primary); font-family: inherit; }
+  .help-faq-search-icon { font-size: 15px; opacity: 0.6; }
+  .help-faq-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 36px; }
+  .help-faq-empty { font-size: 14px; color: var(--text-tertiary); text-align: center; padding: 24px 0; }
+  .help-faq-item { background: var(--bg-elevated); border: 1px solid var(--border-subtle); border-radius: 14px; overflow: hidden; }
+  .help-faq-question {
+    width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    background: none; border: none; cursor: pointer; font: inherit; text-align: left;
+    padding: 16px 18px; font-size: 15px; font-weight: 700; color: var(--text-primary);
+  }
+  .help-faq-item.open .help-faq-question { color: var(--forest); }
+  .help-faq-chevron { font-size: 18px; flex-shrink: 0; color: var(--text-tertiary); }
+  .help-faq-answer { margin: 0; padding: 0 18px 18px; font-size: 14px; line-height: 1.6; color: var(--text-secondary); }
+  .help-faq-cta {
+    text-align: center; padding: 28px 20px; border-radius: 16px; background: var(--bg-elevated);
+    border: 1px solid var(--border-subtle);
+  }
+  .help-faq-cta p { margin: 0 0 14px; font-size: 14px; color: var(--text-secondary); font-weight: 600; }
+  .help-faq-cta-btn {
+    background: var(--forest); color: var(--lime); border: none; border-radius: 100px;
+    padding: 11px 22px; font-size: 14px; font-weight: 800; cursor: pointer; transition: opacity .15s;
+  }
+  .help-faq-cta-btn:hover { opacity: 0.9; }
+  @media (max-width: 640px) {
+    .help-form-page, .help-faq-page { padding: 44px 20px 72px; }
   }
 
   /* ACCOUNT DROPDOWN */
@@ -552,6 +699,18 @@ const css = `
   .search-submit:hover { opacity: .87; }
   .search-hero-tagline { margin-top: 26px; font-size: 13px; color: rgba(250,250,247,0.6); text-align: center; }
   .search-hero-tagline a { color: var(--lime); font-weight: 600; cursor: pointer; text-decoration: underline; }
+  /* Real, non-fabricated live-stat line under the search bar (count comes
+     straight from the same active-providers fetch the Discover rows use —
+     never a made-up number) + a "Get the app" pill, echoing the two small
+     trust/utility elements Fresha places under its own hero search bar. */
+  .hero-stat-line { margin-top: 22px; font-size: 14px; font-weight: 600; color: rgba(250,250,247,0.75); text-align: center; }
+  .hero-stat-line strong { color: var(--lime); font-weight: 800; }
+  .hero-get-app-btn {
+    display: flex; align-items: center; gap: 8px; margin: 18px auto 0; background: #FFFFFF; color: var(--forest);
+    border: none; border-radius: 100px; padding: 11px 22px; font-size: 14px; font-weight: 700; cursor: pointer;
+    box-shadow: 0 10px 26px rgba(0,0,0,0.18); transition: transform .15s;
+  }
+  .hero-get-app-btn:hover { transform: translateY(-1px); }
   .hero-trial-btn { display: block; margin: 0 auto 44px; padding: 17px 38px; font-size: 16px; border-radius: 100px; box-shadow: 0 16px 40px rgba(198,241,53,0.22); }
   .hero-search-label { font-size: 12px; font-weight: 600; letter-spacing: .03em; color: rgba(250,250,247,0.5); text-align: center; margin-bottom: 14px; }
 
@@ -564,7 +723,19 @@ const css = `
   .suggestion-sub { font-size: 11px; color: var(--muted); margin-left: auto; flex-shrink: 0; padding-left: 12px; }
   @media (max-width: 640px) {
     .search-hero { padding: 80px 20px 64px; }
-    .search-bar-pill { flex-direction: column; border-radius: 20px; align-items: stretch; }
+    .search-bar-pill { flex-direction: column; align-items: stretch; }
+    /* .search-glass (declared later in this stylesheet, under GLOBAL
+       PREMIUM UI COMPONENTS, specifically so it always wins layering onto
+       older component classes) unconditionally re-asserts its own
+       border-radius: 100px. On a single-class selector that beats the
+       plain .search-bar-pill rule above (border-radius: 20px) by source
+       order, so the stacked mobile bar stayed a full capsule shape — its
+       rounded ends visibly overlapping/clashing with the Search button
+       nested inside, which is what read as "the search bar and button
+       are all jumbled together". This compound selector outranks the
+       single-class .search-glass rule on specificity instead, so it wins
+       regardless of where either rule sits in the file. */
+    .search-bar-pill.search-glass { border-radius: 20px; }
     .search-bar-pill .sep { display: none; }
     .search-submit { width: 100%; }
   }
@@ -603,13 +774,20 @@ const css = `
     max-width: 480px; margin: 0 auto 26px; line-height: 1.5;
   }
   .provider-hero .trial-badge { margin: 0 auto 28px; }
+  .provider-hero-ctas { display: flex; align-items: center; justify-content: center; gap: 14px; flex-wrap: wrap; }
   .provider-hero-cta.btn-lime {
     display: inline-block; padding: 20px 44px; font-size: 17px; font-weight: 800;
     border-radius: 100px; box-shadow: 0 18px 44px rgba(198,241,53,0.28);
   }
+  .provider-hero-cta-secondary.btn-ghost { padding: 20px 32px; font-size: 16px; font-weight: 700; }
   .provider-hero-note { margin-top: 18px; font-size: 13px; color: rgba(250,250,247,0.5); }
+  /* The dashboard screenshot living inside the dark hero, Fresha-style —
+     platform-preview-img already carries its own white rounded corners +
+     shadow, which is exactly what reads well floating on this gradient. */
+  .provider-hero-screenshot { margin-top: 56px; }
   @media (max-width: 640px) {
     .provider-hero { padding: 96px 20px 72px; }
+    .provider-hero-screenshot { margin-top: 36px; }
     .provider-hero-cta.btn-lime { width: 100%; padding: 18px 0; }
   }
 
@@ -800,6 +978,12 @@ const css = `
   .pricing-card { background: #fff; border: 1px solid var(--border); border-radius: 16px; padding: 32px 28px; display: flex; flex-direction: column; position: relative; }
   .pricing-card.recommended { border: 2px solid var(--forest); box-shadow: 0 16px 36px rgba(13,61,46,0.12); }
   .pricing-badge { position: absolute; top: -13px; left: 50%; transform: translateX(-50%); background: var(--forest); color: var(--lime); font-size: 11px; font-weight: 800; letter-spacing: .4px; text-transform: uppercase; padding: 5px 14px; border-radius: 100px; white-space: nowrap; }
+  /* Per-card trial badge (Task: "add a prominent 14-Day Free Trial badge to
+     both active plans") — separate from the top-of-card .pricing-badge
+     ribbon (which only shows on the recommended plan) so the two never
+     collide; sits inline under the plan name instead of absolutely
+     positioned, since every card gets one, not just one card. */
+  .pricing-trial-badge { display: inline-flex; align-items: center; gap: 5px; background: var(--lime); color: var(--forest); font-size: 11px; font-weight: 800; letter-spacing: .2px; padding: 5px 12px; border-radius: 100px; margin: 8px 0 2px; white-space: nowrap; }
   .pricing-name { font-size: 13px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
   .pricing-price { font-size: 34px; font-weight: 800; color: var(--dark-text); margin: 10px 0 6px; font-family: 'Plus Jakarta Sans', sans-serif; }
   .pricing-price span { font-size: 14px; font-weight: 500; color: var(--muted); }
@@ -964,6 +1148,13 @@ const css = `
   .dopamine-value-sm { font-size: 21px; color: #FFFFFF; }
   .dopamine-pct { font-size: 12.5px; font-weight: 600; color: rgba(245,239,224,0.7); }
   .dopamine-divider { width: 1px; align-self: stretch; background: rgba(255,255,255,0.14); margin: 0 22px; }
+  .dopamine-label-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; flex-wrap: wrap; }
+  .dopamine-label-row .dopamine-label { margin-bottom: 0; }
+  .dopamine-staff-select { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.18); color: rgba(245,239,224,0.85); font-size: 10.5px; font-weight: 600; border-radius: 8px; padding: 2px 6px; max-width: 110px; }
+  .dopamine-metric-quiet { opacity: 0.72; }
+  .dopamine-metric-quiet .dopamine-label { font-size: 10px; }
+  .dopamine-value-xs { font-size: 16px; font-weight: 700; color: rgba(245,239,224,0.85); }
+  .dopamine-value-xs .dopamine-pct { font-size: 11px; }
 
   /* NEXT IN THE CHAIR — spotlight card */
   .next-chair-card { background: #fff; border: 1.5px solid var(--lime); border-left: 6px solid var(--forest); border-radius: 16px; padding: 16px 20px; margin-bottom: 20px; }
@@ -999,6 +1190,15 @@ const css = `
   .launch-banner { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; background: linear-gradient(160deg, var(--forest) 0%, #0A2A20 100%); border: 1px solid rgba(198,241,53,0.3); border-radius: 16px; padding: 18px 22px; margin-bottom: 20px; }
   .launch-banner-title { font-size: 15px; font-weight: 800; color: #FFFFFF; }
   .launch-banner-sub { font-size: 12.5px; color: rgba(245,239,224,0.7); margin-top: 3px; }
+  /* FIX: this banner is a fixed dark-green gradient in every theme (it
+     isn't part of the .provider-shell/.portal-content dark-mode scope),
+     but its "Dismiss" button reused the generic .btn-sm.ghost class, which
+     is styled for light card backgrounds (color: var(--dark-text) — a
+     dark, near-black text). Dark text on a dark-green banner was nearly
+     invisible regardless of light/dark mode. Scoped override forces
+     light text/border here specifically. */
+  .launch-banner .btn-sm.ghost { background: transparent; border: 1px solid rgba(255,255,255,0.4); color: #FFFFFF; }
+  .launch-banner .btn-sm.ghost:hover { border-color: var(--lime); color: var(--lime); }
   .plaque-modal-panel { background: transparent; max-width: 420px; width: 100%; }
   .plaque-loading { background: #fff; border-radius: 16px; padding: 60px 24px; text-align: center; font-size: 14px; color: var(--muted); }
   .plaque-generator { display: flex; flex-direction: column; align-items: center; gap: 16px; }
@@ -1341,6 +1541,36 @@ const css = `
     color: var(--lime);
   }
 
+  /* FIX (dark-mode text contrast) — these surfaces read var(--dark-text)/
+     var(--muted) for their text, which the block above already correctly
+     flips to near-white inside .provider-shell/.portal-content. But each
+     of these also has its own hardcoded #fff/white BACKGROUND that never
+     moved with it, so in dark mode it was near-white text on a background
+     that stayed white — unreadable. This is exactly the "deeper nested
+     surfaces... larger scope than this pass" gap called out above; closing
+     it for the ones users actually hit constantly (account dropdown menu,
+     every form field, the QR/next-appointment cards, mobile action sheets)
+     rather than attempting a full pixel-level pass over every modal. */
+  :root[data-theme="dark"] .provider-shell .nav-dropdown,
+  :root[data-theme="dark"] .portal-content .nav-dropdown,
+  :root[data-theme="dark"] .provider-shell .next-chair-card,
+  :root[data-theme="dark"] .provider-shell .sheet-panel,
+  :root[data-theme="dark"] .portal-content .sheet-panel,
+  :root[data-theme="dark"] .provider-shell .qr-modal-panel {
+    background: #12291F;
+    border-color: rgba(255,255,255,0.12);
+    box-shadow: 0 16px 40px rgba(0,0,0,0.35);
+  }
+  :root[data-theme="dark"] .provider-shell .input-group input,
+  :root[data-theme="dark"] .provider-shell .input-group select,
+  :root[data-theme="dark"] .provider-shell .input-group textarea,
+  :root[data-theme="dark"] .portal-content .input-group input,
+  :root[data-theme="dark"] .portal-content .input-group select,
+  :root[data-theme="dark"] .portal-content .input-group textarea {
+    background: #0E241B;
+    border-color: rgba(255,255,255,0.12);
+  }
+
   /* PROVIDER GRID */
   .provider-card { background: var(--near-white); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; cursor: pointer; transition: box-shadow .2s; }
   .provider-card:hover { box-shadow: 0 4px 20px rgba(13,61,46,0.1); }
@@ -1516,8 +1746,49 @@ const css = `
   @media (max-width: 768px) {
     .nav { padding: 14px 20px; }
     .nav-strip { padding: 10px 20px; gap: 20px; }
+    /* NAV — "Provide my service"/"List your business" moves out of the bar
+       and into the Menu dropdown below this width (it's already duplicated
+       there as a .mobile-only-item), which is what actually keeps the row
+       — language toggle + log in/avatar + this button — from squishing or
+       overflowing on phone-width screens. See the matching .mobile-only-item
+       override right below, and the icon-only Menu button at 480px further
+       down for the narrowest phones. */
+    .nav-signup-btn { display: none; }
+    .nav-dropdown .mobile-only-item { display: block; }
+    .nav-account-dropdown .mobile-only-item { display: flex; }
     .hero { grid-template-columns: 1fr; padding: 60px 24px; min-height: auto; }
     .hero-card-wrap { display: none; }
+    /* HERO CTAs — stacked and full-width instead of a tight side-by-side
+       row, so each is an easy, unambiguous thumb target rather than two
+       medium buttons fighting for a narrow row. */
+    .hero-actions { flex-direction: column; align-items: stretch; }
+    .hero-actions .btn-primary, .hero-actions .btn-outline-white { width: 100%; text-align: center; }
+    /* FOOTER — the 5-across flex row (brand + 4 link columns) wraps, but
+       unevenly (each column is only as wide as its own content), which is
+       what reads as "not wrapping properly" on a phone. A real 2-column
+       grid below this width makes every row line up cleanly; the brand
+       block spans both columns since its description paragraph needs the
+       room. */
+    .footer-top { display: grid; grid-template-columns: 1fr 1fr; gap: 28px 24px; }
+    .footer-brand { grid-column: 1 / -1; }
+    .footer-brand p { max-width: none; }
+    /* TOUCH TARGETS — forms and primary buttons meet the ~44px minimum tap
+       size on mobile. Nav-bar controls (avatar/lang toggle/login link/menu
+       button) only get the height bump, never width:100%, since they still
+       share one horizontal row; standalone form fields and CTA buttons get
+       both. Chips/pills (.service-pill, .cx-discover-pill) keep their
+       compact shape — they're meant to be scanned and tapped in a row, not
+       stretched — but still clear 44px tall. */
+    .nav-login-link, .nav-menu-btn, .nav-avatar-btn, .lang-toggle { min-height: 44px; }
+    .btn-primary, .btn-outline-white, .btn-ghost, .btn-lime, .btn-forest, .btn-outline-forest,
+    .search-submit, .help-form-submit, .for-business-btn,
+    .provider-hero-cta.btn-lime, .provider-hero-cta-secondary.btn-ghost,
+    .auth-option-card, .service-card { min-height: 44px; }
+    .input-group input, .input-group select, .input-group textarea,
+    .help-form-group input, .help-form-group select, .help-form-group textarea,
+    .search-bar-pill .field input, .search-bar-pill .field select { min-height: 44px; }
+    .service-pill, .cx-discover-pill { min-height: 44px; }
+    .help-form-submit { width: 100%; }
     .section { padding: 60px 24px; }
     .marketing-strip { padding: 32px 24px; }
     .portal-content { padding: 20px; }
@@ -1576,8 +1847,11 @@ const css = `
   }
 
   /* NAV — keep the top row on one line without pushing "Menu"/the avatar
-     off-screen on phone-width viewports (the 3-button Log in / List your
-     business / Menu row otherwise overflows below ~430px). */
+     off-screen on phone-width viewports (Log in + the language toggle +
+     Menu, the narrowest realistic combination, still won't fit every
+     label at full size below ~480px). Below this width the Menu button
+     drops its "Menu" text and shows just the bars icon, and the language
+     toggle shrinks slightly, freeing the room login-link/avatar needs. */
   .mobile-only-item { display: none; }
   @media (max-width: 480px) {
     .quick-actions-row { flex-direction: column; }
@@ -1593,13 +1867,18 @@ const css = `
     .nav-cta { gap: 8px; }
     .nav-signup-btn { display: none; }
     .nav-login-link { font-size: 13px; padding: 4px 2px; }
-    .nav-menu-btn { padding: 8px 12px 8px 14px; font-size: 13px; gap: 6px; }
+    .nav-menu-btn { padding: 10px 12px; font-size: 13px; gap: 6px; min-width: 44px; justify-content: center; }
+    .nav-menu-btn-label { display: none; }
     .nav-menu-btn .bars span { width: 13px; }
     .nav-avatar-btn { padding: 3px 8px 3px 3px; gap: 6px; }
+    .lang-toggle { min-width: 34px; padding: 0 8px; }
     .nav-dropdown .mobile-only-item { display: block; }
     .nav-account-dropdown .mobile-only-item { display: flex; }
     .carousel-arrow { display: none; }
     .carousel-card { flex-basis: 200px; }
+    /* FOOTER — one column at phone width; 2-up (set at 768px) can still
+       feel tight once link labels get long or the app is in Spanish. */
+    .footer-top { grid-template-columns: 1fr; }
   }
 
   .a2hs-banner {
@@ -1753,20 +2032,25 @@ function VaiBookMark({ size = 26, style }) {
 // longer featured in nav/homepage/footer/browse) — that's the "everyday
 // services" side of the business, slated for its own "Vai Services" product
 // later rather than folded into VaiBook's self-care identity.
+// NOTE ON i18n: `name` here stays the canonical English label — it's matched
+// directly against provider.service_type from Supabase (plain English data,
+// not translated) for search/filtering. Display-only text uses `key` to look
+// up a translated label via t(`services.${key}.name`) / `.desc` instead of
+// reading `.name`/`.desc` directly — see SERVICES.map() call sites.
 const SERVICES = [
-  { icon: "✂️", name: "Barbers", desc: "Cuts & styles", bg: "#1A5C44" },
-  { icon: "💇", name: "Hair Salons", desc: "Color & styling", bg: "#2A4A3E" },
-  { icon: "💅", name: "Nail Techs", desc: "Nails & art", bg: "#1E4035" },
-  { icon: "🧖", name: "Spas", desc: "Full-body relaxation", bg: "#163626" },
-  { icon: "🩺", name: "Med Spas", desc: "Injectables & clinical", bg: "#1C4A38" },
-  { icon: "💆", name: "Massage", desc: "Therapeutic & relaxation", bg: "#244530" },
-  { icon: "🧴", name: "Skincare & Facials", desc: "Cleanses & glow-ups", bg: "#1A5C44" },
-  { icon: "🪒", name: "Hair Removal", desc: "Waxing & laser", bg: "#2A4A3E" },
-  { icon: "🖋️", name: "Tattoo & Piercing", desc: "Ink & piercings", bg: "#1E4035" },
-  { icon: "🌿", name: "Wellness Centers", desc: "Holistic & recovery", bg: "#163626" },
-  { icon: "🐾", name: "Pet Grooming", desc: "All breeds", bg: "#1C4A38" },
-  { icon: "🏋️", name: "Fitness & Recovery", desc: "Training & recovery", bg: "#2A4A3E" },
-  { icon: "🦵", name: "Physical Therapy", desc: "Rehab & mobility", bg: "#1E4035" },
+  { key: "barbers", icon: "✂️", name: "Barbers", desc: "Cuts & styles", bg: "#1A5C44" },
+  { key: "hairSalons", icon: "💇", name: "Hair Salons", desc: "Color & styling", bg: "#2A4A3E" },
+  { key: "nailTechs", icon: "💅", name: "Nail Techs", desc: "Nails & art", bg: "#1E4035" },
+  { key: "spas", icon: "🧖", name: "Spas", desc: "Full-body relaxation", bg: "#163626" },
+  { key: "medSpas", icon: "🩺", name: "Med Spas", desc: "Injectables & clinical", bg: "#1C4A38" },
+  { key: "massage", icon: "💆", name: "Massage", desc: "Therapeutic & relaxation", bg: "#244530" },
+  { key: "skincareFacials", icon: "🧴", name: "Skincare & Facials", desc: "Cleanses & glow-ups", bg: "#1A5C44" },
+  { key: "hairRemoval", icon: "🪒", name: "Hair Removal", desc: "Waxing & laser", bg: "#2A4A3E" },
+  { key: "tattooPiercing", icon: "🖋️", name: "Tattoo & Piercing", desc: "Ink & piercings", bg: "#1E4035" },
+  { key: "wellnessCenters", icon: "🌿", name: "Wellness Centers", desc: "Holistic & recovery", bg: "#163626" },
+  { key: "petGrooming", icon: "🐾", name: "Pet Grooming", desc: "All breeds", bg: "#1C4A38" },
+  { key: "fitnessRecovery", icon: "🏋️", name: "Fitness & Recovery", desc: "Training & recovery", bg: "#2A4A3E" },
+  { key: "physicalTherapy", icon: "🦵", name: "Physical Therapy", desc: "Rehab & mobility", bg: "#1E4035" },
 ];
 
 // ── BUSINESS CATEGORIES & FEATURE FLAGS ──────────────────────────
@@ -2738,6 +3022,31 @@ function urlBase64ToUint8Array(base64String) {
 // (so a reload doesn't lose the "✓ On" state). Pulled out into one hook
 // instead of writing this twice so provider and customer push behave
 // identically and only need fixing in one place.
+// FIXED (dropdown glitch): the avatar/account dropdowns used to close only
+// via onMouseLeave, which on a trackpad or a slightly diagonal mouse path
+// fires the instant the cursor crosses the gap between the avatar button
+// and the dropdown panel — so opening it often felt like it "didn't take"
+// and needed a second or third click. A real click-outside listener is the
+// standard fix: it closes the menu only when the user actually clicks
+// somewhere else, and stays open no matter how the mouse wanders over it.
+// `mousedown` (not `click`) so this fires and closes any OTHER open menu
+// before a click on a different toggle button's own onClick handler runs.
+// The toggle button itself must stopPropagation() in its onClick (done at
+// each call site below) — otherwise the same click that OPENS the menu
+// would immediately bubble to this document listener and close it again.
+function useClickOutside(active, onOutsideClick) {
+  const ref = useRef(null);
+  useEffect(() => {
+    if (!active) return;
+    const handleClick = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) onOutsideClick();
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [active, onOutsideClick]);
+  return ref;
+}
+
 function usePushSubscription(userId) {
   const [pushEnabled, setPushEnabled] = useState(false);
   const [subscribingPush, setSubscribingPush] = useState(false);
@@ -2832,23 +3141,24 @@ function enterProviderPortal(onNav, session, onSignIn) {
 }
 
 function AuthChoice({ onNav, session, onSignIn, onSignOut }) {
+  const { t } = useTranslation();
   return (
     <div className="auth-choice">
       <div className="auth-choice-left">
-        <button className="auth-back" onClick={() => onNav("home")} aria-label="Back">←</button>
+        <button className="auth-back" onClick={() => onNav("home")} aria-label={t("auth.back")}>←</button>
         <div className="auth-choice-body">
-          <h1>Sign up / log in</h1>
+          <h1>{t("auth.signUpLogIn")}</h1>
           <div className="auth-option-card" onClick={() => enterCustomerPortal(onNav, session, onSignIn)}>
             <div>
-              <h3>VaiBook for customers</h3>
-              <p>Book local services near you</p>
+              <h3>{t("auth.forCustomers")}</h3>
+              <p>{t("auth.bookLocalServices")}</p>
             </div>
             <span className="auth-option-arrow">→</span>
           </div>
           <div className="auth-option-card" onClick={() => enterProviderPortal(onNav, session, onSignIn)}>
             <div>
-              <h3>VaiBook for professionals</h3>
-              <p>Manage and grow your business</p>
+              <h3>{t("auth.forProfessionals")}</h3>
+              <p>{t("auth.manageAndGrow")}</p>
             </div>
             <span className="auth-option-arrow">→</span>
           </div>
@@ -2857,6 +3167,171 @@ function AuthChoice({ onNav, session, onSignIn, onSignOut }) {
       <div className="auth-choice-panel">
         {/* Swap this for a real photo later: <img src="/your-photo.jpg" style={{width:"100%",height:"100%",objectFit:"cover"}} /> */}
         <div className="auth-choice-panel-logo" style={{ display: "flex", alignItems: "center", gap: 12 }}><VaiBookMark size={38} />vai<span>book</span></div>
+      </div>
+    </div>
+  );
+}
+
+// HELP & SUPPORT — reached from "Help and support" in either version of the
+// Menu dropdown (customer-side and business-side). Deliberately a different
+// layout from AuthChoice's full-screen split panel (per explicit request,
+// "in a different format") — a simple centered page with two cards, using
+// VaiBook's own icon-block style (like the SERVICES pills) instead of stock
+// photography, since there isn't a real photo library to draw from.
+//
+// The two cards now lead to two different real destinations rather than
+// both firing an instant mailto (per explicit instruction: "customer
+// support is the one with the email. and the one for professionals is with
+// the faq") — "For customers" opens a proper contact form (HelpContactForm,
+// below), "For professionals" opens a searchable FAQ (HelpFAQ, below) that
+// only answers with real, already-built app behavior.
+function HelpCenter({ onNav }) {
+  const { t } = useTranslation();
+  return (
+    <div className="lp-theme help-shell">
+      <div className="help-center-page">
+        <h1 className="help-title">{t("help.title")}</h1>
+        <p className="help-sub">{t("help.sub")}</p>
+        <div className="help-cards">
+          <button type="button" className="help-card" onClick={() => onNav("help-contact")}>
+            <div className="help-card-icon">🛍️</div>
+            <h3>{t("help.forCustomers")}</h3>
+            <p>{t("help.forCustomersDesc")}</p>
+            <span className="help-card-arrow">→</span>
+          </button>
+          <button type="button" className="help-card" onClick={() => onNav("help-faq")}>
+            <div className="help-card-icon">🏪</div>
+            <h3>{t("help.forProfessionals")}</h3>
+            <p>{t("help.forProfessionalsDesc")}</p>
+            <span className="help-card-arrow">→</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// HELP — EMAIL US — reached from the "For customers" card above. A real
+// contact form instead of an instant mailto, but still honest about what it
+// is: there's no ticketing backend behind VaiBook to receive a form post, so
+// submitting composes a pre-filled email and hands it to the visitor's own
+// mail client, addressed to support@vaibook.bz. Deliberately no fake
+// "attach a screenshot" dropzone (unlike the Fresha reference) since nothing
+// on VaiBook's end could actually receive an attachment yet, and one shared
+// topic dropdown rather than Fresha's redundant two-dropdown structure.
+function HelpContactForm({ onNav }) {
+  const { t } = useTranslation();
+  const [topic, setTopic] = useState("");
+  const [email, setEmail] = useState("");
+  const [description, setDescription] = useState("");
+  const [error, setError] = useState("");
+  const DESCRIPTION_MAX = 1000;
+
+  const handleSend = () => {
+    if (!topic || !email.trim() || !description.trim()) {
+      setError(t("help.contact.validation"));
+      return;
+    }
+    setError("");
+    const topicLabel = t(`help.contact.topics.${topic}`);
+    const subject = `${t("help.contact.emailSubjectPrefix")} — ${topicLabel}`;
+    const body = `${t("help.contact.emailBodyFrom")}: ${email.trim()}\n\n${description.trim()}`;
+    window.location.href = helpMailtoUrl(subject, body);
+  };
+
+  return (
+    <div className="lp-theme help-shell">
+      <div className="help-form-page">
+        <button type="button" className="help-back-link" onClick={() => onNav("help")}>← {t("help.backToHelp")}</button>
+        <h1 className="help-title">{t("help.contact.title")}</h1>
+        <p className="help-sub">{t("help.contact.sub")}</p>
+
+        <div className="help-form-card">
+          <div className="help-form-group">
+            <label>{t("help.contact.topicLabel")}</label>
+            <select value={topic} onChange={(e) => setTopic(e.target.value)}>
+              <option value="">{t("help.contact.topicPlaceholder")}</option>
+              {CONTACT_REASONS.map((r) => (
+                <option key={r} value={r}>{t(`help.contact.topics.${r}`)}</option>
+              ))}
+            </select>
+          </div>
+          <div className="help-form-group">
+            <label>{t("help.contact.emailLabel")}</label>
+            <input type="email" placeholder="you@email.com" value={email} onChange={(e) => setEmail(e.target.value)} />
+            <span className="help-form-hint">{t("help.contact.emailHint")}</span>
+          </div>
+          <div className="help-form-group">
+            <label>{t("help.contact.descriptionLabel")}</label>
+            <textarea
+              rows={6}
+              maxLength={DESCRIPTION_MAX}
+              placeholder={t("help.contact.descriptionPlaceholder")}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+            />
+            <span className="help-form-hint help-form-charcount">{description.length}/{DESCRIPTION_MAX}</span>
+          </div>
+          {error && <p className="help-form-error">{error}</p>}
+          <button type="button" className="help-form-submit" onClick={handleSend}>{t("help.contact.send")}</button>
+          <p className="help-form-footnote">{t("help.contact.sendHint")}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// HELP — FAQ — reached from the "For professionals" card above. A real,
+// client-side-searchable FAQ rather than a mailto — every answer here
+// describes real, already-built VaiBook behavior (see the FAQ_ITEMS comment
+// near the top of this file for the honesty reasoning); nothing aspirational.
+// Still ends with a link into HelpContactForm above, since there's no
+// separate professional-only inbox on the other end.
+function HelpFAQ({ onNav }) {
+  const { t } = useTranslation();
+  const [query, setQuery] = useState("");
+  const [openId, setOpenId] = useState(null);
+
+  const q = query.trim().toLowerCase();
+  const items = FAQ_ITEMS.filter((id) => {
+    if (!q) return true;
+    const question = t(`help.faq.${id}.q`).toLowerCase();
+    const answer = t(`help.faq.${id}.a`).toLowerCase();
+    return question.includes(q) || answer.includes(q);
+  });
+
+  return (
+    <div className="lp-theme help-shell">
+      <div className="help-faq-page">
+        <button type="button" className="help-back-link" onClick={() => onNav("help")}>← {t("help.backToHelp")}</button>
+        <h1 className="help-title">{t("help.faq.title")}</h1>
+        <p className="help-sub">{t("help.faq.sub")}</p>
+
+        <div className="help-faq-search">
+          <span className="help-faq-search-icon" aria-hidden="true">🔍</span>
+          <input placeholder={t("help.faq.searchPlaceholder")} value={query} onChange={(e) => setQuery(e.target.value)} />
+        </div>
+
+        <div className="help-faq-list">
+          {items.length === 0 && <p className="help-faq-empty">{t("help.faq.noResults")}</p>}
+          {items.map((id) => {
+            const isOpen = openId === id;
+            return (
+              <div key={id} className={`help-faq-item ${isOpen ? "open" : ""}`}>
+                <button type="button" className="help-faq-question" onClick={() => setOpenId(isOpen ? null : id)}>
+                  <span>{t(`help.faq.${id}.q`)}</span>
+                  <span className="help-faq-chevron" aria-hidden="true">{isOpen ? "−" : "+"}</span>
+                </button>
+                {isOpen && <p className="help-faq-answer">{t(`help.faq.${id}.a`)}</p>}
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="help-faq-cta">
+          <p>{t("help.faq.stillNeedHelp")}</p>
+          <button type="button" className="help-faq-cta-btn" onClick={() => onNav("help-contact")}>{t("help.faq.emailUs")}</button>
+        </div>
       </div>
     </div>
   );
@@ -3228,10 +3703,17 @@ function setPortalTab(tabId) {
 }
 
 function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignOut, onOpenProviderSignup }) {
+  const { t } = useTranslation();
   const [menuOpen, setMenuOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
   const closeMenu = () => setMenuOpen(false);
   const closeAccount = () => { setAccountOpen(false); setNotifListOpen(false); };
+  // FIXED (dropdown glitch) — see useClickOutside above. Declared once here
+  // (hooks can't be conditional) and the same ref/handler is attached to
+  // whichever of the render branches below actually renders, since only
+  // one is ever mounted at a time.
+  const accountRef = useClickOutside(accountOpen, closeAccount);
+  const menuRef = useClickOutside(menuOpen, closeMenu);
 
   // NOTIFICATIONS — previously a standalone bell icon in the nav
   // (NotificationBell), now folded into the avatar dropdown per the
@@ -3288,17 +3770,17 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
   const notifRow = session && user && (
     <>
       <button className="nav-dropdown-item" onClick={() => setNotifListOpen((v) => !v)}>
-        <span className="icn">🔔</span> Notifications
+        <span className="icn">🔔</span> {t("nav.notifications")}
         {unreadCount > 0 && <span className="nav-dropdown-badge">{unreadCount > 9 ? "9+" : unreadCount}</span>}
       </button>
       {notifListOpen && (
         <div className="notif-inline-list">
           <div className="notif-dropdown-header">
-            <strong>Notifications</strong>
-            {unreadCount > 0 && <a onClick={markAllRead}>Mark all read</a>}
+            <strong>{t("nav.notifications")}</strong>
+            {unreadCount > 0 && <a onClick={markAllRead}>{t("nav.markAllRead")}</a>}
           </div>
           {notifications.length === 0 ? (
-            <p className="notif-empty">No notifications yet.</p>
+            <p className="notif-empty">{t("nav.noNotifications")}</p>
           ) : (
             notifications.map((n) => (
               <div key={n.id} className={`notif-item ${n.read ? "" : "unread"}`} onClick={() => openNotification(n)}>
@@ -3417,7 +3899,7 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
           <div className="nav-search-input-wrap">
             <span className="nav-search-icon">🔍</span>
             <input
-              placeholder="Search barbers, haircuts, nail techs..."
+              placeholder={t("nav.searchPlaceholder")}
               value={navQuery}
               onChange={e => { setNavQuery(e.target.value); setShowNavSuggestions(true); }}
               onFocus={() => setShowNavSuggestions(true)}
@@ -3440,23 +3922,23 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
       </div>
       )}
       {showNavSearch && (
-      <button className={`nav-search-toggle ${navSearchActive ? "visible" : ""}`} onClick={() => setMobileSearchOpen(v => !v)} aria-label="Search">🔍</button>
+      <button className={`nav-search-toggle ${navSearchActive ? "visible" : ""}`} onClick={() => setMobileSearchOpen(v => !v)} aria-label={t("nav.searchAriaLabel")}>🔍</button>
       )}
-
-      {/* THEME TOGGLE — global control (always visible, whatever page or
-          auth state), reads ThemeContext directly rather than being
-          threaded down as a prop. Now themes the Landing Page, Customer
-          Portal, and Admin Portal (see the .lp-theme / .cx-account-page /
-          .portal-content dark-mode CSS). Provider Portal doesn't render
-          this shared Nav once a provider is signed in — see the matching
-          <ThemeToggle/> in its own topbar below. */}
-      <ThemeToggle />
 
       {(current === "home" || current === "providers" || (current === "customer" && !session)) ? (
         <div className="nav-cta">
+          {/* LANGUAGE SELECTOR — moved here, as the first child of the
+              right-side cluster, so it sits immediately to the left of the
+              avatar/account dropdown (or the login link, on pages where
+              there's no session yet) instead of floating as its own
+              top-level nav child. .nav-cta's existing `gap: 18px` and
+              `align-items: center` give it the same vertical alignment and
+              spacing as every other item in this cluster, with no extra
+              CSS needed. */}
+          <LanguageSelector />
           {session ? (
-            <div style={{ position: "relative" }}>
-              <button className="nav-avatar-btn" onClick={() => setAccountOpen((v) => !v)}>
+            <div style={{ position: "relative" }} ref={accountRef}>
+              <button className="nav-avatar-btn" onClick={(e) => { e.stopPropagation(); setAccountOpen((v) => !v); }}>
                 <span className="nav-avatar-wrap">
                   <span className="nav-avatar-circle">{initials}</span>
                   {unreadCount > 0 && <span className="nav-avatar-badge">{unreadCount > 9 ? "9+" : unreadCount}</span>}
@@ -3464,76 +3946,115 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
                 <span className="nav-avatar-caret">▾</span>
               </button>
               {accountOpen && (
-                <div className="nav-account-dropdown" onMouseLeave={closeAccount}>
-                  <div className="nav-account-name">{user?.full_name || "My account"}</div>
+                <div className="nav-account-dropdown">
+                  <div className="nav-account-name">{user?.full_name || t("nav.myAccount")}</div>
                   {notifRow}
                   <button className="nav-dropdown-item" onClick={() => goAccount(() => openTab("settings"))}>
-                    <span className="icn">👤</span> Profile
+                    <span className="icn">👤</span> {t("nav.profile")}
                   </button>
                   <button className="nav-dropdown-item" onClick={() => goAccount(() => openTab("bookings"))}>
-                    <span className="icn">📅</span> My bookings
+                    <span className="icn">📅</span> {t("nav.myBookings")}
                   </button>
                   <button className="nav-dropdown-item" onClick={() => goAccount(() => openTab("payments"))}>
-                    <span className="icn">💳</span> Payments
+                    <span className="icn">💳</span> {t("nav.payments")}
                   </button>
                   <button className="nav-dropdown-item" onClick={() => goAccount(() => openTab("reviews"))}>
-                    <span className="icn">⭐</span> My reviews
+                    <span className="icn">⭐</span> {t("nav.myReviews")}
                   </button>
                   <button className="nav-dropdown-item" onClick={() => goAccount(() => openTab("settings"))}>
-                    <span className="icn">⚙️</span> Settings
+                    <span className="icn">⚙️</span> {t("nav.settings")}
                   </button>
                   <hr />
                   <button className="nav-dropdown-item" onClick={() => goAccount(onSignOut)}>
-                    <span className="icn">↪</span> Log out
+                    <span className="icn">↪</span> {t("nav.logOut")}
                   </button>
                   <hr />
-                  <a onClick={() => goAccount(() => onNav("home"))}>Home</a>
-                  <a onClick={() => goAccount(() => scrollToSection("services", onNav, current))}>Services</a>
-                  <a onClick={() => goAccount(() => scrollToSection("trending-local", onNav, current))}>Trending</a>
-                  <a onClick={() => goAccount(() => scrollToProvidersSection("pricing", onNav, current))}>Pricing</a>
+                  <a onClick={() => goAccount(() => onNav("home"))}>{t("nav.home")}</a>
+                  <a onClick={() => goAccount(() => scrollToSection("services", onNav, current))}>{t("nav.services")}</a>
+                  <a onClick={() => goAccount(() => scrollToSection("trending-local", onNav, current))}>{t("nav.trending")}</a>
+                  <a onClick={() => goAccount(() => scrollToProvidersSection("pricing", onNav, current))}>{t("nav.pricing")}</a>
                   <hr />
                   <button className="nav-dropdown-item mobile-only-item" onClick={() => goAccount(onOpenProviderSignup)}>
-                    <span className="icn">🏪</span> Provide my service
+                    <span className="icn">🏪</span> {t("nav.provideMyService")}
                   </button>
                   <button className="nav-dropdown-item for-biz" onClick={() => goAccount(() => enterProviderPortal(onNav, session, onSignIn))}>
-                    For businesses <span>→</span>
+                    {t("nav.forBusinesses")} <span>→</span>
                   </button>
                   <hr />
                   <button className="nav-dropdown-item" onClick={() => goAccount(openInstallAppGuide)}>
-                    <span className="icn">📲</span> Add to Home Screen
+                    <span className="icn">📲</span> {t("nav.addToHomeScreen")}
                   </button>
                 </div>
               )}
             </div>
           ) : (
-            <button className="nav-login-link" onClick={() => onNav("auth")}>Log in</button>
+            <button className="nav-login-link" onClick={() => onNav("auth")}>{t("nav.logIn")}</button>
           )}
           {current === "home" && (
-            <button className="nav-signup-btn" onClick={onOpenProviderSignup}>Provide my service</button>
+            <button className="nav-signup-btn" onClick={onOpenProviderSignup}>{t("nav.provideMyService")}</button>
           )}
           {current === "providers" && (
-            <button className="nav-signup-btn" onClick={() => onNav("home")}>Find a Professional</button>
+            <>
+              {/* Business-nav links, Fresha's "Business types / Features /
+                  Pricing" pattern — only shown on the business marketing
+                  page itself, scrolling within it rather than duplicating
+                  these as separate routes. */}
+              <a className="nav-link-inline" onClick={() => scrollToProvidersSection("features", onNav, current)}>{t("nav.features")}</a>
+              <a className="nav-link-inline" onClick={() => scrollToProvidersSection("pricing", onNav, current)}>{t("nav.pricing")}</a>
+              <button className="nav-signup-btn" onClick={() => onNav("home")}>{t("nav.findAProfessional")}</button>
+            </>
           )}
           {!session && (
-          <div style={{ position: "relative" }}>
-            <button className="nav-menu-btn" onClick={() => setMenuOpen((v) => !v)}>
-              Menu
+          <div style={{ position: "relative" }} ref={menuRef}>
+            <button className="nav-menu-btn" onClick={(e) => { e.stopPropagation(); setMenuOpen((v) => !v); }}>
+              <span className="nav-menu-btn-label">{t("nav.menu")}</span>
               <span className="bars"><span /><span /></span>
             </button>
             {menuOpen && (
-              <div className="nav-dropdown" onMouseLeave={closeMenu}>
-                <a onClick={() => go(() => onNav("home"))}>Home</a>
-                <a onClick={() => go(() => scrollToSection("services", onNav, current))}>Services</a>
-                <a onClick={() => go(() => scrollToSection("trending-local", onNav, current))}>Trending</a>
-                <a onClick={() => go(() => scrollToProvidersSection("pricing", onNav, current))}>Pricing</a>
-                <hr />
-                <button className="nav-dropdown-item" onClick={() => go(openInstallAppGuide)}>Add to Home Screen</button>
-                {current === "home" && (
+              <div className="nav-dropdown">
+                {/* Page-specific quick links — desktop gets these as
+                    .nav-link-inline buttons in the nav bar itself (see
+                    above), so they only need to live here as a mobile
+                    fallback (.mobile-only-item). Everything else below
+                    matches the reference screenshot's clean "For
+                    customers" menu 1:1, with no site-nav links cluttering
+                    it — Home/Services/Trending are just a scroll away on
+                    the homepage itself. */}
+                {current === "providers" ? (
                   <>
+                    {/* MIRROR of the "For customers" menu below, for the
+                        business marketing page — same shape as Fresha's
+                        own business-side menu: "For businesses" heading,
+                        an emphasized direct provider login, the same
+                        utility rows, then a "For customers →" link back
+                        to the consumer side at the bottom. No "Home" or
+                        "Blog" item here (unlike Fresha's) — this page has
+                        no sub-pages of its own to return to, and there's
+                        no blog to link, so copying those would just be
+                        dead links. */}
+                    <a className="mobile-only-item" onClick={() => go(() => scrollToProvidersSection("features", onNav, current))}>{t("nav.features")}</a>
+                    <a className="mobile-only-item" onClick={() => go(() => scrollToProvidersSection("pricing", onNav, current))}>{t("nav.pricing")}</a>
+                    <hr className="mobile-only-item" />
+                    <div className="nav-dropdown-heading">{t("nav.forBusinessesHeading")}</div>
+                    <a className="nav-dropdown-primary-link" onClick={() => go(() => enterProviderPortal(onNav, session, onSignIn))}>{t("nav.logInOrSignUp")}</a>
+                    <button className="nav-dropdown-item" onClick={() => go(openInstallAppGuide)}>{t("nav.addToHomeScreen")}</button>
+                    <a onClick={() => go(() => onNav("help"))}>{t("nav.helpAndSupport")}</a>
+                    <LanguageSelector variant="menu" onAfterChange={closeMenu} />
                     <hr />
-                    <button className="nav-dropdown-item mobile-only-item" onClick={() => go(onOpenProviderSignup)}>Provide my service</button>
-                    <button className="nav-dropdown-item" onClick={() => go(() => enterProviderPortal(onNav, session, onSignIn))}>
-                      Provider login
+                    <button className="nav-dropdown-item for-biz" onClick={() => go(() => onNav("home"))}>
+                      {t("nav.forCustomers")} <span>→</span>
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <div className="nav-dropdown-heading">{t("nav.forCustomersHeading")}</div>
+                    <a className="nav-dropdown-primary-link" onClick={() => go(() => onNav("auth"))}>{t("nav.logInOrSignUp")}</a>
+                    <button className="nav-dropdown-item" onClick={() => go(openInstallAppGuide)}>{t("nav.addToHomeScreen")}</button>
+                    <a onClick={() => go(() => onNav("help"))}>{t("nav.helpAndSupport")}</a>
+                    <LanguageSelector variant="menu" onAfterChange={closeMenu} />
+                    <hr />
+                    <button className="nav-dropdown-item for-biz" onClick={() => go(() => onNav("providers"))}>
+                      {t("nav.forBusinesses")} <span>→</span>
                     </button>
                   </>
                 )}
@@ -3543,14 +4064,19 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
           )}
         </div>
       ) : session && PORTAL_TOOLS_BY_VIEW[current] ? (
-        // marginLeft: auto — on a portal page this is the only other real
-        // flex child besides .nav-logo (search is hidden here, see
-        // showNavSearch above), and plain space-between would center a
-        // lone middle item instead of hugging it to the right. auto-margin
-        // claims all the free space on its left, pinning this to the
-        // right edge.
-        <div style={{ position: "relative", marginLeft: "auto" }}>
-          <button className="nav-avatar-btn" onClick={() => setAccountOpen((v) => !v)}>
+        // .nav-cta (reused here, not just on the branch above) — on a
+        // portal page this is the only other real flex child besides
+        // .nav-logo (search is hidden here, see showNavSearch above), and
+        // plain space-between would center a lone middle item instead of
+        // hugging it to the right. .nav-cta's own `margin-left: auto`
+        // claims all the free space to its left, pinning the whole
+        // cluster — language selector + avatar together — to the right
+        // edge, with the same `gap: 18px` spacing between them as the
+        // branch above.
+        <div className="nav-cta">
+          <LanguageSelector />
+          <div style={{ position: "relative" }} ref={accountRef}>
+          <button className="nav-avatar-btn" onClick={(e) => { e.stopPropagation(); setAccountOpen((v) => !v); }}>
             <span className="nav-avatar-wrap">
               <span className="nav-avatar-circle">{initials}</span>
               {unreadCount > 0 && <span className="nav-avatar-badge">{unreadCount > 9 ? "9+" : unreadCount}</span>}
@@ -3558,8 +4084,8 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
             <span className="nav-avatar-caret">▾</span>
           </button>
           {accountOpen && (
-            <div className={`nav-account-dropdown${current === "customer" ? " cx-account-dropdown" : ""}`} onMouseLeave={closeAccount}>
-              <div className="nav-account-name">{user?.full_name || "My account"}</div>
+            <div className={`nav-account-dropdown${current === "customer" ? " cx-account-dropdown" : ""}`}>
+              <div className="nav-account-name">{user?.full_name || t("nav.myAccount")}</div>
               {notifRow}
               {PORTAL_TOOLS_BY_VIEW[current].map((item) => (
                 <button key={item.id} className="nav-dropdown-item" onClick={() => goAccount(() => setPortalTab(item.id))}>
@@ -3571,45 +4097,52 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
                   <hr />
                   {current === "provider" ? (
                     <button className="nav-dropdown-item" onClick={() => goAccount(() => enterCustomerPortal(onNav, session, onSignIn))}>
-                      <span className="icn">🛍️</span> Switch to customer
+                      <span className="icn">🛍️</span> {t("nav.switchToCustomer")}
                     </button>
                   ) : (
                     <button className="nav-dropdown-item for-biz" onClick={() => goAccount(() => enterProviderPortal(onNav, session, onSignIn))}>
-                      <span className="icn">🏪</span> Switch to provider
+                      <span className="icn">🏪</span> {t("nav.switchToProvider")}
                     </button>
                   )}
                 </>
               )}
               <hr />
-              <ThemeToggle variant="menu" onAfterToggle={closeAccount} />
+              <LanguageSelector variant="menu" />
               <hr />
               <button className="nav-dropdown-item" onClick={() => goAccount(openInstallAppGuide)}>
-                <span className="icn">📲</span> Add to Home Screen
+                <span className="icn">📲</span> {t("nav.addToHomeScreen")}
               </button>
               <hr />
               <button className="nav-dropdown-item" onClick={() => goAccount(onSignOut)}>
-                <span className="icn">↪</span> Log out
+                <span className="icn">↪</span> {t("nav.logOut")}
               </button>
             </div>
           )}
+          </div>
         </div>
       ) : (
-        <div style={{ position: "relative" }}>
-          <button className="nav-menu-btn" onClick={() => setMenuOpen((v) => !v)}>
-            Menu
+        <div className="nav-cta">
+          {/* Same right-side cluster shape as the two branches above —
+              language selector immediately left of the primary control,
+              here the Menu button since this fallback has no avatar. */}
+          <LanguageSelector />
+          <div style={{ position: "relative" }} ref={menuRef}>
+          <button className="nav-menu-btn" onClick={(e) => { e.stopPropagation(); setMenuOpen((v) => !v); }}>
+            <span className="nav-menu-btn-label">{t("nav.menu")}</span>
             <span className="bars"><span /><span /></span>
           </button>
           {menuOpen && (
-            <div className="nav-dropdown" onMouseLeave={closeMenu}>
-              <a onClick={() => go(() => onNav("home"))}>Home</a>
-              <a onClick={() => go(() => scrollToSection("services", onNav, current))}>Services</a>
-              <a onClick={() => go(() => scrollToSection("trending-local", onNav, current))}>Trending</a>
-              <a onClick={() => go(() => scrollToSection("browse", onNav, current))}>Browse by district</a>
-              <a onClick={() => go(() => scrollToProvidersSection("pricing", onNav, current))}>Pricing</a>
+            <div className="nav-dropdown">
+              <a onClick={() => go(() => onNav("home"))}>{t("nav.home")}</a>
+              <a onClick={() => go(() => scrollToSection("services", onNav, current))}>{t("nav.services")}</a>
+              <a onClick={() => go(() => scrollToSection("trending-local", onNav, current))}>{t("nav.trending")}</a>
+              <a onClick={() => go(() => scrollToSection("browse", onNav, current))}>{t("nav.browseByDistrict")}</a>
+              <a onClick={() => go(() => scrollToProvidersSection("pricing", onNav, current))}>{t("nav.pricing")}</a>
               <hr />
-              <button className="nav-dropdown-item" onClick={() => go(openInstallAppGuide)}>Add to Home Screen</button>
+              <button className="nav-dropdown-item" onClick={() => go(openInstallAppGuide)}>{t("nav.addToHomeScreen")}</button>
             </div>
           )}
+          </div>
         </div>
       )}
 
@@ -3619,7 +4152,7 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
             <span className="nav-search-icon">🔍</span>
             <input
               autoFocus
-              placeholder="Search barbers, haircuts, nail techs..."
+              placeholder={t("nav.searchPlaceholder")}
               value={navQuery}
               onChange={e => setNavQuery(e.target.value)}
               onKeyDown={e => { if (e.key === "Enter") submitNavSearch(); }}
@@ -3653,6 +4186,7 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
 }
 
 function LandingPage({ onNav, session, onSignIn, onSignOut }) {
+  const { t } = useTranslation();
   const [heroQuery, setHeroQuery] = useState("");
   const [heroDistrict, setHeroDistrict] = useState("");
   const [heroDirectory, setHeroDirectory] = useState([]);
@@ -3729,7 +4263,7 @@ function LandingPage({ onNav, session, onSignIn, onSignOut }) {
     ? trendingProviders.filter((p) => p.district === trendingDistrict)
     : [];
   const trendingNearYou = districtTrending.length >= 2 ? districtTrending : trendingProviders;
-  const trendingNearYouHeading = districtTrending.length >= 2 ? `Trending in ${trendingDistrict} 🔥` : "Trending Near You 🔥";
+  const trendingNearYouHeading = districtTrending.length >= 2 ? t("landing.trendingIn", { district: trendingDistrict }) : t("landing.trendingNearYou");
 
   const goToProvider = (p) => {
     try {
@@ -3763,13 +4297,13 @@ function LandingPage({ onNav, session, onSignIn, onSignOut }) {
           glyph with a wide left side-bearing that reads as a stray gap at
           large display size — confirmed on the live site. */}
       <section className="search-hero">
-        <h1><span className="line1">Elevate your standard.</span><span className="line2">Book Belize's elite self-care professionals.</span></h1>
-        <p className="search-sub">Bypass the waitlist and book top-tier self-care artists in seconds.</p>
+        <h1><span className="line1">{t("hero.titleLine1")}</span><span className="line2">{t("hero.titleLine2")}</span></h1>
+        <p className="search-sub">{t("hero.subtitle")}</p>
         <div className="search-bar-pill search-glass" id="main-search-bar">
           <div className="field">
             <span>🔍</span>
             <input
-              placeholder="What service do you need?"
+              placeholder={t("hero.searchPlaceholder")}
               value={heroQuery}
               onChange={e => { setHeroQuery(e.target.value); setShowHeroSuggestions(true); }}
               onFocus={() => setShowHeroSuggestions(true)}
@@ -3781,11 +4315,11 @@ function LandingPage({ onNav, session, onSignIn, onSignOut }) {
           <div className="field">
             <span>📍</span>
             <select value={heroDistrict} onChange={e => setHeroDistrict(e.target.value)}>
-              <option value="">Any district</option>
+              <option value="">{t("hero.anyDistrict")}</option>
               {DISTRICTS.map(d => <option key={d} value={d}>{d}</option>)}
             </select>
           </div>
-          <button className="search-submit btn-neon" onClick={() => { setShowHeroSuggestions(false); submitHeroSearch(); }}>Search</button>
+          <button className="search-submit btn-neon" onClick={() => { setShowHeroSuggestions(false); submitHeroSearch(); }}>{t("hero.searchButton")}</button>
           {showHeroSuggestions && heroSuggestions.length > 0 && (
             <div className="suggestions-dropdown">
               {heroSuggestions.map((s) => (
@@ -3798,19 +4332,27 @@ function LandingPage({ onNav, session, onSignIn, onSignOut }) {
             </div>
           )}
         </div>
+        {!loadingDiscover && discoverProviders.length > 0 && (
+          <p className="hero-stat-line">
+            {t("hero.trustedProfessionals", { count: discoverProviders.length })}
+          </p>
+        )}
+        <button className="hero-get-app-btn" onClick={openInstallAppGuide}>
+          {t("nav.addToHomeScreen")} <span aria-hidden="true">⊞</span>
+        </button>
       </section>
 
       {/* SERVICES */}
       <section className="services-section" id="services">
         <div style={{ textAlign: "center", marginBottom: 40 }}>
-          <div className="section-eyebrow" style={{ justifyContent: "center", display: "flex" }}>What's on VaiBook</div>
-          <h2 className="section-title">Every local service. One platform.</h2>
-          <p className="section-sub" style={{ margin: "0 auto" }}>From a fresh fade to a relaxing facial — all bookable in your district.</p>
+          <div className="section-eyebrow" style={{ justifyContent: "center", display: "flex" }}>{t("landing.whatsOnVaiBook")}</div>
+          <h2 className="section-title">{t("landing.everyLocalService")}</h2>
+          <p className="section-sub" style={{ margin: "0 auto" }}>{t("landing.fromFreshFade")}</p>
         </div>
         <div className="services-pills">
           {SERVICES.map((s, i) => (
             <button className="service-pill badge-pill" key={i} onClick={() => enterCustomerPortal(onNav, session, onSignIn)}>
-              <span className="icon">{s.icon}</span> {s.name}
+              <span className="icon">{s.icon}</span> {t(`services.${s.key}.name`)}
             </button>
           ))}
         </div>
@@ -3847,7 +4389,7 @@ function LandingPage({ onNav, session, onSignIn, onSignOut }) {
                         only shows on providers who actually opted into
                         Featured placement, the same honest proxy the
                         trending sort itself ranks on above. */}
-                    {p.is_featured && <span className="tny-scarcity">🔥 High demand</span>}
+                    {p.is_featured && <span className="tny-scarcity">{t("landing.highDemand")}</span>}
                   </div>
                   <div className="tny-card-body">
                     <h4>{p.business_name}</h4>
@@ -3855,10 +4397,10 @@ function LandingPage({ onNav, session, onSignIn, onSignOut }) {
                     {rating ? (
                       <div className="tny-card-rating">⭐ {rating} ({p.reviews.length})</div>
                     ) : (
-                      <div className="tny-card-rating tny-card-rating-new">New on VaiBook</div>
+                      <div className="tny-card-rating tny-card-rating-new">{t("landing.newOnVaiBook")}</div>
                     )}
                     <button className="tny-book-btn btn-neon" onClick={(e) => { e.stopPropagation(); goToProvider(p); }}>
-                      Book Now
+                      {t("landing.bookNow")}
                     </button>
                   </div>
                 </div>
@@ -3880,16 +4422,16 @@ function LandingPage({ onNav, session, onSignIn, onSignOut }) {
         <section className="section" id="discover">
           {recommendedProviders.length >= 2 && (
             <div style={{ marginBottom: 44 }}>
-              <div className="section-eyebrow">Loved by customers</div>
-              <h2 className="section-title" style={{ marginBottom: 20 }}>Recommended</h2>
+              <div className="section-eyebrow">{t("landing.lovedByCustomers")}</div>
+              <h2 className="section-title" style={{ marginBottom: 20 }}>{t("landing.recommended")}</h2>
               <ProviderCarousel providers={recommendedProviders} onCardClick={goToProvider} />
             </div>
           )}
           {newProviders.length >= 2 && (
             <div>
-              <div className="section-eyebrow">Just joined</div>
-              <h2 className="section-title" style={{ marginBottom: 20 }}>New to VaiBook</h2>
-              <ProviderCarousel providers={newProviders} badgeFor={(p) => (isRecentlyJoined(p) ? "New" : null)} onCardClick={goToProvider} />
+              <div className="section-eyebrow">{t("landing.justJoined")}</div>
+              <h2 className="section-title" style={{ marginBottom: 20 }}>{t("landing.newToVaiBook")}</h2>
+              <ProviderCarousel providers={newProviders} badgeFor={(p) => (isRecentlyJoined(p) ? t("landing.newBadge") : null)} onCardClick={goToProvider} />
             </div>
           )}
         </section>
@@ -3912,42 +4454,43 @@ function LandingPage({ onNav, session, onSignIn, onSignOut }) {
 // landing page. Pulled out once both pages needed it, rather than each
 // page carrying its own copy of the same static markup. ─────────────
 function SiteFooter() {
+  const { t } = useTranslation();
   return (
     <footer className="footer">
       <div className="footer-top">
         <div className="footer-brand">
           <span className="nav-logo" style={{ display: "inline-flex", alignItems: "center", gap: 8 }}><VaiBookMark size={20} />vai<span>book</span></span>
-          <p>Local services. Booked easily. Built for Belize.</p>
+          <p>{t("footer.tagline")}</p>
         </div>
         <div className="footer-links">
-          <h5>Services</h5>
+          <h5>{t("footer.services")}</h5>
           <ul>
-            {SERVICES.map((s) => <li key={s.name}>{s.name}</li>)}
+            {SERVICES.map((s) => <li key={s.name}>{t(`services.${s.key}.name`)}</li>)}
           </ul>
         </div>
         <div className="footer-links">
-          <h5>Company</h5>
+          <h5>{t("footer.company")}</h5>
           <ul>
-            <li>About Vai</li><li>How it works</li><li>Districts</li><li>Blog</li>
+            <li>{t("footer.aboutVai")}</li><li>{t("footer.howItWorks")}</li><li>{t("footer.districts")}</li><li>{t("footer.blog")}</li>
           </ul>
         </div>
         <div className="footer-links">
-          <h5>Support</h5>
+          <h5>{t("footer.support")}</h5>
           <ul>
-            <li>Help center</li><li>Contact us</li><li>Privacy policy</li><li>Terms</li>
+            <li>{t("footer.helpCenter")}</li><li>{t("footer.contactUs")}</li><li>{t("footer.privacyPolicy")}</li><li>{t("footer.terms")}</li>
           </ul>
         </div>
         <div className="footer-links">
-          <h5>More from Vai Plaza</h5>
+          <h5>{t("footer.moreFromVaiPlaza")}</h5>
           <ul>
-            <li><a href="https://vaibuyandsell.bz/shop?category=Home%20%26%20Living" target="_blank" rel="noopener noreferrer" style={{ color: "inherit", textDecoration: "none" }}>Vai Buy — buy &amp; sell</a></li>
+            <li><a href="https://vaibuyandsell.bz/shop?category=Home%20%26%20Living" target="_blank" rel="noopener noreferrer" style={{ color: "inherit", textDecoration: "none" }}>{t("footer.vaiBuy")}</a></li>
             {/* Vai Media entry goes here once its link/handle is confirmed */}
           </ul>
         </div>
       </div>
       <div className="footer-bottom">
-        <span>© 2026 VaiBook. Built in Belize 🇧🇿</span>
-        <span>A product of Vai Plaza</span>
+        <span>{t("footer.copyright")}</span>
+        <span>{t("footer.productOf")}</span>
       </div>
     </footer>
   );
@@ -3968,6 +4511,7 @@ function SiteFooter() {
 // direct-to-app funnel. This page still exists for anyone who scrolls in
 // from "Pricing" wanting the full pitch before they commit.
 function ProviderLandingPage({ onNav, session, onSignIn, onSignOut, onOpenProviderSignup }) {
+  const { t } = useTranslation();
   return (
     <>
       {/* HERO — deliberately dark/high-status rather than reusing the
@@ -3975,30 +4519,31 @@ function ProviderLandingPage({ onNav, session, onSignIn, onSignOut, onOpenProvid
           distinct the instant either one loads, not just different copy
           on the same page. */}
       <section className="provider-hero">
-        <div className="provider-hero-eyebrow">For shop &amp; studio owners</div>
-        <h1 className="provider-hero-title">The operating system for top-tier shops.</h1>
-        <p className="provider-hero-sub">No generic templates. No friction.</p>
-        <div className="trial-badge">✨ Apply today — approved shops get 14 days free</div>
-        <button className="btn-lime provider-hero-cta" onClick={onOpenProviderSignup}>
-          Apply to Join (14 Days Free)
-        </button>
-        <p className="provider-hero-note">No contracts, no setup fees — cancel anytime.</p>
-      </section>
-
-      {/* PLATFORM PREVIEW — a marketing collage showing the scheduling
-          dashboard + a customer-facing booking screen side by side. This is
-          an illustrative mockup (fictional salon/business names and review
-          counts), not a live screenshot or a real usage claim. */}
-      <section className="section platform-preview-section">
-        <div style={{ textAlign: "center", marginBottom: 28 }}>
-          <div className="section-eyebrow" style={{ justifyContent: "center", display: "flex" }}>See it in action</div>
-          <h2 className="section-title">Built for how your business really runs</h2>
-          <p className="section-sub" style={{ margin: "0 auto" }}>One dashboard for your schedule, one booking page your customers love.</p>
+        <div className="provider-hero-eyebrow">{t("providerLanding.eyebrow")}</div>
+        <h1 className="provider-hero-title">{t("providerLanding.title")}</h1>
+        <p className="provider-hero-sub">{t("providerLanding.sub")}</p>
+        <div className="trial-badge">{t("providerLanding.trialBadge")}</div>
+        <div className="provider-hero-ctas">
+          <button className="btn-lime provider-hero-cta" onClick={onOpenProviderSignup}>
+            {t("providerLanding.applyToJoin14")}
+          </button>
+          <button className="btn-ghost provider-hero-cta-secondary" onClick={() => document.getElementById("pricing")?.scrollIntoView({ behavior: "smooth" })}>
+            {t("providerLanding.seePricing")}
+          </button>
         </div>
+        <p className="provider-hero-note">{t("providerLanding.note")}</p>
+
+        {/* PLATFORM PREVIEW — moved inside the hero itself (Fresha's own
+            business-page hero puts its scheduling-calendar screenshot right
+            under the CTAs, in the same panel, rather than a separate plain
+            section below). A marketing collage showing the scheduling
+            dashboard + a customer-facing booking screen side by side — an
+            illustrative mockup (fictional salon/business names and review
+            counts), not a live screenshot or a real usage claim. */}
         <picture>
           <source srcSet="/platform-preview.webp" type="image/webp" />
           <img
-            className="platform-preview-img"
+            className="platform-preview-img provider-hero-screenshot"
             src="/platform-preview.jpg"
             alt="VaiBook scheduling dashboard and customer booking screen preview"
             width={1600}
@@ -4007,6 +4552,17 @@ function ProviderLandingPage({ onNav, session, onSignIn, onSignOut, onOpenProvid
             decoding="async"
           />
         </picture>
+      </section>
+
+      {/* FEATURES INTRO — the copy that used to caption the screenshot
+          above now introduces the page's feature/pricing content on its
+          own, since the screenshot lives in the hero now. */}
+      <section className="section platform-preview-section" id="features">
+        <div style={{ textAlign: "center" }}>
+          <div className="section-eyebrow" style={{ justifyContent: "center", display: "flex" }}>{t("providerLanding.seeItInAction")}</div>
+          <h2 className="section-title">{t("providerLanding.builtForHow")}</h2>
+          <p className="section-sub" style={{ margin: "0 auto" }}>{t("providerLanding.oneDashboard")}</p>
+        </div>
       </section>
 
       {/* PRICING — for prospective providers. "Recommended" on Pro is
@@ -4024,24 +4580,28 @@ function ProviderLandingPage({ onNav, session, onSignIn, onSignOut, onOpenProvid
           work, not just this copy change. */}
       <section className="section pricing-section" id="pricing">
         <div style={{ textAlign: "center", marginBottom: 40 }}>
-          <div className="section-eyebrow" style={{ justifyContent: "center", display: "flex" }}>For business owners</div>
-          <h2 className="section-title">Simple pricing. Grow when you're ready.</h2>
-          <p className="section-sub" style={{ margin: "0 auto" }}>No contracts, no setup fees. Apply for access, and once you're approved your 14-day free trial starts automatically.</p>
+          <div className="section-eyebrow" style={{ justifyContent: "center", display: "flex" }}>{t("providerLanding.forBusinessOwners")}</div>
+          <h2 className="section-title">{t("providerLanding.simplePricing")}</h2>
+          <p className="section-sub" style={{ margin: "0 auto" }}>{t("providerLanding.noContractsApply")}</p>
         </div>
         <div className="pricing-grid">
           {PUBLIC_PLANS.map((p) => (
             <div className={`pricing-card ${p.recommended ? "recommended" : ""}`} key={p.id}>
-              {p.recommended && <div className="pricing-badge">Recommended</div>}
+              {p.recommended && <div className="pricing-badge">{t("providerLanding.recommended")}</div>}
+              {/* Plan name/tagline/features/priceNote come straight from the
+                  PLANS data array (shared with billing/admin logic across the
+                  whole app) — translating those would mean restructuring that
+                  core array, not just this page's copy, so they stay English
+                  for now; everything else on this page is translated. */}
               <div className="pricing-name">{p.name}</div>
+              <div className="pricing-trial-badge">{t("providerLanding.trialBadgeShort")}</div>
               <div className="pricing-price">
-                BZ${p.monthly}<span> /month</span>
+                {p.monthly > 0 ? p.price : <>BZ$0<span> /month</span></>}
               </div>
+              {p.monthly > 0 && <div className="pricing-price-note">{t("providerLanding.billedPerMonth", { amount: p.monthly.toFixed(2) })}</div>}
               {p.priceNote && <div className="pricing-price-note">{p.priceNote}</div>}
               {p.monthly > 0 && (
-                <>
-                  <div className="pricing-daily-rate">Just BZ${(Math.floor((p.monthly / 30) * 100) / 100).toFixed(2)} a day.</div>
-                  <div className="pricing-daily-note">(Pays for itself with a single haircut.)</div>
-                </>
+                <div className="pricing-daily-note">{t("providerLanding.paysForItself")}</div>
               )}
               <div className="pricing-tagline">{p.tagline}</div>
               <ul className="pricing-features">
@@ -4053,12 +4613,12 @@ function ProviderLandingPage({ onNav, session, onSignIn, onSignOut, onOpenProvid
                 className={p.recommended ? "btn-lime pricing-cta" : "btn-sm forest pricing-cta"}
                 onClick={onOpenProviderSignup}
               >
-                Apply to Join
+                {t("providerLanding.applyToJoin")}
               </button>
             </div>
           ))}
         </div>
-        <p className="pricing-foot-note">Every plan includes invoices, refund tracking, and your own booking page. Change plans anytime — email us and we'll switch you at the end of your current billing period.</p>
+        <p className="pricing-foot-note">{t("providerLanding.pricingFootNote")}</p>
 
         {/* VAI MEDIA — a premium agency add-on, deliberately separated
             from the Solo/Team self-serve pricing above: no price shown (the
@@ -4066,23 +4626,23 @@ function ProviderLandingPage({ onNav, session, onSignIn, onSignOut, onOpenProvid
             an inquiry CTA, so it never adds checkout friction to the core
             SaaS signup. */}
         <div className="vai-media-banner">
-          <div className="vai-media-eyebrow">✨ Vai Media</div>
-          <h3 className="vai-media-title">Vai Media: Cinematic Growth</h3>
-          <p className="vai-media-copy">Need fresh content? We bring the cinema camera to your shop. High-converting Instagram/TikTok Reels and social media management designed to pack your chairs.</p>
+          <div className="vai-media-eyebrow">{t("providerLanding.vaiMediaEyebrow")}</div>
+          <h3 className="vai-media-title">{t("providerLanding.vaiMediaTitle")}</h3>
+          <p className="vai-media-copy">{t("providerLanding.vaiMediaCopy")}</p>
           <div className="vai-media-tiers">
             <div className="vai-media-tier">
-              <div className="vai-media-tier-name">The Profile Launch</div>
-              <div className="vai-media-tier-desc">3 professional, algorithm-ready Reels to launch your shop.</div>
+              <div className="vai-media-tier-name">{t("providerLanding.tier1Name")}</div>
+              <div className="vai-media-tier-desc">{t("providerLanding.tier1Desc")}</div>
               <div className="vai-media-tier-price">BZ$XXX</div>
             </div>
             <div className="vai-media-tier">
-              <div className="vai-media-tier-name">The Growth Partner</div>
-              <div className="vai-media-tier-desc">Monthly cinematic video shoots and full social media management.</div>
+              <div className="vai-media-tier-name">{t("providerLanding.tier2Name")}</div>
+              <div className="vai-media-tier-desc">{t("providerLanding.tier2Desc")}</div>
               <div className="vai-media-tier-price">BZ$XXX/mo</div>
             </div>
           </div>
-          <a className="vai-media-btn" href={vaiMediaWhatsAppUrl("pricing page")} target="_blank" rel="noreferrer">Apply for Vai Media</a>
-          <p className="vai-media-alt"><a href={vaiMediaMailtoUrl()}>or email us</a></p>
+          <a className="vai-media-btn" href={vaiMediaWhatsAppUrl("pricing page")} target="_blank" rel="noreferrer">{t("providerLanding.applyForVaiMedia")}</a>
+          <p className="vai-media-alt"><a href={vaiMediaMailtoUrl()}>{t("providerLanding.orEmailUs")}</a></p>
         </div>
       </section>
 
@@ -4091,13 +4651,12 @@ function ProviderLandingPage({ onNav, session, onSignIn, onSignOut, onOpenProvid
           to sell the trial CTA one more time before the page ends. */}
       <section className="for-business-cta">
         <div className="for-business-inner">
-          <h2 className="for-business-headline">Stop Losing Revenue to No-Shows</h2>
+          <h2 className="for-business-headline">{t("providerLanding.stopLosing")}</h2>
           <p className="for-business-sub">
-            Join Belize's top professionals. Get your customized booking link, automate
-            24-hour reminders, and secure deposits directly via WhatsApp.
+            {t("providerLanding.forBusinessSub")}
           </p>
           <button className="btn-lime for-business-btn" onClick={onOpenProviderSignup}>
-            Apply to Join
+            {t("providerLanding.applyToJoin")}
           </button>
         </div>
       </section>
@@ -4109,6 +4668,7 @@ function ProviderLandingPage({ onNav, session, onSignIn, onSignOut, onOpenProvid
 
 // ── CUSTOMER PORTAL ─────────────────────────────────────────────
 function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLinkProviderId, onDeepLinkConsumed }) {
+  const { t } = useTranslation();
   const [tab, setTab] = useState("home");
 
   // Lets the top nav's account dropdown (with the same tools list as the
@@ -4570,7 +5130,7 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
   // provider's own working_hours rows — no separate "is open" field to fake,
   // just today's (or the next open day's) real hours.
   const getOpenStatus = (hours) => {
-    if (!hours || !hours.length) return { open: null, label: "Hours not listed" };
+    if (!hours || !hours.length) return { open: null, label: t("customerPortal.hours.notListed") };
     const now = new Date();
     const dow = now.getDay();
     const nowM = now.getHours() * 60 + now.getMinutes();
@@ -4578,18 +5138,18 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
     if (today && today.is_open && today.start_time && today.end_time) {
       const startM = timeToMinutes(today.start_time);
       const endM = timeToMinutes(today.end_time);
-      if (nowM >= startM && nowM < endM) return { open: true, label: `Open now · closes ${formatTimeLabel(today.end_time)}` };
-      if (nowM < startM) return { open: false, label: `Closed · opens today at ${formatTimeLabel(today.start_time)}` };
+      if (nowM >= startM && nowM < endM) return { open: true, label: t("customerPortal.hours.openNowCloses", { time: formatTimeLabel(today.end_time) }) };
+      if (nowM < startM) return { open: false, label: t("customerPortal.hours.closedOpensTodayAt", { time: formatTimeLabel(today.start_time) }) };
     }
     for (let i = 1; i <= 7; i++) {
       const nextDow = (dow + i) % 7;
       const day = hours.find((h) => h.day_of_week === nextDow);
       if (day && day.is_open && day.start_time) {
-        const dayLabel = i === 1 ? "tomorrow" : DAY_NAMES[nextDow];
-        return { open: false, label: `Closed · opens ${dayLabel} at ${formatTimeLabel(day.start_time)}` };
+        const dayLabel = i === 1 ? t("customerPortal.hours.tomorrow") : DAY_NAMES[nextDow];
+        return { open: false, label: t("customerPortal.hours.closedOpensDayAt", { day: dayLabel, time: formatTimeLabel(day.start_time) }) };
       }
     }
-    return { open: false, label: "Closed" };
+    return { open: false, label: t("customerPortal.hours.closed") };
   };
 
   // Builds the list of bookable slots for the currently selected date + service:
@@ -4657,9 +5217,9 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
 
   const submitBooking = async (overrideCustomerId) => {
     const bookingCustomerId = overrideCustomerId || user?.id;
-    if (!bookingCustomerId) { setBookingError("Please sign in again to book."); return; }
+    if (!bookingCustomerId) { setBookingError(t("customerPortal.booking.signInAgain")); return; }
     if (!bookingForm.service_id || !bookingForm.date || !bookingForm.time) {
-      setBookingError("Please choose a service, date, and time.");
+      setBookingError(t("customerPortal.booking.chooseServiceDateTime"));
       return;
     }
     const check = validate(bookingRequestSchema, {
@@ -4671,7 +5231,7 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
     });
     if (!check.ok) { setBookingError(check.message); return; }
     const service = (selectedProvider.services || []).find((s) => s.id === bookingForm.service_id);
-    if (!service) { setBookingError("Please choose a service."); return; }
+    if (!service) { setBookingError(t("customerPortal.booking.chooseService")); return; }
 
     // Multi-service checkout: service_ids carries the FULL selection (see
     // proceedToMultiServiceTime) — service/service_id above is only the
@@ -4707,18 +5267,18 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
     } catch (err) {
       setSubmittingBooking(false);
       if (err?.code === "SLOT_TAKEN") {
-        setBookingError("Sorry, that time was just taken by another customer. Please pick a different slot.");
+        setBookingError(t("customerPortal.booking.slotTaken"));
         // Refresh so the now-taken slot disappears from the picker.
         getProviderBusyWindows(selectedProvider.id, bookingForm.date).then((w) => setBusyWindows(w || []));
         setBookingForm((f) => ({ ...f, time: "" }));
       } else if (err?.code === "RATE_LIMITED") {
-        setBookingError("You've sent a few booking requests in a short time. Please wait a bit before trying again.");
+        setBookingError(t("customerPortal.booking.rateLimited"));
       } else if (err?.code === "MAINTENANCE_MODE") {
-        setBookingError("New bookings are temporarily paused for maintenance. Please try again shortly.");
+        setBookingError(t("customerPortal.booking.maintenanceMode"));
       } else if (err?.code === "STARTER_LIMIT_REACHED") {
-        setBookingError(`${selectedProvider?.business_name || "This provider"} has reached their booking limit for this month. Please check back next month, or message them directly to arrange your appointment.`);
+        setBookingError(t("customerPortal.booking.starterLimitReached", { providerName: selectedProvider?.business_name || t("customerPortal.booking.thisProvider") }));
       } else {
-        setBookingError("Something went wrong sending your request. Please try again.");
+        setBookingError(t("customerPortal.booking.genericError"));
       }
       return;
     }
@@ -4738,7 +5298,7 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
       } catch (err) {
         await cancelBooking(created.id);
         setSubmittingBooking(false);
-        setBookingError("That combined appointment time is no longer available. Please pick another time.");
+        setBookingError(t("customerPortal.booking.combinedTimeUnavailable"));
         getProviderBusyWindows(selectedProvider.id, bookingForm.date).then((w) => setBusyWindows(w || []));
         setBookingForm((f) => ({ ...f, time: "" }));
         return;
@@ -4778,12 +5338,12 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
       setTab("bookings");
       setBookingTab("upcoming");
     } else {
-      setBookingError("Something went wrong sending your request. Please try again.");
+      setBookingError(t("customerPortal.booking.genericError"));
     }
   };
 
   const handleCancelBooking = async (bookingId) => {
-    if (!window.confirm("Cancel this booking?")) return;
+    if (!window.confirm(t("customerPortal.booking.cancelConfirm"))) return;
     setCancellingId(bookingId);
     const cancelled = bookings.find((b) => b.id === bookingId);
     await cancelBooking(bookingId);
@@ -4810,8 +5370,8 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
       setRescheduleRespondError((e) => ({
         ...e,
         [booking.id]: err.code === "SLOT_TAKEN"
-          ? "That time just got taken. Ask your provider to propose another one."
-          : "Couldn't confirm that time. Please try again.",
+          ? t("customerPortal.booking.rescheduleTimeTaken")
+          : t("customerPortal.booking.rescheduleConfirmFailed"),
       }));
       return;
     }
@@ -4835,7 +5395,7 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
       await declineBookingReschedule(booking.id);
     } catch (err) {
       setRescheduleRespondingId(null);
-      setRescheduleRespondError((e) => ({ ...e, [booking.id]: "Couldn't do that. Please try again." }));
+      setRescheduleRespondError((e) => ({ ...e, [booking.id]: t("customerPortal.booking.genericActionFailed") }));
       return;
     }
     if (booking.provider_profiles?.user_id) {
@@ -4854,7 +5414,7 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
   const handleUploadReceipt = async (bookingId, file) => {
     if (!file) return;
     if (file.size > 10 * 1024 * 1024) {
-      window.alert("That file is larger than 10MB. Please upload a smaller photo or PDF.");
+      window.alert(t("customerPortal.booking.fileTooLarge"));
       return;
     }
     setUploadingReceiptId(bookingId);
@@ -4863,7 +5423,7 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
       // Used to notify the provider and carry on as if it worked, leaving
       // the customer sure they'd sent proof they hadn't.
       setUploadingReceiptId(null);
-      window.alert("That receipt didn't upload. Please check your connection and try again.");
+      window.alert(t("customerPortal.booking.receiptUploadFailed"));
       return;
     }
     const uploadedBooking = bookings.find((b) => b.id === bookingId);
@@ -4895,7 +5455,7 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
     // A provider account is also a customer account, so nothing stopped
     // someone booking their own business, completing it and reviewing it.
     if (booking.provider_profiles?.user_id && booking.provider_profiles.user_id === user.id) {
-      window.alert("You can't review your own business.");
+      window.alert(t("customerPortal.reviews.cantReviewOwnBusiness"));
       return;
     }
     const existing = booking.reviews && booking.reviews[0];
@@ -4914,7 +5474,7 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
             comment: reviewForm.comment ? reviewForm.comment.trim() : null,
           });
       if (!saved) {
-        window.alert("That review didn't save. If you've already reviewed this booking, it's there under the booking. Otherwise please try again.");
+        window.alert(t("customerPortal.reviews.saveFailedAlreadyReviewed"));
         setSubmittingReview(false);
         return;
       }
@@ -4929,9 +5489,9 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
       }
     } catch (err) {
       if (err?.code === "REVIEW_LOCKED") {
-        window.alert("This review has already gone public, so it can't be edited anymore.");
+        window.alert(t("customerPortal.reviews.reviewLocked"));
       } else {
-        window.alert("That review didn't save. Please try again.");
+        window.alert(t("customerPortal.reviews.saveFailed"));
       }
       setSubmittingReview(false);
       return;
@@ -5064,9 +5624,9 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
             <div className="cx-hero">
               {nextAppointment ? (
                 <>
-                  <div className="cx-hero-eyebrow">🎟️ Secured Spot</div>
-                  <div className="cx-hero-service">{nextAppointment.services?.name || "Appointment"}</div>
-                  <div className="cx-hero-provider">{nextAppointmentProvider?.business_name || "Provider"}</div>
+                  <div className="cx-hero-eyebrow">🎟️ {t("customerPortal.home.securedSpot")}</div>
+                  <div className="cx-hero-service">{nextAppointment.services?.name || t("customerPortal.home.appointmentFallback")}</div>
+                  <div className="cx-hero-provider">{nextAppointmentProvider?.business_name || t("customerPortal.home.providerFallback")}</div>
                   <div className="cx-hero-countdown">{formatCountdown(nextAppointmentAt, nowTick)}</div>
                   <div className="cx-hero-when">{formatBookingWhen(nextAppointment)}</div>
                   <div className="cx-hero-divider" />
@@ -5078,26 +5638,26 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
                         target="_blank"
                         rel="noopener noreferrer"
                       >
-                        📍 Get Directions
+                        📍 {t("customerPortal.home.getDirections")}
                       </a>
                     )}
                     {nextAppointmentCheckInUrl && (
                       <a className="cx-btn-ghost" href={nextAppointmentCheckInUrl} target="_blank" rel="noopener noreferrer">
-                        ✅ Check In
+                        ✅ {t("customerPortal.home.checkIn")}
                       </a>
                     )}
                     <button className="cx-btn-ghost" onClick={() => setTab("bookings")}>
-                      {upcomingBookings.length > 1 ? `View all (${upcomingBookings.length})` : "View details"}
+                      {upcomingBookings.length > 1 ? t("customerPortal.home.viewAllCount", { count: upcomingBookings.length }) : t("customerPortal.home.viewDetails")}
                     </button>
                   </div>
                   <div className="cx-hero-barcode" />
                 </>
               ) : (
                 <>
-                  <div className="cx-hero-eyebrow">No upcoming appointments</div>
-                  <div className="cx-hero-service">Ready when you are, {firstName}.</div>
+                  <div className="cx-hero-eyebrow">{t("customerPortal.home.noUpcomingAppointments")}</div>
+                  <div className="cx-hero-service">{t("customerPortal.home.readyWhenYouAre", { firstName })}</div>
                   <div className="cx-hero-actions">
-                    <button className="cx-btn-neon" onClick={() => setTab("browse")}>Find a provider</button>
+                    <button className="cx-btn-neon" onClick={() => setTab("browse")}>{t("customerPortal.home.findAProvider")}</button>
                   </div>
                 </>
               )}
@@ -5110,9 +5670,9 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
                 Horizontal scroll, hidden scrollbar, compact "snag it" cards. */}
             {(loadingLastMinute || lastMinuteDrops.length > 0) && (
               <div className="cx-dropzone">
-                <div className="cx-section-heading">Snag a Spot Today 🔥</div>
+                <div className="cx-section-heading">{t("customerPortal.home.snagASpotToday")} 🔥</div>
                 {loadingLastMinute && lastMinuteDrops.length === 0 ? (
-                  <div className="cx-dropzone-loading">Checking who's free today…</div>
+                  <div className="cx-dropzone-loading">{t("customerPortal.home.checkingWhosFree")}</div>
                 ) : (
                   <div className="cx-dropzone-row">
                     {lastMinuteDrops.map((drop) => (
@@ -5124,8 +5684,8 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
                           {(!drop.provider.portfolio_urls || drop.provider.portfolio_urls.length === 0) && <span>{iconForServiceType(drop.provider.service_type)}</span>}
                         </div>
                         <div className="cx-drop-shop">{drop.provider.business_name}</div>
-                        <div className="cx-drop-time">Today at {formatBookingTime(drop.time)}</div>
-                        <button className="cx-drop-claim" onClick={() => claimLastMinuteDrop(drop)}>Claim</button>
+                        <div className="cx-drop-time">{t("customerPortal.home.todayAt", { time: formatBookingTime(drop.time) })}</div>
+                        <button className="cx-drop-claim" onClick={() => claimLastMinuteDrop(drop)}>{t("customerPortal.home.claim")}</button>
                       </div>
                     ))}
                   </div>
@@ -5138,7 +5698,7 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
                 through the full provider profile. */}
             {rebookProviders.length > 0 && (
               <div className="cx-rebook">
-                <div className="cx-section-heading">Book Again</div>
+                <div className="cx-section-heading">{t("customerPortal.home.bookAgain")}</div>
                 <div className="cx-rebook-list">
                   {rebookProviders.slice(0, 4).map((p) => (
                     <div className="cx-rebook-row" key={p.id} onClick={() => openBooking(p)}>
@@ -5152,7 +5712,7 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
                         <div className="cx-rebook-name">{p.business_name}</div>
                         <div className="cx-rebook-type">{p.service_type}</div>
                       </div>
-                      <button className="cx-rebook-btn" onClick={(e) => { e.stopPropagation(); openBooking(p); }}>Rebook</button>
+                      <button className="cx-rebook-btn" onClick={(e) => { e.stopPropagation(); openBooking(p); }}>{t("customerPortal.home.rebook")}</button>
                     </div>
                   ))}
                 </div>
@@ -5163,11 +5723,11 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
                 before, restyled as dark premium pills instead of a boxed,
                 shadowed form card. */}
             <div className="cx-discover">
-              <div className="cx-section-heading">Find your next service</div>
+              <div className="cx-section-heading">{t("customerPortal.home.findYourNextService")}</div>
               <div className="cx-discover-search">
                 <span className="search-icon">🔍</span>
                 <input
-                  placeholder="Search barbers, nail techs, spas..."
+                  placeholder={t("customerPortal.home.searchPlaceholder")}
                   value={providerSearch}
                   onChange={e => { setProviderSearch(e.target.value); setShowBrowseSuggestions(true); }}
                   onFocus={() => setShowBrowseSuggestions(true)}
@@ -5189,7 +5749,7 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
               <div className="cx-discover-pills">
                 {SERVICES.slice(0, 6).map((s, i) => (
                   <button key={i} className="cx-discover-pill" onClick={() => { setProviderSearch(s.name); setShowBrowseSuggestions(false); setTab("browse"); }}>
-                    <span>{s.icon}</span>{s.name}
+                    <span>{s.icon}</span>{t(`services.${s.key}.name`)}
                   </button>
                 ))}
               </div>
@@ -5201,14 +5761,14 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
                 reveals the shop name + a direct "Book this look". */}
             {lookbookPhotos.length > 0 && (
               <div className="cx-lookbook">
-                <div className="cx-section-heading">Get Inspired</div>
+                <div className="cx-section-heading">{t("customerPortal.home.getInspired")}</div>
                 <div className="cx-lookbook-grid">
                   {lookbookPhotos.map((photo, i) => (
                     <div className="cx-lookbook-item" key={`${photo.provider.id}-${i}`} onClick={() => openBooking(photo.provider)}>
-                      <img src={photo.url} alt={`${photo.provider.business_name} — recent work`} loading="lazy" />
+                      <img src={photo.url} alt={t("customerPortal.home.recentWorkAlt", { businessName: photo.provider.business_name })} loading="lazy" />
                       <div className="cx-lookbook-overlay">
                         <span className="cx-lookbook-name">{photo.provider.business_name}</span>
-                        <button className="cx-lookbook-book" onClick={(e) => { e.stopPropagation(); openBooking(photo.provider); }}>Book this look</button>
+                        <button className="cx-lookbook-book" onClick={(e) => { e.stopPropagation(); openBooking(photo.provider); }}>{t("customerPortal.home.bookThisLook")}</button>
                       </div>
                     </div>
                   ))}
@@ -5220,11 +5780,11 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
 
         {tab === "browse" && (
           <>
-            <div className="portal-header"><h2>Find a service</h2><p>Browse verified providers across Belize.</p></div>
+            <div className="portal-header"><h2>{t("customerPortal.browse.title")}</h2><p>{t("customerPortal.browse.subtitle")}</p></div>
             <div className="search-bar" id="main-search-bar">
               <span className="search-icon">🔍</span>
               <input
-                placeholder="Search barbers, nail techs, spas, or 'haircut'..."
+                placeholder={t("customerPortal.browse.searchPlaceholder")}
                 value={providerSearch}
                 onChange={e => { setProviderSearch(e.target.value); setShowBrowseSuggestions(true); }}
                 onFocus={() => setShowBrowseSuggestions(true)}
@@ -5244,12 +5804,12 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
             </div>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 20 }}>
               {["All", ...DISTRICTS].map((f, i) => (
-                <button key={i} className="btn-sm" style={{ background: f === districtFilter ? "var(--lime)" : "rgba(255,255,255,0.06)", color: f === districtFilter ? "var(--forest)" : "var(--muted)", border: "1px solid var(--border)" }} onClick={() => setDistrictFilter(f)}>{f}</button>
+                <button key={i} className="btn-sm" style={{ background: f === districtFilter ? "var(--lime)" : "rgba(255,255,255,0.06)", color: f === districtFilter ? "var(--forest)" : "var(--muted)", border: "1px solid var(--border)" }} onClick={() => setDistrictFilter(f)}>{f === "All" ? t("customerPortal.browse.allDistricts") : f}</button>
               ))}
             </div>
-            {loadingProviders && <p style={{ fontSize: 13, color: "var(--muted)" }}>Loading providers...</p>}
+            {loadingProviders && <p style={{ fontSize: 13, color: "var(--muted)" }}>{t("customerPortal.browse.loadingProviders")}</p>}
             {!loadingProviders && filteredProviders.length === 0 && (
-              <p style={{ fontSize: 13, color: "var(--muted)" }}>No providers found. Try a different district or search term.</p>
+              <p style={{ fontSize: 13, color: "var(--muted)" }}>{t("customerPortal.browse.noProvidersFound")}</p>
             )}
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px,1fr))", gap: 16 }}>
               {filteredProviders.map((p) => {
@@ -5259,7 +5819,7 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
                   <div className="provider-card" key={p.id} style={{ cursor: "pointer", position: "relative" }} onClick={() => openBooking(p)}>
                     <button
                       onClick={(e) => toggleFavorite(e, p.id)}
-                      aria-label={favoriteIds.has(p.id) ? "Remove from favorites" : "Add to favorites"}
+                      aria-label={favoriteIds.has(p.id) ? t("customerPortal.browse.removeFromFavorites") : t("customerPortal.browse.addToFavorites")}
                       style={{ position: "absolute", top: 10, right: 10, zIndex: 2, width: 30, height: 30, borderRadius: "50%", border: "none", background: "rgba(255,255,255,0.9)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: 15, boxShadow: "0 2px 6px rgba(0,0,0,0.15)" }}
                     >
                       {favoriteIds.has(p.id) ? "❤️" : "🤍"}
@@ -5270,13 +5830,13 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
                       <div className="provider-card-img" style={{ background: "linear-gradient(160deg, #1E6B50 0%, #0E241B 100%)" }}>{iconForServiceType(p.service_type)}</div>
                     )}
                     <div className="provider-card-body">
-                      <h4>{p.business_name}{(() => { const badge = planBadge(p); return badge && <span className="cx-plan-badge">{badge.label}</span>; })()}{p.is_featured && <span style={{ marginLeft: 6, fontSize: 11, fontWeight: 700, color: "var(--lime)", background: "rgba(198,241,53,0.15)", padding: "2px 7px", borderRadius: 5, verticalAlign: "middle" }}>⭐ Featured</span>}</h4>
+                      <h4>{p.business_name}{(() => { const badge = planBadge(p); return badge && <span className="cx-plan-badge">{badge.label}</span>; })()}{p.is_featured && <span style={{ marginLeft: 6, fontSize: 11, fontWeight: 700, color: "var(--lime)", background: "rgba(198,241,53,0.15)", padding: "2px 7px", borderRadius: 5, verticalAlign: "middle" }}>⭐ {t("customerPortal.browse.featuredBadge")}</span>}</h4>
                       <div className="trade">{p.service_type} · {p.district}</div>
-                      <div className="stars">{rating ? <StarRating value={rating} /> : "No reviews yet "}<span style={{ color: "var(--muted)", fontSize: 12 }}>{rating ? ` ${rating} (${p.reviews.length})` : ""}</span></div>
+                      <div className="stars">{rating ? <StarRating value={rating} /> : t("customerPortal.browse.noReviewsYet")}<span style={{ color: "var(--muted)", fontSize: 12 }}>{rating ? ` ${rating} (${p.reviews.length})` : ""}</span></div>
                       {p.whatsapp && <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 4 }}>📞 {p.whatsapp}</div>}
                       <div className="provider-card-footer">
-                        <span className="price-tag">{fromPrice != null ? `From BZ$${fromPrice}` : "Contact for pricing"}</span>
-                        {p.downpayment_required ? <span style={{ fontSize: 11, color: "var(--muted)" }}>{p.downpayment_pct || 50}% deposit</span> : <span className="avail-badge">No deposit</span>}
+                        <span className="price-tag">{fromPrice != null ? t("customerPortal.browse.fromPrice", { price: fromPrice }) : t("customerPortal.browse.contactForPricing")}</span>
+                        {p.downpayment_required ? <span style={{ fontSize: 11, color: "var(--muted)" }}>{t("customerPortal.browse.depositPct", { pct: p.downpayment_pct || 50 })}</span> : <span className="avail-badge">{t("customerPortal.browse.noDeposit")}</span>}
                       </div>
                     </div>
                   </div>
@@ -5288,10 +5848,10 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
 
         {tab === "favorites" && (
           <>
-            <div className="portal-header"><h2>Favorites</h2><p>Providers you've saved for next time.</p></div>
-            {loadingFavorites && <p style={{ fontSize: 13, color: "var(--muted)" }}>Loading...</p>}
+            <div className="portal-header"><h2>{t("customerPortal.favorites.title")}</h2><p>{t("customerPortal.favorites.subtitle")}</p></div>
+            {loadingFavorites && <p style={{ fontSize: 13, color: "var(--muted)" }}>{t("customerPortal.favorites.loading")}</p>}
             {!loadingFavorites && favoriteProviders.length === 0 && (
-              <p style={{ fontSize: 13, color: "var(--muted)" }}>No favorites yet — tap the heart on any provider to save them here.</p>
+              <p style={{ fontSize: 13, color: "var(--muted)" }}>{t("customerPortal.favorites.emptyState")}</p>
             )}
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px,1fr))", gap: 16 }}>
               {favoriteProviders.map((p) => {
@@ -5301,7 +5861,7 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
                   <div className="provider-card" key={p.id} style={{ cursor: "pointer", position: "relative" }} onClick={() => openBooking(p)}>
                     <button
                       onClick={(e) => toggleFavorite(e, p.id)}
-                      aria-label="Remove from favorites"
+                      aria-label={t("customerPortal.browse.removeFromFavorites")}
                       style={{ position: "absolute", top: 10, right: 10, zIndex: 2, width: 30, height: 30, borderRadius: "50%", border: "none", background: "rgba(255,255,255,0.9)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: 15, boxShadow: "0 2px 6px rgba(0,0,0,0.15)" }}
                     >
                       ❤️
@@ -5312,12 +5872,12 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
                       <div className="provider-card-img" style={{ background: "linear-gradient(160deg, #1E6B50 0%, #0E241B 100%)" }}>{iconForServiceType(p.service_type)}</div>
                     )}
                     <div className="provider-card-body">
-                      <h4>{p.business_name}{(() => { const badge = planBadge(p); return badge && <span className="cx-plan-badge">{badge.label}</span>; })()}{p.is_featured && <span style={{ marginLeft: 6, fontSize: 11, fontWeight: 700, color: "var(--lime)", background: "rgba(198,241,53,0.15)", padding: "2px 7px", borderRadius: 5, verticalAlign: "middle" }}>⭐ Featured</span>}</h4>
+                      <h4>{p.business_name}{(() => { const badge = planBadge(p); return badge && <span className="cx-plan-badge">{badge.label}</span>; })()}{p.is_featured && <span style={{ marginLeft: 6, fontSize: 11, fontWeight: 700, color: "var(--lime)", background: "rgba(198,241,53,0.15)", padding: "2px 7px", borderRadius: 5, verticalAlign: "middle" }}>⭐ {t("customerPortal.browse.featuredBadge")}</span>}</h4>
                       <div className="trade">{p.service_type} · {p.district}</div>
-                      <div className="stars">{rating ? <StarRating value={rating} /> : "No reviews yet "}<span style={{ color: "var(--muted)", fontSize: 12 }}>{rating ? ` ${rating} (${p.reviews.length})` : ""}</span></div>
+                      <div className="stars">{rating ? <StarRating value={rating} /> : t("customerPortal.browse.noReviewsYet")}<span style={{ color: "var(--muted)", fontSize: 12 }}>{rating ? ` ${rating} (${p.reviews.length})` : ""}</span></div>
                       <div className="provider-card-footer">
-                        <span className="price-tag">{fromPrice != null ? `From BZ$${fromPrice}` : "Contact for pricing"}</span>
-                        {p.downpayment_required ? <span style={{ fontSize: 11, color: "var(--muted)" }}>{p.downpayment_pct || 50}% deposit</span> : <span className="avail-badge">No deposit</span>}
+                        <span className="price-tag">{fromPrice != null ? t("customerPortal.browse.fromPrice", { price: fromPrice }) : t("customerPortal.browse.contactForPricing")}</span>
+                        {p.downpayment_required ? <span style={{ fontSize: 11, color: "var(--muted)" }}>{t("customerPortal.browse.depositPct", { pct: p.downpayment_pct || 50 })}</span> : <span className="avail-badge">{t("customerPortal.browse.noDeposit")}</span>}
                       </div>
                     </div>
                   </div>
@@ -5329,27 +5889,31 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
 
         {tab === "bookings" && (
           <>
-            <div className="portal-header"><h2>My bookings</h2><p>Track all your appointments in one place.</p></div>
+            <div className="portal-header"><h2>{t("customerPortal.bookings.title")}</h2><p>{t("customerPortal.bookings.subtitle")}</p></div>
             <div className="tab-row">
-              {["Upcoming", "Completed", "Cancelled"].map((t, i) => (
-                <div key={i} className={`tab ${bookingTab === t.toLowerCase() ? "active" : ""}`} onClick={() => setBookingTab(t.toLowerCase())}>{t}</div>
+              {[
+                { key: "upcoming", label: t("customerPortal.bookings.tabUpcoming") },
+                { key: "completed", label: t("customerPortal.bookings.tabCompleted") },
+                { key: "cancelled", label: t("customerPortal.bookings.tabCancelled") },
+              ].map((opt, i) => (
+                <div key={i} className={`tab ${bookingTab === opt.key ? "active" : ""}`} onClick={() => setBookingTab(opt.key)}>{opt.label}</div>
               ))}
             </div>
             <div className="form-row" style={{ marginBottom: 12 }}>
               <div className="input-group" style={{ flex: 2 }}>
-                <input placeholder="Search by provider or service name..." value={bookingSearch} onChange={e => setBookingSearch(e.target.value)} />
+                <input placeholder={t("customerPortal.bookings.searchPlaceholder")} value={bookingSearch} onChange={e => setBookingSearch(e.target.value)} />
               </div>
               <div className="input-group" style={{ flex: 1 }}>
                 <select value={bookingSort} onChange={e => setBookingSort(e.target.value)}>
-                  <option value="newest">Recently booked: newest first</option>
-                  <option value="oldest">Recently booked: oldest first</option>
+                  <option value="newest">{t("customerPortal.bookings.sortNewest")}</option>
+                  <option value="oldest">{t("customerPortal.bookings.sortOldest")}</option>
                 </select>
               </div>
             </div>
             <div className="card">
-              {loadingBookings && <p style={{ fontSize: 13, color: "var(--muted)", padding: "16px 0" }}>Loading...</p>}
+              {loadingBookings && <p style={{ fontSize: 13, color: "var(--muted)", padding: "16px 0" }}>{t("customerPortal.common.loading")}</p>}
               {!loadingBookings && visibleBookings.length === 0 && (
-                <p style={{ fontSize: 13, color: "var(--muted)", padding: "16px 0" }}>{bookingSearch.trim() ? "No bookings match your search." : "Nothing here yet."}</p>
+                <p style={{ fontSize: 13, color: "var(--muted)", padding: "16px 0" }}>{bookingSearch.trim() ? t("customerPortal.bookings.noSearchMatch") : t("customerPortal.bookings.emptyState")}</p>
               )}
               {visibleBookings.map((b) => {
                 const hasReview = b.reviews && b.reviews.length > 0;
@@ -5363,13 +5927,13 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
                       <div className={`booking-dot ${bookingStatusClass(b.status)}`}></div>
                       <div className="booking-info">
                         <div className="title">
-                          {b.services?.name || "Service"}
+                          {b.services?.name || t("customerPortal.common.serviceFallback")}
                         </div>
                         <div className="meta">
-                          {b.provider_profiles?.business_name || "Provider"} · {formatBookingWhen(b)}
+                          {b.provider_profiles?.business_name || t("customerPortal.home.providerFallback")} · {formatBookingWhen(b)}
                           {unreadByBooking[b.id] > 0 && (
                             <span style={{ marginLeft: 8, fontSize: 11, fontWeight: 700, color: "var(--forest)", background: "var(--lime)", padding: "2px 7px", borderRadius: 999 }}>
-                              💬 {unreadByBooking[b.id]} new
+                              💬 {t("customerPortal.bookings.newMessages", { count: unreadByBooking[b.id] })}
                             </span>
                           )}
                         </div>
@@ -5381,33 +5945,33 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
                     </div>
 
                     {b.status === "rejected" && b.provider_message && (
-                      <p style={{ fontSize: 12, color: "#B91C1C", marginTop: 6 }}>Provider's note: {b.provider_message}</p>
+                      <p style={{ fontSize: 12, color: "#B91C1C", marginTop: 6 }}>{t("customerPortal.bookings.providersNote")} {b.provider_message}</p>
                     )}
                     {b.status !== "rejected" && b.provider_message && (
-                      <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 6 }}>Provider's note: {b.provider_message}</p>
+                      <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 6 }}>{t("customerPortal.bookings.providersNote")} {b.provider_message}</p>
                     )}
 
                     {["cancelled", "rejected"].includes(b.status) && b.booking_refunds && b.booking_refunds.length > 0 && (
                       <div style={{ marginTop: 8, background: "rgba(34,197,94,0.12)", borderRadius: 8, padding: 12 }}>
-                        <div style={{ fontSize: 13, fontWeight: 600, color: "#4ADE80" }}>💸 You were refunded BZ${b.booking_refunds[0].amount}</div>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: "#4ADE80" }}>💸 {t("customerPortal.bookings.refundedAmount", { amount: b.booking_refunds[0].amount })}</div>
                         {b.booking_refunds[0].note && <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 4 }}>{b.booking_refunds[0].note}</p>}
-                        {b.booking_refunds[0].receipt_url && <a href="#" onClick={(e) => { e.preventDefault(); openPrivateFile(b.booking_refunds[0].receipt_url); }} style={{ fontSize: 12 }}>View proof</a>}
+                        {b.booking_refunds[0].receipt_url && <a href="#" onClick={(e) => { e.preventDefault(); openPrivateFile(b.booking_refunds[0].receipt_url); }} style={{ fontSize: 12 }}>{t("customerPortal.bookings.viewProof")}</a>}
                       </div>
                     )}
 
                     {b.pending_reschedule_date && (
                       <div style={{ marginTop: 8, background: "var(--sand)", borderRadius: 10, padding: 12 }}>
-                        <div style={{ fontSize: 13, fontWeight: 700, color: "var(--lime)", marginBottom: 4 }}>New time proposed</div>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: "var(--lime)", marginBottom: 4 }}>{t("customerPortal.bookings.newTimeProposed")}</div>
                         <p style={{ fontSize: 12.5, color: "var(--dark-text)", marginBottom: 10 }}>
-                          {b.provider_profiles?.business_name || "Your provider"} would like to move this to <strong>{formatBookingWhen({ booking_date: b.pending_reschedule_date, booking_time: b.pending_reschedule_time })}</strong>. Your original time stays booked until you decide.
+                          {t("customerPortal.bookings.rescheduleProposedText", { providerName: b.provider_profiles?.business_name || t("customerPortal.bookings.yourProvider") })} <strong>{formatBookingWhen({ booking_date: b.pending_reschedule_date, booking_time: b.pending_reschedule_time })}</strong>. {t("customerPortal.bookings.rescheduleOriginalStaysBooked")}
                         </p>
                         {rescheduleRespondError[b.id] && <p style={{ color: "#B91C1C", fontSize: 12, marginBottom: 8 }}>{rescheduleRespondError[b.id]}</p>}
                         <div style={{ display: "flex", gap: 8 }}>
                           <button className="btn-sm lime" disabled={rescheduleRespondingId === b.id} onClick={() => handleConfirmReschedule(b)}>
-                            {rescheduleRespondingId === b.id ? "Confirming..." : "Confirm new time"}
+                            {rescheduleRespondingId === b.id ? t("customerPortal.bookings.confirming") : t("customerPortal.bookings.confirmNewTime")}
                           </button>
                           <button className="btn-sm ghost" disabled={rescheduleRespondingId === b.id} onClick={() => handleDeclineReschedule(b)}>
-                            Keep original time
+                            {t("customerPortal.bookings.keepOriginalTime")}
                           </button>
                         </div>
                       </div>
@@ -5420,20 +5984,20 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
                         disabled={cancellingId === b.id}
                         onClick={() => handleCancelBooking(b.id)}
                       >
-                        {cancellingId === b.id ? "Cancelling..." : "Cancel booking"}
+                        {cancellingId === b.id ? t("customerPortal.bookings.cancelling") : t("customerPortal.bookings.cancelBooking")}
                       </button>
                     )}
 
                     {b.status === "awaiting_payment" && b.payments && b.payments.find((p) => p.payment_status === "pending") && (
                       <p style={{ fontSize: 11, color: "var(--muted)", marginTop: 6 }}>
-                        Payment status: <strong style={{ color: "var(--lime)" }}>pending</strong> — BZ${b.payments.find((p) => p.payment_status === "pending").amount}
+                        {t("customerPortal.bookings.paymentStatus")} <strong style={{ color: "var(--lime)" }}>{t("customerPortal.bookings.pending")}</strong> — BZ${b.payments.find((p) => p.payment_status === "pending").amount}
                       </p>
                     )}
                     {b.status === "awaiting_payment" && b.payment_status === "unpaid" && (
                       <div style={{ marginTop: 8 }}>
                         {(b.provider_profiles?.payment_methods && b.provider_profiles.payment_methods.length > 0) ? (
                           <div style={{ background: "var(--sand)", borderRadius: 10, padding: "10px 12px", marginBottom: 10, fontSize: 12.5, lineHeight: 1.6 }}>
-                            <div style={{ fontWeight: 700, marginBottom: 4 }}>Send BZ${b.downpayment_amount ?? "—"} to one of:</div>
+                            <div style={{ fontWeight: 700, marginBottom: 4 }}>{t("customerPortal.bookings.sendAmountToOneOf", { amount: b.downpayment_amount ?? "—" })}</div>
                             {b.provider_profiles.payment_methods.map((m) => (
                               <div key={m.id} style={{ marginBottom: 6 }}>
                                 <div>{m.type === "wallet" ? "📱" : "🏦"} {m.name}{m.account_name ? ` — ${m.account_name}` : ""}{m.account_number ? ` — ${m.account_number}` : ""}</div>
@@ -5441,27 +6005,27 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
                             ))}
                           </div>
                         ) : (
-                          <p style={{ fontSize: 12, color: "var(--muted)", marginBottom: 10 }}>The provider hasn't added their payment details yet — reach out to them directly to arrange the deposit.</p>
+                          <p style={{ fontSize: 12, color: "var(--muted)", marginBottom: 10 }}>{t("customerPortal.bookings.noPaymentDetailsYet")}</p>
                         )}
                         <label className="btn-sm lime" style={{ cursor: "pointer" }}>
-                          {uploadingReceiptId === b.id ? "Uploading..." : "Upload deposit receipt"}
+                          {uploadingReceiptId === b.id ? t("customerPortal.bookings.uploading") : t("customerPortal.bookings.uploadDepositReceipt")}
                           <input type="file" accept="image/*,application/pdf" style={{ display: "none" }} disabled={uploadingReceiptId === b.id} onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ""; handleUploadReceipt(b.id, f); }} />
                         </label>
                       </div>
                     )}
                     {b.status === "awaiting_payment" && b.payment_status === "receipt_uploaded" && (
-                      <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 6 }}>Receipt submitted — waiting for the provider to confirm payment.</p>
+                      <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 6 }}>{t("customerPortal.bookings.receiptSubmittedWaiting")}</p>
                     )}
 
                     {b.status === "confirmed" && b.provider_profiles?.payment_methods && b.provider_profiles.payment_methods.length > 0 && (
                       <details style={{ marginTop: 8 }}>
-                        <summary style={{ fontSize: 12, color: "var(--lime)", cursor: "pointer", fontWeight: 600 }}>Payment details</summary>
+                        <summary style={{ fontSize: 12, color: "var(--lime)", cursor: "pointer", fontWeight: 600 }}>{t("customerPortal.bookings.paymentDetails")}</summary>
                         <div style={{ background: "var(--sand)", borderRadius: 10, padding: "10px 12px", marginTop: 8, fontSize: 12.5, lineHeight: 1.6 }}>
                           {b.provider_profiles.payment_methods.map((m) => (
                             <div key={m.id} style={{ marginBottom: 6 }}>
                               <div style={{ fontWeight: 700 }}>{m.type === "wallet" ? "📱" : "🏦"} {m.name}</div>
-                              {m.account_name && <div>Account name: {m.account_name}</div>}
-                              {m.account_number && <div>{m.type === "wallet" ? "Wallet number" : "Account number"}: {m.account_number}</div>}
+                              {m.account_name && <div>{t("customerPortal.bookings.accountName")} {m.account_name}</div>}
+                              {m.account_number && <div>{m.type === "wallet" ? t("customerPortal.bookings.walletNumber") : t("customerPortal.bookings.accountNumber")}: {m.account_number}</div>}
                             </div>
                           ))}
                         </div>
@@ -5476,7 +6040,7 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
                           orderNumber: b.order_number,
                           bookingDate: b.booking_date,
                           bookingTime: b.booking_time,
-                          serviceName: b.services?.name || "Service",
+                          serviceName: b.services?.name || t("customerPortal.common.serviceFallback"),
                           amount: b.total_amount,
                           depositAmount: b.downpayment_amount,
                           providerName: b.provider_profiles?.business_name,
@@ -5487,11 +6051,11 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
                           customerEmail: user?.email || session?.user?.email,
                         }))}
                       >
-                        🧾 Print / download invoice
+                        🧾 {t("customerPortal.bookings.printDownloadInvoice")}
                       </button>
                     )}
                     {b.status === "completed" && !hasReview && reviewingId !== b.id && (
-                      <button className="btn-sm ghost" style={{ marginTop: 8 }} onClick={() => openReview(b.id, null)}>Leave a review</button>
+                      <button className="btn-sm ghost" style={{ marginTop: 8 }} onClick={() => openReview(b.id, null)}>{t("customerPortal.reviews.leaveAReview")}</button>
                     )}
                     {b.status === "completed" && reviewingId === b.id && (
                       <div style={{ marginTop: 10, background: "var(--sand)", borderRadius: 8, padding: 12 }}>
@@ -5501,24 +6065,24 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
                           ))}
                         </div>
                         <div className="input-group" style={{ marginBottom: 0 }}>
-                          <textarea placeholder="How was it?" value={reviewForm.comment} onChange={e => setReviewForm(f => ({ ...f, comment: e.target.value }))} style={{ width: "100%", minHeight: 60, marginBottom: 8 }} />
+                          <textarea placeholder={t("customerPortal.reviews.howWasIt")} value={reviewForm.comment} onChange={e => setReviewForm(f => ({ ...f, comment: e.target.value }))} style={{ width: "100%", minHeight: 60, marginBottom: 8 }} />
                         </div>
                         <div style={{ display: "flex", gap: 8 }}>
-                          <button className="btn-sm forest" disabled={submittingReview} onClick={() => submitBookingReview(b)}>{submittingReview ? "Submitting..." : "Submit review"}</button>
-                          <button className="btn-sm ghost" onClick={() => setReviewingId(null)}>Cancel</button>
+                          <button className="btn-sm forest" disabled={submittingReview} onClick={() => submitBookingReview(b)}>{submittingReview ? t("customerPortal.reviews.submitting") : t("customerPortal.reviews.submitReview")}</button>
+                          <button className="btn-sm ghost" onClick={() => setReviewingId(null)}>{t("customerPortal.common.cancel")}</button>
                         </div>
                       </div>
                     )}
                     {b.status === "completed" && hasReview && reviewingId !== b.id && (
                       <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 6 }}>
-                        You rated this {"★".repeat(b.reviews[0].rating)}{b.reviews[0].comment ? ` — "${b.reviews[0].comment}"` : ""}
+                        {t("customerPortal.reviews.youRatedThis")} {"★".repeat(b.reviews[0].rating)}{b.reviews[0].comment ? ` — "${b.reviews[0].comment}"` : ""}
                         {reviewIsHeld && (
                           <>
                             {" "}
                             <span style={{ color: "var(--lime)" }}>
-                              — not public yet, so you can still change it until {new Date(b.reviews[0].hold_until).toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}.
+                              {t("customerPortal.reviews.notPublicYetUntil", { until: new Date(b.reviews[0].hold_until).toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) })}
                             </span>{" "}
-                            <button className="btn-sm ghost" style={{ marginLeft: 4, fontSize: 11, padding: "3px 8px" }} onClick={() => openReview(b.id, b.reviews[0])}>Edit review</button>
+                            <button className="btn-sm ghost" style={{ marginLeft: 4, fontSize: 11, padding: "3px 8px" }} onClick={() => openReview(b.id, b.reviews[0])}>{t("customerPortal.reviews.editReview")}</button>
                           </>
                         )}
                       </p>
@@ -5526,8 +6090,7 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
 
                     {["pending", "awaiting_payment", "confirmed"].includes(b.status) && (
                       <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 8 }}>
-                        Need a different time? Message them below — they can move this booking to a new slot without you
-                        having to cancel and rebook.
+                        {t("customerPortal.bookings.needDifferentTime")}
                       </p>
                     )}
 
@@ -5548,22 +6111,22 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
 
         {tab === "payments" && (
           <>
-            <div className="portal-header"><h2>Payments</h2><p>All your transactions and receipts.</p></div>
+            <div className="portal-header"><h2>{t("customerPortal.payments.title")}</h2><p>{t("customerPortal.payments.subtitle")}</p></div>
             <div className="metric-grid" style={{ gridTemplateColumns: "1fr 1fr 1fr" }}>
-              <div className="metric"><div className="metric-label">Total spent</div><div className="metric-value" style={{ color: "var(--clay)" }}>BZ${totalSpent.toFixed(0)}</div><div className="metric-sub">All time</div></div>
-              <div className="metric"><div className="metric-label">Awaiting payment</div><div className="metric-value">{bookings.filter(b => b.status === "awaiting_payment").length}</div><div className="metric-sub">Bookings</div></div>
-              <div className="metric"><div className="metric-label">Completed</div><div className="metric-value">{completedBookings.length}</div><div className="metric-sub">Bookings</div></div>
+              <div className="metric"><div className="metric-label">{t("customerPortal.payments.totalSpent")}</div><div className="metric-value" style={{ color: "var(--clay)" }}>BZ${totalSpent.toFixed(0)}</div><div className="metric-sub">{t("customerPortal.payments.allTime")}</div></div>
+              <div className="metric"><div className="metric-label">{t("customerPortal.payments.awaitingPayment")}</div><div className="metric-value">{bookings.filter(b => b.status === "awaiting_payment").length}</div><div className="metric-sub">{t("customerPortal.payments.bookings")}</div></div>
+              <div className="metric"><div className="metric-label">{t("customerPortal.bookings.tabCompleted")}</div><div className="metric-value">{completedBookings.length}</div><div className="metric-sub">{t("customerPortal.payments.bookings")}</div></div>
             </div>
             <div className="card">
-              <div className="card-title">Recent transactions</div>
-              {bookings.length === 0 && <p style={{ fontSize: 13, color: "var(--muted)", padding: "16px 0" }}>{loadingBookings ? "Loading..." : "No transactions yet."}</p>}
+              <div className="card-title">{t("customerPortal.payments.recentTransactions")}</div>
+              {bookings.length === 0 && <p style={{ fontSize: 13, color: "var(--muted)", padding: "16px 0" }}>{loadingBookings ? t("customerPortal.common.loading") : t("customerPortal.payments.noTransactionsYet")}</p>}
               {bookings.map((b) => (
                 <div className="booking-item" key={b.id}>
                   <div style={{ width: 36, height: 36, background: "var(--sand)", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18 }}>💳</div>
-                  <div className="booking-info"><div className="title">{b.services?.name || "Service"}</div><div className="meta">{b.provider_profiles?.business_name || "Provider"}{b.receipt_url ? " · " : ""}{b.receipt_url && <a href="#" onClick={(e) => { e.preventDefault(); openPrivateFile(b.receipt_url); }}>receipt</a>}</div></div>
+                  <div className="booking-info"><div className="title">{b.services?.name || t("customerPortal.common.serviceFallback")}</div><div className="meta">{b.provider_profiles?.business_name || t("customerPortal.home.providerFallback")}{b.receipt_url ? " · " : ""}{b.receipt_url && <a href="#" onClick={(e) => { e.preventDefault(); openPrivateFile(b.receipt_url); }}>{t("customerPortal.payments.receipt")}</a>}</div></div>
                   <div>
                     <span className="booking-amount">BZ${b.total_amount ?? "—"}</span>
-                    <span className={`status-pill ${bookingStatusClass(b.status)}`}>{b.payment_status === "paid" ? "paid" : statusLabel(b.status)}</span>
+                    <span className={`status-pill ${bookingStatusClass(b.status)}`}>{b.payment_status === "paid" ? t("customerPortal.payments.paid") : statusLabel(b.status)}</span>
                   </div>
                 </div>
               ))}
@@ -5573,21 +6136,21 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
 
         {(tab === "reviews" || tab === "settings") && (
           <>
-            <div className="portal-header"><h2>{tab === "reviews" ? "My reviews" : "Settings"}</h2></div>
+            <div className="portal-header"><h2>{tab === "reviews" ? t("customerPortal.reviews.myReviews") : t("customerPortal.settings.title")}</h2></div>
             <div className="card" style={{ maxWidth: 480 }}>
               {tab === "settings" ? (
                 <>
                   <div className="card-title" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    Profile
+                    {t("customerPortal.settings.profile")}
                     {!editingProfile && (
-                      <span style={{ color: "var(--lime)", fontWeight: 600, fontSize: 13, cursor: "pointer" }} onClick={startEditProfile}>Edit</span>
+                      <span style={{ color: "var(--lime)", fontWeight: 600, fontSize: 13, cursor: "pointer" }} onClick={startEditProfile}>{t("customerPortal.common.edit")}</span>
                     )}
                   </div>
                   <div style={{ display: "flex", justifyContent: "center", margin: "8px 0 20px" }}>
                     <div className="profile-avatar-circle">{getInitials(user?.full_name)}</div>
                   </div>
                   <div className="input-group">
-                    <label>First name</label>
+                    <label>{t("customerPortal.settings.firstName")}</label>
                     <input
                       value={profileForm.firstName}
                       disabled={!editingProfile}
@@ -5595,7 +6158,7 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
                     />
                   </div>
                   <div className="input-group">
-                    <label>Last name</label>
+                    <label>{t("customerPortal.settings.lastName")}</label>
                     <input
                       value={profileForm.lastName}
                       disabled={!editingProfile}
@@ -5603,7 +6166,7 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
                     />
                   </div>
                   <div className="input-group">
-                    <label>Phone number</label>
+                    <label>{t("customerPortal.settings.phoneNumber")}</label>
                     <input
                       value={profileForm.phone}
                       disabled={!editingProfile}
@@ -5611,24 +6174,24 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
                       onChange={(e) => setProfileForm({ ...profileForm, phone: e.target.value })}
                     />
                   </div>
-                  <div className="input-group"><label>Email</label><input defaultValue={user?.email || session?.user?.email || ""} disabled /></div>
-                  <p style={{ fontSize: 12, color: "var(--muted)" }}>Your email is managed through your Google sign-in.</p>
+                  <div className="input-group"><label>{t("customerPortal.settings.email")}</label><input defaultValue={user?.email || session?.user?.email || ""} disabled /></div>
+                  <p style={{ fontSize: 12, color: "var(--muted)" }}>{t("customerPortal.settings.emailManagedByGoogle")}</p>
                   {editingProfile && (
                     <div style={{ display: "flex", gap: 10, marginTop: 14 }}>
                       <button className="btn-primary" onClick={saveProfile} disabled={savingProfile}>
-                        {savingProfile ? "Saving..." : "Save"}
+                        {savingProfile ? t("customerPortal.settings.saving") : t("customerPortal.common.save")}
                       </button>
-                      <button className="btn-ghost" onClick={cancelEditProfile} disabled={savingProfile}>Cancel</button>
+                      <button className="btn-ghost" onClick={cancelEditProfile} disabled={savingProfile}>{t("customerPortal.common.cancel")}</button>
                     </div>
                   )}
                 </>
               ) : (
                 <>
-                  <div className="card-title">Reviews you've left</div>
-                  {reviewedBookings.length === 0 && <p style={{ fontSize: 13, color: "var(--muted)" }}>No reviews yet. Leave one after a completed booking.</p>}
+                  <div className="card-title">{t("customerPortal.reviews.reviewsYouveLeft")}</div>
+                  {reviewedBookings.length === 0 && <p style={{ fontSize: 13, color: "var(--muted)" }}>{t("customerPortal.reviews.noReviewsYetLeaveOne")}</p>}
                   {reviewedBookings.map((b) => (
                     <div key={b.id} style={{ padding: "14px 0", borderBottom: "1px solid var(--border)" }}>
-                      <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 4 }}>{b.provider_profiles?.business_name || "Provider"}</div>
+                      <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 4 }}>{b.provider_profiles?.business_name || t("customerPortal.home.providerFallback")}</div>
                       <div className="stars" style={{ marginBottom: 6 }}>{"★".repeat(b.reviews[0].rating)}</div>
                       <div style={{ fontSize: 13, color: "var(--muted)" }}>{b.reviews[0].comment}</div>
                     </div>
@@ -5639,19 +6202,19 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
 
             {tab === "settings" && (
               <div className="card" style={{ maxWidth: 480, marginTop: 20 }}>
-                <div className="card-title">Notifications</div>
+                <div className="card-title">{t("customerPortal.settings.notifications")}</div>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", gap: 16 }}>
                   <div>
-                    <div style={{ fontSize: 14, fontWeight: 600 }}>Push notifications on this device</div>
+                    <div style={{ fontSize: 14, fontWeight: 600 }}>{t("customerPortal.settings.pushNotificationsOnDevice")}</div>
                     <div style={{ fontSize: 12, color: "var(--muted)" }}>
-                      Get an alert the instant a provider responds to or cancels your booking, even with VaiBook closed.
+                      {t("customerPortal.settings.pushNotificationsDesc")}
                     </div>
                   </div>
                   {pushEnabled ? (
-                    <span style={{ fontSize: 12, fontWeight: 700, color: "var(--lime)", flexShrink: 0 }}>✓ On</span>
+                    <span style={{ fontSize: 12, fontWeight: 700, color: "var(--lime)", flexShrink: 0 }}>✓ {t("customerPortal.settings.on")}</span>
                   ) : (
                     <button className="btn-sm forest" style={{ flexShrink: 0 }} onClick={enablePushNotifications} disabled={subscribingPush}>
-                      {subscribingPush ? "Turning on..." : "Turn on"}
+                      {subscribingPush ? t("customerPortal.settings.turningOn") : t("customerPortal.settings.turnOn")}
                     </button>
                   )}
                 </div>
@@ -5675,7 +6238,7 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
           <div className="modal-overlay" onClick={() => setSelectedProvider(null)}>
             <div className="modal-panel profile-panel" onClick={(e) => e.stopPropagation()}>
               <div className="profile-scroll">
-                <span className="modal-close" onClick={() => setSelectedProvider(null)}>✕ Close</span>
+                <span className="modal-close" onClick={() => setSelectedProvider(null)}>✕ {t("customerPortal.common.close")}</span>
 
                 <div className="profile-header-row">
                   <div className="profile-name-row">
@@ -5683,8 +6246,8 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
                     <button
                       className="profile-icon-btn"
                       onClick={() => shareProvider(selectedProvider)}
-                      aria-label="Share this business"
-                      title={providerLinkCopied ? "Link copied" : "Share"}
+                      aria-label={t("customerPortal.profile.shareThisBusiness")}
+                      title={providerLinkCopied ? t("customerPortal.profile.linkCopied") : t("customerPortal.profile.share")}
                     >
                       {providerLinkCopied ? (
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5" /></svg>
@@ -5695,7 +6258,7 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
                     <button
                       className="profile-icon-btn"
                       onClick={(e) => toggleFavorite(e, selectedProvider.id)}
-                      aria-label={favoriteIds.has(selectedProvider.id) ? "Remove from favorites" : "Add to favorites"}
+                      aria-label={favoriteIds.has(selectedProvider.id) ? t("customerPortal.browse.removeFromFavorites") : t("customerPortal.browse.addToFavorites")}
                     >
                       <svg viewBox="0 0 24 24" fill={favoriteIds.has(selectedProvider.id) ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={favoriteIds.has(selectedProvider.id) ? "heart-filled" : ""}><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21.2l7.8-7.8 1-1a5.5 5.5 0 0 0 0-7.8z" /></svg>
                     </button>
@@ -5704,7 +6267,7 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
                 <div className="profile-meta">
                   {rating ? (
                     <span className="stars"><StarRating value={rating} size={15} /> {rating} <span style={{ color: "var(--muted)" }}>({selectedProvider.reviews.length})</span></span>
-                  ) : <span>No reviews yet</span>}
+                  ) : <span>{t("customerPortal.browse.noReviewsYet")}</span>}
                   <span className="dot">·</span>
                   <span className={openStatus.open ? "open-txt" : "closed-txt"}>{openStatus.label}</span>
                   <span className="dot">·</span>
@@ -5714,7 +6277,7 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
                   {selectedProvider.latitude != null && selectedProvider.longitude != null && (
                     <>
                       <span className="dot">·</span>
-                      <a href={directionsUrl(selectedProvider.latitude, selectedProvider.longitude)} target="_blank" rel="noreferrer">Get directions</a>
+                      <a href={directionsUrl(selectedProvider.latitude, selectedProvider.longitude)} target="_blank" rel="noreferrer">{t("customerPortal.profile.getDirections")}</a>
                     </>
                   )}
                 </div>
@@ -5737,7 +6300,7 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
                             {photos.slice(1, 3).map((url, i) => (
                               <div key={url} className="gallery-side-img" style={{ backgroundImage: `url(${url})` }} onClick={() => (photos.length > 3 && i === 1 ? setProfileTab("portfolio") : setLightboxUrl(url))}>
                                 {i === 1 && photos.length > 3 && (
-                                  <button className="gallery-more-btn" onClick={(e) => { e.stopPropagation(); setProfileTab("portfolio"); }}>See all photos</button>
+                                  <button className="gallery-more-btn" onClick={(e) => { e.stopPropagation(); setProfileTab("portfolio"); }}>{t("customerPortal.profile.seeAllPhotos")}</button>
                                 )}
                               </div>
                             ))}
@@ -5753,10 +6316,10 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
                     {(() => {
                       const threshold = Number(selectedProvider.loyalty_reward_threshold) || 0;
                       const balance = myLoyalty?.points_balance || 0;
-                      const reward = selectedProvider.loyalty_reward_description || "a reward";
-                      if (!user) return <>⭐ Loyalty program: earn points here toward <strong>{reward}</strong> — sign in to start earning.</>;
-                      if (threshold > 0 && balance >= threshold) return <>⭐ You've earned <strong>{reward}</strong>! Mention it at your next visit.</>;
-                      return <>⭐ You have <strong>{balance}</strong> point{balance === 1 ? "" : "s"} here{threshold > 0 ? ` — ${threshold - balance} more for ${reward}` : ""}.</>;
+                      const reward = selectedProvider.loyalty_reward_description || t("customerPortal.profile.loyaltyRewardFallback");
+                      if (!user) return <>⭐ {t("customerPortal.profile.loyaltyGuestIntro")} <strong>{reward}</strong> {t("customerPortal.profile.loyaltyGuestOutro")}</>;
+                      if (threshold > 0 && balance >= threshold) return <>⭐ {t("customerPortal.profile.loyaltyEarnedIntro")} <strong>{reward}</strong>{t("customerPortal.profile.loyaltyEarnedOutro")}</>;
+                      return <>⭐ {t("customerPortal.profile.loyaltyHaveIntro")} <strong>{balance}</strong> {t("customerPortal.profile.loyaltyPoints", { count: balance })} {t("customerPortal.profile.loyaltyHere")}{threshold > 0 ? ` ${t("customerPortal.profile.loyaltyMoreFor", { count: threshold - balance, reward })}` : ""}.</>;
                     })()}
                   </div>
                 )}
@@ -5766,13 +6329,13 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
                     {!bookingService && (
                       <div className="tab-row">
                         {[
-                          { id: "services", label: "Services" },
-                          { id: "portfolio", label: "Portfolio" },
-                          { id: "reviews", label: "Reviews" },
-                          { id: "about", label: "About" },
-                        ].map((t) => (
-                          <div key={t.id} className={`tab ${profileTab === t.id ? "active" : ""}`} onClick={() => (t.id === "reviews" ? openReviewsTab() : setProfileTab(t.id))}>
-                            {t.label}
+                          { id: "services", label: t("customerPortal.profile.tabServices") },
+                          { id: "portfolio", label: t("customerPortal.profile.tabPortfolio") },
+                          { id: "reviews", label: t("customerPortal.profile.tabReviews") },
+                          { id: "about", label: t("customerPortal.profile.tabAbout") },
+                        ].map((opt) => (
+                          <div key={opt.id} className={`tab ${profileTab === opt.id ? "active" : ""}`} onClick={() => (opt.id === "reviews" ? openReviewsTab() : setProfileTab(opt.id))}>
+                            {opt.label}
                           </div>
                         ))}
                       </div>
@@ -5782,25 +6345,25 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
                       bookingService ? (
                         <div style={{ maxWidth: 440, margin: "0 auto" }}>
                           <div onClick={backToServices} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: "var(--forest)", fontWeight: 700, cursor: "pointer", marginBottom: 20 }}>
-                            <span style={{ fontSize: 16 }}>←</span> Back to services
+                            <span style={{ fontSize: 16 }}>←</span> {t("customerPortal.booking.backToServices")}
                           </div>
-                          <h3 style={{ fontSize: 20, fontWeight: 800, color: "var(--dark-text)", margin: "0 0 4px" }}>Pick a date &amp; time</h3>
-                          <p style={{ fontSize: 13, color: "var(--muted)", margin: "0 0 18px" }}>at {selectedProvider.business_name}</p>
+                          <h3 style={{ fontSize: 20, fontWeight: 800, color: "var(--dark-text)", margin: "0 0 4px" }}>{t("customerPortal.booking.pickDateAndTime")}</h3>
+                          <p style={{ fontSize: 13, color: "var(--muted)", margin: "0 0 18px" }}>{t("customerPortal.booking.at")} {selectedProvider.business_name}</p>
                           <div style={{ background: "var(--sand)", borderRadius: 10, padding: "14px 16px", marginBottom: 20, fontSize: 13 }}>
-                            <strong>{bookingService.name}</strong> — BZ${bookingService.price} · {bookingService.duration_min} min
+                            <strong>{bookingService.name}</strong> — BZ${bookingService.price} · {t("customerPortal.booking.durationMin", { count: bookingService.duration_min })}
                           </div>
                           <div className="input-group">
-                            <label>Date</label>
+                            <label>{t("customerPortal.booking.date")}</label>
                             <input type="date" min={localDateStr()} value={bookingForm.date} onChange={e => setBookingForm(f => ({ ...f, date: e.target.value, time: "" }))} style={{ padding: "13px 14px", fontSize: 15 }} />
                           </div>
                           <div className="input-group">
-                            <label>Available times</label>
+                            <label>{t("customerPortal.booking.availableTimes")}</label>
                             {loadingSlots ? (
-                              <p style={{ fontSize: 12, color: "var(--muted)" }}>Checking live availability...</p>
+                              <p style={{ fontSize: 12, color: "var(--muted)" }}>{t("customerPortal.booking.checkingLiveAvailability")}</p>
                             ) : !providerHours.length ? (
-                              <p style={{ fontSize: 12, color: "var(--muted)" }}>This provider hasn't set their working hours yet — try again later or send a note with your preferred time.</p>
+                              <p style={{ fontSize: 12, color: "var(--muted)" }}>{t("customerPortal.booking.hoursNotSetYet")}</p>
                             ) : availableSlots.length === 0 ? (
-                              <p style={{ fontSize: 12, color: "var(--clay)" }}>No open slots on this date. Please choose another day.</p>
+                              <p style={{ fontSize: 12, color: "var(--clay)" }}>{t("customerPortal.booking.noOpenSlots")}</p>
                             ) : (
                               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(92px, 1fr))", gap: 9, maxHeight: 220, overflowY: "auto", paddingTop: 4 }}>
                                 {availableSlots.map((t) => (
@@ -5826,28 +6389,28 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
                               </div>
                             )}
                           </div>
-                          <div className="input-group"><label>Notes (optional)</label><textarea placeholder="Anything the provider should know?" value={bookingForm.notes} onChange={e => setBookingForm(f => ({ ...f, notes: e.target.value }))} style={{ minHeight: 60 }} /></div>
+                          <div className="input-group"><label>{t("customerPortal.booking.notesOptional")}</label><textarea placeholder={t("customerPortal.booking.notesPlaceholder")} value={bookingForm.notes} onChange={e => setBookingForm(f => ({ ...f, notes: e.target.value }))} style={{ minHeight: 60 }} /></div>
 
                           {selectedProvider.downpayment_required && (
-                            <p style={{ fontSize: 12, color: "var(--clay)", marginBottom: 12 }}>This provider requires a {selectedProvider.downpayment_pct || 50}% deposit after they accept your booking.</p>
+                            <p style={{ fontSize: 12, color: "var(--clay)", marginBottom: 12 }}>{t("customerPortal.booking.depositRequired", { pct: selectedProvider.downpayment_pct || 50 })}</p>
                           )}
 
                           {!user?.id && (
                             <div className="guest-checkout-fields">
-                              <p className="guest-checkout-label">Your details</p>
+                              <p className="guest-checkout-label">{t("customerPortal.booking.yourDetails")}</p>
                               <div className="input-group">
-                                <label>Full name</label>
-                                <input type="text" placeholder="Your full name" value={guestCheckoutForm.name} onChange={e => setGuestCheckoutForm(f => ({ ...f, name: e.target.value }))} />
+                                <label>{t("customerPortal.booking.fullName")}</label>
+                                <input type="text" placeholder={t("customerPortal.booking.fullNamePlaceholder")} value={guestCheckoutForm.name} onChange={e => setGuestCheckoutForm(f => ({ ...f, name: e.target.value }))} />
                               </div>
                               <div className="input-group">
-                                <label>Email address</label>
+                                <label>{t("customerPortal.booking.emailAddress")}</label>
                                 <input type="email" placeholder="you@example.com" value={guestCheckoutForm.email} onChange={e => setGuestCheckoutForm(f => ({ ...f, email: e.target.value }))} />
                               </div>
                               <div className="input-group">
-                                <label>WhatsApp number <span className="optional-tag">(optional)</span></label>
+                                <label>{t("customerPortal.booking.whatsappNumber")} <span className="optional-tag">({t("customerPortal.common.optional")})</span></label>
                                 <input type="tel" placeholder="+501 622 1234" value={guestCheckoutForm.whatsapp} onChange={e => setGuestCheckoutForm(f => ({ ...f, whatsapp: e.target.value }))} />
                               </div>
-                              <p className="guest-checkout-note">We'll email you a 6-digit code to confirm it's really you — no password, no separate signup.</p>
+                              <p className="guest-checkout-note">{t("customerPortal.booking.emailCodeNote")}</p>
                             </div>
                           )}
 
@@ -5861,20 +6424,20 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
                               if (user?.id) { submitBooking(); return; }
                               const guestName = guestCheckoutForm.name.trim();
                               const guestEmail = guestCheckoutForm.email.trim().toLowerCase();
-                              if (!guestName) { setBookingError("Please enter your full name."); return; }
-                              if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(guestEmail)) { setBookingError("Please enter a valid email address."); return; }
+                              if (!guestName) { setBookingError(t("customerPortal.booking.enterFullName")); return; }
+                              if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(guestEmail)) { setBookingError(t("customerPortal.booking.enterValidEmail")); return; }
                               setBookingError("");
                               setSendingBookingOtp(true);
                               const { error } = await sendEmailOtp(guestEmail, { full_name: guestName });
                               setSendingBookingOtp(false);
-                              if (error) { setBookingError("Couldn't send the code. Please try again."); return; }
+                              if (error) { setBookingError(t("customerPortal.booking.codeSendFailed")); return; }
                               setShowEmailAuthModal(true);
                             }}
                           >
-                            {submittingBooking ? "Sending request..." : sendingBookingOtp ? "Sending code..." : user?.id ? "Request booking" : "Continue"}
+                            {submittingBooking ? t("customerPortal.booking.sendingRequest") : sendingBookingOtp ? t("customerPortal.booking.sendingCode") : user?.id ? t("customerPortal.booking.requestBooking") : t("customerPortal.common.continue")}
                           </button>
                           <p className="checkout-liability-note">
-                            VaiBook is a scheduling platform. All payments and deposits are direct transactions between the client and the business. Vai Technologies is not liable for disputes.
+                            {t("customerPortal.booking.liabilityNote")}
                           </p>
 
                           {showEmailAuthModal && (
@@ -5896,10 +6459,10 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
                         </div>
                       ) : (
                         (selectedProvider.services || []).filter(s => s.is_active !== false).length === 0 ? (
-                          <p style={{ fontSize: 13, color: "var(--muted)" }}>This provider hasn't listed any services yet.</p>
+                          <p style={{ fontSize: 13, color: "var(--muted)" }}>{t("customerPortal.profile.noServicesListed")}</p>
                         ) : (
                           <div>
-                            <p style={{ fontSize: 12, color: "var(--muted)", margin: "0 0 4px" }}>Tap a service to add it — booking more than one? Add them all, then pick one time for the whole visit.</p>
+                            <p style={{ fontSize: 12, color: "var(--muted)", margin: "0 0 4px" }}>{t("customerPortal.profile.tapServiceToAdd")}</p>
                             {(selectedProvider.services || []).filter(s => s.is_active !== false).map(s => {
                               const active = selectedServiceIds.includes(s.id);
                               return (
@@ -5908,19 +6471,19 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
                                     <span className="service-card-check">✓</span>
                                     <div>
                                       <div className="service-card-name" style={{ fontWeight: 600, fontSize: 14, color: "var(--dark-text)" }}>{s.name}</div>
-                                      <div className="service-card-meta" style={{ fontSize: 12, color: "var(--muted)" }}>{s.duration_min} min · BZ${s.price}</div>
+                                      <div className="service-card-meta" style={{ fontSize: 12, color: "var(--muted)" }}>{t("customerPortal.booking.durationMin", { count: s.duration_min })} · BZ${s.price}</div>
                                     </div>
                                   </div>
                                   <div style={{ display: "flex", gap: 6 }} onClick={(e) => e.stopPropagation()}>
                                     <button
                                       className="btn-sm ghost"
                                       onClick={() => shareService(s)}
-                                      aria-label={`Share ${s.name}`}
-                                      title="Share this service"
+                                      aria-label={t("customerPortal.profile.shareServiceAria", { serviceName: s.name })}
+                                      title={t("customerPortal.profile.shareThisService")}
                                     >
-                                      {copiedServiceId === s.id ? "Link copied" : "📤 Share"}
+                                      {copiedServiceId === s.id ? t("customerPortal.profile.linkCopied") : `📤 ${t("customerPortal.profile.share")}`}
                                     </button>
-                                    <button className="btn-sm forest" onClick={() => startBookingForService(s)}>Book</button>
+                                    <button className="btn-sm forest" onClick={() => startBookingForService(s)}>{t("customerPortal.profile.book")}</button>
                                   </div>
                                 </div>
                               );
@@ -5928,10 +6491,10 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
                             {selectedServiceIds.length > 0 && (
                               <div className="multi-fab">
                                 <div className="totals">
-                                  <strong>BZ${multiTotalPrice.toFixed(2)} · {multiTotalDuration} min</strong>
-                                  {selectedServicesList.length} service{selectedServicesList.length === 1 ? "" : "s"} selected
+                                  <strong>BZ${multiTotalPrice.toFixed(2)} · {t("customerPortal.booking.durationMin", { count: multiTotalDuration })}</strong>
+                                  {t("customerPortal.profile.servicesSelected", { count: selectedServicesList.length })}
                                 </div>
-                                <button onClick={proceedToMultiServiceTime}>Next: Pick Time →</button>
+                                <button onClick={proceedToMultiServiceTime}>{t("customerPortal.profile.nextPickTime")}</button>
                               </div>
                             )}
                           </div>
@@ -5943,33 +6506,33 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
                       photos.length > 0 ? (
                         <div className="portfolio-grid">
                           {photos.map((url) => (
-                            <img key={url} src={url} alt="Provider work" className="portfolio-thumb" loading="lazy" decoding="async" onClick={() => setLightboxUrl(url)} />
+                            <img key={url} src={url} alt={t("customerPortal.profile.providerWorkAlt")} className="portfolio-thumb" loading="lazy" decoding="async" onClick={() => setLightboxUrl(url)} />
                           ))}
                         </div>
                       ) : (
-                        <p style={{ fontSize: 13, color: "var(--muted)" }}>No portfolio photos yet.</p>
+                        <p style={{ fontSize: 13, color: "var(--muted)" }}>{t("customerPortal.profile.noPortfolioPhotosYet")}</p>
                       )
                     )}
 
                     {profileTab === "reviews" && (
                       loadingReviews ? (
-                        <p style={{ fontSize: 13, color: "var(--muted)" }}>Loading reviews...</p>
+                        <p style={{ fontSize: 13, color: "var(--muted)" }}>{t("customerPortal.profile.loadingReviews")}</p>
                       ) : providerReviews.length === 0 ? (
-                        <p style={{ fontSize: 13, color: "var(--muted)" }}>No reviews yet.</p>
+                        <p style={{ fontSize: 13, color: "var(--muted)" }}>{t("customerPortal.browse.noReviewsYet")}</p>
                       ) : (
                         <div>
                           <div className="reviews-summary">
                             <span className="big-rating">{rating || "—"}</span>
                             <div>
                               {rating ? <StarRating value={rating} size={16} /> : null}
-                              <div style={{ fontSize: 12, color: "var(--muted)" }}>{providerReviews.length} review{providerReviews.length === 1 ? "" : "s"}</div>
+                              <div style={{ fontSize: 12, color: "var(--muted)" }}>{t("customerPortal.profile.reviewCount", { count: providerReviews.length })}</div>
                             </div>
                           </div>
                           <div className="reviews-grid">
                             {providerReviews.map((r) => (
                               <div key={r.id} className="review-card">
                                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                                  <strong style={{ fontSize: 13 }}>{r.users?.full_name || "Customer"}</strong>
+                                  <strong style={{ fontSize: 13 }}>{r.users?.full_name || t("customerPortal.profile.customerFallback")}</strong>
                                   <span className="stars">{"★".repeat(r.rating || 0)}{"☆".repeat(5 - (r.rating || 0))}</span>
                                 </div>
                                 {r.comment && <p style={{ fontSize: 13, color: "var(--dark-text)", marginTop: 4 }}>{r.comment}</p>}
@@ -5986,12 +6549,12 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
                         {selectedProvider.bio ? (
                           <p style={{ fontSize: 13, color: "var(--dark-text)", marginBottom: 20, lineHeight: 1.6 }}>{selectedProvider.bio}</p>
                         ) : (
-                          <p style={{ fontSize: 13, color: "var(--muted)", marginBottom: 20 }}>This provider hasn't added a description yet.</p>
+                          <p style={{ fontSize: 13, color: "var(--muted)", marginBottom: 20 }}>{t("customerPortal.profile.noDescriptionYet")}</p>
                         )}
 
                         {selectedProvider.latitude != null && selectedProvider.longitude != null && (
                           <div style={{ marginBottom: 22 }}>
-                            <div style={{ fontSize: 13, fontWeight: 700, color: "var(--forest)", marginBottom: 10 }}>Location</div>
+                            <div style={{ fontSize: 13, fontWeight: 700, color: "var(--forest)", marginBottom: 10 }}>{t("customerPortal.profile.location")}</div>
                             <div style={{ borderRadius: 10, overflow: "hidden", border: "1px solid var(--border)", marginBottom: 8 }}>
                               <Suspense fallback={<MapLoadingFallback height={200} />}>
                                 <ProviderMiniMap lat={selectedProvider.latitude} lng={selectedProvider.longitude} height={200} />
@@ -5999,13 +6562,13 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
                             </div>
                             <p style={{ fontSize: 13 }}>
                               {selectedProvider.location_label || `${selectedProvider.district}, Belize`}{" "}
-                              <a href={directionsUrl(selectedProvider.latitude, selectedProvider.longitude)} target="_blank" rel="noreferrer" style={{ color: "var(--forest)", fontWeight: 600 }}>Get directions</a>
+                              <a href={directionsUrl(selectedProvider.latitude, selectedProvider.longitude)} target="_blank" rel="noreferrer" style={{ color: "var(--forest)", fontWeight: 600 }}>{t("customerPortal.profile.getDirections")}</a>
                             </p>
                           </div>
                         )}
 
                         <div style={{ marginBottom: 22 }}>
-                          <div style={{ fontSize: 13, fontWeight: 700, color: "var(--forest)", marginBottom: 10 }}>Opening times</div>
+                          <div style={{ fontSize: 13, fontWeight: 700, color: "var(--forest)", marginBottom: 10 }}>{t("customerPortal.profile.openingTimes")}</div>
                           <div className="hours-list">
                             {hoursRows.map((h) => (
                               <div key={h.i} className={`hours-row ${h.isToday ? "today" : ""}`}>
@@ -6028,11 +6591,11 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
                     <div className="profile-sidebar-card">
                       <h3>{selectedProvider.business_name}</h3>
                       <div className="stars" style={{ marginBottom: 4, display: "block" }}>
-                        {rating ? <>{"★".repeat(Math.round(rating))}{"☆".repeat(5 - Math.round(rating))} <span style={{ color: "var(--muted)", fontWeight: 400 }}>{rating} ({selectedProvider.reviews.length})</span></> : <span style={{ color: "var(--muted)" }}>No reviews yet</span>}
+                        {rating ? <>{"★".repeat(Math.round(rating))}{"☆".repeat(5 - Math.round(rating))} <span style={{ color: "var(--muted)", fontWeight: 400 }}>{rating} ({selectedProvider.reviews.length})</span></> : <span style={{ color: "var(--muted)" }}>{t("customerPortal.browse.noReviewsYet")}</span>}
                       </div>
                       {(() => { const badge = planBadge(selectedProvider); return badge && <span className={`chip ${selectedProvider.plan === "business" ? "chip-plan-business" : "chip-plan-pro"}`} style={{ marginRight: selectedProvider.is_featured ? 6 : 0 }}>{badge.label}</span>; })()}
-                      {selectedProvider.is_featured && <span className="chip chip-featured">⭐ Featured</span>}
-                      <button className="btn-sm forest" style={{ width: "100%", padding: "13px 0", marginTop: 4 }} onClick={() => setProfileTab("services")}>Book now</button>
+                      {selectedProvider.is_featured && <span className="chip chip-featured">⭐ {t("customerPortal.browse.featuredBadge")}</span>}
+                      <button className="btn-sm forest" style={{ width: "100%", padding: "13px 0", marginTop: 4 }} onClick={() => setProfileTab("services")}>{t("customerPortal.profile.bookNow")}</button>
 
                       <div className="sidebar-row clickable" onClick={() => setHoursExpanded(v => !v)}>
                         <span>🕐 <span className={openStatus.open ? "open-txt" : "closed-txt"}>{openStatus.label}</span></span>
@@ -6055,7 +6618,7 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
                         </div>
                       )}
                       {selectedProvider.latitude != null && selectedProvider.longitude != null && (
-                        <a href={directionsUrl(selectedProvider.latitude, selectedProvider.longitude)} target="_blank" rel="noreferrer" style={{ fontSize: 12, color: "var(--forest)", fontWeight: 600 }}>Get directions</a>
+                        <a href={directionsUrl(selectedProvider.latitude, selectedProvider.longitude)} target="_blank" rel="noreferrer" style={{ fontSize: 12, color: "var(--forest)", fontWeight: 600 }}>{t("customerPortal.profile.getDirections")}</a>
                       )}
                     </div>
                   </aside>
@@ -6069,7 +6632,7 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
 
       {lightboxUrl && (
         <div className="lightbox-overlay" onClick={() => setLightboxUrl(null)}>
-          <img src={lightboxUrl} alt="Provider work" decoding="async" />
+          <img src={lightboxUrl} alt={t("customerPortal.profile.providerWorkAlt")} decoding="async" />
         </div>
       )}
     </div>
@@ -6083,6 +6646,7 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
 // (settings, pricing, billing, other staff, loyalty) stays owner-only,
 // only reachable from the owner's own login via ProviderPortal.
 function StaffPortal({ onNav, session, staffProfile, onSignOut }) {
+  const { t } = useTranslation();
   const [bookings, setBookings] = useState([]);
   const [loadingBookings, setLoadingBookings] = useState(false);
   const [bookingTab, setBookingTab] = useState("upcoming");
@@ -6110,7 +6674,7 @@ function StaffPortal({ onNav, session, staffProfile, onSignOut }) {
     const updated = await updateBooking(bookingId, { status: "completed" });
     if (!updated) {
       setBusyId(null);
-      window.alert("Couldn't mark that done. Please check your connection and try again.");
+      window.alert(t("staffPortal.markDoneFailed"));
       return;
     }
     // Same business event as the owner marking it done, so the customer
@@ -6136,8 +6700,8 @@ function StaffPortal({ onNav, session, staffProfile, onSignOut }) {
           <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 28, fontWeight: 800, color: "var(--near-white)", marginBottom: 8, display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}>
             <VaiBookMark size={30} />vai<span style={{ color: "var(--lime)" }}>book</span>
           </div>
-          <p style={{ color: "rgba(255,255,255,0.6)", fontSize: 14, marginBottom: 24 }}>Sign in with Google to access your schedule.</p>
-          <button className="btn-lime" style={{ width: "100%", padding: "12px 0" }} onClick={() => onNav("home")}>← Back to site</button>
+          <p style={{ color: "rgba(255,255,255,0.6)", fontSize: 14, marginBottom: 24 }}>{t("staffPortal.signInWithGoogle")}</p>
+          <button className="btn-lime" style={{ width: "100%", padding: "12px 0" }} onClick={() => onNav("home")}>← {t("staffPortal.backToSite")}</button>
         </div>
       </div>
     );
@@ -6160,42 +6724,46 @@ function StaffPortal({ onNav, session, staffProfile, onSignOut }) {
         <div>
           <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 20, fontWeight: 800, display: "flex", alignItems: "center", gap: 8 }}><VaiBookMark size={20} />vai<span style={{ color: "var(--lime)" }}>book</span> <span style={{ fontWeight: 500, fontSize: 14, color: "var(--muted)" }}>staff</span></div>
           <p style={{ fontSize: 13, color: "var(--muted)", marginTop: 2 }}>
-            {staffProfile?.name} · {staffProfile?.provider_profiles?.business_name || "your team"}
+            {staffProfile?.name} · {staffProfile?.provider_profiles?.business_name || t("staffPortal.yourTeam")}
           </p>
         </div>
-        <a style={{ fontSize: 13, color: "var(--muted)", cursor: "pointer" }} onClick={onSignOut}>Sign out</a>
+        <a style={{ fontSize: 13, color: "var(--muted)", cursor: "pointer" }} onClick={onSignOut}>{t("staffPortal.signOut")}</a>
       </div>
 
-      <div className="portal-header"><h2>My bookings</h2><p>Only appointments assigned to you show up here.</p></div>
+      <div className="portal-header"><h2>{t("staffPortal.myBookings")}</h2><p>{t("staffPortal.onlyAssignedAppointments")}</p></div>
       <div className="tab-row">
-        {["Upcoming", "Completed", "Cancelled"].map((t, i) => (
-          <div key={i} className={`tab ${bookingTab === t.toLowerCase() ? "active" : ""}`} onClick={() => setBookingTab(t.toLowerCase())}>{t}</div>
+        {[
+          { key: "upcoming", label: t("staffPortal.tabUpcoming") },
+          { key: "completed", label: t("staffPortal.tabCompleted") },
+          { key: "cancelled", label: t("staffPortal.tabCancelled") },
+        ].map((opt, i) => (
+          <div key={i} className={`tab ${bookingTab === opt.key ? "active" : ""}`} onClick={() => setBookingTab(opt.key)}>{opt.label}</div>
         ))}
       </div>
       <div className="form-row" style={{ marginBottom: 12 }}>
         <div className="input-group" style={{ flex: 2 }}>
-          <input placeholder="Search by client name..." value={bookingSearch} onChange={e => setBookingSearch(e.target.value)} />
+          <input placeholder={t("staffPortal.searchByClientName")} value={bookingSearch} onChange={e => setBookingSearch(e.target.value)} />
         </div>
         <div className="input-group" style={{ flex: 1 }}>
           <select value={bookingSort} onChange={e => setBookingSort(e.target.value)}>
-            <option value="newest">Recently booked: newest first</option>
-            <option value="oldest">Recently booked: oldest first</option>
+            <option value="newest">{t("customerPortal.bookings.sortNewest")}</option>
+            <option value="oldest">{t("customerPortal.bookings.sortOldest")}</option>
           </select>
         </div>
       </div>
       <div className="card">
-        {loadingBookings && <p style={{ fontSize: 13, color: "var(--muted)", padding: "16px 0" }}>Loading...</p>}
+        {loadingBookings && <p style={{ fontSize: 13, color: "var(--muted)", padding: "16px 0" }}>{t("customerPortal.common.loading")}</p>}
         {!loadingBookings && visibleBookings.length === 0 && (
-          <p style={{ fontSize: 13, color: "var(--muted)", padding: "16px 0" }}>{bookingSearch.trim() ? "No bookings match your search." : "Nothing here yet."}</p>
+          <p style={{ fontSize: 13, color: "var(--muted)", padding: "16px 0" }}>{bookingSearch.trim() ? t("customerPortal.bookings.noSearchMatch") : t("customerPortal.bookings.emptyState")}</p>
         )}
         {visibleBookings.map((b) => (
           <div key={b.id} style={{ padding: "14px 0", borderBottom: "1px solid var(--border)" }}>
             <div className="booking-item" style={{ padding: 0, border: "none" }}>
               <div className={`booking-dot ${bookingStatusClass(b.status)}`}></div>
               <div className="booking-info">
-                <div className="title">{b.services?.name || "Service"}</div>
+                <div className="title">{b.services?.name || t("customerPortal.common.serviceFallback")}</div>
                 <div className="meta">
-                  {b.users?.full_name || b.walkin_customer_name || "Customer"}
+                  {b.users?.full_name || b.walkin_customer_name || t("staffPortal.customerFallback")}
                   {" · "}{formatBookingWhen(b)}
                 </div>
               </div>
@@ -6203,7 +6771,7 @@ function StaffPortal({ onNav, session, staffProfile, onSignOut }) {
                 <span className="booking-amount">BZ${b.total_amount ?? b.services?.price ?? "—"}</span>
                 <span className={`status-pill ${bookingStatusClass(b.status)}`}>{statusLabel(b.status)}</span>
                 {b.status === "confirmed" && (
-                  <button className="btn-sm forest" disabled={busyId === b.id} onClick={() => markDone(b.id)}>{busyId === b.id ? "Saving..." : "Mark done"}</button>
+                  <button className="btn-sm forest" disabled={busyId === b.id} onClick={() => markDone(b.id)}>{busyId === b.id ? t("staffPortal.saving") : t("staffPortal.markDone")}</button>
                 )}
               </div>
             </div>
@@ -6216,6 +6784,7 @@ function StaffPortal({ onNav, session, staffProfile, onSignOut }) {
 
 // ── PROVIDER PORTAL ─────────────────────────────────────────────
 function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSignOut, onProviderProfileUpdate }) {
+  const { t } = useTranslation();
   const [tab, setTab] = useState("dashboard");
 
   // Lets the top nav's account dropdown (with the same tools list as the
@@ -6356,6 +6925,10 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
   // avatar's grouped "everything else" dropdown, both closed by default.
   const [providerMobileNavOpen, setProviderMobileNavOpen] = useState(false);
   const [providerMenuOpen, setProviderMenuOpen] = useState(false);
+  // FIXED (dropdown glitch) — same onMouseLeave-only closing bug as the
+  // shared Nav's account dropdown (see useClickOutside above); replaced
+  // with a real click-outside listener here too.
+  const providerMenuRef = useClickOutside(providerMenuOpen, () => setProviderMenuOpen(false));
   const [showBlockSheet, setShowBlockSheet] = useState(false);
   // "in15m" | "in30m" | "in1h" | "custom" — the bottom sheet asks "when
   // will you be back" and works out the end time from that, rather than
@@ -6430,7 +7003,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
     if (!providerId) return;
     const end = resolveBlockSheetEnd();
     if (!end || end <= new Date()) {
-      setBlockError("Pick a resume time later today.");
+      setBlockError(t("providerPortal.blockSheet.pickResumeTimeError"));
       return;
     }
     setSavingBlock(true);
@@ -6444,13 +7017,13 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
     // now-pointless walk-in/break choice from the UI).
     const created = await insertProviderBlock({ provider_id: providerId, block_type: "break", ...window_ });
     setSavingBlock(false);
-    if (!created) { setBlockError("Couldn't save that block. Please try again."); return; }
+    if (!created) { setBlockError(t("providerPortal.blockSheet.saveError")); return; }
     setShowBlockSheet(false);
     await loadBlocks();
   };
 
   const removeBlock = async (blockId) => {
-    if (!window.confirm("Remove this block? The time will open back up for booking.")) return;
+    if (!window.confirm(t("providerPortal.confirm.removeBlock"))) return;
     await deleteProviderBlock(blockId);
     await loadBlocks();
   };
@@ -6516,19 +7089,19 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
     } catch (err) {
       setSavingWalkInSale(false);
       if (err?.code === "RATE_LIMITED") {
-        setWalkInSaleError("You've logged several sales in a short time. Please wait a few minutes and try again.");
+        setWalkInSaleError(t("providerPortal.walkInSheet.rateLimited"));
       } else if (err?.code === "MAINTENANCE_MODE") {
-        setWalkInSaleError("New bookings are temporarily paused for maintenance. Please try again shortly.");
+        setWalkInSaleError(t("providerPortal.errors.maintenanceMode"));
       } else if (err?.code === "STARTER_LIMIT_REACHED") {
-        setWalkInSaleError("You've reached the free Starter plan's 30 bookings/month limit. Upgrade to Pro under My plan & billing for unlimited bookings.");
+        setWalkInSaleError(t("providerPortal.errors.starterLimitReached"));
       } else {
-        setWalkInSaleError("Something went wrong logging this sale. Please try again.");
+        setWalkInSaleError(t("providerPortal.walkInSheet.genericError"));
       }
       return;
     }
     if (!created) {
       setSavingWalkInSale(false);
-      setWalkInSaleError("Something went wrong logging this sale. Please try again.");
+      setWalkInSaleError(t("providerPortal.walkInSheet.genericError"));
       return;
     }
     // The customer is being served right now — count the revenue
@@ -6580,11 +7153,11 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
 
   const submitWalkIn = async () => {
     if (!walkInForm.service_id || !walkInForm.date || !walkInForm.time) {
-      setWalkInError("Please choose a service, date, and time.");
+      setWalkInError(t("providerPortal.walkIn.chooseServiceDateTime"));
       return;
     }
     if (!walkInForm.name.trim()) {
-      setWalkInError("Please enter the client's name.");
+      setWalkInError(t("providerPortal.walkIn.enterClientName"));
       return;
     }
     setSavingWalkIn(true);
@@ -6609,7 +7182,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
     });
     if (clash) {
       const who = clash.users?.full_name || clash.walkin_customer_name || "another client";
-      if (!window.confirm(`That overlaps your ${formatBookingTime(clash.booking_time)} booking with ${who}. Add it anyway?`)) {
+      if (!window.confirm(t("providerPortal.walkIn.overlapConfirm", { time: formatBookingTime(clash.booking_time), who }))) {
         setSavingWalkIn(false);
         return;
       }
@@ -6631,13 +7204,13 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
     } catch (err) {
       setSavingWalkIn(false);
       if (err?.code === "RATE_LIMITED") {
-        setWalkInError("You've added several appointments in a short time. Please wait a few minutes and try again.");
+        setWalkInError(t("providerPortal.walkIn.rateLimited"));
       } else if (err?.code === "MAINTENANCE_MODE") {
-        setWalkInError("New bookings are temporarily paused for maintenance. Please try again shortly.");
+        setWalkInError(t("providerPortal.errors.maintenanceMode"));
       } else if (err?.code === "STARTER_LIMIT_REACHED") {
-        setWalkInError("You've reached the free Starter plan's 30 bookings/month limit. Upgrade to Pro under My plan & billing for unlimited bookings.");
+        setWalkInError(t("providerPortal.errors.starterLimitReached"));
       } else {
-        setWalkInError("Something went wrong saving this appointment. Please try again.");
+        setWalkInError(t("providerPortal.walkIn.genericError"));
       }
       return;
     }
@@ -6646,7 +7219,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
       await loadBookings();
       setAddingWalkIn(false);
     } else {
-      setWalkInError("Something went wrong saving this appointment. Please try again.");
+      setWalkInError(t("providerPortal.walkIn.genericError"));
     }
   };
 
@@ -6674,8 +7247,8 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
   const closeRefundForm = () => { setRefundingBookingId(null); setRefundError(""); };
 
   const submitRefund = async (bookingId) => {
-    if (!refundForm.receipt) { setRefundError("Please attach a screenshot or receipt of the refund."); return; }
-    if (!refundForm.amount || Number(refundForm.amount) <= 0) { setRefundError("Please enter the amount refunded."); return; }
+    if (!refundForm.receipt) { setRefundError(t("providerPortal.refund.attachReceipt")); return; }
+    if (!refundForm.amount || Number(refundForm.amount) <= 0) { setRefundError(t("providerPortal.refund.enterAmount")); return; }
     setSavingRefund(true);
     setRefundError("");
     const ok = await submitBookingRefund(bookingId, providerId, refundForm.receipt, {
@@ -6688,7 +7261,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
       await loadBookings();
       setRefundingBookingId(null);
     } else {
-      setRefundError("Something went wrong uploading that. Please try again.");
+      setRefundError(t("providerPortal.errors.uploadFailed"));
     }
   };
 
@@ -6723,10 +7296,14 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
   }, [providerId]);
 
   const submitPayment = async () => {
-    if (!paymentForm.receipt) { setPaymentError("Please attach a receipt image or PDF."); return; }
-    if (!paymentForm.periodLabel.trim()) { setPaymentError("Please say which period this payment covers."); return; }
-    const plan = PLANS.find((p) => p.id === (payingForPlan || providerProfile?.plan || "starter"));
-    if (!plan || plan.monthly <= 0) { setPaymentError("Pick the plan you're paying for first."); return; }
+    if (!paymentForm.receipt) { setPaymentError(t("providerPortal.billing.attachReceipt")); return; }
+    if (!paymentForm.periodLabel.trim()) { setPaymentError(t("providerPortal.billing.sayPeriod")); return; }
+    // Same "starter defaults to pro" fallback as the picker's chosenPlan
+    // above — keeps this in sync with whichever plan looked selected on
+    // screen even if the provider never explicitly clicked a radio button.
+    const effectivePlan = providerProfile?.plan && providerProfile.plan !== "starter" ? providerProfile.plan : "pro";
+    const plan = PLANS.find((p) => p.id === (payingForPlan || effectivePlan));
+    if (!plan || plan.monthly <= 0) { setPaymentError(t("providerPortal.billing.pickPlanFirst")); return; }
     setSubmittingPayment(true);
     setPaymentError("");
     const ok = await submitProviderPayment(providerId, paymentForm.receipt, {
@@ -6740,7 +7317,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
       setPaymentFileKey((k) => k + 1);
       await loadPayments();
     } else {
-      setPaymentError("Something went wrong uploading that. Please try again.");
+      setPaymentError(t("providerPortal.errors.uploadFailed"));
     }
   };
 
@@ -6756,6 +7333,10 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
   const [staffFilter, setStaffFilter] = useState("all");
   const [editingStaffEmailId, setEditingStaffEmailId] = useState(null);
   const [editStaffEmailValue, setEditStaffEmailValue] = useState("");
+  // Scopes the dashboard's "Chairs Filled" metric to one staff member's
+  // own bookings — only meaningful (and only shown) for a Business-plan
+  // shop with staff added; a solo provider has nothing to scope by.
+  const [chairsStaffFilter, setChairsStaffFilter] = useState("all");
   const isBusinessPlan = (providerProfile?.plan || "starter") === "business";
   // Loyalty & rewards is Pro-and-above (staff seats and featured placement
   // stay Business-only).
@@ -6774,8 +7355,8 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
   }, [providerId]);
 
   const addStaff = async () => {
-    if (!providerId || !newStaffName.trim()) { setStaffError("Enter a name."); return; }
-    if (!newStaffEmail.trim()) { setStaffError("Enter the email they'll sign in with — that's how they get their own login."); return; }
+    if (!providerId || !newStaffName.trim()) { setStaffError(t("providerPortal.staff.enterName")); return; }
+    if (!newStaffEmail.trim()) { setStaffError(t("providerPortal.staff.enterEmail")); return; }
     setSavingStaff(true);
     setStaffError("");
     const created = await addProviderStaff(providerId, { name: newStaffName.trim(), phone: newStaffPhone.trim(), email: newStaffEmail.trim() });
@@ -6786,7 +7367,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
       setNewStaffEmail("");
       await loadStaff();
     } else {
-      setStaffError("Couldn't add that staff member. Please try again.");
+      setStaffError(t("providerPortal.staff.addError"));
     }
   };
 
@@ -6808,7 +7389,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
   };
 
   const removeStaff = async (member) => {
-    if (!window.confirm(`Remove ${member.name}? Past bookings stay on record, just unassigned.`)) return;
+    if (!window.confirm(t("providerPortal.staff.removeConfirm", { name: member.name }))) return;
     await deleteProviderStaff(member.id);
     await loadStaff();
   };
@@ -6889,14 +7470,14 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
     const target = bookings.find((b) => b.id === id);
     // Cancelling and marking a no-show both end a booking the provider
     // already accepted, so both ask first — there's no undo.
-    if (status === "cancelled" && !window.confirm("Cancel this booking? The customer will be notified, and the time slot is freed up. If they already paid a deposit, record the refund afterwards.")) return;
-    if (status === "no_show" && !window.confirm("Mark this customer as a no-show? It frees the slot and keeps the booking out of your completion rate as a completed job.")) return;
+    if (status === "cancelled" && !window.confirm(t("providerPortal.confirm.cancelBooking"))) return;
+    if (status === "no_show" && !window.confirm(t("providerPortal.confirm.markNoShow"))) return;
 
     setBusyId(id);
     const updated = await updateBookingStatus(id, status);
     if (!updated) {
       setBusyId(null);
-      window.alert("Couldn't update that booking. Please check your connection and try again.");
+      window.alert(t("providerPortal.errors.updateBookingFailed"));
       return;
     }
 
@@ -6957,7 +7538,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
   const closeReschedule = () => { setReschedulingId(null); setRescheduleError(""); };
 
   const submitReschedule = async (booking) => {
-    if (!rescheduleForm.date || !rescheduleForm.time) { setRescheduleError("Pick a new date and time."); return; }
+    if (!rescheduleForm.date || !rescheduleForm.time) { setRescheduleError(t("providerPortal.reschedule.pickDateTime")); return; }
     const check = validate(rescheduleProposalSchema, { date: rescheduleForm.date, time: rescheduleForm.time });
     if (!check.ok) { setRescheduleError(check.message); return; }
     setSavingReschedule(true);
@@ -6968,8 +7549,8 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
     } catch (err) {
       setSavingReschedule(false);
       setRescheduleError(err.code === "SLOT_TAKEN"
-        ? "You already have a booking overlapping that time. Pick another slot."
-        : "Couldn't propose that time. Please try again.");
+        ? t("providerPortal.reschedule.slotTaken")
+        : t("providerPortal.reschedule.proposeError"));
       return;
     }
     setSavingReschedule(false);
@@ -7028,7 +7609,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
       onProviderProfileUpdate && onProviderProfileUpdate(saved);
     } else {
       setEmailOnNewBooking(!next);
-      window.alert("Couldn't save that setting. Please try again.");
+      window.alert(t("providerPortal.errors.saveSettingFailed"));
     }
   };
 
@@ -7043,7 +7624,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
       onProviderProfileUpdate && onProviderProfileUpdate(saved);
     } else {
       setAcceptsWalkins(!next);
-      window.alert("Couldn't save that setting. Please try again.");
+      window.alert(t("providerPortal.errors.saveSettingFailed"));
     }
   };
 
@@ -7270,7 +7851,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
     if (redeemingId === account.id) return;
     const threshold = Number(providerProfile?.loyalty_reward_threshold) || 0;
     if (account.points_balance < threshold) return;
-    if (!window.confirm(`Mark the reward as given to ${account.users?.full_name || "this customer"}? This will deduct ${threshold} points.`)) return;
+    if (!window.confirm(t("providerPortal.loyalty.redeemConfirm", { name: account.users?.full_name || t("providerPortal.loyalty.thisCustomerFallback"), threshold }))) return;
     setRedeemingId(account.id);
     // Deducts against the balance as it stands in the database right now —
     // the figure on screen may be minutes old and points may have been
@@ -7278,7 +7859,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
     const updated = await redeemLoyaltyReward(account.id);
     await loadLoyaltyCustomers();
     setRedeemingId(null);
-    if (!updated) window.alert("Couldn't apply that reward — their balance may have changed. The list has been refreshed.");
+    if (!updated) window.alert(t("providerPortal.loyalty.redeemError"));
   };
 
   const handlePhotoUpload = async (e) => {
@@ -7348,34 +7929,34 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
   // of the original 3-group spec) were folded into Operations rather than
   // dropped.
   const PROVIDER_TOP_NAV = [
-    { id: "dashboard", label: "Dashboard" },
-    { id: "bookings", label: "Bookings" },
-    { id: "clients", label: "Clients" },
+    { id: "dashboard", label: t("providerPortal.nav.dashboard") },
+    { id: "bookings", label: t("providerPortal.nav.bookings") },
+    { id: "clients", label: t("providerPortal.nav.clients") },
   ];
   const PROVIDER_MENU_GROUPS = [
     {
-      label: "Operations",
+      label: t("providerPortal.nav.groupOperations"),
       items: [
-        { id: "services", icon: "✂️", label: "My services" },
-        { id: "calendar", icon: "🗓️", label: "Availability" },
-        { id: "staff", icon: "👥", label: "My staff" },
-        { id: "earnings", icon: "💰", label: "Earnings" },
-        { id: "review", icon: "📈", label: "Monthly review" },
+        { id: "services", icon: "✂️", label: t("providerPortal.nav.services") },
+        { id: "calendar", icon: "🗓️", label: t("providerPortal.nav.availability") },
+        { id: "staff", icon: "👥", label: t("providerPortal.nav.staff") },
+        { id: "earnings", icon: "💰", label: t("providerPortal.nav.earnings") },
+        { id: "review", icon: "📈", label: t("providerPortal.nav.monthlyReview") },
       ],
     },
     {
-      label: "Growth",
+      label: t("providerPortal.nav.groupGrowth"),
       items: [
-        { id: "reviews", icon: "⭐", label: "My reviews" },
-        { id: "modules", icon: "🧩", label: "Add-ons" },
+        { id: "reviews", icon: "⭐", label: t("providerPortal.nav.reviews") },
+        { id: "modules", icon: "🧩", label: t("providerPortal.nav.addons") },
       ],
     },
     {
-      label: "Account",
+      label: t("providerPortal.nav.groupAccount"),
       items: [
-        { id: "profile", icon: "👤", label: "Public profile" },
-        { id: "billing", icon: "🧾", label: "My plan & billing" },
-        { id: "settings", icon: "⚙️", label: "Settings" },
+        { id: "profile", icon: "👤", label: t("providerPortal.nav.profile") },
+        { id: "billing", icon: "🧾", label: t("providerPortal.nav.billing") },
+        { id: "settings", icon: "⚙️", label: t("providerPortal.nav.settings") },
       ],
     },
   ];
@@ -7389,10 +7970,10 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
           <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 28, fontWeight: 800, color: "var(--near-white)", marginBottom: 8, display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}>
             <VaiBookMark size={30} />vai<span style={{ color: "var(--lime)" }}>book</span> <span style={{ color: "rgba(255,255,255,0.5)", fontWeight: 600, fontSize: 16 }}>providers</span>
           </div>
-          <p style={{ color: "rgba(255,255,255,0.6)", fontSize: 14, marginBottom: 24 }}>Sign in with Google to access your provider portal.</p>
-          <button className="btn-lime" style={{ width: "100%", padding: "12px 0" }} onClick={onSignIn}>Sign in with Google</button>
+          <p style={{ color: "rgba(255,255,255,0.6)", fontSize: 14, marginBottom: 24 }}>{t("providerPortal.signIn.subtitle")}</p>
+          <button className="btn-lime" style={{ width: "100%", padding: "12px 0" }} onClick={onSignIn}>{t("providerPortal.signIn.button")}</button>
           <div style={{ marginTop: 20 }}>
-            <a style={{ color: "rgba(255,255,255,0.4)", fontSize: 13, cursor: "pointer" }} onClick={() => onNav("home")}>← Back to site</a>
+            <a style={{ color: "rgba(255,255,255,0.4)", fontSize: 13, cursor: "pointer" }} onClick={() => onNav("home")}>{t("providerPortal.signIn.backToSite")}</a>
           </div>
         </div>
       </div>
@@ -7428,34 +8009,33 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
       <div style={{ minHeight: "100vh", background: "var(--forest)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
         <div style={{ textAlign: "center", maxWidth: 400 }}>
           <div style={{ fontSize: 40, marginBottom: 12 }}>✂️</div>
-          <h2 style={{ color: "var(--near-white)", fontFamily: "'Plus Jakarta Sans', sans-serif", marginBottom: 8 }}>No business found on this account</h2>
+          <h2 style={{ color: "var(--near-white)", fontFamily: "'Plus Jakarta Sans', sans-serif", marginBottom: 8 }}>{t("providerPortal.noProfile.title")}</h2>
           <p style={{ color: "rgba(255,255,255,0.65)", fontSize: 14, marginBottom: 4 }}>
-            Signed in as
+            {t("providerPortal.noProfile.signedInAs")}
           </p>
           <p style={{ color: "var(--near-white)", fontWeight: 700, fontSize: 15, marginBottom: 16, wordBreak: "break-all" }}>
-            {session?.user?.email || "unknown account"}
+            {session?.user?.email || t("providerPortal.noProfile.unknownAccount")}
           </p>
           <p style={{ color: "rgba(255,255,255,0.6)", fontSize: 14, marginBottom: 20, lineHeight: 1.5 }}>
-            If that's not the Google account your business is registered under — easy to pick the wrong one, since Google's account picker shows up every time you sign in — that's almost always why this screen appears. Try a different account before assuming anything's wrong with your data.
+            {t("providerPortal.noProfile.wrongAccountHint")}
           </p>
           <button className="btn-lime" style={{ width: "100%", padding: "13px 0", marginBottom: 12, fontWeight: 700 }} onClick={switchGoogleAccount}>
-            Try a different Google account
+            {t("providerPortal.noProfile.switchAccountButton")}
           </button>
           <p style={{ color: "rgba(255,255,255,0.45)", fontSize: 12, marginTop: 20, marginBottom: 8, lineHeight: 1.6 }}>
-            Definitely the right account, and definitely a new business? Apply below — once approved, your provider portal and 14-day free trial activate automatically.
+            {t("providerPortal.noProfile.newBusinessHint")}
           </p>
           <button
             style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.3)", color: "var(--near-white)", padding: "10px 20px", borderRadius: 8, cursor: "pointer", fontSize: 13 }}
             onClick={() => onNav("signup")}
           >
-            List your business
+            {t("providerPortal.noProfile.listBusinessButton")}
           </button>
           <p style={{ color: "rgba(255,255,255,0.45)", fontSize: 12, marginTop: 20, marginBottom: 0, lineHeight: 1.6 }}>
-            Work here as staff? Ask the owner to check that your seat is still active and registered to this exact
-            email address — that's what opens your own staff view.
+            {t("providerPortal.noProfile.staffHint")}
           </p>
           <div style={{ marginTop: 16 }}>
-            <a style={{ color: "rgba(255,255,255,0.4)", fontSize: 13, cursor: "pointer" }} onClick={onSignOut}>Sign out</a>
+            <a style={{ color: "rgba(255,255,255,0.4)", fontSize: 13, cursor: "pointer" }} onClick={onSignOut}>{t("providerPortal.nav.signOut")}</a>
           </div>
         </div>
       </div>
@@ -7493,7 +8073,13 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
     const lunchMin = lunchForm.enabled ? Number(lunchForm.lunch_break_minutes) || 0 : 0;
     totalChairSlots = Math.round(Math.max(0, openMin - lunchMin) / CHAIR_SLOT_MIN);
   }
-  const bookedMinutesToday = todaysBookings
+  // Staff-scoped when a Business-plan shop has picked a specific staff
+  // member above "Chairs Filled" — blocks stay shop-wide either way since
+  // there's no per-staff calendar in this schema, only per-staff bookings.
+  const chairsScopedBookings = (isBusinessPlan && staff.length > 0 && chairsStaffFilter !== "all")
+    ? todaysBookings.filter((b) => (b.staff_id || "") === chairsStaffFilter)
+    : todaysBookings;
+  const bookedMinutesToday = chairsScopedBookings
     .filter((b) => ["pending", "awaiting_payment", "confirmed", "completed", "done"].includes(b.status))
     .reduce((sum, b) => sum + (Number(b.total_duration_min) || Number(b.services?.duration_min) || 30), 0);
   const blockedMinutesToday = blocks
@@ -7510,7 +8096,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
   const nextBooking = todaysBookings
     .filter((b) => b.status === "confirmed" && hhmmToMinutes(b.booking_time) >= nowMinutes)
     .sort((a, b) => hhmmToMinutes(a.booking_time) - hhmmToMinutes(b.booking_time))[0] || null;
-  const nextBookingName = nextBooking ? (nextBooking.users?.full_name || nextBooking.walkin_customer_name || "Customer") : "";
+  const nextBookingName = nextBooking ? (nextBooking.users?.full_name || nextBooking.walkin_customer_name || t("providerPortal.common.customerFallback")) : "";
   const nextBookingPhone = nextBooking ? (nextBooking.users?.phone || nextBooking.walkin_customer_phone || null) : null;
   const nextBookingWhatsAppUrl = nextBooking && nextBookingPhone
     ? `https://wa.me/${nextBookingPhone.replace(/[^\d]/g, "")}?text=${encodeURIComponent(`Hey ${nextBookingName}, ready for you at ${formatBookingTime(nextBooking.booking_time)}!`)}`
@@ -7546,7 +8132,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
     if (!["completed", "done", "confirmed", "pending", "awaiting_payment"].includes(b.status)) return;
     const d = bookingDateOnly(b.booking_date);
     if (!d) return;
-    const entry = customerHistory[b.customer_id] || { id: b.customer_id, name: "Customer", email: null, phone: null, visits: 0, lastDate: null, hasUpcoming: false };
+    const entry = customerHistory[b.customer_id] || { id: b.customer_id, name: t("providerPortal.common.customerFallback"), email: null, phone: null, visits: 0, lastDate: null, hasUpcoming: false };
     entry.visits += 1;
     if (b.users?.full_name) entry.name = b.users.full_name;
     if (b.users?.email) entry.email = b.users.email;
@@ -7698,7 +8284,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
         <div className="provider-topbar-left">
           <span className="nav-logo" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 18, color: "var(--near-white)", display: "inline-flex", alignItems: "center", gap: 7 }}><VaiBookMark size={19} />vai<span style={{ color: "var(--lime)" }}>book</span></span>
           <span className={`provider-status-pill ${providerProfile.is_active ? "" : "pending"}`}>
-            {providerProfile.is_active ? "✓ Verified" : "Pending"}
+            {providerProfile.is_active ? t("providerPortal.status.verified") : t("providerPortal.status.pending")}
           </span>
         </div>
 
@@ -7721,7 +8307,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
         <button
           className="provider-hamburger"
           onClick={() => setProviderMobileNavOpen((v) => !v)}
-          aria-label="Menu"
+          aria-label={t("providerPortal.aria.menu")}
           aria-expanded={providerMobileNavOpen}
         >
           ☰
@@ -7730,13 +8316,15 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
         <div className="provider-topbar-right" style={{ display: "flex", alignItems: "center", gap: 10 }}>
           {/* Provider Portal has its own topbar and never renders the
               shared Nav once a provider is signed in (see App()'s render
-              condition), so this is its only theme toggle. */}
-          <ThemeToggle />
-          <div className="provider-avatar-wrap" onMouseLeave={() => setProviderMenuOpen(false)}>
+              condition), so this is its only language selector. (The
+              theme toggle that used to sit here was removed along with
+              dark mode.) */}
+          <LanguageSelector />
+          <div className="provider-avatar-wrap" ref={providerMenuRef}>
             <button
               className="provider-avatar-btn"
-              onClick={() => setProviderMenuOpen((v) => !v)}
-              aria-label="Account menu"
+              onClick={(e) => { e.stopPropagation(); setProviderMenuOpen((v) => !v); }}
+              aria-label={t("providerPortal.aria.accountMenu")}
               aria-expanded={providerMenuOpen}
             >
               <span className="avatar">{(providerProfile.business_name || "V")[0].toUpperCase()}</span>
@@ -7744,7 +8332,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
             {providerMenuOpen && (
               <div className="nav-dropdown provider-account-dropdown">
                 <div className="provider-dropdown-header">
-                  <div className="name">{providerProfile.business_name || "Your business"}</div>
+                  <div className="name">{providerProfile.business_name || t("providerPortal.nav.yourBusinessFallback")}</div>
                   <div className="sub">{providerProfile.service_type} · {providerProfile.district}</div>
                 </div>
                 <hr />
@@ -7765,7 +8353,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                 ))}
                 <hr />
                 <button className="nav-dropdown-item" onClick={onSignOut}>
-                  <span className="icn">↪</span>Sign out
+                  <span className="icn">↪</span>{t("providerPortal.nav.signOut")}
                 </button>
               </div>
             )}
@@ -7796,47 +8384,84 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
             {providerProfile.is_active && !launchBannerDismissed && (
               <div className="launch-banner">
                 <div>
-                  <div className="launch-banner-title">🎉 You're live on VaiBook!</div>
-                  <div className="launch-banner-sub">Grab your official launch graphic to share on Instagram.</div>
+                  <div className="launch-banner-title">🎉 {t("providerPortal.dashboard.launchBannerTitle")}</div>
+                  <div className="launch-banner-sub">{t("providerPortal.dashboard.launchBannerSub")}</div>
                 </div>
                 <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
-                  <button className="btn-sm ghost" onClick={dismissLaunchBanner}>Dismiss</button>
-                  <button className="btn-sm lime" onClick={() => setShowLaunchGraphic(true)}>Get My Launch Graphic</button>
+                  <button className="btn-sm ghost" onClick={dismissLaunchBanner}>{t("providerPortal.dashboard.dismiss")}</button>
+                  <button className="btn-sm lime" onClick={() => setShowLaunchGraphic(true)}>{t("providerPortal.dashboard.getLaunchGraphic")}</button>
                 </div>
               </div>
             )}
 
             <div className="portal-header">
-              <h2>Dashboard</h2>
-              <p>{now.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })} · {todaysBookings.length} appointment{todaysBookings.length === 1 ? "" : "s"} today</p>
+              <h2>{t("providerPortal.nav.dashboard")}</h2>
+              {/* The exact "today" count used to also repeat in the
+                  "Bookings today" stat card just below, and again in the
+                  "Today's appointments" list — three restatements of the
+                  same number. This subtitle now just anchors the date; the
+                  stat card is the one canonical place for the count. */}
+              <p>{now.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}</p>
             </div>
 
             {/* THE DOPAMINE CARD — instant financial payoff the moment the
                 dashboard opens. Today's Take is completed revenue only
                 (same definition as "This month earnings" below, just for
                 today); Chairs Filled is today's booked+blocked time against
-                today's open hours. */}
+                today's open hours.
+                Chairs Filled context fix: this metric is really "% of
+                today's open hours booked," computed from one shared
+                open-hours schedule — there's no separate calendar per
+                chair. For a Business-plan shop with staff, a scope select
+                at least lets it answer "whose bookings" rather than being
+                an unexplained shop-wide number; a solo provider has no one
+                to scope by, so the metric is just shown smaller/quieter
+                instead, since it's a secondary stat next to Today's Take. */}
             <div className="dopamine-card">
               <div className="dopamine-metric">
-                <div className="dopamine-label">Today's Take</div>
+                <div className="dopamine-label">{t("providerPortal.dashboard.todaysTake")}</div>
                 <div className="dopamine-value">BZ${todayRevenue.toFixed(0)}</div>
               </div>
               <div className="dopamine-divider"></div>
-              <div className="dopamine-metric">
-                <div className="dopamine-label">Chairs Filled</div>
-                <div className="dopamine-value dopamine-value-sm">
-                  {filledChairSlots}/{totalChairSlots} <span className="dopamine-pct">({chairsBookedPct}% booked)</span>
+              {isBusinessPlan && staff.length > 0 ? (
+                <div className="dopamine-metric">
+                  <div className="dopamine-label-row">
+                    <span className="dopamine-label">{t("providerPortal.dashboard.chairsFilled")}</span>
+                    <select
+                      className="dopamine-staff-select"
+                      value={chairsStaffFilter}
+                      onChange={(e) => setChairsStaffFilter(e.target.value)}
+                      aria-label={t("providerPortal.dashboard.chairsFilledAriaLabel")}
+                    >
+                      <option value="all">{t("providerPortal.dashboard.wholeShop")}</option>
+                      {staff.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
+                    </select>
+                  </div>
+                  <div className="dopamine-value dopamine-value-sm">
+                    {filledChairSlots}/{totalChairSlots} <span className="dopamine-pct">{t("providerPortal.dashboard.pctBooked", { pct: chairsBookedPct })}</span>
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div className="dopamine-metric dopamine-metric-quiet">
+                  <div className="dopamine-label">{t("providerPortal.dashboard.chairsFilled")}</div>
+                  <div className="dopamine-value dopamine-value-xs">
+                    {filledChairSlots}/{totalChairSlots} <span className="dopamine-pct">{t("providerPortal.dashboard.pctOnly", { pct: chairsBookedPct })}</span>
+                  </div>
+                </div>
+              )}
             </div>
 
-            {/* ZERO-FRICTION QUICK ACTIONS — one or two buttons, never more.
-                Normally: Walk-In (primary, revenue) + Custom Block
-                (secondary, pause) — but Walk-In only shows for providers
-                who take walk-ins (see Settings); appointment-only providers
-                just get Custom Block, full-width. The instant a block is
-                active, everything collapses into a single massive Resume
-                Bookings Now button. */}
+            {/* ZERO-FRICTION QUICK ACTIONS. Normally: Walk-In (primary,
+                revenue-right-now) + New Appointment (secondary, schedule
+                something for later) + Custom Block (secondary, pause) —
+                but Walk-In only shows for providers who take walk-ins (see
+                Settings); appointment-only providers get New Appointment as
+                the primary action instead, paired with Custom Block. New
+                Appointment opens the existing "+ Add appointment" form on
+                the Bookings tab (date/time/service/client, with
+                overlap-clash checking) rather than duplicating that form
+                here. The instant a block is active, everything collapses
+                into a single massive Resume Bookings Now button. */}
             {activeBlock ? (
               <button
                 className="panic-btn"
@@ -7844,7 +8469,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                 onClick={resumeBookingsNow}
                 disabled={resumingNow}
               >
-                {resumingNow ? "Reopening..." : `✅ Resume Bookings Now (blocked until ${formatBookingTime(activeBlock.end_time)})`}
+                {resumingNow ? t("providerPortal.dashboard.reopening") : t("providerPortal.dashboard.resumeBookingsNow", { time: formatBookingTime(activeBlock.end_time) })}
               </button>
             ) : acceptsWalkins ? (
               <>
@@ -7855,27 +8480,35 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                     onClick={openWalkInSheet}
                     disabled={activeServices.length === 0}
                   >
-                    🧾 Walk-In
+                    🧾 {t("providerPortal.dashboard.walkInButton")}
+                  </button>
+                  <button className="panic-btn-secondary" style={{ flex: 3 }} onClick={() => { setTab("bookings"); openWalkInForm(); }}>
+                    🗓️ {t("providerPortal.dashboard.newAppointmentButton")}
                   </button>
                   <button className="panic-btn-secondary" style={{ flex: 2 }} onClick={openBlockSheet}>
-                    ⏸ Custom Block
+                    ⏸ {t("providerPortal.dashboard.customBlockButton")}
                   </button>
                 </div>
                 {activeServices.length === 0 && (
-                  <p style={{ fontSize: 12, color: "var(--muted)", margin: "0 0 20px" }}>Add a service under Services to start logging walk-in sales.</p>
+                  <p style={{ fontSize: 12, color: "var(--muted)", margin: "0 0 20px" }}>{t("providerPortal.dashboard.addServiceHint")}</p>
                 )}
               </>
             ) : (
-              <button className="panic-btn" style={{ width: "100%", marginBottom: 20 }} onClick={openBlockSheet}>
-                ⏸ Custom Block
-              </button>
+              <div className="quick-actions-row" style={{ display: "flex", gap: 10, alignItems: "stretch", marginBottom: 20 }}>
+                <button className="panic-btn" style={{ flex: 3, marginBottom: 0 }} onClick={() => { setTab("bookings"); openWalkInForm(); }}>
+                  🗓️ {t("providerPortal.dashboard.newAppointmentButton")}
+                </button>
+                <button className="panic-btn-secondary" style={{ flex: 2 }} onClick={openBlockSheet}>
+                  ⏸ {t("providerPortal.dashboard.customBlockButton")}
+                </button>
+              </div>
             )}
 
             <div className="metric-grid">
-              <div className="metric"><div className="metric-label">This month earnings</div><div className="metric-value" style={{ color: "var(--forest-light)" }}>BZ${thisMonthEarnings.toFixed(0)}</div><div className="metric-sub">{thisMonthCompletedCount} completed this month</div></div>
-              <div className="metric"><div className="metric-label">Bookings today</div><div className="metric-value">{todaysBookings.length}</div><div className="metric-sub">{todaysBookings.filter(b => b.status === "confirmed").length} confirmed, {pendingBookings.length} awaiting your reply</div></div>
-              <div className="metric"><div className="metric-label">Total bookings</div><div className="metric-value">{bookings.length}</div><div className="metric-sub">All time</div></div>
-              <div className="metric"><div className="metric-label">Completion rate</div><div className="metric-value">{completionRate === null ? "—" : `${completionRate}%`}</div><div className="metric-sub">{completionRate === null ? "No finished bookings yet" : `Of ${settledBookings.length} finished booking${settledBookings.length === 1 ? "" : "s"}`}</div></div>
+              <div className="metric"><div className="metric-label">{t("providerPortal.dashboard.thisMonthEarnings")}</div><div className="metric-value" style={{ color: "var(--forest-light)" }}>BZ${thisMonthEarnings.toFixed(0)}</div><div className="metric-sub">{t("providerPortal.dashboard.completedThisMonth", { count: thisMonthCompletedCount })}</div></div>
+              <div className="metric"><div className="metric-label">{t("providerPortal.dashboard.bookingsToday")}</div><div className="metric-value">{todaysBookings.length}</div><div className="metric-sub">{t("providerPortal.dashboard.confirmedAwaitingReply", { confirmed: todaysBookings.filter(b => b.status === "confirmed").length, pending: pendingBookings.length })}</div></div>
+              <div className="metric"><div className="metric-label">{t("providerPortal.dashboard.totalBookings")}</div><div className="metric-value">{bookings.length}</div><div className="metric-sub">{t("providerPortal.dashboard.allTime")}</div></div>
+              <div className="metric"><div className="metric-label">{t("providerPortal.dashboard.completionRate")}</div><div className="metric-value">{completionRate === null ? "—" : `${completionRate}%`}</div><div className="metric-sub">{completionRate === null ? t("providerPortal.dashboard.noFinishedBookings") : t("providerPortal.dashboard.ofFinishedBookings", { count: settledBookings.length })}</div></div>
             </div>
 
             {/* NEXT IN THE CHAIR — spotlight on the next confirmed
@@ -7885,14 +8518,14 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                 among blocks and past bookings. */}
             {nextBooking && (
               <div className="next-chair-card">
-                <div className="next-chair-label">⏭ Next in the Chair</div>
+                <div className="next-chair-label">⏭ {t("providerPortal.dashboard.nextInChair")}</div>
                 <div className="next-chair-body">
                   <div>
                     <div className="next-chair-name">{nextBookingName}</div>
                     <div className="next-chair-meta">{nextBooking.services?.name || "Service"} · {formatBookingTime(nextBooking.booking_time)}</div>
                   </div>
                   {nextBookingWhatsAppUrl && (
-                    <a className="next-chair-whatsapp" href={nextBookingWhatsAppUrl} target="_blank" rel="noreferrer" aria-label={`Message ${nextBookingName} on WhatsApp`} title="Message on WhatsApp">💬</a>
+                    <a className="next-chair-whatsapp" href={nextBookingWhatsAppUrl} target="_blank" rel="noreferrer" aria-label={t("providerPortal.dashboard.messageAriaLabel", { name: nextBookingName })} title={t("providerPortal.dashboard.messageOnWhatsapp")}>💬</a>
                   )}
                 </div>
               </div>
@@ -7903,7 +8536,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                 so it's one tap away while the client is literally sitting
                 in front of you, instead of buried in the sidebar. */}
             <div className="shopfront-card">
-              <div className="shopfront-label">Your Shopfront</div>
+              <div className="shopfront-label">{t("providerPortal.dashboard.yourShopfront")}</div>
               <div className="shopfront-url">{bookingUrl}</div>
               <div className="shopfront-actions">
                 <button
@@ -7916,10 +8549,10 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                     } catch (e) { /* clipboard unavailable — link is shown above already */ }
                   }}
                 >
-                  {copiedShopfrontLink ? "Copied ✓" : "Copy Link"}
+                  {copiedShopfrontLink ? t("providerPortal.dashboard.copied") : t("providerPortal.dashboard.copyLink")}
                 </button>
-                <button className="shopfront-btn shopfront-btn-lime" onClick={() => setShowQrModal(true)}>
-                  Show QR Code
+                <button className="shopfront-btn shopfront-btn-outline" onClick={() => setShowQrModal(true)}>
+                  {t("providerPortal.dashboard.showQrCode")}
                 </button>
               </div>
             </div>
@@ -7927,18 +8560,18 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
             <div className="grid-2">
               <div className="card">
                 <div className="card-title" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <span>Today's appointments</span>
+                  <span>{t("providerPortal.dashboard.todaysAppointments")}</span>
                   <button className="btn-sm ghost" onClick={loadBookings} disabled={loadingBookings}>{loadingBookings ? "Refreshing..." : "Refresh"}</button>
                 </div>
-                {todaysBookings.length === 0 && blocks.filter(bl => bl.block_date === localDateStr()).length === 0 && <p style={{ fontSize: 13, color: "var(--muted)", padding: "16px 0" }}>Nothing booked for today.</p>}
+                {todaysBookings.length === 0 && blocks.filter(bl => bl.block_date === localDateStr()).length === 0 && <p style={{ fontSize: 13, color: "var(--muted)", padding: "16px 0" }}>{t("providerPortal.dashboard.nothingToday")}</p>}
                 {blocks.filter(bl => bl.block_date === localDateStr()).map((bl) => (
                   <div className="block-row" key={bl.id}>
                     <div className="dot"></div>
                     <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: 13, fontWeight: 700, color: "var(--dark-text)" }}>⏸ Away</div>
-                      <div style={{ fontSize: 12, color: "var(--muted)" }}>{formatBookingTime(bl.start_time)} – {formatBookingTime(bl.end_time)} · calendar blocked</div>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: "var(--dark-text)" }}>⏸ {t("providerPortal.dashboard.away")}</div>
+                      <div style={{ fontSize: 12, color: "var(--muted)" }}>{formatBookingTime(bl.start_time)} – {formatBookingTime(bl.end_time)} · {t("providerPortal.dashboard.calendarBlocked")}</div>
                     </div>
-                    <button className="btn-sm ghost" style={{ fontSize: 11, padding: "5px 10px" }} onClick={() => removeBlock(bl.id)}>Remove</button>
+                    <button className="btn-sm ghost" style={{ fontSize: 11, padding: "5px 10px" }} onClick={() => removeBlock(bl.id)}>{t("providerPortal.common.remove")}</button>
                   </div>
                 ))}
                 {todaysBookings.map((b) => (
@@ -7956,8 +8589,8 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                 ))}
               </div>
               <div className="card">
-                <div className="card-title">Recent bookings</div>
-                {bookings.length === 0 && <p style={{ fontSize: 13, color: "var(--muted)", padding: "16px 0" }}>{loadingBookings ? "Loading..." : "No bookings yet. Once customers book you, they'll show up here."}</p>}
+                <div className="card-title">{t("providerPortal.dashboard.recentBookings")}</div>
+                {bookings.length === 0 && <p style={{ fontSize: 13, color: "var(--muted)", padding: "16px 0" }}>{loadingBookings ? t("providerPortal.common.loading") : t("providerPortal.dashboard.noBookingsYet")}</p>}
                 {bookings.slice(0, 6).map((b) => (
                   <div key={b.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: "1px solid var(--border)" }}>
                     <div>
@@ -7976,9 +8609,9 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
             {quietRegulars.length > 0 && (
               <div className="rebook-radar">
                 <div className="rebook-radar-text">
-                  🔁 {quietRegulars.length} regular{quietRegulars.length === 1 ? "" : "s"} haven't booked in {REBOOK_QUIET_DAYS / 7}+ weeks.
+                  🔁 {t("providerPortal.dashboard.rebookRadarText", { count: quietRegulars.length, weeks: REBOOK_QUIET_DAYS / 7 })}
                 </div>
-                <button className="rebook-radar-btn" onClick={() => setShowCheckInModal(true)}>Send Check-In</button>
+                <button className="rebook-radar-btn" onClick={() => setShowCheckInModal(true)}>{t("providerPortal.dashboard.sendCheckIn")}</button>
               </div>
             )}
           </>
@@ -7986,24 +8619,24 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
 
         {tab === "clients" && (
           <>
-            <div className="portal-header"><h2>Clients</h2><p>Everyone who's booked with you, most recent visit first.</p></div>
+            <div className="portal-header"><h2>{t("providerPortal.nav.clients")}</h2><p>{t("providerPortal.clients.subtitle")}</p></div>
             <div className="card">
               <div className="card-title" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <span>All clients ({allClients.length})</span>
+                <span>{t("providerPortal.clients.allClients", { count: allClients.length })}</span>
                 <button className="btn-sm forest" onClick={loadBookings} disabled={loadingBookings}>{loadingBookings ? "Refreshing..." : "Refresh"}</button>
               </div>
               {allClients.length > 0 && (
                 <div className="input-group" style={{ marginBottom: 12 }}>
-                  <input placeholder="Search by name..." value={clientSearch} onChange={(e) => setClientSearch(e.target.value)} />
+                  <input placeholder={t("providerPortal.clients.searchPlaceholder")} value={clientSearch} onChange={(e) => setClientSearch(e.target.value)} />
                 </div>
               )}
               {allClients.length === 0 && (
                 <p style={{ fontSize: 13, color: "var(--muted)", padding: "16px 0" }}>
-                  {loadingBookings ? "Loading..." : "No clients yet — they'll show up here as soon as someone books with you. (Walk-in sales don't have an account, so they won't appear.)"}
+                  {loadingBookings ? t("providerPortal.common.loading") : t("providerPortal.clients.noClientsYet")}
                 </p>
               )}
               {allClients.length > 0 && filteredClients.length === 0 && (
-                <p style={{ fontSize: 13, color: "var(--muted)", padding: "16px 0" }}>No clients match "{clientSearch}".</p>
+                <p style={{ fontSize: 13, color: "var(--muted)", padding: "16px 0" }}>{t("providerPortal.clients.noMatch", { query: clientSearch })}</p>
               )}
               {filteredClients.map((c) => (
                 <div key={c.id} className="booking-item" style={{ alignItems: "center" }}>
@@ -8011,12 +8644,12 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                     <div className="title">
                       {c.name}
                       {c.hasUpcoming && (
-                        <span style={{ marginLeft: 8, fontSize: 11, fontWeight: 700, color: "var(--forest)", background: "var(--lime)", padding: "2px 7px", borderRadius: 5, verticalAlign: "middle" }}>Upcoming</span>
+                        <span style={{ marginLeft: 8, fontSize: 11, fontWeight: 700, color: "var(--forest)", background: "var(--lime)", padding: "2px 7px", borderRadius: 5, verticalAlign: "middle" }}>{t("providerPortal.common.upcoming")}</span>
                       )}
                     </div>
                     <div className="meta">
-                      {c.email || c.phone || "No contact on file"}
-                      {" · "}{c.visits} visit{c.visits === 1 ? "" : "s"}
+                      {c.email || c.phone || t("providerPortal.clients.noContact")}
+                      {" · "}{t("providerPortal.clients.visits", { count: c.visits })}
                       {c.lastDate && ` · last ${c.lastDate.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`}
                     </div>
                   </div>
@@ -8027,14 +8660,14 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
             {isProOrAbove && providerProfile?.loyalty_enabled && (
               <div className="card" style={{ marginTop: 20 }}>
                 <div className="card-title" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <span>Loyalty &amp; rewards</span>
+                  <span>{t("providerPortal.clients.loyaltyRewards")}</span>
                   <button className="btn-sm forest" onClick={loadLoyaltyCustomers} disabled={loadingLoyaltyCustomers}>{loadingLoyaltyCustomers ? "Refreshing..." : "Refresh"}</button>
                 </div>
                 <p style={{ fontSize: 12, color: "var(--muted)", marginTop: -8, marginBottom: 12 }}>
-                  {providerProfile.loyalty_points_per_dollar} point{Number(providerProfile.loyalty_points_per_dollar) === 1 ? "" : "s"} per BZ$1 spent · {providerProfile.loyalty_reward_threshold} points = {providerProfile.loyalty_reward_description || "a reward"}
+                  {t("providerPortal.clients.loyaltySummary", { points: providerProfile.loyalty_points_per_dollar, threshold: providerProfile.loyalty_reward_threshold, reward: providerProfile.loyalty_reward_description || t("providerPortal.clients.aRewardFallback") })}
                 </p>
                 {loyaltyCustomers.length === 0 && (
-                  <p style={{ fontSize: 13, color: "var(--muted)", padding: "16px 0" }}>{loadingLoyaltyCustomers ? "Loading..." : "No customers with points yet."}</p>
+                  <p style={{ fontSize: 13, color: "var(--muted)", padding: "16px 0" }}>{loadingLoyaltyCustomers ? t("providerPortal.common.loading") : t("providerPortal.clients.noPointsYet")}</p>
                 )}
                 {loyaltyCustomers.map((account) => {
                   const threshold = Number(providerProfile.loyalty_reward_threshold) || 0;
@@ -8042,12 +8675,12 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                   return (
                     <div key={account.id} className="booking-item" style={{ alignItems: "center" }}>
                       <div className="booking-info" style={{ flex: 1 }}>
-                        <div className="title">{account.users?.full_name || "Customer"}</div>
-                        <div className="meta">{account.points_balance} points{threshold > 0 && !eligible ? ` · ${threshold - account.points_balance} to go` : ""}</div>
+                        <div className="title">{account.users?.full_name || t("providerPortal.common.customerFallback")}</div>
+                        <div className="meta">{t("providerPortal.clients.pointsBalance", { count: account.points_balance })}{threshold > 0 && !eligible ? t("providerPortal.clients.pointsToGo", { remaining: threshold - account.points_balance }) : ""}</div>
                       </div>
                       {eligible && (
                         <button className="btn-sm lime" disabled={redeemingId === account.id} onClick={() => redeemReward(account)}>
-                          {redeemingId === account.id ? "Redeeming..." : "Mark reward given"}
+                          {redeemingId === account.id ? t("providerPortal.clients.redeeming") : t("providerPortal.clients.markRewardGiven")}
                         </button>
                       )}
                     </div>
@@ -8060,46 +8693,46 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
 
         {tab === "bookings" && (
           <>
-            <div className="portal-header"><h2>Bookings</h2><p>Manage your upcoming and past appointments.</p></div>
+            <div className="portal-header"><h2>{t("providerPortal.nav.bookings")}</h2><p>{t("providerPortal.bookings.subtitle")}</p></div>
             <div className="card">
               <div className="card-title" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <span>All bookings</span>
+                <span>{t("providerPortal.bookings.allBookings")}</span>
                 <div style={{ display: "flex", gap: 8 }}>
-                  <button className="btn-sm lime" onClick={openWalkInForm}>+ Add appointment</button>
+                  <button className="btn-sm lime" onClick={openWalkInForm}>+ {t("providerPortal.bookings.addAppointment")}</button>
                   <button className="btn-sm forest" onClick={loadBookings} disabled={loadingBookings}>{loadingBookings ? "Refreshing..." : "Refresh"}</button>
                 </div>
               </div>
               <p style={{ fontSize: 12, color: "var(--muted)", marginTop: -8, marginBottom: 12 }}>
-                Had someone ask you directly — in person, by phone, or WhatsApp — instead of booking through the app? Add it yourself with "+ Add appointment," no account needed on their end.
+                {t("providerPortal.bookings.addAppointmentHint")}
               </p>
 
               <div className="form-row" style={{ marginBottom: 12 }}>
                 <div className="input-group" style={{ flex: 2 }}>
-                  <input placeholder="Search by client name..." value={bookingSearch} onChange={e => setBookingSearch(e.target.value)} />
+                  <input placeholder={t("providerPortal.bookings.searchPlaceholder")} value={bookingSearch} onChange={e => setBookingSearch(e.target.value)} />
                 </div>
                 <div className="input-group" style={{ flex: 1 }}>
                   <select value={bookingSort} onChange={e => setBookingSort(e.target.value)}>
-                    <option value="newest">Recently booked: newest first</option>
-                    <option value="oldest">Recently booked: oldest first</option>
+                    <option value="newest">{t("providerPortal.bookings.sortNewest")}</option>
+                    <option value="oldest">{t("providerPortal.bookings.sortOldest")}</option>
                   </select>
                 </div>
                 <div className="input-group" style={{ flex: 1 }}>
                   <select value={bookingStatusFilter} onChange={e => setBookingStatusFilter(e.target.value)}>
-                    <option value="all">All statuses</option>
-                    <option value="needs_action">Needs action ({pendingBookings.length})</option>
-                    <option value="pending">Pending</option>
-                    <option value="awaiting_payment">Awaiting payment</option>
-                    <option value="confirmed">Confirmed</option>
-                    <option value="completed">Completed</option>
-                    <option value="cancelled">Cancelled / declined</option>
-                    <option value="no_show">No-shows</option>
+                    <option value="all">{t("providerPortal.bookings.allStatuses")}</option>
+                    <option value="needs_action">{t("providerPortal.bookings.needsAction", { count: pendingBookings.length })}</option>
+                    <option value="pending">{t("providerPortal.bookings.statusPending")}</option>
+                    <option value="awaiting_payment">{t("providerPortal.bookings.statusAwaitingPayment")}</option>
+                    <option value="confirmed">{t("providerPortal.bookings.statusConfirmed")}</option>
+                    <option value="completed">{t("providerPortal.bookings.statusCompleted")}</option>
+                    <option value="cancelled">{t("providerPortal.bookings.statusCancelled")}</option>
+                    <option value="no_show">{t("providerPortal.bookings.statusNoShow")}</option>
                   </select>
                 </div>
                 {isBusinessPlan && staff.length > 0 && (
                   <div className="input-group" style={{ flex: 1 }}>
                     <select value={staffFilter} onChange={e => setStaffFilter(e.target.value)}>
-                      <option value="all">Everyone's bookings</option>
-                      <option value="unassigned">Unassigned</option>
+                      <option value="all">{t("providerPortal.bookings.everyonesBookings")}</option>
+                      <option value="unassigned">{t("providerPortal.bookings.unassigned")}</option>
                       {staff.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
                     </select>
                   </div>
@@ -8108,43 +8741,43 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
 
               {addingWalkIn && (
                 <div style={{ background: "var(--sand)", borderRadius: 10, padding: 16, marginBottom: 16 }}>
-                  <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 10 }}>Add an appointment</div>
+                  <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 10 }}>{t("providerPortal.bookings.addAnAppointment")}</div>
                   {services.length === 0 ? (
-                    <p style={{ fontSize: 13, color: "var(--muted)" }}>Add a service under "My services" first, then come back here.</p>
+                    <p style={{ fontSize: 13, color: "var(--muted)" }}>{t("providerPortal.bookings.addServiceFirst")}</p>
                   ) : (
                     <>
                       <div className="input-group">
-                        <label>Client's name *</label>
-                        <input placeholder="e.g. Mrs. Alvarez" value={walkInForm.name} onChange={e => setWalkInForm(f => ({ ...f, name: e.target.value }))} />
+                        <label>{t("providerPortal.bookings.clientName")}</label>
+                        <input placeholder={t("providerPortal.bookings.clientNamePlaceholder")} value={walkInForm.name} onChange={e => setWalkInForm(f => ({ ...f, name: e.target.value }))} />
                       </div>
                       <div className="input-group">
-                        <label>Client's phone (optional)</label>
-                        <input placeholder="e.g. +501 600-0000" value={walkInForm.phone} onChange={e => setWalkInForm(f => ({ ...f, phone: e.target.value }))} />
+                        <label>{t("providerPortal.bookings.clientPhone")}</label>
+                        <input placeholder={t("providerPortal.common.phonePlaceholder")} value={walkInForm.phone} onChange={e => setWalkInForm(f => ({ ...f, phone: e.target.value }))} />
                       </div>
                       <div className="input-group">
-                        <label>Service *</label>
+                        <label>{t("providerPortal.bookings.serviceLabel")}</label>
                         <select value={walkInForm.service_id} onChange={e => setWalkInForm(f => ({ ...f, service_id: e.target.value }))}>
                           {services.map(s => <option key={s.id} value={s.id}>{s.name} — BZ${s.price}</option>)}
                         </select>
                       </div>
                       <div className="form-row">
                         <div className="input-group">
-                          <label>Date *</label>
+                          <label>{t("providerPortal.bookings.dateLabel")}</label>
                           <input type="date" value={walkInForm.date} onChange={e => setWalkInForm(f => ({ ...f, date: e.target.value }))} />
                         </div>
                         <div className="input-group">
-                          <label>Time *</label>
+                          <label>{t("providerPortal.bookings.timeLabel")}</label>
                           <input type="time" value={walkInForm.time} onChange={e => setWalkInForm(f => ({ ...f, time: e.target.value }))} />
                         </div>
                       </div>
                       <div className="input-group">
-                        <label>Notes (optional)</label>
-                        <textarea placeholder="Anything you want to remember about this appointment..." value={walkInForm.notes} onChange={e => setWalkInForm(f => ({ ...f, notes: e.target.value }))} style={{ minHeight: 50 }} />
+                        <label>{t("providerPortal.bookings.notesLabel")}</label>
+                        <textarea placeholder={t("providerPortal.bookings.notesPlaceholder")} value={walkInForm.notes} onChange={e => setWalkInForm(f => ({ ...f, notes: e.target.value }))} style={{ minHeight: 50 }} />
                       </div>
                       {walkInError && <p style={{ fontSize: 12, color: "#B91C1C", marginBottom: 8 }}>{walkInError}</p>}
                       <div style={{ display: "flex", gap: 8 }}>
-                        <button className="btn-sm lime" disabled={savingWalkIn} onClick={submitWalkIn}>{savingWalkIn ? "Saving..." : "Save appointment"}</button>
-                        <button className="btn-sm ghost" onClick={closeWalkInForm}>Cancel</button>
+                        <button className="btn-sm lime" disabled={savingWalkIn} onClick={submitWalkIn}>{savingWalkIn ? t("providerPortal.common.saving") : t("providerPortal.bookings.saveAppointment")}</button>
+                        <button className="btn-sm ghost" onClick={closeWalkInForm}>{t("providerPortal.common.cancel")}</button>
                       </div>
                     </>
                   )}
@@ -8152,7 +8785,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
               )}
 
               {visibleBookings.length === 0 && (
-                <p style={{ fontSize: 13, color: "var(--muted)", padding: "16px 0" }}>{loadingBookings ? "Loading..." : bookingSearch.trim() ? "No bookings match your search." : "No bookings yet."}</p>
+                <p style={{ fontSize: 13, color: "var(--muted)", padding: "16px 0" }}>{loadingBookings ? t("providerPortal.common.loading") : bookingSearch.trim() ? t("providerPortal.bookings.noMatch") : t("providerPortal.bookings.noneYet")}</p>
               )}
               {visibleBookings.map((b) => (
                 <div key={b.id} style={{ padding: "14px 0", borderBottom: "1px solid var(--border)" }}>
@@ -8162,7 +8795,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                       <div className="title">
                         {b.services?.name || "Service"}
                         {b.created_by_provider && (
-                          <span style={{ marginLeft: 8, fontSize: 11, fontWeight: 600, color: "var(--forest)", background: "var(--sand)", padding: "2px 7px", borderRadius: 5, verticalAlign: "middle" }}>Walk-in</span>
+                          <span style={{ marginLeft: 8, fontSize: 11, fontWeight: 600, color: "var(--accent-text)", background: "var(--sand)", padding: "2px 7px", borderRadius: 5, verticalAlign: "middle" }}>{t("providerPortal.bookings.walkInBadge")}</span>
                         )}
                       </div>
                       <div className="meta">
@@ -8171,7 +8804,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                         {" · "}{formatBookingWhen(b)}
                         {unreadByBooking[b.id] > 0 && (
                           <span style={{ marginLeft: 8, fontSize: 11, fontWeight: 700, color: "var(--forest)", background: "var(--lime)", padding: "2px 7px", borderRadius: 999 }}>
-                            💬 {unreadByBooking[b.id]} new
+                            💬 {t("providerPortal.bookings.newMessages", { count: unreadByBooking[b.id] })}
                           </span>
                         )}
                       </div>
@@ -8182,7 +8815,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                             onChange={(e) => assignBookingStaff(b.id, e.target.value || null)}
                             style={{ fontSize: 12, padding: "2px 6px" }}
                           >
-                            <option value="">Unassigned</option>
+                            <option value="">{t("providerPortal.bookings.unassigned")}</option>
                             {staff.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
                           </select>
                         </div>
@@ -8193,62 +8826,62 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                       <span className={`status-pill ${bookingStatusClass(b.status)}`}>{statusLabel(b.status)}</span>
                       {b.status === "pending" && respondingId !== b.id && (
                         <>
-                          <button className="btn-sm lime" disabled={busyId === b.id} onClick={() => openResponse(b.id, "accept")}>Accept</button>
-                          <button className="btn-sm ghost" disabled={busyId === b.id} onClick={() => openResponse(b.id, "reject")}>Decline</button>
+                          <button className="btn-sm lime" disabled={busyId === b.id} onClick={() => openResponse(b.id, "accept")}>{t("providerPortal.bookings.accept")}</button>
+                          <button className="btn-sm ghost" disabled={busyId === b.id} onClick={() => openResponse(b.id, "reject")}>{t("providerPortal.bookings.decline")}</button>
                         </>
                       )}
                       {b.status === "confirmed" && (
-                        <button className="btn-sm forest" disabled={busyId === b.id} onClick={() => act(b.id, "completed")}>Mark done</button>
+                        <button className="btn-sm forest" disabled={busyId === b.id} onClick={() => act(b.id, "completed")}>{t("providerPortal.bookings.markDone")}</button>
                       )}
                       {/* A booking you've already accepted has to be movable and
                           cancellable — otherwise a sick day, or a customer who
                           never pays their deposit, blocks that slot forever and
                           no refund can be recorded against it. */}
                       {["pending", "awaiting_payment", "confirmed"].includes(b.status) && reschedulingId !== b.id && !b.pending_reschedule_date && (
-                        <button className="btn-sm ghost" disabled={busyId === b.id} onClick={() => openReschedule(b)}>Reschedule</button>
+                        <button className="btn-sm ghost" disabled={busyId === b.id} onClick={() => openReschedule(b)}>{t("providerPortal.bookings.reschedule")}</button>
                       )}
                       {b.pending_reschedule_date && (
                         <button className="btn-sm ghost" disabled={withdrawingId === b.id} onClick={() => withdrawReschedule(b)}>
-                          {withdrawingId === b.id ? "Withdrawing..." : "Withdraw proposal"}
+                          {withdrawingId === b.id ? t("providerPortal.bookings.withdrawing") : t("providerPortal.bookings.withdrawProposal")}
                         </button>
                       )}
                       {["awaiting_payment", "confirmed"].includes(b.status) && (
-                        <button className="btn-sm ghost" disabled={busyId === b.id} onClick={() => act(b.id, "cancelled")}>Cancel</button>
+                        <button className="btn-sm ghost" disabled={busyId === b.id} onClick={() => act(b.id, "cancelled")}>{t("providerPortal.common.cancel")}</button>
                       )}
                       {b.status === "confirmed" && (
-                        <button className="btn-sm ghost" disabled={busyId === b.id} onClick={() => act(b.id, "no_show")}>No-show</button>
+                        <button className="btn-sm ghost" disabled={busyId === b.id} onClick={() => act(b.id, "no_show")}>{t("providerPortal.bookings.noShowButton")}</button>
                       )}
                     </div>
                   </div>
 
-                  {b.notes && <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 6 }}>Customer note: {b.notes}</p>}
+                  {b.notes && <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 6 }}>{t("providerPortal.bookings.customerNote", { notes: b.notes })}</p>}
 
                   {b.pending_reschedule_date && (
-                    <p style={{ fontSize: 12, color: "var(--forest)", marginTop: 6, fontWeight: 600 }}>
-                      Waiting on customer to confirm the new time: {formatBookingWhen({ booking_date: b.pending_reschedule_date, booking_time: b.pending_reschedule_time })}
+                    <p style={{ fontSize: 12, color: "var(--accent-text)", marginTop: 6, fontWeight: 600 }}>
+                      {t("providerPortal.bookings.waitingConfirmNewTime", { when: formatBookingWhen({ booking_date: b.pending_reschedule_date, booking_time: b.pending_reschedule_time }) })}
                     </p>
                   )}
 
                   {reschedulingId === b.id && (
                     <div style={{ marginTop: 10, background: "var(--sand)", borderRadius: 8, padding: 12 }}>
-                      <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 8 }}>Propose a new time</div>
+                      <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 8 }}>{t("providerPortal.bookings.proposeNewTime")}</div>
                       <div className="form-row">
                         <div className="input-group">
-                          <label>New date</label>
+                          <label>{t("providerPortal.bookings.newDate")}</label>
                           <input type="date" value={rescheduleForm.date} min={localDateStr()} onChange={e => setRescheduleForm(f => ({ ...f, date: e.target.value }))} />
                         </div>
                         <div className="input-group">
-                          <label>New time</label>
+                          <label>{t("providerPortal.bookings.newTime")}</label>
                           <input type="time" value={rescheduleForm.time} onChange={e => setRescheduleForm(f => ({ ...f, time: e.target.value }))} />
                         </div>
                       </div>
                       {rescheduleError && <p style={{ color: "#B91C1C", fontSize: 12, marginBottom: 8 }}>{rescheduleError}</p>}
                       <div style={{ display: "flex", gap: 8 }}>
-                        <button className="btn-sm lime" disabled={savingReschedule} onClick={() => submitReschedule(b)}>{savingReschedule ? "Sending..." : "Propose new time"}</button>
-                        <button className="btn-sm ghost" onClick={closeReschedule}>Cancel</button>
+                        <button className="btn-sm lime" disabled={savingReschedule} onClick={() => submitReschedule(b)}>{savingReschedule ? t("providerPortal.common.sending") : t("providerPortal.bookings.proposeNewTime")}</button>
+                        <button className="btn-sm ghost" onClick={closeReschedule}>{t("providerPortal.common.cancel")}</button>
                       </div>
                       <p style={{ fontSize: 11, color: "var(--muted)", marginTop: 8 }}>
-                        The customer is notified and emailed, but the appointment won't move until they confirm the new time. They can also keep the original time instead.
+                        {t("providerPortal.bookings.rescheduleNote")}
                       </p>
                     </div>
                   )}
@@ -8256,37 +8889,37 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                   {respondingId === b.id && (
                     <div style={{ marginTop: 10, background: "var(--sand)", borderRadius: 8, padding: 12 }}>
                       <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 6 }}>
-                        {responseType === "accept" ? "Accept this booking" : "Decline this booking"}
+                        {responseType === "accept" ? t("providerPortal.bookings.acceptThisBooking") : t("providerPortal.bookings.declineThisBooking")}
                       </div>
                       <textarea
-                        placeholder={responseType === "accept" ? "Optional message for the customer..." : "Optional reason for declining..."}
+                        placeholder={responseType === "accept" ? t("providerPortal.bookings.optionalMessagePlaceholder") : t("providerPortal.bookings.optionalReasonPlaceholder")}
                         value={responseMessage}
                         onChange={e => setResponseMessage(e.target.value)}
                         style={{ width: "100%", minHeight: 60, marginBottom: 8 }}
                       />
                       <div style={{ display: "flex", gap: 8 }}>
                         <button className={`btn-sm ${responseType === "accept" ? "lime" : "forest"}`} disabled={busyId === b.id} onClick={() => submitResponse(b)}>
-                          {busyId === b.id ? "Sending..." : responseType === "accept" ? "Confirm accept" : "Confirm decline"}
+                          {busyId === b.id ? t("providerPortal.common.sending") : responseType === "accept" ? t("providerPortal.bookings.confirmAccept") : t("providerPortal.bookings.confirmDecline")}
                         </button>
-                        <button className="btn-sm ghost" onClick={cancelResponse}>Cancel</button>
+                        <button className="btn-sm ghost" onClick={cancelResponse}>{t("providerPortal.common.cancel")}</button>
                       </div>
                     </div>
                   )}
 
                   {b.status !== "pending" && b.provider_message && (
-                    <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 6 }}>Your note to customer: {b.provider_message}</p>
+                    <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 6 }}>{t("providerPortal.bookings.yourNoteToCustomer", { note: b.provider_message })}</p>
                   )}
 
                   {b.status === "awaiting_payment" && b.payment_status !== "receipt_uploaded" && (
-                    <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 6 }}>Waiting for the customer to upload their deposit receipt.</p>
+                    <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 6 }}>{t("providerPortal.bookings.waitingDepositReceipt")}</p>
                   )}
                   {b.status === "awaiting_payment" && b.payment_status === "receipt_uploaded" && (
                     <div style={{ marginTop: 8, background: "var(--sand)", borderRadius: 8, padding: 12 }}>
-                      <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 6 }}>Deposit receipt uploaded</div>
-                      {b.receipt_url && <a href="#" onClick={(e) => { e.preventDefault(); openPrivateFile(b.receipt_url); }} style={{ fontSize: 12 }}>View receipt</a>}
+                      <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 6 }}>{t("providerPortal.bookings.depositReceiptUploaded")}</div>
+                      {b.receipt_url && <a href="#" onClick={(e) => { e.preventDefault(); openPrivateFile(b.receipt_url); }} style={{ fontSize: 12 }}>{t("providerPortal.common.viewReceipt")}</a>}
                       <div style={{ marginTop: 8 }}>
                         <button className="btn-sm lime" disabled={confirmingPaymentId === b.id} onClick={() => confirmPayment(b)}>
-                          {confirmingPaymentId === b.id ? "Confirming..." : "Confirm payment received"}
+                          {confirmingPaymentId === b.id ? t("providerPortal.bookings.confirming") : t("providerPortal.bookings.confirmPaymentReceived")}
                         </button>
                       </div>
                     </div>
@@ -8312,7 +8945,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                           customerEmail: b.users?.email,
                         }))}
                       >
-                        🧾 Print / download invoice
+                        🧾 {t("providerPortal.bookings.printInvoice")}
                       </button>
                       <FeatureGate flag="soap_charting">
                         <VisitNotesButton booking={b} />
@@ -8323,33 +8956,33 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                   {["cancelled", "rejected"].includes(b.status) && (
                     b.booking_refunds && b.booking_refunds.length > 0 ? (
                       <div style={{ marginTop: 8, background: "#E7F5EC", borderRadius: 8, padding: 12 }}>
-                        <div style={{ fontSize: 13, fontWeight: 600, color: "var(--forest)" }}>💸 Refund recorded — BZ${b.booking_refunds[0].amount}</div>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: "var(--forest)" }}>💸 {t("providerPortal.bookings.refundRecorded", { amount: b.booking_refunds[0].amount })}</div>
                         {b.booking_refunds[0].note && <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 4 }}>{b.booking_refunds[0].note}</p>}
-                        {b.booking_refunds[0].receipt_url && <a href="#" onClick={(e) => { e.preventDefault(); openPrivateFile(b.booking_refunds[0].receipt_url); }} style={{ fontSize: 12 }}>View receipt</a>}
+                        {b.booking_refunds[0].receipt_url && <a href="#" onClick={(e) => { e.preventDefault(); openPrivateFile(b.booking_refunds[0].receipt_url); }} style={{ fontSize: 12 }}>{t("providerPortal.common.viewReceipt")}</a>}
                       </div>
                     ) : refundingBookingId === b.id ? (
                       <div style={{ marginTop: 8, background: "var(--sand)", borderRadius: 8, padding: 12 }}>
-                        <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 8 }}>Record a refund for this booking</div>
+                        <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 8 }}>{t("providerPortal.bookings.recordRefundTitle")}</div>
                         <div className="input-group">
-                          <label>Amount refunded (BZ$) *</label>
+                          <label>{t("providerPortal.bookings.amountRefunded")}</label>
                           <input type="number" min="0" step="0.01" value={refundForm.amount} onChange={e => setRefundForm(f => ({ ...f, amount: e.target.value }))} />
                         </div>
                         <div className="input-group">
-                          <label>Screenshot or receipt *</label>
+                          <label>{t("providerPortal.bookings.screenshotOrReceipt")}</label>
                           <input key={refundFileKey} type="file" accept="image/*,application/pdf" onChange={e => setRefundForm(f => ({ ...f, receipt: e.target.files?.[0] || null }))} />
                         </div>
                         <div className="input-group">
-                          <label>Note (optional)</label>
-                          <input value={refundForm.note} onChange={e => setRefundForm(f => ({ ...f, note: e.target.value }))} placeholder="e.g. Refunded via bank transfer" />
+                          <label>{t("providerPortal.bookings.noteOptional")}</label>
+                          <input value={refundForm.note} onChange={e => setRefundForm(f => ({ ...f, note: e.target.value }))} placeholder={t("providerPortal.bookings.refundNotePlaceholder")} />
                         </div>
                         {refundError && <p style={{ fontSize: 12, color: "#B91C1C", marginBottom: 8 }}>{refundError}</p>}
                         <div style={{ display: "flex", gap: 8 }}>
-                          <button className="btn-sm lime" disabled={savingRefund} onClick={() => submitRefund(b.id)}>{savingRefund ? "Saving..." : "Save refund"}</button>
-                          <button className="btn-sm ghost" onClick={closeRefundForm}>Cancel</button>
+                          <button className="btn-sm lime" disabled={savingRefund} onClick={() => submitRefund(b.id)}>{savingRefund ? t("providerPortal.common.saving") : t("providerPortal.bookings.saveRefund")}</button>
+                          <button className="btn-sm ghost" onClick={closeRefundForm}>{t("providerPortal.common.cancel")}</button>
                         </div>
                       </div>
                     ) : (
-                      <button className="btn-sm ghost" style={{ marginTop: 8, fontSize: 12 }} onClick={() => openRefundForm(b)}>Record a refund</button>
+                      <button className="btn-sm ghost" style={{ marginTop: 8, fontSize: 12 }} onClick={() => openRefundForm(b)}>{t("providerPortal.bookings.recordRefund")}</button>
                     )
                   )}
 
@@ -8369,15 +9002,15 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
 
         {tab === "calendar" && (
           <>
-            <div className="portal-header"><h2>Availability</h2><p>Set your open slots. Customers can only book when you're available.</p></div>
+            <div className="portal-header"><h2>{t("providerPortal.nav.availability")}</h2><p>{t("providerPortal.calendar.subtitle")}</p></div>
             <div className="grid-2">
               <div className="card">
                 <div className="card-title" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
-                  <button className="btn-sm ghost" onClick={() => { setCalOffset(o => o - 1); setSelectedDay(null); }} aria-label="Previous month">‹</button>
+                  <button className="btn-sm ghost" onClick={() => { setCalOffset(o => o - 1); setSelectedDay(null); }} aria-label={t("providerPortal.calendar.previousMonth")}>‹</button>
                   <span>{monthLabel}</span>
                   <span style={{ display: "flex", gap: 6 }}>
-                    {calOffset !== 0 && <button className="btn-sm ghost" onClick={() => { setCalOffset(0); setSelectedDay(null); }}>Today</button>}
-                    <button className="btn-sm ghost" onClick={() => { setCalOffset(o => o + 1); setSelectedDay(null); }} aria-label="Next month">›</button>
+                    {calOffset !== 0 && <button className="btn-sm ghost" onClick={() => { setCalOffset(0); setSelectedDay(null); }}>{t("providerPortal.calendar.today")}</button>}
+                    <button className="btn-sm ghost" onClick={() => { setCalOffset(o => o + 1); setSelectedDay(null); }} aria-label={t("providerPortal.calendar.nextMonth")}>›</button>
                   </span>
                 </div>
                 <div className="cal-grid">
@@ -8394,13 +9027,13 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                   ))}
                 </div>
                 <div style={{ marginTop: 12, display: "flex", gap: 16, fontSize: 12, color: "var(--muted)" }}>
-                  <span>● Today</span>
-                  <span style={{ color: "var(--lime)", fontSize: 14 }}>● </span><span>Has booking</span>
+                  <span>● {t("providerPortal.calendar.today")}</span>
+                  <span style={{ color: "var(--lime)", fontSize: 14 }}>● </span><span>{t("providerPortal.calendar.hasBooking")}</span>
                 </div>
                 {selectedDay && (
                   <div style={{ marginTop: 16, paddingTop: 14, borderTop: "1px solid var(--border)" }}>
                     <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 8 }}>{monthLabel.split(" ")[0]} {selectedDay}</div>
-                    {selectedDayBookings.length === 0 && <p style={{ fontSize: 12, color: "var(--muted)" }}>No bookings this day.</p>}
+                    {selectedDayBookings.length === 0 && <p style={{ fontSize: 12, color: "var(--muted)" }}>{t("providerPortal.calendar.noBookingsThisDay")}</p>}
                     {selectedDayBookings.map(b => (
                       <div key={b.id} style={{ fontSize: 12, color: "var(--muted)", padding: "4px 0" }}>
                         {formatBookingTime(b.booking_time)} · {b.services?.name || "Service"} · {b.users?.full_name || b.walkin_customer_name || "Customer"}
@@ -8410,7 +9043,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                 )}
               </div>
               <div className="card">
-                <div className="card-title">Working hours</div>
+                <div className="card-title">{t("providerPortal.calendar.workingHours")}</div>
                 {hours.map((d, i) => (
                   <div key={i} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 0", borderBottom: "1px solid var(--border)" }}>
                     <span style={{ fontSize: 14, fontWeight: 500 }}>{d.day}</span>
@@ -8422,42 +9055,42 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                           <input type="time" value={d.end_time} onChange={e => setDayTime(i, "end_time", e.target.value)} style={{ fontSize: 12, border: "1px solid var(--border)", borderRadius: 6, padding: "4px 6px" }} />
                         </>
                       ) : (
-                        <span style={{ fontSize: 12, color: "var(--muted)" }}>Closed</span>
+                        <span style={{ fontSize: 12, color: "var(--muted)" }}>{t("providerPortal.calendar.closed")}</span>
                       )}
                       <div className={`toggle ${d.is_open ? "on" : ""}`} onClick={() => toggleDay(i)}></div>
                     </div>
                   </div>
                 ))}
-                <button className="btn-sm forest" style={{ marginTop: 12 }} onClick={saveHours} disabled={savingHours}>{savingHours ? "Saving..." : "Save hours"}</button>
+                <button className="btn-sm forest" style={{ marginTop: 12 }} onClick={saveHours} disabled={savingHours}>{savingHours ? t("providerPortal.common.saving") : t("providerPortal.calendar.saveHours")}</button>
 
-                <div className="card-title" style={{ marginTop: 28 }}>Daily lunch break</div>
-                <p style={{ fontSize: 13, color: "var(--muted)", marginTop: -8, marginBottom: 16 }}>Set it once and forget it — this time is automatically taken off your calendar every day, so you never have to block it yourself.</p>
+                <div className="card-title" style={{ marginTop: 28 }}>{t("providerPortal.calendar.dailyLunchBreak")}</div>
+                <p style={{ fontSize: 13, color: "var(--muted)", marginTop: -8, marginBottom: 16 }}>{t("providerPortal.calendar.lunchBreakHint")}</p>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", borderBottom: lunchForm.enabled ? "1px solid var(--border)" : "none" }}>
-                  <span style={{ fontSize: 14 }}>Block my calendar for lunch every day</span>
+                  <span style={{ fontSize: 14 }}>{t("providerPortal.calendar.blockLunchToggle")}</span>
                   <div className={`toggle ${lunchForm.enabled ? "on" : ""}`} onClick={() => setLunchForm(f => ({ ...f, enabled: !f.enabled }))}></div>
                 </div>
                 {lunchForm.enabled && (
                   <div className="form-row" style={{ marginTop: 12 }}>
                     <div className="input-group">
-                      <label>Start time</label>
+                      <label>{t("providerPortal.calendar.startTime")}</label>
                       <select value={lunchForm.lunch_break_start} onChange={e => setLunchForm(f => ({ ...f, lunch_break_start: e.target.value }))}>
                         {Array.from({ length: 28 }, (_, i) => { const m = 6 * 60 + i * 30; const h = String(Math.floor(m / 60)).padStart(2, "0"); const mm = String(m % 60).padStart(2, "0"); return `${h}:${mm}`; }).map(t => {
                           const [h24, m] = t.split(":").map(Number);
-                          const ampm = h24 >= 12 ? "PM" : "AM";
+                          const ampm = h24 >= 12 ? t("providerPortal.calendar.pm") : t("providerPortal.calendar.am");
                           const h12 = h24 % 12 === 0 ? 12 : h24 % 12;
                           return <option key={t} value={t}>{`${h12}:${String(m).padStart(2, "0")} ${ampm}`}</option>;
                         })}
                       </select>
                     </div>
                     <div className="input-group">
-                      <label>Duration</label>
+                      <label>{t("providerPortal.common.duration")}</label>
                       <select value={lunchForm.lunch_break_minutes} onChange={e => setLunchForm(f => ({ ...f, lunch_break_minutes: e.target.value }))}>
-                        {[15, 30, 45, 60, 90].map(m => <option key={m} value={m}>{m} min</option>)}
+                        {[15, 30, 45, 60, 90].map(m => <option key={m} value={m}>{t("providerPortal.common.durationMin", { count: m })}</option>)}
                       </select>
                     </div>
                   </div>
                 )}
-                <button className="btn-sm forest" style={{ marginTop: 12 }} onClick={saveLunchSettings} disabled={savingLunch}>{savingLunch ? "Saving..." : "Save lunch break"}</button>
+                <button className="btn-sm forest" style={{ marginTop: 12 }} onClick={saveLunchSettings} disabled={savingLunch}>{savingLunch ? t("providerPortal.common.saving") : t("providerPortal.calendar.saveLunchBreak")}</button>
               </div>
             </div>
 
@@ -8465,50 +9098,50 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
             <div className="vai-media-promo">
               <div className="vai-media-promo-text">
                 <strong>✨ Vai Media</strong>
-                <span>Stand out from the crowd. Book a cinematic video shoot for your shop with Vai Media.</span>
+                <span>{t("providerPortal.calendar.vaiMediaPromo")}</span>
               </div>
-              <a className="vai-media-promo-btn" href={vaiMediaWhatsAppUrl("provider dashboard")} target="_blank" rel="noreferrer">Apply Now</a>
+              <a className="vai-media-promo-btn" href={vaiMediaWhatsAppUrl("provider dashboard")} target="_blank" rel="noreferrer">{t("providerPortal.calendar.applyNow")}</a>
             </div>
           </>
         )}
 
         {tab === "services" && (
           <>
-            <div className="portal-header"><h2>My services</h2><p>The services customers can book from your profile.</p></div>
+            <div className="portal-header"><h2>{t("providerPortal.nav.services")}</h2><p>{t("providerPortal.services.subtitle")}</p></div>
             <div className="card" style={{ maxWidth: 560 }}>
-              <div className="card-title">Active services</div>
+              <div className="card-title">{t("providerPortal.services.activeServices")}</div>
               {services.length === 0 && (
-                <p style={{ fontSize: 13, color: "var(--muted)", padding: "12px 0" }}>No services added yet. Add your first one below.</p>
+                <p style={{ fontSize: 13, color: "var(--muted)", padding: "12px 0" }}>{t("providerPortal.services.noneYet")}</p>
               )}
               {services.map((s) => (
                 <div className="provider-service" key={s.id}>
                   <div>
                     <div style={{ fontSize: 14, fontWeight: 600 }}>{s.name}</div>
-                    <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 2 }}>{s.duration_min} min</div>
+                    <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 2 }}>{t("providerPortal.common.durationMin", { count: s.duration_min })}</div>
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                    <span style={{ fontWeight: 700, color: "var(--forest)" }}>BZ${s.price}</span>
-                    <button className="btn-sm ghost" style={{ fontSize: 12 }} onClick={() => handleDeleteService(s.id)}>Remove</button>
+                    <span style={{ fontWeight: 700, color: "var(--accent-text)" }}>BZ${s.price}</span>
+                    <button className="btn-sm ghost" style={{ fontSize: 12 }} onClick={() => handleDeleteService(s.id)}>{t("providerPortal.common.remove")}</button>
                   </div>
                 </div>
               ))}
               <div style={{ marginTop: 20, paddingTop: 16, borderTop: "1px solid var(--border)" }}>
-                <div className="card-title">Add a service</div>
-                <div className="input-group"><label>Service name</label><input placeholder="e.g. Full Colour Treatment" value={serviceForm.name} onChange={e => setServiceForm(f => ({ ...f, name: e.target.value }))} /></div>
+                <div className="card-title">{t("providerPortal.services.addService")}</div>
+                <div className="input-group"><label>{t("providerPortal.services.serviceName")}</label><input placeholder={t("providerPortal.services.serviceNamePlaceholder")} value={serviceForm.name} onChange={e => setServiceForm(f => ({ ...f, name: e.target.value }))} /></div>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-                  <div className="input-group"><label>Price (BZ$)</label><input type="number" placeholder="0" value={serviceForm.price} onChange={e => setServiceForm(f => ({ ...f, price: e.target.value }))} /></div>
+                  <div className="input-group"><label>{t("providerPortal.services.price")}</label><input type="number" placeholder="0" value={serviceForm.price} onChange={e => setServiceForm(f => ({ ...f, price: e.target.value }))} /></div>
                   <div className="input-group">
-                    <label>Duration</label>
+                    <label>{t("providerPortal.common.duration")}</label>
                     <select value={serviceForm.duration_min} onChange={e => setServiceForm(f => ({ ...f, duration_min: e.target.value }))}>
-                      <option value={15}>15 min</option>
-                      <option value={30}>30 min</option>
-                      <option value={45}>45 min</option>
-                      <option value={60}>60 min</option>
-                      <option value={90}>90 min</option>
+                      <option value={15}>{t("providerPortal.common.durationMin", { count: 15 })}</option>
+                      <option value={30}>{t("providerPortal.common.durationMin", { count: 30 })}</option>
+                      <option value={45}>{t("providerPortal.common.durationMin", { count: 45 })}</option>
+                      <option value={60}>{t("providerPortal.common.durationMin", { count: 60 })}</option>
+                      <option value={90}>{t("providerPortal.common.durationMin", { count: 90 })}</option>
                     </select>
                   </div>
                 </div>
-                <button className="btn-sm lime" onClick={handleAddService} disabled={savingService || !serviceForm.name.trim()}>{savingService ? "Adding..." : "Add service"}</button>
+                <button className="btn-sm lime" onClick={handleAddService} disabled={savingService || !serviceForm.name.trim()}>{savingService ? t("providerPortal.services.adding") : t("providerPortal.services.addService")}</button>
               </div>
             </div>
           </>
@@ -8516,52 +9149,50 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
 
         {tab === "earnings" && (
           <>
-            <div className="portal-header"><h2>Earnings</h2><p>Customers pay you directly — track your income here.</p></div>
+            <div className="portal-header"><h2>{t("providerPortal.nav.earnings")}</h2><p>{t("providerPortal.earnings.subtitle")}</p></div>
             <div className="metric-grid" style={{ gridTemplateColumns: "1fr 1fr 1fr" }}>
-              <div className="metric"><div className="metric-label">Total earned</div><div className="metric-value" style={{ color: "var(--forest-light)" }}>BZ${totalNetEarned.toFixed(2)}</div><div className="metric-sub">All time, paid to you in full</div></div>
-              <div className="metric"><div className="metric-label">Upcoming</div><div className="metric-value">BZ${pendingEarnings.toFixed(2)}</div><div className="metric-sub">Confirmed, not yet completed</div></div>
-              <div className="metric"><div className="metric-label">This month ({currentMonthLabel})</div><div className="metric-value">BZ${thisMonthNetEarnings.toFixed(2)}</div><div className="metric-sub">{monthOverMonthPct === null ? "No data for last month" : `${monthOverMonthPct >= 0 ? "↑" : "↓"} ${Math.abs(monthOverMonthPct)}% vs last month`}</div></div>
+              <div className="metric"><div className="metric-label">{t("providerPortal.earnings.totalEarned")}</div><div className="metric-value" style={{ color: "var(--forest-light)" }}>BZ${totalNetEarned.toFixed(2)}</div><div className="metric-sub">{t("providerPortal.earnings.allTimePaidInFull")}</div></div>
+              <div className="metric"><div className="metric-label">{t("providerPortal.common.upcoming")}</div><div className="metric-value">BZ${pendingEarnings.toFixed(2)}</div><div className="metric-sub">{t("providerPortal.earnings.confirmedNotCompleted")}</div></div>
+              <div className="metric"><div className="metric-label">{t("providerPortal.earnings.thisMonthLabel", { month: currentMonthLabel })}</div><div className="metric-value">BZ${thisMonthNetEarnings.toFixed(2)}</div><div className="metric-sub">{monthOverMonthPct === null ? t("providerPortal.common.noDataLastMonth") : t("providerPortal.common.vsLastMonth", { arrow: monthOverMonthPct >= 0 ? "↑" : "↓", pct: Math.abs(monthOverMonthPct) })}</div></div>
             </div>
             <div className="card">
-              <div className="card-title">Sales &amp; tax ledger</div>
+              <div className="card-title">{t("providerPortal.earnings.salesTaxLedger")}</div>
               <p style={{ fontSize: 13, color: "var(--muted)", marginBottom: 12 }}>
-                Every completed booking in one printable/downloadable list, for your own tax filing — separate from the per-booking invoices you can print from each completed booking below.
+                {t("providerPortal.earnings.ledgerHint")}
               </p>
               <div className="form-row">
                 <div className="input-group">
-                  <label>From</label>
+                  <label>{t("providerPortal.earnings.from")}</label>
                   <input type="date" value={ledgerStart} onChange={e => setLedgerStart(e.target.value)} />
                 </div>
                 <div className="input-group">
-                  <label>To</label>
+                  <label>{t("providerPortal.earnings.to")}</label>
                   <input type="date" value={ledgerEnd} onChange={e => setLedgerEnd(e.target.value)} />
                 </div>
                 <div className="input-group">
-                  <label>Tax rate % (optional)</label>
+                  <label>{t("providerPortal.earnings.taxRate")}</label>
                   <input
                     type="number"
                     min="0"
                     max="100"
                     step="0.5"
-                    placeholder="e.g. 12.5"
+                    placeholder={t("providerPortal.earnings.taxRatePlaceholder")}
                     value={ledgerTaxRate}
                     onChange={e => setLedgerTaxRate(e.target.value)}
                   />
                 </div>
               </div>
               <p style={{ fontSize: 12, color: "var(--muted)", marginBottom: 12 }}>
-                Leave the rate blank for a plain sales total. Enter one and the ledger also shows the tax included in what you
-                collected and the net figure underneath it — your prices are treated as tax-inclusive, which is how they're
-                quoted to customers.
+                {t("providerPortal.earnings.taxRateExplain")}
               </p>
-              <button className="btn-sm forest" onClick={printLedger}>🧾 Print / download ledger</button>
+              <button className="btn-sm forest" onClick={printLedger}>🧾 {t("providerPortal.earnings.printLedger")}</button>
             </div>
             <div className="card">
-              <div className="card-title">Your payment details</div>
-              <p style={{ fontSize: 13, color: "var(--muted)", marginBottom: 16 }}>Customers pay deposits and full payments straight to you — add a bank account, a mobile wallet, or both. This is what they'll see when it's time to pay.</p>
+              <div className="card-title">{t("providerPortal.earnings.paymentDetailsTitle")}</div>
+              <p style={{ fontSize: 13, color: "var(--muted)", marginBottom: 16 }}>{t("providerPortal.earnings.paymentDetailsHint")}</p>
 
               {paymentMethods.length === 0 && (
-                <p style={{ fontSize: 13, color: "var(--muted)", padding: "8px 0" }}>No payment methods added yet. Add one below.</p>
+                <p style={{ fontSize: 13, color: "var(--muted)", padding: "8px 0" }}>{t("providerPortal.earnings.noPaymentMethods")}</p>
               )}
               {paymentMethods.map((m) => (
                 <div key={m.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: "1px solid var(--border)" }}>
@@ -8569,31 +9200,31 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                     <div style={{ fontSize: 14, fontWeight: 600 }}>{m.type === "wallet" ? "📱" : "🏦"} {m.name}</div>
                     <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 2 }}>{[m.account_name, m.account_number].filter(Boolean).join(" · ")}</div>
                   </div>
-                  <button className="btn-sm ghost" style={{ fontSize: 12 }} onClick={() => handleDeletePaymentMethod(m.id)}>Remove</button>
+                  <button className="btn-sm ghost" style={{ fontSize: 12 }} onClick={() => handleDeletePaymentMethod(m.id)}>{t("providerPortal.common.remove")}</button>
                 </div>
               ))}
 
               <div style={{ marginTop: 20, paddingTop: 16, borderTop: "1px solid var(--border)" }}>
-                <div className="card-title">Add a payment method</div>
+                <div className="card-title">{t("providerPortal.earnings.addPaymentMethod")}</div>
                 <div className="input-group">
-                  <label>Type</label>
+                  <label>{t("providerPortal.earnings.type")}</label>
                   <select value={paymentMethodForm.type} onChange={e => setPaymentMethodForm(f => ({ ...f, type: e.target.value }))}>
-                    <option value="bank">Bank account</option>
-                    <option value="wallet">Mobile wallet</option>
+                    <option value="bank">{t("providerPortal.earnings.bankAccount")}</option>
+                    <option value="wallet">{t("providerPortal.earnings.mobileWallet")}</option>
                   </select>
                 </div>
                 <div className="grid-2">
                   <div className="input-group">
-                    <label>{paymentMethodForm.type === "wallet" ? "Wallet name" : "Bank name"}</label>
-                    <input value={paymentMethodForm.name} onChange={e => setPaymentMethodForm(f => ({ ...f, name: e.target.value }))} placeholder={paymentMethodForm.type === "wallet" ? "e.g. Wave, PayPal" : "e.g. Atlantic Bank"} />
+                    <label>{paymentMethodForm.type === "wallet" ? t("providerPortal.earnings.walletName") : t("providerPortal.earnings.bankName")}</label>
+                    <input value={paymentMethodForm.name} onChange={e => setPaymentMethodForm(f => ({ ...f, name: e.target.value }))} placeholder={paymentMethodForm.type === "wallet" ? t("providerPortal.earnings.walletNamePlaceholder") : t("providerPortal.earnings.bankNamePlaceholder")} />
                   </div>
-                  <div className="input-group"><label>Account holder name</label><input value={paymentMethodForm.account_name} onChange={e => setPaymentMethodForm(f => ({ ...f, account_name: e.target.value }))} placeholder="Name on the account" /></div>
+                  <div className="input-group"><label>{t("providerPortal.earnings.accountHolderName")}</label><input value={paymentMethodForm.account_name} onChange={e => setPaymentMethodForm(f => ({ ...f, account_name: e.target.value }))} placeholder={t("providerPortal.earnings.accountHolderPlaceholder")} /></div>
                 </div>
                 <div className="input-group">
-                  <label>{paymentMethodForm.type === "wallet" ? "Wallet number / handle" : "Account number"}</label>
-                  <input value={paymentMethodForm.account_number} onChange={e => setPaymentMethodForm(f => ({ ...f, account_number: e.target.value }))} placeholder={paymentMethodForm.type === "wallet" ? "Phone number or handle" : "Account number"} />
+                  <label>{paymentMethodForm.type === "wallet" ? t("providerPortal.earnings.walletNumberLabel") : t("providerPortal.earnings.accountNumberLabel")}</label>
+                  <input value={paymentMethodForm.account_number} onChange={e => setPaymentMethodForm(f => ({ ...f, account_number: e.target.value }))} placeholder={paymentMethodForm.type === "wallet" ? t("providerPortal.earnings.walletNumberPlaceholder") : t("providerPortal.earnings.accountNumberPlaceholder")} />
                 </div>
-                <button className="btn-sm lime" disabled={savingPaymentMethod || !paymentMethodForm.name.trim()} onClick={handleAddPaymentMethod}>{savingPaymentMethod ? "Adding..." : "Add payment method"}</button>
+                <button className="btn-sm lime" disabled={savingPaymentMethod || !paymentMethodForm.name.trim()} onClick={handleAddPaymentMethod}>{savingPaymentMethod ? t("providerPortal.common.adding") : t("providerPortal.earnings.addPaymentMethod")}</button>
               </div>
             </div>
           </>
@@ -8603,31 +9234,50 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
           const currentPlan = PLANS.find((p) => p.id === (providerProfile?.plan || "starter")) || PLANS[0];
           const statusColor = { pending: "#B45309", confirmed: "var(--forest)", rejected: "#B91C1C" };
           const statusBg = { pending: "#FEF3C7", confirmed: "#E7F5EC", rejected: "#FEE2E2" };
+          // FIX ("every provider is providing a service, they must be
+          // paying"): VaiBook has no backend trial-date tracking (no
+          // trial_ends_at column) — this is copy-only, the same
+          // marketing-copy-not-enforcement approach already used for the
+          // pricing page's "14-Day Free Trial" badge. `next_payment_due_date`
+          // is never set anywhere in this codebase except by an admin (or
+          // directly in Supabase), so its absence is a safe, already-existing
+          // signal for "hasn't been billed yet" — used here only to decide
+          // which copy to show, no new field and no changed gating logic.
+          const inTrial = currentPlan.monthly > 0 && !providerProfile?.next_payment_due_date;
           return (
             <>
-              <div className="portal-header"><h2>My plan &amp; billing</h2><p>This is your VaiBook subscription — separate from what customers pay you for bookings.</p></div>
+              <div className="portal-header"><h2>{t("providerPortal.nav.billing")}</h2><p>{t("providerPortal.billing.subtitle")}</p></div>
 
               <div className="card" style={{ maxWidth: 560 }}>
-                <div className="card-title">Current plan</div>
+                <div className="card-title">{t("providerPortal.billing.currentPlan")}</div>
                 <div style={{ fontSize: 20, fontWeight: 700 }}>{currentPlan.name} <span style={{ fontSize: 14, fontWeight: 500, color: "var(--muted)" }}>— {currentPlan.price}</span></div>
                 {currentPlan.monthly > 0 && (
-                  <div style={{ marginTop: 6 }}>
-                    <span style={{ display: "inline-block", background: "var(--forest)", color: "var(--lime)", fontSize: 12, fontWeight: 800, padding: "4px 10px", borderRadius: 100 }}>
-                      Just BZ${(Math.floor((currentPlan.monthly / 30) * 100) / 100).toFixed(2)} a day.
-                    </span>
-                    <div style={{ fontSize: 11, color: "var(--muted)", fontStyle: "italic", marginTop: 4 }}>(Pays for itself with a single haircut.)</div>
-                  </div>
+                  inTrial ? (
+                    <div style={{ marginTop: 10, background: "#E7F5EC", border: "1px solid var(--forest)", borderRadius: 8, padding: "10px 14px" }}>
+                      <p style={{ fontSize: 13, fontWeight: 700, color: "var(--forest)", margin: 0 }}>🎉 {t("providerPortal.billing.trialBannerTitle", { plan: currentPlan.name })}</p>
+                      <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 4, marginBottom: 0 }}>
+                        {t("providerPortal.billing.trialBannerSub", { amount: (Math.round((currentPlan.monthly / 30) * 100) / 100).toFixed(2) })}
+                      </p>
+                    </div>
+                  ) : (
+                    <div style={{ marginTop: 6 }}>
+                      <span style={{ display: "inline-block", background: "var(--forest)", color: "var(--lime)", fontSize: 12, fontWeight: 800, padding: "4px 10px", borderRadius: 100 }}>
+                        {t("providerPortal.billing.justPerDay", { amount: (Math.round((currentPlan.monthly / 30) * 100) / 100).toFixed(2) })}
+                      </span>
+                      <div style={{ fontSize: 11, color: "var(--muted)", fontStyle: "italic", marginTop: 4 }}>{t("providerPortal.billing.paysForItself")}</div>
+                    </div>
+                  )
                 )}
                 <p style={{ fontSize: 13, color: "var(--muted)", marginTop: 4 }}>{currentPlan.desc}</p>
 
                 {currentPlan.monthly > 0 && providerProfile?.next_payment_due_date && (
                   <p style={{ fontSize: 13, fontWeight: 600, marginTop: 10, color: providerProfile.is_active ? "var(--dark-text)" : "#B91C1C" }}>
-                    Next payment due {new Date(providerProfile.next_payment_due_date).toLocaleDateString([], { month: "long", day: "numeric", year: "numeric" })}
+                    {t("providerPortal.billing.nextPaymentDue", { date: new Date(providerProfile.next_payment_due_date).toLocaleDateString([], { month: "long", day: "numeric", year: "numeric" }) })}
                   </p>
                 )}
                 {currentPlan.monthly > 0 && !providerProfile?.is_active && (
                   <div style={{ marginTop: 12, background: "#FEE2E2", border: "1px solid #FCA5A5", borderRadius: 8, padding: "10px 14px", fontSize: 13, color: "#B91C1C" }}>
-                    Your listing is currently hidden from customers. If this is because a payment is overdue, upload your receipt below — you'll go back live as soon as it's confirmed.
+                    {t("providerPortal.billing.listingHidden")}
                   </div>
                 )}
 
@@ -8638,17 +9288,19 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                   const atCap = usedThisMonth >= STARTER_CAP;
                   return (
                     <>
-                      <p style={{ fontSize: 13, color: "var(--forest)", fontWeight: 600, marginTop: 16 }}>You're on the free Starter plan — nothing to pay.</p>
+                      <p style={{ fontSize: 13, color: "var(--accent-text)", fontWeight: 600, marginTop: 16 }}>
+                        {t("providerPortal.billing.trialNoPlanYet")}
+                      </p>
                       <div style={{ marginTop: 10 }}>
                         <div style={{ fontSize: 12, color: atCap ? "#B91C1C" : "var(--muted)", fontWeight: 600, marginBottom: 4 }}>
-                          {Math.min(usedThisMonth, STARTER_CAP)} of {STARTER_CAP} bookings used this month
+                          {t("providerPortal.billing.bookingsUsedThisMonth", { used: Math.min(usedThisMonth, STARTER_CAP), cap: STARTER_CAP })}
                         </div>
                         <div style={{ height: 6, borderRadius: 3, background: "var(--sand)", overflow: "hidden" }}>
                           <div style={{ height: "100%", width: `${(Math.min(usedThisMonth, STARTER_CAP) / STARTER_CAP) * 100}%`, background: atCap ? "#B91C1C" : "var(--forest)", borderRadius: 3 }} />
                         </div>
                         {atCap && (
                           <p style={{ fontSize: 12, color: "#B91C1C", marginTop: 6 }}>
-                            You've hit this month's limit — new bookings will be turned away until next month, or you upgrade to Pro for unlimited bookings.
+                            {t("providerPortal.billing.hitLimit")}
                           </p>
                         )}
                       </div>
@@ -8658,17 +9310,26 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
               </div>
 
               {(() => {
-                const chosenPlan = PLANS.find((p) => p.id === (payingForPlan || currentPlan.id)) || currentPlan;
+                // FIX (Task 1, "keep only Pro and Team"): a Starter provider
+                // opening this card used to see Starter re-listed here too
+                // (marked "YOUR PLAN") right below the "You're on the free
+                // Starter plan" summary above — Starter's already covered by
+                // that summary, so it shouldn't also be a selectable row in
+                // the upgrade picker. Restricting the picker to PUBLIC_PLANS
+                // (Pro/Team only) matches the public pricing page; a Starter
+                // user's default selection falls back to "pro" instead of
+                // "starter" so a Pro/Team radio is pre-selected on first
+                // open rather than showing nothing checked.
+                const chosenPlan = PLANS.find((p) => p.id === (payingForPlan || (currentPlan.monthly === 0 ? "pro" : currentPlan.id))) || currentPlan;
                 const isUpgrade = chosenPlan.id !== currentPlan.id;
                 return (
                   <div className="card" style={{ maxWidth: 560, marginTop: 20 }}>
-                    <div className="card-title">{currentPlan.monthly === 0 ? "Upgrade your plan" : "Pay for your plan"}</div>
+                    <div className="card-title">{currentPlan.monthly === 0 ? t("providerPortal.billing.upgradeYourPlan") : t("providerPortal.billing.payForYourPlan")}</div>
                     <p style={{ fontSize: 13, color: "var(--muted)", marginBottom: 12 }}>
-                      Pick the plan you're paying for, transfer the amount by bank or mobile wallet, and upload the receipt.
-                      Admin confirms it, and your plan switches over as soon as they do — that's how an upgrade takes effect.
+                      {t("providerPortal.billing.pickPlanHint")}
                     </p>
 
-                    {PLANS.map((pl) => {
+                    {PUBLIC_PLANS.map((pl) => {
                       const selected = chosenPlan.id === pl.id;
                       return (
                         <label
@@ -8690,11 +9351,11 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                           <div style={{ flex: 1 }}>
                             <div style={{ fontSize: 14, fontWeight: 700 }}>
                               {pl.name} <span style={{ fontWeight: 500, color: "var(--muted)" }}>— {pl.price}</span>
-                              {pl.id === currentPlan.id && <span style={{ marginLeft: 8, fontSize: 11, fontWeight: 700, color: "var(--forest)" }}>YOUR PLAN</span>}
+                              {pl.id === currentPlan.id && <span style={{ marginLeft: 8, fontSize: 11, fontWeight: 700, color: "var(--accent-text)" }}>{t("providerPortal.billing.yourPlanBadge")}</span>}
                             </div>
                             {pl.monthly > 0 && (
-                              <div style={{ fontSize: 11.5, fontWeight: 700, color: "var(--forest)", marginTop: 2 }}>
-                                Just BZ${(Math.floor((pl.monthly / 30) * 100) / 100).toFixed(2)} a day.
+                              <div style={{ fontSize: 11.5, fontWeight: 700, color: "var(--accent-text)", marginTop: 2 }}>
+                                {t("providerPortal.billing.justPerDay", { amount: (Math.round((pl.monthly / 30) * 100) / 100).toFixed(2) })}
                               </div>
                             )}
                             <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 2 }}>{pl.desc}</div>
@@ -8705,26 +9366,26 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
 
                     {chosenPlan.monthly === 0 ? (
                       <p style={{ fontSize: 13, color: "var(--muted)", marginTop: 8 }}>
-                        Starter is free — there's nothing to upload. To move down to Starter, email VaiBook and we'll switch you at the end of your paid period.
+                        {t("providerPortal.billing.freeTrialNote")}
                       </p>
                     ) : (
                       <div style={{ marginTop: 8, paddingTop: 16, borderTop: "1px solid var(--border)" }}>
                         <p style={{ fontSize: 13, marginBottom: 12 }}>
                           {isUpgrade
-                            ? `Send BZ$${chosenPlan.monthly} for the ${chosenPlan.name} plan, then upload the receipt — you'll move onto ${chosenPlan.name} once admin confirms it.`
-                            : `Send BZ$${chosenPlan.monthly} for your ${chosenPlan.name} plan, then upload the receipt so admin can confirm it and keep your account active.`}
+                            ? t("providerPortal.billing.sendForUpgrade", { amount: chosenPlan.monthly.toFixed(2), plan: chosenPlan.name })
+                            : t("providerPortal.billing.sendForRenewal", { amount: chosenPlan.monthly.toFixed(2), plan: chosenPlan.name })}
                         </p>
                         <div className="input-group">
-                          <label>Which period is this for?</label>
-                          <input value={paymentForm.periodLabel} onChange={e => setPaymentForm(f => ({ ...f, periodLabel: e.target.value }))} placeholder="e.g. September 2026" />
+                          <label>{t("providerPortal.billing.whichPeriod")}</label>
+                          <input value={paymentForm.periodLabel} onChange={e => setPaymentForm(f => ({ ...f, periodLabel: e.target.value }))} placeholder={t("providerPortal.billing.periodPlaceholder")} />
                         </div>
                         <div className="input-group">
-                          <label>Receipt (image or PDF)</label>
+                          <label>{t("providerPortal.billing.receiptLabel")}</label>
                           <input key={paymentFileKey} type="file" accept="image/*,application/pdf" onChange={e => setPaymentForm(f => ({ ...f, receipt: e.target.files?.[0] || null }))} />
                         </div>
                         {paymentError && <p style={{ fontSize: 12, color: "#B91C1C", marginBottom: 8 }}>{paymentError}</p>}
                         <button className="btn-sm lime" disabled={submittingPayment} onClick={submitPayment}>
-                          {submittingPayment ? "Uploading..." : isUpgrade ? `Submit payment for ${chosenPlan.name}` : "Submit payment"}
+                          {submittingPayment ? t("providerPortal.billing.uploading") : isUpgrade ? t("providerPortal.billing.submitPaymentForPlan", { plan: chosenPlan.name }) : t("providerPortal.billing.submitPayment")}
                         </button>
                       </div>
                     )}
@@ -8734,22 +9395,22 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
 
               <div className="card" style={{ maxWidth: 560, marginTop: 20 }}>
                 <div className="card-title" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <span>Payment history</span>
+                  <span>{t("providerPortal.billing.paymentHistory")}</span>
                   <button className="btn-sm forest" onClick={loadPayments} disabled={loadingPayments}>{loadingPayments ? "Refreshing..." : "Refresh"}</button>
                 </div>
                 {payments.length === 0 ? (
-                  <p style={{ fontSize: 13, color: "var(--muted)", padding: "16px 0" }}>{loadingPayments ? "Loading..." : "No payments submitted yet."}</p>
+                  <p style={{ fontSize: 13, color: "var(--muted)", padding: "16px 0" }}>{loadingPayments ? t("providerPortal.common.loading") : t("providerPortal.billing.noPaymentsYet")}</p>
                 ) : (
                   payments.map((pmt) => (
                     <div key={pmt.id} style={{ padding: "12px 0", borderBottom: "1px solid var(--border)", display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
                       <div>
                         <div style={{ fontSize: 14, fontWeight: 600 }}>{pmt.period_label} — BZ${pmt.amount}</div>
-                        <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 2 }}>Submitted {new Date(pmt.submitted_at).toLocaleDateString()}</div>
-                        {pmt.admin_note && <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 2, fontStyle: "italic" }}>Admin note: {pmt.admin_note}</div>}
-                        {pmt.receipt_url && <a href="#" onClick={(e) => { e.preventDefault(); openPrivateFile(pmt.receipt_url); }} style={{ fontSize: 12 }}>View receipt</a>}
+                        <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 2 }}>{t("providerPortal.billing.submittedDate", { date: new Date(pmt.submitted_at).toLocaleDateString() })}</div>
+                        {pmt.admin_note && <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 2, fontStyle: "italic" }}>{t("providerPortal.billing.adminNote", { note: pmt.admin_note })}</div>}
+                        {pmt.receipt_url && <a href="#" onClick={(e) => { e.preventDefault(); openPrivateFile(pmt.receipt_url); }} style={{ fontSize: 12 }}>{t("providerPortal.common.viewReceipt")}</a>}
                       </div>
                       <span style={{ fontSize: 12, fontWeight: 600, color: statusColor[pmt.status] || "var(--muted)", background: statusBg[pmt.status] || "var(--sand)", padding: "3px 8px", borderRadius: 6, whiteSpace: "nowrap" }}>
-                        {pmt.status.charAt(0).toUpperCase() + pmt.status.slice(1)}
+                        {t(`providerPortal.billing.status_${pmt.status}`, { defaultValue: pmt.status.charAt(0).toUpperCase() + pmt.status.slice(1) })}
                       </span>
                     </div>
                   ))
@@ -8761,79 +9422,79 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
 
         {tab === "staff" && (
           <>
-            <div className="portal-header"><h2>My staff</h2><p>Add the people on your team — they'll sign in with their own Google account and only see their own bookings.</p></div>
+            <div className="portal-header"><h2>{t("providerPortal.nav.staff")}</h2><p>{t("providerPortal.staff.subtitle")}</p></div>
 
             {!isBusinessPlan ? (
               <div className="card" style={{ maxWidth: 560 }}>
-                <div className="card-title">This is a Business plan feature</div>
+                <div className="card-title">{t("providerPortal.staff.businessPlanFeatureTitle")}</div>
                 <p style={{ fontSize: 13, color: "var(--muted)", marginBottom: 12 }}>
-                  Staff seats let you add your team and each person gets their own login to see just their own bookings. Upgrade to the Business plan (BZ${PLANS.find(p => p.id === "business")?.monthly}/mo) to turn this on.
+                  {t("providerPortal.staff.businessPlanHint", { amount: (PLANS.find(p => p.id === "business")?.monthly || 0).toFixed(2) })}
                 </p>
-                <button className="btn-sm lime" onClick={() => setTab("billing")}>View plans & billing</button>
+                <button className="btn-sm lime" onClick={() => setTab("billing")}>{t("providerPortal.staff.viewPlansBilling")}</button>
               </div>
             ) : (
               <>
                 <div className="card" style={{ maxWidth: 560 }}>
-                  <div className="card-title">Add a staff member</div>
+                  <div className="card-title">{t("providerPortal.staff.addStaffMember")}</div>
                   <div className="form-row">
                     <div className="input-group">
-                      <label>Name *</label>
-                      <input placeholder="e.g. Maria" value={newStaffName} onChange={e => setNewStaffName(e.target.value)} />
+                      <label>{t("providerPortal.staff.nameLabel")}</label>
+                      <input placeholder={t("providerPortal.staff.namePlaceholder")} value={newStaffName} onChange={e => setNewStaffName(e.target.value)} />
                     </div>
                     <div className="input-group">
-                      <label>Phone (optional)</label>
-                      <input placeholder="e.g. +501 600-0000" value={newStaffPhone} onChange={e => setNewStaffPhone(e.target.value)} />
+                      <label>{t("providerPortal.staff.phoneLabel")}</label>
+                      <input placeholder={t("providerPortal.common.phonePlaceholder")} value={newStaffPhone} onChange={e => setNewStaffPhone(e.target.value)} />
                     </div>
                   </div>
                   <div className="input-group">
-                    <label>Their email *</label>
-                    <input type="email" placeholder="e.g. maria@gmail.com" value={newStaffEmail} onChange={e => setNewStaffEmail(e.target.value)} />
+                    <label>{t("providerPortal.staff.emailLabel")}</label>
+                    <input type="email" placeholder={t("providerPortal.staff.emailPlaceholder")} value={newStaffEmail} onChange={e => setNewStaffEmail(e.target.value)} />
                   </div>
                   {staffError && <p style={{ fontSize: 12, color: "#B91C1C", marginBottom: 8 }}>{staffError}</p>}
-                  <button className="btn-sm lime" disabled={savingStaff} onClick={addStaff}>{savingStaff ? "Adding..." : "Add staff member"}</button>
+                  <button className="btn-sm lime" disabled={savingStaff} onClick={addStaff}>{savingStaff ? t("providerPortal.common.adding") : t("providerPortal.staff.addStaffMember")}</button>
                   <p style={{ fontSize: 11, color: "var(--muted)", marginTop: 10 }}>
-                    They don't need an account yet — have them go to VaiBook, choose "VaiBook for professionals," and sign in with this exact email. Their own portal appears automatically, no chooser needed.
+                    {t("providerPortal.staff.noAccountNeededHint")}
                   </p>
                 </div>
 
                 <div className="card" style={{ maxWidth: 560, marginTop: 20 }}>
                   <div className="card-title" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <span>Your team</span>
+                    <span>{t("providerPortal.staff.yourTeam")}</span>
                     <button className="btn-sm forest" onClick={loadStaff} disabled={loadingStaff}>{loadingStaff ? "Refreshing..." : "Refresh"}</button>
                   </div>
                   {staff.length === 0 && (
-                    <p style={{ fontSize: 13, color: "var(--muted)", padding: "16px 0" }}>{loadingStaff ? "Loading..." : "No staff added yet."}</p>
+                    <p style={{ fontSize: 13, color: "var(--muted)", padding: "16px 0" }}>{loadingStaff ? t("providerPortal.common.loading") : t("providerPortal.staff.noneYet")}</p>
                   )}
                   {staff.map((member) => (
                     <div key={member.id} style={{ padding: "12px 0", borderBottom: "1px solid var(--border)" }}>
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                         <div>
                           <div style={{ fontSize: 14, fontWeight: 600 }}>
-                            {member.name}{!member.is_active && <span style={{ fontWeight: 500, color: "var(--muted)" }}> — inactive</span>}
+                            {member.name}{!member.is_active && <span style={{ fontWeight: 500, color: "var(--muted)" }}> — {t("providerPortal.staff.inactiveSuffix")}</span>}
                             {" "}
                             <span style={{ fontSize: 11, fontWeight: 600, padding: "2px 7px", borderRadius: 5, background: member.user_id ? "#E7F5EC" : "var(--sand)", color: member.user_id ? "var(--forest)" : "var(--muted)" }}>
-                              {member.user_id ? "Signed in" : "Invited — hasn't signed in yet"}
+                              {member.user_id ? t("providerPortal.staff.signedIn") : t("providerPortal.staff.invitedNotSignedIn")}
                             </span>
                           </div>
                           {member.phone && <div style={{ fontSize: 12, color: "var(--muted)" }}>{member.phone}</div>}
                           {editingStaffEmailId === member.id ? (
                             <div style={{ display: "flex", gap: 6, marginTop: 4 }}>
                               <input type="email" style={{ fontSize: 12, padding: "3px 6px" }} value={editStaffEmailValue} onChange={e => setEditStaffEmailValue(e.target.value)} />
-                              <button className="btn-sm forest" style={{ padding: "2px 8px" }} onClick={() => saveStaffEmail(member)}>Save</button>
-                              <button className="btn-sm ghost" style={{ padding: "2px 8px" }} onClick={() => setEditingStaffEmailId(null)}>Cancel</button>
+                              <button className="btn-sm forest" style={{ padding: "2px 8px" }} onClick={() => saveStaffEmail(member)}>{t("providerPortal.common.save")}</button>
+                              <button className="btn-sm ghost" style={{ padding: "2px 8px" }} onClick={() => setEditingStaffEmailId(null)}>{t("providerPortal.common.cancel")}</button>
                             </div>
                           ) : (
                             <div style={{ fontSize: 12, color: "var(--muted)" }}>
-                              {member.email || "No email set"}
+                              {member.email || t("providerPortal.staff.noEmailSet")}
                               {!member.user_id && (
-                                <a href="#" style={{ marginLeft: 8 }} onClick={(e) => { e.preventDefault(); startEditStaffEmail(member); }}>{member.email ? "Edit" : "Add email"}</a>
+                                <a href="#" style={{ marginLeft: 8 }} onClick={(e) => { e.preventDefault(); startEditStaffEmail(member); }}>{member.email ? t("providerPortal.staff.editEmail") : t("providerPortal.staff.addEmail")}</a>
                               )}
                             </div>
                           )}
                         </div>
                         <div style={{ display: "flex", gap: 8 }}>
-                          <button className="btn-sm ghost" onClick={() => toggleStaffActive(member)}>{member.is_active ? "Set inactive" : "Set active"}</button>
-                          <button className="btn-sm ghost" style={{ color: "#B91C1C" }} onClick={() => removeStaff(member)}>Remove</button>
+                          <button className="btn-sm ghost" onClick={() => toggleStaffActive(member)}>{member.is_active ? t("providerPortal.staff.setInactive") : t("providerPortal.staff.setActive")}</button>
+                          <button className="btn-sm ghost" style={{ color: "#B91C1C" }} onClick={() => removeStaff(member)}>{t("providerPortal.common.remove")}</button>
                         </div>
                       </div>
                     </div>
@@ -8846,7 +9507,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
 
         {tab === "reviews" && (
           <>
-            <div className="portal-header"><h2>My reviews</h2><p>What your customers said after their appointment. New 1-2 star reviews are held here privately for 48 hours before they're shown publicly, so the rating and count below can run ahead of what customers currently see on your profile.</p></div>
+            <div className="portal-header"><h2>{t("providerPortal.nav.reviews")}</h2><p>{t("providerPortal.reviews.subtitle")}</p></div>
             <div className="card">
               <div className="card-title" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <span>
@@ -8857,7 +9518,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                     </>
                   )}
                   <span style={{ color: "var(--muted)", fontWeight: 500, fontSize: 13 }}>
-                    {myReviews.length} review{myReviews.length === 1 ? "" : "s"}
+                    {t("providerPortal.reviews.reviewCount", { count: myReviews.length })}
                   </span>
                 </span>
                 <button className="btn-sm forest" onClick={loadMyReviews} disabled={loadingMyReviews}>{loadingMyReviews ? "Refreshing..." : "Refresh"}</button>
@@ -8865,7 +9526,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
 
               {myReviews.length === 0 && (
                 <p style={{ fontSize: 13, color: "var(--muted)", padding: "20px 0" }}>
-                  {loadingMyReviews ? "Loading..." : "No reviews yet. Customers are invited to leave one as soon as you mark their booking done."}
+                  {loadingMyReviews ? t("providerPortal.common.loading") : t("providerPortal.reviews.noneYet")}
                 </p>
               )}
 
@@ -8876,10 +9537,10 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                     <div className="booking-info" style={{ flex: 1 }}>
                       <div className="title" style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                         <StarRating value={r.rating} />
-                        <span>{r.users?.full_name || "Customer"}</span>
+                        <span>{r.users?.full_name || t("providerPortal.common.customerFallback")}</span>
                         {isHeld && (
-                          <span style={{ fontSize: 11, fontWeight: 700, color: "var(--forest)", background: "var(--sand)", padding: "2px 8px", borderRadius: 999 }}>
-                            🔒 Only you can see this — goes public {new Date(r.hold_until).toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
+                          <span style={{ fontSize: 11, fontWeight: 700, color: "var(--accent-text)", background: "var(--sand)", padding: "2px 8px", borderRadius: 999 }}>
+                            🔒 {t("providerPortal.reviews.privateUntil", { date: new Date(r.hold_until).toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) })}
                           </span>
                         )}
                       </div>
@@ -8889,7 +9550,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                       </div>
                       {isHeld && (
                         <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 6, lineHeight: 1.6 }}>
-                          This customer's rating isn't visible to anyone else yet. If something went wrong, this is your window to reach out (their booking's chat, or WhatsApp) before it's public — if they update their rating, it'll reflect here right away.
+                          {t("providerPortal.reviews.privateHint")}
                         </p>
                       )}
                     </div>
@@ -8898,8 +9559,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
               })}
 
               <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 16, lineHeight: 1.6 }}>
-                Reviews can't be edited or removed by a business — that's what makes them worth something to the customers
-                reading them. If one is abusive or clearly not a real customer, email VaiBook and we'll look at it.
+                {t("providerPortal.reviews.cannotEditHint")}
               </p>
             </div>
           </>
@@ -8921,53 +9581,53 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
           return (
             <>
               <div className="portal-header">
-                <h2>Monthly review</h2>
-                <p>Your business, tracked month over month — the same trends a business owner watches.</p>
+                <h2>{t("providerPortal.nav.monthlyReview")}</h2>
+                <p>{t("providerPortal.monthlyReview.subtitle")}</p>
               </div>
 
               {loadingTrend && monthlyTrend.length === 0 ? (
-                <p style={{ fontSize: 13, color: "var(--muted)", padding: "16px 0" }}>Loading...</p>
+                <p style={{ fontSize: 13, color: "var(--muted)", padding: "16px 0" }}>{t("providerPortal.common.loading")}</p>
               ) : (
                 <>
                   <div className="metric-grid" style={{ gridTemplateColumns: "1fr 1fr 1fr" }}>
                     <div className="metric">
-                      <div className="metric-label">Revenue this month</div>
+                      <div className="metric-label">{t("providerPortal.monthlyReview.revenueThisMonth")}</div>
                       <div className="metric-value" style={{ color: "var(--clay)" }}>BZ${thisMonth ? Number(thisMonth.revenue_total).toFixed(0) : "0"}</div>
-                      <div className="metric-sub">{revenueDeltaPct === null ? "No data for last month" : `${revenueDeltaPct >= 0 ? "↑" : "↓"} ${Math.abs(revenueDeltaPct)}% vs last month`}</div>
+                      <div className="metric-sub">{revenueDeltaPct === null ? t("providerPortal.common.noDataLastMonth") : t("providerPortal.common.vsLastMonth", { arrow: revenueDeltaPct >= 0 ? "↑" : "↓", pct: Math.abs(revenueDeltaPct) })}</div>
                     </div>
                     <div className="metric">
-                      <div className="metric-label">Bookings this month</div>
+                      <div className="metric-label">{t("providerPortal.monthlyReview.bookingsThisMonth")}</div>
                       <div className="metric-value">{thisMonth ? thisMonth.bookings_total : 0}</div>
-                      <div className="metric-sub">{completionPct === null ? "No bookings yet" : `${completionPct}% completed`}</div>
+                      <div className="metric-sub">{completionPct === null ? t("providerPortal.monthlyReview.noBookingsYet") : t("providerPortal.monthlyReview.pctCompleted", { pct: completionPct })}</div>
                     </div>
                     <div className="metric">
-                      <div className="metric-label">Avg. rating this month</div>
+                      <div className="metric-label">{t("providerPortal.monthlyReview.avgRating")}</div>
                       <div className="metric-value">{thisMonth && thisMonth.avg_rating != null ? Number(thisMonth.avg_rating).toFixed(1) : "—"}</div>
-                      <div className="metric-sub">{thisMonth && thisMonth.reviews_count ? `${thisMonth.reviews_count} review${thisMonth.reviews_count === 1 ? "" : "s"} this month` : "No reviews yet"}</div>
+                      <div className="metric-sub">{thisMonth && thisMonth.reviews_count ? t("providerPortal.monthlyReview.reviewsThisMonth", { count: thisMonth.reviews_count }) : t("providerPortal.monthlyReview.noReviewsYet")}</div>
                     </div>
                   </div>
 
                   <div className="card" style={{ marginBottom: 20 }}>
-                    <div className="card-title">Revenue trend</div>
-                    <p style={{ fontSize: 12.5, color: "var(--muted)", marginTop: -8, marginBottom: 12 }}>Earnings from completed bookings, by month.</p>
+                    <div className="card-title">{t("providerPortal.monthlyReview.revenueTrend")}</div>
+                    <p style={{ fontSize: 12.5, color: "var(--muted)", marginTop: -8, marginBottom: 12 }}>{t("providerPortal.monthlyReview.revenueTrendHint")}</p>
                     <TrendChart points={revenuePoints} kind="line" color="#D4795A" formatValue={(v) => `$${Math.round(v)}`} />
                   </div>
 
                   <div className="card" style={{ marginBottom: 20 }}>
-                    <div className="card-title">Booking volume</div>
-                    <p style={{ fontSize: 12.5, color: "var(--muted)", marginTop: -8, marginBottom: 12 }}>Total bookings received each month.</p>
+                    <div className="card-title">{t("providerPortal.monthlyReview.bookingVolume")}</div>
+                    <p style={{ fontSize: 12.5, color: "var(--muted)", marginTop: -8, marginBottom: 12 }}>{t("providerPortal.monthlyReview.bookingVolumeHint")}</p>
                     <TrendChart points={bookingPoints} kind="bar" color="#1BAF7A" formatValue={(v) => `${v}`} />
                   </div>
 
                   <div className="card">
-                    <div className="card-title">Reviews &amp; ratings</div>
-                    <p style={{ fontSize: 12.5, color: "var(--muted)", marginTop: -8, marginBottom: 12 }}>Your average star rating each month.</p>
+                    <div className="card-title">{t("providerPortal.monthlyReview.reviewsRatings")}</div>
+                    <p style={{ fontSize: 12.5, color: "var(--muted)", marginTop: -8, marginBottom: 12 }}>{t("providerPortal.monthlyReview.reviewsRatingsHint")}</p>
                     <TrendChart points={ratingPoints} kind="line" color="#F59E0B" formatValue={(v) => `${v.toFixed(1)}★`} />
                     {monthlyTrend.some((m) => m.reviews_count > 0) && (
                       <div style={{ display: "flex", justifyContent: "space-around", marginTop: 4, paddingTop: 10, borderTop: "1px solid var(--border)" }}>
                         {monthlyTrend.map((m) => (
                           <div key={m.month_start} style={{ textAlign: "center", fontSize: 11, color: "var(--muted)" }}>
-                            {m.reviews_count} review{m.reviews_count === 1 ? "" : "s"}
+                            {t("providerPortal.reviews.reviewCount", { count: m.reviews_count })}
                           </div>
                         ))}
                       </div>
@@ -8975,7 +9635,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                   </div>
 
                   <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 16 }}>
-                    We also email you this summary automatically at the start of each month.
+                    {t("providerPortal.monthlyReview.emailSummaryNote")}
                   </p>
                 </>
               )}
@@ -8985,7 +9645,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
 
         {tab === "profile" && (
           <>
-            <div className="portal-header"><h2>Public profile</h2><p>This is what customers see when they find you.</p></div>
+            <div className="portal-header"><h2>{t("providerPortal.nav.profile")}</h2><p>{t("providerPortal.profile.subtitle")}</p></div>
             <div className="card" style={{ maxWidth: 560 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 24, paddingBottom: 20, borderBottom: "1px solid var(--border)" }}>
                 <div style={{ width: 72, height: 72, background: "var(--forest)", borderRadius: 14, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 36 }}>✂️</div>
@@ -8993,116 +9653,116 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                   <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 20, fontWeight: 700 }}>{providerProfile.business_name}</div>
                   <div style={{ color: "var(--muted)", fontSize: 14 }}>{providerProfile.service_type} · {providerProfile.district}</div>
                 </div>
-                <span className={`status-pill ${providerProfile.is_active ? "confirmed" : "pending"}`} style={{ marginLeft: "auto" }}>{providerProfile.is_active ? "✓ Verified" : "Pending activation"}</span>
+                <span className={`status-pill ${providerProfile.is_active ? "confirmed" : "pending"}`} style={{ marginLeft: "auto" }}>{providerProfile.is_active ? t("providerPortal.status.verified") : t("providerPortal.profile.pendingActivation")}</span>
               </div>
-              <div className="input-group"><label>Business name</label><input value={profileForm.business_name} onChange={e => setProfileForm(f => ({ ...f, business_name: e.target.value }))} /></div>
-              <div className="input-group"><label>About</label><textarea value={profileForm.bio} onChange={e => setProfileForm(f => ({ ...f, bio: e.target.value }))} /></div>
+              <div className="input-group"><label>{t("providerPortal.profile.businessName")}</label><input value={profileForm.business_name} onChange={e => setProfileForm(f => ({ ...f, business_name: e.target.value }))} /></div>
+              <div className="input-group"><label>{t("providerPortal.profile.about")}</label><textarea value={profileForm.bio} onChange={e => setProfileForm(f => ({ ...f, bio: e.target.value }))} /></div>
               <div className="input-group">
-                <label>District</label>
+                <label>{t("providerPortal.profile.district")}</label>
                 <select value={profileForm.district} onChange={e => setProfileForm(f => ({ ...f, district: e.target.value }))}>
                   {DISTRICTS.map(d => <option key={d}>{d}</option>)}
                 </select>
               </div>
-              <div className="input-group"><label>WhatsApp / phone number</label><input placeholder="+501 600 0000" value={profileForm.whatsapp} onChange={e => setProfileForm(f => ({ ...f, whatsapp: e.target.value }))} /></div>
+              <div className="input-group"><label>{t("providerPortal.profile.whatsappPhone")}</label><input placeholder="+501 600 0000" value={profileForm.whatsapp} onChange={e => setProfileForm(f => ({ ...f, whatsapp: e.target.value }))} /></div>
               <div className="input-group">
-                <label>Business registration / TIN number (optional)</label>
-                <input placeholder="Shows on your invoices once you're registered" value={profileForm.tax_id} onChange={e => setProfileForm(f => ({ ...f, tax_id: e.target.value }))} />
+                <label>{t("providerPortal.profile.taxIdLabel")}</label>
+                <input placeholder={t("providerPortal.profile.taxIdPlaceholder")} value={profileForm.tax_id} onChange={e => setProfileForm(f => ({ ...f, tax_id: e.target.value }))} />
               </div>
-              <button className="btn-sm forest" onClick={saveProfile} disabled={savingProfile}>{savingProfile ? "Saving..." : "Save profile"}</button>
+              <button className="btn-sm forest" onClick={saveProfile} disabled={savingProfile}>{savingProfile ? t("providerPortal.common.saving") : t("providerPortal.profile.saveProfile")}</button>
             </div>
 
             <div className="card" style={{ maxWidth: 560, marginTop: 20 }}>
-              <div className="card-title">Featured in district search</div>
+              <div className="card-title">{t("providerPortal.profile.featuredTitle")}</div>
               {isBusinessPlan ? (
                 <>
                   <p style={{ fontSize: 13, color: "var(--muted)", marginBottom: 12 }}>
-                    Turn this on and you'll show up at the top of "Find services" results for your district, ahead of non-featured listings — a Business plan perk.
+                    {t("providerPortal.profile.featuredHint")}
                   </p>
                   <button className={profileForm.is_featured ? "btn-sm forest" : "btn-sm ghost"} disabled={savingFeatured} onClick={toggleFeatured}>
-                    {savingFeatured ? "Saving..." : profileForm.is_featured ? "✓ Featured — tap to turn off" : "Turn on featured placement"}
+                    {savingFeatured ? t("providerPortal.common.saving") : profileForm.is_featured ? t("providerPortal.profile.featuredOn") : t("providerPortal.profile.featuredOff")}
                   </button>
                 </>
               ) : (
                 <p style={{ fontSize: 13, color: "var(--muted)" }}>
-                  Business plan providers can turn on featured placement to show up at the top of search results in their district. <a href="#" onClick={(e) => { e.preventDefault(); setTab("billing"); }}>View plans</a>.
+                  {t("providerPortal.profile.featuredUpsell")} <a href="#" onClick={(e) => { e.preventDefault(); setTab("billing"); }}>{t("providerPortal.profile.viewPlans")}</a>.
                 </p>
               )}
             </div>
 
             <div className="card" style={{ maxWidth: 560, marginTop: 20 }}>
-              <div className="card-title">Loyalty &amp; rewards program</div>
+              <div className="card-title">{t("providerPortal.profile.loyaltyTitle")}</div>
               {isProOrAbove ? (
                 <>
                   <p style={{ fontSize: 13, color: "var(--muted)", marginBottom: 12 }}>
-                    Turn this on to earn your customers points on every completed booking, based on how much they spend. When someone reaches your reward threshold, you'll see it here to redeem yourself, however you like — a discount, a free add-on, whatever you decide.
+                    {t("providerPortal.profile.loyaltyHint")}
                   </p>
                   <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
                     <div className={`toggle ${loyaltyForm.enabled ? "on" : ""}`} onClick={() => setLoyaltyForm(f => ({ ...f, enabled: !f.enabled }))}></div>
-                    <span style={{ fontSize: 13, fontWeight: 600 }}>{loyaltyForm.enabled ? "On" : "Off"}</span>
+                    <span style={{ fontSize: 13, fontWeight: 600 }}>{loyaltyForm.enabled ? t("providerPortal.common.on") : t("providerPortal.common.off")}</span>
                   </div>
                   <div className="form-row">
                     <div className="input-group">
-                      <label>Points per BZ$1 spent</label>
+                      <label>{t("providerPortal.profile.pointsPerDollar")}</label>
                       <input type="number" min="0" step="0.1" value={loyaltyForm.pointsPerDollar} onChange={e => setLoyaltyForm(f => ({ ...f, pointsPerDollar: e.target.value }))} />
                     </div>
                     <div className="input-group">
-                      <label>Points needed for a reward</label>
+                      <label>{t("providerPortal.profile.pointsNeeded")}</label>
                       <input type="number" min="1" step="1" value={loyaltyForm.threshold} onChange={e => setLoyaltyForm(f => ({ ...f, threshold: e.target.value }))} />
                     </div>
                   </div>
                   <div className="input-group">
-                    <label>What's the reward?</label>
-                    <input placeholder="e.g. 10% off your next visit, or a free add-on" value={loyaltyForm.description} onChange={e => setLoyaltyForm(f => ({ ...f, description: e.target.value }))} />
+                    <label>{t("providerPortal.profile.whatsTheReward")}</label>
+                    <input placeholder={t("providerPortal.profile.rewardPlaceholder")} value={loyaltyForm.description} onChange={e => setLoyaltyForm(f => ({ ...f, description: e.target.value }))} />
                   </div>
-                  <button className="btn-sm forest" onClick={saveLoyaltySettings} disabled={savingLoyalty}>{savingLoyalty ? "Saving..." : "Save loyalty settings"}</button>
+                  <button className="btn-sm forest" onClick={saveLoyaltySettings} disabled={savingLoyalty}>{savingLoyalty ? t("providerPortal.common.saving") : t("providerPortal.profile.saveLoyalty")}</button>
                   <p style={{ fontSize: 11, color: "var(--muted)", marginTop: 10 }}>
-                    Only bookings made by a signed-in customer earn points — walk-ins you add yourself don't have an account to attach points to.
+                    {t("providerPortal.profile.loyaltyWalkinNote")}
                   </p>
                 </>
               ) : (
                 <p style={{ fontSize: 13, color: "var(--muted)" }}>
-                  Pro and Business plan providers can run their own loyalty program — set the earn rate and the reward yourself. <a href="#" onClick={(e) => { e.preventDefault(); setTab("billing"); }}>View plans</a>.
+                  {t("providerPortal.profile.loyaltyUpsell")} <a href="#" onClick={(e) => { e.preventDefault(); setTab("billing"); }}>{t("providerPortal.profile.viewPlans")}</a>.
                 </p>
               )}
             </div>
 
             <div className="card" style={{ maxWidth: 560, marginTop: 20 }}>
-              <div className="card-title">Photos</div>
-              <p style={{ color: "var(--muted)", fontSize: 13, marginTop: -8, marginBottom: 16 }}>Show off your work. Customers see these on your public profile.</p>
+              <div className="card-title">{t("providerPortal.profile.photosTitle")}</div>
+              <p style={{ color: "var(--muted)", fontSize: 13, marginTop: -8, marginBottom: 16 }}>{t("providerPortal.profile.photosHint")}</p>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginBottom: 16 }}>
                 {photos.map((url) => (
                   <div key={url} style={{ position: "relative", width: 96, height: 96 }}>
-                    <img src={url} alt="Provider work" loading="lazy" decoding="async" width={96} height={96} style={{ width: 96, height: 96, objectFit: "cover", borderRadius: 10, border: "1px solid var(--border)" }} />
+                    <img src={url} alt={t("providerPortal.profile.photoAlt")} loading="lazy" decoding="async" width={96} height={96} style={{ width: 96, height: 96, objectFit: "cover", borderRadius: 10, border: "1px solid var(--border)" }} />
                     <button
                       onClick={() => handleDeletePhoto(url)}
                       style={{ position: "absolute", top: -6, right: -6, width: 22, height: 22, borderRadius: "50%", background: "var(--forest)", color: "#fff", border: "none", cursor: "pointer", fontSize: 12, lineHeight: "22px" }}
-                      title="Remove photo"
+                      title={t("providerPortal.profile.removePhotoTitle")}
                     >×</button>
                   </div>
                 ))}
                 <label style={{ width: 96, height: 96, borderRadius: 10, border: "1px dashed var(--border)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "var(--muted)", fontSize: 12, textAlign: "center" }}>
-                  {uploadingPhoto ? "Uploading..." : "+ Add photo"}
+                  {uploadingPhoto ? t("providerPortal.profile.uploadingPhoto") : `+ ${t("providerPortal.profile.addPhoto")}`}
                   <input type="file" accept="image/*" onChange={handlePhotoUpload} disabled={uploadingPhoto} style={{ display: "none" }} />
                 </label>
               </div>
             </div>
 
             <div className="card" style={{ maxWidth: 560, marginTop: 20 }}>
-              <div className="card-title">Location</div>
-              <p style={{ color: "var(--muted)", fontSize: 13, marginTop: -8, marginBottom: 16 }}>Click the map to drop a pin at your exact location. Customers will get a "Get Directions" link straight to it.</p>
+              <div className="card-title">{t("providerPortal.profile.locationTitle")}</div>
+              <p style={{ color: "var(--muted)", fontSize: 13, marginTop: -8, marginBottom: 16 }}>{t("providerPortal.profile.locationHint")}</p>
               <div style={{ borderRadius: 10, overflow: "hidden", border: "1px solid var(--border)", marginBottom: 12 }}>
                 <Suspense fallback={<MapLoadingFallback height={260} />}>
                   <ProviderLocationMap center={mapPosition || BELIZE_CENTER} zoom={mapPosition ? 15 : 8} position={mapPosition} onPick={setMapPosition} height={260} />
                 </Suspense>
               </div>
-              <div className="input-group"><label>Location label (optional)</label><input placeholder="e.g. Next to Brodie's, San Ignacio" value={locationLabel} onChange={e => setLocationLabel(e.target.value)} /></div>
+              <div className="input-group"><label>{t("providerPortal.profile.locationLabelField")}</label><input placeholder={t("providerPortal.profile.locationLabelPlaceholder")} value={locationLabel} onChange={e => setLocationLabel(e.target.value)} /></div>
               {mapPosition && (
                 <p style={{ fontSize: 12, color: "var(--muted)", marginBottom: 12 }}>
-                  Pin set at {mapPosition[0].toFixed(5)}, {mapPosition[1].toFixed(5)} —{" "}
-                  <a href={directionsUrl(mapPosition[0], mapPosition[1])} target="_blank" rel="noreferrer">preview directions</a>
+                  {t("providerPortal.profile.pinSetAt", { lat: mapPosition[0].toFixed(5), lng: mapPosition[1].toFixed(5) })}{" "}
+                  <a href={directionsUrl(mapPosition[0], mapPosition[1])} target="_blank" rel="noreferrer">{t("providerPortal.profile.previewDirections")}</a>
                 </p>
               )}
-              <button className="btn-sm forest" onClick={saveLocation} disabled={savingLocation || !mapPosition}>{savingLocation ? "Saving..." : "Save location"}</button>
+              <button className="btn-sm forest" onClick={saveLocation} disabled={savingLocation || !mapPosition}>{savingLocation ? t("providerPortal.common.saving") : t("providerPortal.profile.saveLocation")}</button>
             </div>
           </>
         )}
@@ -9111,14 +9771,14 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
 
         {tab === "settings" && (
           <>
-            <div className="portal-header"><h2>Settings</h2></div>
+            <div className="portal-header"><h2>{t("providerPortal.nav.settings")}</h2></div>
             <div className="card" style={{ maxWidth: 480 }}>
-              <div className="card-title">Walk-ins</div>
-              <p style={{ fontSize: 13, color: "var(--muted)", marginTop: -8, marginBottom: 16 }}>Not every business takes walk-in customers. Turn this off if you're appointment-only — the Walk-In button will disappear from your dashboard, leaving just Custom Block.</p>
+              <div className="card-title">{t("providerPortal.settings.walkInsTitle")}</div>
+              <p style={{ fontSize: 13, color: "var(--muted)", marginTop: -8, marginBottom: 16 }}>{t("providerPortal.settings.walkInsHint")}</p>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", gap: 16 }}>
                 <div>
-                  <div style={{ fontSize: 14, fontWeight: 600 }}>Accept walk-in customers</div>
-                  <div style={{ fontSize: 12, color: "var(--muted)" }}>Lets you log a walk-in sale from the dashboard as it happens.</div>
+                  <div style={{ fontSize: 14, fontWeight: 600 }}>{t("providerPortal.settings.acceptWalkins")}</div>
+                  <div style={{ fontSize: 12, color: "var(--muted)" }}>{t("providerPortal.settings.acceptWalkinsHint")}</div>
                 </div>
                 <div
                   className={`toggle ${acceptsWalkins ? "on" : ""}`}
@@ -9129,15 +9789,15 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
             </div>
 
             <div className="card" style={{ maxWidth: 480, marginTop: 20 }}>
-              <div className="card-title">Deposit requirement</div>
-              <p style={{ fontSize: 13, color: "var(--muted)", marginTop: -8, marginBottom: 16 }}>If turned on, customers must pay a deposit and upload a receipt before their booking is confirmed.</p>
+              <div className="card-title">{t("providerPortal.settings.depositTitle")}</div>
+              <p style={{ fontSize: 13, color: "var(--muted)", marginTop: -8, marginBottom: 16 }}>{t("providerPortal.settings.depositHint")}</p>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", borderBottom: "1px solid var(--border)" }}>
-                <span style={{ fontSize: 14 }}>Require a deposit before confirming</span>
+                <span style={{ fontSize: 14 }}>{t("providerPortal.settings.requireDeposit")}</span>
                 <div className={`toggle ${depositForm.downpayment_required ? "on" : ""}`} onClick={() => setDepositForm(f => ({ ...f, downpayment_required: !f.downpayment_required }))}></div>
               </div>
               {depositForm.downpayment_required && (
                 <div className="input-group" style={{ marginTop: 12 }}>
-                  <label>Deposit percentage</label>
+                  <label>{t("providerPortal.settings.depositPercentage")}</label>
                   <select value={depositForm.downpayment_pct} onChange={e => setDepositForm(f => ({ ...f, downpayment_pct: e.target.value }))}>
                     {[25, 50, 75, 100].map(p => <option key={p} value={p}>{p}%</option>)}
                   </select>
@@ -9147,22 +9807,22 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
               {!depositForm.downpayment_required && (
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", borderBottom: "1px solid var(--border)", gap: 16 }}>
                   <div>
-                    <span style={{ fontSize: 14 }}>Skip review for these bookings</span>
+                    <span style={{ fontSize: 14 }}>{t("providerPortal.settings.skipReview")}</span>
                     <div style={{ fontSize: 12, color: "var(--muted)" }}>
-                      Since no deposit is required, a booking can either wait in Pending for you to accept it, or book straight in as confirmed. This only applies when a deposit isn't required — a deposit booking always needs your accept.
+                      {t("providerPortal.settings.skipReviewHint")}
                     </div>
                   </div>
                   <div className={`toggle ${depositForm.auto_confirm_bookings ? "on" : ""}`} onClick={() => setDepositForm(f => ({ ...f, auto_confirm_bookings: !f.auto_confirm_bookings }))}></div>
                 </div>
               )}
-              <button className="btn-sm forest" style={{ marginTop: 12 }} onClick={saveDepositSettings} disabled={savingDeposit}>{savingDeposit ? "Saving..." : "Save deposit settings"}</button>
+              <button className="btn-sm forest" style={{ marginTop: 12 }} onClick={saveDepositSettings} disabled={savingDeposit}>{savingDeposit ? t("providerPortal.common.saving") : t("providerPortal.settings.saveDepositSettings")}</button>
 
-              <div className="card-title" style={{ marginTop: 28 }}>Notifications</div>
+              <div className="card-title" style={{ marginTop: 28 }}>{t("providerPortal.settings.notificationsTitle")}</div>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", borderBottom: "1px solid var(--border)", gap: 16 }}>
                 <div>
-                  <div style={{ fontSize: 14, fontWeight: 600 }}>Email me about new bookings</div>
+                  <div style={{ fontSize: 14, fontWeight: 600 }}>{t("providerPortal.settings.emailNewBookings")}</div>
                   <div style={{ fontSize: 12, color: "var(--muted)" }}>
-                    Sends an email the moment a customer requests a booking, so you don't have to be in the app to know.
+                    {t("providerPortal.settings.emailNewBookingsHint")}
                   </div>
                 </div>
                 <div
@@ -9172,32 +9832,29 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                 ></div>
               </div>
               <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 12, lineHeight: 1.6 }}>
-                Everything else — booking requests, cancellations, deposit receipts, completed bookings and new reviews —
-                always shows up under Notifications in your account menu.
+                {t("providerPortal.settings.everythingElseNote")}
               </p>
 
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", borderBottom: "1px solid var(--border)", gap: 16, marginTop: 8 }}>
                 <div>
-                  <div style={{ fontSize: 14, fontWeight: 600 }}>Push notifications on this device</div>
+                  <div style={{ fontSize: 14, fontWeight: 600 }}>{t("providerPortal.settings.pushNotifications")}</div>
                   <div style={{ fontSize: 12, color: "var(--muted)" }}>
-                    Get a notification the instant a booking request comes in, even with VaiBook closed. Free — no SMS needed.
+                    {t("providerPortal.settings.pushNotificationsHint")}
                   </div>
                 </div>
                 {pushEnabled ? (
-                  <span style={{ fontSize: 12, fontWeight: 700, color: "var(--forest)", flexShrink: 0 }}>✓ On</span>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: "var(--accent-text)", flexShrink: 0 }}>✓ {t("providerPortal.settings.onBadge")}</span>
                 ) : (
                   <button className="btn-sm forest" style={{ flexShrink: 0 }} onClick={enablePushNotifications} disabled={subscribingPush}>
-                    {subscribingPush ? "Turning on..." : "Turn on"}
+                    {subscribingPush ? t("providerPortal.settings.turningOn") : t("providerPortal.settings.turnOn")}
                   </button>
                 )}
               </div>
               {pushError && <p style={{ fontSize: 12, color: "#B91C1C", marginTop: 8 }}>{pushError}</p>}
 
-              <div className="card-title" style={{ marginTop: 24 }}>What VaiBook charges</div>
+              <div className="card-title" style={{ marginTop: 24 }}>{t("providerPortal.settings.whatVaibookCharges")}</div>
               <p style={{ fontSize: 13, color: "var(--muted)", lineHeight: 1.6 }}>
-                Your monthly subscription, and nothing else. VaiBook never handles your customers' payments and takes no
-                cut of a booking — every dollar a customer pays you is yours, which is why the Earnings figures above match
-                your invoices and your tax ledger exactly.
+                {t("providerPortal.settings.chargesExplain")}
               </p>
             </div>
           </>
@@ -9216,28 +9873,28 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
         <div className="sheet-overlay" onClick={closeBlockSheet}>
           <div className="sheet-panel" onClick={(e) => e.stopPropagation()}>
             <div className="sheet-handle"></div>
-            <h3 style={{ fontSize: 17, fontWeight: 800, margin: "0 0 4px", color: "var(--dark-text)" }}>When will you be back?</h3>
-            <p style={{ fontSize: 13, color: "var(--muted)", margin: "0 0 16px" }}>Blocks your calendar starting right now.</p>
+            <h3 style={{ fontSize: 17, fontWeight: 800, margin: "0 0 4px", color: "var(--dark-text)" }}>{t("providerPortal.blockSheet.title")}</h3>
+            <p style={{ fontSize: 13, color: "var(--muted)", margin: "0 0 16px" }}>{t("providerPortal.blockSheet.subtitle")}</p>
             <div className="preset-row">
-              <button className={`preset-btn ${blockSheetResumeMode === "in15m" ? "active" : ""}`} onClick={() => setBlockSheetResumeMode("in15m")}>15m</button>
-              <button className={`preset-btn ${blockSheetResumeMode === "in30m" ? "active" : ""}`} onClick={() => setBlockSheetResumeMode("in30m")}>30m</button>
-              <button className={`preset-btn ${blockSheetResumeMode === "in1h" ? "active" : ""}`} onClick={() => setBlockSheetResumeMode("in1h")}>1h</button>
-              <button className={`preset-btn ${blockSheetResumeMode === "custom" ? "active" : ""}`} onClick={() => setBlockSheetResumeMode("custom")}>Resume at...</button>
+              <button className={`preset-btn ${blockSheetResumeMode === "in15m" ? "active" : ""}`} onClick={() => setBlockSheetResumeMode("in15m")}>{t("providerPortal.blockSheet.in15m")}</button>
+              <button className={`preset-btn ${blockSheetResumeMode === "in30m" ? "active" : ""}`} onClick={() => setBlockSheetResumeMode("in30m")}>{t("providerPortal.blockSheet.in30m")}</button>
+              <button className={`preset-btn ${blockSheetResumeMode === "in1h" ? "active" : ""}`} onClick={() => setBlockSheetResumeMode("in1h")}>{t("providerPortal.blockSheet.in1h")}</button>
+              <button className={`preset-btn ${blockSheetResumeMode === "custom" ? "active" : ""}`} onClick={() => setBlockSheetResumeMode("custom")}>{t("providerPortal.blockSheet.resumeAt")}</button>
             </div>
             {blockSheetResumeMode === "custom" && (
               <div className="input-group" style={{ marginBottom: 12 }}>
-                <label>Resume at</label>
+                <label>{t("providerPortal.blockSheet.resumeAtLabel")}</label>
                 <input type="time" value={blockSheetResumeAt} onChange={(e) => setBlockSheetResumeAt(e.target.value)} />
               </div>
             )}
             {blockError && <p style={{ fontSize: 12, color: "#B91C1C", marginBottom: 12 }}>{blockError}</p>}
             <button className="btn-sm forest" style={{ width: "100%", padding: "14px 0", fontSize: 15, borderRadius: 12 }} disabled={savingBlock} onClick={submitBlockSheet}>
-              {savingBlock ? "Blocking..." : (() => {
+              {savingBlock ? t("providerPortal.blockSheet.blocking") : (() => {
                 const end = resolveBlockSheetEnd();
-                return end && end > new Date() ? `Block until ${formatBookingTime(localTimeStr(end))}` : "Block calendar";
+                return end && end > new Date() ? t("providerPortal.blockSheet.blockUntil", { time: formatBookingTime(localTimeStr(end)) }) : t("providerPortal.blockSheet.blockCalendar");
               })()}
             </button>
-            <button className="btn-sm ghost" style={{ width: "100%", padding: "12px 0", marginTop: 8 }} onClick={closeBlockSheet}>Cancel</button>
+            <button className="btn-sm ghost" style={{ width: "100%", padding: "12px 0", marginTop: 8 }} onClick={closeBlockSheet}>{t("providerPortal.common.cancel")}</button>
           </div>
         </div>
       )}
@@ -9250,8 +9907,8 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
         <div className="sheet-overlay" onClick={closeWalkInSheet}>
           <div className="sheet-panel" onClick={(e) => e.stopPropagation()}>
             <div className="sheet-handle"></div>
-            <h3 style={{ fontSize: 17, fontWeight: 800, margin: "0 0 4px", color: "var(--dark-text)" }}>Walk-In Sale</h3>
-            <p style={{ fontSize: 13, color: "var(--muted)", margin: "0 0 16px" }}>Tap what they're getting today.</p>
+            <h3 style={{ fontSize: 17, fontWeight: 800, margin: "0 0 4px", color: "var(--dark-text)" }}>{t("providerPortal.walkInSheet.title")}</h3>
+            <p style={{ fontSize: 13, color: "var(--muted)", margin: "0 0 16px" }}>{t("providerPortal.walkInSheet.subtitle")}</p>
             <div style={{ maxHeight: "45vh", overflowY: "auto", marginBottom: 12 }}>
               {activeServices.map((s) => {
                 const active = walkInSaleServiceIds.includes(s.id);
@@ -9261,7 +9918,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                       <span className="service-card-check">✓</span>
                       <div>
                         <div className="service-card-name" style={{ fontWeight: 600, fontSize: 14, color: "var(--dark-text)" }}>{s.name}</div>
-                        <div className="service-card-meta" style={{ fontSize: 12, color: "var(--muted)" }}>{s.duration_min} min · BZ${s.price}</div>
+                        <div className="service-card-meta" style={{ fontSize: 12, color: "var(--muted)" }}>{t("providerPortal.common.durationMin", { count: s.duration_min })} · BZ${s.price}</div>
                       </div>
                     </div>
                   </div>
@@ -9270,7 +9927,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
             </div>
             {walkInSaleServiceIds.length > 0 && (
               <p style={{ fontSize: 14, fontWeight: 700, color: "var(--dark-text)", margin: "0 0 12px" }}>
-                Total: BZ${walkInSaleTotal.toFixed(2)} · {walkInSaleDuration} min · {walkInSaleServiceIds.length} service{walkInSaleServiceIds.length === 1 ? "" : "s"}
+                {t("providerPortal.walkInSheet.totalSummary", { total: walkInSaleTotal.toFixed(2), duration: walkInSaleDuration, count: walkInSaleServiceIds.length })}
               </p>
             )}
             {walkInSaleError && <p style={{ fontSize: 12, color: "#B91C1C", marginBottom: 12 }}>{walkInSaleError}</p>}
@@ -9280,9 +9937,9 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
               disabled={savingWalkInSale || walkInSaleServiceIds.length === 0}
               onClick={submitWalkInSale}
             >
-              {savingWalkInSale ? "Logging sale..." : walkInSaleServiceIds.length > 0 ? `Log sale — BZ${walkInSaleTotal.toFixed(2)}` : "Log sale"}
+              {savingWalkInSale ? t("providerPortal.walkInSheet.loggingSale") : walkInSaleServiceIds.length > 0 ? t("providerPortal.walkInSheet.logSaleWithTotal", { total: walkInSaleTotal.toFixed(2) }) : t("providerPortal.walkInSheet.logSale")}
             </button>
-            <button className="btn-sm ghost" style={{ width: "100%", padding: "12px 0", marginTop: 8 }} onClick={closeWalkInSheet}>Cancel</button>
+            <button className="btn-sm ghost" style={{ width: "100%", padding: "12px 0", marginTop: 8 }} onClick={closeWalkInSheet}>{t("providerPortal.common.cancel")}</button>
           </div>
         </div>
       )}
@@ -9292,9 +9949,9 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
           provider actually opens it. */}
       {showLaunchGraphic && (
         <div className="qr-modal-overlay" onClick={() => setShowLaunchGraphic(false)}>
-          <button className="qr-modal-close" onClick={() => setShowLaunchGraphic(false)} aria-label="Close launch graphic">✕</button>
+          <button className="qr-modal-close" onClick={() => setShowLaunchGraphic(false)} aria-label={t("providerPortal.launchGraphic.closeAriaLabel")}>✕</button>
           <div className="plaque-modal-panel" onClick={(e) => e.stopPropagation()}>
-            <Suspense fallback={<div className="plaque-loading">Preparing your launch graphic...</div>}>
+            <Suspense fallback={<div className="plaque-loading">{t("providerPortal.launchGraphic.preparing")}</div>}>
               <WelcomePlaqueGenerator businessName={providerProfile.business_name} bookingUrl={bookingUrl} />
             </Suspense>
           </div>
@@ -9306,15 +9963,15 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
           card. Same qrserver.com-generated image the old QR tab used. */}
       {showQrModal && (
         <div className="qr-modal-overlay" onClick={() => setShowQrModal(false)}>
-          <button className="qr-modal-close" onClick={() => setShowQrModal(false)} aria-label="Close QR code">✕</button>
+          <button className="qr-modal-close" onClick={() => setShowQrModal(false)} aria-label={t("providerPortal.qrModal.closeAriaLabel")}>✕</button>
           <div className="qr-modal-panel" onClick={(e) => e.stopPropagation()}>
             <img
               src={qrImageUrl}
-              alt={`QR code linking to ${providerProfile?.business_name || "your"} booking page`}
+              alt={t("providerPortal.qrModal.altText", { business: providerProfile?.business_name || t("providerPortal.qrModal.yourFallback") })}
               className="qr-modal-img"
             />
-            <div className="qr-modal-business">{providerProfile?.business_name || "Book with us"}</div>
-            <p className="qr-modal-hint">Scan to book instantly on VaiBook</p>
+            <div className="qr-modal-business">{providerProfile?.business_name || t("providerPortal.qrModal.bookWithUsFallback")}</div>
+            <p className="qr-modal-hint">{t("providerPortal.qrModal.scanHint")}</p>
           </div>
         </div>
       )}
@@ -9326,8 +9983,8 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
         <div className="sheet-overlay" onClick={() => setShowCheckInModal(false)}>
           <div className="sheet-panel" onClick={(e) => e.stopPropagation()}>
             <div className="sheet-handle"></div>
-            <h3 style={{ fontSize: 17, fontWeight: 800, margin: "0 0 4px", color: "var(--dark-text)" }}>Send a check-in</h3>
-            <p style={{ fontSize: 13, color: "var(--muted)", margin: "0 0 16px" }}>Tap a customer to open a prefilled WhatsApp message.</p>
+            <h3 style={{ fontSize: 17, fontWeight: 800, margin: "0 0 4px", color: "var(--dark-text)" }}>{t("providerPortal.checkInModal.title")}</h3>
+            <p style={{ fontSize: 13, color: "var(--muted)", margin: "0 0 16px" }}>{t("providerPortal.checkInModal.subtitle")}</p>
             <div style={{ maxHeight: "50vh", overflowY: "auto" }}>
               {quietRegulars.map((c, i) => {
                 const daysAgo = Math.round((now.getTime() - c.lastDate.getTime()) / (24 * 60 * 60 * 1000));
@@ -9338,18 +9995,18 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                     <div className="dot"></div>
                     <div style={{ flex: 1 }}>
                       <div style={{ fontSize: 13, fontWeight: 700, color: "var(--dark-text)" }}>{c.name}</div>
-                      <div style={{ fontSize: 12, color: "var(--muted)" }}>Last visit {daysAgo} days ago</div>
+                      <div style={{ fontSize: 12, color: "var(--muted)" }}>{t("providerPortal.checkInModal.lastVisit", { days: daysAgo })}</div>
                     </div>
                     {waUrl ? (
-                      <a className="btn-sm forest" style={{ textDecoration: "none" }} href={waUrl} target="_blank" rel="noreferrer">💬 Message</a>
+                      <a className="btn-sm forest" style={{ textDecoration: "none" }} href={waUrl} target="_blank" rel="noreferrer">💬 {t("providerPortal.checkInModal.messageButton")}</a>
                     ) : (
-                      <span style={{ fontSize: 11, color: "var(--muted)" }}>No phone on file</span>
+                      <span style={{ fontSize: 11, color: "var(--muted)" }}>{t("providerPortal.checkInModal.noPhone")}</span>
                     )}
                   </div>
                 );
               })}
             </div>
-            <button className="btn-sm ghost" style={{ width: "100%", padding: "12px 0", marginTop: 16 }} onClick={() => setShowCheckInModal(false)}>Close</button>
+            <button className="btn-sm ghost" style={{ width: "100%", padding: "12px 0", marginTop: 16 }} onClick={() => setShowCheckInModal(false)}>{t("providerPortal.common.close")}</button>
           </div>
         </div>
       )}
@@ -9709,7 +10366,14 @@ const vaiMediaMailtoUrl = () =>
 
 const PLANS = [
   {
-    id: "starter", name: "Starter", price: "Free", desc: "Up to 30 bookings/month", monthly: 0,
+    // Renamed "Starter" -> "Trial" (display name only — `id` stays
+    // "starter" so STARTER_CAP booking-limit enforcement, the
+    // `providerProfile?.plan || "starter"` no-plan-set fallback used
+    // everywhere, and admin tooling all keep working unchanged). Per
+    // explicit instruction: "Starter" as a plan name/concept should never
+    // be user-visible — every provider is on a real (trial-then-paid)
+    // plan, never something that reads as a permanent free tier.
+    id: "starter", name: "Trial", price: "Free", desc: "Up to 30 bookings/month", monthly: 0,
     tagline: "Get listed and start taking bookings — no cost, no card required.",
     features: [
       "Up to 30 bookings a month",
@@ -9720,7 +10384,14 @@ const PLANS = [
     ],
   },
   {
-    id: "pro", name: "Pro", price: "BZ$50/mo", desc: "For solo practitioners", monthly: 50,
+    // Renamed "Pro" -> "Solo" (display name only — `id` stays "pro" so
+    // existing providers' stored plan value, admin tooling, and every
+    // `PLANS.find(p => p.id === "pro")` lookup keep working unchanged).
+    // Repriced to BZ$1.99/day per the user's explicit pricing update
+    // (was BZ$50/mo ~= BZ$1.67/day). monthly is set to exactly 59.7 so
+    // the existing (monthly/30) day-rate math lands on 1.99 everywhere
+    // it's computed, not just in this label.
+    id: "pro", name: "Solo", price: "BZ$1.99/day", desc: "For solo practitioners", monthly: 59.7,
     tagline: "For solo practitioners who want frictionless booking, automated reminders, and deposits handled for them.",
     recommended: true,
     features: [
@@ -9729,15 +10400,18 @@ const PLANS = [
       "Customizable deposits routed to your bank",
       "Your own booking page & calendar",
       "Loyalty & rewards program",
-      "A \"Pro\" badge customers see on your listing",
+      "A \"Solo\" badge customers see on your listing",
     ],
   },
   {
-    id: "business", name: "Team", price: "BZ$120/mo", desc: "Base fee + per-seat pricing", monthly: 120,
+    // Repriced to BZ$4.99/day per the user's explicit pricing update
+    // (was BZ$120/mo ~= BZ$4.00/day). monthly = 149.7 so (monthly/30)
+    // lands on exactly 4.99 wherever that math runs.
+    id: "business", name: "Team", price: "BZ$4.99/day for 1 month", desc: "Base fee + per-seat pricing", monthly: 149.7,
     priceNote: "Base fee, plus a per-seat add-on as you bring on staff",
     tagline: "For teams — a base plan covering your shop, plus staff seats you add as you grow.",
     features: [
-      "Everything in Pro",
+      "Everything in Solo",
       "Staff seats with their own logins",
       "Featured placement in district search",
       "A \"Team\" badge customers see on your listing",
@@ -9783,6 +10457,7 @@ function nearestDistrict(lat, lng) {
 const SERVICE_TYPES = ["Barber", "Hair Salon", "Nail Tech", "Spa", "Med Spa / Clinic", "Massage", "Skincare Studio", "Hair Removal Studio", "Tattoo & Piercing Studio", "Wellness Center", "Pet Grooming", "Fitness & Recovery", "Physical Therapy", "Photography", "Other"];
 
 function ProviderSignup({ onNav }) {
+  const { t } = useTranslation();
   const [plan, setPlan] = useState(() => {
     try {
       const stashed = localStorage.getItem("vaibook_signup_plan");
@@ -9804,7 +10479,7 @@ function ProviderSignup({ onNav }) {
   const handleSubmit = async () => {
     const required = ["businessName", "ownerName", "email", "phone", "serviceType", "district"];
     if (required.some(k => !form[k].trim())) {
-      alert("Please fill in all required fields.");
+      alert(t("providerSignup.validation.requiredFields"));
       return;
     }
     setLoading(true);
@@ -9829,18 +10504,18 @@ function ProviderSignup({ onNav }) {
     } catch (err) {
       setLoading(false);
       if (err?.code === "RATE_LIMITED") {
-        setSubmitError("We've received a few applications from this email/address already. Please wait an hour and try again, or WhatsApp us directly.");
+        setSubmitError(t("providerSignup.validation.rateLimited"));
       } else if (err?.code === "MAINTENANCE_MODE") {
-        setSubmitError("New applications are temporarily paused for maintenance. Please try again shortly.");
+        setSubmitError(t("providerSignup.validation.maintenanceMode"));
       } else {
-        setSubmitError("Something went wrong saving your application. Please try again, or WhatsApp us directly if it keeps failing.");
+        setSubmitError(t("providerSignup.validation.saveFailed"));
       }
       return;
     }
 
     if (!saved) {
       setLoading(false);
-      setSubmitError("Something went wrong saving your application. Please try again, or WhatsApp us directly if it keeps failing.");
+      setSubmitError(t("providerSignup.validation.saveFailed"));
       return;
     }
 
@@ -9892,14 +10567,14 @@ function ProviderSignup({ onNav }) {
             <div className="pl-pending-icon-glow"></div>
             <div className="pl-pending-icon">✓</div>
           </div>
-          <span className="pl-pending-eyebrow">Application received</span>
-          <h2>Application Received.</h2>
-          <p>VaiBook is an exclusive network for top-tier shops. Our team is reviewing your profile. Once approved, your 14-day free trial will automatically begin.</p>
+          <span className="pl-pending-eyebrow">{t("providerSignup.pending.eyebrow")}</span>
+          <h2>{t("providerSignup.pending.title")}</h2>
+          <p>{t("providerSignup.pending.body")}</p>
           <p className="pl-pending-meta">
-            Submitted for <strong>{form.businessName}</strong> ({selectedPlan.name} plan) — we'll email <strong>{form.email}</strong> as soon as you're approved.
-            Once you are, come back and click <strong>Provider login</strong> to open your portal with that same email.
+            {t("providerSignup.pending.submittedFor")} <strong>{form.businessName}</strong> {t("providerSignup.pending.planEmailLead", { planName: selectedPlan.name })} <strong>{form.email}</strong> {t("providerSignup.pending.approvedSuffix")}
+            {" "}{t("providerSignup.pending.loginPrefix")} <strong>{t("nav.providerLogin")}</strong> {t("providerSignup.pending.loginSuffix")}
           </p>
-          <button className="pl-pending-back" onClick={() => onNav("home")}>Back to home</button>
+          <button className="pl-pending-back" onClick={() => onNav("home")}>{t("providerSignup.pending.backToHome")}</button>
         </div>
       </div>
     );
@@ -9915,11 +10590,11 @@ function ProviderSignup({ onNav }) {
         <section className="pl-hero">
           <div className="pl-hero-inner">
             <div className="pl-hero-copy">
-              <span className="pl-eyebrow">✓ Invite-only for top-tier shops</span>
-              <h1>The operating system for top-tier shops.</h1>
-              <p className="pl-hero-sub">No clunky sidebars. No confusing features. Just a lightning-fast booking engine built to pack your chairs and manage your money.</p>
+              <span className="pl-eyebrow">✓ {t("providerSignup.hero.eyebrow")}</span>
+              <h1>{t("providerSignup.hero.title")}</h1>
+              <p className="pl-hero-sub">{t("providerSignup.hero.subtitle")}</p>
               <button className="pl-cta" onClick={() => document.getElementById("signup-form")?.scrollIntoView({ behavior: "smooth" })}>
-                Apply to Join
+                {t("providerSignup.hero.cta")}
               </button>
             </div>
             <div className="pl-phone-stage">
@@ -9929,16 +10604,16 @@ function ProviderSignup({ onNav }) {
                   drifts out of sync with that UI. */}
               <div className="pl-phone">
                 <div className="pl-phone-card">
-                  <div className="pl-phone-label">Today's Take</div>
+                  <div className="pl-phone-label">{t("providerSignup.hero.mockup.todaysTake")}</div>
                   <div className="pl-phone-value">BZ$482</div>
                 </div>
                 <div className="pl-phone-card">
                   <div className="pl-phone-row">
-                    <div className="pl-phone-label" style={{ marginBottom: 0 }}>Next in the Chair</div>
+                    <div className="pl-phone-label" style={{ marginBottom: 0 }}>{t("providerSignup.hero.mockup.nextInChair")}</div>
                     <span className="pl-phone-chip">2:30 PM</span>
                   </div>
                   <div className="pl-phone-name">Maria S.</div>
-                  <div className="pl-phone-meta">Signature Fade</div>
+                  <div className="pl-phone-meta">{t("providerSignup.hero.mockup.signatureFade")}</div>
                 </div>
               </div>
             </div>
@@ -9954,13 +10629,13 @@ function ProviderSignup({ onNav }) {
                 <span className="pl-tap-arrow">→</span>
                 <span className="pl-tap-circle">2</span>
                 <span className="pl-tap-arrow">→</span>
-                <span className="pl-tap-result">+ BZ$45 logged</span>
+                <span className="pl-tap-result">{t("providerSignup.hero.mockup.tapResult")}</span>
               </div>
             </div>
             <div className="pl-feature-text">
-              <div className="pl-feature-kicker">Zero friction</div>
-              <h3>The 2-Tap Walk-In.</h3>
-              <p>Log walk-in revenue instantly without leaving the home screen.</p>
+              <div className="pl-feature-kicker">{t("providerSignup.features.kicker")}</div>
+              <h3>{t("providerSignup.features.walkIn.title")}</h3>
+              <p>{t("providerSignup.features.walkIn.body")}</p>
             </div>
           </div>
 
@@ -9975,17 +10650,17 @@ function ProviderSignup({ onNav }) {
               </div>
             </div>
             <div className="pl-feature-text">
-              <div className="pl-feature-kicker">Zero friction</div>
-              <h3>Chair-Side QR Booking.</h3>
-              <p>Let clients scan your screen before they leave the chair. Never lose a rebooking.</p>
+              <div className="pl-feature-kicker">{t("providerSignup.features.kicker")}</div>
+              <h3>{t("providerSignup.features.qrBooking.title")}</h3>
+              <p>{t("providerSignup.features.qrBooking.body")}</p>
             </div>
           </div>
         </section>
 
         {/* SOCIAL PROOF */}
         <section className="pl-social">
-          <span className="pl-badge">✓ Verified Vai Partner</span>
-          <p>Join the elite network of independent barbers and salons across Belize.</p>
+          <span className="pl-badge">✓ {t("providerSignup.social.badge")}</span>
+          <p>{t("providerSignup.social.body")}</p>
           <div className="pl-ticker-mask">
             <div className="pl-ticker-track">
               {[...DISTRICTS, ...DISTRICTS].map((d, i) => (
@@ -10000,13 +10675,13 @@ function ProviderSignup({ onNav }) {
       <style>{SIGNUP_CSS}</style>
       <div className="signup-box">
         <div className="signup-header">
-          <h1>List your business on VaiBook</h1>
-          <p>Join local providers already getting booked across Belize. Takes less than 3 minutes.</p>
+          <h1>{t("providerSignup.form.header")}</h1>
+          <p>{t("providerSignup.form.subheader")}</p>
         </div>
 
         {/* Plan selector */}
         <div style={{ marginBottom: 8 }}>
-          <div className="form-section-title" style={{ borderBottom: "none", paddingBottom: 0, marginBottom: 12 }}>Choose your plan</div>
+          <div className="form-section-title" style={{ borderBottom: "none", paddingBottom: 0, marginBottom: 12 }}>{t("providerSignup.form.choosePlan")}</div>
         </div>
         <div className="plan-selector">
           {PUBLIC_PLANS.map(p => (
@@ -10020,51 +10695,51 @@ function ProviderSignup({ onNav }) {
 
         {/* Form */}
         <div className="signup-form-card">
-          <div className="form-section-title">Business details</div>
+          <div className="form-section-title">{t("providerSignup.form.businessDetails")}</div>
           <div className="form-row">
             <div className="input-group">
-              <label>Business name *</label>
-              <input placeholder="e.g. Karim's Cuts" value={form.businessName} onChange={e => set("businessName", e.target.value)} />
+              <label>{t("providerSignup.form.businessName")}</label>
+              <input placeholder={t("providerSignup.form.businessNamePlaceholder")} value={form.businessName} onChange={e => set("businessName", e.target.value)} />
             </div>
             <div className="input-group">
-              <label>Owner / contact name *</label>
-              <input placeholder="Your full name" value={form.ownerName} onChange={e => set("ownerName", e.target.value)} />
+              <label>{t("providerSignup.form.ownerName")}</label>
+              <input placeholder={t("providerSignup.form.ownerNamePlaceholder")} value={form.ownerName} onChange={e => set("ownerName", e.target.value)} />
             </div>
           </div>
           <div className="form-row">
             <div className="input-group">
-              <label>Email *</label>
+              <label>{t("providerSignup.form.email")}</label>
               <input type="email" placeholder="you@email.com" value={form.email} onChange={e => set("email", e.target.value)} />
             </div>
             <div className="input-group">
-              <label>WhatsApp / Phone *</label>
+              <label>{t("providerSignup.form.whatsappPhone")}</label>
               <input placeholder="+501 600 0000" value={form.phone} onChange={e => set("phone", e.target.value)} />
             </div>
           </div>
           <div className="form-row">
             <div className="input-group">
-              <label>Service type *</label>
+              <label>{t("providerSignup.form.serviceType")}</label>
               <select value={form.serviceType} onChange={e => set("serviceType", e.target.value)}>
-                <option value="">Select a service</option>
+                <option value="">{t("providerSignup.form.selectService")}</option>
                 {SERVICE_TYPES.map(s => <option key={s}>{s}</option>)}
               </select>
             </div>
             <div className="input-group">
-              <label>District *</label>
+              <label>{t("providerSignup.form.district")}</label>
               <select value={form.district} onChange={e => set("district", e.target.value)}>
-                <option value="">Select your district</option>
+                <option value="">{t("providerSignup.form.selectDistrict")}</option>
                 {DISTRICTS.map(d => <option key={d}>{d}</option>)}
               </select>
             </div>
           </div>
           <div className="input-group">
-            <label>Tell customers about your business (optional)</label>
-            <textarea placeholder="Years of experience, specialties, location details..." value={form.description} onChange={e => set("description", e.target.value)} />
+            <label>{t("providerSignup.form.description")}</label>
+            <textarea placeholder={t("providerSignup.form.descriptionPlaceholder")} value={form.description} onChange={e => set("description", e.target.value)} />
           </div>
         </div>
 
         <button className="signup-submit" onClick={handleSubmit} disabled={loading}>
-          {loading ? "Submitting..." : `Apply for ${selectedPlan.name} plan →`}
+          {loading ? t("providerSignup.form.submitting") : t("providerSignup.form.applyForPlan", { planName: selectedPlan.name })}
         </button>
         {submitError && (
           <p style={{ textAlign: "center", fontSize: 13, color: "#B91C1C", marginTop: 12, fontWeight: 600 }}>
@@ -10072,7 +10747,7 @@ function ProviderSignup({ onNav }) {
           </p>
         )}
         <p style={{ textAlign: "center", fontSize: 12, color: "var(--muted)", marginTop: 12 }}>
-          We review every application within 24 hours. No credit card required to apply.
+          {t("providerSignup.form.footerNote")}
         </p>
       </div>
     </div>
@@ -10900,11 +11575,6 @@ export default function App() {
   // page or the real ProviderSignup application form.
   const [showProviderSignup, setShowProviderSignup] = useState(false);
 
-  // Light/dark theme now lives in ThemeContext (src/ThemeContext.jsx),
-  // provided once at the app root in index.js, so it's reachable from
-  // anywhere via useTheme() instead of being threaded through authProps.
-  // Nav, ThemeToggle, and the Provider Portal topbar all read it directly.
-
   // Site-wide offline takeover (see SiteOffline / AdminPortal's Emergency
   // tab). Checked independently of the session/loading flow below so it
   // still shows up even if, say, Google sign-in itself is having issues —
@@ -11150,6 +11820,54 @@ export default function App() {
     return () => subscription.unsubscribe();
   }, []);
 
+  // SOLO-PLAN SINGLE SESSION (Starter/Pro only — "Team"/business plan is
+  // exempt, since multiple staff are expected to be signed in concurrently
+  // on their own devices). Runs whenever providerProfile settles onto a
+  // real Starter/Pro business: rotates this device's session token (which
+  // silently invalidates whatever device was previously logged into this
+  // same account), then listens for the token changing again — meaning a
+  // newer login happened somewhere else — and signs this device out the
+  // moment that happens, rather than leaving it quietly logged in. See
+  // supabase_solo_single_session.sql / the new helpers in supabase.js.
+  useEffect(() => {
+    if (!providerProfile || providerProfile.plan === "business") return;
+    let unsubscribe;
+    let cancelled = false;
+
+    const forceSignOutHere = async () => {
+      clearLocalSoloSessionToken();
+      await signOut();
+      setView("home");
+      alert("You've been signed out because this account just signed in on another device.");
+    };
+
+    (async () => {
+      // One-shot backstop: if the server's token already doesn't match what
+      // this device has cached (e.g. this tab was asleep/backgrounded while
+      // another device logged in and the Realtime socket missed it), don't
+      // wait for a future change event — catch it right away.
+      const existingLocal = getLocalSoloSessionToken();
+      if (existingLocal) {
+        const serverToken = await getServerSoloSessionToken(providerProfile.user_id);
+        if (serverToken && serverToken !== existingLocal) {
+          if (!cancelled) await forceSignOutHere();
+          return;
+        }
+      }
+
+      await establishSoloSession(providerProfile.id);
+      if (cancelled) return;
+      unsubscribe = subscribeToSoloSessionReplacement(providerProfile.user_id, () => {
+        if (!cancelled) forceSignOutHere();
+      });
+    })();
+
+    return () => {
+      cancelled = true;
+      unsubscribe?.();
+    };
+  }, [providerProfile?.id, providerProfile?.plan, providerProfile?.user_id]);
+
   // Re-check admin status whenever the site is offline and we have (or
   // gain) a signed-in user — this is what lets the "Site owner? Sign in"
   // link on SiteOffline actually get you past it once you're recognized.
@@ -11170,6 +11888,7 @@ export default function App() {
   }, [view]);
 
   const handleSignOut = async () => {
+    clearLocalSoloSessionToken();
     await signOut();
     setView("home");
     try { localStorage.removeItem("vaibook_last_view"); } catch (e) { /* ignore */ }
@@ -11241,6 +11960,9 @@ export default function App() {
       {view === "signup" && <ProviderSignup onNav={setView} {...authProps} />}
       {view === "admin" && <AdminPortal onNav={setView} {...authProps} />}
       {view === "auth" && <AuthChoice onNav={setView} {...authProps} />}
+      {view === "help" && <HelpCenter onNav={setView} />}
+      {view === "help-contact" && <HelpContactForm onNav={setView} />}
+      {view === "help-faq" && <HelpFAQ onNav={setView} />}
     </>
   );
 }

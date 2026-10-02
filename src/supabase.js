@@ -76,6 +76,74 @@ export const getSession = async () => {
   return session;
 };
 
+// ── SOLO-PLAN SINGLE SESSION (Starter/Pro only) ──────────────────
+// A Starter or Pro ("Solo") provider is a single person — if their login
+// shows up on a second device, the first one should get signed out, not
+// stay live alongside it. Business ("Team") plan providers are exempt:
+// multiple staff are expected to be signed in concurrently on their own
+// devices/accounts.
+//
+// Mechanism: one row per provider user in `provider_sessions` holding an
+// opaque `session_token`. Logging in rotates it (rotate_provider_session,
+// see supabase_solo_single_session.sql) and the new token is cached in
+// localStorage on this device. Every other device still has the OLD token
+// cached — subscribeToSoloSessionReplacement below listens for the row
+// changing and fires as soon as that happens, so a stale device gets
+// signed out within moments instead of silently staying logged in.
+//
+// Requires Realtime enabled on `provider_sessions` (Supabase dashboard →
+// Database → Replication → toggle it on) — the postgres_changes
+// subscription below depends on it.
+const SOLO_SESSION_KEY = 'vaibook_solo_session_token';
+
+export const establishSoloSession = async (providerId) => {
+  const { data: newToken, error } = await supabase.rpc('rotate_provider_session', {
+    p_provider_id: providerId,
+  });
+  if (error) { console.error('Error establishing solo session:', error.message); return null; }
+  localStorage.setItem(SOLO_SESSION_KEY, newToken);
+  return newToken;
+};
+
+export const getLocalSoloSessionToken = () => localStorage.getItem(SOLO_SESSION_KEY);
+
+export const clearLocalSoloSessionToken = () => localStorage.removeItem(SOLO_SESSION_KEY);
+
+// One-shot check against the server's current token — used on mount and on
+// tab-focus, as a backstop for the Realtime subscription below (sockets can
+// silently drop on a flaky connection; this catches a replacement that
+// happened while this tab was backgrounded or the socket was down).
+export const getServerSoloSessionToken = async (userId) => {
+  const { data, error } = await supabase
+    .from('provider_sessions')
+    .select('session_token')
+    .eq('user_id', userId)
+    .maybeSingle();
+  if (error) { console.error('Error checking solo session token:', error.message); return null; }
+  return data?.session_token || null;
+};
+
+// Subscribes to this provider's session row; calls onReplaced() the moment
+// another device rotates the token (i.e. signs in elsewhere). Returns an
+// unsubscribe function — call it on sign-out / unmount.
+export const subscribeToSoloSessionReplacement = (userId, onReplaced) => {
+  if (!userId) return () => {};
+  const channel = supabase
+    .channel(`provider-session-${userId}`)
+    .on(
+      'postgres_changes',
+      { event: 'UPDATE', schema: 'public', table: 'provider_sessions', filter: `user_id=eq.${userId}` },
+      (payload) => {
+        const localToken = getLocalSoloSessionToken();
+        if (payload.new?.session_token && payload.new.session_token !== localToken) {
+          onReplaced();
+        }
+      }
+    )
+    .subscribe();
+  return () => supabase.removeChannel(channel);
+};
+
 // ── USER HELPERS ─────────────────────────────────────────────────
 
 export const getOrCreateUser = async (authUser) => {
