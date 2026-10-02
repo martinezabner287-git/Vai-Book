@@ -1,6 +1,6 @@
 
 import { useState, useEffect, useLayoutEffect, useRef, useContext, createContext, lazy, Suspense } from "react";
-import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, deleteService, getActiveProviders, getProviderDirectory, createBooking, getProviderBusyWindows, createBookingSafe, cancelBooking, getCustomerBookings, uploadReceipt, submitReview, getProviderReviews, updateReview, sendBookingEmail, updateUserProfile, getPaymentMethods, addPaymentMethod, deletePaymentMethod, createNotification, getNotifications, markNotificationRead, markAllNotificationsRead, getCategoryDefaultFeatures, getProviderFeatureOverrides, setProviderFeatureOverride, getVisitNotes, upsertVisitNote, adminListProviders, adminUpdateProvider, adminDeleteProvider, getFavoriteProviderIds, getFavoriteProviders, addFavorite, removeFavorite, getBookingMessages, sendBookingMessage, markBookingMessagesRead, getUnreadBookingMessages, getProviderMonthlyTrend, createProviderProfile, getProviderById, createWalkInBooking, submitProviderPayment, getMyProviderPayments, adminListProviderPayments, adminReviewProviderPayment, submitBookingRefund, adminListBookingRefunds, openPrivateFile, getProviderStaff, addProviderStaff, updateProviderStaff, deleteProviderStaff, getLoyaltyAccount, getProviderLoyaltyCustomers, redeemLoyaltyReward, getMyStaffProfile, claimStaffSeatByEmail, getStaffBookings, getProviderNotifyEmail, getMaintenanceStatus, setMaintenanceMode, getSiteOfflineStatus, setSiteOffline, sendEmailOtp, verifyEmailOtp, savePushSubscription, attachBookingServices, getProviderBlocks, insertProviderBlock, deleteProviderBlock, proposeBookingReschedule, confirmBookingReschedule, declineBookingReschedule, withdrawBookingReschedule } from "./supabase";
+import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, deleteService, getActiveProviders, getProviderDirectory, createBooking, getProviderBusyWindows, createBookingSafe, cancelBooking, getCustomerBookings, uploadReceipt, submitReview, getProviderReviews, updateReview, sendBookingEmail, updateUserProfile, getPaymentMethods, addPaymentMethod, deletePaymentMethod, createNotification, getNotifications, markNotificationRead, markAllNotificationsRead, getCategoryDefaultFeatures, getProviderFeatureOverrides, setProviderFeatureOverride, getVisitNotes, upsertVisitNote, adminListProviders, adminUpdateProvider, adminDeleteProvider, getFavoriteProviderIds, getFavoriteProviders, addFavorite, removeFavorite, getBookingMessages, sendBookingMessage, markBookingMessagesRead, getUnreadBookingMessages, getProviderMonthlyTrend, createProviderProfile, getProviderById, createWalkInBooking, submitProviderPayment, getMyProviderPayments, adminListProviderPayments, adminReviewProviderPayment, submitBookingRefund, adminListBookingRefunds, openPrivateFile, getProviderStaff, addProviderStaff, updateProviderStaff, deleteProviderStaff, getLoyaltyAccount, getProviderLoyaltyCustomers, redeemLoyaltyReward, getMyStaffProfile, claimStaffSeatByEmail, getStaffBookings, getProviderNotifyEmail, getMaintenanceStatus, setMaintenanceMode, getSiteOfflineStatus, setSiteOffline, sendEmailOtp, verifyEmailOtp, savePushSubscription, attachBookingServices, getProviderBlocks, insertProviderBlock, deleteProviderBlock, proposeBookingReschedule, confirmBookingReschedule, declineBookingReschedule, withdrawBookingReschedule, establishSoloSession, getServerSoloSessionToken, getLocalSoloSessionToken, clearLocalSoloSessionToken, subscribeToSoloSessionReplacement } from "./supabase";
 import AdminDashboard from "./AdminDashboard";
 import ProviderSignupModal from "./ProviderSignupModal";
 import LanguageSelector from "./LanguageSelector";
@@ -11820,6 +11820,54 @@ export default function App() {
     return () => subscription.unsubscribe();
   }, []);
 
+  // SOLO-PLAN SINGLE SESSION (Starter/Pro only — "Team"/business plan is
+  // exempt, since multiple staff are expected to be signed in concurrently
+  // on their own devices). Runs whenever providerProfile settles onto a
+  // real Starter/Pro business: rotates this device's session token (which
+  // silently invalidates whatever device was previously logged into this
+  // same account), then listens for the token changing again — meaning a
+  // newer login happened somewhere else — and signs this device out the
+  // moment that happens, rather than leaving it quietly logged in. See
+  // supabase_solo_single_session.sql / the new helpers in supabase.js.
+  useEffect(() => {
+    if (!providerProfile || providerProfile.plan === "business") return;
+    let unsubscribe;
+    let cancelled = false;
+
+    const forceSignOutHere = async () => {
+      clearLocalSoloSessionToken();
+      await signOut();
+      setView("home");
+      alert("You've been signed out because this account just signed in on another device.");
+    };
+
+    (async () => {
+      // One-shot backstop: if the server's token already doesn't match what
+      // this device has cached (e.g. this tab was asleep/backgrounded while
+      // another device logged in and the Realtime socket missed it), don't
+      // wait for a future change event — catch it right away.
+      const existingLocal = getLocalSoloSessionToken();
+      if (existingLocal) {
+        const serverToken = await getServerSoloSessionToken(providerProfile.user_id);
+        if (serverToken && serverToken !== existingLocal) {
+          if (!cancelled) await forceSignOutHere();
+          return;
+        }
+      }
+
+      await establishSoloSession(providerProfile.id);
+      if (cancelled) return;
+      unsubscribe = subscribeToSoloSessionReplacement(providerProfile.user_id, () => {
+        if (!cancelled) forceSignOutHere();
+      });
+    })();
+
+    return () => {
+      cancelled = true;
+      unsubscribe?.();
+    };
+  }, [providerProfile?.id, providerProfile?.plan, providerProfile?.user_id]);
+
   // Re-check admin status whenever the site is offline and we have (or
   // gain) a signed-in user — this is what lets the "Site owner? Sign in"
   // link on SiteOffline actually get you past it once you're recognized.
@@ -11840,6 +11888,7 @@ export default function App() {
   }, [view]);
 
   const handleSignOut = async () => {
+    clearLocalSoloSessionToken();
     await signOut();
     setView("home");
     try { localStorage.removeItem("vaibook_last_view"); } catch (e) { /* ignore */ }
