@@ -558,6 +558,7 @@
       "sending": "Enviando...",
       "adding": "Agregando...",
       "remove": "Quitar",
+      "edit": "Editar",
       "loading": "Cargando...",
       "close": "Cerrar",
       "on": "Activado",
@@ -801,7 +802,9 @@
       "serviceName": "Nombre del servicio",
       "serviceNamePlaceholder": "ej. Tratamiento de color completo",
       "price": "Precio (BZ$)",
-      "adding": "Agregando..."
+      "adding": "Agregando...",
+      "descriptionLabel": "Descripción (opcional)",
+      "descriptionPlaceholder": "ej. Qué incluye, qué esperar, cualquier cosa que el cliente deba saber antes de reservar."
     },
     "earnings": {
       "subtitle": "Los clientes te pagan directamente a ti — lleva el control de tus ingresos aquí.",
