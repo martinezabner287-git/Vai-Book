@@ -2310,10 +2310,23 @@ function FeatureGate({ flag, children, fallback = null }) {
   return flags[flag] ? children : fallback;
 }
 
-// Settings → Modules: shows core features (always on) plus every industry
-// module, pre-toggled from the provider's category defaults, with a manual
-// per-provider override switch. This is the live UI for the adaptive
-// feature-flag system described in the architecture doc.
+// Which industry modules are actually wired to real functionality
+// somewhere in the app. Checked directly against every <FeatureGate> usage
+// — soap_charting is the only one that gates anything (the Visit Notes
+// button on completed bookings). The rest of INDUSTRY_FEATURE_CATALOG are
+// scaffolding for features that don't exist yet: nothing reads their flag,
+// so toggling them on used to look like it worked (even
+// pre-toggled "on" by category default) while silently doing nothing.
+// Rather than let providers flip switches that go nowhere, anything not in
+// this list now renders locked with a "Coming soon" badge instead of a
+// working toggle. Add a key here the day it actually gets wired up.
+const LIVE_INDUSTRY_FEATURES = ["soap_charting"];
+
+// Settings → Modules: shows core features (always on), the one live
+// industry module (soap_charting, pre-toggled from the provider's category
+// defaults, with a manual per-provider override switch), and every other
+// industry module as a locked "Coming soon" row. This is the live UI for
+// the adaptive feature-flag system described in the architecture doc.
 function ModulesPanel() {
   const { flags, loading, defaults, categoryKey, setOverride } = useFeatureFlags();
   const categoryLabel = (BUSINESS_CATEGORIES.find((c) => c.key === categoryKey) || {}).label || "General Service";
@@ -2322,7 +2335,7 @@ function ModulesPanel() {
     <>
       <div className="portal-header">
         <h2>Modules</h2>
-        <p>Your default modules come from your business category ({categoryLabel}). Toggle any module on or off for your account.</p>
+        <p>Your default modules come from your business category ({categoryLabel}). These are free — nothing here is a paid add-on. Most industry modules are still in development; only the ones marked live actually do anything yet.</p>
       </div>
       <div className="card" style={{ maxWidth: 560 }}>
         <div className="card-title">Core — included for every provider</div>
@@ -2340,23 +2353,46 @@ function ModulesPanel() {
         {loading ? (
           <p style={{ fontSize: 13, color: "var(--muted)" }}>Loading modules...</p>
         ) : (
-          Object.keys(INDUSTRY_FEATURE_CATALOG).map((key) => {
-            const f = INDUSTRY_FEATURE_CATALOG[key];
-            const isOn = !!flags[key];
-            const isDefault = defaults.includes(key);
-            return (
-              <div key={key} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", borderBottom: "1px solid var(--border)" }}>
-                <div>
-                  <div style={{ fontSize: 14 }}>
-                    {f.icon} {f.label}
-                    {isDefault && <span style={{ fontSize: 10, color: "var(--forest-light)", fontWeight: 700, marginLeft: 6 }}>RECOMMENDED FOR YOUR CATEGORY</span>}
+          <>
+            {/* Live modules first, so the one real toggle isn't buried
+                between locked rows — then a labeled break, then every
+                locked "Coming soon" module grouped together below it. */}
+            {Object.keys(INDUSTRY_FEATURE_CATALOG).filter((key) => LIVE_INDUSTRY_FEATURES.includes(key)).map((key) => {
+              const f = INDUSTRY_FEATURE_CATALOG[key];
+              const isOn = !!flags[key];
+              const isDefault = defaults.includes(key);
+              return (
+                <div key={key} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", borderBottom: "1px solid var(--border)" }}>
+                  <div>
+                    <div style={{ fontSize: 14 }}>
+                      {f.icon} {f.label}
+                      {isDefault && <span style={{ fontSize: 10, color: "var(--forest-light)", fontWeight: 700, marginLeft: 6 }}>RECOMMENDED FOR YOUR CATEGORY</span>}
+                    </div>
+                    <div style={{ fontSize: 12, color: "var(--muted)" }}>{f.desc}</div>
                   </div>
-                  <div style={{ fontSize: 12, color: "var(--muted)" }}>{f.desc}</div>
+                  <div className={`toggle ${isOn ? "on" : ""}`} onClick={() => setOverride(key, !isOn)}></div>
                 </div>
-                <div className={`toggle ${isOn ? "on" : ""}`} onClick={() => setOverride(key, !isOn)}></div>
-              </div>
-            );
-          })
+              );
+            })}
+            <div style={{ fontSize: 11, color: "var(--muted)", fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.4, marginTop: 20, marginBottom: 4 }}>
+              In development
+            </div>
+            {Object.keys(INDUSTRY_FEATURE_CATALOG).filter((key) => !LIVE_INDUSTRY_FEATURES.includes(key)).map((key) => {
+              const f = INDUSTRY_FEATURE_CATALOG[key];
+              return (
+                <div key={key} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", borderBottom: "1px solid var(--border)", opacity: 0.5 }}>
+                  <div>
+                    <div style={{ fontSize: 14 }}>
+                      {f.icon} {f.label}
+                      <span style={{ fontSize: 10, color: "var(--muted)", fontWeight: 700, marginLeft: 6 }}>COMING SOON</span>
+                    </div>
+                    <div style={{ fontSize: 12, color: "var(--muted)" }}>{f.desc}</div>
+                  </div>
+                  <div className="toggle" style={{ cursor: "not-allowed" }} title="Coming soon"></div>
+                </div>
+              );
+            })}
+          </>
         )}
       </div>
     </>
