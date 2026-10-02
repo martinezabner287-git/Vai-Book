@@ -79,11 +79,11 @@
   "auth": {
     "back": "Volver",
     "signUpLogIn": "Registrarse / iniciar sesión",
-    "forCustomers": "VaiBook para clientes",
+    "forCustomers": "Para clientes",
     "bookLocalServices": "Reserva servicios locales cerca de ti",
-    "forProfessionals": "VaiBook para profesionales",
+    "forProfessionals": "Para profesionales",
     "manageAndGrow": "Administra y haz crecer tu negocio",
-    "alreadyListed": "Ya tengo un negocio en VaiBook",
+    "alreadyListed": "Ya tengo un negocio registrado",
     "alreadyListedDesc": "Inicia sesión con Google para administrarlo",
     "newBusiness": "Negocio nuevo",
     "newBusinessDesc": "Solicita inscribirlo — aún no necesitas una cuenta"
