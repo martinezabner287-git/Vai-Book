@@ -1,6 +1,6 @@
 
 import { useState, useEffect, useLayoutEffect, useRef, useContext, createContext, lazy, Suspense } from "react";
-import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, deleteService, getActiveProviders, getProviderDirectory, createBooking, getProviderBusyWindows, createBookingSafe, cancelBooking, getCustomerBookings, uploadReceipt, submitReview, getProviderReviews, updateReview, sendBookingEmail, updateUserProfile, getPaymentMethods, addPaymentMethod, deletePaymentMethod, createNotification, getNotifications, markNotificationRead, markAllNotificationsRead, getCategoryDefaultFeatures, getProviderFeatureOverrides, setProviderFeatureOverride, getVisitNotes, upsertVisitNote, adminListProviders, adminUpdateProvider, adminDeleteProvider, getFavoriteProviderIds, getFavoriteProviders, addFavorite, removeFavorite, getBookingMessages, sendBookingMessage, markBookingMessagesRead, getUnreadBookingMessages, getProviderMonthlyTrend, createProviderProfile, getProviderById, createWalkInBooking, submitProviderPayment, getMyProviderPayments, adminListProviderPayments, adminReviewProviderPayment, submitBookingRefund, adminListBookingRefunds, openPrivateFile, getProviderStaff, addProviderStaff, updateProviderStaff, deleteProviderStaff, getLoyaltyAccount, getProviderLoyaltyCustomers, redeemLoyaltyReward, getMyStaffProfile, claimStaffSeatByEmail, getStaffBookings, getProviderNotifyEmail, getMaintenanceStatus, setMaintenanceMode, getSiteOfflineStatus, setSiteOffline, sendEmailOtp, verifyEmailOtp, savePushSubscription, attachBookingServices, getProviderBlocks, insertProviderBlock, deleteProviderBlock, proposeBookingReschedule, confirmBookingReschedule, declineBookingReschedule, withdrawBookingReschedule, establishSoloSession, getServerSoloSessionToken, getLocalSoloSessionToken, clearLocalSoloSessionToken, subscribeToSoloSessionReplacement } from "./supabase";
+import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, updateService, deleteService, getActiveProviders, getProviderDirectory, createBooking, getProviderBusyWindows, createBookingSafe, cancelBooking, getCustomerBookings, uploadReceipt, submitReview, getProviderReviews, updateReview, sendBookingEmail, updateUserProfile, getPaymentMethods, addPaymentMethod, deletePaymentMethod, createNotification, getNotifications, markNotificationRead, markAllNotificationsRead, getCategoryDefaultFeatures, getProviderFeatureOverrides, setProviderFeatureOverride, getVisitNotes, upsertVisitNote, adminListProviders, adminUpdateProvider, adminDeleteProvider, getFavoriteProviderIds, getFavoriteProviders, addFavorite, removeFavorite, getBookingMessages, sendBookingMessage, markBookingMessagesRead, getUnreadBookingMessages, getProviderMonthlyTrend, createProviderProfile, getProviderById, createWalkInBooking, submitProviderPayment, getMyProviderPayments, adminListProviderPayments, adminReviewProviderPayment, submitBookingRefund, adminListBookingRefunds, openPrivateFile, getProviderStaff, addProviderStaff, updateProviderStaff, deleteProviderStaff, getLoyaltyAccount, getProviderLoyaltyCustomers, redeemLoyaltyReward, getMyStaffProfile, claimStaffSeatByEmail, getStaffBookings, getProviderNotifyEmail, getMaintenanceStatus, setMaintenanceMode, getSiteOfflineStatus, setSiteOffline, sendEmailOtp, verifyEmailOtp, savePushSubscription, attachBookingServices, getProviderBlocks, insertProviderBlock, deleteProviderBlock, proposeBookingReschedule, confirmBookingReschedule, declineBookingReschedule, withdrawBookingReschedule, establishSoloSession, getServerSoloSessionToken, getLocalSoloSessionToken, clearLocalSoloSessionToken, subscribeToSoloSessionReplacement } from "./supabase";
 import AdminDashboard from "./AdminDashboard";
 import ProviderSignupModal from "./ProviderSignupModal";
 import LanguageSelector from "./LanguageSelector";
@@ -6472,6 +6472,7 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
                                     <div>
                                       <div className="service-card-name" style={{ fontWeight: 600, fontSize: 14, color: "var(--dark-text)" }}>{s.name}</div>
                                       <div className="service-card-meta" style={{ fontSize: 12, color: "var(--muted)" }}>{t("customerPortal.booking.durationMin", { count: s.duration_min })} · BZ${s.price}</div>
+                                      {s.description && <div style={{ fontSize: 12.5, color: "var(--muted)", marginTop: 3, maxWidth: 280 }}>{s.description}</div>}
                                     </div>
                                   </div>
                                   <div style={{ display: "flex", gap: 6 }} onClick={(e) => e.stopPropagation()}>
@@ -6869,8 +6870,11 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
   const [locationLabel, setLocationLabel] = useState("");
   const [savingLocation, setSavingLocation] = useState(false);
   const [services, setServices] = useState([]);
-  const [serviceForm, setServiceForm] = useState({ name: "", price: "", duration_min: 15 });
+  const [serviceForm, setServiceForm] = useState({ name: "", price: "", duration_min: 15, description: "" });
   const [savingService, setSavingService] = useState(false);
+  const [editingServiceId, setEditingServiceId] = useState(null);
+  const [editServiceForm, setEditServiceForm] = useState({ name: "", price: "", duration_min: 15, description: "" });
+  const [savingServiceEdit, setSavingServiceEdit] = useState(false);
   const [respondingId, setRespondingId] = useState(null);
   const [responseType, setResponseType] = useState(null);
   const [responseMessage, setResponseMessage] = useState("");
@@ -7925,11 +7929,12 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
       name: serviceForm.name.trim(),
       price: Number(serviceForm.price) || 0,
       duration_min: Number(serviceForm.duration_min) || 15,
+      description: serviceForm.description.trim() || null,
       is_active: true,
     });
     if (created) {
       setServices((prev) => [...prev, created]);
-      setServiceForm({ name: "", price: "", duration_min: 15 });
+      setServiceForm({ name: "", price: "", duration_min: 15, description: "" });
     }
     setSavingService(false);
   };
@@ -7937,6 +7942,36 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
   const handleDeleteService = async (serviceId) => {
     setServices((prev) => prev.filter((s) => s.id !== serviceId));
     await deleteService(serviceId);
+  };
+
+  const handleStartEditService = (s) => {
+    setEditingServiceId(s.id);
+    setEditServiceForm({
+      name: s.name || "",
+      price: s.price ?? "",
+      duration_min: s.duration_min || 15,
+      description: s.description || "",
+    });
+  };
+
+  const handleCancelEditService = () => {
+    setEditingServiceId(null);
+  };
+
+  const handleSaveEditService = async (serviceId) => {
+    if (!editServiceForm.name.trim()) return;
+    setSavingServiceEdit(true);
+    const updated = await updateService(serviceId, {
+      name: editServiceForm.name.trim(),
+      price: Number(editServiceForm.price) || 0,
+      duration_min: Number(editServiceForm.duration_min) || 15,
+      description: editServiceForm.description.trim() || null,
+    });
+    if (updated) {
+      setServices((prev) => prev.map((s) => (s.id === serviceId ? updated : s)));
+      setEditingServiceId(null);
+    }
+    setSavingServiceEdit(false);
   };
 
   // TOP NAV REDESIGN — same destinations the old sidebar had, regrouped:
@@ -9133,15 +9168,46 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                 <p style={{ fontSize: 13, color: "var(--muted)", padding: "12px 0" }}>{t("providerPortal.services.noneYet")}</p>
               )}
               {services.map((s) => (
-                <div className="provider-service" key={s.id}>
-                  <div>
-                    <div style={{ fontSize: 14, fontWeight: 600 }}>{s.name}</div>
-                    <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 2 }}>{t("providerPortal.common.durationMin", { count: s.duration_min })}</div>
-                  </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                    <span style={{ fontWeight: 700, color: "var(--accent-text)" }}>BZ${s.price}</span>
-                    <button className="btn-sm ghost" style={{ fontSize: 12 }} onClick={() => handleDeleteService(s.id)}>{t("providerPortal.common.remove")}</button>
-                  </div>
+                <div className="provider-service" key={s.id} style={{ display: "block" }}>
+                  {editingServiceId === s.id ? (
+                    <div style={{ padding: "8px 0" }}>
+                      <div className="input-group"><label>{t("providerPortal.services.serviceName")}</label><input placeholder={t("providerPortal.services.serviceNamePlaceholder")} value={editServiceForm.name} onChange={e => setEditServiceForm(f => ({ ...f, name: e.target.value }))} /></div>
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                        <div className="input-group"><label>{t("providerPortal.services.price")}</label><input type="number" placeholder="0" value={editServiceForm.price} onChange={e => setEditServiceForm(f => ({ ...f, price: e.target.value }))} /></div>
+                        <div className="input-group">
+                          <label>{t("providerPortal.common.duration")}</label>
+                          <select value={editServiceForm.duration_min} onChange={e => setEditServiceForm(f => ({ ...f, duration_min: e.target.value }))}>
+                            <option value={15}>{t("providerPortal.common.durationMin", { count: 15 })}</option>
+                            <option value={30}>{t("providerPortal.common.durationMin", { count: 30 })}</option>
+                            <option value={45}>{t("providerPortal.common.durationMin", { count: 45 })}</option>
+                            <option value={60}>{t("providerPortal.common.durationMin", { count: 60 })}</option>
+                            <option value={90}>{t("providerPortal.common.durationMin", { count: 90 })}</option>
+                          </select>
+                        </div>
+                      </div>
+                      <div className="input-group">
+                        <label>{t("providerPortal.services.descriptionLabel")}</label>
+                        <textarea rows={2} placeholder={t("providerPortal.services.descriptionPlaceholder")} value={editServiceForm.description} onChange={e => setEditServiceForm(f => ({ ...f, description: e.target.value }))} />
+                      </div>
+                      <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+                        <button className="btn-sm lime" disabled={savingServiceEdit || !editServiceForm.name.trim()} onClick={() => handleSaveEditService(s.id)}>{savingServiceEdit ? t("providerPortal.common.saving") : t("providerPortal.common.save")}</button>
+                        <button className="btn-sm ghost" onClick={handleCancelEditService}>{t("providerPortal.common.cancel")}</button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                      <div>
+                        <div style={{ fontSize: 14, fontWeight: 600 }}>{s.name}</div>
+                        <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 2 }}>{t("providerPortal.common.durationMin", { count: s.duration_min })}</div>
+                        {s.description && <div style={{ fontSize: 12.5, color: "var(--muted)", marginTop: 4, maxWidth: 320 }}>{s.description}</div>}
+                      </div>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <span style={{ fontWeight: 700, color: "var(--accent-text)" }}>BZ${s.price}</span>
+                        <button className="btn-sm ghost" style={{ fontSize: 12 }} onClick={() => handleStartEditService(s)}>{t("providerPortal.common.edit")}</button>
+                        <button className="btn-sm ghost" style={{ fontSize: 12 }} onClick={() => handleDeleteService(s.id)}>{t("providerPortal.common.remove")}</button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))}
               <div style={{ marginTop: 20, paddingTop: 16, borderTop: "1px solid var(--border)" }}>
@@ -9159,6 +9225,10 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                       <option value={90}>{t("providerPortal.common.durationMin", { count: 90 })}</option>
                     </select>
                   </div>
+                </div>
+                <div className="input-group">
+                  <label>{t("providerPortal.services.descriptionLabel")}</label>
+                  <textarea rows={2} placeholder={t("providerPortal.services.descriptionPlaceholder")} value={serviceForm.description} onChange={e => setServiceForm(f => ({ ...f, description: e.target.value }))} />
                 </div>
                 <button className="btn-sm lime" onClick={handleAddService} disabled={savingService || !serviceForm.name.trim()}>{savingService ? t("providerPortal.services.adding") : t("providerPortal.services.addService")}</button>
               </div>
