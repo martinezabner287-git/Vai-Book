@@ -11930,6 +11930,35 @@ export default function App() {
     };
   }, [providerProfile?.id, providerProfile?.plan, providerProfile?.user_id]);
 
+  // AUTO-PROMPT FOR PUSH NOTIFICATIONS, once, right after sign-in. Before
+  // this, turning push on required finding a "Turn on" button buried in
+  // Settings — most people never would, and every one of them is someone
+  // who could miss a booking update they'd have wanted. This asks once per
+  // device (not once per login — the "already asked" flag persists across
+  // sessions) via the browser's own permission prompt, for both customers
+  // and providers; it never re-asks after that, whichever way they answer,
+  // same as the browser itself (a "Block" decision can't be re-prompted
+  // short of the visitor changing it in their own browser settings).
+  // Applies for every signed-in account regardless of which portal they're
+  // in, since this effect lives in App() itself rather than inside either
+  // portal component.
+  const { pushEnabled: autoPushEnabled, enablePushNotifications: autoEnablePush } = usePushSubscription(user?.id);
+  useEffect(() => {
+    if (!user?.id) return;
+    if (autoPushEnabled) return;
+    if (typeof window === "undefined" || !("Notification" in window)) return;
+    let alreadyPrompted = false;
+    try { alreadyPrompted = localStorage.getItem("vaibook_push_auto_prompted") === "1"; } catch (e) { /* ignore */ }
+    if (alreadyPrompted) return;
+    try { localStorage.setItem("vaibook_push_auto_prompted", "1"); } catch (e) { /* ignore */ }
+    // Only actually show the browser's prompt when nothing's been decided
+    // yet — if it's already "granted" there's nothing to do, and if it's
+    // already "denied" calling requestPermission again wouldn't show
+    // anything anyway (browsers don't re-prompt after a block).
+    if (Notification.permission !== "default") return;
+    autoEnablePush();
+  }, [user?.id, autoPushEnabled]);
+
   // Re-check admin status whenever the site is offline and we have (or
   // gain) a signed-in user — this is what lets the "Site owner? Sign in"
   // link on SiteOffline actually get you past it once you're recognized.
