@@ -2,7 +2,7 @@
   "hero": {
     "titleLine1": "Elevate your standard.",
     "titleLine2": "Book Belize's elite self-care professionals.",
-    "subtitle": "Bypass the waitlist and book top-tier self-care artists in seconds.",
+    "subtitle": "Stay sharp. Stay booked.",
     "searchPlaceholder": "What service do you need?",
     "anyDistrict": "Any district",
     "searchButton": "Search",
@@ -263,11 +263,13 @@
       "checkingLiveAvailability": "Checking live availability...",
       "chooseService": "Please choose a service.",
       "chooseServiceDateTime": "Please choose a service, date, and time.",
+      "chooseTimeForEach": "Please pick a date and time for {{service}}.",
       "codeSendFailed": "Couldn't send the code. Please try again.",
       "combinedTimeUnavailable": "That combined appointment time is no longer available. Please pick another time.",
       "date": "Date",
       "depositRequired": "This provider requires a {{pct}}% deposit after they accept your booking.",
       "durationMin": "{{count}} min",
+      "eachServiceOwnTime": "Each service is booked separately, so you can give them different times — we'll make sure none of them overlap each other or anything already on the provider's calendar.",
       "emailAddress": "Email address",
       "emailCodeNote": "We'll email you a 6-digit code to confirm it's really you — no password, no separate signup.",
       "enterFullName": "Please enter your full name.",
@@ -280,10 +282,12 @@
       "hoursNotSetYet": "This provider hasn't set their working hours yet — try again later or send a note with your preferred time.",
       "liabilityNote": "VaiBook is a scheduling platform. All payments and deposits are direct transactions between the client and the business. Vai Technologies is not liable for disputes.",
       "maintenanceMode": "New bookings are temporarily paused for maintenance. Please try again shortly.",
+      "multiSlotTaken": "Sorry, the time you picked for {{service}} was just taken. Nothing in this cart has been booked — please pick a different time for it and try again.",
       "noOpenSlots": "No open slots on this date. Please choose another day.",
       "notesOptional": "Notes (optional)",
       "notesPlaceholder": "Anything the provider should know?",
       "pickDateAndTime": "Pick a date & time",
+      "pickTimesForEach": "Pick a time for each service",
       "rateLimited": "You've sent a few booking requests in a short time. Please wait a bit before trying again.",
       "receiptUploadFailed": "That receipt didn't upload. Please check your connection and try again.",
       "requestBooking": "Request booking",
@@ -396,6 +400,7 @@
       "closedOpensDayAt": "Closed · opens {{day}} at {{time}}",
       "closedOpensTodayAt": "Closed · opens today at {{time}}",
       "notListed": "Hours not listed",
+      "openNow": "Open now",
       "openNowCloses": "Open now · closes {{time}}",
       "tomorrow": "tomorrow"
     },
@@ -448,7 +453,7 @@
       "tabPortfolio": "Portfolio",
       "tabReviews": "Reviews",
       "tabServices": "Services",
-      "tapServiceToAdd": "Tap a service to add it — booking more than one? Add them all, then pick one time for the whole visit."
+      "tapServiceToAdd": "Tap a service to add it — booking more than one? Add them all, then pick a time for each."
     },
     "reviews": {
       "cantReviewOwnBusiness": "You can't review your own business.",
