@@ -944,6 +944,7 @@
       "photoModalTitle": "Recorta tu foto",
       "photoModalHint": "Arrastra para reposicionar, usa el control para acercar o alejar. Este recorte exacto es lo que verán los clientes.",
       "zoom": "Zoom",
+      "photoSaveError": "No se pudo guardar tu foto — inténtalo de nuevo.",
       "locationTitle": "Ubicación",
       "locationHint": "Haz clic en el mapa para colocar un pin en tu ubicación exacta. Los clientes obtendrán un enlace de \"Cómo llegar\" directo a ella.",
       "locationLabelField": "Etiqueta de ubicación (opcional)",
