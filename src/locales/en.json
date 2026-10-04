@@ -2,7 +2,7 @@
   "hero": {
     "titleLine1": "Elevate your standard.",
     "titleLine2": "Book Belize's elite self-care professionals.",
-    "subtitle": "Bypass the waitlist and book top-tier self-care artists in seconds.",
+    "subtitle": "Stay sharp. Stay booked.",
     "searchPlaceholder": "What service do you need?",
     "anyDistrict": "Any district",
     "searchButton": "Search",
@@ -74,15 +74,20 @@
     "moreFromVaiPlaza": "More from Vai Plaza",
     "vaiBuy": "Vai Buy — buy & sell",
     "copyright": "© 2026 VaiBook. Built in Belize 🇧🇿",
-    "productOf": "A product of Vai Plaza"
+    "productOf": "A product of Vai Plaza",
+    "translate": "Translate"
   },
   "auth": {
     "back": "Back",
     "signUpLogIn": "Sign up / log in",
-    "forCustomers": "VaiBook for customers",
+    "forCustomers": "For customers",
     "bookLocalServices": "Book local services near you",
-    "forProfessionals": "VaiBook for professionals",
-    "manageAndGrow": "Manage and grow your business"
+    "forProfessionals": "For professionals",
+    "manageAndGrow": "Manage and grow your business",
+    "alreadyListed": "Already have a business listed",
+    "alreadyListedDesc": "Sign in with Google to manage it",
+    "newBusiness": "New business",
+    "newBusinessDesc": "Apply to list it — no account needed yet"
   },
   "help": {
     "title": "Get support",
@@ -250,6 +255,21 @@
     "stopLosing": "Stop Losing Revenue to No-Shows",
     "forBusinessSub": "Join Belize's top professionals. Get your customized booking link, automate 24-hour reminders, and secure deposits directly via WhatsApp."
   },
+  "providerSignupModal": {
+    "close": "Close",
+    "eyebrow": "✨ 14-day free trial",
+    "headline": "Start Your 14-Day Free Trial.",
+    "sub": "No credit card required. Setup takes 30 seconds.",
+    "shopNameLabel": "Shop Name",
+    "shopNamePlaceholder": "e.g. Fresh Cutz Barbershop",
+    "emailLabel": "Email",
+    "emailPlaceholder": "you@business.com",
+    "passwordLabel": "Password",
+    "passwordPlaceholder": "Create a password",
+    "entering": "Entering…",
+    "enterDashboard": "Enter Dashboard →",
+    "note": "No contracts, no setup fees — cancel anytime."
+  },
   "customerPortal": {
     "booking": {
       "at": "at",
@@ -259,11 +279,13 @@
       "checkingLiveAvailability": "Checking live availability...",
       "chooseService": "Please choose a service.",
       "chooseServiceDateTime": "Please choose a service, date, and time.",
+      "chooseTimeForEach": "Please pick a date and time for {{service}}.",
       "codeSendFailed": "Couldn't send the code. Please try again.",
       "combinedTimeUnavailable": "That combined appointment time is no longer available. Please pick another time.",
       "date": "Date",
       "depositRequired": "This provider requires a {{pct}}% deposit after they accept your booking.",
       "durationMin": "{{count}} min",
+      "eachServiceOwnTime": "Each service is booked separately, so you can give them different times — we'll make sure none of them overlap each other or anything already on the provider's calendar.",
       "emailAddress": "Email address",
       "emailCodeNote": "We'll email you a 6-digit code to confirm it's really you — no password, no separate signup.",
       "enterFullName": "Please enter your full name.",
@@ -276,10 +298,12 @@
       "hoursNotSetYet": "This provider hasn't set their working hours yet — try again later or send a note with your preferred time.",
       "liabilityNote": "VaiBook is a scheduling platform. All payments and deposits are direct transactions between the client and the business. Vai Technologies is not liable for disputes.",
       "maintenanceMode": "New bookings are temporarily paused for maintenance. Please try again shortly.",
+      "multiSlotTaken": "Sorry, the time you picked for {{service}} was just taken. Nothing in this cart has been booked — please pick a different time for it and try again.",
       "noOpenSlots": "No open slots on this date. Please choose another day.",
       "notesOptional": "Notes (optional)",
       "notesPlaceholder": "Anything the provider should know?",
       "pickDateAndTime": "Pick a date & time",
+      "pickTimesForEach": "Pick a time for each service",
       "rateLimited": "You've sent a few booking requests in a short time. Please wait a bit before trying again.",
       "receiptUploadFailed": "That receipt didn't upload. Please check your connection and try again.",
       "requestBooking": "Request booking",
@@ -392,6 +416,7 @@
       "closedOpensDayAt": "Closed · opens {{day}} at {{time}}",
       "closedOpensTodayAt": "Closed · opens today at {{time}}",
       "notListed": "Hours not listed",
+      "openNow": "Open now",
       "openNowCloses": "Open now · closes {{time}}",
       "tomorrow": "tomorrow"
     },
@@ -444,7 +469,7 @@
       "tabPortfolio": "Portfolio",
       "tabReviews": "Reviews",
       "tabServices": "Services",
-      "tapServiceToAdd": "Tap a service to add it — booking more than one? Add them all, then pick one time for the whole visit."
+      "tapServiceToAdd": "Tap a service to add it — booking more than one? Add them all, then pick a time for each."
     },
     "reviews": {
       "cantReviewOwnBusiness": "You can't review your own business.",
@@ -507,9 +532,9 @@
       "availability": "Availability",
       "staff": "My staff",
       "earnings": "Earnings",
-      "monthlyReview": "Monthly review",
+      "monthlyReview": "Monthly insights",
       "reviews": "My reviews",
-      "addons": "Add-ons",
+      "addons": "Modules",
       "profile": "Public profile",
       "billing": "My plan & billing",
       "settings": "Settings",
@@ -558,6 +583,7 @@
       "sending": "Sending...",
       "adding": "Adding...",
       "remove": "Remove",
+      "edit": "Edit",
       "loading": "Loading...",
       "close": "Close",
       "on": "On",
@@ -801,7 +827,9 @@
       "serviceName": "Service name",
       "serviceNamePlaceholder": "e.g. Full Colour Treatment",
       "price": "Price (BZ$)",
-      "adding": "Adding..."
+      "adding": "Adding...",
+      "descriptionLabel": "Description (optional)",
+      "descriptionPlaceholder": "e.g. What's included, what to expect, anything customers should know before booking."
     },
     "earnings": {
       "subtitle": "Customers pay you directly — track your income here.",
@@ -932,6 +960,12 @@
       "removePhotoTitle": "Remove photo",
       "uploadingPhoto": "Uploading...",
       "addPhoto": "Add photo",
+      "changePhoto": "Change photo",
+      "uploadPhoto": "Upload photo",
+      "photoModalTitle": "Crop your photo",
+      "photoModalHint": "Drag to reposition, use the slider to zoom. This exact crop is what customers will see.",
+      "zoom": "Zoom",
+      "photoSaveError": "Couldn't save your photo — please try again.",
       "locationTitle": "Location",
       "locationHint": "Click the map to drop a pin at your exact location. Customers will get a \"Get Directions\" link straight to it.",
       "locationLabelField": "Location label (optional)",

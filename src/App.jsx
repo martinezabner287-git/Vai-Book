@@ -1,8 +1,8 @@
 
 import { useState, useEffect, useLayoutEffect, useRef, useContext, createContext, lazy, Suspense } from "react";
-import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, deleteService, getActiveProviders, getProviderDirectory, createBooking, getProviderBusyWindows, createBookingSafe, cancelBooking, getCustomerBookings, uploadReceipt, submitReview, getProviderReviews, updateReview, sendBookingEmail, updateUserProfile, getPaymentMethods, addPaymentMethod, deletePaymentMethod, createNotification, getNotifications, markNotificationRead, markAllNotificationsRead, getCategoryDefaultFeatures, getProviderFeatureOverrides, setProviderFeatureOverride, getVisitNotes, upsertVisitNote, adminListProviders, adminUpdateProvider, adminDeleteProvider, getFavoriteProviderIds, getFavoriteProviders, addFavorite, removeFavorite, getBookingMessages, sendBookingMessage, markBookingMessagesRead, getUnreadBookingMessages, getProviderMonthlyTrend, createProviderProfile, getProviderById, createWalkInBooking, submitProviderPayment, getMyProviderPayments, adminListProviderPayments, adminReviewProviderPayment, submitBookingRefund, adminListBookingRefunds, openPrivateFile, getProviderStaff, addProviderStaff, updateProviderStaff, deleteProviderStaff, getLoyaltyAccount, getProviderLoyaltyCustomers, redeemLoyaltyReward, getMyStaffProfile, claimStaffSeatByEmail, getStaffBookings, getProviderNotifyEmail, getMaintenanceStatus, setMaintenanceMode, getSiteOfflineStatus, setSiteOffline, sendEmailOtp, verifyEmailOtp, savePushSubscription, attachBookingServices, getProviderBlocks, insertProviderBlock, deleteProviderBlock, proposeBookingReschedule, confirmBookingReschedule, declineBookingReschedule, withdrawBookingReschedule, establishSoloSession, getServerSoloSessionToken, getLocalSoloSessionToken, clearLocalSoloSessionToken, subscribeToSoloSessionReplacement } from "./supabase";
+import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, updateService, deleteService, getActiveProviders, getProviderDirectory, createBooking, getProviderBusyWindows, createBookingSafe, cancelBooking, getCustomerBookings, uploadReceipt, submitReview, getProviderReviews, updateReview, sendBookingEmail, updateUserProfile, getPaymentMethods, addPaymentMethod, deletePaymentMethod, createNotification, getNotifications, markNotificationRead, markAllNotificationsRead, getCategoryDefaultFeatures, getProviderFeatureOverrides, setProviderFeatureOverride, getVisitNotes, upsertVisitNote, adminListProviders, adminUpdateProvider, adminDeleteProvider, getFavoriteProviderIds, getFavoriteProviders, addFavorite, removeFavorite, getBookingMessages, sendBookingMessage, markBookingMessagesRead, getUnreadBookingMessages, getProviderMonthlyTrend, createProviderProfile, getProviderById, createWalkInBooking, submitProviderPayment, getMyProviderPayments, adminListProviderPayments, adminReviewProviderPayment, submitBookingRefund, adminListBookingRefunds, openPrivateFile, getProviderStaff, addProviderStaff, updateProviderStaff, deleteProviderStaff, getLoyaltyAccount, getProviderLoyaltyCustomers, redeemLoyaltyReward, getMyStaffProfile, claimStaffSeatByEmail, getStaffBookings, getProviderNotifyEmail, getMaintenanceStatus, setMaintenanceMode, getSiteOfflineStatus, setSiteOffline, sendEmailOtp, verifyEmailOtp, savePushSubscription, attachBookingServices, getProviderBlocks, insertProviderBlock, deleteProviderBlock, proposeBookingReschedule, confirmBookingReschedule, declineBookingReschedule, withdrawBookingReschedule, establishSoloSession, getServerSoloSessionToken, getLocalSoloSessionToken, clearLocalSoloSessionToken, subscribeToSoloSessionReplacement } from "./supabase";
 import AdminDashboard from "./AdminDashboard";
-import ProviderSignupModal from "./ProviderSignupModal";
+import ProfilePhotoModal from "./ProfilePhotoModal";
 import LanguageSelector from "./LanguageSelector";
 import { useTranslation } from "react-i18next";
 import { compressImageFile } from "./imageUtils";
@@ -433,6 +433,20 @@ const css = `
     font-size: 12px; font-weight: 800; letter-spacing: .04em; font-family: 'Plus Jakarta Sans', sans-serif;
   }
   .lang-toggle:hover { border-color: var(--lime); color: var(--lime); background: rgba(198,241,53,0.08); }
+  /* FOOTER LANGUAGE SELECTOR — the "🌐 English" control that sits in the
+     footer's bottom bar (same spot/pattern as Fresha's "🌐 English (US)").
+     Lives on a dark footer background like the nav, so it reuses that
+     same dim/near-white-on-hover treatment, just as plain inline text
+     with no pill border — the footer-bottom row is already a thin,
+     understated strip, a bordered pill there would look out of place. */
+  .lang-toggle-footer {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: none; border: none; padding: 2px 0;
+    color: rgba(255,255,255,0.5); cursor: pointer; transition: color .2s;
+    font-size: 12px; font-weight: 600; font-family: 'Plus Jakarta Sans', sans-serif;
+  }
+  .lang-toggle-footer:hover { color: var(--near-white); }
+  .lang-toggle-footer span:first-child { font-size: 14px; }
   .nav-dropdown { position: absolute; top: calc(100% + 12px); right: 0; background: white; border-radius: 20px; box-shadow: 0 20px 50px rgba(13,61,46,0.20); border: 1px solid var(--border); min-width: 300px; max-width: calc(100vw - 32px); padding: 22px; z-index: 200; }
   .nav-dropdown a, .nav-dropdown button.nav-dropdown-item { display: block; width: 100%; text-align: left; background: none; border: none; padding: 12px 8px; border-radius: 10px; font-size: 16px; font-weight: 500; color: var(--dark-text); cursor: pointer; text-decoration: none; }
   .nav-dropdown a:hover, .nav-dropdown button.nav-dropdown-item:hover { background: var(--sand); }
@@ -460,6 +474,11 @@ const css = `
   .auth-option-card h3 { font-size: 16px; font-weight: 700; color: var(--dark-text); margin-bottom: 4px; }
   .auth-option-card p { font-size: 13px; color: var(--muted); }
   .auth-option-arrow { font-size: 18px; color: var(--forest); flex-shrink: 0; }
+  .auth-provider-fork-heading { font-size: 13px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .03em; margin-bottom: 10px; }
+  .auth-option-card-sm { padding: 14px 18px; margin-bottom: 10px; }
+  .auth-option-card-sm h3 { font-size: 14px; }
+  .auth-provider-fork-back { display: inline-block; font-size: 13px; color: var(--muted); cursor: pointer; margin-top: 2px; }
+  .auth-provider-fork-back:hover { color: var(--forest); }
   .auth-choice-panel { position: relative; overflow: hidden; background: var(--forest); display: flex; align-items: center; justify-content: center; }
   .auth-choice-panel::before {
     content: '';
@@ -654,36 +673,83 @@ const css = `
   .service-badge { margin-left: auto; background: var(--lime); color: var(--forest); font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 6px; }
   .service-badge.open { background: rgba(198,241,53,0.15); color: var(--lime); }
 
-  /* SEARCH HERO — dark marketplace-style hero: small eyebrow label, bold
-     two-line statement headline (2nd line in lime), then the search pill.
-     Same structural language as Vai Buy's shop hero, in VaiBook's own
-     forest-green palette instead of Vai Buy's navy/teal. */
+  /* SEARCH HERO — light marketplace-style hero: small eyebrow label, bold
+     two-line statement headline (2nd line in a mid-green accent), then the
+     search pill, all sitting on a near-white surface with a few large,
+     blurred, softly-colored shapes drifting slowly behind the content
+     (Fresha's own hero uses this exact technique with pink/purple blobs —
+     here it's built from VaiBook's own lime/forest palette instead, so the
+     motion reads as on-brand rather than borrowed). Dark text throughout
+     is a deliberate departure from the old dark-hero's white/lime text:
+     white text is illegible against a light, moving background, so once
+     the background went light the text had to follow — confirmed with the
+     user via an explicit before/after comparison. */
   .search-hero {
-    position: relative; overflow: hidden; padding: 100px 24px 88px; text-align: left;
-    /* Picks up exactly where the nav's gradient ends (#17593F) and keeps
-       brightening toward a vivid emerald glow at the bottom, so the nav
-       and hero read as one unbroken fade down the page. Percentage-based
-       to its own box (not a fixed pixel canvas), so the hero always
-       reaches full vivid green right at its own bottom edge, whatever its
-       actual rendered height turns out to be. */
-    background: linear-gradient(170deg, #17593F 0%, #1E6B50 45%, #2BB37B 100%);
+    /* Side padding matches .section's (48px) so the hero's edge lines up
+       with every row below it instead of sitting 24px closer to the
+       screen edge than everything else — the other half of the "doesn't
+       follow the border" gap, alongside the max-width above. */
+    position: relative; overflow: hidden; padding: 100px 48px 88px; text-align: left;
+    background: var(--bg-primary);
   }
+  /* Two large, blurred, independently-drifting color blobs. Using
+     ::before/::after (rather than extra DOM nodes) keeps this change
+     CSS-only. filter:blur() already softens every edge, and the hero's
+     own overflow:hidden clips both to the section, so — unlike the old
+     hard-edged dark gradient — there's no seam to dissolve into the page
+     background underneath; the hero's base color already matches it. */
   .search-hero::before {
     content: '';
-    position: absolute; inset: -25%;
-    background: radial-gradient(circle at 50% 100%, rgba(198,241,53,0.22), transparent 60%);
-    z-index: 0;
+    position: absolute; z-index: 0; pointer-events: none;
+    width: 640px; height: 640px; top: -230px; left: -180px;
+    border-radius: 50%; filter: blur(70px);
+    background: radial-gradient(circle, rgba(198,241,53,0.5) 0%, rgba(198,241,53,0) 70%);
+    animation: hero-blob-drift-1 17s ease-in-out infinite;
   }
-  .search-hero > * { position: relative; z-index: 1; max-width: 780px; margin-left: auto; margin-right: auto; }
+  .search-hero::after {
+    content: '';
+    position: absolute; z-index: 0; pointer-events: none;
+    width: 580px; height: 580px; top: -120px; right: -200px;
+    border-radius: 50%; filter: blur(70px);
+    background: radial-gradient(circle, rgba(30,139,92,0.4) 0%, rgba(30,139,92,0) 70%);
+    animation: hero-blob-drift-2 21s ease-in-out infinite;
+  }
+  @keyframes hero-blob-drift-1 {
+    0%   { transform: translate(0, 0) scale(1); }
+    50%  { transform: translate(170px, 110px) scale(1.12); }
+    100% { transform: translate(0, 0) scale(1); }
+  }
+  @keyframes hero-blob-drift-2 {
+    0%   { transform: translate(0, 0) scale(1); }
+    50%  { transform: translate(-150px, 120px) scale(1.08); }
+    100% { transform: translate(0, 0) scale(1); }
+  }
+  /* Widened from 780px so the hero's own content box lines up with the
+     page's actual edge (the same 48px .section padding every row below it
+     uses) on virtually every real laptop/tablet/phone width, instead of
+     sitting in its own narrower centered column — the "doesn't follow the
+     border" gap vs. the rest of the page, and vs. sites like Fresha where
+     hero + content share one consistent margin. Below ~1416px total
+     viewport width (every phone, every tablet, and the common 1280/1366
+     laptop resolutions) this max-width never even binds, so the hero just
+     naturally fills out to the same edge as everything else — on a true
+     wide external monitor a small gap can still remain, which is a much
+     smaller, rarer residual than before rather than a full fix at every
+     possible width. */
+  .search-hero > * { position: relative; z-index: 1; max-width: 1320px; margin-left: auto; margin-right: auto; }
   .search-hero > .search-bar-pill { z-index: 10; }
-  .search-hero-eyebrow { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 12px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; color: rgba(250,250,247,0.55); margin-bottom: 18px; text-align: center; }
+  .search-hero-eyebrow { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 12px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; color: var(--muted); margin-bottom: 18px; text-align: center; }
   .search-hero h1 { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; font-size: clamp(32px, 5vw, 58px); line-height: 1.08; letter-spacing: -1px; margin: 0 auto 20px; text-align: center; }
-  .search-hero h1 .line1 { display: block; color: var(--near-white); }
-  .search-hero h1 .line2 { display: block; color: var(--lime); }
+  .search-hero h1 .line1 { display: block; color: var(--forest); }
+  /* var(--lime) reads great on the old dark-green hero but nearly
+     disappears on this light one (low-contrast light-yellow-green on
+     off-white) — this mid-green keeps the same "accent line" role at
+     readable contrast. */
+  .search-hero h1 .line2 { display: block; color: #1E8F5C; }
   @media (max-width: 480px) {
     .search-hero h1 { font-size: clamp(28px, 8vw, 36px); }
   }
-  .search-sub { font-size: 17px; color: rgba(250,250,247,0.72); max-width: 560px; margin: 0 auto 40px; line-height: 1.5; text-align: center; }
+  .search-sub { font-size: 17px; color: var(--muted); max-width: 560px; margin: 0 auto 40px; line-height: 1.5; text-align: center; }
   .search-bar-pill {
     position: relative; max-width: 760px; margin: 0 auto;
     background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.16);
@@ -697,18 +763,18 @@ const css = `
   .search-bar-pill .sep { width: 1px; height: 28px; background: rgba(255,255,255,0.18); flex-shrink: 0; }
   .search-submit { background: var(--lime); color: var(--forest); border: none; border-radius: 100px; padding: 14px 30px; font-weight: 700; font-size: 15px; cursor: pointer; white-space: nowrap; transition: opacity .2s; font-family: 'Plus Jakarta Sans', sans-serif; }
   .search-submit:hover { opacity: .87; }
-  .search-hero-tagline { margin-top: 26px; font-size: 13px; color: rgba(250,250,247,0.6); text-align: center; }
-  .search-hero-tagline a { color: var(--lime); font-weight: 600; cursor: pointer; text-decoration: underline; }
+  .search-hero-tagline { margin-top: 26px; font-size: 13px; color: var(--muted); text-align: center; }
+  .search-hero-tagline a { color: #1E8F5C; font-weight: 600; cursor: pointer; text-decoration: underline; }
   /* Real, non-fabricated live-stat line under the search bar (count comes
      straight from the same active-providers fetch the Discover rows use —
      never a made-up number) + a "Get the app" pill, echoing the two small
      trust/utility elements Fresha places under its own hero search bar. */
-  .hero-stat-line { margin-top: 22px; font-size: 14px; font-weight: 600; color: rgba(250,250,247,0.75); text-align: center; }
-  .hero-stat-line strong { color: var(--lime); font-weight: 800; }
+  .hero-stat-line { margin-top: 22px; font-size: 14px; font-weight: 600; color: var(--muted); text-align: center; }
+  .hero-stat-line strong { color: #1E8F5C; font-weight: 800; }
   .hero-get-app-btn {
     display: flex; align-items: center; gap: 8px; margin: 18px auto 0; background: #FFFFFF; color: var(--forest);
-    border: none; border-radius: 100px; padding: 11px 22px; font-size: 14px; font-weight: 700; cursor: pointer;
-    box-shadow: 0 10px 26px rgba(0,0,0,0.18); transition: transform .15s;
+    border: 1px solid var(--border); border-radius: 100px; padding: 11px 22px; font-size: 14px; font-weight: 700; cursor: pointer;
+    box-shadow: 0 10px 26px rgba(13,61,46,0.1); transition: transform .15s;
   }
   .hero-get-app-btn:hover { transform: translateY(-1px); }
   .hero-trial-btn { display: block; margin: 0 auto 44px; padding: 17px 38px; font-size: 16px; border-radius: 100px; box-shadow: 0 16px 40px rgba(198,241,53,0.22); }
@@ -722,7 +788,8 @@ const css = `
   .suggestion-label { font-weight: 600; color: var(--dark-text); }
   .suggestion-sub { font-size: 11px; color: var(--muted); margin-left: auto; flex-shrink: 0; padding-left: 12px; }
   @media (max-width: 640px) {
-    .search-hero { padding: 80px 20px 64px; }
+    /* Side padding now set once, at the 768px breakpoint below, so it
+       matches .section's at every width instead of diverging here. */
     .search-bar-pill { flex-direction: column; align-items: stretch; }
     /* .search-glass (declared later in this stylesheet, under GLOBAL
        PREMIUM UI COMPONENTS, specifically so it always wins layering onto
@@ -790,54 +857,6 @@ const css = `
     .provider-hero-screenshot { margin-top: 36px; }
     .provider-hero-cta.btn-lime { width: 100%; padding: 18px 0; }
   }
-
-  /* PROVIDER SIGNUP MODAL — the "direct-to-app" frictionless overlay
-     (see ProviderSignupModal.jsx). Sleek dark card over a dimmed backdrop,
-     same visual language as .provider-hero (near-black forest gradient +
-     lime accents) so it reads as a continuation of that CTA, not a
-     separate light-mode form popping in. Reuses the shared .input-group
-     classes for the fields, dark-scoped the same way .cx-account-page
-     does for the customer portal, so this needed no new form-field CSS. */
-  .psm-overlay {
-    position: fixed; inset: 0; z-index: 500; background: rgba(6,20,15,0.72);
-    backdrop-filter: blur(3px); display: flex; align-items: center; justify-content: center; padding: 20px;
-  }
-  .psm-modal {
-    position: relative; width: 100%; max-width: 420px; max-height: 92vh; overflow-y: auto;
-    background: linear-gradient(165deg, #0A2A20 0%, #0D3D2E 100%);
-    border: 1px solid rgba(198,241,53,0.18); border-radius: 24px;
-    padding: 40px 32px 32px; box-shadow: 0 30px 70px rgba(0,0,0,0.45);
-  }
-  .psm-close {
-    position: absolute; top: 16px; right: 16px; background: rgba(255,255,255,0.08); border: none;
-    color: rgba(245,239,224,0.7); width: 30px; height: 30px; border-radius: 50%; font-size: 13px;
-    cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background .2s, color .2s;
-  }
-  .psm-close:hover { background: rgba(255,255,255,0.16); color: #FFFFFF; }
-  .psm-eyebrow {
-    display: inline-block; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 11px; font-weight: 700;
-    letter-spacing: .12em; text-transform: uppercase; color: var(--lime);
-    background: rgba(198,241,53,0.1); border: 1px solid rgba(198,241,53,0.28);
-    padding: 6px 14px; border-radius: 100px; margin-bottom: 16px;
-  }
-  .psm-headline {
-    font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; color: #FFFFFF;
-    font-size: 26px; line-height: 1.2; margin: 0 0 8px;
-  }
-  .psm-sub { font-size: 14px; color: rgba(245,239,224,0.6); line-height: 1.5; margin: 0 0 24px; }
-  .psm-form { display: flex; flex-direction: column; }
-  .psm-modal .input-group label { color: rgba(245,239,224,0.75); }
-  .psm-modal .input-group input {
-    background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.14); color: #FFFFFF;
-  }
-  .psm-modal .input-group input::placeholder { color: rgba(245,239,224,0.35); }
-  .psm-modal .input-group input:focus { border-color: var(--lime); box-shadow: 0 0 0 3px rgba(198,241,53,0.15); }
-  .psm-submit {
-    width: 100%; margin-top: 6px; padding: 16px 0; font-size: 15.5px; font-weight: 800;
-    border-radius: 14px; box-shadow: 0 14px 34px rgba(198,241,53,0.24);
-  }
-  .psm-submit:disabled { opacity: 0.7; cursor: default; }
-  .psm-note { text-align: center; font-size: 12.5px; color: rgba(245,239,224,0.45); margin: 18px 0 0; }
 
   /* LANDING PAGE — themed surface (see the .lp-theme wrapper on
      LandingPage's root, App.jsx), driven entirely by the THEME TOKENS
@@ -926,8 +945,9 @@ const css = `
   }
   .tny-card-body { padding: 14px 16px 16px; }
   .tny-card-body h4 { font-size: 15px; font-weight: 800; color: var(--text-primary); margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .tny-card-loc { font-size: 12px; color: var(--text-tertiary); margin-bottom: 8px; }
-  .tny-card-rating { font-size: 12.5px; font-weight: 700; color: var(--accent-text); margin-bottom: 12px; }
+  .tny-card-loc { font-size: 12px; color: var(--text-tertiary); margin-bottom: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tny-card-meta-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 12px; }
+  .tny-card-rating { font-size: 12.5px; font-weight: 700; color: var(--accent-text); }
   .tny-card-rating-new { color: var(--text-tertiary); font-weight: 600; }
   .tny-book-btn { width: 100%; background: var(--accent-neon); color: var(--accent-neon-text); font-weight: 800; font-size: 13px; padding: 10px 0; border-radius: 100px; border: none; cursor: pointer; }
 
@@ -1185,6 +1205,18 @@ const css = `
   .qr-modal-img { width: 100%; max-width: 300px; height: auto; border-radius: 12px; }
   .qr-modal-business { margin-top: 16px; font-size: 16px; font-weight: 800; color: var(--dark-text); }
   .qr-modal-hint { margin-top: 4px; font-size: 13px; color: var(--muted); }
+
+  /* PROFILE PHOTO CROP MODAL — light-themed (shares .modal-overlay above
+     for the backdrop) so it matches ProviderPortal's own UI. */
+  .ppm-modal { background: #fff; border-radius: 18px; padding: 24px; max-width: 420px; width: 100%; }
+  .ppm-title { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 18px; font-weight: 800; color: var(--dark-text); margin: 0 0 6px; }
+  .ppm-hint { font-size: 13px; color: var(--muted); margin: 0 0 16px; line-height: 1.5; }
+  .ppm-crop-area { position: relative; width: 100%; height: 280px; border-radius: 12px; overflow: hidden; background: #222; }
+  .ppm-zoom-row { display: flex; align-items: center; gap: 12px; margin-top: 16px; }
+  .ppm-zoom-label { font-size: 12px; color: var(--muted); flex-shrink: 0; }
+  .ppm-zoom-row input[type="range"] { flex: 1; }
+  .ppm-error { font-size: 13px; color: #B3261E; margin: 14px 0 0; }
+  .ppm-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
 
   /* ELITE WELCOME — "you're live" banner + launch graphic modal */
   .launch-banner { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; background: linear-gradient(160deg, var(--forest) 0%, #0A2A20 100%); border: 1px solid rgba(198,241,53,0.3); border-radius: 16px; padding: 18px 22px; margin-bottom: 20px; }
@@ -1582,6 +1614,18 @@ const css = `
   .provider-card-footer { display: flex; align-items: center; justify-content: space-between; margin-top: 10px; }
   .price-tag { font-size: 14px; font-weight: 600; color: var(--forest); }
   .avail-badge { font-size: 11px; font-weight: 600; background: #DCFCE7; color: #15803D; padding: 3px 8px; border-radius: 6px; }
+  /* Shared open/closed indicator for every provider card type (trending,
+     discover carousels, browse/favorites grid) — a dot + short label
+     rather than the longer "opens tomorrow at 9am" detail the full profile
+     view shows, since a card has no room for that. Rendered only when
+     providerOpenNow() returns a real true/false — null (no hours on file)
+     means nothing shows, same honesty rule the rest of the hours UI uses. */
+  .open-status { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 700; }
+  .open-status::before { content: ""; width: 6px; height: 6px; border-radius: 50%; display: inline-block; flex: 0 0 auto; }
+  .open-status.is-open { color: #15803D; }
+  .open-status.is-open::before { background: #15803D; }
+  .open-status.is-closed { color: var(--clay); }
+  .open-status.is-closed::before { background: var(--clay); }
 
   /* DISCOVER CAROUSELS (Recommended / New to VaiBook / Trending) */
   .carousel-row { display: flex; gap: 16px; overflow-x: auto; scroll-behavior: smooth; scrollbar-width: none; padding-bottom: 6px; }
@@ -1790,6 +1834,10 @@ const css = `
     .service-pill, .cx-discover-pill { min-height: 44px; }
     .help-form-submit { width: 100%; }
     .section { padding: 60px 24px; }
+    /* Matches .section's side padding (was 20px, set in its own separate
+       640px breakpoint below) so the hero lines up with every row below it
+       all the way down to phone widths, not just above 768px. */
+    .search-hero { padding: 80px 24px 64px; }
     .marketing-strip { padding: 32px 24px; }
     .portal-content { padding: 20px; }
     .provider-topbar { padding: 0 16px; gap: 12px; }
@@ -2037,20 +2085,29 @@ function VaiBookMark({ size = 26, style }) {
 // not translated) for search/filtering. Display-only text uses `key` to look
 // up a translated label via t(`services.${key}.name`) / `.desc` instead of
 // reading `.name`/`.desc` directly — see SERVICES.map() call sites.
+// `categoryQuery` is deliberately NOT the same string as `name` — it has
+// to be a substring of the real `service_type` values providers actually
+// sign up with (see SERVICE_TYPES below: "Barber", "Hair Salon", "Med Spa
+// / Clinic", etc. — singular, and not always worded the same as these
+// pill labels), because the pills reuse the existing search-by-category
+// matching in CustomerPortal (`categoryMatch`, a plain case-insensitive
+// `.includes()`), the same mechanism the hero search and "Book Now" deep
+// links already use via `vaibook_pending_search` — not a second, separate
+// filter to keep in sync.
 const SERVICES = [
-  { key: "barbers", icon: "✂️", name: "Barbers", desc: "Cuts & styles", bg: "#1A5C44" },
-  { key: "hairSalons", icon: "💇", name: "Hair Salons", desc: "Color & styling", bg: "#2A4A3E" },
-  { key: "nailTechs", icon: "💅", name: "Nail Techs", desc: "Nails & art", bg: "#1E4035" },
-  { key: "spas", icon: "🧖", name: "Spas", desc: "Full-body relaxation", bg: "#163626" },
-  { key: "medSpas", icon: "🩺", name: "Med Spas", desc: "Injectables & clinical", bg: "#1C4A38" },
-  { key: "massage", icon: "💆", name: "Massage", desc: "Therapeutic & relaxation", bg: "#244530" },
-  { key: "skincareFacials", icon: "🧴", name: "Skincare & Facials", desc: "Cleanses & glow-ups", bg: "#1A5C44" },
-  { key: "hairRemoval", icon: "🪒", name: "Hair Removal", desc: "Waxing & laser", bg: "#2A4A3E" },
-  { key: "tattooPiercing", icon: "🖋️", name: "Tattoo & Piercing", desc: "Ink & piercings", bg: "#1E4035" },
-  { key: "wellnessCenters", icon: "🌿", name: "Wellness Centers", desc: "Holistic & recovery", bg: "#163626" },
-  { key: "petGrooming", icon: "🐾", name: "Pet Grooming", desc: "All breeds", bg: "#1C4A38" },
-  { key: "fitnessRecovery", icon: "🏋️", name: "Fitness & Recovery", desc: "Training & recovery", bg: "#2A4A3E" },
-  { key: "physicalTherapy", icon: "🦵", name: "Physical Therapy", desc: "Rehab & mobility", bg: "#1E4035" },
+  { key: "barbers", icon: "✂️", name: "Barbers", desc: "Cuts & styles", bg: "#1A5C44", categoryQuery: "Barber" },
+  { key: "hairSalons", icon: "💇", name: "Hair Salons", desc: "Color & styling", bg: "#2A4A3E", categoryQuery: "Hair Salon" },
+  { key: "nailTechs", icon: "💅", name: "Nail Techs", desc: "Nails & art", bg: "#1E4035", categoryQuery: "Nail Tech" },
+  { key: "spas", icon: "🧖", name: "Spas", desc: "Full-body relaxation", bg: "#163626", categoryQuery: "Spa" },
+  { key: "medSpas", icon: "🩺", name: "Med Spas", desc: "Injectables & clinical", bg: "#1C4A38", categoryQuery: "Med Spa" },
+  { key: "massage", icon: "💆", name: "Massage", desc: "Therapeutic & relaxation", bg: "#244530", categoryQuery: "Massage" },
+  { key: "skincareFacials", icon: "🧴", name: "Skincare & Facials", desc: "Cleanses & glow-ups", bg: "#1A5C44", categoryQuery: "Skincare" },
+  { key: "hairRemoval", icon: "🪒", name: "Hair Removal", desc: "Waxing & laser", bg: "#2A4A3E", categoryQuery: "Hair Removal" },
+  { key: "tattooPiercing", icon: "🖋️", name: "Tattoo & Piercing", desc: "Ink & piercings", bg: "#1E4035", categoryQuery: "Tattoo" },
+  { key: "wellnessCenters", icon: "🌿", name: "Wellness Centers", desc: "Holistic & recovery", bg: "#163626", categoryQuery: "Wellness" },
+  { key: "petGrooming", icon: "🐾", name: "Pet Grooming", desc: "All breeds", bg: "#1C4A38", categoryQuery: "Pet Grooming" },
+  { key: "fitnessRecovery", icon: "🏋️", name: "Fitness & Recovery", desc: "Training & recovery", bg: "#2A4A3E", categoryQuery: "Fitness & Recovery" },
+  { key: "physicalTherapy", icon: "🦵", name: "Physical Therapy", desc: "Rehab & mobility", bg: "#1E4035", categoryQuery: "Physical Therapy" },
 ];
 
 // ── BUSINESS CATEGORIES & FEATURE FLAGS ──────────────────────────
@@ -2133,6 +2190,13 @@ const SERVICE_TYPE_ICON = {
 };
 const iconForServiceType = (serviceType) => SERVICE_TYPE_ICON[serviceType] || "🛠️";
 
+// Cover image shown on every card/carousel thumbnail: the dedicated
+// profile photo if the provider has set one, falling back to the first
+// portfolio/gallery photo (the old default) for providers who haven't —
+// and finally to the service-type emoji, handled by each call site same
+// as before.
+const coverImageUrl = (provider) => provider?.profile_photo_url || (provider?.portfolio_urls && provider.portfolio_urls[0]) || null;
+
 // Shared provider helpers — module-level so both the landing page's
 // discover carousels and the customer portal's browse grid compute rating
 // and starting price the same way, off the same provider shape
@@ -2147,6 +2211,26 @@ const providerFromPrice = (p) => {
   const prices = (p.services || []).filter((s) => s.is_active !== false).map((s) => Number(s.price) || 0);
   if (!prices.length) return null;
   return Math.min(...prices);
+};
+
+// Compact open/closed check for list cards — same "is right now inside
+// today's working hours" logic as CustomerPortal's getOpenStatus, just a
+// plain boolean (no "opens tomorrow at 9am" detail, there's no room for
+// that on a card). Needs `working_hours` embedded on the provider row —
+// see getActiveProviders' `*, services(*), reviews(rating), working_hours(*)`
+// select. Returns null (render nothing) when hours were never set at all,
+// rather than guessing — same honesty rule the rest of the hours UI follows.
+const providerOpenNow = (p) => {
+  const hours = p?.working_hours;
+  if (!hours || !hours.length) return null;
+  const now = new Date();
+  const dow = now.getDay();
+  const nowM = now.getHours() * 60 + now.getMinutes();
+  const today = hours.find((h) => h.day_of_week === dow);
+  if (!today || !today.is_open || !today.start_time || !today.end_time) return false;
+  const startM = hhmmToMinutes(today.start_time);
+  const endM = hhmmToMinutes(today.end_time);
+  return nowM >= startM && nowM < endM;
 };
 
 // Small badge that literally reflects a provider's plan tier ("✓ Pro" /
@@ -2178,7 +2262,8 @@ const isRecentlyJoined = (p, days = 30) => {
 // page's Recommended / New to VaiBook / Trending sections. `badgeFor` is an
 // optional (provider) => string|null that puts a pill in the top-left
 // corner of a card (e.g. "New", "Featured").
-function ProviderCarousel({ providers, badgeFor, onCardClick, ctaLabel }) {
+function ProviderCarousel({ providers, badgeFor, onCardClick, ctaLabel, favoriteIds, onToggleFavorite }) {
+  const { t } = useTranslation();
   const rowRef = useRef(null);
   const scrollNext = () => {
     if (rowRef.current) rowRef.current.scrollBy({ left: 260, behavior: "smooth" });
@@ -2188,6 +2273,7 @@ function ProviderCarousel({ providers, badgeFor, onCardClick, ctaLabel }) {
       <div className="carousel-row" ref={rowRef}>
         {providers.map((p) => {
           const rating = providerRating(p);
+          const openNow = providerOpenNow(p);
           const badge = badgeFor ? badgeFor(p) : null;
           return (
             <div className="carousel-card card-premium" key={p.id} onClick={() => onCardClick(p)}>
@@ -2200,14 +2286,14 @@ function ProviderCarousel({ providers, badgeFor, onCardClick, ctaLabel }) {
               {ctaLabel ? null : (
                 <button
                   className="carousel-heart"
-                  onClick={(e) => { e.stopPropagation(); onCardClick(p); }}
-                  aria-label="Save this provider"
+                  onClick={(e) => onToggleFavorite(e, p.id)}
+                  aria-label={favoriteIds?.has(p.id) ? "Remove from favorites" : "Save this provider"}
                 >
-                  🤍
+                  {favoriteIds?.has(p.id) ? "❤️" : "🤍"}
                 </button>
               )}
-              {p.portfolio_urls && p.portfolio_urls.length > 0 ? (
-                <div className="carousel-card-img" style={{ background: `center/cover no-repeat url(${p.portfolio_urls[0]})` }} />
+              {coverImageUrl(p) ? (
+                <div className="carousel-card-img" style={{ background: `center/cover no-repeat url(${coverImageUrl(p)})` }} />
               ) : (
                 <div className="carousel-card-img">{iconForServiceType(p.service_type)}</div>
               )}
@@ -2218,6 +2304,11 @@ function ProviderCarousel({ providers, badgeFor, onCardClick, ctaLabel }) {
                   {p.service_type}
                   {rating ? <> · ⭐ {rating} ({p.reviews.length})</> : null}
                 </div>
+                {openNow !== null && (
+                  <span className={`open-status ${openNow ? "is-open" : "is-closed"}`} style={{ marginTop: 4, display: "inline-flex" }}>
+                    {openNow ? t("customerPortal.hours.openNow") : t("customerPortal.hours.closed")}
+                  </span>
+                )}
                 {ctaLabel && (
                   <button className="carousel-cta btn-neon" onClick={(e) => { e.stopPropagation(); onCardClick(p); }}>
                     {ctaLabel}
@@ -2305,10 +2396,23 @@ function FeatureGate({ flag, children, fallback = null }) {
   return flags[flag] ? children : fallback;
 }
 
-// Settings → Modules: shows core features (always on) plus every industry
-// module, pre-toggled from the provider's category defaults, with a manual
-// per-provider override switch. This is the live UI for the adaptive
-// feature-flag system described in the architecture doc.
+// Which industry modules are actually wired to real functionality
+// somewhere in the app. Checked directly against every <FeatureGate> usage
+// — soap_charting is the only one that gates anything (the Visit Notes
+// button on completed bookings). The rest of INDUSTRY_FEATURE_CATALOG are
+// scaffolding for features that don't exist yet: nothing reads their flag,
+// so toggling them on used to look like it worked (even
+// pre-toggled "on" by category default) while silently doing nothing.
+// Rather than let providers flip switches that go nowhere, anything not in
+// this list now renders locked with a "Coming soon" badge instead of a
+// working toggle. Add a key here the day it actually gets wired up.
+const LIVE_INDUSTRY_FEATURES = ["soap_charting"];
+
+// Settings → Modules: shows core features (always on), the one live
+// industry module (soap_charting, pre-toggled from the provider's category
+// defaults, with a manual per-provider override switch), and every other
+// industry module as a locked "Coming soon" row. This is the live UI for
+// the adaptive feature-flag system described in the architecture doc.
 function ModulesPanel() {
   const { flags, loading, defaults, categoryKey, setOverride } = useFeatureFlags();
   const categoryLabel = (BUSINESS_CATEGORIES.find((c) => c.key === categoryKey) || {}).label || "General Service";
@@ -2317,7 +2421,7 @@ function ModulesPanel() {
     <>
       <div className="portal-header">
         <h2>Modules</h2>
-        <p>Your default modules come from your business category ({categoryLabel}). Toggle any module on or off for your account.</p>
+        <p>Your default modules come from your business category ({categoryLabel}). These are free — nothing here is a paid add-on. Most industry modules are still in development; only the ones marked live actually do anything yet.</p>
       </div>
       <div className="card" style={{ maxWidth: 560 }}>
         <div className="card-title">Core — included for every provider</div>
@@ -2335,23 +2439,46 @@ function ModulesPanel() {
         {loading ? (
           <p style={{ fontSize: 13, color: "var(--muted)" }}>Loading modules...</p>
         ) : (
-          Object.keys(INDUSTRY_FEATURE_CATALOG).map((key) => {
-            const f = INDUSTRY_FEATURE_CATALOG[key];
-            const isOn = !!flags[key];
-            const isDefault = defaults.includes(key);
-            return (
-              <div key={key} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", borderBottom: "1px solid var(--border)" }}>
-                <div>
-                  <div style={{ fontSize: 14 }}>
-                    {f.icon} {f.label}
-                    {isDefault && <span style={{ fontSize: 10, color: "var(--forest-light)", fontWeight: 700, marginLeft: 6 }}>RECOMMENDED FOR YOUR CATEGORY</span>}
+          <>
+            {/* Live modules first, so the one real toggle isn't buried
+                between locked rows — then a labeled break, then every
+                locked "Coming soon" module grouped together below it. */}
+            {Object.keys(INDUSTRY_FEATURE_CATALOG).filter((key) => LIVE_INDUSTRY_FEATURES.includes(key)).map((key) => {
+              const f = INDUSTRY_FEATURE_CATALOG[key];
+              const isOn = !!flags[key];
+              const isDefault = defaults.includes(key);
+              return (
+                <div key={key} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", borderBottom: "1px solid var(--border)" }}>
+                  <div>
+                    <div style={{ fontSize: 14 }}>
+                      {f.icon} {f.label}
+                      {isDefault && <span style={{ fontSize: 10, color: "var(--forest-light)", fontWeight: 700, marginLeft: 6 }}>RECOMMENDED FOR YOUR CATEGORY</span>}
+                    </div>
+                    <div style={{ fontSize: 12, color: "var(--muted)" }}>{f.desc}</div>
                   </div>
-                  <div style={{ fontSize: 12, color: "var(--muted)" }}>{f.desc}</div>
+                  <div className={`toggle ${isOn ? "on" : ""}`} onClick={() => setOverride(key, !isOn)}></div>
                 </div>
-                <div className={`toggle ${isOn ? "on" : ""}`} onClick={() => setOverride(key, !isOn)}></div>
-              </div>
-            );
-          })
+              );
+            })}
+            <div style={{ fontSize: 11, color: "var(--muted)", fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.4, marginTop: 20, marginBottom: 4 }}>
+              In development
+            </div>
+            {Object.keys(INDUSTRY_FEATURE_CATALOG).filter((key) => !LIVE_INDUSTRY_FEATURES.includes(key)).map((key) => {
+              const f = INDUSTRY_FEATURE_CATALOG[key];
+              return (
+                <div key={key} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", borderBottom: "1px solid var(--border)", opacity: 0.5 }}>
+                  <div>
+                    <div style={{ fontSize: 14 }}>
+                      {f.icon} {f.label}
+                      <span style={{ fontSize: 10, color: "var(--muted)", fontWeight: 700, marginLeft: 6 }}>COMING SOON</span>
+                    </div>
+                    <div style={{ fontSize: 12, color: "var(--muted)" }}>{f.desc}</div>
+                  </div>
+                  <div className="toggle" style={{ cursor: "not-allowed" }} title="Coming soon"></div>
+                </div>
+              );
+            })}
+          </>
         )}
       </div>
     </>
@@ -3142,26 +3269,74 @@ function enterProviderPortal(onNav, session, onSignIn) {
 
 function AuthChoice({ onNav, session, onSignIn, onSignOut }) {
   const { t } = useTranslation();
+  // GAP FIX: this card used to go straight to Google sign-in, as if
+  // "For professionals" on a page titled "Sign up / log in" could only
+  // mean "I already have an approved business." A brand-new provider has
+  // no provider_profiles row yet, so that sign-in just dead-ended them on
+  // ProviderPortal's "No business found on this account" screen —
+  // technically correct, but only after a confusing detour through an
+  // account picker that had nothing to do with actually signing up.
+  // Clicking the card now reveals the real fork instead of assuming an
+  // answer: "already listed" still goes through the same sign-in as
+  // before; "new business" routes to view "signup" — the real,
+  // admin-reviewed application form (ProviderSignup/submitProviderApplication)
+  // — with no sign-in required first. (This used to need calling out as
+  // "deliberately not the ProviderSignupModal mockup" — that modal has
+  // since been removed entirely; every "provide my service"/"apply to
+  // join" entry point in the app, including this one, now goes through
+  // either the ProviderLandingPage explainer or straight to this real
+  // form, never a popup that quietly did nothing.)
+  const [showProviderFork, setShowProviderFork] = useState(false);
   return (
+    <>
     <div className="auth-choice">
       <div className="auth-choice-left">
         <button className="auth-back" onClick={() => onNav("home")} aria-label={t("auth.back")}>←</button>
         <div className="auth-choice-body">
           <h1>{t("auth.signUpLogIn")}</h1>
-          <div className="auth-option-card" onClick={() => enterCustomerPortal(onNav, session, onSignIn)}>
-            <div>
-              <h3>{t("auth.forCustomers")}</h3>
-              <p>{t("auth.bookLocalServices")}</p>
+          {/* Hidden once the professional fork is showing, per explicit
+              request — "once the click for professionals the following
+              page shouldn't have the [for customers]" — so that screen
+              is just the two real provider options, not those plus an
+              unrelated customer card. The back link below still returns
+              to both cards. */}
+          {!showProviderFork && (
+            <div className="auth-option-card" onClick={() => enterCustomerPortal(onNav, session, onSignIn)}>
+              <div>
+                <h3>{t("auth.forCustomers")}</h3>
+                <p>{t("auth.bookLocalServices")}</p>
+              </div>
+              <span className="auth-option-arrow">→</span>
             </div>
-            <span className="auth-option-arrow">→</span>
-          </div>
-          <div className="auth-option-card" onClick={() => enterProviderPortal(onNav, session, onSignIn)}>
-            <div>
-              <h3>{t("auth.forProfessionals")}</h3>
-              <p>{t("auth.manageAndGrow")}</p>
+          )}
+          {!showProviderFork ? (
+            <div className="auth-option-card" onClick={() => setShowProviderFork(true)}>
+              <div>
+                <h3>{t("auth.forProfessionals")}</h3>
+                <p>{t("auth.manageAndGrow")}</p>
+              </div>
+              <span className="auth-option-arrow">→</span>
             </div>
-            <span className="auth-option-arrow">→</span>
-          </div>
+          ) : (
+            <div className="auth-provider-fork">
+              <div className="auth-provider-fork-heading">{t("auth.forProfessionals")}</div>
+              <div className="auth-option-card auth-option-card-sm" onClick={() => enterProviderPortal(onNav, session, onSignIn)}>
+                <div>
+                  <h3>{t("auth.alreadyListed")}</h3>
+                  <p>{t("auth.alreadyListedDesc")}</p>
+                </div>
+                <span className="auth-option-arrow">→</span>
+              </div>
+              <div className="auth-option-card auth-option-card-sm" onClick={() => onNav("signup")}>
+                <div>
+                  <h3>{t("auth.newBusiness")}</h3>
+                  <p>{t("auth.newBusinessDesc")}</p>
+                </div>
+                <span className="auth-option-arrow">→</span>
+              </div>
+              <a className="auth-provider-fork-back" onClick={() => setShowProviderFork(false)}>{t("auth.back")}</a>
+            </div>
+          )}
         </div>
       </div>
       <div className="auth-choice-panel">
@@ -3169,6 +3344,8 @@ function AuthChoice({ onNav, session, onSignIn, onSignOut }) {
         <div className="auth-choice-panel-logo" style={{ display: "flex", alignItems: "center", gap: 12 }}><VaiBookMark size={38} />vai<span>book</span></div>
       </div>
     </div>
+    <SiteFooter />
+    </>
   );
 }
 
@@ -3207,6 +3384,7 @@ function HelpCenter({ onNav }) {
           </button>
         </div>
       </div>
+      <SiteFooter />
     </div>
   );
 }
@@ -3277,6 +3455,7 @@ function HelpContactForm({ onNav }) {
           <p className="help-form-footnote">{t("help.contact.sendHint")}</p>
         </div>
       </div>
+      <SiteFooter />
     </div>
   );
 }
@@ -3333,6 +3512,7 @@ function HelpFAQ({ onNav }) {
           <button type="button" className="help-faq-cta-btn" onClick={() => onNav("help-contact")}>{t("help.faq.emailUs")}</button>
         </div>
       </div>
+      <SiteFooter />
     </div>
   );
 }
@@ -3702,7 +3882,7 @@ function setPortalTab(tabId) {
   window.dispatchEvent(new CustomEvent("vaibook-set-portal-tab", { detail: { tab: tabId } }));
 }
 
-function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignOut, onOpenProviderSignup }) {
+function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignOut }) {
   const { t } = useTranslation();
   const [menuOpen, setMenuOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
@@ -3974,7 +4154,7 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
                   <a onClick={() => goAccount(() => scrollToSection("trending-local", onNav, current))}>{t("nav.trending")}</a>
                   <a onClick={() => goAccount(() => scrollToProvidersSection("pricing", onNav, current))}>{t("nav.pricing")}</a>
                   <hr />
-                  <button className="nav-dropdown-item mobile-only-item" onClick={() => goAccount(onOpenProviderSignup)}>
+                  <button className="nav-dropdown-item mobile-only-item" onClick={() => goAccount(() => onNav("providers"))}>
                     <span className="icn">🏪</span> {t("nav.provideMyService")}
                   </button>
                   <button className="nav-dropdown-item for-biz" onClick={() => goAccount(() => enterProviderPortal(onNav, session, onSignIn))}>
@@ -3991,7 +4171,13 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
             <button className="nav-login-link" onClick={() => onNav("auth")}>{t("nav.logIn")}</button>
           )}
           {current === "home" && (
-            <button className="nav-signup-btn" onClick={onOpenProviderSignup}>{t("nav.provideMyService")}</button>
+            // Goes to the real B2B marketing/explainer page (ProviderLandingPage,
+            // view "providers") — no sign-in, no form, just "here's what this
+            // is and how it works" — rather than popping the old
+            // ProviderSignupModal mockup straight at someone who hasn't even
+            // been told what VaiBook-for-business is yet. See the removal note
+            // near ProviderLandingPage below.
+            <button className="nav-signup-btn" onClick={() => onNav("providers")}>{t("nav.provideMyService")}</button>
           )}
           {current === "providers" && (
             <>
@@ -4036,7 +4222,7 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
                     <a className="mobile-only-item" onClick={() => go(() => scrollToProvidersSection("pricing", onNav, current))}>{t("nav.pricing")}</a>
                     <hr className="mobile-only-item" />
                     <div className="nav-dropdown-heading">{t("nav.forBusinessesHeading")}</div>
-                    <a className="nav-dropdown-primary-link" onClick={() => go(() => enterProviderPortal(onNav, session, onSignIn))}>{t("nav.logInOrSignUp")}</a>
+                    <a className="nav-dropdown-primary-link" onClick={() => go(() => onNav("auth"))}>{t("nav.logInOrSignUp")}</a>
                     <button className="nav-dropdown-item" onClick={() => go(openInstallAppGuide)}>{t("nav.addToHomeScreen")}</button>
                     <a onClick={() => go(() => onNav("help"))}>{t("nav.helpAndSupport")}</a>
                     <LanguageSelector variant="menu" onAfterChange={closeMenu} />
@@ -4185,7 +4371,7 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
   );
 }
 
-function LandingPage({ onNav, session, onSignIn, onSignOut }) {
+function LandingPage({ onNav, session, user, onSignIn, onSignOut }) {
   const { t } = useTranslation();
   const [heroQuery, setHeroQuery] = useState("");
   const [heroDistrict, setHeroDistrict] = useState("");
@@ -4201,6 +4387,42 @@ function LandingPage({ onNav, session, onSignIn, onSignOut }) {
     getProviderDirectory().then((data) => setHeroDirectory(data || []));
     getActiveProviders().then((data) => { setDiscoverProviders(data || []); setLoadingDiscover(false); });
   }, []);
+
+  // FAVORITES — the carousel cards' heart button used to just reopen the
+  // card (identical to tapping it), so it never actually saved anything.
+  // Lighter version of CustomerPortal's own favoriteIds/toggleFavorite
+  // (same functions, same optimistic-update pattern) — this page only
+  // ever needs to know WHICH providers are favorited for the heart icon,
+  // never the full favorited-provider list (that's what the portal's own
+  // Favorites tab is for).
+  const [favoriteIds, setFavoriteIds] = useState(new Set());
+  const [togglingFavoriteId, setTogglingFavoriteId] = useState(null);
+  useEffect(() => {
+    if (!user?.id) { setFavoriteIds(new Set()); return; }
+    getFavoriteProviderIds(user.id).then((ids) => setFavoriteIds(new Set(ids)));
+  }, [user?.id]);
+  const toggleFavorite = async (e, providerId) => {
+    e.stopPropagation();
+    if (!session) { onSignIn(); return; }
+    if (!user?.id || togglingFavoriteId === providerId) return;
+    setTogglingFavoriteId(providerId);
+    const isFav = favoriteIds.has(providerId);
+    setFavoriteIds((prev) => {
+      const next = new Set(prev);
+      isFav ? next.delete(providerId) : next.add(providerId);
+      return next;
+    });
+    const ok = isFav ? await removeFavorite(user.id, providerId) : await addFavorite(user.id, providerId);
+    if (!ok) {
+      // Revert on failure — same as CustomerPortal's own toggle.
+      setFavoriteIds((prev) => {
+        const next = new Set(prev);
+        isFav ? next.add(providerId) : next.delete(providerId);
+        return next;
+      });
+    }
+    setTogglingFavoriteId(null);
+  };
 
   // "Trending near you" — a real (not guessed) district, from the
   // browser's own geolocation matched to the nearest of Belize's 6
@@ -4265,11 +4487,19 @@ function LandingPage({ onNav, session, onSignIn, onSignOut }) {
   const trendingNearYou = districtTrending.length >= 2 ? districtTrending : trendingProviders;
   const trendingNearYouHeading = districtTrending.length >= 2 ? t("landing.trendingIn", { district: trendingDistrict }) : t("landing.trendingNearYou");
 
+  // FIXED — this used to stash the provider's NAME as a text search and
+  // let CustomerPortal re-search for it (`vaibook_pending_search`), which
+  // added an extra results-page click and risked a fuzzy name match
+  // surfacing the wrong provider. Every card/button here is really saying
+  // "open THIS exact provider" — same intent as a QR code or a shared
+  // booking link — so this now uses that same "#book-<id>" deep link
+  // (parseBookingHash in App()) instead of a second, less precise path to
+  // the same place. Setting the hash (not just calling onNav) is what
+  // actually triggers it — App()'s hashchange listener is what sets
+  // deepLinkProviderId and jumps straight into CustomerPortal already
+  // opened on this provider's booking view, no search results in between.
   const goToProvider = (p) => {
-    try {
-      localStorage.setItem("vaibook_pending_search", JSON.stringify({ query: p.business_name, district: "All" }));
-    } catch (e) { /* ignore storage errors */ }
-    enterCustomerPortal(onNav, session, onSignIn);
+    window.location.hash = `book-${p.id}`;
   };
 
   const submitHeroSearch = (queryOverride) => {
@@ -4351,7 +4581,23 @@ function LandingPage({ onNav, session, onSignIn, onSignOut }) {
         </div>
         <div className="services-pills">
           {SERVICES.map((s, i) => (
-            <button className="service-pill badge-pill" key={i} onClick={() => enterCustomerPortal(onNav, session, onSignIn)}>
+            // FIXED — every pill used to land on the same generic portal
+            // home regardless of which one was tapped (no category ever
+            // actually reached CustomerPortal). Reuses the exact same
+            // pending-search mechanism the hero search bar and "Book Now"
+            // already use (vaibook_pending_search → CustomerPortal's
+            // Browse tab, see its categoryMatch filter) rather than a
+            // second, separate filtering path.
+            <button
+              className="service-pill badge-pill"
+              key={i}
+              onClick={() => {
+                try {
+                  localStorage.setItem("vaibook_pending_search", JSON.stringify({ query: s.categoryQuery, district: "All" }));
+                } catch (e) { /* ignore storage errors */ }
+                enterCustomerPortal(onNav, session, onSignIn);
+              }}
+            >
               <span className="icon">{s.icon}</span> {t(`services.${s.key}.name`)}
             </button>
           ))}
@@ -4376,11 +4622,12 @@ function LandingPage({ onNav, session, onSignIn, onSignOut }) {
           <div className="tny-row">
             {trendingNearYou.map((p) => {
               const rating = providerRating(p);
+              const openNow = providerOpenNow(p);
               return (
                 <div className="tny-card card-premium" key={p.id} onClick={() => goToProvider(p)}>
                   <div className="tny-card-img">
-                    {p.portfolio_urls && p.portfolio_urls.length > 0 ? (
-                      <img src={p.portfolio_urls[0]} alt="" />
+                    {coverImageUrl(p) ? (
+                      <img src={coverImageUrl(p)} alt="" />
                     ) : (
                       <div className="tny-card-img-fallback">{iconForServiceType(p.service_type)}</div>
                     )}
@@ -4393,12 +4640,19 @@ function LandingPage({ onNav, session, onSignIn, onSignOut }) {
                   </div>
                   <div className="tny-card-body">
                     <h4>{p.business_name}</h4>
-                    <div className="tny-card-loc">{p.district}</div>
-                    {rating ? (
-                      <div className="tny-card-rating">⭐ {rating} ({p.reviews.length})</div>
-                    ) : (
-                      <div className="tny-card-rating tny-card-rating-new">{t("landing.newOnVaiBook")}</div>
-                    )}
+                    <div className="tny-card-loc">{p.service_type}{p.service_type && p.district ? " · " : ""}{p.district}</div>
+                    <div className="tny-card-meta-row">
+                      {rating ? (
+                        <span className="tny-card-rating">⭐ {rating} ({p.reviews.length})</span>
+                      ) : (
+                        <span className="tny-card-rating tny-card-rating-new">{t("landing.newOnVaiBook")}</span>
+                      )}
+                      {openNow !== null && (
+                        <span className={`open-status ${openNow ? "is-open" : "is-closed"}`}>
+                          {openNow ? t("customerPortal.hours.openNow") : t("customerPortal.hours.closed")}
+                        </span>
+                      )}
+                    </div>
                     <button className="tny-book-btn btn-neon" onClick={(e) => { e.stopPropagation(); goToProvider(p); }}>
                       {t("landing.bookNow")}
                     </button>
@@ -4424,14 +4678,14 @@ function LandingPage({ onNav, session, onSignIn, onSignOut }) {
             <div style={{ marginBottom: 44 }}>
               <div className="section-eyebrow">{t("landing.lovedByCustomers")}</div>
               <h2 className="section-title" style={{ marginBottom: 20 }}>{t("landing.recommended")}</h2>
-              <ProviderCarousel providers={recommendedProviders} onCardClick={goToProvider} />
+              <ProviderCarousel providers={recommendedProviders} onCardClick={goToProvider} favoriteIds={favoriteIds} onToggleFavorite={toggleFavorite} />
             </div>
           )}
           {newProviders.length >= 2 && (
             <div>
               <div className="section-eyebrow">{t("landing.justJoined")}</div>
               <h2 className="section-title" style={{ marginBottom: 20 }}>{t("landing.newToVaiBook")}</h2>
-              <ProviderCarousel providers={newProviders} badgeFor={(p) => (isRecentlyJoined(p) ? t("landing.newBadge") : null)} onCardClick={goToProvider} />
+              <ProviderCarousel providers={newProviders} badgeFor={(p) => (isRecentlyJoined(p) ? t("landing.newBadge") : null)} onCardClick={goToProvider} favoriteIds={favoriteIds} onToggleFavorite={toggleFavorite} />
             </div>
           )}
         </section>
@@ -4491,6 +4745,7 @@ function SiteFooter() {
       <div className="footer-bottom">
         <span>{t("footer.copyright")}</span>
         <span>{t("footer.productOf")}</span>
+        <LanguageSelector variant="footer" />
       </div>
     </footer>
   );
@@ -4502,15 +4757,22 @@ function SiteFooter() {
 // agency upsell, and the platform/dashboard preview — now lives here on
 // its own route instead, so a customer looking for a haircut never sees
 // SaaS pricing, and a shop owner evaluating VaiBook never has to scroll
-// past a consumer search bar to find it. Reached only via the nav's
-// "Pricing" link (scrollToProvidersSection) or a direct #providers visit
-// — the nav's main "Provide my service" CTA and every "Apply to Join"
-// button on this page now short-circuit straight to ProviderSignupModal
-// (see onOpenProviderSignup below) instead of landing here or on the real
-// application form (ProviderSignup, view "signup"), per the frictionless
-// direct-to-app funnel. This page still exists for anyone who scrolls in
-// from "Pricing" wanting the full pitch before they commit.
-function ProviderLandingPage({ onNav, session, onSignIn, onSignOut, onOpenProviderSignup }) {
+// past a consumer search bar to find it.
+//
+// This is now the ONLY landing spot for "I might want to list my
+// business" — the nav's main "Provide my service" CTA, the "Pricing"
+// link (scrollToProvidersSection), and a direct #providers visit all
+// land here, no sign-in required. Every "Apply to Join" button ON this
+// page routes straight to `onNav("signup")` — the real, admin-reviewed
+// application (ProviderSignup/submitProviderApplication) — now that the
+// old ProviderSignupModal mockup (collected Shop Name/Email/Password,
+// created no account, dumped the person on a Google sign-in gate with
+// zero explanation) has been removed entirely. See ProviderSignup's own
+// header comment for why that form, not a popup, is the real funnel: a
+// prospective provider now always sees what the business is first, then
+// applies for real, rather than hitting a convincing-looking form that
+// quietly did nothing.
+function ProviderLandingPage({ onNav, session, onSignIn, onSignOut }) {
   const { t } = useTranslation();
   return (
     <>
@@ -4524,7 +4786,7 @@ function ProviderLandingPage({ onNav, session, onSignIn, onSignOut, onOpenProvid
         <p className="provider-hero-sub">{t("providerLanding.sub")}</p>
         <div className="trial-badge">{t("providerLanding.trialBadge")}</div>
         <div className="provider-hero-ctas">
-          <button className="btn-lime provider-hero-cta" onClick={onOpenProviderSignup}>
+          <button className="btn-lime provider-hero-cta" onClick={() => onNav("signup")}>
             {t("providerLanding.applyToJoin14")}
           </button>
           <button className="btn-ghost provider-hero-cta-secondary" onClick={() => document.getElementById("pricing")?.scrollIntoView({ behavior: "smooth" })}>
@@ -4611,7 +4873,15 @@ function ProviderLandingPage({ onNav, session, onSignIn, onSignOut, onOpenProvid
               </ul>
               <button
                 className={p.recommended ? "btn-lime pricing-cta" : "btn-sm forest pricing-cta"}
-                onClick={onOpenProviderSignup}
+                onClick={() => {
+                  // Same stash-and-consume-once pattern the public pricing
+                  // section already uses (ProviderSignup reads this on
+                  // mount) — so picking a plan here carries it straight
+                  // through to the real application form instead of
+                  // landing on a blank picker.
+                  try { localStorage.setItem("vaibook_signup_plan", p.id); } catch (e) { /* ignore */ }
+                  onNav("signup");
+                }}
               >
                 {t("providerLanding.applyToJoin")}
               </button>
@@ -4655,7 +4925,7 @@ function ProviderLandingPage({ onNav, session, onSignIn, onSignOut, onOpenProvid
           <p className="for-business-sub">
             {t("providerLanding.forBusinessSub")}
           </p>
-          <button className="btn-lime for-business-btn" onClick={onOpenProviderSignup}>
+          <button className="btn-lime for-business-btn" onClick={() => onNav("signup")}>
             {t("providerLanding.applyToJoin")}
           </button>
         </div>
@@ -4837,6 +5107,16 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
   const [profileTab, setProfileTab] = useState("services");
   const [hoursExpanded, setHoursExpanded] = useState(false);
   const [bookingService, setBookingService] = useState(null);
+  // Multi-service checkout — independent time per service. Keyed by
+  // service id: { [serviceId]: { date, time } }. Each selected service gets
+  // its own date/time picker instead of being collapsed into one combined
+  // back-to-back block, so a customer can e.g. put a lash lift at 9:30am and
+  // a bridal makeup trial at 2pm on a different day. multiBusyWindowsByDate
+  // caches get_busy_windows results per date string so multiple services
+  // sharing the same date don't each trigger their own fetch.
+  const [multiBookingTimes, setMultiBookingTimes] = useState({});
+  const [multiBusyWindowsByDate, setMultiBusyWindowsByDate] = useState({});
+  const [loadingMultiSlots, setLoadingMultiSlots] = useState(false);
   const [providerReviews, setProviderReviews] = useState([]);
   const [loadingReviews, setLoadingReviews] = useState(false);
   const [lightboxUrl, setLightboxUrl] = useState(null);
@@ -5020,6 +5300,8 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
     setHoursExpanded(false);
     setBookingService(null);
     setSelectedServiceIds([]);
+    setMultiBookingTimes({});
+    setMultiBusyWindowsByDate({});
     setProviderReviews([]);
     setLightboxUrl(null);
     setSelectedProvider(provider);
@@ -5073,30 +5355,87 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
   const multiTotalPrice = selectedServicesList.reduce((sum, s) => sum + (Number(s.price) || 0), 0);
   const multiTotalDuration = selectedServicesList.reduce((sum, s) => sum + (Number(s.duration_min) || 0), 0);
 
-  // "Next: Pick time" — builds one combined "service" out of everything
-  // selected so the existing date/time step below (which only ever knew
-  // about a single bookingService) can render it unchanged: same name/price/
-  // duration fields, just summed across the whole selection. The real list
-  // of service ids travels separately on bookingForm.service_ids for
-  // submitBooking to use.
+  // "Next: Pick time" — each selected service gets its OWN date/time picker
+  // (multiBookingTimes, keyed by service id) instead of being collapsed into
+  // one combined back-to-back block. bookingService itself just becomes a
+  // marker ({isMulti:true}) so the existing "!bookingService && ..." gating
+  // elsewhere (gallery/tabs/sidebar) still hides correctly during this step.
   const proceedToMultiServiceTime = () => {
     if (selectedServicesList.length === 0) return;
-    const names = selectedServicesList.map((s) => s.name).join(" + ");
-    setBookingForm({
-      service_id: selectedServicesList[0].id,
-      service_ids: selectedServicesList.map((s) => s.id),
-      date: localDateStr(),
-      time: "",
-      notes: "",
-    });
+    const today = localDateStr();
+    setMultiBookingTimes(Object.fromEntries(selectedServicesList.map((s) => [s.id, { date: today, time: "" }])));
     setBookingError("");
-    setBookingService({
-      id: selectedServicesList[0].id,
-      name: names,
-      price: multiTotalPrice,
-      duration_min: multiTotalDuration,
-      isMulti: true,
+    setBookingService({ isMulti: true });
+  };
+
+  // Every distinct date currently chosen across the multi-service pickers —
+  // used below to fetch (and cache) get_busy_windows once per date instead
+  // of once per service, since two services can share the same day.
+  const multiBookingDates = Array.from(new Set(Object.values(multiBookingTimes).map((v) => v.date).filter(Boolean)));
+
+  useEffect(() => {
+    if (!selectedProvider?.id || multiBookingDates.length === 0) return;
+    const missing = multiBookingDates.filter((d) => !(d in multiBusyWindowsByDate));
+    if (missing.length === 0) return;
+    let cancelled = false;
+    setLoadingMultiSlots(true);
+    Promise.all(missing.map((d) => getProviderBusyWindows(selectedProvider.id, d).then((w) => [d, w || []]))).then((pairs) => {
+      if (cancelled) return;
+      setMultiBusyWindowsByDate((prev) => {
+        const next = { ...prev };
+        pairs.forEach(([d, w]) => { next[d] = w; });
+        return next;
+      });
+      setLoadingMultiSlots(false);
     });
+    return () => { cancelled = true; };
+  }, [selectedProvider?.id, multiBookingDates.join(",")]);
+
+  // Bookable slots for ONE service within the multi-service picker: that
+  // service's own duration, that date's real provider hours/busy windows/
+  // lunch break (same rules as the single-service picker below), PLUS the
+  // times already chosen for every OTHER selected service that shares the
+  // same date — so two services in the same cart can never be scheduled to
+  // overlap each other, not just against the provider's existing calendar.
+  const getMultiServiceSlots = (service) => {
+    const picked = multiBookingTimes[service.id];
+    if (!picked?.date) return [];
+    const durationMin = Number(service.duration_min) || 30;
+    const dow = new Date(picked.date + "T00:00:00").getDay();
+    const dayHours = providerHours.find((h) => h.day_of_week === dow);
+    if (!dayHours || !dayHours.is_open || !dayHours.start_time || !dayHours.end_time) return [];
+    const startM = timeToMinutes(dayHours.start_time);
+    const endM = timeToMinutes(dayHours.end_time);
+    const isToday = picked.date === localDateStr();
+    const nowM = isToday ? new Date().getHours() * 60 + new Date().getMinutes() : -1;
+    const step = 30;
+    const lunchWindow = (selectedProvider?.lunch_break_start && Number(selectedProvider?.lunch_break_minutes) > 0)
+      ? { start_time: selectedProvider.lunch_break_start, end_time: minutesToTime(timeToMinutes(selectedProvider.lunch_break_start) + Number(selectedProvider.lunch_break_minutes)) }
+      : null;
+    const otherPicksSameDay = selectedServicesList
+      .filter((s) => s.id !== service.id && multiBookingTimes[s.id]?.date === picked.date && multiBookingTimes[s.id]?.time)
+      .map((s) => {
+        const t = multiBookingTimes[s.id].time;
+        const start = timeToMinutes(t);
+        return { start_time: t, end_time: minutesToTime(start + (Number(s.duration_min) || 30)) };
+      });
+    const allBusy = [
+      ...(multiBusyWindowsByDate[picked.date] || []),
+      ...(lunchWindow ? [lunchWindow] : []),
+      ...otherPicksSameDay,
+    ];
+    const slots = [];
+    for (let m = startM; m + durationMin <= endM; m += step) {
+      if (isToday && m <= nowM) continue;
+      const slotEnd = m + durationMin;
+      const busy = allBusy.some((w) => {
+        const wStart = timeToMinutes(w.start_time);
+        const wEnd = timeToMinutes(w.end_time);
+        return m < wEnd && wStart < slotEnd;
+      });
+      if (!busy) slots.push(minutesToTime(m));
+    }
+    return slots;
   };
 
   // Reload the provider's busy windows whenever the chosen date changes so the
@@ -5201,6 +5540,8 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
   const backToServices = () => {
     setBookingService(null);
     setSelectedServiceIds([]);
+    setMultiBookingTimes({});
+    setMultiBusyWindowsByDate({});
     setBookingError("");
   };
 
@@ -5215,6 +5556,74 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
     }
   };
 
+  // Creates one booking (service_id/date/time/total/downpayment) via the
+  // hardened create_booking_safe RPC, then fires the provider notification +
+  // email. Shared by the single-service flow below and, called once per
+  // service in sequence, by submitMultiServiceBooking — the per-booking
+  // logic (deposit math, notification copy, email) is identical either way,
+  // only which service/date/time/notes feed it differs.
+  const createOneBooking = async ({ bookingCustomerId, service, dateStr, timeStr, notes }) => {
+    const total = Number(service.price) || 0;
+    const dpPct = selectedProvider.downpayment_required ? (selectedProvider.downpayment_pct || 50) : 0;
+    const downpayment = dpPct ? Math.round(total * dpPct) / 100 : null;
+    const order_number = `VB-${Date.now().toString(36).toUpperCase()}${Math.random().toString(36).slice(2, 5).toUpperCase()}`;
+    const created = await createBookingSafe({
+      order_number,
+      customer_id: bookingCustomerId,
+      provider_id: selectedProvider.id,
+      service_id: service.id,
+      booking_date: dateStr,
+      booking_time: timeStr,
+      total_amount: total,
+      downpayment_amount: downpayment,
+      notes: notes ? notes.trim() : null,
+    });
+    if (created) {
+      // FIXED — these used to be awaited one after another (in-app
+      // notification, then a lookup for the provider's email, then the
+      // actual email send) before the customer's "Request booking" button
+      // ever unlocked, even though none of this is something the customer
+      // needs to wait on — the booking itself (createBookingSafe above)
+      // already succeeded. Fired here without awaiting so the customer
+      // gets their confirmation immediately; the provider still gets
+      // notified, just not on the customer's clock. Errors are swallowed
+      // (not surfaced to the customer, who has nothing to retry here) but
+      // still logged, same as every other best-effort notification path
+      // in this file.
+      const finalTotal = Number(created.total_amount) || total;
+      const whenLabel = `${formatBookingDate(dateStr)} at ${formatBookingTime(timeStr)}`;
+      (async () => {
+        try {
+          if (selectedProvider.user_id) {
+            await createNotification({
+              user_id: selectedProvider.user_id,
+              title: "New booking request",
+              body: `${user?.full_name || guestCheckoutForm.name || "A customer"} requested ${service.name} on ${whenLabel}.`,
+              type: "booking_requested",
+              booking_id: created.id,
+            });
+          }
+          // A provider who isn't sitting in the app had no way of knowing a
+          // request had come in. The address is resolved server-side for
+          // this one booking (and only if they still want these emails)
+          // rather than being published on every provider's public profile
+          // row.
+          const providerEmail = await getProviderNotifyEmail(created.id);
+          if (providerEmail) {
+            await sendBookingEmail({
+              to: providerEmail,
+              subject: `New booking request — ${service.name}, ${whenLabel}`,
+              html: `<p>Hi ${selectedProvider.business_name || "there"},</p><p><strong>${user?.full_name || guestCheckoutForm.name || "A customer"}</strong> just requested <strong>${service.name}</strong> for <strong>${whenLabel}</strong> (BZ$${finalTotal.toFixed(2)}).</p>${notes ? `<p>Their note: "${notes.trim()}"</p>` : ""}<p>Open VaiBook to accept or decline it. You can turn these emails off under Settings → Notifications.</p>`,
+            });
+          }
+        } catch (err) {
+          console.error("Provider booking-request notification/email failed:", err);
+        }
+      })();
+    }
+    return created;
+  };
+
   const submitBooking = async (overrideCustomerId) => {
     const bookingCustomerId = overrideCustomerId || user?.id;
     if (!bookingCustomerId) { setBookingError(t("customerPortal.booking.signInAgain")); return; }
@@ -5224,7 +5633,6 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
     }
     const check = validate(bookingRequestSchema, {
       service_id: bookingForm.service_id,
-      service_ids: bookingForm.service_ids && bookingForm.service_ids.length > 0 ? bookingForm.service_ids : undefined,
       date: bookingForm.date,
       time: bookingForm.time,
       notes: bookingForm.notes || null,
@@ -5233,37 +5641,12 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
     const service = (selectedProvider.services || []).find((s) => s.id === bookingForm.service_id);
     if (!service) { setBookingError(t("customerPortal.booking.chooseService")); return; }
 
-    // Multi-service checkout: service_ids carries the FULL selection (see
-    // proceedToMultiServiceTime) — service/service_id above is only the
-    // first one, used because create_booking_safe's signature takes a
-    // single primary service. The combined price/duration/label for
-    // everything the customer actually picked are computed here instead.
-    const isMultiService = (bookingForm.service_ids || []).length > 1;
-    const multiServices = isMultiService ? (selectedProvider.services || []).filter((s) => bookingForm.service_ids.includes(s.id)) : [service];
-    const serviceLabel = isMultiService ? multiServices.map((s) => s.name).join(" + ") : service.name;
-    const combinedDuration = multiServices.reduce((sum, s) => sum + (Number(s.duration_min) || 0), 0);
-
     setSubmittingBooking(true);
     setBookingError("");
 
-    const total = isMultiService ? multiServices.reduce((sum, s) => sum + (Number(s.price) || 0), 0) : (Number(service.price) || 0);
-    const dpPct = selectedProvider.downpayment_required ? (selectedProvider.downpayment_pct || 50) : 0;
-    const downpayment = dpPct ? Math.round(total * dpPct) / 100 : null;
-    const order_number = `VB-${Date.now().toString(36).toUpperCase()}${Math.random().toString(36).slice(2, 5).toUpperCase()}`;
-
     let created = null;
     try {
-      created = await createBookingSafe({
-        order_number,
-        customer_id: bookingCustomerId,
-        provider_id: selectedProvider.id,
-        service_id: service.id,
-        booking_date: bookingForm.date,
-        booking_time: bookingForm.time,
-        total_amount: total,
-        downpayment_amount: downpayment,
-        notes: bookingForm.notes ? bookingForm.notes.trim() : null,
-      });
+      created = await createOneBooking({ bookingCustomerId, service, dateStr: bookingForm.date, timeStr: bookingForm.time, notes: bookingForm.notes });
     } catch (err) {
       setSubmittingBooking(false);
       if (err?.code === "SLOT_TAKEN") {
@@ -5283,54 +5666,9 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
       return;
     }
 
-    if (created && isMultiService) {
-      // Attach the full service list + combined duration now that the
-      // primary booking exists — see attachBookingServices' comment for why
-      // this is a separate call rather than something create_booking_safe
-      // does in one shot. A conflict here means the combined duration
-      // doesn't actually fit (a race with another booking, or the picked
-      // slot was only ever valid for the single primary service) — safest
-      // is to undo the booking outright rather than leave a confirmed/
-      // pending row that doesn't reflect what the customer actually paid a
-      // deposit for.
-      try {
-        await attachBookingServices(created.id, bookingForm.service_ids, combinedDuration);
-      } catch (err) {
-        await cancelBooking(created.id);
-        setSubmittingBooking(false);
-        setBookingError(t("customerPortal.booking.combinedTimeUnavailable"));
-        getProviderBusyWindows(selectedProvider.id, bookingForm.date).then((w) => setBusyWindows(w || []));
-        setBookingForm((f) => ({ ...f, time: "" }));
-        return;
-      }
-    }
-
     setSubmittingBooking(false);
 
     if (created) {
-      const finalTotal = Number(created.total_amount) || total;
-      const whenLabel = `${formatBookingDate(bookingForm.date)} at ${formatBookingTime(bookingForm.time)}`;
-      if (selectedProvider.user_id) {
-        await createNotification({
-          user_id: selectedProvider.user_id,
-          title: "New booking request",
-          body: `${user?.full_name || guestCheckoutForm.name || "A customer"} requested ${serviceLabel} on ${whenLabel}.`,
-          type: "booking_requested",
-          booking_id: created.id,
-        });
-      }
-      // A provider who isn't sitting in the app had no way of knowing a
-      // request had come in. The address is resolved server-side for this
-      // one booking (and only if they still want these emails) rather than
-      // being published on every provider's public profile row.
-      const providerEmail = await getProviderNotifyEmail(created.id);
-      if (providerEmail) {
-        await sendBookingEmail({
-          to: providerEmail,
-          subject: `New booking request — ${serviceLabel}, ${whenLabel}`,
-          html: `<p>Hi ${selectedProvider.business_name || "there"},</p><p><strong>${user?.full_name || guestCheckoutForm.name || "A customer"}</strong> just requested <strong>${serviceLabel}</strong> for <strong>${whenLabel}</strong> (BZ$${finalTotal.toFixed(2)}).</p>${bookingForm.notes ? `<p>Their note: "${bookingForm.notes.trim()}"</p>` : ""}<p>Open VaiBook to accept or decline it. You can turn these emails off under Settings → Notifications.</p>`,
-        });
-      }
       setSelectedProvider(null);
       setBookingService(null);
       setSelectedServiceIds([]);
@@ -5340,6 +5678,87 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
     } else {
       setBookingError(t("customerPortal.booking.genericError"));
     }
+  };
+
+  // Multi-service checkout — each selected service becomes its OWN booking
+  // (own order_number, own notification), submitted one at a time in
+  // selection order so create_booking_safe's own overlap check (which looks
+  // at every booking for that provider/date, not just this customer's) sees
+  // each prior one as already-busy by the time the next is checked — on top
+  // of the client-side same-cart overlap prevention in getMultiServiceSlots
+  // above, this is what stops two of the customer's own picks from landing
+  // on the same time even under a race. "Request booking" is one button for
+  // the whole cart, so a failure partway through rolls back every booking
+  // already created rather than leaving a partial cart confirmed — the
+  // customer sees one clear error naming the service that couldn't be
+  // booked, not a silent partial success.
+  const submitMultiServiceBooking = async (overrideCustomerId) => {
+    const bookingCustomerId = overrideCustomerId || user?.id;
+    if (!bookingCustomerId) { setBookingError(t("customerPortal.booking.signInAgain")); return; }
+    const missingTime = selectedServicesList.find((s) => !multiBookingTimes[s.id]?.date || !multiBookingTimes[s.id]?.time);
+    if (missingTime) {
+      setBookingError(t("customerPortal.booking.chooseTimeForEach", { service: missingTime.name }));
+      return;
+    }
+    for (const s of selectedServicesList) {
+      const check = validate(bookingRequestSchema, {
+        service_id: s.id,
+        date: multiBookingTimes[s.id].date,
+        time: multiBookingTimes[s.id].time,
+        notes: bookingForm.notes || null,
+      });
+      if (!check.ok) { setBookingError(check.message); return; }
+    }
+
+    setSubmittingBooking(true);
+    setBookingError("");
+
+    const createdSoFar = [];
+    for (const service of selectedServicesList) {
+      const { date: dateStr, time: timeStr } = multiBookingTimes[service.id];
+      let created = null;
+      try {
+        created = await createOneBooking({ bookingCustomerId, service, dateStr, timeStr, notes: bookingForm.notes });
+      } catch (err) {
+        // Undo everything already created in this same cart — the customer
+        // only ever clicked "Request booking" once, so a failure on service
+        // 3 of 3 shouldn't quietly leave services 1 and 2 booked without
+        // them having confirmed that's still what they want.
+        await Promise.all(createdSoFar.map((b) => cancelBooking(b.id)));
+        setSubmittingBooking(false);
+        if (err?.code === "SLOT_TAKEN") {
+          setBookingError(t("customerPortal.booking.multiSlotTaken", { service: service.name }));
+          setMultiBusyWindowsByDate((prev) => { const next = { ...prev }; delete next[dateStr]; return next; });
+          setMultiBookingTimes((prev) => ({ ...prev, [service.id]: { ...prev[service.id], time: "" } }));
+        } else if (err?.code === "RATE_LIMITED") {
+          setBookingError(t("customerPortal.booking.rateLimited"));
+        } else if (err?.code === "MAINTENANCE_MODE") {
+          setBookingError(t("customerPortal.booking.maintenanceMode"));
+        } else if (err?.code === "STARTER_LIMIT_REACHED") {
+          setBookingError(t("customerPortal.booking.starterLimitReached", { providerName: selectedProvider?.business_name || t("customerPortal.booking.thisProvider") }));
+        } else {
+          setBookingError(t("customerPortal.booking.genericError"));
+        }
+        return;
+      }
+      if (!created) {
+        await Promise.all(createdSoFar.map((b) => cancelBooking(b.id)));
+        setSubmittingBooking(false);
+        setBookingError(t("customerPortal.booking.genericError"));
+        return;
+      }
+      createdSoFar.push(created);
+    }
+
+    setSubmittingBooking(false);
+    setSelectedProvider(null);
+    setBookingService(null);
+    setSelectedServiceIds([]);
+    setMultiBookingTimes({});
+    setMultiBusyWindowsByDate({});
+    await loadBookings();
+    setTab("bookings");
+    setBookingTab("upcoming");
   };
 
   const handleCancelBooking = async (bookingId) => {
@@ -5679,9 +6098,9 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
                       <div className="cx-drop-card" key={drop.provider.id}>
                         <div
                           className="cx-drop-avatar"
-                          style={drop.provider.portfolio_urls && drop.provider.portfolio_urls.length > 0 ? { background: `center/cover no-repeat url(${drop.provider.portfolio_urls[0]})` } : undefined}
+                          style={coverImageUrl(drop.provider) ? { background: `center/cover no-repeat url(${coverImageUrl(drop.provider)})` } : undefined}
                         >
-                          {(!drop.provider.portfolio_urls || drop.provider.portfolio_urls.length === 0) && <span>{iconForServiceType(drop.provider.service_type)}</span>}
+                          {!coverImageUrl(drop.provider) && <span>{iconForServiceType(drop.provider.service_type)}</span>}
                         </div>
                         <div className="cx-drop-shop">{drop.provider.business_name}</div>
                         <div className="cx-drop-time">{t("customerPortal.home.todayAt", { time: formatBookingTime(drop.time) })}</div>
@@ -5704,9 +6123,9 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
                     <div className="cx-rebook-row" key={p.id} onClick={() => openBooking(p)}>
                       <div
                         className="cx-rebook-thumb"
-                        style={p.portfolio_urls && p.portfolio_urls.length > 0 ? { background: `center/cover no-repeat url(${p.portfolio_urls[0]})` } : undefined}
+                        style={coverImageUrl(p) ? { background: `center/cover no-repeat url(${coverImageUrl(p)})` } : undefined}
                       >
-                        {(!p.portfolio_urls || p.portfolio_urls.length === 0) && <span>{iconForServiceType(p.service_type)}</span>}
+                        {!coverImageUrl(p) && <span>{iconForServiceType(p.service_type)}</span>}
                       </div>
                       <div className="cx-rebook-info">
                         <div className="cx-rebook-name">{p.business_name}</div>
@@ -5815,6 +6234,7 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
               {filteredProviders.map((p) => {
                 const rating = providerRating(p);
                 const fromPrice = providerFromPrice(p);
+                const openNow = providerOpenNow(p);
                 return (
                   <div className="provider-card" key={p.id} style={{ cursor: "pointer", position: "relative" }} onClick={() => openBooking(p)}>
                     <button
@@ -5824,8 +6244,8 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
                     >
                       {favoriteIds.has(p.id) ? "❤️" : "🤍"}
                     </button>
-                    {p.portfolio_urls && p.portfolio_urls.length > 0 ? (
-                      <div className="provider-card-img" style={{ background: `center/cover no-repeat url(${p.portfolio_urls[0]})` }} />
+                    {coverImageUrl(p) ? (
+                      <div className="provider-card-img" style={{ background: `center/cover no-repeat url(${coverImageUrl(p)})` }} />
                     ) : (
                       <div className="provider-card-img" style={{ background: "linear-gradient(160deg, #1E6B50 0%, #0E241B 100%)" }}>{iconForServiceType(p.service_type)}</div>
                     )}
@@ -5833,6 +6253,11 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
                       <h4>{p.business_name}{(() => { const badge = planBadge(p); return badge && <span className="cx-plan-badge">{badge.label}</span>; })()}{p.is_featured && <span style={{ marginLeft: 6, fontSize: 11, fontWeight: 700, color: "var(--lime)", background: "rgba(198,241,53,0.15)", padding: "2px 7px", borderRadius: 5, verticalAlign: "middle" }}>⭐ {t("customerPortal.browse.featuredBadge")}</span>}</h4>
                       <div className="trade">{p.service_type} · {p.district}</div>
                       <div className="stars">{rating ? <StarRating value={rating} /> : t("customerPortal.browse.noReviewsYet")}<span style={{ color: "var(--muted)", fontSize: 12 }}>{rating ? ` ${rating} (${p.reviews.length})` : ""}</span></div>
+                      {openNow !== null && (
+                        <span className={`open-status ${openNow ? "is-open" : "is-closed"}`} style={{ marginTop: 4, display: "inline-flex" }}>
+                          {openNow ? t("customerPortal.hours.openNow") : t("customerPortal.hours.closed")}
+                        </span>
+                      )}
                       {p.whatsapp && <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 4 }}>📞 {p.whatsapp}</div>}
                       <div className="provider-card-footer">
                         <span className="price-tag">{fromPrice != null ? t("customerPortal.browse.fromPrice", { price: fromPrice }) : t("customerPortal.browse.contactForPricing")}</span>
@@ -5857,6 +6282,7 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
               {favoriteProviders.map((p) => {
                 const rating = providerRating(p);
                 const fromPrice = providerFromPrice(p);
+                const openNow = providerOpenNow(p);
                 return (
                   <div className="provider-card" key={p.id} style={{ cursor: "pointer", position: "relative" }} onClick={() => openBooking(p)}>
                     <button
@@ -5866,8 +6292,8 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
                     >
                       ❤️
                     </button>
-                    {p.portfolio_urls && p.portfolio_urls.length > 0 ? (
-                      <div className="provider-card-img" style={{ background: `center/cover no-repeat url(${p.portfolio_urls[0]})` }} />
+                    {coverImageUrl(p) ? (
+                      <div className="provider-card-img" style={{ background: `center/cover no-repeat url(${coverImageUrl(p)})` }} />
                     ) : (
                       <div className="provider-card-img" style={{ background: "linear-gradient(160deg, #1E6B50 0%, #0E241B 100%)" }}>{iconForServiceType(p.service_type)}</div>
                     )}
@@ -5875,6 +6301,11 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
                       <h4>{p.business_name}{(() => { const badge = planBadge(p); return badge && <span className="cx-plan-badge">{badge.label}</span>; })()}{p.is_featured && <span style={{ marginLeft: 6, fontSize: 11, fontWeight: 700, color: "var(--lime)", background: "rgba(198,241,53,0.15)", padding: "2px 7px", borderRadius: 5, verticalAlign: "middle" }}>⭐ {t("customerPortal.browse.featuredBadge")}</span>}</h4>
                       <div className="trade">{p.service_type} · {p.district}</div>
                       <div className="stars">{rating ? <StarRating value={rating} /> : t("customerPortal.browse.noReviewsYet")}<span style={{ color: "var(--muted)", fontSize: 12 }}>{rating ? ` ${rating} (${p.reviews.length})` : ""}</span></div>
+                      {openNow !== null && (
+                        <span className={`open-status ${openNow ? "is-open" : "is-closed"}`} style={{ marginTop: 4, display: "inline-flex" }}>
+                          {openNow ? t("customerPortal.hours.openNow") : t("customerPortal.hours.closed")}
+                        </span>
+                      )}
                       <div className="provider-card-footer">
                         <span className="price-tag">{fromPrice != null ? t("customerPortal.browse.fromPrice", { price: fromPrice }) : t("customerPortal.browse.contactForPricing")}</span>
                         {p.downpayment_required ? <span style={{ fontSize: 11, color: "var(--muted)" }}>{t("customerPortal.browse.depositPct", { pct: p.downpayment_pct || 50 })}</span> : <span className="avail-badge">{t("customerPortal.browse.noDeposit")}</span>}
@@ -6226,6 +6657,8 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
         )}
       </main>
 
+      <SiteFooter />
+
       {selectedProvider && (() => {
         const photos = selectedProvider.portfolio_urls || [];
         const rating = providerRating(selectedProvider);
@@ -6347,48 +6780,115 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
                           <div onClick={backToServices} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: "var(--forest)", fontWeight: 700, cursor: "pointer", marginBottom: 20 }}>
                             <span style={{ fontSize: 16 }}>←</span> {t("customerPortal.booking.backToServices")}
                           </div>
-                          <h3 style={{ fontSize: 20, fontWeight: 800, color: "var(--dark-text)", margin: "0 0 4px" }}>{t("customerPortal.booking.pickDateAndTime")}</h3>
+                          <h3 style={{ fontSize: 20, fontWeight: 800, color: "var(--dark-text)", margin: "0 0 4px" }}>{bookingService.isMulti ? t("customerPortal.booking.pickTimesForEach") : t("customerPortal.booking.pickDateAndTime")}</h3>
                           <p style={{ fontSize: 13, color: "var(--muted)", margin: "0 0 18px" }}>{t("customerPortal.booking.at")} {selectedProvider.business_name}</p>
-                          <div style={{ background: "var(--sand)", borderRadius: 10, padding: "14px 16px", marginBottom: 20, fontSize: 13 }}>
-                            <strong>{bookingService.name}</strong> — BZ${bookingService.price} · {t("customerPortal.booking.durationMin", { count: bookingService.duration_min })}
-                          </div>
-                          <div className="input-group">
-                            <label>{t("customerPortal.booking.date")}</label>
-                            <input type="date" min={localDateStr()} value={bookingForm.date} onChange={e => setBookingForm(f => ({ ...f, date: e.target.value, time: "" }))} style={{ padding: "13px 14px", fontSize: 15 }} />
-                          </div>
-                          <div className="input-group">
-                            <label>{t("customerPortal.booking.availableTimes")}</label>
-                            {loadingSlots ? (
-                              <p style={{ fontSize: 12, color: "var(--muted)" }}>{t("customerPortal.booking.checkingLiveAvailability")}</p>
-                            ) : !providerHours.length ? (
-                              <p style={{ fontSize: 12, color: "var(--muted)" }}>{t("customerPortal.booking.hoursNotSetYet")}</p>
-                            ) : availableSlots.length === 0 ? (
-                              <p style={{ fontSize: 12, color: "var(--clay)" }}>{t("customerPortal.booking.noOpenSlots")}</p>
-                            ) : (
-                              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(92px, 1fr))", gap: 9, maxHeight: 220, overflowY: "auto", paddingTop: 4 }}>
-                                {availableSlots.map((t) => (
-                                  <button
-                                    type="button"
-                                    key={t}
-                                    onClick={() => setBookingForm(f => ({ ...f, time: t }))}
-                                    className="btn-sm"
-                                    style={{
-                                      padding: "11px 4px",
-                                      fontSize: 13,
-                                      fontWeight: 700,
-                                      border: bookingForm.time === t ? "1.5px solid var(--forest)" : "1px solid var(--border, #ddd)",
-                                      background: bookingForm.time === t ? "var(--forest)" : "#fff",
-                                      color: bookingForm.time === t ? "#fff" : "var(--dark-text)",
-                                      borderRadius: 10,
-                                      cursor: "pointer",
-                                    }}
-                                  >
-                                    {formatTimeLabel(t)}
-                                  </button>
-                                ))}
+
+                          {bookingService.isMulti ? (
+                            <>
+                              <div style={{ background: "var(--sand)", borderRadius: 10, padding: "14px 16px", marginBottom: 8, fontSize: 13 }}>
+                                <strong>BZ${multiTotalPrice.toFixed(2)} · {t("customerPortal.booking.durationMin", { count: multiTotalDuration })}</strong> · {t("customerPortal.profile.servicesSelected", { count: selectedServicesList.length })}
                               </div>
-                            )}
-                          </div>
+                              <p style={{ fontSize: 12, color: "var(--muted)", margin: "0 0 18px" }}>{t("customerPortal.booking.eachServiceOwnTime")}</p>
+                              {selectedServicesList.map((service) => {
+                                const picked = multiBookingTimes[service.id] || { date: localDateStr(), time: "" };
+                                const slots = getMultiServiceSlots(service);
+                                return (
+                                  <div key={service.id} style={{ border: "1px solid var(--border)", borderRadius: 12, padding: "14px 16px", marginBottom: 14 }}>
+                                    <div style={{ fontSize: 13, marginBottom: 12 }}>
+                                      <strong>{service.name}</strong> — BZ${service.price} · {t("customerPortal.booking.durationMin", { count: service.duration_min })}
+                                    </div>
+                                    <div className="input-group">
+                                      <label>{t("customerPortal.booking.date")}</label>
+                                      <input
+                                        type="date"
+                                        min={localDateStr()}
+                                        value={picked.date}
+                                        onChange={e => setMultiBookingTimes(prev => ({ ...prev, [service.id]: { date: e.target.value, time: "" } }))}
+                                        style={{ padding: "13px 14px", fontSize: 15 }}
+                                      />
+                                    </div>
+                                    <div className="input-group">
+                                      <label>{t("customerPortal.booking.availableTimes")}</label>
+                                      {loadingMultiSlots ? (
+                                        <p style={{ fontSize: 12, color: "var(--muted)" }}>{t("customerPortal.booking.checkingLiveAvailability")}</p>
+                                      ) : !providerHours.length ? (
+                                        <p style={{ fontSize: 12, color: "var(--muted)" }}>{t("customerPortal.booking.hoursNotSetYet")}</p>
+                                      ) : slots.length === 0 ? (
+                                        <p style={{ fontSize: 12, color: "var(--clay)" }}>{t("customerPortal.booking.noOpenSlots")}</p>
+                                      ) : (
+                                        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(92px, 1fr))", gap: 9, maxHeight: 220, overflowY: "auto", paddingTop: 4 }}>
+                                          {slots.map((t) => (
+                                            <button
+                                              type="button"
+                                              key={t}
+                                              onClick={() => setMultiBookingTimes(prev => ({ ...prev, [service.id]: { ...prev[service.id], time: t } }))}
+                                              className="btn-sm"
+                                              style={{
+                                                padding: "11px 4px",
+                                                fontSize: 13,
+                                                fontWeight: 700,
+                                                border: picked.time === t ? "1.5px solid var(--forest)" : "1px solid var(--border, #ddd)",
+                                                background: picked.time === t ? "var(--forest)" : "#fff",
+                                                color: picked.time === t ? "#fff" : "var(--dark-text)",
+                                                borderRadius: 10,
+                                                cursor: "pointer",
+                                              }}
+                                            >
+                                              {formatTimeLabel(t)}
+                                            </button>
+                                          ))}
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </>
+                          ) : (
+                            <>
+                              <div style={{ background: "var(--sand)", borderRadius: 10, padding: "14px 16px", marginBottom: 20, fontSize: 13 }}>
+                                <strong>{bookingService.name}</strong> — BZ${bookingService.price} · {t("customerPortal.booking.durationMin", { count: bookingService.duration_min })}
+                              </div>
+                              <div className="input-group">
+                                <label>{t("customerPortal.booking.date")}</label>
+                                <input type="date" min={localDateStr()} value={bookingForm.date} onChange={e => setBookingForm(f => ({ ...f, date: e.target.value, time: "" }))} style={{ padding: "13px 14px", fontSize: 15 }} />
+                              </div>
+                              <div className="input-group">
+                                <label>{t("customerPortal.booking.availableTimes")}</label>
+                                {loadingSlots ? (
+                                  <p style={{ fontSize: 12, color: "var(--muted)" }}>{t("customerPortal.booking.checkingLiveAvailability")}</p>
+                                ) : !providerHours.length ? (
+                                  <p style={{ fontSize: 12, color: "var(--muted)" }}>{t("customerPortal.booking.hoursNotSetYet")}</p>
+                                ) : availableSlots.length === 0 ? (
+                                  <p style={{ fontSize: 12, color: "var(--clay)" }}>{t("customerPortal.booking.noOpenSlots")}</p>
+                                ) : (
+                                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(92px, 1fr))", gap: 9, maxHeight: 220, overflowY: "auto", paddingTop: 4 }}>
+                                    {availableSlots.map((t) => (
+                                      <button
+                                        type="button"
+                                        key={t}
+                                        onClick={() => setBookingForm(f => ({ ...f, time: t }))}
+                                        className="btn-sm"
+                                        style={{
+                                          padding: "11px 4px",
+                                          fontSize: 13,
+                                          fontWeight: 700,
+                                          border: bookingForm.time === t ? "1.5px solid var(--forest)" : "1px solid var(--border, #ddd)",
+                                          background: bookingForm.time === t ? "var(--forest)" : "#fff",
+                                          color: bookingForm.time === t ? "#fff" : "var(--dark-text)",
+                                          borderRadius: 10,
+                                          cursor: "pointer",
+                                        }}
+                                      >
+                                        {formatTimeLabel(t)}
+                                      </button>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            </>
+                          )}
+
                           <div className="input-group"><label>{t("customerPortal.booking.notesOptional")}</label><textarea placeholder={t("customerPortal.booking.notesPlaceholder")} value={bookingForm.notes} onChange={e => setBookingForm(f => ({ ...f, notes: e.target.value }))} style={{ minHeight: 60 }} /></div>
 
                           {selectedProvider.downpayment_required && (
@@ -6421,7 +6921,7 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
                             style={{ width: "100%", padding: "15px 0", fontSize: 15, borderRadius: 12, marginTop: 4 }}
                             disabled={submittingBooking || sendingBookingOtp}
                             onClick={async () => {
-                              if (user?.id) { submitBooking(); return; }
+                              if (user?.id) { bookingService.isMulti ? submitMultiServiceBooking() : submitBooking(); return; }
                               const guestName = guestCheckoutForm.name.trim();
                               const guestEmail = guestCheckoutForm.email.trim().toLowerCase();
                               if (!guestName) { setBookingError(t("customerPortal.booking.enterFullName")); return; }
@@ -6452,7 +6952,7 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
                                 if (whatsapp && uid) {
                                   updateUserProfile(uid, { whatsapp_number: whatsapp }).catch(() => {});
                                 }
-                                submitBooking(uid);
+                                bookingService.isMulti ? submitMultiServiceBooking(uid) : submitBooking(uid);
                               }}
                             />
                           )}
@@ -6472,6 +6972,7 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
                                     <div>
                                       <div className="service-card-name" style={{ fontWeight: 600, fontSize: 14, color: "var(--dark-text)" }}>{s.name}</div>
                                       <div className="service-card-meta" style={{ fontSize: 12, color: "var(--muted)" }}>{t("customerPortal.booking.durationMin", { count: s.duration_min })} · BZ${s.price}</div>
+                                      {s.description && <div style={{ fontSize: 12.5, color: "var(--muted)", marginTop: 3, maxWidth: 280 }}>{s.description}</div>}
                                     </div>
                                   </div>
                                   <div style={{ display: "flex", gap: 6 }} onClick={(e) => e.stopPropagation()}>
@@ -6719,6 +7220,7 @@ function StaffPortal({ onNav, session, staffProfile, onSignOut }) {
   );
 
   return (
+    <>
     <div style={{ maxWidth: 760, margin: "0 auto", padding: "32px 20px" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
         <div>
@@ -6779,6 +7281,8 @@ function StaffPortal({ onNav, session, staffProfile, onSignOut }) {
         ))}
       </div>
     </div>
+    <SiteFooter />
+    </>
   );
 }
 
@@ -6865,12 +7369,26 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
   const [savingProfile, setSavingProfile] = useState(false);
   const [photos, setPhotos] = useState([]);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
+
+  // Single profile photo (distinct from the portfolio gallery above) —
+  // the square photo shown next to the business name on this tab, and
+  // used as the cover image on search cards once set (see the
+  // profile_photo_url handling further down and in the card renderers).
+  const [profilePhotoUrl, setProfilePhotoUrl] = useState(null);
+  const [profilePhotoFile, setProfilePhotoFile] = useState(null);
+  const [showProfilePhotoModal, setShowProfilePhotoModal] = useState(false);
+  const [savingProfilePhoto, setSavingProfilePhoto] = useState(false);
+  const [profilePhotoError, setProfilePhotoError] = useState(null);
+  const profilePhotoInputRef = useRef(null);
   const [mapPosition, setMapPosition] = useState(null);
   const [locationLabel, setLocationLabel] = useState("");
   const [savingLocation, setSavingLocation] = useState(false);
   const [services, setServices] = useState([]);
-  const [serviceForm, setServiceForm] = useState({ name: "", price: "", duration_min: 15 });
+  const [serviceForm, setServiceForm] = useState({ name: "", price: "", duration_min: 15, description: "" });
   const [savingService, setSavingService] = useState(false);
+  const [editingServiceId, setEditingServiceId] = useState(null);
+  const [editServiceForm, setEditServiceForm] = useState({ name: "", price: "", duration_min: 15, description: "" });
+  const [savingServiceEdit, setSavingServiceEdit] = useState(false);
   const [respondingId, setRespondingId] = useState(null);
   const [responseType, setResponseType] = useState(null);
   const [responseMessage, setResponseMessage] = useState("");
@@ -7465,6 +7983,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
         description: providerProfile.loyalty_reward_description || "",
       });
       setPhotos(providerProfile.portfolio_urls || []);
+      setProfilePhotoUrl(providerProfile.profile_photo_url || null);
       setServices(providerProfile.services || []);
       if (providerProfile.latitude != null && providerProfile.longitude != null) {
         setMapPosition([providerProfile.latitude, providerProfile.longitude]);
@@ -7904,6 +8423,66 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
     await upsertProviderProfile({ id: providerProfile.id, user_id: providerProfile.user_id, portfolio_urls: next });
   };
 
+  // Single profile photo — picking a file just opens the crop modal;
+  // nothing uploads until the provider confirms the crop there.
+  const handleProfilePhotoFileSelect = (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    setProfilePhotoFile(file);
+    setShowProfilePhotoModal(true);
+  };
+
+  const handleSaveProfilePhoto = async (croppedFile) => {
+    if (!providerProfile?.user_id) return;
+    setSavingProfilePhoto(true);
+    setProfilePhotoError(null);
+    const previousUrl = profilePhotoUrl;
+    const url = await uploadProviderPhoto(providerProfile.user_id, croppedFile);
+    if (!url) {
+      setProfilePhotoError(t("providerPortal.profile.photoSaveError"));
+      setSavingProfilePhoto(false);
+      return;
+    }
+    // Only treat this as "saved" once the database row itself actually
+    // updates — upsertProviderProfile logs and swallows its own errors
+    // (see supabase.js), so without this check a failed save (e.g. the
+    // profile_photo_url column not existing yet because the patch's SQL
+    // migration hasn't been run) would still close the modal and show
+    // the new photo right here, while the database — and therefore every
+    // search card pulling from it — never actually got it. That mismatch
+    // is exactly what silently shipping this would look like from the
+    // provider's side: "I set it" in their own portal, but customer-facing
+    // cards keep showing the old cover image.
+    const updated = await upsertProviderProfile({ id: providerProfile.id, user_id: providerProfile.user_id, profile_photo_url: url });
+    if (updated) {
+      setProfilePhotoUrl(url);
+      onProviderProfileUpdate && onProviderProfileUpdate(updated);
+      // Clean up the old photo now that the new one is saved — same
+      // bucket as the gallery (uploadProviderPhoto always writes a fresh,
+      // uniquely-named file), so the old file would otherwise just sit
+      // there unused forever.
+      if (previousUrl) await deleteProviderPhoto(providerProfile.user_id, previousUrl);
+      setShowProfilePhotoModal(false);
+      setProfilePhotoFile(null);
+    } else {
+      // The database write failed — don't leave an orphaned file sitting
+      // in storage with nothing pointing to it, and tell the provider
+      // plainly instead of acting like it worked. Modal stays open so
+      // they can retry without re-picking and re-cropping the file.
+      await deleteProviderPhoto(providerProfile.user_id, url);
+      setProfilePhotoError(t("providerPortal.profile.photoSaveError"));
+    }
+    setSavingProfilePhoto(false);
+  };
+
+  const closeProfilePhotoModal = () => {
+    if (savingProfilePhoto) return;
+    setShowProfilePhotoModal(false);
+    setProfilePhotoFile(null);
+    setProfilePhotoError(null);
+  };
+
   const saveLocation = async () => {
     if (!providerId || !mapPosition) return;
     setSavingLocation(true);
@@ -7925,11 +8504,12 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
       name: serviceForm.name.trim(),
       price: Number(serviceForm.price) || 0,
       duration_min: Number(serviceForm.duration_min) || 15,
+      description: serviceForm.description.trim() || null,
       is_active: true,
     });
     if (created) {
       setServices((prev) => [...prev, created]);
-      setServiceForm({ name: "", price: "", duration_min: 15 });
+      setServiceForm({ name: "", price: "", duration_min: 15, description: "" });
     }
     setSavingService(false);
   };
@@ -7937,6 +8517,36 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
   const handleDeleteService = async (serviceId) => {
     setServices((prev) => prev.filter((s) => s.id !== serviceId));
     await deleteService(serviceId);
+  };
+
+  const handleStartEditService = (s) => {
+    setEditingServiceId(s.id);
+    setEditServiceForm({
+      name: s.name || "",
+      price: s.price ?? "",
+      duration_min: s.duration_min || 15,
+      description: s.description || "",
+    });
+  };
+
+  const handleCancelEditService = () => {
+    setEditingServiceId(null);
+  };
+
+  const handleSaveEditService = async (serviceId) => {
+    if (!editServiceForm.name.trim()) return;
+    setSavingServiceEdit(true);
+    const updated = await updateService(serviceId, {
+      name: editServiceForm.name.trim(),
+      price: Number(editServiceForm.price) || 0,
+      duration_min: Number(editServiceForm.duration_min) || 15,
+      description: editServiceForm.description.trim() || null,
+    });
+    if (updated) {
+      setServices((prev) => prev.map((s) => (s.id === serviceId ? updated : s)));
+      setEditingServiceId(null);
+    }
+    setSavingServiceEdit(false);
   };
 
   // TOP NAV REDESIGN — same destinations the old sidebar had, regrouped:
@@ -9133,15 +9743,46 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                 <p style={{ fontSize: 13, color: "var(--muted)", padding: "12px 0" }}>{t("providerPortal.services.noneYet")}</p>
               )}
               {services.map((s) => (
-                <div className="provider-service" key={s.id}>
-                  <div>
-                    <div style={{ fontSize: 14, fontWeight: 600 }}>{s.name}</div>
-                    <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 2 }}>{t("providerPortal.common.durationMin", { count: s.duration_min })}</div>
-                  </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                    <span style={{ fontWeight: 700, color: "var(--accent-text)" }}>BZ${s.price}</span>
-                    <button className="btn-sm ghost" style={{ fontSize: 12 }} onClick={() => handleDeleteService(s.id)}>{t("providerPortal.common.remove")}</button>
-                  </div>
+                <div className="provider-service" key={s.id} style={{ display: "block" }}>
+                  {editingServiceId === s.id ? (
+                    <div style={{ padding: "8px 0" }}>
+                      <div className="input-group"><label>{t("providerPortal.services.serviceName")}</label><input placeholder={t("providerPortal.services.serviceNamePlaceholder")} value={editServiceForm.name} onChange={e => setEditServiceForm(f => ({ ...f, name: e.target.value }))} /></div>
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                        <div className="input-group"><label>{t("providerPortal.services.price")}</label><input type="number" placeholder="0" value={editServiceForm.price} onChange={e => setEditServiceForm(f => ({ ...f, price: e.target.value }))} /></div>
+                        <div className="input-group">
+                          <label>{t("providerPortal.common.duration")}</label>
+                          <select value={editServiceForm.duration_min} onChange={e => setEditServiceForm(f => ({ ...f, duration_min: e.target.value }))}>
+                            <option value={15}>{t("providerPortal.common.durationMin", { count: 15 })}</option>
+                            <option value={30}>{t("providerPortal.common.durationMin", { count: 30 })}</option>
+                            <option value={45}>{t("providerPortal.common.durationMin", { count: 45 })}</option>
+                            <option value={60}>{t("providerPortal.common.durationMin", { count: 60 })}</option>
+                            <option value={90}>{t("providerPortal.common.durationMin", { count: 90 })}</option>
+                          </select>
+                        </div>
+                      </div>
+                      <div className="input-group">
+                        <label>{t("providerPortal.services.descriptionLabel")}</label>
+                        <textarea rows={2} placeholder={t("providerPortal.services.descriptionPlaceholder")} value={editServiceForm.description} onChange={e => setEditServiceForm(f => ({ ...f, description: e.target.value }))} />
+                      </div>
+                      <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+                        <button className="btn-sm lime" disabled={savingServiceEdit || !editServiceForm.name.trim()} onClick={() => handleSaveEditService(s.id)}>{savingServiceEdit ? t("providerPortal.common.saving") : t("providerPortal.common.save")}</button>
+                        <button className="btn-sm ghost" onClick={handleCancelEditService}>{t("providerPortal.common.cancel")}</button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                      <div>
+                        <div style={{ fontSize: 14, fontWeight: 600 }}>{s.name}</div>
+                        <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 2 }}>{t("providerPortal.common.durationMin", { count: s.duration_min })}</div>
+                        {s.description && <div style={{ fontSize: 12.5, color: "var(--muted)", marginTop: 4, maxWidth: 320 }}>{s.description}</div>}
+                      </div>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <span style={{ fontWeight: 700, color: "var(--accent-text)" }}>BZ${s.price}</span>
+                        <button className="btn-sm ghost" style={{ fontSize: 12 }} onClick={() => handleStartEditService(s)}>{t("providerPortal.common.edit")}</button>
+                        <button className="btn-sm ghost" style={{ fontSize: 12 }} onClick={() => handleDeleteService(s.id)}>{t("providerPortal.common.remove")}</button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))}
               <div style={{ marginTop: 20, paddingTop: 16, borderTop: "1px solid var(--border)" }}>
@@ -9159,6 +9800,10 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                       <option value={90}>{t("providerPortal.common.durationMin", { count: 90 })}</option>
                     </select>
                   </div>
+                </div>
+                <div className="input-group">
+                  <label>{t("providerPortal.services.descriptionLabel")}</label>
+                  <textarea rows={2} placeholder={t("providerPortal.services.descriptionPlaceholder")} value={serviceForm.description} onChange={e => setServiceForm(f => ({ ...f, description: e.target.value }))} />
                 </div>
                 <button className="btn-sm lime" onClick={handleAddService} disabled={savingService || !serviceForm.name.trim()}>{savingService ? t("providerPortal.services.adding") : t("providerPortal.services.addService")}</button>
               </div>
@@ -9699,7 +10344,33 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
             <div className="portal-header"><h2>{t("providerPortal.nav.profile")}</h2><p>{t("providerPortal.profile.subtitle")}</p></div>
             <div className="card" style={{ maxWidth: 560 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 24, paddingBottom: 20, borderBottom: "1px solid var(--border)" }}>
-                <div style={{ width: 72, height: 72, background: "var(--forest)", borderRadius: 14, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 36 }}>✂️</div>
+                <div style={{ position: "relative", width: 72, height: 72, flexShrink: 0 }}>
+                  {profilePhotoUrl ? (
+                    <img
+                      src={profilePhotoUrl}
+                      alt=""
+                      style={{ width: 72, height: 72, borderRadius: 14, objectFit: "cover", display: "block" }}
+                    />
+                  ) : (
+                    <div style={{ width: 72, height: 72, background: "var(--forest)", borderRadius: 14, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 36 }}>✂️</div>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => profilePhotoInputRef.current?.click()}
+                    title={profilePhotoUrl ? t("providerPortal.profile.changePhoto") : t("providerPortal.profile.uploadPhoto")}
+                    aria-label={profilePhotoUrl ? t("providerPortal.profile.changePhoto") : t("providerPortal.profile.uploadPhoto")}
+                    style={{ position: "absolute", bottom: -4, right: -4, width: 26, height: 26, borderRadius: "50%", background: "#fff", border: "1px solid var(--border)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, cursor: "pointer", boxShadow: "0 1px 3px rgba(0,0,0,0.18)", padding: 0 }}
+                  >
+                    ✎
+                  </button>
+                  <input
+                    ref={profilePhotoInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleProfilePhotoFileSelect}
+                    style={{ display: "none" }}
+                  />
+                </div>
                 <div>
                   <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 20, fontWeight: 700 }}>{providerProfile.business_name}</div>
                   <div style={{ color: "var(--muted)", fontSize: 14 }}>{providerProfile.service_type} · {providerProfile.district}</div>
@@ -9912,6 +10583,8 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
         )}
       </main>
 
+      <SiteFooter />
+
       {/* CUSTOM BLOCK — bottom sheet, not a modal: say when you'll be back —
           "15m", "30m", "1h", or an exact resume time. Purely a pause from
           the business (lunch, an errand, stepping away) — no "walk-in"
@@ -10061,6 +10734,15 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
           </div>
         </div>
       )}
+
+      <ProfilePhotoModal
+        open={showProfilePhotoModal}
+        file={profilePhotoFile}
+        onClose={closeProfilePhotoModal}
+        onSave={handleSaveProfilePhoto}
+        saving={savingProfilePhoto}
+        error={profilePhotoError}
+      />
     </div>
     </FeatureFlagsProvider>
   );
@@ -10813,6 +11495,7 @@ function ProviderSignup({ onNav }) {
         </p>
       </div>
     </div>
+    <SiteFooter />
     </>
   );
 }
@@ -11586,6 +12269,8 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
           </>
         )}
       </main>
+
+      <SiteFooter />
     </div>
   );
 }
@@ -11629,13 +12314,6 @@ export default function App() {
     window.addEventListener("hashchange", onHashChange);
     return () => window.removeEventListener("hashchange", onHashChange);
   }, []);
-
-  // Direct-to-app provider signup modal — one global instance, opened from
-  // anywhere (nav CTA, pricing cards, etc. — see onOpenProviderSignup
-  // below) so every "provide my service" / "apply to join" entry point
-  // pops the same frictionless overlay instead of routing to a marketing
-  // page or the real ProviderSignup application form.
-  const [showProviderSignup, setShowProviderSignup] = useState(false);
 
   // Site-wide offline takeover (see SiteOffline / AdminPortal's Emergency
   // tab). Checked independently of the session/loading flow below so it
@@ -12012,7 +12690,6 @@ export default function App() {
     session, user, providerProfile,
     onSignIn: signInWithGoogle, onSignOut: handleSignOut,
     onUserUpdate: setUser, onProviderProfileUpdate: setProviderProfile,
-    onOpenProviderSignup: () => setShowProviderSignup(true),
   };
 
   return (
@@ -12020,13 +12697,6 @@ export default function App() {
       <style>{css}</style>
       <MaintenanceBanner />
       <InstallAppGuide />
-      {/* Rendered once, globally, so it can pop over whatever page/view is
-          currently showing — see the showProviderSignup state above. */}
-      <ProviderSignupModal
-        open={showProviderSignup}
-        onClose={() => setShowProviderSignup(false)}
-        onEnterDashboard={() => { setShowProviderSignup(false); setView("provider"); }}
-      />
       {/* The Provider Portal now has its own top bar (logo, nav links, avatar
           menu) replacing the persistent sidebar, so the global site nav
           would just be a redundant second header above it. Every other

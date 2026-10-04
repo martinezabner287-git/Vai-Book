@@ -9,6 +9,7 @@
     "qrcode": "^1.5.4",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-easy-crop": "^6.2.3",
     "react-i18next": "^17.0.15",
     "react-leaflet": "^4.2.1",
     "react-scripts": "5.0.1",
