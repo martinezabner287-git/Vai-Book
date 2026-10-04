@@ -2,7 +2,6 @@
 import { useState, useEffect, useLayoutEffect, useRef, useContext, createContext, lazy, Suspense } from "react";
 import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, updateService, deleteService, getActiveProviders, getProviderDirectory, createBooking, getProviderBusyWindows, createBookingSafe, cancelBooking, getCustomerBookings, uploadReceipt, submitReview, getProviderReviews, updateReview, sendBookingEmail, updateUserProfile, getPaymentMethods, addPaymentMethod, deletePaymentMethod, createNotification, getNotifications, markNotificationRead, markAllNotificationsRead, getCategoryDefaultFeatures, getProviderFeatureOverrides, setProviderFeatureOverride, getVisitNotes, upsertVisitNote, adminListProviders, adminUpdateProvider, adminDeleteProvider, getFavoriteProviderIds, getFavoriteProviders, addFavorite, removeFavorite, getBookingMessages, sendBookingMessage, markBookingMessagesRead, getUnreadBookingMessages, getProviderMonthlyTrend, createProviderProfile, getProviderById, createWalkInBooking, submitProviderPayment, getMyProviderPayments, adminListProviderPayments, adminReviewProviderPayment, submitBookingRefund, adminListBookingRefunds, openPrivateFile, getProviderStaff, addProviderStaff, updateProviderStaff, deleteProviderStaff, getLoyaltyAccount, getProviderLoyaltyCustomers, redeemLoyaltyReward, getMyStaffProfile, claimStaffSeatByEmail, getStaffBookings, getProviderNotifyEmail, getMaintenanceStatus, setMaintenanceMode, getSiteOfflineStatus, setSiteOffline, sendEmailOtp, verifyEmailOtp, savePushSubscription, attachBookingServices, getProviderBlocks, insertProviderBlock, deleteProviderBlock, proposeBookingReschedule, confirmBookingReschedule, declineBookingReschedule, withdrawBookingReschedule, establishSoloSession, getServerSoloSessionToken, getLocalSoloSessionToken, clearLocalSoloSessionToken, subscribeToSoloSessionReplacement } from "./supabase";
 import AdminDashboard from "./AdminDashboard";
-import ProviderSignupModal from "./ProviderSignupModal";
 import ProfilePhotoModal from "./ProfilePhotoModal";
 import LanguageSelector from "./LanguageSelector";
 import { useTranslation } from "react-i18next";
@@ -859,54 +858,6 @@ const css = `
     .provider-hero-cta.btn-lime { width: 100%; padding: 18px 0; }
   }
 
-  /* PROVIDER SIGNUP MODAL — the "direct-to-app" frictionless overlay
-     (see ProviderSignupModal.jsx). Sleek dark card over a dimmed backdrop,
-     same visual language as .provider-hero (near-black forest gradient +
-     lime accents) so it reads as a continuation of that CTA, not a
-     separate light-mode form popping in. Reuses the shared .input-group
-     classes for the fields, dark-scoped the same way .cx-account-page
-     does for the customer portal, so this needed no new form-field CSS. */
-  .psm-overlay {
-    position: fixed; inset: 0; z-index: 500; background: rgba(6,20,15,0.72);
-    backdrop-filter: blur(3px); display: flex; align-items: center; justify-content: center; padding: 20px;
-  }
-  .psm-modal {
-    position: relative; width: 100%; max-width: 420px; max-height: 92vh; overflow-y: auto;
-    background: linear-gradient(165deg, #0A2A20 0%, #0D3D2E 100%);
-    border: 1px solid rgba(198,241,53,0.18); border-radius: 24px;
-    padding: 40px 32px 32px; box-shadow: 0 30px 70px rgba(0,0,0,0.45);
-  }
-  .psm-close {
-    position: absolute; top: 16px; right: 16px; background: rgba(255,255,255,0.08); border: none;
-    color: rgba(245,239,224,0.7); width: 30px; height: 30px; border-radius: 50%; font-size: 13px;
-    cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background .2s, color .2s;
-  }
-  .psm-close:hover { background: rgba(255,255,255,0.16); color: #FFFFFF; }
-  .psm-eyebrow {
-    display: inline-block; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 11px; font-weight: 700;
-    letter-spacing: .12em; text-transform: uppercase; color: var(--lime);
-    background: rgba(198,241,53,0.1); border: 1px solid rgba(198,241,53,0.28);
-    padding: 6px 14px; border-radius: 100px; margin-bottom: 16px;
-  }
-  .psm-headline {
-    font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; color: #FFFFFF;
-    font-size: 26px; line-height: 1.2; margin: 0 0 8px;
-  }
-  .psm-sub { font-size: 14px; color: rgba(245,239,224,0.6); line-height: 1.5; margin: 0 0 24px; }
-  .psm-form { display: flex; flex-direction: column; }
-  .psm-modal .input-group label { color: rgba(245,239,224,0.75); }
-  .psm-modal .input-group input {
-    background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.14); color: #FFFFFF;
-  }
-  .psm-modal .input-group input::placeholder { color: rgba(245,239,224,0.35); }
-  .psm-modal .input-group input:focus { border-color: var(--lime); box-shadow: 0 0 0 3px rgba(198,241,53,0.15); }
-  .psm-submit {
-    width: 100%; margin-top: 6px; padding: 16px 0; font-size: 15.5px; font-weight: 800;
-    border-radius: 14px; box-shadow: 0 14px 34px rgba(198,241,53,0.24);
-  }
-  .psm-submit:disabled { opacity: 0.7; cursor: default; }
-  .psm-note { text-align: center; font-size: 12.5px; color: rgba(245,239,224,0.45); margin: 18px 0 0; }
-
   /* LANDING PAGE — themed surface (see the .lp-theme wrapper on
      LandingPage's root, App.jsx), driven entirely by the THEME TOKENS
      defined on :root / :root[data-theme="light"] above — toggling theme
@@ -1256,8 +1207,7 @@ const css = `
   .qr-modal-hint { margin-top: 4px; font-size: 13px; color: var(--muted); }
 
   /* PROFILE PHOTO CROP MODAL — light-themed (shares .modal-overlay above
-     for the backdrop) so it matches ProviderPortal's own UI, not the dark
-     marketing-funnel styling used by .psm-* (ProviderSignupModal). */
+     for the backdrop) so it matches ProviderPortal's own UI. */
   .ppm-modal { background: #fff; border-radius: 18px; padding: 24px; max-width: 420px; width: 100%; }
   .ppm-title { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 18px; font-weight: 800; color: var(--dark-text); margin: 0 0 6px; }
   .ppm-hint { font-size: 13px; color: var(--muted); margin: 0 0 16px; line-height: 1.5; }
@@ -2135,20 +2085,29 @@ function VaiBookMark({ size = 26, style }) {
 // not translated) for search/filtering. Display-only text uses `key` to look
 // up a translated label via t(`services.${key}.name`) / `.desc` instead of
 // reading `.name`/`.desc` directly — see SERVICES.map() call sites.
+// `categoryQuery` is deliberately NOT the same string as `name` — it has
+// to be a substring of the real `service_type` values providers actually
+// sign up with (see SERVICE_TYPES below: "Barber", "Hair Salon", "Med Spa
+// / Clinic", etc. — singular, and not always worded the same as these
+// pill labels), because the pills reuse the existing search-by-category
+// matching in CustomerPortal (`categoryMatch`, a plain case-insensitive
+// `.includes()`), the same mechanism the hero search and "Book Now" deep
+// links already use via `vaibook_pending_search` — not a second, separate
+// filter to keep in sync.
 const SERVICES = [
-  { key: "barbers", icon: "✂️", name: "Barbers", desc: "Cuts & styles", bg: "#1A5C44" },
-  { key: "hairSalons", icon: "💇", name: "Hair Salons", desc: "Color & styling", bg: "#2A4A3E" },
-  { key: "nailTechs", icon: "💅", name: "Nail Techs", desc: "Nails & art", bg: "#1E4035" },
-  { key: "spas", icon: "🧖", name: "Spas", desc: "Full-body relaxation", bg: "#163626" },
-  { key: "medSpas", icon: "🩺", name: "Med Spas", desc: "Injectables & clinical", bg: "#1C4A38" },
-  { key: "massage", icon: "💆", name: "Massage", desc: "Therapeutic & relaxation", bg: "#244530" },
-  { key: "skincareFacials", icon: "🧴", name: "Skincare & Facials", desc: "Cleanses & glow-ups", bg: "#1A5C44" },
-  { key: "hairRemoval", icon: "🪒", name: "Hair Removal", desc: "Waxing & laser", bg: "#2A4A3E" },
-  { key: "tattooPiercing", icon: "🖋️", name: "Tattoo & Piercing", desc: "Ink & piercings", bg: "#1E4035" },
-  { key: "wellnessCenters", icon: "🌿", name: "Wellness Centers", desc: "Holistic & recovery", bg: "#163626" },
-  { key: "petGrooming", icon: "🐾", name: "Pet Grooming", desc: "All breeds", bg: "#1C4A38" },
-  { key: "fitnessRecovery", icon: "🏋️", name: "Fitness & Recovery", desc: "Training & recovery", bg: "#2A4A3E" },
-  { key: "physicalTherapy", icon: "🦵", name: "Physical Therapy", desc: "Rehab & mobility", bg: "#1E4035" },
+  { key: "barbers", icon: "✂️", name: "Barbers", desc: "Cuts & styles", bg: "#1A5C44", categoryQuery: "Barber" },
+  { key: "hairSalons", icon: "💇", name: "Hair Salons", desc: "Color & styling", bg: "#2A4A3E", categoryQuery: "Hair Salon" },
+  { key: "nailTechs", icon: "💅", name: "Nail Techs", desc: "Nails & art", bg: "#1E4035", categoryQuery: "Nail Tech" },
+  { key: "spas", icon: "🧖", name: "Spas", desc: "Full-body relaxation", bg: "#163626", categoryQuery: "Spa" },
+  { key: "medSpas", icon: "🩺", name: "Med Spas", desc: "Injectables & clinical", bg: "#1C4A38", categoryQuery: "Med Spa" },
+  { key: "massage", icon: "💆", name: "Massage", desc: "Therapeutic & relaxation", bg: "#244530", categoryQuery: "Massage" },
+  { key: "skincareFacials", icon: "🧴", name: "Skincare & Facials", desc: "Cleanses & glow-ups", bg: "#1A5C44", categoryQuery: "Skincare" },
+  { key: "hairRemoval", icon: "🪒", name: "Hair Removal", desc: "Waxing & laser", bg: "#2A4A3E", categoryQuery: "Hair Removal" },
+  { key: "tattooPiercing", icon: "🖋️", name: "Tattoo & Piercing", desc: "Ink & piercings", bg: "#1E4035", categoryQuery: "Tattoo" },
+  { key: "wellnessCenters", icon: "🌿", name: "Wellness Centers", desc: "Holistic & recovery", bg: "#163626", categoryQuery: "Wellness" },
+  { key: "petGrooming", icon: "🐾", name: "Pet Grooming", desc: "All breeds", bg: "#1C4A38", categoryQuery: "Pet Grooming" },
+  { key: "fitnessRecovery", icon: "🏋️", name: "Fitness & Recovery", desc: "Training & recovery", bg: "#2A4A3E", categoryQuery: "Fitness & Recovery" },
+  { key: "physicalTherapy", icon: "🦵", name: "Physical Therapy", desc: "Rehab & mobility", bg: "#1E4035", categoryQuery: "Physical Therapy" },
 ];
 
 // ── BUSINESS CATEGORIES & FEATURE FLAGS ──────────────────────────
@@ -2303,7 +2262,7 @@ const isRecentlyJoined = (p, days = 30) => {
 // page's Recommended / New to VaiBook / Trending sections. `badgeFor` is an
 // optional (provider) => string|null that puts a pill in the top-left
 // corner of a card (e.g. "New", "Featured").
-function ProviderCarousel({ providers, badgeFor, onCardClick, ctaLabel }) {
+function ProviderCarousel({ providers, badgeFor, onCardClick, ctaLabel, favoriteIds, onToggleFavorite }) {
   const { t } = useTranslation();
   const rowRef = useRef(null);
   const scrollNext = () => {
@@ -2327,10 +2286,10 @@ function ProviderCarousel({ providers, badgeFor, onCardClick, ctaLabel }) {
               {ctaLabel ? null : (
                 <button
                   className="carousel-heart"
-                  onClick={(e) => { e.stopPropagation(); onCardClick(p); }}
-                  aria-label="Save this provider"
+                  onClick={(e) => onToggleFavorite(e, p.id)}
+                  aria-label={favoriteIds?.has(p.id) ? "Remove from favorites" : "Save this provider"}
                 >
-                  🤍
+                  {favoriteIds?.has(p.id) ? "❤️" : "🤍"}
                 </button>
               )}
               {coverImageUrl(p) ? (
@@ -3321,13 +3280,12 @@ function AuthChoice({ onNav, session, onSignIn, onSignOut }) {
   // answer: "already listed" still goes through the same sign-in as
   // before; "new business" routes to view "signup" — the real,
   // admin-reviewed application form (ProviderSignup/submitProviderApplication)
-  // — with no sign-in required first. Deliberately NOT onOpenProviderSignup:
-  // that opens ProviderSignupModal, which per its own file header is a
-  // front-end-only mockup with no backend wiring at all (submitting it
-  // creates no auth user, no provider row, nothing — see
-  // ProviderSignupModal.jsx). Routing "new business" through the mockup
-  // would make this fork look fixed while actually leaving new providers
-  // right back at a dead end, just a prettier one.
+  // — with no sign-in required first. (This used to need calling out as
+  // "deliberately not the ProviderSignupModal mockup" — that modal has
+  // since been removed entirely; every "provide my service"/"apply to
+  // join" entry point in the app, including this one, now goes through
+  // either the ProviderLandingPage explainer or straight to this real
+  // form, never a popup that quietly did nothing.)
   const [showProviderFork, setShowProviderFork] = useState(false);
   return (
     <>
@@ -3924,7 +3882,7 @@ function setPortalTab(tabId) {
   window.dispatchEvent(new CustomEvent("vaibook-set-portal-tab", { detail: { tab: tabId } }));
 }
 
-function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignOut, onOpenProviderSignup }) {
+function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignOut }) {
   const { t } = useTranslation();
   const [menuOpen, setMenuOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
@@ -4196,7 +4154,7 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
                   <a onClick={() => goAccount(() => scrollToSection("trending-local", onNav, current))}>{t("nav.trending")}</a>
                   <a onClick={() => goAccount(() => scrollToProvidersSection("pricing", onNav, current))}>{t("nav.pricing")}</a>
                   <hr />
-                  <button className="nav-dropdown-item mobile-only-item" onClick={() => goAccount(onOpenProviderSignup)}>
+                  <button className="nav-dropdown-item mobile-only-item" onClick={() => goAccount(() => onNav("providers"))}>
                     <span className="icn">🏪</span> {t("nav.provideMyService")}
                   </button>
                   <button className="nav-dropdown-item for-biz" onClick={() => goAccount(() => enterProviderPortal(onNav, session, onSignIn))}>
@@ -4213,7 +4171,13 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
             <button className="nav-login-link" onClick={() => onNav("auth")}>{t("nav.logIn")}</button>
           )}
           {current === "home" && (
-            <button className="nav-signup-btn" onClick={onOpenProviderSignup}>{t("nav.provideMyService")}</button>
+            // Goes to the real B2B marketing/explainer page (ProviderLandingPage,
+            // view "providers") — no sign-in, no form, just "here's what this
+            // is and how it works" — rather than popping the old
+            // ProviderSignupModal mockup straight at someone who hasn't even
+            // been told what VaiBook-for-business is yet. See the removal note
+            // near ProviderLandingPage below.
+            <button className="nav-signup-btn" onClick={() => onNav("providers")}>{t("nav.provideMyService")}</button>
           )}
           {current === "providers" && (
             <>
@@ -4407,7 +4371,7 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
   );
 }
 
-function LandingPage({ onNav, session, onSignIn, onSignOut }) {
+function LandingPage({ onNav, session, user, onSignIn, onSignOut }) {
   const { t } = useTranslation();
   const [heroQuery, setHeroQuery] = useState("");
   const [heroDistrict, setHeroDistrict] = useState("");
@@ -4423,6 +4387,42 @@ function LandingPage({ onNav, session, onSignIn, onSignOut }) {
     getProviderDirectory().then((data) => setHeroDirectory(data || []));
     getActiveProviders().then((data) => { setDiscoverProviders(data || []); setLoadingDiscover(false); });
   }, []);
+
+  // FAVORITES — the carousel cards' heart button used to just reopen the
+  // card (identical to tapping it), so it never actually saved anything.
+  // Lighter version of CustomerPortal's own favoriteIds/toggleFavorite
+  // (same functions, same optimistic-update pattern) — this page only
+  // ever needs to know WHICH providers are favorited for the heart icon,
+  // never the full favorited-provider list (that's what the portal's own
+  // Favorites tab is for).
+  const [favoriteIds, setFavoriteIds] = useState(new Set());
+  const [togglingFavoriteId, setTogglingFavoriteId] = useState(null);
+  useEffect(() => {
+    if (!user?.id) { setFavoriteIds(new Set()); return; }
+    getFavoriteProviderIds(user.id).then((ids) => setFavoriteIds(new Set(ids)));
+  }, [user?.id]);
+  const toggleFavorite = async (e, providerId) => {
+    e.stopPropagation();
+    if (!session) { onSignIn(); return; }
+    if (!user?.id || togglingFavoriteId === providerId) return;
+    setTogglingFavoriteId(providerId);
+    const isFav = favoriteIds.has(providerId);
+    setFavoriteIds((prev) => {
+      const next = new Set(prev);
+      isFav ? next.delete(providerId) : next.add(providerId);
+      return next;
+    });
+    const ok = isFav ? await removeFavorite(user.id, providerId) : await addFavorite(user.id, providerId);
+    if (!ok) {
+      // Revert on failure — same as CustomerPortal's own toggle.
+      setFavoriteIds((prev) => {
+        const next = new Set(prev);
+        isFav ? next.add(providerId) : next.delete(providerId);
+        return next;
+      });
+    }
+    setTogglingFavoriteId(null);
+  };
 
   // "Trending near you" — a real (not guessed) district, from the
   // browser's own geolocation matched to the nearest of Belize's 6
@@ -4487,11 +4487,19 @@ function LandingPage({ onNav, session, onSignIn, onSignOut }) {
   const trendingNearYou = districtTrending.length >= 2 ? districtTrending : trendingProviders;
   const trendingNearYouHeading = districtTrending.length >= 2 ? t("landing.trendingIn", { district: trendingDistrict }) : t("landing.trendingNearYou");
 
+  // FIXED — this used to stash the provider's NAME as a text search and
+  // let CustomerPortal re-search for it (`vaibook_pending_search`), which
+  // added an extra results-page click and risked a fuzzy name match
+  // surfacing the wrong provider. Every card/button here is really saying
+  // "open THIS exact provider" — same intent as a QR code or a shared
+  // booking link — so this now uses that same "#book-<id>" deep link
+  // (parseBookingHash in App()) instead of a second, less precise path to
+  // the same place. Setting the hash (not just calling onNav) is what
+  // actually triggers it — App()'s hashchange listener is what sets
+  // deepLinkProviderId and jumps straight into CustomerPortal already
+  // opened on this provider's booking view, no search results in between.
   const goToProvider = (p) => {
-    try {
-      localStorage.setItem("vaibook_pending_search", JSON.stringify({ query: p.business_name, district: "All" }));
-    } catch (e) { /* ignore storage errors */ }
-    enterCustomerPortal(onNav, session, onSignIn);
+    window.location.hash = `book-${p.id}`;
   };
 
   const submitHeroSearch = (queryOverride) => {
@@ -4573,7 +4581,23 @@ function LandingPage({ onNav, session, onSignIn, onSignOut }) {
         </div>
         <div className="services-pills">
           {SERVICES.map((s, i) => (
-            <button className="service-pill badge-pill" key={i} onClick={() => enterCustomerPortal(onNav, session, onSignIn)}>
+            // FIXED — every pill used to land on the same generic portal
+            // home regardless of which one was tapped (no category ever
+            // actually reached CustomerPortal). Reuses the exact same
+            // pending-search mechanism the hero search bar and "Book Now"
+            // already use (vaibook_pending_search → CustomerPortal's
+            // Browse tab, see its categoryMatch filter) rather than a
+            // second, separate filtering path.
+            <button
+              className="service-pill badge-pill"
+              key={i}
+              onClick={() => {
+                try {
+                  localStorage.setItem("vaibook_pending_search", JSON.stringify({ query: s.categoryQuery, district: "All" }));
+                } catch (e) { /* ignore storage errors */ }
+                enterCustomerPortal(onNav, session, onSignIn);
+              }}
+            >
               <span className="icon">{s.icon}</span> {t(`services.${s.key}.name`)}
             </button>
           ))}
@@ -4654,14 +4678,14 @@ function LandingPage({ onNav, session, onSignIn, onSignOut }) {
             <div style={{ marginBottom: 44 }}>
               <div className="section-eyebrow">{t("landing.lovedByCustomers")}</div>
               <h2 className="section-title" style={{ marginBottom: 20 }}>{t("landing.recommended")}</h2>
-              <ProviderCarousel providers={recommendedProviders} onCardClick={goToProvider} />
+              <ProviderCarousel providers={recommendedProviders} onCardClick={goToProvider} favoriteIds={favoriteIds} onToggleFavorite={toggleFavorite} />
             </div>
           )}
           {newProviders.length >= 2 && (
             <div>
               <div className="section-eyebrow">{t("landing.justJoined")}</div>
               <h2 className="section-title" style={{ marginBottom: 20 }}>{t("landing.newToVaiBook")}</h2>
-              <ProviderCarousel providers={newProviders} badgeFor={(p) => (isRecentlyJoined(p) ? t("landing.newBadge") : null)} onCardClick={goToProvider} />
+              <ProviderCarousel providers={newProviders} badgeFor={(p) => (isRecentlyJoined(p) ? t("landing.newBadge") : null)} onCardClick={goToProvider} favoriteIds={favoriteIds} onToggleFavorite={toggleFavorite} />
             </div>
           )}
         </section>
@@ -4733,15 +4757,22 @@ function SiteFooter() {
 // agency upsell, and the platform/dashboard preview — now lives here on
 // its own route instead, so a customer looking for a haircut never sees
 // SaaS pricing, and a shop owner evaluating VaiBook never has to scroll
-// past a consumer search bar to find it. Reached only via the nav's
-// "Pricing" link (scrollToProvidersSection) or a direct #providers visit
-// — the nav's main "Provide my service" CTA and every "Apply to Join"
-// button on this page now short-circuit straight to ProviderSignupModal
-// (see onOpenProviderSignup below) instead of landing here or on the real
-// application form (ProviderSignup, view "signup"), per the frictionless
-// direct-to-app funnel. This page still exists for anyone who scrolls in
-// from "Pricing" wanting the full pitch before they commit.
-function ProviderLandingPage({ onNav, session, onSignIn, onSignOut, onOpenProviderSignup }) {
+// past a consumer search bar to find it.
+//
+// This is now the ONLY landing spot for "I might want to list my
+// business" — the nav's main "Provide my service" CTA, the "Pricing"
+// link (scrollToProvidersSection), and a direct #providers visit all
+// land here, no sign-in required. Every "Apply to Join" button ON this
+// page routes straight to `onNav("signup")` — the real, admin-reviewed
+// application (ProviderSignup/submitProviderApplication) — now that the
+// old ProviderSignupModal mockup (collected Shop Name/Email/Password,
+// created no account, dumped the person on a Google sign-in gate with
+// zero explanation) has been removed entirely. See ProviderSignup's own
+// header comment for why that form, not a popup, is the real funnel: a
+// prospective provider now always sees what the business is first, then
+// applies for real, rather than hitting a convincing-looking form that
+// quietly did nothing.
+function ProviderLandingPage({ onNav, session, onSignIn, onSignOut }) {
   const { t } = useTranslation();
   return (
     <>
@@ -4755,7 +4786,7 @@ function ProviderLandingPage({ onNav, session, onSignIn, onSignOut, onOpenProvid
         <p className="provider-hero-sub">{t("providerLanding.sub")}</p>
         <div className="trial-badge">{t("providerLanding.trialBadge")}</div>
         <div className="provider-hero-ctas">
-          <button className="btn-lime provider-hero-cta" onClick={onOpenProviderSignup}>
+          <button className="btn-lime provider-hero-cta" onClick={() => onNav("signup")}>
             {t("providerLanding.applyToJoin14")}
           </button>
           <button className="btn-ghost provider-hero-cta-secondary" onClick={() => document.getElementById("pricing")?.scrollIntoView({ behavior: "smooth" })}>
@@ -4842,7 +4873,15 @@ function ProviderLandingPage({ onNav, session, onSignIn, onSignOut, onOpenProvid
               </ul>
               <button
                 className={p.recommended ? "btn-lime pricing-cta" : "btn-sm forest pricing-cta"}
-                onClick={onOpenProviderSignup}
+                onClick={() => {
+                  // Same stash-and-consume-once pattern the public pricing
+                  // section already uses (ProviderSignup reads this on
+                  // mount) — so picking a plan here carries it straight
+                  // through to the real application form instead of
+                  // landing on a blank picker.
+                  try { localStorage.setItem("vaibook_signup_plan", p.id); } catch (e) { /* ignore */ }
+                  onNav("signup");
+                }}
               >
                 {t("providerLanding.applyToJoin")}
               </button>
@@ -4886,7 +4925,7 @@ function ProviderLandingPage({ onNav, session, onSignIn, onSignOut, onOpenProvid
           <p className="for-business-sub">
             {t("providerLanding.forBusinessSub")}
           </p>
-          <button className="btn-lime for-business-btn" onClick={onOpenProviderSignup}>
+          <button className="btn-lime for-business-btn" onClick={() => onNav("signup")}>
             {t("providerLanding.applyToJoin")}
           </button>
         </div>
@@ -5540,29 +5579,47 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
       notes: notes ? notes.trim() : null,
     });
     if (created) {
+      // FIXED — these used to be awaited one after another (in-app
+      // notification, then a lookup for the provider's email, then the
+      // actual email send) before the customer's "Request booking" button
+      // ever unlocked, even though none of this is something the customer
+      // needs to wait on — the booking itself (createBookingSafe above)
+      // already succeeded. Fired here without awaiting so the customer
+      // gets their confirmation immediately; the provider still gets
+      // notified, just not on the customer's clock. Errors are swallowed
+      // (not surfaced to the customer, who has nothing to retry here) but
+      // still logged, same as every other best-effort notification path
+      // in this file.
       const finalTotal = Number(created.total_amount) || total;
       const whenLabel = `${formatBookingDate(dateStr)} at ${formatBookingTime(timeStr)}`;
-      if (selectedProvider.user_id) {
-        await createNotification({
-          user_id: selectedProvider.user_id,
-          title: "New booking request",
-          body: `${user?.full_name || guestCheckoutForm.name || "A customer"} requested ${service.name} on ${whenLabel}.`,
-          type: "booking_requested",
-          booking_id: created.id,
-        });
-      }
-      // A provider who isn't sitting in the app had no way of knowing a
-      // request had come in. The address is resolved server-side for this
-      // one booking (and only if they still want these emails) rather than
-      // being published on every provider's public profile row.
-      const providerEmail = await getProviderNotifyEmail(created.id);
-      if (providerEmail) {
-        await sendBookingEmail({
-          to: providerEmail,
-          subject: `New booking request — ${service.name}, ${whenLabel}`,
-          html: `<p>Hi ${selectedProvider.business_name || "there"},</p><p><strong>${user?.full_name || guestCheckoutForm.name || "A customer"}</strong> just requested <strong>${service.name}</strong> for <strong>${whenLabel}</strong> (BZ$${finalTotal.toFixed(2)}).</p>${notes ? `<p>Their note: "${notes.trim()}"</p>` : ""}<p>Open VaiBook to accept or decline it. You can turn these emails off under Settings → Notifications.</p>`,
-        });
-      }
+      (async () => {
+        try {
+          if (selectedProvider.user_id) {
+            await createNotification({
+              user_id: selectedProvider.user_id,
+              title: "New booking request",
+              body: `${user?.full_name || guestCheckoutForm.name || "A customer"} requested ${service.name} on ${whenLabel}.`,
+              type: "booking_requested",
+              booking_id: created.id,
+            });
+          }
+          // A provider who isn't sitting in the app had no way of knowing a
+          // request had come in. The address is resolved server-side for
+          // this one booking (and only if they still want these emails)
+          // rather than being published on every provider's public profile
+          // row.
+          const providerEmail = await getProviderNotifyEmail(created.id);
+          if (providerEmail) {
+            await sendBookingEmail({
+              to: providerEmail,
+              subject: `New booking request — ${service.name}, ${whenLabel}`,
+              html: `<p>Hi ${selectedProvider.business_name || "there"},</p><p><strong>${user?.full_name || guestCheckoutForm.name || "A customer"}</strong> just requested <strong>${service.name}</strong> for <strong>${whenLabel}</strong> (BZ$${finalTotal.toFixed(2)}).</p>${notes ? `<p>Their note: "${notes.trim()}"</p>` : ""}<p>Open VaiBook to accept or decline it. You can turn these emails off under Settings → Notifications.</p>`,
+            });
+          }
+        } catch (err) {
+          console.error("Provider booking-request notification/email failed:", err);
+        }
+      })();
     }
     return created;
   };
@@ -12258,13 +12315,6 @@ export default function App() {
     return () => window.removeEventListener("hashchange", onHashChange);
   }, []);
 
-  // Direct-to-app provider signup modal — one global instance, opened from
-  // anywhere (nav CTA, pricing cards, etc. — see onOpenProviderSignup
-  // below) so every "provide my service" / "apply to join" entry point
-  // pops the same frictionless overlay instead of routing to a marketing
-  // page or the real ProviderSignup application form.
-  const [showProviderSignup, setShowProviderSignup] = useState(false);
-
   // Site-wide offline takeover (see SiteOffline / AdminPortal's Emergency
   // tab). Checked independently of the session/loading flow below so it
   // still shows up even if, say, Google sign-in itself is having issues —
@@ -12640,7 +12690,6 @@ export default function App() {
     session, user, providerProfile,
     onSignIn: signInWithGoogle, onSignOut: handleSignOut,
     onUserUpdate: setUser, onProviderProfileUpdate: setProviderProfile,
-    onOpenProviderSignup: () => setShowProviderSignup(true),
   };
 
   return (
@@ -12648,13 +12697,6 @@ export default function App() {
       <style>{css}</style>
       <MaintenanceBanner />
       <InstallAppGuide />
-      {/* Rendered once, globally, so it can pop over whatever page/view is
-          currently showing — see the showProviderSignup state above. */}
-      <ProviderSignupModal
-        open={showProviderSignup}
-        onClose={() => setShowProviderSignup(false)}
-        onEnterDashboard={() => { setShowProviderSignup(false); setView("provider"); }}
-      />
       {/* The Provider Portal now has its own top bar (logo, nav links, avatar
           menu) replacing the persistent sidebar, so the global site nav
           would just be a redundant second header above it. Every other
