@@ -497,7 +497,11 @@ export const redeemLoyaltyReward = async (accountId) => {
 export const getActiveProviders = async (filters = {}) => {
   let query = supabase
     .from('provider_profiles')
-    .select('*, services(*), reviews(rating)')
+    // working_hours(*) added so every card that renders from this list
+    // (trending/discover carousels, browse + favorites grid) can show a
+    // real open/closed status without a second query per provider — see
+    // providerOpenNow() in App.jsx, which reads p.working_hours directly.
+    .select('*, services(*), reviews(rating), working_hours(*)')
     .eq('is_active', true)
     // Business-plan providers can turn on "Featured in district search" —
     // boosts them to the top of every browse/search result, everything
@@ -516,6 +520,10 @@ export const getActiveProviders = async (filters = {}) => {
     ...p,
     services: toArray(p.services),
     reviews: toArray(p.reviews),
+    // DB columns are open_time/close_time; providerOpenNow (and the rest
+    // of the app) reads start_time/end_time — same mapping getWorkingHours
+    // already does for the single-provider fetch.
+    working_hours: toArray(p.working_hours).map((h) => ({ ...h, start_time: h.open_time, end_time: h.close_time })),
   }));
 };
 
