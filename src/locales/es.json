@@ -2,7 +2,7 @@
   "hero": {
     "titleLine1": "Eleva tu estándar.",
     "titleLine2": "Reserva con los mejores profesionales de belleza de Belice.",
-    "subtitle": "Sáltate la lista de espera y reserva artistas de primer nivel en segundos.",
+    "subtitle": "Luce impecable. Reserva sin parar.",
     "searchPlaceholder": "¿Qué servicio necesitas?",
     "anyDistrict": "Cualquier distrito",
     "searchButton": "Buscar",
@@ -263,11 +263,13 @@
       "checkingLiveAvailability": "Comprobando disponibilidad en tiempo real...",
       "chooseService": "Por favor elige un servicio.",
       "chooseServiceDateTime": "Por favor elige un servicio, fecha y hora.",
+      "chooseTimeForEach": "Por favor elige una fecha y hora para {{service}}.",
       "codeSendFailed": "No pudimos enviar el código. Inténtalo de nuevo.",
       "combinedTimeUnavailable": "Ese horario combinado ya no está disponible. Por favor elige otro horario.",
       "date": "Fecha",
       "depositRequired": "Este proveedor requiere un depósito del {{pct}}% después de aceptar tu reserva.",
       "durationMin": "{{count}} min",
+      "eachServiceOwnTime": "Cada servicio se reserva por separado, así que puedes darles horarios distintos — nos aseguramos de que no se crucen entre sí ni con nada que ya esté en la agenda del proveedor.",
       "emailAddress": "Correo electrónico",
       "emailCodeNote": "Te enviaremos un código de 6 dígitos por correo para confirmar que eres tú — sin contraseña, sin registro aparte.",
       "enterFullName": "Por favor ingresa tu nombre completo.",
@@ -280,10 +282,12 @@
       "hoursNotSetYet": "Este proveedor aún no ha configurado su horario de trabajo — intenta de nuevo más tarde o envía una nota con tu horario preferido.",
       "liabilityNote": "VaiBook es una plataforma de reservas. Todos los pagos y depósitos son transacciones directas entre el cliente y el negocio. Vai Technologies no se hace responsable de disputas.",
       "maintenanceMode": "Las nuevas reservas están pausadas temporalmente por mantenimiento. Por favor intenta de nuevo en un momento.",
+      "multiSlotTaken": "Lo sentimos, el horario que elegiste para {{service}} se acaba de ocupar. No se reservó nada de este carrito — elige otro horario para ese servicio e inténtalo de nuevo.",
       "noOpenSlots": "No hay horarios disponibles en esta fecha. Por favor elige otro día.",
       "notesOptional": "Notas (opcional)",
       "notesPlaceholder": "¿Algo que el proveedor deba saber?",
       "pickDateAndTime": "Elige una fecha y hora",
+      "pickTimesForEach": "Elige un horario para cada servicio",
       "rateLimited": "Has enviado varias solicitudes de reserva en poco tiempo. Espera un momento antes de intentar de nuevo.",
       "receiptUploadFailed": "Ese recibo no se pudo subir. Revisa tu conexión e inténtalo de nuevo.",
       "requestBooking": "Solicitar reserva",
@@ -396,6 +400,7 @@
       "closedOpensDayAt": "Cerrado · abre {{day}} a las {{time}}",
       "closedOpensTodayAt": "Cerrado · abre hoy a las {{time}}",
       "notListed": "Horario no disponible",
+      "openNow": "Abierto ahora",
       "openNowCloses": "Abierto ahora · cierra a las {{time}}",
       "tomorrow": "mañana"
     },
@@ -448,7 +453,7 @@
       "tabPortfolio": "Portafolio",
       "tabReviews": "Reseñas",
       "tabServices": "Servicios",
-      "tapServiceToAdd": "Toca un servicio para añadirlo — ¿vas a reservar más de uno? Añádelos todos y elige un horario para toda la visita."
+      "tapServiceToAdd": "Toca un servicio para añadirlo — ¿vas a reservar más de uno? Añádelos todos y elige un horario para cada uno."
     },
     "reviews": {
       "cantReviewOwnBusiness": "No puedes reseñar tu propio negocio.",
