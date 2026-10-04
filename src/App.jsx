@@ -1202,6 +1202,7 @@ const css = `
   .ppm-zoom-row { display: flex; align-items: center; gap: 12px; margin-top: 16px; }
   .ppm-zoom-label { font-size: 12px; color: var(--muted); flex-shrink: 0; }
   .ppm-zoom-row input[type="range"] { flex: 1; }
+  .ppm-error { font-size: 13px; color: #B3261E; margin: 14px 0 0; }
   .ppm-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
 
   /* ELITE WELCOME — "you're live" banner + launch graphic modal */
@@ -6984,6 +6985,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
   const [profilePhotoFile, setProfilePhotoFile] = useState(null);
   const [showProfilePhotoModal, setShowProfilePhotoModal] = useState(false);
   const [savingProfilePhoto, setSavingProfilePhoto] = useState(false);
+  const [profilePhotoError, setProfilePhotoError] = useState(null);
   const profilePhotoInputRef = useRef(null);
   const [mapPosition, setMapPosition] = useState(null);
   const [locationLabel, setLocationLabel] = useState("");
@@ -8041,27 +8043,51 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
   const handleSaveProfilePhoto = async (croppedFile) => {
     if (!providerProfile?.user_id) return;
     setSavingProfilePhoto(true);
+    setProfilePhotoError(null);
     const previousUrl = profilePhotoUrl;
     const url = await uploadProviderPhoto(providerProfile.user_id, croppedFile);
-    if (url) {
+    if (!url) {
+      setProfilePhotoError(t("providerPortal.profile.photoSaveError"));
+      setSavingProfilePhoto(false);
+      return;
+    }
+    // Only treat this as "saved" once the database row itself actually
+    // updates — upsertProviderProfile logs and swallows its own errors
+    // (see supabase.js), so without this check a failed save (e.g. the
+    // profile_photo_url column not existing yet because the patch's SQL
+    // migration hasn't been run) would still close the modal and show
+    // the new photo right here, while the database — and therefore every
+    // search card pulling from it — never actually got it. That mismatch
+    // is exactly what silently shipping this would look like from the
+    // provider's side: "I set it" in their own portal, but customer-facing
+    // cards keep showing the old cover image.
+    const updated = await upsertProviderProfile({ id: providerProfile.id, user_id: providerProfile.user_id, profile_photo_url: url });
+    if (updated) {
       setProfilePhotoUrl(url);
-      const updated = await upsertProviderProfile({ id: providerProfile.id, user_id: providerProfile.user_id, profile_photo_url: url });
-      if (updated) onProviderProfileUpdate && onProviderProfileUpdate(updated);
+      onProviderProfileUpdate && onProviderProfileUpdate(updated);
       // Clean up the old photo now that the new one is saved — same
       // bucket as the gallery (uploadProviderPhoto always writes a fresh,
       // uniquely-named file), so the old file would otherwise just sit
       // there unused forever.
       if (previousUrl) await deleteProviderPhoto(providerProfile.user_id, previousUrl);
+      setShowProfilePhotoModal(false);
+      setProfilePhotoFile(null);
+    } else {
+      // The database write failed — don't leave an orphaned file sitting
+      // in storage with nothing pointing to it, and tell the provider
+      // plainly instead of acting like it worked. Modal stays open so
+      // they can retry without re-picking and re-cropping the file.
+      await deleteProviderPhoto(providerProfile.user_id, url);
+      setProfilePhotoError(t("providerPortal.profile.photoSaveError"));
     }
     setSavingProfilePhoto(false);
-    setShowProfilePhotoModal(false);
-    setProfilePhotoFile(null);
   };
 
   const closeProfilePhotoModal = () => {
     if (savingProfilePhoto) return;
     setShowProfilePhotoModal(false);
     setProfilePhotoFile(null);
+    setProfilePhotoError(null);
   };
 
   const saveLocation = async () => {
@@ -10320,6 +10346,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
         onClose={closeProfilePhotoModal}
         onSave={handleSaveProfilePhoto}
         saving={savingProfilePhoto}
+        error={profilePhotoError}
       />
     </div>
     </FeatureFlagsProvider>
