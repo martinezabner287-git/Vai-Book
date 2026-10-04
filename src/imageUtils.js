@@ -61,3 +61,42 @@ export async function compressImageFile(file, { maxDimension = MAX_DIMENSION, qu
     return file;
   }
 }
+
+// Used by the profile-photo crop flow (ProfilePhotoModal + react-easy-crop):
+// takes an image source (an object URL from the file the provider just
+// picked) plus the pixel crop rect react-easy-crop's onCropComplete hands
+// back, and resolves to a new square File — cropped, resized to
+// outputSize×outputSize, and re-encoded the same WebP/JPEG way
+// compressImageFile already does above. Unlike compressImageFile this
+// always re-encodes (a forced 1:1 crop is never "skippable"), and there's
+// no dependency on react-easy-crop here — it just needs plain crop-pixel
+// coordinates, so this stays a small, independent canvas helper.
+const PROFILE_PHOTO_SIZE = 640; // plenty sharp for a 72px thumbnail or a cover image, nowhere near portfolio-photo size
+const PROFILE_PHOTO_QUALITY = 0.85;
+
+export async function cropImageToFile(imageSrc, cropPixels, { outputSize = PROFILE_PHOTO_SIZE, quality = PROFILE_PHOTO_QUALITY, fileName = "profile-photo" } = {}) {
+  const img = await new Promise((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => resolve(image);
+    image.onerror = () => reject(new Error("Could not load image for cropping"));
+    image.src = imageSrc;
+  });
+
+  const canvas = document.createElement("canvas");
+  canvas.width = outputSize;
+  canvas.height = outputSize;
+  const ctx = canvas.getContext("2d");
+  ctx.drawImage(
+    img,
+    cropPixels.x, cropPixels.y, cropPixels.width, cropPixels.height,
+    0, 0, outputSize, outputSize
+  );
+
+  const outputType = canEncodeWebP() ? "image/webp" : "image/jpeg";
+  const ext = outputType === "image/webp" ? "webp" : "jpg";
+
+  const blob = await new Promise((resolve) => canvas.toBlob(resolve, outputType, quality));
+  if (!blob) return null;
+
+  return new File([blob], `${fileName}.${ext}`, { type: outputType });
+}
