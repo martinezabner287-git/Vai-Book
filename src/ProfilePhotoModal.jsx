@@ -18,7 +18,7 @@ import { cropImageToFile } from "./imageUtils";
 // backdrop) to match ProviderPortal's own UI — unlike
 // ProviderSignupModal.jsx, which is dark on purpose because it's part of
 // the separate marketing funnel.
-export default function ProfilePhotoModal({ open, file, onClose, onSave, saving }) {
+export default function ProfilePhotoModal({ open, file, onClose, onSave, saving, error }) {
   const { t } = useTranslation();
   const [imageSrc, setImageSrc] = useState(null);
   const [crop, setCrop] = useState({ x: 0, y: 0 });
@@ -112,6 +112,8 @@ export default function ProfilePhotoModal({ open, file, onClose, onSave, saving 
             aria-label={t("providerPortal.profile.zoom")}
           />
         </div>
+
+        {error && <p className="ppm-error">{error}</p>}
 
         <div className="ppm-actions">
           <button className="btn-sm ghost" onClick={onClose} disabled={saving}>
