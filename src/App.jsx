@@ -680,8 +680,34 @@ const css = `
     background: radial-gradient(circle at 50% 100%, rgba(198,241,53,0.22), transparent 60%);
     z-index: 0;
   }
+  /* Dissolves the hero's vivid green into the page's own off-white
+     (--bg-primary) right at the section's own bottom edge, instead of the
+     gradient just stopping dead and leaving a hard seam where the
+     services section's background shows through. Since the page
+     background behind/after the hero IS --bg-primary already (see
+     .lp-theme below), fading to that exact color here makes the two
+     read as one continuous surface rather than two stacked blocks. */
+  .search-hero::after {
+    content: '';
+    position: absolute; left: 0; right: 0; bottom: 0; height: 200px;
+    background: linear-gradient(to bottom, transparent, var(--bg-primary));
+    z-index: 0;
+    pointer-events: none;
+  }
   .search-hero > * { position: relative; z-index: 1; max-width: 780px; margin-left: auto; margin-right: auto; }
   .search-hero > .search-bar-pill { z-index: 10; }
+  /* Faint decorative Belize silhouette (see the JSX comment above the
+     <svg> for why it's simplified rather than survey-accurate). Overrides
+     the ".search-hero > *" rule above back to an unconstrained, absolutely
+     positioned watermark instead of a centered, max-width content block. */
+  .search-hero > .search-hero-map {
+    position: absolute; z-index: 0; top: -10%; right: -6%; max-width: none; margin: 0;
+    width: 340px; height: auto; opacity: 0.07; pointer-events: none;
+  }
+  .search-hero-map path { fill: var(--near-white); }
+  @media (max-width: 640px) {
+    .search-hero > .search-hero-map { width: 220px; top: -4%; right: -10%; opacity: 0.06; }
+  }
   .search-hero-eyebrow { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 12px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; color: rgba(250,250,247,0.55); margin-bottom: 18px; text-align: center; }
   .search-hero h1 { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; font-size: clamp(32px, 5vw, 58px); line-height: 1.08; letter-spacing: -1px; margin: 0 auto 20px; text-align: center; }
   .search-hero h1 .line1 { display: block; color: var(--near-white); }
@@ -4407,6 +4433,16 @@ function LandingPage({ onNav, session, onSignIn, onSignOut }) {
           glyph with a wide left side-bearing that reads as a stray gap at
           large display size — confirmed on the live site. */}
       <section className="search-hero">
+        {/* Faint Belize silhouette watermark — purely decorative texture,
+            not a reference map, so it's a simplified/stylized outline
+            rather than a surveyed boundary (low-poly on purpose — reads
+            as an intentional brand mark, not an attempt at cartographic
+            precision). Sits in the same z-index:0 layer as the radial
+            glow below and the bottom fade further down, all beneath the
+            real hero content (z-index:1 via ".search-hero > *"). */}
+        <svg className="search-hero-map" viewBox="0 0 100 230" aria-hidden="true" focusable="false">
+          <path d="M24,8 L46,14 L70,20 L88,32 L84,48 L92,60 L86,78 L90,100 L82,125 L76,150 L68,175 L58,200 L50,222 L38,208 L26,195 L20,175 L28,160 L18,145 L24,125 L14,108 L20,90 L12,70 L18,50 L14,30 Z" />
+        </svg>
         <h1><span className="line1">{t("hero.titleLine1")}</span><span className="line2">{t("hero.titleLine2")}</span></h1>
         <p className="search-sub">{t("hero.subtitle")}</p>
         <div className="search-bar-pill search-glass" id="main-search-bar">
