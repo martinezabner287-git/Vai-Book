@@ -660,62 +660,67 @@ const css = `
   .service-badge { margin-left: auto; background: var(--lime); color: var(--forest); font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 6px; }
   .service-badge.open { background: rgba(198,241,53,0.15); color: var(--lime); }
 
-  /* SEARCH HERO — dark marketplace-style hero: small eyebrow label, bold
-     two-line statement headline (2nd line in lime), then the search pill.
-     Same structural language as Vai Buy's shop hero, in VaiBook's own
-     forest-green palette instead of Vai Buy's navy/teal. */
+  /* SEARCH HERO — light marketplace-style hero: small eyebrow label, bold
+     two-line statement headline (2nd line in a mid-green accent), then the
+     search pill, all sitting on a near-white surface with a few large,
+     blurred, softly-colored shapes drifting slowly behind the content
+     (Fresha's own hero uses this exact technique with pink/purple blobs —
+     here it's built from VaiBook's own lime/forest palette instead, so the
+     motion reads as on-brand rather than borrowed). Dark text throughout
+     is a deliberate departure from the old dark-hero's white/lime text:
+     white text is illegible against a light, moving background, so once
+     the background went light the text had to follow — confirmed with the
+     user via an explicit before/after comparison. */
   .search-hero {
     position: relative; overflow: hidden; padding: 100px 24px 88px; text-align: left;
-    /* Picks up exactly where the nav's gradient ends (#17593F) and keeps
-       brightening toward a vivid emerald glow at the bottom, so the nav
-       and hero read as one unbroken fade down the page. Percentage-based
-       to its own box (not a fixed pixel canvas), so the hero always
-       reaches full vivid green right at its own bottom edge, whatever its
-       actual rendered height turns out to be. */
-    background: linear-gradient(170deg, #17593F 0%, #1E6B50 45%, #2BB37B 100%);
+    background: var(--bg-primary);
   }
+  /* Two large, blurred, independently-drifting color blobs. Using
+     ::before/::after (rather than extra DOM nodes) keeps this change
+     CSS-only. filter:blur() already softens every edge, and the hero's
+     own overflow:hidden clips both to the section, so — unlike the old
+     hard-edged dark gradient — there's no seam to dissolve into the page
+     background underneath; the hero's base color already matches it. */
   .search-hero::before {
     content: '';
-    position: absolute; inset: -25%;
-    background: radial-gradient(circle at 50% 100%, rgba(198,241,53,0.22), transparent 60%);
-    z-index: 0;
+    position: absolute; z-index: 0; pointer-events: none;
+    width: 640px; height: 640px; top: -230px; left: -180px;
+    border-radius: 50%; filter: blur(70px);
+    background: radial-gradient(circle, rgba(198,241,53,0.5) 0%, rgba(198,241,53,0) 70%);
+    animation: hero-blob-drift-1 17s ease-in-out infinite;
   }
-  /* Dissolves the hero's vivid green into the page's own off-white
-     (--bg-primary) right at the section's own bottom edge, instead of the
-     gradient just stopping dead and leaving a hard seam where the
-     services section's background shows through. Since the page
-     background behind/after the hero IS --bg-primary already (see
-     .lp-theme below), fading to that exact color here makes the two
-     read as one continuous surface rather than two stacked blocks. */
   .search-hero::after {
     content: '';
-    position: absolute; left: 0; right: 0; bottom: 0; height: 200px;
-    background: linear-gradient(to bottom, transparent, var(--bg-primary));
-    z-index: 0;
-    pointer-events: none;
+    position: absolute; z-index: 0; pointer-events: none;
+    width: 580px; height: 580px; top: -120px; right: -200px;
+    border-radius: 50%; filter: blur(70px);
+    background: radial-gradient(circle, rgba(30,139,92,0.4) 0%, rgba(30,139,92,0) 70%);
+    animation: hero-blob-drift-2 21s ease-in-out infinite;
+  }
+  @keyframes hero-blob-drift-1 {
+    0%   { transform: translate(0, 0) scale(1); }
+    50%  { transform: translate(170px, 110px) scale(1.12); }
+    100% { transform: translate(0, 0) scale(1); }
+  }
+  @keyframes hero-blob-drift-2 {
+    0%   { transform: translate(0, 0) scale(1); }
+    50%  { transform: translate(-150px, 120px) scale(1.08); }
+    100% { transform: translate(0, 0) scale(1); }
   }
   .search-hero > * { position: relative; z-index: 1; max-width: 780px; margin-left: auto; margin-right: auto; }
   .search-hero > .search-bar-pill { z-index: 10; }
-  /* Faint decorative Belize silhouette (see the JSX comment above the
-     <svg> for why it's simplified rather than survey-accurate). Overrides
-     the ".search-hero > *" rule above back to an unconstrained, absolutely
-     positioned watermark instead of a centered, max-width content block. */
-  .search-hero > .search-hero-map {
-    position: absolute; z-index: 0; top: -10%; right: -6%; max-width: none; margin: 0;
-    width: 340px; height: auto; opacity: 0.07; pointer-events: none;
-  }
-  .search-hero-map path { fill: var(--near-white); }
-  @media (max-width: 640px) {
-    .search-hero > .search-hero-map { width: 220px; top: -4%; right: -10%; opacity: 0.06; }
-  }
-  .search-hero-eyebrow { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 12px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; color: rgba(250,250,247,0.55); margin-bottom: 18px; text-align: center; }
+  .search-hero-eyebrow { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 12px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; color: var(--muted); margin-bottom: 18px; text-align: center; }
   .search-hero h1 { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; font-size: clamp(32px, 5vw, 58px); line-height: 1.08; letter-spacing: -1px; margin: 0 auto 20px; text-align: center; }
-  .search-hero h1 .line1 { display: block; color: var(--near-white); }
-  .search-hero h1 .line2 { display: block; color: var(--lime); }
+  .search-hero h1 .line1 { display: block; color: var(--forest); }
+  /* var(--lime) reads great on the old dark-green hero but nearly
+     disappears on this light one (low-contrast light-yellow-green on
+     off-white) — this mid-green keeps the same "accent line" role at
+     readable contrast. */
+  .search-hero h1 .line2 { display: block; color: #1E8F5C; }
   @media (max-width: 480px) {
     .search-hero h1 { font-size: clamp(28px, 8vw, 36px); }
   }
-  .search-sub { font-size: 17px; color: rgba(250,250,247,0.72); max-width: 560px; margin: 0 auto 40px; line-height: 1.5; text-align: center; }
+  .search-sub { font-size: 17px; color: var(--muted); max-width: 560px; margin: 0 auto 40px; line-height: 1.5; text-align: center; }
   .search-bar-pill {
     position: relative; max-width: 760px; margin: 0 auto;
     background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.16);
@@ -729,18 +734,18 @@ const css = `
   .search-bar-pill .sep { width: 1px; height: 28px; background: rgba(255,255,255,0.18); flex-shrink: 0; }
   .search-submit { background: var(--lime); color: var(--forest); border: none; border-radius: 100px; padding: 14px 30px; font-weight: 700; font-size: 15px; cursor: pointer; white-space: nowrap; transition: opacity .2s; font-family: 'Plus Jakarta Sans', sans-serif; }
   .search-submit:hover { opacity: .87; }
-  .search-hero-tagline { margin-top: 26px; font-size: 13px; color: rgba(250,250,247,0.6); text-align: center; }
-  .search-hero-tagline a { color: var(--lime); font-weight: 600; cursor: pointer; text-decoration: underline; }
+  .search-hero-tagline { margin-top: 26px; font-size: 13px; color: var(--muted); text-align: center; }
+  .search-hero-tagline a { color: #1E8F5C; font-weight: 600; cursor: pointer; text-decoration: underline; }
   /* Real, non-fabricated live-stat line under the search bar (count comes
      straight from the same active-providers fetch the Discover rows use —
      never a made-up number) + a "Get the app" pill, echoing the two small
      trust/utility elements Fresha places under its own hero search bar. */
-  .hero-stat-line { margin-top: 22px; font-size: 14px; font-weight: 600; color: rgba(250,250,247,0.75); text-align: center; }
-  .hero-stat-line strong { color: var(--lime); font-weight: 800; }
+  .hero-stat-line { margin-top: 22px; font-size: 14px; font-weight: 600; color: var(--muted); text-align: center; }
+  .hero-stat-line strong { color: #1E8F5C; font-weight: 800; }
   .hero-get-app-btn {
     display: flex; align-items: center; gap: 8px; margin: 18px auto 0; background: #FFFFFF; color: var(--forest);
-    border: none; border-radius: 100px; padding: 11px 22px; font-size: 14px; font-weight: 700; cursor: pointer;
-    box-shadow: 0 10px 26px rgba(0,0,0,0.18); transition: transform .15s;
+    border: 1px solid var(--border); border-radius: 100px; padding: 11px 22px; font-size: 14px; font-weight: 700; cursor: pointer;
+    box-shadow: 0 10px 26px rgba(13,61,46,0.1); transition: transform .15s;
   }
   .hero-get-app-btn:hover { transform: translateY(-1px); }
   .hero-trial-btn { display: block; margin: 0 auto 44px; padding: 17px 38px; font-size: 16px; border-radius: 100px; box-shadow: 0 16px 40px rgba(198,241,53,0.22); }
@@ -4433,16 +4438,6 @@ function LandingPage({ onNav, session, onSignIn, onSignOut }) {
           glyph with a wide left side-bearing that reads as a stray gap at
           large display size — confirmed on the live site. */}
       <section className="search-hero">
-        {/* Faint Belize silhouette watermark — purely decorative texture,
-            not a reference map, so it's a simplified/stylized outline
-            rather than a surveyed boundary (low-poly on purpose — reads
-            as an intentional brand mark, not an attempt at cartographic
-            precision). Sits in the same z-index:0 layer as the radial
-            glow below and the bottom fade further down, all beneath the
-            real hero content (z-index:1 via ".search-hero > *"). */}
-        <svg className="search-hero-map" viewBox="0 0 100 230" aria-hidden="true" focusable="false">
-          <path d="M24,8 L46,14 L70,20 L88,32 L84,48 L92,60 L86,78 L90,100 L82,125 L76,150 L68,175 L58,200 L50,222 L38,208 L26,195 L20,175 L28,160 L18,145 L24,125 L14,108 L20,90 L12,70 L18,50 L14,30 Z" />
-        </svg>
         <h1><span className="line1">{t("hero.titleLine1")}</span><span className="line2">{t("hero.titleLine2")}</span></h1>
         <p className="search-sub">{t("hero.subtitle")}</p>
         <div className="search-bar-pill search-glass" id="main-search-bar">
