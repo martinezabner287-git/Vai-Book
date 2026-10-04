@@ -255,6 +255,21 @@
     "stopLosing": "Deja de perder ingresos por ausencias",
     "forBusinessSub": "Únete a los mejores profesionales de Belice. Obtén tu enlace de reservas personalizado, automatiza recordatorios de 24 horas y asegura depósitos directamente por WhatsApp."
   },
+  "providerSignupModal": {
+    "close": "Cerrar",
+    "eyebrow": "✨ Prueba gratis de 14 días",
+    "headline": "Comienza tu prueba gratis de 14 días.",
+    "sub": "No se requiere tarjeta de crédito. La configuración toma 30 segundos.",
+    "shopNameLabel": "Nombre del negocio",
+    "shopNamePlaceholder": "ej. Barbería Fresh Cutz",
+    "emailLabel": "Correo electrónico",
+    "emailPlaceholder": "tu@negocio.com",
+    "passwordLabel": "Contraseña",
+    "passwordPlaceholder": "Crea una contraseña",
+    "entering": "Entrando…",
+    "enterDashboard": "Entrar al panel →",
+    "note": "Sin contratos, sin cuotas de instalación — cancela cuando quieras."
+  },
   "customerPortal": {
     "booking": {
       "at": "en",
