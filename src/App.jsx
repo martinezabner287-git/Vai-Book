@@ -434,6 +434,20 @@ const css = `
     font-size: 12px; font-weight: 800; letter-spacing: .04em; font-family: 'Plus Jakarta Sans', sans-serif;
   }
   .lang-toggle:hover { border-color: var(--lime); color: var(--lime); background: rgba(198,241,53,0.08); }
+  /* FOOTER LANGUAGE SELECTOR — the "🌐 English" control that sits in the
+     footer's bottom bar (same spot/pattern as Fresha's "🌐 English (US)").
+     Lives on a dark footer background like the nav, so it reuses that
+     same dim/near-white-on-hover treatment, just as plain inline text
+     with no pill border — the footer-bottom row is already a thin,
+     understated strip, a bordered pill there would look out of place. */
+  .lang-toggle-footer {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: none; border: none; padding: 2px 0;
+    color: rgba(255,255,255,0.5); cursor: pointer; transition: color .2s;
+    font-size: 12px; font-weight: 600; font-family: 'Plus Jakarta Sans', sans-serif;
+  }
+  .lang-toggle-footer:hover { color: var(--near-white); }
+  .lang-toggle-footer span:first-child { font-size: 14px; }
   .nav-dropdown { position: absolute; top: calc(100% + 12px); right: 0; background: white; border-radius: 20px; box-shadow: 0 20px 50px rgba(13,61,46,0.20); border: 1px solid var(--border); min-width: 300px; max-width: calc(100vw - 32px); padding: 22px; z-index: 200; }
   .nav-dropdown a, .nav-dropdown button.nav-dropdown-item { display: block; width: 100%; text-align: left; background: none; border: none; padding: 12px 8px; border-radius: 10px; font-size: 16px; font-weight: 500; color: var(--dark-text); cursor: pointer; text-decoration: none; }
   .nav-dropdown a:hover, .nav-dropdown button.nav-dropdown-item:hover { background: var(--sand); }
@@ -4707,6 +4721,7 @@ function SiteFooter() {
       <div className="footer-bottom">
         <span>{t("footer.copyright")}</span>
         <span>{t("footer.productOf")}</span>
+        <LanguageSelector variant="footer" />
       </div>
     </footer>
   );
