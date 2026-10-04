@@ -3,6 +3,7 @@ import { useState, useEffect, useLayoutEffect, useRef, useContext, createContext
 import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, updateService, deleteService, getActiveProviders, getProviderDirectory, createBooking, getProviderBusyWindows, createBookingSafe, cancelBooking, getCustomerBookings, uploadReceipt, submitReview, getProviderReviews, updateReview, sendBookingEmail, updateUserProfile, getPaymentMethods, addPaymentMethod, deletePaymentMethod, createNotification, getNotifications, markNotificationRead, markAllNotificationsRead, getCategoryDefaultFeatures, getProviderFeatureOverrides, setProviderFeatureOverride, getVisitNotes, upsertVisitNote, adminListProviders, adminUpdateProvider, adminDeleteProvider, getFavoriteProviderIds, getFavoriteProviders, addFavorite, removeFavorite, getBookingMessages, sendBookingMessage, markBookingMessagesRead, getUnreadBookingMessages, getProviderMonthlyTrend, createProviderProfile, getProviderById, createWalkInBooking, submitProviderPayment, getMyProviderPayments, adminListProviderPayments, adminReviewProviderPayment, submitBookingRefund, adminListBookingRefunds, openPrivateFile, getProviderStaff, addProviderStaff, updateProviderStaff, deleteProviderStaff, getLoyaltyAccount, getProviderLoyaltyCustomers, redeemLoyaltyReward, getMyStaffProfile, claimStaffSeatByEmail, getStaffBookings, getProviderNotifyEmail, getMaintenanceStatus, setMaintenanceMode, getSiteOfflineStatus, setSiteOffline, sendEmailOtp, verifyEmailOtp, savePushSubscription, attachBookingServices, getProviderBlocks, insertProviderBlock, deleteProviderBlock, proposeBookingReschedule, confirmBookingReschedule, declineBookingReschedule, withdrawBookingReschedule, establishSoloSession, getServerSoloSessionToken, getLocalSoloSessionToken, clearLocalSoloSessionToken, subscribeToSoloSessionReplacement } from "./supabase";
 import AdminDashboard from "./AdminDashboard";
 import ProviderSignupModal from "./ProviderSignupModal";
+import ProfilePhotoModal from "./ProfilePhotoModal";
 import LanguageSelector from "./LanguageSelector";
 import { useTranslation } from "react-i18next";
 import { compressImageFile } from "./imageUtils";
@@ -1191,6 +1192,18 @@ const css = `
   .qr-modal-business { margin-top: 16px; font-size: 16px; font-weight: 800; color: var(--dark-text); }
   .qr-modal-hint { margin-top: 4px; font-size: 13px; color: var(--muted); }
 
+  /* PROFILE PHOTO CROP MODAL — light-themed (shares .modal-overlay above
+     for the backdrop) so it matches ProviderPortal's own UI, not the dark
+     marketing-funnel styling used by .psm-* (ProviderSignupModal). */
+  .ppm-modal { background: #fff; border-radius: 18px; padding: 24px; max-width: 420px; width: 100%; }
+  .ppm-title { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 18px; font-weight: 800; color: var(--dark-text); margin: 0 0 6px; }
+  .ppm-hint { font-size: 13px; color: var(--muted); margin: 0 0 16px; line-height: 1.5; }
+  .ppm-crop-area { position: relative; width: 100%; height: 280px; border-radius: 12px; overflow: hidden; background: #222; }
+  .ppm-zoom-row { display: flex; align-items: center; gap: 12px; margin-top: 16px; }
+  .ppm-zoom-label { font-size: 12px; color: var(--muted); flex-shrink: 0; }
+  .ppm-zoom-row input[type="range"] { flex: 1; }
+  .ppm-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+
   /* ELITE WELCOME — "you're live" banner + launch graphic modal */
   .launch-banner { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; background: linear-gradient(160deg, var(--forest) 0%, #0A2A20 100%); border: 1px solid rgba(198,241,53,0.3); border-radius: 16px; padding: 18px 22px; margin-bottom: 20px; }
   .launch-banner-title { font-size: 15px; font-weight: 800; color: #FFFFFF; }
@@ -2138,6 +2151,13 @@ const SERVICE_TYPE_ICON = {
 };
 const iconForServiceType = (serviceType) => SERVICE_TYPE_ICON[serviceType] || "🛠️";
 
+// Cover image shown on every card/carousel thumbnail: the dedicated
+// profile photo if the provider has set one, falling back to the first
+// portfolio/gallery photo (the old default) for providers who haven't —
+// and finally to the service-type emoji, handled by each call site same
+// as before.
+const coverImageUrl = (provider) => provider?.profile_photo_url || (provider?.portfolio_urls && provider.portfolio_urls[0]) || null;
+
 // Shared provider helpers — module-level so both the landing page's
 // discover carousels and the customer portal's browse grid compute rating
 // and starting price the same way, off the same provider shape
@@ -2211,8 +2231,8 @@ function ProviderCarousel({ providers, badgeFor, onCardClick, ctaLabel }) {
                   🤍
                 </button>
               )}
-              {p.portfolio_urls && p.portfolio_urls.length > 0 ? (
-                <div className="carousel-card-img" style={{ background: `center/cover no-repeat url(${p.portfolio_urls[0]})` }} />
+              {coverImageUrl(p) ? (
+                <div className="carousel-card-img" style={{ background: `center/cover no-repeat url(${coverImageUrl(p)})` }} />
               ) : (
                 <div className="carousel-card-img">{iconForServiceType(p.service_type)}</div>
               )}
@@ -4468,8 +4488,8 @@ function LandingPage({ onNav, session, onSignIn, onSignOut }) {
               return (
                 <div className="tny-card card-premium" key={p.id} onClick={() => goToProvider(p)}>
                   <div className="tny-card-img">
-                    {p.portfolio_urls && p.portfolio_urls.length > 0 ? (
-                      <img src={p.portfolio_urls[0]} alt="" />
+                    {coverImageUrl(p) ? (
+                      <img src={coverImageUrl(p)} alt="" />
                     ) : (
                       <div className="tny-card-img-fallback">{iconForServiceType(p.service_type)}</div>
                     )}
@@ -5768,9 +5788,9 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
                       <div className="cx-drop-card" key={drop.provider.id}>
                         <div
                           className="cx-drop-avatar"
-                          style={drop.provider.portfolio_urls && drop.provider.portfolio_urls.length > 0 ? { background: `center/cover no-repeat url(${drop.provider.portfolio_urls[0]})` } : undefined}
+                          style={coverImageUrl(drop.provider) ? { background: `center/cover no-repeat url(${coverImageUrl(drop.provider)})` } : undefined}
                         >
-                          {(!drop.provider.portfolio_urls || drop.provider.portfolio_urls.length === 0) && <span>{iconForServiceType(drop.provider.service_type)}</span>}
+                          {!coverImageUrl(drop.provider) && <span>{iconForServiceType(drop.provider.service_type)}</span>}
                         </div>
                         <div className="cx-drop-shop">{drop.provider.business_name}</div>
                         <div className="cx-drop-time">{t("customerPortal.home.todayAt", { time: formatBookingTime(drop.time) })}</div>
@@ -5793,9 +5813,9 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
                     <div className="cx-rebook-row" key={p.id} onClick={() => openBooking(p)}>
                       <div
                         className="cx-rebook-thumb"
-                        style={p.portfolio_urls && p.portfolio_urls.length > 0 ? { background: `center/cover no-repeat url(${p.portfolio_urls[0]})` } : undefined}
+                        style={coverImageUrl(p) ? { background: `center/cover no-repeat url(${coverImageUrl(p)})` } : undefined}
                       >
-                        {(!p.portfolio_urls || p.portfolio_urls.length === 0) && <span>{iconForServiceType(p.service_type)}</span>}
+                        {!coverImageUrl(p) && <span>{iconForServiceType(p.service_type)}</span>}
                       </div>
                       <div className="cx-rebook-info">
                         <div className="cx-rebook-name">{p.business_name}</div>
@@ -5913,8 +5933,8 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
                     >
                       {favoriteIds.has(p.id) ? "❤️" : "🤍"}
                     </button>
-                    {p.portfolio_urls && p.portfolio_urls.length > 0 ? (
-                      <div className="provider-card-img" style={{ background: `center/cover no-repeat url(${p.portfolio_urls[0]})` }} />
+                    {coverImageUrl(p) ? (
+                      <div className="provider-card-img" style={{ background: `center/cover no-repeat url(${coverImageUrl(p)})` }} />
                     ) : (
                       <div className="provider-card-img" style={{ background: "linear-gradient(160deg, #1E6B50 0%, #0E241B 100%)" }}>{iconForServiceType(p.service_type)}</div>
                     )}
@@ -5955,8 +5975,8 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
                     >
                       ❤️
                     </button>
-                    {p.portfolio_urls && p.portfolio_urls.length > 0 ? (
-                      <div className="provider-card-img" style={{ background: `center/cover no-repeat url(${p.portfolio_urls[0]})` }} />
+                    {coverImageUrl(p) ? (
+                      <div className="provider-card-img" style={{ background: `center/cover no-repeat url(${coverImageUrl(p)})` }} />
                     ) : (
                       <div className="provider-card-img" style={{ background: "linear-gradient(160deg, #1E6B50 0%, #0E241B 100%)" }}>{iconForServiceType(p.service_type)}</div>
                     )}
@@ -6955,6 +6975,16 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
   const [savingProfile, setSavingProfile] = useState(false);
   const [photos, setPhotos] = useState([]);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
+
+  // Single profile photo (distinct from the portfolio gallery above) —
+  // the square photo shown next to the business name on this tab, and
+  // used as the cover image on search cards once set (see the
+  // profile_photo_url handling further down and in the card renderers).
+  const [profilePhotoUrl, setProfilePhotoUrl] = useState(null);
+  const [profilePhotoFile, setProfilePhotoFile] = useState(null);
+  const [showProfilePhotoModal, setShowProfilePhotoModal] = useState(false);
+  const [savingProfilePhoto, setSavingProfilePhoto] = useState(false);
+  const profilePhotoInputRef = useRef(null);
   const [mapPosition, setMapPosition] = useState(null);
   const [locationLabel, setLocationLabel] = useState("");
   const [savingLocation, setSavingLocation] = useState(false);
@@ -7558,6 +7588,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
         description: providerProfile.loyalty_reward_description || "",
       });
       setPhotos(providerProfile.portfolio_urls || []);
+      setProfilePhotoUrl(providerProfile.profile_photo_url || null);
       setServices(providerProfile.services || []);
       if (providerProfile.latitude != null && providerProfile.longitude != null) {
         setMapPosition([providerProfile.latitude, providerProfile.longitude]);
@@ -7995,6 +8026,42 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
     setPhotos(next);
     await deleteProviderPhoto(providerProfile.user_id, url);
     await upsertProviderProfile({ id: providerProfile.id, user_id: providerProfile.user_id, portfolio_urls: next });
+  };
+
+  // Single profile photo — picking a file just opens the crop modal;
+  // nothing uploads until the provider confirms the crop there.
+  const handleProfilePhotoFileSelect = (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    setProfilePhotoFile(file);
+    setShowProfilePhotoModal(true);
+  };
+
+  const handleSaveProfilePhoto = async (croppedFile) => {
+    if (!providerProfile?.user_id) return;
+    setSavingProfilePhoto(true);
+    const previousUrl = profilePhotoUrl;
+    const url = await uploadProviderPhoto(providerProfile.user_id, croppedFile);
+    if (url) {
+      setProfilePhotoUrl(url);
+      const updated = await upsertProviderProfile({ id: providerProfile.id, user_id: providerProfile.user_id, profile_photo_url: url });
+      if (updated) onProviderProfileUpdate && onProviderProfileUpdate(updated);
+      // Clean up the old photo now that the new one is saved — same
+      // bucket as the gallery (uploadProviderPhoto always writes a fresh,
+      // uniquely-named file), so the old file would otherwise just sit
+      // there unused forever.
+      if (previousUrl) await deleteProviderPhoto(providerProfile.user_id, previousUrl);
+    }
+    setSavingProfilePhoto(false);
+    setShowProfilePhotoModal(false);
+    setProfilePhotoFile(null);
+  };
+
+  const closeProfilePhotoModal = () => {
+    if (savingProfilePhoto) return;
+    setShowProfilePhotoModal(false);
+    setProfilePhotoFile(null);
   };
 
   const saveLocation = async () => {
@@ -9858,7 +9925,33 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
             <div className="portal-header"><h2>{t("providerPortal.nav.profile")}</h2><p>{t("providerPortal.profile.subtitle")}</p></div>
             <div className="card" style={{ maxWidth: 560 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 24, paddingBottom: 20, borderBottom: "1px solid var(--border)" }}>
-                <div style={{ width: 72, height: 72, background: "var(--forest)", borderRadius: 14, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 36 }}>✂️</div>
+                <div style={{ position: "relative", width: 72, height: 72, flexShrink: 0 }}>
+                  {profilePhotoUrl ? (
+                    <img
+                      src={profilePhotoUrl}
+                      alt=""
+                      style={{ width: 72, height: 72, borderRadius: 14, objectFit: "cover", display: "block" }}
+                    />
+                  ) : (
+                    <div style={{ width: 72, height: 72, background: "var(--forest)", borderRadius: 14, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 36 }}>✂️</div>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => profilePhotoInputRef.current?.click()}
+                    title={profilePhotoUrl ? t("providerPortal.profile.changePhoto") : t("providerPortal.profile.uploadPhoto")}
+                    aria-label={profilePhotoUrl ? t("providerPortal.profile.changePhoto") : t("providerPortal.profile.uploadPhoto")}
+                    style={{ position: "absolute", bottom: -4, right: -4, width: 26, height: 26, borderRadius: "50%", background: "#fff", border: "1px solid var(--border)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, cursor: "pointer", boxShadow: "0 1px 3px rgba(0,0,0,0.18)", padding: 0 }}
+                  >
+                    ✎
+                  </button>
+                  <input
+                    ref={profilePhotoInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleProfilePhotoFileSelect}
+                    style={{ display: "none" }}
+                  />
+                </div>
                 <div>
                   <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 20, fontWeight: 700 }}>{providerProfile.business_name}</div>
                   <div style={{ color: "var(--muted)", fontSize: 14 }}>{providerProfile.service_type} · {providerProfile.district}</div>
@@ -10220,6 +10313,14 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
           </div>
         </div>
       )}
+
+      <ProfilePhotoModal
+        open={showProfilePhotoModal}
+        file={profilePhotoFile}
+        onClose={closeProfilePhotoModal}
+        onSave={handleSaveProfilePhoto}
+        saving={savingProfilePhoto}
+      />
     </div>
     </FeatureFlagsProvider>
   );
