@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 // ── PROVIDER SIGNUP MODAL — "Direct-to-App" frictionless funnel ─────────
 //
@@ -23,6 +24,7 @@ import { useEffect, useState } from "react";
 // backend work, not included here — this component is the front-end
 // shell + interaction only.
 export default function ProviderSignupModal({ open, onClose, onEnterDashboard }) {
+  const { t } = useTranslation();
   const [form, setForm] = useState({ shopName: "", email: "", password: "" });
   const [entering, setEntering] = useState(false);
 
@@ -54,18 +56,18 @@ export default function ProviderSignupModal({ open, onClose, onEnterDashboard })
   return (
     <div className="psm-overlay" onClick={onClose}>
       <div className="psm-modal" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="psm-headline">
-        <button className="psm-close" onClick={onClose} aria-label="Close">✕</button>
+        <button className="psm-close" onClick={onClose} aria-label={t("providerSignupModal.close")}>✕</button>
 
-        <div className="psm-eyebrow">✨ 14-day free trial</div>
-        <h2 className="psm-headline" id="psm-headline">Start Your 14-Day Free Trial.</h2>
-        <p className="psm-sub">No credit card required. Setup takes 30 seconds.</p>
+        <div className="psm-eyebrow">{t("providerSignupModal.eyebrow")}</div>
+        <h2 className="psm-headline" id="psm-headline">{t("providerSignupModal.headline")}</h2>
+        <p className="psm-sub">{t("providerSignupModal.sub")}</p>
 
         <form className="psm-form" onSubmit={handleSubmit}>
           <div className="input-group">
-            <label>Shop Name</label>
+            <label>{t("providerSignupModal.shopNameLabel")}</label>
             <input
               type="text"
-              placeholder="e.g. Fresh Cutz Barbershop"
+              placeholder={t("providerSignupModal.shopNamePlaceholder")}
               value={form.shopName}
               onChange={set("shopName")}
               required
@@ -73,20 +75,20 @@ export default function ProviderSignupModal({ open, onClose, onEnterDashboard })
             />
           </div>
           <div className="input-group">
-            <label>Email</label>
+            <label>{t("providerSignupModal.emailLabel")}</label>
             <input
               type="email"
-              placeholder="you@business.com"
+              placeholder={t("providerSignupModal.emailPlaceholder")}
               value={form.email}
               onChange={set("email")}
               required
             />
           </div>
           <div className="input-group">
-            <label>Password</label>
+            <label>{t("providerSignupModal.passwordLabel")}</label>
             <input
               type="password"
-              placeholder="Create a password"
+              placeholder={t("providerSignupModal.passwordPlaceholder")}
               value={form.password}
               onChange={set("password")}
               minLength={6}
@@ -95,11 +97,11 @@ export default function ProviderSignupModal({ open, onClose, onEnterDashboard })
           </div>
 
           <button type="submit" className="btn-lime psm-submit" disabled={entering}>
-            {entering ? "Entering…" : "Enter Dashboard →"}
+            {entering ? t("providerSignupModal.entering") : t("providerSignupModal.enterDashboard")}
           </button>
         </form>
 
-        <p className="psm-note">No contracts, no setup fees — cancel anytime.</p>
+        <p className="psm-note">{t("providerSignupModal.note")}</p>
       </div>
     </div>
   );
