@@ -4978,6 +4978,16 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
   const [profileTab, setProfileTab] = useState("services");
   const [hoursExpanded, setHoursExpanded] = useState(false);
   const [bookingService, setBookingService] = useState(null);
+  // Multi-service checkout — independent time per service. Keyed by
+  // service id: { [serviceId]: { date, time } }. Each selected service gets
+  // its own date/time picker instead of being collapsed into one combined
+  // back-to-back block, so a customer can e.g. put a lash lift at 9:30am and
+  // a bridal makeup trial at 2pm on a different day. multiBusyWindowsByDate
+  // caches get_busy_windows results per date string so multiple services
+  // sharing the same date don't each trigger their own fetch.
+  const [multiBookingTimes, setMultiBookingTimes] = useState({});
+  const [multiBusyWindowsByDate, setMultiBusyWindowsByDate] = useState({});
+  const [loadingMultiSlots, setLoadingMultiSlots] = useState(false);
   const [providerReviews, setProviderReviews] = useState([]);
   const [loadingReviews, setLoadingReviews] = useState(false);
   const [lightboxUrl, setLightboxUrl] = useState(null);
@@ -5161,6 +5171,8 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
     setHoursExpanded(false);
     setBookingService(null);
     setSelectedServiceIds([]);
+    setMultiBookingTimes({});
+    setMultiBusyWindowsByDate({});
     setProviderReviews([]);
     setLightboxUrl(null);
     setSelectedProvider(provider);
@@ -5214,30 +5226,87 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
   const multiTotalPrice = selectedServicesList.reduce((sum, s) => sum + (Number(s.price) || 0), 0);
   const multiTotalDuration = selectedServicesList.reduce((sum, s) => sum + (Number(s.duration_min) || 0), 0);
 
-  // "Next: Pick time" — builds one combined "service" out of everything
-  // selected so the existing date/time step below (which only ever knew
-  // about a single bookingService) can render it unchanged: same name/price/
-  // duration fields, just summed across the whole selection. The real list
-  // of service ids travels separately on bookingForm.service_ids for
-  // submitBooking to use.
+  // "Next: Pick time" — each selected service gets its OWN date/time picker
+  // (multiBookingTimes, keyed by service id) instead of being collapsed into
+  // one combined back-to-back block. bookingService itself just becomes a
+  // marker ({isMulti:true}) so the existing "!bookingService && ..." gating
+  // elsewhere (gallery/tabs/sidebar) still hides correctly during this step.
   const proceedToMultiServiceTime = () => {
     if (selectedServicesList.length === 0) return;
-    const names = selectedServicesList.map((s) => s.name).join(" + ");
-    setBookingForm({
-      service_id: selectedServicesList[0].id,
-      service_ids: selectedServicesList.map((s) => s.id),
-      date: localDateStr(),
-      time: "",
-      notes: "",
-    });
+    const today = localDateStr();
+    setMultiBookingTimes(Object.fromEntries(selectedServicesList.map((s) => [s.id, { date: today, time: "" }])));
     setBookingError("");
-    setBookingService({
-      id: selectedServicesList[0].id,
-      name: names,
-      price: multiTotalPrice,
-      duration_min: multiTotalDuration,
-      isMulti: true,
+    setBookingService({ isMulti: true });
+  };
+
+  // Every distinct date currently chosen across the multi-service pickers —
+  // used below to fetch (and cache) get_busy_windows once per date instead
+  // of once per service, since two services can share the same day.
+  const multiBookingDates = Array.from(new Set(Object.values(multiBookingTimes).map((v) => v.date).filter(Boolean)));
+
+  useEffect(() => {
+    if (!selectedProvider?.id || multiBookingDates.length === 0) return;
+    const missing = multiBookingDates.filter((d) => !(d in multiBusyWindowsByDate));
+    if (missing.length === 0) return;
+    let cancelled = false;
+    setLoadingMultiSlots(true);
+    Promise.all(missing.map((d) => getProviderBusyWindows(selectedProvider.id, d).then((w) => [d, w || []]))).then((pairs) => {
+      if (cancelled) return;
+      setMultiBusyWindowsByDate((prev) => {
+        const next = { ...prev };
+        pairs.forEach(([d, w]) => { next[d] = w; });
+        return next;
+      });
+      setLoadingMultiSlots(false);
     });
+    return () => { cancelled = true; };
+  }, [selectedProvider?.id, multiBookingDates.join(",")]);
+
+  // Bookable slots for ONE service within the multi-service picker: that
+  // service's own duration, that date's real provider hours/busy windows/
+  // lunch break (same rules as the single-service picker below), PLUS the
+  // times already chosen for every OTHER selected service that shares the
+  // same date — so two services in the same cart can never be scheduled to
+  // overlap each other, not just against the provider's existing calendar.
+  const getMultiServiceSlots = (service) => {
+    const picked = multiBookingTimes[service.id];
+    if (!picked?.date) return [];
+    const durationMin = Number(service.duration_min) || 30;
+    const dow = new Date(picked.date + "T00:00:00").getDay();
+    const dayHours = providerHours.find((h) => h.day_of_week === dow);
+    if (!dayHours || !dayHours.is_open || !dayHours.start_time || !dayHours.end_time) return [];
+    const startM = timeToMinutes(dayHours.start_time);
+    const endM = timeToMinutes(dayHours.end_time);
+    const isToday = picked.date === localDateStr();
+    const nowM = isToday ? new Date().getHours() * 60 + new Date().getMinutes() : -1;
+    const step = 30;
+    const lunchWindow = (selectedProvider?.lunch_break_start && Number(selectedProvider?.lunch_break_minutes) > 0)
+      ? { start_time: selectedProvider.lunch_break_start, end_time: minutesToTime(timeToMinutes(selectedProvider.lunch_break_start) + Number(selectedProvider.lunch_break_minutes)) }
+      : null;
+    const otherPicksSameDay = selectedServicesList
+      .filter((s) => s.id !== service.id && multiBookingTimes[s.id]?.date === picked.date && multiBookingTimes[s.id]?.time)
+      .map((s) => {
+        const t = multiBookingTimes[s.id].time;
+        const start = timeToMinutes(t);
+        return { start_time: t, end_time: minutesToTime(start + (Number(s.duration_min) || 30)) };
+      });
+    const allBusy = [
+      ...(multiBusyWindowsByDate[picked.date] || []),
+      ...(lunchWindow ? [lunchWindow] : []),
+      ...otherPicksSameDay,
+    ];
+    const slots = [];
+    for (let m = startM; m + durationMin <= endM; m += step) {
+      if (isToday && m <= nowM) continue;
+      const slotEnd = m + durationMin;
+      const busy = allBusy.some((w) => {
+        const wStart = timeToMinutes(w.start_time);
+        const wEnd = timeToMinutes(w.end_time);
+        return m < wEnd && wStart < slotEnd;
+      });
+      if (!busy) slots.push(minutesToTime(m));
+    }
+    return slots;
   };
 
   // Reload the provider's busy windows whenever the chosen date changes so the
@@ -5342,6 +5411,8 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
   const backToServices = () => {
     setBookingService(null);
     setSelectedServiceIds([]);
+    setMultiBookingTimes({});
+    setMultiBusyWindowsByDate({});
     setBookingError("");
   };
 
@@ -5356,6 +5427,56 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
     }
   };
 
+  // Creates one booking (service_id/date/time/total/downpayment) via the
+  // hardened create_booking_safe RPC, then fires the provider notification +
+  // email. Shared by the single-service flow below and, called once per
+  // service in sequence, by submitMultiServiceBooking — the per-booking
+  // logic (deposit math, notification copy, email) is identical either way,
+  // only which service/date/time/notes feed it differs.
+  const createOneBooking = async ({ bookingCustomerId, service, dateStr, timeStr, notes }) => {
+    const total = Number(service.price) || 0;
+    const dpPct = selectedProvider.downpayment_required ? (selectedProvider.downpayment_pct || 50) : 0;
+    const downpayment = dpPct ? Math.round(total * dpPct) / 100 : null;
+    const order_number = `VB-${Date.now().toString(36).toUpperCase()}${Math.random().toString(36).slice(2, 5).toUpperCase()}`;
+    const created = await createBookingSafe({
+      order_number,
+      customer_id: bookingCustomerId,
+      provider_id: selectedProvider.id,
+      service_id: service.id,
+      booking_date: dateStr,
+      booking_time: timeStr,
+      total_amount: total,
+      downpayment_amount: downpayment,
+      notes: notes ? notes.trim() : null,
+    });
+    if (created) {
+      const finalTotal = Number(created.total_amount) || total;
+      const whenLabel = `${formatBookingDate(dateStr)} at ${formatBookingTime(timeStr)}`;
+      if (selectedProvider.user_id) {
+        await createNotification({
+          user_id: selectedProvider.user_id,
+          title: "New booking request",
+          body: `${user?.full_name || guestCheckoutForm.name || "A customer"} requested ${service.name} on ${whenLabel}.`,
+          type: "booking_requested",
+          booking_id: created.id,
+        });
+      }
+      // A provider who isn't sitting in the app had no way of knowing a
+      // request had come in. The address is resolved server-side for this
+      // one booking (and only if they still want these emails) rather than
+      // being published on every provider's public profile row.
+      const providerEmail = await getProviderNotifyEmail(created.id);
+      if (providerEmail) {
+        await sendBookingEmail({
+          to: providerEmail,
+          subject: `New booking request — ${service.name}, ${whenLabel}`,
+          html: `<p>Hi ${selectedProvider.business_name || "there"},</p><p><strong>${user?.full_name || guestCheckoutForm.name || "A customer"}</strong> just requested <strong>${service.name}</strong> for <strong>${whenLabel}</strong> (BZ$${finalTotal.toFixed(2)}).</p>${notes ? `<p>Their note: "${notes.trim()}"</p>` : ""}<p>Open VaiBook to accept or decline it. You can turn these emails off under Settings → Notifications.</p>`,
+        });
+      }
+    }
+    return created;
+  };
+
   const submitBooking = async (overrideCustomerId) => {
     const bookingCustomerId = overrideCustomerId || user?.id;
     if (!bookingCustomerId) { setBookingError(t("customerPortal.booking.signInAgain")); return; }
@@ -5365,7 +5486,6 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
     }
     const check = validate(bookingRequestSchema, {
       service_id: bookingForm.service_id,
-      service_ids: bookingForm.service_ids && bookingForm.service_ids.length > 0 ? bookingForm.service_ids : undefined,
       date: bookingForm.date,
       time: bookingForm.time,
       notes: bookingForm.notes || null,
@@ -5374,37 +5494,12 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
     const service = (selectedProvider.services || []).find((s) => s.id === bookingForm.service_id);
     if (!service) { setBookingError(t("customerPortal.booking.chooseService")); return; }
 
-    // Multi-service checkout: service_ids carries the FULL selection (see
-    // proceedToMultiServiceTime) — service/service_id above is only the
-    // first one, used because create_booking_safe's signature takes a
-    // single primary service. The combined price/duration/label for
-    // everything the customer actually picked are computed here instead.
-    const isMultiService = (bookingForm.service_ids || []).length > 1;
-    const multiServices = isMultiService ? (selectedProvider.services || []).filter((s) => bookingForm.service_ids.includes(s.id)) : [service];
-    const serviceLabel = isMultiService ? multiServices.map((s) => s.name).join(" + ") : service.name;
-    const combinedDuration = multiServices.reduce((sum, s) => sum + (Number(s.duration_min) || 0), 0);
-
     setSubmittingBooking(true);
     setBookingError("");
 
-    const total = isMultiService ? multiServices.reduce((sum, s) => sum + (Number(s.price) || 0), 0) : (Number(service.price) || 0);
-    const dpPct = selectedProvider.downpayment_required ? (selectedProvider.downpayment_pct || 50) : 0;
-    const downpayment = dpPct ? Math.round(total * dpPct) / 100 : null;
-    const order_number = `VB-${Date.now().toString(36).toUpperCase()}${Math.random().toString(36).slice(2, 5).toUpperCase()}`;
-
     let created = null;
     try {
-      created = await createBookingSafe({
-        order_number,
-        customer_id: bookingCustomerId,
-        provider_id: selectedProvider.id,
-        service_id: service.id,
-        booking_date: bookingForm.date,
-        booking_time: bookingForm.time,
-        total_amount: total,
-        downpayment_amount: downpayment,
-        notes: bookingForm.notes ? bookingForm.notes.trim() : null,
-      });
+      created = await createOneBooking({ bookingCustomerId, service, dateStr: bookingForm.date, timeStr: bookingForm.time, notes: bookingForm.notes });
     } catch (err) {
       setSubmittingBooking(false);
       if (err?.code === "SLOT_TAKEN") {
@@ -5424,54 +5519,9 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
       return;
     }
 
-    if (created && isMultiService) {
-      // Attach the full service list + combined duration now that the
-      // primary booking exists — see attachBookingServices' comment for why
-      // this is a separate call rather than something create_booking_safe
-      // does in one shot. A conflict here means the combined duration
-      // doesn't actually fit (a race with another booking, or the picked
-      // slot was only ever valid for the single primary service) — safest
-      // is to undo the booking outright rather than leave a confirmed/
-      // pending row that doesn't reflect what the customer actually paid a
-      // deposit for.
-      try {
-        await attachBookingServices(created.id, bookingForm.service_ids, combinedDuration);
-      } catch (err) {
-        await cancelBooking(created.id);
-        setSubmittingBooking(false);
-        setBookingError(t("customerPortal.booking.combinedTimeUnavailable"));
-        getProviderBusyWindows(selectedProvider.id, bookingForm.date).then((w) => setBusyWindows(w || []));
-        setBookingForm((f) => ({ ...f, time: "" }));
-        return;
-      }
-    }
-
     setSubmittingBooking(false);
 
     if (created) {
-      const finalTotal = Number(created.total_amount) || total;
-      const whenLabel = `${formatBookingDate(bookingForm.date)} at ${formatBookingTime(bookingForm.time)}`;
-      if (selectedProvider.user_id) {
-        await createNotification({
-          user_id: selectedProvider.user_id,
-          title: "New booking request",
-          body: `${user?.full_name || guestCheckoutForm.name || "A customer"} requested ${serviceLabel} on ${whenLabel}.`,
-          type: "booking_requested",
-          booking_id: created.id,
-        });
-      }
-      // A provider who isn't sitting in the app had no way of knowing a
-      // request had come in. The address is resolved server-side for this
-      // one booking (and only if they still want these emails) rather than
-      // being published on every provider's public profile row.
-      const providerEmail = await getProviderNotifyEmail(created.id);
-      if (providerEmail) {
-        await sendBookingEmail({
-          to: providerEmail,
-          subject: `New booking request — ${serviceLabel}, ${whenLabel}`,
-          html: `<p>Hi ${selectedProvider.business_name || "there"},</p><p><strong>${user?.full_name || guestCheckoutForm.name || "A customer"}</strong> just requested <strong>${serviceLabel}</strong> for <strong>${whenLabel}</strong> (BZ$${finalTotal.toFixed(2)}).</p>${bookingForm.notes ? `<p>Their note: "${bookingForm.notes.trim()}"</p>` : ""}<p>Open VaiBook to accept or decline it. You can turn these emails off under Settings → Notifications.</p>`,
-        });
-      }
       setSelectedProvider(null);
       setBookingService(null);
       setSelectedServiceIds([]);
@@ -5481,6 +5531,87 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
     } else {
       setBookingError(t("customerPortal.booking.genericError"));
     }
+  };
+
+  // Multi-service checkout — each selected service becomes its OWN booking
+  // (own order_number, own notification), submitted one at a time in
+  // selection order so create_booking_safe's own overlap check (which looks
+  // at every booking for that provider/date, not just this customer's) sees
+  // each prior one as already-busy by the time the next is checked — on top
+  // of the client-side same-cart overlap prevention in getMultiServiceSlots
+  // above, this is what stops two of the customer's own picks from landing
+  // on the same time even under a race. "Request booking" is one button for
+  // the whole cart, so a failure partway through rolls back every booking
+  // already created rather than leaving a partial cart confirmed — the
+  // customer sees one clear error naming the service that couldn't be
+  // booked, not a silent partial success.
+  const submitMultiServiceBooking = async (overrideCustomerId) => {
+    const bookingCustomerId = overrideCustomerId || user?.id;
+    if (!bookingCustomerId) { setBookingError(t("customerPortal.booking.signInAgain")); return; }
+    const missingTime = selectedServicesList.find((s) => !multiBookingTimes[s.id]?.date || !multiBookingTimes[s.id]?.time);
+    if (missingTime) {
+      setBookingError(t("customerPortal.booking.chooseTimeForEach", { service: missingTime.name }));
+      return;
+    }
+    for (const s of selectedServicesList) {
+      const check = validate(bookingRequestSchema, {
+        service_id: s.id,
+        date: multiBookingTimes[s.id].date,
+        time: multiBookingTimes[s.id].time,
+        notes: bookingForm.notes || null,
+      });
+      if (!check.ok) { setBookingError(check.message); return; }
+    }
+
+    setSubmittingBooking(true);
+    setBookingError("");
+
+    const createdSoFar = [];
+    for (const service of selectedServicesList) {
+      const { date: dateStr, time: timeStr } = multiBookingTimes[service.id];
+      let created = null;
+      try {
+        created = await createOneBooking({ bookingCustomerId, service, dateStr, timeStr, notes: bookingForm.notes });
+      } catch (err) {
+        // Undo everything already created in this same cart — the customer
+        // only ever clicked "Request booking" once, so a failure on service
+        // 3 of 3 shouldn't quietly leave services 1 and 2 booked without
+        // them having confirmed that's still what they want.
+        await Promise.all(createdSoFar.map((b) => cancelBooking(b.id)));
+        setSubmittingBooking(false);
+        if (err?.code === "SLOT_TAKEN") {
+          setBookingError(t("customerPortal.booking.multiSlotTaken", { service: service.name }));
+          setMultiBusyWindowsByDate((prev) => { const next = { ...prev }; delete next[dateStr]; return next; });
+          setMultiBookingTimes((prev) => ({ ...prev, [service.id]: { ...prev[service.id], time: "" } }));
+        } else if (err?.code === "RATE_LIMITED") {
+          setBookingError(t("customerPortal.booking.rateLimited"));
+        } else if (err?.code === "MAINTENANCE_MODE") {
+          setBookingError(t("customerPortal.booking.maintenanceMode"));
+        } else if (err?.code === "STARTER_LIMIT_REACHED") {
+          setBookingError(t("customerPortal.booking.starterLimitReached", { providerName: selectedProvider?.business_name || t("customerPortal.booking.thisProvider") }));
+        } else {
+          setBookingError(t("customerPortal.booking.genericError"));
+        }
+        return;
+      }
+      if (!created) {
+        await Promise.all(createdSoFar.map((b) => cancelBooking(b.id)));
+        setSubmittingBooking(false);
+        setBookingError(t("customerPortal.booking.genericError"));
+        return;
+      }
+      createdSoFar.push(created);
+    }
+
+    setSubmittingBooking(false);
+    setSelectedProvider(null);
+    setBookingService(null);
+    setSelectedServiceIds([]);
+    setMultiBookingTimes({});
+    setMultiBusyWindowsByDate({});
+    await loadBookings();
+    setTab("bookings");
+    setBookingTab("upcoming");
   };
 
   const handleCancelBooking = async (bookingId) => {
@@ -6488,48 +6619,115 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
                           <div onClick={backToServices} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: "var(--forest)", fontWeight: 700, cursor: "pointer", marginBottom: 20 }}>
                             <span style={{ fontSize: 16 }}>←</span> {t("customerPortal.booking.backToServices")}
                           </div>
-                          <h3 style={{ fontSize: 20, fontWeight: 800, color: "var(--dark-text)", margin: "0 0 4px" }}>{t("customerPortal.booking.pickDateAndTime")}</h3>
+                          <h3 style={{ fontSize: 20, fontWeight: 800, color: "var(--dark-text)", margin: "0 0 4px" }}>{bookingService.isMulti ? t("customerPortal.booking.pickTimesForEach") : t("customerPortal.booking.pickDateAndTime")}</h3>
                           <p style={{ fontSize: 13, color: "var(--muted)", margin: "0 0 18px" }}>{t("customerPortal.booking.at")} {selectedProvider.business_name}</p>
-                          <div style={{ background: "var(--sand)", borderRadius: 10, padding: "14px 16px", marginBottom: 20, fontSize: 13 }}>
-                            <strong>{bookingService.name}</strong> — BZ${bookingService.price} · {t("customerPortal.booking.durationMin", { count: bookingService.duration_min })}
-                          </div>
-                          <div className="input-group">
-                            <label>{t("customerPortal.booking.date")}</label>
-                            <input type="date" min={localDateStr()} value={bookingForm.date} onChange={e => setBookingForm(f => ({ ...f, date: e.target.value, time: "" }))} style={{ padding: "13px 14px", fontSize: 15 }} />
-                          </div>
-                          <div className="input-group">
-                            <label>{t("customerPortal.booking.availableTimes")}</label>
-                            {loadingSlots ? (
-                              <p style={{ fontSize: 12, color: "var(--muted)" }}>{t("customerPortal.booking.checkingLiveAvailability")}</p>
-                            ) : !providerHours.length ? (
-                              <p style={{ fontSize: 12, color: "var(--muted)" }}>{t("customerPortal.booking.hoursNotSetYet")}</p>
-                            ) : availableSlots.length === 0 ? (
-                              <p style={{ fontSize: 12, color: "var(--clay)" }}>{t("customerPortal.booking.noOpenSlots")}</p>
-                            ) : (
-                              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(92px, 1fr))", gap: 9, maxHeight: 220, overflowY: "auto", paddingTop: 4 }}>
-                                {availableSlots.map((t) => (
-                                  <button
-                                    type="button"
-                                    key={t}
-                                    onClick={() => setBookingForm(f => ({ ...f, time: t }))}
-                                    className="btn-sm"
-                                    style={{
-                                      padding: "11px 4px",
-                                      fontSize: 13,
-                                      fontWeight: 700,
-                                      border: bookingForm.time === t ? "1.5px solid var(--forest)" : "1px solid var(--border, #ddd)",
-                                      background: bookingForm.time === t ? "var(--forest)" : "#fff",
-                                      color: bookingForm.time === t ? "#fff" : "var(--dark-text)",
-                                      borderRadius: 10,
-                                      cursor: "pointer",
-                                    }}
-                                  >
-                                    {formatTimeLabel(t)}
-                                  </button>
-                                ))}
+
+                          {bookingService.isMulti ? (
+                            <>
+                              <div style={{ background: "var(--sand)", borderRadius: 10, padding: "14px 16px", marginBottom: 8, fontSize: 13 }}>
+                                <strong>BZ${multiTotalPrice.toFixed(2)} · {t("customerPortal.booking.durationMin", { count: multiTotalDuration })}</strong> · {t("customerPortal.profile.servicesSelected", { count: selectedServicesList.length })}
                               </div>
-                            )}
-                          </div>
+                              <p style={{ fontSize: 12, color: "var(--muted)", margin: "0 0 18px" }}>{t("customerPortal.booking.eachServiceOwnTime")}</p>
+                              {selectedServicesList.map((service) => {
+                                const picked = multiBookingTimes[service.id] || { date: localDateStr(), time: "" };
+                                const slots = getMultiServiceSlots(service);
+                                return (
+                                  <div key={service.id} style={{ border: "1px solid var(--border)", borderRadius: 12, padding: "14px 16px", marginBottom: 14 }}>
+                                    <div style={{ fontSize: 13, marginBottom: 12 }}>
+                                      <strong>{service.name}</strong> — BZ${service.price} · {t("customerPortal.booking.durationMin", { count: service.duration_min })}
+                                    </div>
+                                    <div className="input-group">
+                                      <label>{t("customerPortal.booking.date")}</label>
+                                      <input
+                                        type="date"
+                                        min={localDateStr()}
+                                        value={picked.date}
+                                        onChange={e => setMultiBookingTimes(prev => ({ ...prev, [service.id]: { date: e.target.value, time: "" } }))}
+                                        style={{ padding: "13px 14px", fontSize: 15 }}
+                                      />
+                                    </div>
+                                    <div className="input-group">
+                                      <label>{t("customerPortal.booking.availableTimes")}</label>
+                                      {loadingMultiSlots ? (
+                                        <p style={{ fontSize: 12, color: "var(--muted)" }}>{t("customerPortal.booking.checkingLiveAvailability")}</p>
+                                      ) : !providerHours.length ? (
+                                        <p style={{ fontSize: 12, color: "var(--muted)" }}>{t("customerPortal.booking.hoursNotSetYet")}</p>
+                                      ) : slots.length === 0 ? (
+                                        <p style={{ fontSize: 12, color: "var(--clay)" }}>{t("customerPortal.booking.noOpenSlots")}</p>
+                                      ) : (
+                                        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(92px, 1fr))", gap: 9, maxHeight: 220, overflowY: "auto", paddingTop: 4 }}>
+                                          {slots.map((t) => (
+                                            <button
+                                              type="button"
+                                              key={t}
+                                              onClick={() => setMultiBookingTimes(prev => ({ ...prev, [service.id]: { ...prev[service.id], time: t } }))}
+                                              className="btn-sm"
+                                              style={{
+                                                padding: "11px 4px",
+                                                fontSize: 13,
+                                                fontWeight: 700,
+                                                border: picked.time === t ? "1.5px solid var(--forest)" : "1px solid var(--border, #ddd)",
+                                                background: picked.time === t ? "var(--forest)" : "#fff",
+                                                color: picked.time === t ? "#fff" : "var(--dark-text)",
+                                                borderRadius: 10,
+                                                cursor: "pointer",
+                                              }}
+                                            >
+                                              {formatTimeLabel(t)}
+                                            </button>
+                                          ))}
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </>
+                          ) : (
+                            <>
+                              <div style={{ background: "var(--sand)", borderRadius: 10, padding: "14px 16px", marginBottom: 20, fontSize: 13 }}>
+                                <strong>{bookingService.name}</strong> — BZ${bookingService.price} · {t("customerPortal.booking.durationMin", { count: bookingService.duration_min })}
+                              </div>
+                              <div className="input-group">
+                                <label>{t("customerPortal.booking.date")}</label>
+                                <input type="date" min={localDateStr()} value={bookingForm.date} onChange={e => setBookingForm(f => ({ ...f, date: e.target.value, time: "" }))} style={{ padding: "13px 14px", fontSize: 15 }} />
+                              </div>
+                              <div className="input-group">
+                                <label>{t("customerPortal.booking.availableTimes")}</label>
+                                {loadingSlots ? (
+                                  <p style={{ fontSize: 12, color: "var(--muted)" }}>{t("customerPortal.booking.checkingLiveAvailability")}</p>
+                                ) : !providerHours.length ? (
+                                  <p style={{ fontSize: 12, color: "var(--muted)" }}>{t("customerPortal.booking.hoursNotSetYet")}</p>
+                                ) : availableSlots.length === 0 ? (
+                                  <p style={{ fontSize: 12, color: "var(--clay)" }}>{t("customerPortal.booking.noOpenSlots")}</p>
+                                ) : (
+                                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(92px, 1fr))", gap: 9, maxHeight: 220, overflowY: "auto", paddingTop: 4 }}>
+                                    {availableSlots.map((t) => (
+                                      <button
+                                        type="button"
+                                        key={t}
+                                        onClick={() => setBookingForm(f => ({ ...f, time: t }))}
+                                        className="btn-sm"
+                                        style={{
+                                          padding: "11px 4px",
+                                          fontSize: 13,
+                                          fontWeight: 700,
+                                          border: bookingForm.time === t ? "1.5px solid var(--forest)" : "1px solid var(--border, #ddd)",
+                                          background: bookingForm.time === t ? "var(--forest)" : "#fff",
+                                          color: bookingForm.time === t ? "#fff" : "var(--dark-text)",
+                                          borderRadius: 10,
+                                          cursor: "pointer",
+                                        }}
+                                      >
+                                        {formatTimeLabel(t)}
+                                      </button>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            </>
+                          )}
+
                           <div className="input-group"><label>{t("customerPortal.booking.notesOptional")}</label><textarea placeholder={t("customerPortal.booking.notesPlaceholder")} value={bookingForm.notes} onChange={e => setBookingForm(f => ({ ...f, notes: e.target.value }))} style={{ minHeight: 60 }} /></div>
 
                           {selectedProvider.downpayment_required && (
@@ -6562,7 +6760,7 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
                             style={{ width: "100%", padding: "15px 0", fontSize: 15, borderRadius: 12, marginTop: 4 }}
                             disabled={submittingBooking || sendingBookingOtp}
                             onClick={async () => {
-                              if (user?.id) { submitBooking(); return; }
+                              if (user?.id) { bookingService.isMulti ? submitMultiServiceBooking() : submitBooking(); return; }
                               const guestName = guestCheckoutForm.name.trim();
                               const guestEmail = guestCheckoutForm.email.trim().toLowerCase();
                               if (!guestName) { setBookingError(t("customerPortal.booking.enterFullName")); return; }
@@ -6593,7 +6791,7 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
                                 if (whatsapp && uid) {
                                   updateUserProfile(uid, { whatsapp_number: whatsapp }).catch(() => {});
                                 }
-                                submitBooking(uid);
+                                bookingService.isMulti ? submitMultiServiceBooking(uid) : submitBooking(uid);
                               }}
                             />
                           )}
