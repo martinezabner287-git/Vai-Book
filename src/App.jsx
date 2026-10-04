@@ -963,8 +963,9 @@ const css = `
   }
   .tny-card-body { padding: 14px 16px 16px; }
   .tny-card-body h4 { font-size: 15px; font-weight: 800; color: var(--text-primary); margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .tny-card-loc { font-size: 12px; color: var(--text-tertiary); margin-bottom: 8px; }
-  .tny-card-rating { font-size: 12.5px; font-weight: 700; color: var(--accent-text); margin-bottom: 12px; }
+  .tny-card-loc { font-size: 12px; color: var(--text-tertiary); margin-bottom: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tny-card-meta-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 12px; }
+  .tny-card-rating { font-size: 12.5px; font-weight: 700; color: var(--accent-text); }
   .tny-card-rating-new { color: var(--text-tertiary); font-weight: 600; }
   .tny-book-btn { width: 100%; background: var(--accent-neon); color: var(--accent-neon-text); font-weight: 800; font-size: 13px; padding: 10px 0; border-radius: 100px; border: none; cursor: pointer; }
 
@@ -1632,6 +1633,18 @@ const css = `
   .provider-card-footer { display: flex; align-items: center; justify-content: space-between; margin-top: 10px; }
   .price-tag { font-size: 14px; font-weight: 600; color: var(--forest); }
   .avail-badge { font-size: 11px; font-weight: 600; background: #DCFCE7; color: #15803D; padding: 3px 8px; border-radius: 6px; }
+  /* Shared open/closed indicator for every provider card type (trending,
+     discover carousels, browse/favorites grid) — a dot + short label
+     rather than the longer "opens tomorrow at 9am" detail the full profile
+     view shows, since a card has no room for that. Rendered only when
+     providerOpenNow() returns a real true/false — null (no hours on file)
+     means nothing shows, same honesty rule the rest of the hours UI uses. */
+  .open-status { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 700; }
+  .open-status::before { content: ""; width: 6px; height: 6px; border-radius: 50%; display: inline-block; flex: 0 0 auto; }
+  .open-status.is-open { color: #15803D; }
+  .open-status.is-open::before { background: #15803D; }
+  .open-status.is-closed { color: var(--clay); }
+  .open-status.is-closed::before { background: var(--clay); }
 
   /* DISCOVER CAROUSELS (Recommended / New to VaiBook / Trending) */
   .carousel-row { display: flex; gap: 16px; overflow-x: auto; scroll-behavior: smooth; scrollbar-width: none; padding-bottom: 6px; }
@@ -2206,6 +2219,26 @@ const providerFromPrice = (p) => {
   return Math.min(...prices);
 };
 
+// Compact open/closed check for list cards — same "is right now inside
+// today's working hours" logic as CustomerPortal's getOpenStatus, just a
+// plain boolean (no "opens tomorrow at 9am" detail, there's no room for
+// that on a card). Needs `working_hours` embedded on the provider row —
+// see getActiveProviders' `*, services(*), reviews(rating), working_hours(*)`
+// select. Returns null (render nothing) when hours were never set at all,
+// rather than guessing — same honesty rule the rest of the hours UI follows.
+const providerOpenNow = (p) => {
+  const hours = p?.working_hours;
+  if (!hours || !hours.length) return null;
+  const now = new Date();
+  const dow = now.getDay();
+  const nowM = now.getHours() * 60 + now.getMinutes();
+  const today = hours.find((h) => h.day_of_week === dow);
+  if (!today || !today.is_open || !today.start_time || !today.end_time) return false;
+  const startM = hhmmToMinutes(today.start_time);
+  const endM = hhmmToMinutes(today.end_time);
+  return nowM >= startM && nowM < endM;
+};
+
 // Small badge that literally reflects a provider's plan tier ("✓ Pro" /
 // "✓ Business") so customers can see they're on a paid plan. Deliberately
 // NOT worded as "Verified" or "Certified" — VaiBook doesn't vet or inspect
@@ -2236,6 +2269,7 @@ const isRecentlyJoined = (p, days = 30) => {
 // optional (provider) => string|null that puts a pill in the top-left
 // corner of a card (e.g. "New", "Featured").
 function ProviderCarousel({ providers, badgeFor, onCardClick, ctaLabel }) {
+  const { t } = useTranslation();
   const rowRef = useRef(null);
   const scrollNext = () => {
     if (rowRef.current) rowRef.current.scrollBy({ left: 260, behavior: "smooth" });
@@ -2245,6 +2279,7 @@ function ProviderCarousel({ providers, badgeFor, onCardClick, ctaLabel }) {
       <div className="carousel-row" ref={rowRef}>
         {providers.map((p) => {
           const rating = providerRating(p);
+          const openNow = providerOpenNow(p);
           const badge = badgeFor ? badgeFor(p) : null;
           return (
             <div className="carousel-card card-premium" key={p.id} onClick={() => onCardClick(p)}>
@@ -2275,6 +2310,11 @@ function ProviderCarousel({ providers, badgeFor, onCardClick, ctaLabel }) {
                   {p.service_type}
                   {rating ? <> · ⭐ {rating} ({p.reviews.length})</> : null}
                 </div>
+                {openNow !== null && (
+                  <span className={`open-status ${openNow ? "is-open" : "is-closed"}`} style={{ marginTop: 4, display: "inline-flex" }}>
+                    {openNow ? t("customerPortal.hours.openNow") : t("customerPortal.hours.closed")}
+                  </span>
+                )}
                 {ctaLabel && (
                   <button className="carousel-cta btn-neon" onClick={(e) => { e.stopPropagation(); onCardClick(p); }}>
                     {ctaLabel}
@@ -3255,6 +3295,7 @@ function AuthChoice({ onNav, session, onSignIn, onSignOut }) {
   // right back at a dead end, just a prettier one.
   const [showProviderFork, setShowProviderFork] = useState(false);
   return (
+    <>
     <div className="auth-choice">
       <div className="auth-choice-left">
         <button className="auth-back" onClick={() => onNav("home")} aria-label={t("auth.back")}>←</button>
@@ -3310,6 +3351,8 @@ function AuthChoice({ onNav, session, onSignIn, onSignOut }) {
         <div className="auth-choice-panel-logo" style={{ display: "flex", alignItems: "center", gap: 12 }}><VaiBookMark size={38} />vai<span>book</span></div>
       </div>
     </div>
+    <SiteFooter />
+    </>
   );
 }
 
@@ -3348,6 +3391,7 @@ function HelpCenter({ onNav }) {
           </button>
         </div>
       </div>
+      <SiteFooter />
     </div>
   );
 }
@@ -3418,6 +3462,7 @@ function HelpContactForm({ onNav }) {
           <p className="help-form-footnote">{t("help.contact.sendHint")}</p>
         </div>
       </div>
+      <SiteFooter />
     </div>
   );
 }
@@ -3474,6 +3519,7 @@ function HelpFAQ({ onNav }) {
           <button type="button" className="help-faq-cta-btn" onClick={() => onNav("help-contact")}>{t("help.faq.emailUs")}</button>
         </div>
       </div>
+      <SiteFooter />
     </div>
   );
 }
@@ -4517,6 +4563,7 @@ function LandingPage({ onNav, session, onSignIn, onSignOut }) {
           <div className="tny-row">
             {trendingNearYou.map((p) => {
               const rating = providerRating(p);
+              const openNow = providerOpenNow(p);
               return (
                 <div className="tny-card card-premium" key={p.id} onClick={() => goToProvider(p)}>
                   <div className="tny-card-img">
@@ -4534,12 +4581,19 @@ function LandingPage({ onNav, session, onSignIn, onSignOut }) {
                   </div>
                   <div className="tny-card-body">
                     <h4>{p.business_name}</h4>
-                    <div className="tny-card-loc">{p.district}</div>
-                    {rating ? (
-                      <div className="tny-card-rating">⭐ {rating} ({p.reviews.length})</div>
-                    ) : (
-                      <div className="tny-card-rating tny-card-rating-new">{t("landing.newOnVaiBook")}</div>
-                    )}
+                    <div className="tny-card-loc">{p.service_type}{p.service_type && p.district ? " · " : ""}{p.district}</div>
+                    <div className="tny-card-meta-row">
+                      {rating ? (
+                        <span className="tny-card-rating">⭐ {rating} ({p.reviews.length})</span>
+                      ) : (
+                        <span className="tny-card-rating tny-card-rating-new">{t("landing.newOnVaiBook")}</span>
+                      )}
+                      {openNow !== null && (
+                        <span className={`open-status ${openNow ? "is-open" : "is-closed"}`}>
+                          {openNow ? t("customerPortal.hours.openNow") : t("customerPortal.hours.closed")}
+                        </span>
+                      )}
+                    </div>
                     <button className="tny-book-btn btn-neon" onClick={(e) => { e.stopPropagation(); goToProvider(p); }}>
                       {t("landing.bookNow")}
                     </button>
@@ -6087,6 +6141,7 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
               {filteredProviders.map((p) => {
                 const rating = providerRating(p);
                 const fromPrice = providerFromPrice(p);
+                const openNow = providerOpenNow(p);
                 return (
                   <div className="provider-card" key={p.id} style={{ cursor: "pointer", position: "relative" }} onClick={() => openBooking(p)}>
                     <button
@@ -6105,6 +6160,11 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
                       <h4>{p.business_name}{(() => { const badge = planBadge(p); return badge && <span className="cx-plan-badge">{badge.label}</span>; })()}{p.is_featured && <span style={{ marginLeft: 6, fontSize: 11, fontWeight: 700, color: "var(--lime)", background: "rgba(198,241,53,0.15)", padding: "2px 7px", borderRadius: 5, verticalAlign: "middle" }}>⭐ {t("customerPortal.browse.featuredBadge")}</span>}</h4>
                       <div className="trade">{p.service_type} · {p.district}</div>
                       <div className="stars">{rating ? <StarRating value={rating} /> : t("customerPortal.browse.noReviewsYet")}<span style={{ color: "var(--muted)", fontSize: 12 }}>{rating ? ` ${rating} (${p.reviews.length})` : ""}</span></div>
+                      {openNow !== null && (
+                        <span className={`open-status ${openNow ? "is-open" : "is-closed"}`} style={{ marginTop: 4, display: "inline-flex" }}>
+                          {openNow ? t("customerPortal.hours.openNow") : t("customerPortal.hours.closed")}
+                        </span>
+                      )}
                       {p.whatsapp && <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 4 }}>📞 {p.whatsapp}</div>}
                       <div className="provider-card-footer">
                         <span className="price-tag">{fromPrice != null ? t("customerPortal.browse.fromPrice", { price: fromPrice }) : t("customerPortal.browse.contactForPricing")}</span>
@@ -6129,6 +6189,7 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
               {favoriteProviders.map((p) => {
                 const rating = providerRating(p);
                 const fromPrice = providerFromPrice(p);
+                const openNow = providerOpenNow(p);
                 return (
                   <div className="provider-card" key={p.id} style={{ cursor: "pointer", position: "relative" }} onClick={() => openBooking(p)}>
                     <button
@@ -6147,6 +6208,11 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
                       <h4>{p.business_name}{(() => { const badge = planBadge(p); return badge && <span className="cx-plan-badge">{badge.label}</span>; })()}{p.is_featured && <span style={{ marginLeft: 6, fontSize: 11, fontWeight: 700, color: "var(--lime)", background: "rgba(198,241,53,0.15)", padding: "2px 7px", borderRadius: 5, verticalAlign: "middle" }}>⭐ {t("customerPortal.browse.featuredBadge")}</span>}</h4>
                       <div className="trade">{p.service_type} · {p.district}</div>
                       <div className="stars">{rating ? <StarRating value={rating} /> : t("customerPortal.browse.noReviewsYet")}<span style={{ color: "var(--muted)", fontSize: 12 }}>{rating ? ` ${rating} (${p.reviews.length})` : ""}</span></div>
+                      {openNow !== null && (
+                        <span className={`open-status ${openNow ? "is-open" : "is-closed"}`} style={{ marginTop: 4, display: "inline-flex" }}>
+                          {openNow ? t("customerPortal.hours.openNow") : t("customerPortal.hours.closed")}
+                        </span>
+                      )}
                       <div className="provider-card-footer">
                         <span className="price-tag">{fromPrice != null ? t("customerPortal.browse.fromPrice", { price: fromPrice }) : t("customerPortal.browse.contactForPricing")}</span>
                         {p.downpayment_required ? <span style={{ fontSize: 11, color: "var(--muted)" }}>{t("customerPortal.browse.depositPct", { pct: p.downpayment_pct || 50 })}</span> : <span className="avail-badge">{t("customerPortal.browse.noDeposit")}</span>}
@@ -6497,6 +6563,8 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
           </>
         )}
       </main>
+
+      <SiteFooter />
 
       {selectedProvider && (() => {
         const photos = selectedProvider.portfolio_urls || [];
@@ -7059,6 +7127,7 @@ function StaffPortal({ onNav, session, staffProfile, onSignOut }) {
   );
 
   return (
+    <>
     <div style={{ maxWidth: 760, margin: "0 auto", padding: "32px 20px" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
         <div>
@@ -7119,6 +7188,8 @@ function StaffPortal({ onNav, session, staffProfile, onSignOut }) {
         ))}
       </div>
     </div>
+    <SiteFooter />
+    </>
   );
 }
 
@@ -10419,6 +10490,8 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
         )}
       </main>
 
+      <SiteFooter />
+
       {/* CUSTOM BLOCK — bottom sheet, not a modal: say when you'll be back —
           "15m", "30m", "1h", or an exact resume time. Purely a pause from
           the business (lunch, an errand, stepping away) — no "walk-in"
@@ -11329,6 +11402,7 @@ function ProviderSignup({ onNav }) {
         </p>
       </div>
     </div>
+    <SiteFooter />
     </>
   );
 }
@@ -12102,6 +12176,8 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
           </>
         )}
       </main>
+
+      <SiteFooter />
     </div>
   );
 }
