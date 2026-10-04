@@ -255,6 +255,21 @@
     "stopLosing": "Stop Losing Revenue to No-Shows",
     "forBusinessSub": "Join Belize's top professionals. Get your customized booking link, automate 24-hour reminders, and secure deposits directly via WhatsApp."
   },
+  "providerSignupModal": {
+    "close": "Close",
+    "eyebrow": "✨ 14-day free trial",
+    "headline": "Start Your 14-Day Free Trial.",
+    "sub": "No credit card required. Setup takes 30 seconds.",
+    "shopNameLabel": "Shop Name",
+    "shopNamePlaceholder": "e.g. Fresh Cutz Barbershop",
+    "emailLabel": "Email",
+    "emailPlaceholder": "you@business.com",
+    "passwordLabel": "Password",
+    "passwordPlaceholder": "Create a password",
+    "entering": "Entering…",
+    "enterDashboard": "Enter Dashboard →",
+    "note": "No contracts, no setup fees — cancel anytime."
+  },
   "customerPortal": {
     "booking": {
       "at": "at",
