@@ -672,6 +672,12678 @@ const css = `
      the background went light the text had to follow — confirmed with the
      user via an explicit before/after comparison. */
   .search-hero {
+    /* Side padding matches .section's (48px) so the hero's edge lines up
+       with every row below it instead of sitting 24px closer to the
+       screen edge than everything else — the other half of the "doesn't
+       follow the border" gap, alongside the max-width above. */
+    position: relative; overflow: hidden; padding: 100px 48px 88px; text-align: left;
+    background: var(--bg-primary);
+  }
+  /* Two large, blurred, independently-drifting color blobs. Using
+     ::before/::after (rather than extra DOM nodes) keeps this change
+     CSS-only. filter:blur() already softens every edge, and the hero's
+     own overflow:hidden clips both to the section, so — unlike the old
+     hard-edged dark gradient — there's no seam to dissolve into the page
+     background underneath; the hero's base color already matches it. */
+  .search-hero::before {
+    content: '';
+    position: absolute; z-index: 0; pointer-events: none;
+    width: 640px; height: 640px; top: -230px; left: -180px;
+    border-radius: 50%; filter: blur(70px);
+    background: radial-gradient(circle, rgba(198,241,53,0.5) 0%, rgba(198,241,53,0) 70%);
+    animation: hero-blob-drift-1 17s ease-in-out infinite;
+  }
+  .search-hero::after {
+    content: '';
+    position: absolute; z-index: 0; pointer-events: none;
+    width: 580px; height: 580px; top: -120px; right: -200px;
+    border-radius: 50%; filter: blur(70px);
+    background: radial-gradient(circle, rgba(30,139,92,0.4) 0%, rgba(30,139,92,0) 70%);
+    animation: hero-blob-drift-2 21s ease-in-out infinite;
+  }
+  @keyframes hero-blob-drift-1 {
+    0%   { transform: translate(0, 0) scale(1); }
+    50%  { transform: translate(170px, 110px) scale(1.12); }
+    100% { transform: translate(0, 0) scale(1); }
+  }
+  @keyframes hero-blob-drift-2 {
+    0%   { transform: translate(0, 0) scale(1); }
+    50%  { transform: translate(-150px, 120px) scale(1.08); }
+    100% { transform: translate(0, 0) scale(1); }
+  }
+  /* Widened from 780px so the hero's own content box lines up with the
+     page's actual edge (the same 48px .section padding every row below it
+     uses) on virtually every real laptop/tablet/phone width, instead of
+     sitting in its own narrower centered column — the "doesn't follow the
+     border" gap vs. the rest of the page, and vs. sites like Fresha where
+     hero + content share one consistent margin. Below ~1416px total
+     viewport width (every phone, every tablet, and the common 1280/1366
+     laptop resolutions) this max-width never even binds, so the hero just
+     naturally fills out to the same edge as everything else — on a true
+     wide external monitor a small gap can still remain, which is a much
+     smaller, rarer residual than before rather than a full fix at every
+     possible width. */
+  .search-hero > * { position: relative; z-index: 1; max-width: 1320px; margin-left: auto; margin-right: auto; }
+  .search-hero > .search-bar-pill { z-index: 10; }
+  .search-hero-eyebrow { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 12px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; color: var(--muted); margin-bottom: 18px; text-align: center; }
+  .search-hero h1 { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; font-size: clamp(32px, 5vw, 58px); line-height: 1.08; letter-spacing: -1px; margin: 0 auto 20px; text-align: center; }
+  .search-hero h1 .line1 { display: block; color: var(--forest); }
+  /* var(--lime) reads great on the old dark-green hero but nearly
+     disappears on this light one (low-contrast light-yellow-green on
+     off-white) — this mid-green keeps the same "accent line" role at
+     readable contrast. */
+  .search-hero h1 .line2 { display: block; color: #1E8F5C; }
+  @media (max-width: 480px) {
+    .search-hero h1 { font-size: clamp(28px, 8vw, 36px); }
+  }
+  .search-sub { font-size: 17px; color: var(--muted); max-width: 560px; margin: 0 auto 40px; line-height: 1.5; text-align: center; }
+  .search-bar-pill {
+    position: relative; max-width: 760px; margin: 0 auto;
+    background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.16);
+    border-radius: 100px; box-shadow: 0 20px 50px rgba(0,0,0,0.22);
+    display: flex; align-items: center; padding: 8px; gap: 4px;
+  }
+  .search-bar-pill .field { flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; padding: 10px 18px; }
+  .search-bar-pill .field input, .search-bar-pill .field select { border: none; outline: none; background: transparent; font-size: 14px; width: 100%; color: #FFFFFF; font-family: 'Plus Jakarta Sans', sans-serif; }
+  .search-bar-pill .field input::placeholder { color: rgba(245,239,224,0.45); }
+  .search-bar-pill select option { background: #0D3D2E; color: #FFFFFF; }
+  .search-bar-pill .sep { width: 1px; height: 28px; background: rgba(255,255,255,0.18); flex-shrink: 0; }
+  .search-submit { background: var(--lime); color: var(--forest); border: none; border-radius: 100px; padding: 14px 30px; font-weight: 700; font-size: 15px; cursor: pointer; white-space: nowrap; transition: opacity .2s; font-family: 'Plus Jakarta Sans', sans-serif; }
+  .search-submit:hover { opacity: .87; }
+  .search-hero-tagline { margin-top: 26px; font-size: 13px; color: var(--muted); text-align: center; }
+  .search-hero-tagline a { color: #1E8F5C; font-weight: 600; cursor: pointer; text-decoration: underline; }
+  /* Real, non-fabricated live-stat line under the search bar (count comes
+     straight from the same active-providers fetch the Discover rows use —
+     never a made-up number) + a "Get the app" pill, echoing the two small
+     trust/utility elements Fresha places under its own hero search bar. */
+  .hero-stat-line { margin-top: 22px; font-size: 14px; font-weight: 600; color: var(--muted); text-align: center; }
+  .hero-stat-line strong { color: #1E8F5C; font-weight: 800; }
+  .hero-get-app-btn {
+    display: flex; align-items: center; gap: 8px; margin: 18px auto 0; background: #FFFFFF; color: var(--forest);
+    border: 1px solid var(--border); border-radius: 100px; padding: 11px 22px; font-size: 14px; font-weight: 700; cursor: pointer;
+    box-shadow: 0 10px 26px rgba(13,61,46,0.1); transition: transform .15s;
+  }
+  .hero-get-app-btn:hover { transform: translateY(-1px); }
+  .hero-trial-btn { display: block; margin: 0 auto 44px; padding: 17px 38px; font-size: 16px; border-radius: 100px; box-shadow: 0 16px 40px rgba(198,241,53,0.22); }
+  .hero-search-label { font-size: 12px; font-weight: 600; letter-spacing: .03em; color: rgba(250,250,247,0.5); text-align: center; margin-bottom: 14px; }
+
+  /* SEARCH SUGGESTIONS (autocomplete dropdown, shared by hero + browse search bars) */
+  .suggestions-dropdown { position: absolute; top: calc(100% + 8px); left: 0; right: 0; background: white; border: 1px solid var(--border); border-radius: 16px; box-shadow: 0 16px 36px rgba(13,61,46,0.16); z-index: 60; overflow: hidden; text-align: left; }
+  .suggestion-item { display: flex; align-items: center; gap: 10px; padding: 11px 18px; cursor: pointer; font-size: 13px; }
+  .suggestion-item:hover, .suggestion-item.active { background: var(--sand); }
+  .suggestion-icon { font-size: 14px; width: 18px; text-align: center; flex-shrink: 0; }
+  .suggestion-label { font-weight: 600; color: var(--dark-text); }
+  .suggestion-sub { font-size: 11px; color: var(--muted); margin-left: auto; flex-shrink: 0; padding-left: 12px; }
+  @media (max-width: 640px) {
+    /* Side padding now set once, at the 768px breakpoint below, so it
+       matches .section's at every width instead of diverging here. */
+    .search-bar-pill { flex-direction: column; align-items: stretch; }
+    /* .search-glass (declared later in this stylesheet, under GLOBAL
+       PREMIUM UI COMPONENTS, specifically so it always wins layering onto
+       older component classes) unconditionally re-asserts its own
+       border-radius: 100px. On a single-class selector that beats the
+       plain .search-bar-pill rule above (border-radius: 20px) by source
+       order, so the stacked mobile bar stayed a full capsule shape — its
+       rounded ends visibly overlapping/clashing with the Search button
+       nested inside, which is what read as "the search bar and button
+       are all jumbled together". This compound selector outranks the
+       single-class .search-glass rule on specificity instead, so it wins
+       regardless of where either rule sits in the file. */
+    .search-bar-pill.search-glass { border-radius: 20px; }
+    .search-bar-pill .sep { display: none; }
+    .search-submit { width: 100%; }
+  }
+
+  /* PROVIDER HERO (B2B "/providers" route) — deliberately darker and more
+     "high-status" than the consumer .search-hero: near-black forest
+     gradient instead of the bright emerald one, no search pill, a single
+     centered stack (eyebrow → headline → subhead → trial badge → massive
+     lime CTA → trust note). This is what makes the two routes read as
+     visually distinct businesses (consumer marketplace vs. B2B SaaS)
+     rather than the same page with different copy. */
+  .provider-hero {
+    position: relative; overflow: hidden; padding: 128px 24px 104px; text-align: center;
+    background: linear-gradient(165deg, #081F17 0%, #0D3D2E 55%, #14503A 100%);
+  }
+  .provider-hero::before {
+    content: '';
+    position: absolute; inset: -25%;
+    background: radial-gradient(circle at 50% 0%, rgba(198,241,53,0.16), transparent 62%);
+    z-index: 0;
+  }
+  .provider-hero > * { position: relative; z-index: 1; }
+  .provider-hero-eyebrow {
+    display: inline-block; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 12px; font-weight: 700;
+    letter-spacing: .16em; text-transform: uppercase; color: var(--lime);
+    background: rgba(198,241,53,0.1); border: 1px solid rgba(198,241,53,0.28);
+    padding: 8px 20px; border-radius: 100px; margin-bottom: 24px;
+  }
+  .provider-hero-title {
+    font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; color: var(--near-white);
+    font-size: clamp(34px, 5vw, 60px); line-height: 1.08; letter-spacing: -1px;
+    max-width: 780px; margin: 0 auto 18px;
+  }
+  .provider-hero-sub {
+    font-size: 18px; font-weight: 500; color: rgba(250,250,247,0.7);
+    max-width: 480px; margin: 0 auto 26px; line-height: 1.5;
+  }
+  .provider-hero .trial-badge { margin: 0 auto 28px; }
+  .provider-hero-ctas { display: flex; align-items: center; justify-content: center; gap: 14px; flex-wrap: wrap; }
+  .provider-hero-cta.btn-lime {
+    display: inline-block; padding: 20px 44px; font-size: 17px; font-weight: 800;
+    border-radius: 100px; box-shadow: 0 18px 44px rgba(198,241,53,0.28);
+  }
+  .provider-hero-cta-secondary.btn-ghost { padding: 20px 32px; font-size: 16px; font-weight: 700; }
+  .provider-hero-note { margin-top: 18px; font-size: 13px; color: rgba(250,250,247,0.5); }
+  /* The dashboard screenshot living inside the dark hero, Fresha-style —
+     platform-preview-img already carries its own white rounded corners +
+     shadow, which is exactly what reads well floating on this gradient. */
+  .provider-hero-screenshot { margin-top: 56px; }
+  @media (max-width: 640px) {
+    .provider-hero { padding: 96px 20px 72px; }
+    .provider-hero-screenshot { margin-top: 36px; }
+    .provider-hero-cta.btn-lime { width: 100%; padding: 18px 0; }
+  }
+
+  /* PROVIDER SIGNUP MODAL — the "direct-to-app" frictionless overlay
+     (see ProviderSignupModal.jsx). Sleek dark card over a dimmed backdrop,
+     same visual language as .provider-hero (near-black forest gradient +
+     lime accents) so it reads as a continuation of that CTA, not a
+     separate light-mode form popping in. Reuses the shared .input-group
+     classes for the fields, dark-scoped the same way .cx-account-page
+     does for the customer portal, so this needed no new form-field CSS. */
+  .psm-overlay {
+    position: fixed; inset: 0; z-index: 500; background: rgba(6,20,15,0.72);
+    backdrop-filter: blur(3px); display: flex; align-items: center; justify-content: center; padding: 20px;
+  }
+  .psm-modal {
+    position: relative; width: 100%; max-width: 420px; max-height: 92vh; overflow-y: auto;
+    background: linear-gradient(165deg, #0A2A20 0%, #0D3D2E 100%);
+    border: 1px solid rgba(198,241,53,0.18); border-radius: 24px;
+    padding: 40px 32px 32px; box-shadow: 0 30px 70px rgba(0,0,0,0.45);
+  }
+  .psm-close {
+    position: absolute; top: 16px; right: 16px; background: rgba(255,255,255,0.08); border: none;
+    color: rgba(245,239,224,0.7); width: 30px; height: 30px; border-radius: 50%; font-size: 13px;
+    cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background .2s, color .2s;
+  }
+  .psm-close:hover { background: rgba(255,255,255,0.16); color: #FFFFFF; }
+  .psm-eyebrow {
+    display: inline-block; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 11px; font-weight: 700;
+    letter-spacing: .12em; text-transform: uppercase; color: var(--lime);
+    background: rgba(198,241,53,0.1); border: 1px solid rgba(198,241,53,0.28);
+    padding: 6px 14px; border-radius: 100px; margin-bottom: 16px;
+  }
+  .psm-headline {
+    font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; color: #FFFFFF;
+    font-size: 26px; line-height: 1.2; margin: 0 0 8px;
+  }
+  .psm-sub { font-size: 14px; color: rgba(245,239,224,0.6); line-height: 1.5; margin: 0 0 24px; }
+  .psm-form { display: flex; flex-direction: column; }
+  .psm-modal .input-group label { color: rgba(245,239,224,0.75); }
+  .psm-modal .input-group input {
+    background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.14); color: #FFFFFF;
+  }
+  .psm-modal .input-group input::placeholder { color: rgba(245,239,224,0.35); }
+  .psm-modal .input-group input:focus { border-color: var(--lime); box-shadow: 0 0 0 3px rgba(198,241,53,0.15); }
+  .psm-submit {
+    width: 100%; margin-top: 6px; padding: 16px 0; font-size: 15.5px; font-weight: 800;
+    border-radius: 14px; box-shadow: 0 14px 34px rgba(198,241,53,0.24);
+  }
+  .psm-submit:disabled { opacity: 0.7; cursor: default; }
+  .psm-note { text-align: center; font-size: 12.5px; color: rgba(245,239,224,0.45); margin: 18px 0 0; }
+
+  /* LANDING PAGE — themed surface (see the .lp-theme wrapper on
+     LandingPage's root, App.jsx), driven entirely by the THEME TOKENS
+     defined on :root / :root[data-theme="light"] above — toggling theme
+     repaints this whole block for free, nothing here hardcodes a color.
+     Same ancestor-scoping technique as .cx-account-page below: an
+     ancestor class overrides only the single-purpose shared classes this
+     page actually uses (.section-eyebrow/title/sub, .service-pill,
+     .carousel-card and friends, .marketing-strip) rather than their base
+     definitions, so ProviderLandingPage's still-light pricing/platform-
+     preview sections and the Customer/Provider/Admin portals — which
+     reuse several of these exact class names — are completely
+     unaffected, in either theme. */
+  .lp-theme { background: var(--bg-primary); color: var(--text-primary); }
+  .lp-theme .section-eyebrow { color: var(--accent-text); }
+  .lp-theme .section-title { color: var(--text-primary); }
+  .lp-theme .section-sub { color: var(--text-secondary); }
+
+  /* CATEGORY PILLS — centered/wrapping row → horizontal-scrolling row of
+     translucent pills, purpose-built for a mobile thumb swipe. */
+  .lp-theme .services-pills {
+    flex-wrap: nowrap; overflow-x: auto; justify-content: flex-start;
+    max-width: 100%; margin: 0; padding-bottom: 6px;
+    scroll-snap-type: x mandatory; scrollbar-width: none;
+  }
+  .lp-theme .services-pills::-webkit-scrollbar { display: none; }
+  .lp-theme .services-pills .service-pill { flex: 0 0 auto; scroll-snap-align: start; }
+  .lp-theme .service-pill { background: var(--bg-elevated); border-color: var(--border-subtle); color: var(--text-primary); }
+  .lp-theme .service-pill:hover { border-color: var(--accent-neon); color: var(--accent-text); background: rgba(198,241,53,0.08); box-shadow: none; }
+
+  /* TRENDING / DISCOVER CAROUSEL CARDS — themed, borderless-in-dark /
+     subtly-bordered-in-light variant of the shared .carousel-card (also
+     used, unscoped and still permanently light, by the Customer Portal's
+     own browse/favorites carousels elsewhere). The card's image area
+     (.carousel-card-img's fallback gradient, badges sitting on top of it)
+     deliberately stays the same green regardless of theme, same as the
+     hero — a photo/media surface reads as a brand accent, not "page
+     chrome", so it doesn't need to repaint with the rest of the page. */
+  .lp-theme .carousel-card { background: var(--bg-elevated); border: 1px solid var(--card-border); }
+  .lp-theme .carousel-card:hover { box-shadow: var(--card-shadow); background: var(--bg-elevated-hover); }
+  .lp-theme .carousel-card-body h4 { color: var(--text-primary); }
+  .lp-theme .carousel-card-body .loc,
+  .lp-theme .carousel-card-body .meta { color: var(--text-tertiary); }
+  .lp-theme .carousel-arrow { background: var(--bg-elevated); border-color: var(--border-subtle); color: var(--accent-text); box-shadow: none; }
+
+  /* TRUST STRIP — the features strip itself (.marketing-strip) was
+     removed from LandingPage's JSX per explicit request; these overrides
+     are left idle rather than deleted, same convention as other retired
+     CSS in this file, in case it's reused elsewhere later. */
+  .lp-theme .marketing-strip { background: var(--bg-elevated); border-top: 1px solid var(--border-subtle); border-bottom: 1px solid var(--border-subtle); }
+  .lp-theme .marketing-item-title { color: var(--text-primary); }
+  .lp-theme .marketing-item-sub { color: var(--text-tertiary); }
+
+  /* TRENDING NEAR YOU — the Fresha-style "dopamine hit" card: full image
+     top with a bottom gradient overlay, then shop name / district /
+     rating / an optional "High demand" scarcity pill / a full-width lime
+     "Book Now" CTA. Unscoped (not under .lp-theme) since this markup only
+     ever renders inside LandingPage — no other page uses these classes —
+     but still themed via the shared CSS variables, same as everything
+     else on this page. The image area (fallback gradient/overlay) and the
+     scarcity pill both sit on top of the photo, not the page background,
+     so — like the carousel cards above — they stay a fixed green/lime
+     regardless of theme rather than needing their own light variant. */
+  .tny-heading { margin-bottom: 20px; }
+  .tny-row {
+    display: flex; gap: 16px; overflow-x: auto; padding-bottom: 6px;
+    scroll-snap-type: x mandatory; scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch; scrollbar-width: none;
+  }
+  .tny-row::-webkit-scrollbar { display: none; }
+  .tny-card {
+    flex: 0 0 230px; scroll-snap-align: start; background: var(--bg-elevated);
+    border: 1px solid var(--card-border); border-radius: 20px; overflow: hidden; cursor: pointer;
+    transition: transform .15s ease, background .2s ease, box-shadow .2s ease;
+  }
+  .tny-card:hover { transform: translateY(-4px); background: var(--bg-elevated-hover); box-shadow: var(--card-shadow); }
+  .tny-card-img { position: relative; height: 160px; background: linear-gradient(160deg, #1E6B50 0%, #0E241B 100%); overflow: hidden; }
+  .tny-card-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .tny-card-img-fallback { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 40px; }
+  .tny-card-img-overlay { position: absolute; left: 0; right: 0; bottom: 0; height: 65%; background: linear-gradient(180deg, rgba(8,31,23,0) 0%, rgba(8,31,23,0.9) 100%); pointer-events: none; }
+  .tny-scarcity {
+    position: absolute; top: 10px; left: 10px; z-index: 2;
+    background: rgba(198,241,53,0.18); color: var(--lime); border: 1px solid rgba(198,241,53,0.4);
+    font-size: 10px; font-weight: 800; letter-spacing: .03em; text-transform: uppercase;
+    padding: 4px 9px; border-radius: 100px; box-shadow: 0 0 14px rgba(198,241,53,0.4);
+  }
+  .tny-card-body { padding: 14px 16px 16px; }
+  .tny-card-body h4 { font-size: 15px; font-weight: 800; color: var(--text-primary); margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tny-card-loc { font-size: 12px; color: var(--text-tertiary); margin-bottom: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tny-card-meta-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 12px; }
+  .tny-card-rating { font-size: 12.5px; font-weight: 700; color: var(--accent-text); }
+  .tny-card-rating-new { color: var(--text-tertiary); font-weight: 600; }
+  .tny-book-btn { width: 100%; background: var(--accent-neon); color: var(--accent-neon-text); font-weight: 800; font-size: 13px; padding: 10px 0; border-radius: 100px; border: none; cursor: pointer; }
+
+  /* STATS BAR */
+  .marketing-strip { background: var(--sand); padding: 40px 48px; display: flex; justify-content: space-around; gap: 32px; flex-wrap: wrap; }
+  .marketing-item { text-align: center; max-width: 230px; }
+  .marketing-item-icon { font-size: 26px; line-height: 1; margin-bottom: 10px; }
+  .marketing-item-title { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 16px; font-weight: 800; color: var(--forest); }
+  .marketing-item-sub { font-size: 13px; color: var(--muted); margin-top: 4px; line-height: 1.45; }
+
+  .platform-preview-section { padding-bottom: 40px; }
+  .platform-preview-img { display: block; width: 100%; height: auto; max-width: 1100px; margin: 0 auto; border-radius: 20px; box-shadow: 0 24px 60px rgba(13,61,46,0.14); }
+
+  /* HOW IT WORKS */
+  .section { padding: 80px 48px; }
+  .section-eyebrow { font-size: 12px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--clay); margin-bottom: 12px; }
+  .section-title { font-family: 'Plus Jakarta Sans', sans-serif; font-size: clamp(28px, 4vw, 44px); color: var(--forest); margin-bottom: 16px; line-height: 1.1; }
+  .section-sub { font-size: 16px; color: var(--muted); max-width: 520px; line-height: 1.65; margin-bottom: 48px; }
+  .steps-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 24px; }
+  .step-card { background: var(--near-white); border: 1px solid var(--border); border-radius: var(--radius); padding: 28px 24px; position: relative; overflow: hidden; }
+  .step-card::before { content: attr(data-n); position: absolute; top: -10px; right: 16px; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 72px; font-weight: 800; color: var(--forest); opacity: 0.04; line-height: 1; }
+  .step-icon { font-size: 28px; margin-bottom: 16px; }
+  .step-card h3 { font-size: 16px; font-weight: 600; color: var(--forest); margin-bottom: 8px; }
+  .step-card p { font-size: 14px; color: var(--muted); line-height: 1.6; }
+
+  /* SERVICES SECTION */
+  .services-section { padding: 80px 48px; }
+  .services-pills { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; max-width: 1040px; margin: 0 auto; }
+  .service-pill { display: inline-flex; align-items: center; gap: 9px; background: #fff; border: 1px solid var(--border); color: var(--dark-text); padding: 13px 22px; border-radius: 100px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all .2s; }
+  .service-pill:hover { border-color: var(--forest); color: var(--forest); box-shadow: 0 2px 10px rgba(13,61,46,0.08); }
+  .service-pill .icon { font-size: 18px; line-height: 1; }
+
+  /* BROWSE BY DISTRICT */
+  .browse-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 32px 24px; max-width: 1100px; margin: 0 auto 44px; }
+  .browse-col h5 { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--forest); margin-bottom: 14px; }
+  .browse-col ul { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+  .browse-col li { font-size: 14px; color: var(--dark-text); }
+  .browse-col a { color: inherit; cursor: pointer; transition: color .2s; }
+  .browse-col a:hover { color: var(--forest-light); text-decoration: underline; }
+  .browse-pills { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; max-width: 1100px; margin: 0 auto; }
+  .browse-pill { background: white; border: 1px solid var(--border); color: var(--dark-text); padding: 9px 18px; border-radius: 100px; font-size: 13px; font-weight: 500; cursor: pointer; transition: all .2s; }
+  .browse-pill:hover { border-color: var(--forest); color: var(--forest); }
+
+  /* PRICING (public, for prospective providers) */
+  .pricing-section { padding: 80px 48px; }
+  .trial-badge { display: inline-flex; align-items: center; gap: 6px; background: var(--lime); color: var(--forest); font-size: 12.5px; font-weight: 700; padding: 7px 18px; border-radius: 100px; margin: 4px 0 18px; }
+  .pricing-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; max-width: 720px; margin: 0 auto; align-items: stretch; }
+  .pricing-card { background: #fff; border: 1px solid var(--border); border-radius: 16px; padding: 32px 28px; display: flex; flex-direction: column; position: relative; }
+  .pricing-card.recommended { border: 2px solid var(--forest); box-shadow: 0 16px 36px rgba(13,61,46,0.12); }
+  .pricing-badge { position: absolute; top: -13px; left: 50%; transform: translateX(-50%); background: var(--forest); color: var(--lime); font-size: 11px; font-weight: 800; letter-spacing: .4px; text-transform: uppercase; padding: 5px 14px; border-radius: 100px; white-space: nowrap; }
+  /* Per-card trial badge (Task: "add a prominent 14-Day Free Trial badge to
+     both active plans") — separate from the top-of-card .pricing-badge
+     ribbon (which only shows on the recommended plan) so the two never
+     collide; sits inline under the plan name instead of absolutely
+     positioned, since every card gets one, not just one card. */
+  .pricing-trial-badge { display: inline-flex; align-items: center; gap: 5px; background: var(--lime); color: var(--forest); font-size: 11px; font-weight: 800; letter-spacing: .2px; padding: 5px 12px; border-radius: 100px; margin: 8px 0 2px; white-space: nowrap; }
+  .pricing-name { font-size: 13px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
+  .pricing-price { font-size: 34px; font-weight: 800; color: var(--dark-text); margin: 10px 0 6px; font-family: 'Plus Jakarta Sans', sans-serif; }
+  .pricing-price span { font-size: 14px; font-weight: 500; color: var(--muted); }
+  .pricing-price-note { font-size: 12px; color: var(--muted); margin: -4px 0 14px; }
+  .pricing-daily-rate { display: inline-block; background: var(--forest); color: var(--lime); font-size: 13px; font-weight: 800; padding: 5px 12px; border-radius: 100px; margin: 0 0 6px; }
+  .pricing-daily-note { font-size: 11.5px; color: var(--muted); font-style: italic; margin: 0 0 14px; }
+  .pricing-tagline { font-size: 13px; color: var(--muted); margin-bottom: 22px; min-height: 34px; }
+  .pricing-features { list-style: none; padding: 0; margin: 0 0 28px; flex: 1; }
+  .pricing-features li { display: flex; gap: 9px; align-items: flex-start; font-size: 13.5px; color: var(--dark-text); padding: 7px 0; line-height: 1.4; }
+  .pricing-features li .check { color: var(--forest); font-weight: 700; flex-shrink: 0; }
+  .pricing-cta { width: 100%; text-align: center; }
+  .pricing-foot-note { text-align: center; font-size: 13px; color: var(--muted); margin-top: 32px; max-width: 620px; margin-left: auto; margin-right: auto; }
+  .vai-media-banner { position: relative; overflow: hidden; max-width: 780px; margin: 56px auto 0; text-align: center; background: linear-gradient(160deg, var(--forest) 0%, #0A2A20 100%); border: 1px solid rgba(198,241,53,0.25); border-radius: 24px; padding: 52px 40px; box-shadow: 0 24px 60px rgba(13,61,46,0.28); }
+  .vai-media-banner::before { content: ""; position: absolute; top: -60px; right: -60px; width: 220px; height: 220px; background: radial-gradient(circle, rgba(198,241,53,0.18) 0%, rgba(198,241,53,0) 70%); pointer-events: none; }
+  .vai-media-eyebrow { display: inline-flex; align-items: center; gap: 6px; background: rgba(198,241,53,0.12); color: var(--lime); font-size: 11px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; padding: 7px 16px; border-radius: 100px; margin-bottom: 18px; border: 1px solid rgba(198,241,53,0.3); }
+  .vai-media-title { color: #FFFFFF; font-size: 27px; font-weight: 800; margin: 0 0 14px; letter-spacing: -0.01em; position: relative; }
+  .vai-media-copy { color: rgba(245,239,224,0.78); font-size: 15.5px; line-height: 1.6; max-width: 520px; margin: 0 auto 30px; position: relative; }
+  .vai-media-tiers { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; max-width: 600px; margin: 0 auto 32px; position: relative; }
+  .vai-media-tier { background: rgba(255,255,255,0.05); border: 1px solid rgba(198,241,53,0.18); border-radius: 14px; padding: 18px 18px 16px; text-align: left; }
+  .vai-media-tier-name { color: #FFFFFF; font-size: 14px; font-weight: 800; margin-bottom: 6px; }
+  .vai-media-tier-desc { color: rgba(245,239,224,0.65); font-size: 12.5px; line-height: 1.5; margin-bottom: 12px; min-height: 38px; }
+  .vai-media-tier-price { color: var(--lime); font-size: 15px; font-weight: 800; }
+  @media (max-width: 560px) {
+    .vai-media-tiers { grid-template-columns: 1fr; }
+  }
+  .vai-media-btn { display: inline-block; background: var(--lime); color: var(--forest); font-weight: 800; font-size: 15px; padding: 15px 34px; border-radius: 14px; text-decoration: none; box-shadow: 0 10px 26px rgba(198,241,53,0.25); position: relative; }
+  .vai-media-alt { margin: 14px 0 0; font-size: 12.5px; position: relative; }
+  .vai-media-alt a { color: rgba(245,239,224,0.65); text-decoration: underline; }
+  .for-business-cta { background: var(--forest); padding: 96px 24px; text-align: center; }
+  .for-business-inner { max-width: 640px; margin: 0 auto; }
+  .for-business-headline { color: #FFFFFF; font-weight: 800; font-size: 40px; line-height: 1.15; margin: 0 0 20px; letter-spacing: -0.01em; }
+  .for-business-sub { color: rgba(245, 239, 224, 0.72); font-size: 17px; line-height: 1.6; margin: 0 0 40px; }
+  .for-business-btn { padding: 17px 36px; font-size: 16px; font-weight: 700; border-radius: 14px; }
+  @media (max-width: 900px) {
+    .pricing-grid { grid-template-columns: 1fr; max-width: 420px; }
+  }
+  @media (max-width: 768px) {
+    .pricing-section { padding: 60px 24px; }
+  }
+
+  .btn-forest { background: var(--forest); color: var(--near-white); border: none; width: 100%; padding: 13px; border-radius: var(--radius-sm); font-size: 14px; font-weight: 600; cursor: pointer; transition: opacity .2s; }
+  .btn-forest:hover { opacity: .85; }
+  .btn-outline-forest { background: transparent; color: var(--forest); border: 1px solid var(--forest); width: 100%; padding: 13px; border-radius: var(--radius-sm); font-size: 14px; font-weight: 600; cursor: pointer; transition: all .2s; }
+  .btn-outline-forest:hover { background: var(--forest); color: var(--near-white); }
+
+  /* FOOTER */
+  .footer { background: var(--dark-text); padding: 48px 48px 32px; color: rgba(255,255,255,0.5); }
+  .footer-top { display: flex; justify-content: space-between; gap: 32px; flex-wrap: wrap; margin-bottom: 40px; }
+  .footer-brand .nav-logo { font-size: 20px; display: block; margin-bottom: 12px; }
+  .footer-brand p { font-size: 13px; max-width: 240px; line-height: 1.6; }
+  .footer-links h5 { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: rgba(255,255,255,0.8); margin-bottom: 14px; }
+  .footer-links ul { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+  .footer-links li { font-size: 13px; cursor: pointer; transition: color .2s; }
+  .footer-links li:hover { color: var(--near-white); }
+  .footer-bottom { border-top: 1px solid rgba(255,255,255,0.08); padding-top: 24px; font-size: 12px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+
+  /* PORTAL LAYOUTS — the persistent left sidebar (Customer + Admin portals;
+     the Provider Portal was already converted to its own top bar earlier)
+     was removed entirely: no <aside>, no reserved-width column. This is a
+     single-column, full-width content area now — every link that sidebar
+     held lives in the top header's avatar dropdown instead (Nav component,
+     PORTAL_TOOLS_BY_VIEW). */
+  .portal-layout { display: block; min-height: calc(100vh - 64px); width: 100%; }
+  .avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--lime); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; color: var(--forest); flex-shrink: 0; }
+
+  /* PROVIDER PORTAL — TOP NAV (replaces the persistent left sidebar with a
+     single top bar: logo, daily-use links, and an avatar dropdown holding
+     everything else. Customer/Staff portals are untouched and still use
+     .portal-layout/.sidebar above.) */
+  .provider-shell { min-height: 100vh; background: #F0F4F2; }
+  .provider-topbar { position: sticky; top: 0; z-index: 150; height: 64px; background: var(--forest); display: flex; align-items: center; gap: 24px; padding: 0 24px; }
+  .provider-topbar-left { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+  .provider-status-pill { font-size: 10px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--lime); background: rgba(198,241,53,0.12); padding: 4px 9px; border-radius: 100px; white-space: nowrap; }
+  .provider-status-pill.pending { color: rgba(255,255,255,0.6); background: rgba(255,255,255,0.08); }
+  .provider-topnav-links { display: flex; align-items: center; gap: 4px; flex: 1; }
+  .provider-nav-link { background: none; border: none; color: rgba(255,255,255,0.65); font-family: 'Plus Jakarta Sans', sans-serif; font-size: 14px; font-weight: 600; padding: 21px 14px; cursor: pointer; border-bottom: 2px solid transparent; transition: color .2s, border-color .2s; }
+  .provider-nav-link:hover { color: #FFFFFF; }
+  .provider-nav-link.active { color: var(--lime); border-bottom-color: var(--lime); }
+  .provider-hamburger { display: none; background: none; border: 1px solid rgba(255,255,255,0.3); color: #FFFFFF; width: 38px; height: 38px; border-radius: 8px; font-size: 16px; cursor: pointer; flex-shrink: 0; }
+  .provider-topbar-right { flex-shrink: 0; margin-left: auto; }
+  .provider-avatar-wrap { position: relative; }
+  .provider-avatar-btn { background: none; border: none; cursor: pointer; padding: 0; display: flex; align-items: center; }
+  .provider-avatar-btn .avatar { flex-shrink: 0; }
+  .provider-account-dropdown { top: calc(100% + 10px); min-width: 240px; }
+  .provider-dropdown-header { padding: 6px 14px 10px; }
+  .provider-dropdown-header .name { font-size: 14px; font-weight: 700; color: var(--dark-text); }
+  .provider-dropdown-header .sub { font-size: 11.5px; color: var(--muted); margin-top: 2px; }
+  .provider-dropdown-group-label { font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); padding: 10px 14px 4px; }
+  .provider-mobile-nav { display: none; }
+
+  /* PORTAL CONTENT */
+  .portal-content { background: #F0F4F2; padding: 32px; overflow-y: auto; width: 100%; max-width: 100%; }
+  .portal-header { margin-bottom: 28px; }
+  .portal-header h2 { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 26px; font-weight: 700; color: var(--forest); }
+  .portal-header p { font-size: 14px; color: var(--muted); margin-top: 4px; }
+
+  /* CARDS / WIDGETS */
+  .card { background: var(--near-white); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; }
+  .card-sm { background: var(--near-white); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; }
+  .metric-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 24px; }
+  .metric { background: var(--near-white); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; }
+  .metric-label { font-size: 12px; font-weight: 500; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 8px; }
+  .metric-value { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 30px; font-weight: 800; color: var(--forest); }
+  .metric-sub { font-size: 12px; color: var(--muted); margin-top: 4px; }
+  .metric-accent { color: var(--clay); }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+  .mb-4 { margin-bottom: 16px; }
+  .mb-6 { margin-bottom: 24px; }
+
+  /* BOOKING CARDS */
+  .booking-item { display: flex; align-items: center; gap: 16px; padding: 14px 0; border-bottom: 1px solid var(--border); }
+  .booking-item:last-child { border-bottom: none; }
+  .booking-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .booking-dot.confirmed { background: #22C55E; }
+  .booking-dot.pending { background: #F59E0B; }
+  .booking-dot.done { background: var(--muted); }
+  .booking-info { flex: 1; }
+  .booking-info .title { font-size: 14px; font-weight: 600; color: var(--dark-text); }
+  .booking-info .meta { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .booking-amount { font-size: 14px; font-weight: 600; color: var(--forest); }
+  .status-pill { font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 20px; margin-left: 10px; }
+  .status-pill.confirmed { background: #DCFCE7; color: #15803D; }
+  .status-pill.pending { background: #FEF3C7; color: #B45309; }
+  .status-pill.done { background: #F1F5F9; color: var(--muted); }
+  .status-pill.rejected { background: #FEE2E2; color: #B91C1C; }
+  .status-pill.awaiting { background: #DBEAFE; color: #1D4ED8; }
+  .booking-dot.rejected { background: #EF4444; }
+  .booking-dot.awaiting { background: #3B82F6; }
+
+  /* MODAL */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(13,61,46,0.55); display: flex; align-items: center; justify-content: center; z-index: 200; padding: 20px; }
+  .modal-panel { background: white; border-radius: var(--radius); padding: 28px; width: 100%; max-width: 440px; max-height: 88vh; overflow-y: auto; }
+  .modal-close { float: right; cursor: pointer; color: var(--muted); font-size: 14px; }
+  .star-picker { display: flex; gap: 6px; margin: 8px 0 16px; }
+  .star-picker span { font-size: 26px; cursor: pointer; color: #E2E8F0; }
+  .star-picker span.on { color: #F59E0B; }
+
+  /* PROVIDER SPECIFIC */
+  .provider-service { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border); }
+  .provider-service:last-child { border-bottom: none; }
+  .toggle { width: 40px; height: 22px; background: #E2E8F0; border-radius: 11px; position: relative; cursor: pointer; transition: background .2s; }
+  .toggle.on { background: var(--forest); }
+  .toggle::after { content: ''; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; background: white; border-radius: 50%; transition: transform .2s; }
+  .toggle.on::after { transform: translateX(18px); }
+  .card-title { font-size: 16px; font-weight: 600; color: var(--forest); margin-bottom: 16px; }
+
+  /* VAI MEDIA — dashboard promo card (Availability tab). Small and
+     dark against the light dashboard cards around it so it reads as a
+     premium aside, not another form to fill in. */
+  .vai-media-promo { margin-top: 24px; background: linear-gradient(160deg, var(--forest) 0%, #0A2A20 100%); border: 1px solid rgba(198,241,53,0.22); border-radius: 16px; padding: 22px 26px; display: flex; align-items: center; justify-content: space-between; gap: 18px; flex-wrap: wrap; }
+  .vai-media-promo-text strong { display: block; font-size: 14.5px; font-weight: 800; color: #FFFFFF; margin-bottom: 4px; }
+  .vai-media-promo-text span { font-size: 12.5px; color: rgba(245,239,224,0.7); line-height: 1.5; }
+  .vai-media-promo-btn { flex-shrink: 0; background: var(--lime); color: var(--forest); font-weight: 800; font-size: 13px; padding: 11px 20px; border-radius: 10px; text-decoration: none; white-space: nowrap; }
+
+  /* DOPAMINE CARD — dashboard financial snapshot */
+  .dopamine-card { display: flex; align-items: center; background: linear-gradient(160deg, var(--forest) 0%, #0A2A20 100%); border-radius: 20px; padding: 26px 24px; margin-bottom: 20px; box-shadow: 0 16px 40px rgba(13,61,46,0.22); }
+  .dopamine-metric { flex: 1; min-width: 0; }
+  .dopamine-label { font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: rgba(245,239,224,0.6); margin-bottom: 6px; }
+  .dopamine-value { font-size: 32px; font-weight: 800; color: var(--lime); font-family: 'Plus Jakarta Sans', sans-serif; letter-spacing: -0.02em; white-space: nowrap; }
+  .dopamine-value-sm { font-size: 21px; color: #FFFFFF; }
+  .dopamine-pct { font-size: 12.5px; font-weight: 600; color: rgba(245,239,224,0.7); }
+  .dopamine-divider { width: 1px; align-self: stretch; background: rgba(255,255,255,0.14); margin: 0 22px; }
+  .dopamine-label-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; flex-wrap: wrap; }
+  .dopamine-label-row .dopamine-label { margin-bottom: 0; }
+  .dopamine-staff-select { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.18); color: rgba(245,239,224,0.85); font-size: 10.5px; font-weight: 600; border-radius: 8px; padding: 2px 6px; max-width: 110px; }
+  .dopamine-metric-quiet { opacity: 0.72; }
+  .dopamine-metric-quiet .dopamine-label { font-size: 10px; }
+  .dopamine-value-xs { font-size: 16px; font-weight: 700; color: rgba(245,239,224,0.85); }
+  .dopamine-value-xs .dopamine-pct { font-size: 11px; }
+
+  /* NEXT IN THE CHAIR — spotlight card */
+  .next-chair-card { background: #fff; border: 1.5px solid var(--lime); border-left: 6px solid var(--forest); border-radius: 16px; padding: 16px 20px; margin-bottom: 20px; }
+  .next-chair-label { font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--forest); margin-bottom: 8px; }
+  .next-chair-body { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+  .next-chair-name { font-size: 16px; font-weight: 800; color: var(--dark-text); }
+  .next-chair-meta { font-size: 13px; color: var(--muted); margin-top: 2px; }
+  .next-chair-whatsapp { flex-shrink: 0; width: 46px; height: 46px; border-radius: 50%; background: #25D366; display: flex; align-items: center; justify-content: center; font-size: 21px; text-decoration: none; box-shadow: 0 6px 16px rgba(37,211,102,0.35); }
+
+  /* YOUR SHOPFRONT — chairside link/QR card */
+  .shopfront-card { background: linear-gradient(160deg, var(--forest) 0%, #0A2A20 100%); border: 1px solid rgba(198,241,53,0.2); border-radius: 16px; padding: 20px 22px; margin-bottom: 20px; }
+  .shopfront-label { font-size: 11px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--lime); margin-bottom: 8px; }
+  .shopfront-url { font-size: 12.5px; color: rgba(245,239,224,0.75); word-break: break-all; margin-bottom: 16px; }
+  .shopfront-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+  .shopfront-btn { flex: 1; min-width: 130px; padding: 12px 0; border-radius: 10px; font-weight: 800; font-size: 13.5px; cursor: pointer; border: none; text-align: center; }
+  .shopfront-btn-outline { background: transparent; color: #FFFFFF; border: 1.5px solid rgba(255,255,255,0.3); }
+  .shopfront-btn-lime { background: var(--lime); color: var(--forest); }
+
+  /* REBOOKING RADAR — bottom-of-dashboard retention strip */
+  .rebook-radar { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; background: var(--sand); border-radius: 14px; padding: 16px 20px; margin-top: 20px; }
+  .rebook-radar-text { font-size: 13.5px; font-weight: 600; color: var(--dark-text); }
+  .rebook-radar-btn { flex-shrink: 0; background: var(--forest); color: #FFFFFF; font-weight: 700; font-size: 13px; padding: 10px 18px; border-radius: 10px; border: none; cursor: pointer; }
+
+  /* FULL-SCREEN QR MODAL */
+  .qr-modal-overlay { position: fixed; inset: 0; background: rgba(13,31,24,0.94); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 24px; }
+  .qr-modal-close { position: absolute; top: 20px; right: 20px; background: rgba(255,255,255,0.1); color: #fff; border: none; width: 40px; height: 40px; border-radius: 50%; font-size: 18px; cursor: pointer; }
+  .qr-modal-panel { background: #fff; border-radius: 20px; padding: 28px; text-align: center; max-width: 360px; width: 100%; }
+  .qr-modal-img { width: 100%; max-width: 300px; height: auto; border-radius: 12px; }
+  .qr-modal-business { margin-top: 16px; font-size: 16px; font-weight: 800; color: var(--dark-text); }
+  .qr-modal-hint { margin-top: 4px; font-size: 13px; color: var(--muted); }
+
+  /* PROFILE PHOTO CROP MODAL — light-themed (shares .modal-overlay above
+     for the backdrop) so it matches ProviderPortal's own UI, not the dark
+     marketing-funnel styling used by .psm-* (ProviderSignupModal). */
+  .ppm-modal { background: #fff; border-radius: 18px; padding: 24px; max-width: 420px; width: 100%; }
+  .ppm-title { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 18px; font-weight: 800; color: var(--dark-text); margin: 0 0 6px; }
+  .ppm-hint { font-size: 13px; color: var(--muted); margin: 0 0 16px; line-height: 1.5; }
+  .ppm-crop-area { position: relative; width: 100%; height: 280px; border-radius: 12px; overflow: hidden; background: #222; }
+  .ppm-zoom-row { display: flex; align-items: center; gap: 12px; margin-top: 16px; }
+  .ppm-zoom-label { font-size: 12px; color: var(--muted); flex-shrink: 0; }
+  .ppm-zoom-row input[type="range"] { flex: 1; }
+  .ppm-error { font-size: 13px; color: #B3261E; margin: 14px 0 0; }
+  .ppm-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+
+  /* ELITE WELCOME — "you're live" banner + launch graphic modal */
+  .launch-banner { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; background: linear-gradient(160deg, var(--forest) 0%, #0A2A20 100%); border: 1px solid rgba(198,241,53,0.3); border-radius: 16px; padding: 18px 22px; margin-bottom: 20px; }
+  .launch-banner-title { font-size: 15px; font-weight: 800; color: #FFFFFF; }
+  .launch-banner-sub { font-size: 12.5px; color: rgba(245,239,224,0.7); margin-top: 3px; }
+  /* FIX: this banner is a fixed dark-green gradient in every theme (it
+     isn't part of the .provider-shell/.portal-content dark-mode scope),
+     but its "Dismiss" button reused the generic .btn-sm.ghost class, which
+     is styled for light card backgrounds (color: var(--dark-text) — a
+     dark, near-black text). Dark text on a dark-green banner was nearly
+     invisible regardless of light/dark mode. Scoped override forces
+     light text/border here specifically. */
+  .launch-banner .btn-sm.ghost { background: transparent; border: 1px solid rgba(255,255,255,0.4); color: #FFFFFF; }
+  .launch-banner .btn-sm.ghost:hover { border-color: var(--lime); color: var(--lime); }
+  .plaque-modal-panel { background: transparent; max-width: 420px; width: 100%; }
+  .plaque-loading { background: #fff; border-radius: 16px; padding: 60px 24px; text-align: center; font-size: 14px; color: var(--muted); }
+  .plaque-generator { display: flex; flex-direction: column; align-items: center; gap: 16px; }
+  .plaque-canvas { width: 100%; max-width: 420px; aspect-ratio: 1 / 1; border-radius: 16px; box-shadow: 0 24px 60px rgba(0,0,0,0.45); }
+  .plaque-actions { display: flex; flex-direction: column; gap: 10px; width: 100%; }
+  .plaque-actions .btn-sm { width: 100%; padding: 13px 0; font-size: 13.5px; }
+
+  /* SEARCH BAR */
+  .search-bar { position: relative; background: white; border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 20px; display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
+  .search-bar input { border: none; outline: none; font-size: 15px; flex: 1; font-family: 'Plus Jakarta Sans', sans-serif; color: var(--dark-text); background: transparent; }
+  .search-bar .search-icon { color: var(--muted); font-size: 18px; }
+
+  /* CUSTOMER DASHBOARD — "addictive premium consumer app" redesign (v2).
+     Dark, tight, native-app feel: a digital-ticket VIP Pass, one-tap
+     Rebook rows, glass/neon discovery pills. No metric cards, no boxed
+     pastel tiles. */
+
+  /* VIP PASS — the next appointment as a digital ticket/boarding pass. */
+  .cx-hero { position: relative; overflow: hidden; background: linear-gradient(160deg, var(--forest) 0%, #081F17 100%); border-radius: 22px; padding: 30px 28px; margin-bottom: 24px; box-shadow: 0 20px 50px rgba(8,31,23,0.3); }
+  .cx-hero::after { content: ''; position: absolute; top: -60px; right: -60px; width: 220px; height: 220px; background: radial-gradient(circle, rgba(198,241,53,0.16) 0%, rgba(198,241,53,0) 70%); pointer-events: none; }
+  .cx-hero-eyebrow { font-size: 11.5px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--lime); margin-bottom: 10px; }
+  .cx-hero-service { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 26px; font-weight: 800; color: #FFFFFF; line-height: 1.15; }
+  .cx-hero-provider { font-size: 14.5px; color: rgba(245,239,224,0.75); margin-top: 4px; }
+  .cx-hero-countdown { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 48px; font-weight: 800; color: var(--lime); letter-spacing: -0.02em; margin-top: 16px; text-shadow: 0 0 30px rgba(198,241,53,0.45); }
+  .cx-hero-when { font-size: 12.5px; color: rgba(245,239,224,0.6); margin-top: 4px; }
+  /* The perforated tear line — a dashed rule stretched to the card's true
+     edge (negative-margined out to cancel the card's own padding), with
+     two circles punched at each end. Because .cx-hero clips overflow,
+     each circle gets sliced to a clean semicircle exactly at the card's
+     rounded edge — the classic ticket-stub notch, done in pure CSS. */
+  .cx-hero-divider { position: relative; border-top: 2px dashed rgba(255,255,255,0.18); margin: 20px -28px 0; }
+  .cx-hero-divider::before, .cx-hero-divider::after { content: ''; position: absolute; top: -14px; width: 28px; height: 28px; border-radius: 50%; background: #F0F4F2; }
+  .cx-hero-divider::before { left: -14px; }
+  .cx-hero-divider::after { right: -14px; }
+  .cx-hero-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 22px; }
+  .cx-btn-neon { display: inline-flex; align-items: center; gap: 6px; background: var(--lime); color: var(--forest); font-weight: 800; font-size: 14px; padding: 13px 22px; border-radius: 100px; border: none; cursor: pointer; text-decoration: none; box-shadow: 0 0 0 rgba(198,241,53,0.5); transition: box-shadow .2s, transform .15s; }
+  .cx-btn-neon:hover { box-shadow: 0 0 24px rgba(198,241,53,0.55); transform: translateY(-1px); }
+  .cx-btn-ghost { display: inline-flex; align-items: center; gap: 6px; background: transparent; color: #FFFFFF; font-weight: 700; font-size: 13.5px; padding: 12px 18px; border-radius: 100px; border: 1.5px solid rgba(255,255,255,0.28); cursor: pointer; text-decoration: none; transition: border-color .2s, background .2s; }
+  .cx-btn-ghost:hover { border-color: rgba(255,255,255,0.55); background: rgba(255,255,255,0.06); }
+  /* Purely decorative ticket-stub texture — not a scannable/real barcode,
+     just the visual cue that sells "this is a pass," like an airline's
+     boarding-pass footer. */
+  .cx-hero-barcode { height: 20px; margin-top: 18px; border-radius: 2px; opacity: .3; background: repeating-linear-gradient(90deg, rgba(255,255,255,0.9) 0 2px, transparent 2px 6px); }
+
+  /* BOOK AGAIN — sleek horizontal rows, one tap to rebook. */
+  .cx-section-heading { font-size: 13px; font-weight: 800; letter-spacing: .04em; color: var(--forest); margin-bottom: 14px; }
+  .cx-rebook { margin-bottom: 28px; }
+  .cx-rebook-list { display: flex; flex-direction: column; gap: 10px; }
+  .cx-rebook-row { display: flex; align-items: center; gap: 14px; background: #0E241B; border-radius: 16px; padding: 10px 12px 10px 10px; cursor: pointer; transition: transform .12s, box-shadow .2s; }
+  .cx-rebook-row:hover { transform: translateY(-2px); box-shadow: 0 12px 26px rgba(13,61,46,0.22); }
+  .cx-rebook-thumb { flex-shrink: 0; width: 54px; height: 54px; border-radius: 12px; background: linear-gradient(160deg, #1E6B50 0%, #0E241B 100%); display: flex; align-items: center; justify-content: center; font-size: 24px; }
+  .cx-rebook-info { flex: 1; min-width: 0; }
+  .cx-rebook-name { font-size: 14.5px; font-weight: 700; color: #FFFFFF; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .cx-rebook-type { font-size: 12px; color: rgba(245,239,224,0.55); margin-top: 2px; }
+  .cx-rebook-btn { flex-shrink: 0; background: var(--lime); color: var(--forest); font-weight: 800; font-size: 13px; padding: 10px 18px; border-radius: 100px; border: none; cursor: pointer; box-shadow: 0 0 0 rgba(198,241,53,0.5); transition: box-shadow .2s; }
+  .cx-rebook-btn:hover { box-shadow: 0 0 18px rgba(198,241,53,0.5); }
+
+  /* SLEEK DISCOVERY — frosted glass at rest, neon on hover/focus. */
+  .cx-discover { margin-bottom: 8px; }
+  .cx-discover-search { position: relative; background: rgba(14,36,27,0.94); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); box-shadow: inset 0 1px 0 rgba(255,255,255,0.06); border-radius: 100px; padding: 15px 22px; display: flex; align-items: center; gap: 12px; margin-bottom: 14px; transition: border-color .2s; }
+  .cx-discover-search:focus-within { border-color: rgba(198,241,53,0.5); }
+  .cx-discover-search input { border: none; outline: none; font-size: 14.5px; flex: 1; font-family: 'Plus Jakarta Sans', sans-serif; color: #FFFFFF; background: transparent; }
+  .cx-discover-search input::placeholder { color: rgba(245,239,224,0.45); }
+  .cx-discover-search .search-icon { color: rgba(245,239,224,0.55); font-size: 17px; }
+  .cx-discover-pills { display: flex; gap: 10px; flex-wrap: wrap; }
+  .cx-discover-pill { display: inline-flex; align-items: center; gap: 7px; background: rgba(14,36,27,0.94); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); box-shadow: inset 0 1px 0 rgba(255,255,255,0.06); color: rgba(245,239,224,0.85); font-weight: 600; font-size: 13px; padding: 10px 18px; border-radius: 100px; border: 1px solid rgba(255,255,255,0.1); cursor: pointer; transition: border-color .2s, color .2s, box-shadow .2s; }
+  .cx-discover-pill:hover { border-color: var(--lime); color: var(--lime); box-shadow: 0 0 16px rgba(198,241,53,0.25); }
+
+  /* LAST-MINUTE DROPS — horizontal scroll, hidden scrollbar, compact
+     "snag it" cards. Only ever populated with real same-day openings
+     (see the lastMinuteDrops effect) — never a placeholder time. */
+  .cx-dropzone { margin-bottom: 28px; }
+  .cx-dropzone-loading { font-size: 12.5px; color: rgba(13,61,46,0.55); }
+  .cx-dropzone-row { display: flex; gap: 12px; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; padding-bottom: 2px; }
+  .cx-dropzone-row::-webkit-scrollbar { display: none; }
+  .cx-drop-card { flex: 0 0 132px; scroll-snap-align: start; background: #0E241B; border-radius: 16px; padding: 14px 12px; display: flex; flex-direction: column; align-items: center; text-align: center; transition: transform .15s, box-shadow .2s; }
+  .cx-drop-card:hover { transform: translateY(-3px); box-shadow: 0 14px 30px rgba(13,61,46,0.25); }
+  .cx-drop-avatar { width: 48px; height: 48px; border-radius: 50%; background: linear-gradient(160deg, #1E6B50 0%, #0E241B 100%); display: flex; align-items: center; justify-content: center; font-size: 20px; margin-bottom: 10px; flex-shrink: 0; }
+  .cx-drop-shop { font-size: 12.5px; font-weight: 700; color: #FFFFFF; line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+  .cx-drop-time { font-size: 11px; font-weight: 700; color: var(--lime); margin-top: 4px; margin-bottom: 10px; }
+  .cx-drop-claim { width: 100%; background: var(--lime); color: var(--forest); font-weight: 800; font-size: 12.5px; padding: 9px 0; border-radius: 100px; border: none; cursor: pointer; box-shadow: 0 0 0 rgba(198,241,53,0.5); transition: box-shadow .2s; }
+  .cx-drop-claim:hover { box-shadow: 0 0 16px rgba(198,241,53,0.5); }
+
+  /* THE LOOKBOOK — CSS-columns masonry (no JS layout math needed): each
+     photo keeps its natural aspect ratio so the feed reads as a curated
+     gallery instead of a uniform directory grid. Name is always legible;
+     the "Book this look" CTA shows on hover for pointer devices and stays
+     visible by default everywhere else (touch has no hover). */
+  .cx-lookbook { margin-top: 8px; }
+  .cx-lookbook-grid { column-count: 2; column-gap: 12px; }
+  .cx-lookbook-item { position: relative; break-inside: avoid; margin-bottom: 12px; border-radius: 16px; overflow: hidden; cursor: pointer; background: #0E241B; }
+  .cx-lookbook-item img { display: block; width: 100%; height: auto; }
+  .cx-lookbook-overlay { position: absolute; left: 0; right: 0; bottom: 0; padding: 28px 12px 12px; background: linear-gradient(180deg, rgba(8,31,23,0) 0%, rgba(8,31,23,0.88) 100%); display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
+  .cx-lookbook-name { font-size: 12.5px; font-weight: 700; color: #FFFFFF; text-shadow: 0 1px 4px rgba(0,0,0,0.4); }
+  .cx-lookbook-book { background: var(--lime); color: var(--forest); font-weight: 800; font-size: 11.5px; padding: 7px 14px; border-radius: 100px; border: none; cursor: pointer; }
+  @media (hover: hover) {
+    .cx-lookbook-book { opacity: 0; transform: translateY(4px); transition: opacity .18s, transform .18s; }
+    .cx-lookbook-item:hover .cx-lookbook-book { opacity: 1; transform: translateY(0); }
+  }
+  @media (min-width: 640px) {
+    .cx-lookbook-grid { column-count: 3; }
+  }
+
+  /* ── CUSTOMER ACCOUNT PAGES — global dark standardization ──────────
+     Every Customer Portal tab except Home (Browse, Favorites, My
+     bookings, Payments, My reviews, Settings) gets this ONE treatment,
+     switched on by the single ".cx-account-page" class on <main> (see
+     CustomerPortal's render). Deliberately built as overrides of the
+     EXISTING shared classes (.card, .metric, .status-pill, .input-group,
+     .tab-row, .provider-card, .search-bar, etc.) rather than new
+     one-off classes, so every page reuses the same rules instead of
+     each page getting its own custom CSS — and scoped under
+     .cx-account-page specifically so none of this touches the Provider
+     or Admin portals, which still use these exact class names with the
+     original light theme.
+
+     --forest and --near-white are deliberately left untouched here: both
+     are dual-purpose in this codebase (used as TEXT color in some
+     places, and as a lime-paired BUTTON background in others — e.g.
+     .btn-sm.lime/.btn-primary pair a lime background with var(--forest)
+     text, and .btn-ghost already pairs var(--near-white) text with a
+     transparent background for dark surfaces). Remapping either
+     globally would fix some spots and silently break others. Only the
+     genuinely single-purpose tokens (--sand/--dark-text/--muted/--border,
+     all used as plain background or secondary-text roles) are remapped;
+     everywhere --forest was used as bare text-on-dark it gets an
+     explicit override or, for the handful of inline styles CSS can't
+     reach, a direct fix at the JSX call site. */
+  .cx-account-page {
+    /* Local tokens for the handful of literal colors below, so the same
+       rules can be re-pointed for Light Mode (see the
+       :root[data-theme="light"] .cx-account-page block right after this
+       one) without duplicating every selector. Defaults here are this
+       section's original, always-dark values — i.e. what you get under
+       :root[data-theme="dark"] (the app default) unchanged from before
+       the toggle existed. */
+    --cxp-heading: #FFFFFF;
+    --cxp-text-dim: rgba(245,239,224,0.55);
+    --cxp-text-dim-2: rgba(245,239,224,0.75);
+    --cxp-text-dim-3: rgba(245,239,224,0.35);
+    --cxp-card-bg: #0E241B;
+    --cxp-card-shadow: 0 10px 26px rgba(0,0,0,0.22);
+    --cxp-hairline: rgba(255,255,255,0.08);
+    --cxp-tint-1: rgba(255,255,255,0.05);
+    --cxp-tint-2: rgba(255,255,255,0.06);
+    --cxp-tint-3: rgba(255,255,255,0.1);
+    --cxp-tint-4: rgba(255,255,255,0.12);
+    --cxp-tint-5: rgba(255,255,255,0.14);
+    --cxp-tint-6: rgba(255,255,255,0.28);
+    --cxp-disabled-bg: rgba(255,255,255,0.03);
+    --cxp-disabled-text: rgba(245,239,224,0.4);
+    --cxp-star-off: rgba(255,255,255,0.18);
+    --sand: #14301F;
+    --dark-text: #F5EFE0;
+    --muted: rgba(245,239,224,0.55);
+    --border: rgba(255,255,255,0.12);
+    background: #081F17;
+  }
+
+  /* Light Mode: reverts this whole section back to the ordinary light
+     surface (same near-white/dark-text/sand/border the rest of the app's
+     unscoped pages already use), so toggling to light makes Customer
+     account pages match Provider/Admin/Customer-Home instead of staying
+     dark. --forest/--near-white/--lime still untouched (see note above) —
+     only the same single-purpose tokens, plus this section's own --cxp-*
+     literals, get a light equivalent. */
+  :root[data-theme="light"] .cx-account-page {
+    --sand: #F5EFE0;
+    --dark-text: #0D1F18;
+    --muted: #6B7F76;
+    --border: #D9E4DF;
+    --cxp-heading: #0D1F18;
+    --cxp-text-dim: #6B7F76;
+    --cxp-text-dim-2: #4A5A52;
+    --cxp-text-dim-3: #9AA69F;
+    --cxp-card-bg: #FFFFFF;
+    --cxp-card-shadow: 0 8px 22px rgba(13,61,46,0.08);
+    --cxp-hairline: #EDEAE0;
+    --cxp-tint-1: #F3F1EA;
+    --cxp-tint-2: #F3F1EA;
+    --cxp-tint-3: #EDEAE0;
+    --cxp-tint-4: #D9E4DF;
+    --cxp-tint-5: #D9E4DF;
+    --cxp-tint-6: #C7D2CC;
+    --cxp-disabled-bg: #F5F5F0;
+    --cxp-disabled-text: #9AA69F;
+    --cxp-star-off: #D9D9D9;
+    background: #F0F4F2;
+  }
+
+  /* Page header */
+  .cx-account-page .portal-header h2 { color: var(--cxp-heading); }
+  .cx-account-page .portal-header p { color: var(--cxp-text-dim); }
+
+  /* Cards + metrics — the same borderless card everywhere */
+  .cx-account-page .card,
+  .cx-account-page .metric,
+  .cx-account-page .provider-card {
+    background: var(--cxp-card-bg);
+    border: none;
+    box-shadow: var(--cxp-card-shadow);
+  }
+  .cx-account-page .card-title { color: var(--cxp-heading); }
+  .cx-account-page .metric-value { color: var(--accent-text); }
+  .cx-account-page .booking-amount { color: var(--accent-text); }
+  .cx-account-page .price-tag { color: var(--accent-text); }
+  .cx-account-page .booking-info .title,
+  .cx-account-page .provider-card-body h4 { color: var(--cxp-heading); }
+  .cx-account-page .booking-item { border-bottom-color: var(--cxp-hairline); }
+  .cx-account-page .avail-badge { background: rgba(198,241,53,0.15); color: var(--accent-text); }
+  .cx-account-page .cx-plan-badge { background: rgba(198,241,53,0.15); color: var(--accent-text); font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 5px; vertical-align: middle; margin-left: 6px; }
+
+  /* Status pills — semi-transparent tints read fine on both a near-black
+     and a near-white card, so these stay constant across themes (same
+     "functional status color, not a surface" logic as the lime/forest
+     brand fills below). */
+  .cx-account-page .status-pill.confirmed { background: rgba(34,197,94,0.18); color: #16A34A; }
+  :root[data-theme="dark"] .cx-account-page .status-pill.confirmed { color: #4ADE80; }
+  .cx-account-page .status-pill.pending { background: rgba(245,158,11,0.18); color: #B45309; }
+  :root[data-theme="dark"] .cx-account-page .status-pill.pending { color: #FBBF24; }
+  .cx-account-page .status-pill.done { background: var(--cxp-tint-3); color: var(--cxp-text-dim); }
+  .cx-account-page .status-pill.rejected { background: rgba(239,68,68,0.18); color: #DC2626; }
+  :root[data-theme="dark"] .cx-account-page .status-pill.rejected { color: #F87171; }
+  .cx-account-page .status-pill.awaiting { background: rgba(59,130,246,0.18); color: #2563EB; }
+  :root[data-theme="dark"] .cx-account-page .status-pill.awaiting { color: #60A5FA; }
+
+  /* Filter tabs (Upcoming / Completed / Cancelled, provider profile tabs) */
+  .cx-account-page .tab-row { background: var(--cxp-tint-1); border-color: var(--cxp-tint-3); }
+  .cx-account-page .tab.active { background: var(--lime); color: #0E241B; }
+
+  /* Inputs, selects, textareas — integrated card look, neon focus ring */
+  .cx-account-page .input-group label { color: var(--cxp-text-dim-2); }
+  .cx-account-page .input-group input,
+  .cx-account-page .input-group select,
+  .cx-account-page .input-group textarea {
+    background: var(--cxp-tint-2);
+    border-color: var(--cxp-tint-5);
+    color: var(--cxp-heading);
+  }
+  .cx-account-page .input-group input::placeholder,
+  .cx-account-page .input-group textarea::placeholder { color: var(--cxp-text-dim-3); }
+  .cx-account-page .input-group input:focus,
+  .cx-account-page .input-group select:focus,
+  .cx-account-page .input-group textarea:focus {
+    border-color: var(--lime);
+    box-shadow: 0 0 0 3px rgba(198,241,53,0.15);
+  }
+  .cx-account-page .input-group input:disabled { background: var(--cxp-disabled-bg); color: var(--cxp-disabled-text); }
+  .cx-account-page select option { background: var(--cxp-card-bg); color: var(--cxp-heading); }
+
+  /* Buttons — .btn-sm.lime/.forest and .btn-primary/.btn-ghost already
+     work unmodified on dark (see the note above); only the plain
+     "ghost" outline variant needs its border/hover adjusted to read
+     clearly against the card/page background in either theme. */
+  .cx-account-page .btn-sm.ghost { border-color: var(--cxp-tint-6); color: var(--cxp-heading); }
+  .cx-account-page .btn-sm.ghost:hover { border-color: var(--lime); color: var(--lime); }
+
+  /* Search bar + autocomplete (Browse tab, and the pinned nav search
+     when it's showing over an account page) */
+  .cx-account-page .search-bar,
+  .cx-account-page .suggestions-dropdown {
+    background: var(--cxp-card-bg);
+    border-color: var(--cxp-tint-4);
+  }
+  .cx-account-page .search-bar input { color: var(--cxp-heading); }
+  .cx-account-page .suggestion-item:hover,
+  .cx-account-page .suggestion-item.active { background: var(--cxp-tint-2); }
+
+  /* Star rating / review picker */
+  .cx-account-page .star-picker span { color: var(--cxp-star-off); }
+  .cx-account-page .star-picker span.on { color: #F59E0B; }
+
+  /* Profile avatar circle already pairs lime + forest text — dark-safe
+     as-is, no override needed. */
+
+  /* ── PROVIDER / ADMIN / CUSTOMER-HOME — global toggle, dark scope ──
+     Same technique as .cx-account-page just above, applied to the two
+     other page shells that weren't already dark: .provider-shell
+     (Provider Portal, once signed in) and the plain .portal-content
+     (Admin Portal, and the Customer Portal Home tab — both render that
+     same unscoped class). Gated behind :root[data-theme="dark"] because,
+     unlike .cx-account-page, these shells are LIGHT by default today, so
+     the override only needs to apply for the non-default theme.
+
+     Scope: page background, the shared .card/.metric/.provider-card
+     surface, and the handful of headings/labels that use var(--forest)
+     as plain text (illegible once the page behind them goes dark, since
+     --forest itself stays a fixed brand color — see the note atop
+     .cx-account-page for why it's never remapped). --forest/--lime/
+     --near-white stay untouched, so every branded fill (.btn-forest,
+     .tab.active, provider-topbar, pricing badges, chat bubbles, the
+     booking calendar, etc.) still renders exactly as it does today in
+     both themes. Deeper nested surfaces — modal panels, the booking
+     calendar's day cells, chat bubbles — keep their original white for
+     now; a full pixel-level retrofit of every one of those was a larger
+     scope than this pass. */
+  :root[data-theme="dark"] .provider-shell,
+  :root[data-theme="dark"] .portal-content {
+    --sand: #14301F;
+    --dark-text: #F5EFE0;
+    --muted: rgba(245,239,224,0.6);
+    --border: rgba(255,255,255,0.12);
+  }
+  :root[data-theme="dark"] .provider-shell { background: #0A211A; }
+  :root[data-theme="dark"] .portal-content { background: #0A211A; }
+  :root[data-theme="dark"] .provider-shell .card,
+  :root[data-theme="dark"] .provider-shell .card-sm,
+  :root[data-theme="dark"] .provider-shell .metric,
+  :root[data-theme="dark"] .provider-shell .provider-card,
+  :root[data-theme="dark"] .provider-shell .carousel-card,
+  :root[data-theme="dark"] .portal-content .card,
+  :root[data-theme="dark"] .portal-content .card-sm,
+  :root[data-theme="dark"] .portal-content .metric,
+  :root[data-theme="dark"] .portal-content .provider-card,
+  :root[data-theme="dark"] .portal-content .carousel-card {
+    background: #12291F;
+    border: none;
+    box-shadow: 0 10px 26px rgba(0,0,0,0.22);
+  }
+  :root[data-theme="dark"] .provider-shell .portal-header h2,
+  :root[data-theme="dark"] .portal-content .portal-header h2,
+  :root[data-theme="dark"] .provider-shell .card-title,
+  :root[data-theme="dark"] .portal-content .card-title {
+    color: #FFFFFF;
+  }
+  :root[data-theme="dark"] .provider-shell .metric-value,
+  :root[data-theme="dark"] .provider-shell .booking-amount,
+  :root[data-theme="dark"] .provider-shell .price-tag,
+  :root[data-theme="dark"] .provider-shell .next-chair-label,
+  :root[data-theme="dark"] .provider-shell .cx-section-heading,
+  :root[data-theme="dark"] .provider-shell .chip-featured,
+  :root[data-theme="dark"] .provider-shell .chip-plan-pro,
+  :root[data-theme="dark"] .portal-content .metric-value,
+  :root[data-theme="dark"] .portal-content .booking-amount,
+  :root[data-theme="dark"] .portal-content .price-tag,
+  :root[data-theme="dark"] .portal-content .next-chair-label,
+  :root[data-theme="dark"] .portal-content .cx-section-heading,
+  :root[data-theme="dark"] .portal-content .chip-featured,
+  :root[data-theme="dark"] .portal-content .chip-plan-pro {
+    color: var(--lime);
+  }
+
+  /* FIX (dark-mode text contrast) — these surfaces read var(--dark-text)/
+     var(--muted) for their text, which the block above already correctly
+     flips to near-white inside .provider-shell/.portal-content. But each
+     of these also has its own hardcoded #fff/white BACKGROUND that never
+     moved with it, so in dark mode it was near-white text on a background
+     that stayed white — unreadable. This is exactly the "deeper nested
+     surfaces... larger scope than this pass" gap called out above; closing
+     it for the ones users actually hit constantly (account dropdown menu,
+     every form field, the QR/next-appointment cards, mobile action sheets)
+     rather than attempting a full pixel-level pass over every modal. */
+  :root[data-theme="dark"] .provider-shell .nav-dropdown,
+  :root[data-theme="dark"] .portal-content .nav-dropdown,
+  :root[data-theme="dark"] .provider-shell .next-chair-card,
+  :root[data-theme="dark"] .provider-shell .sheet-panel,
+  :root[data-theme="dark"] .portal-content .sheet-panel,
+  :root[data-theme="dark"] .provider-shell .qr-modal-panel {
+    background: #12291F;
+    border-color: rgba(255,255,255,0.12);
+    box-shadow: 0 16px 40px rgba(0,0,0,0.35);
+  }
+  :root[data-theme="dark"] .provider-shell .input-group input,
+  :root[data-theme="dark"] .provider-shell .input-group select,
+  :root[data-theme="dark"] .provider-shell .input-group textarea,
+  :root[data-theme="dark"] .portal-content .input-group input,
+  :root[data-theme="dark"] .portal-content .input-group select,
+  :root[data-theme="dark"] .portal-content .input-group textarea {
+    background: #0E241B;
+    border-color: rgba(255,255,255,0.12);
+  }
+
+  /* PROVIDER GRID */
+  .provider-card { background: var(--near-white); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; cursor: pointer; transition: box-shadow .2s; }
+  .provider-card:hover { box-shadow: 0 4px 20px rgba(13,61,46,0.1); }
+  .provider-card-img { height: 120px; display: flex; align-items: center; justify-content: center; font-size: 52px; }
+  .provider-card-body { padding: 16px; }
+  .provider-card-body h4 { font-size: 15px; font-weight: 600; color: var(--dark-text); margin-bottom: 2px; }
+  .provider-card-body .trade { font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+  .stars { color: #F59E0B; font-size: 13px; }
+  .provider-card-footer { display: flex; align-items: center; justify-content: space-between; margin-top: 10px; }
+  .price-tag { font-size: 14px; font-weight: 600; color: var(--forest); }
+  .avail-badge { font-size: 11px; font-weight: 600; background: #DCFCE7; color: #15803D; padding: 3px 8px; border-radius: 6px; }
+  /* Shared open/closed indicator for every provider card type (trending,
+     discover carousels, browse/favorites grid) — a dot + short label
+     rather than the longer "opens tomorrow at 9am" detail the full profile
+     view shows, since a card has no room for that. Rendered only when
+     providerOpenNow() returns a real true/false — null (no hours on file)
+     means nothing shows, same honesty rule the rest of the hours UI uses. */
+  .open-status { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 700; }
+  .open-status::before { content: ""; width: 6px; height: 6px; border-radius: 50%; display: inline-block; flex: 0 0 auto; }
+  .open-status.is-open { color: #15803D; }
+  .open-status.is-open::before { background: #15803D; }
+  .open-status.is-closed { color: var(--clay); }
+  .open-status.is-closed::before { background: var(--clay); }
+
+  /* DISCOVER CAROUSELS (Recommended / New to VaiBook / Trending) */
+  .carousel-row { display: flex; gap: 16px; overflow-x: auto; scroll-behavior: smooth; scrollbar-width: none; padding-bottom: 6px; }
+  .carousel-row::-webkit-scrollbar { display: none; }
+  .carousel-card { flex: 0 0 240px; background: var(--near-white); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; cursor: pointer; transition: box-shadow .2s; position: relative; }
+  .carousel-card:hover { box-shadow: 0 4px 20px rgba(13,61,46,0.1); }
+  .carousel-card-img { height: 140px; display: flex; align-items: center; justify-content: center; font-size: 44px; background: #E8F5EF; }
+  .carousel-badge { position: absolute; top: 10px; left: 10px; z-index: 2; background: var(--near-white); font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 6px; color: var(--dark-text); box-shadow: 0 1px 4px rgba(0,0,0,0.15); }
+  .carousel-heart { position: absolute; top: 10px; right: 10px; z-index: 2; width: 28px; height: 28px; border-radius: 50%; border: none; background: rgba(255,255,255,0.9); display: flex; align-items: center; justify-content: center; font-size: 13px; cursor: pointer; box-shadow: 0 1px 4px rgba(0,0,0,0.15); }
+  .carousel-card-body { padding: 14px; }
+  .carousel-card-body h4 { font-size: 14px; font-weight: 700; color: var(--dark-text); margin-bottom: 2px; }
+  .carousel-card-body .loc { font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+  .carousel-card-body .meta { font-size: 12px; color: var(--muted); }
+  /* Only rendered when ProviderCarousel is given a ctaLabel (currently
+     just the Trending Local row) — a plain lime pill, so it already reads
+     correctly on both the light carousel cards elsewhere and the dark
+     ones on the home page without needing its own scoped variant. */
+  .carousel-cta { margin-top: 10px; width: 100%; background: var(--lime); color: var(--forest); font-weight: 800; font-size: 12.5px; padding: 9px 0; border-radius: 100px; border: none; cursor: pointer; }
+  .carousel-arrow { position: absolute; top: 50%; right: -14px; transform: translateY(-50%); width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--border); background: var(--near-white); box-shadow: 0 2px 10px rgba(0,0,0,0.12); cursor: pointer; font-size: 15px; color: var(--forest); display: flex; align-items: center; justify-content: center; }
+
+  /* PROVIDER PROFILE MODAL (Services / Portfolio / Reviews / About) — a
+     Fresha-style profile: photo gallery + name/rating/hours header up top,
+     a sticky booking card alongside the tabbed content. Still an in-app
+     overlay (not a routable URL) rather than a page, since VaiBook doesn't
+     have per-provider routes yet — same trigger (openBooking) and state
+     as before, just a much richer layout. */
+  .modal-panel.profile-panel { max-width: 1080px; padding: 0; }
+  .profile-scroll { padding: 28px; }
+  .profile-header-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+  .profile-name-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .profile-name-row h2 { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 26px; font-weight: 800; color: var(--forest); margin: 0; }
+  .profile-icon-btn { background: #FFFFFF; border: 1px solid var(--border); cursor: pointer; width: 38px; height: 38px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; color: var(--dark-text); transition: background .15s, border-color .15s; }
+  .profile-icon-btn:hover { background: var(--sand); border-color: var(--forest); }
+  .profile-icon-btn svg { width: 18px; height: 18px; }
+  .profile-icon-btn svg.heart-filled { color: var(--clay); }
+
+  .guest-checkout-fields { border-top: 1px solid var(--border, #eee); margin-top: 4px; padding-top: 16px; margin-bottom: 4px; }
+  .guest-checkout-label { font-size: 12px; font-weight: 700; color: var(--dark-text); margin: 0 0 10px; }
+  .guest-checkout-note { font-size: 11px; color: var(--muted); margin: -4px 0 4px; }
+  .optional-tag { font-weight: 400; color: var(--muted); }
+  .checkout-liability-note { font-size: 10.5px; color: var(--muted); text-align: center; line-height: 1.5; margin: 10px 0 0; }
+
+  .email-auth-overlay { position: fixed; inset: 0; background: rgba(13, 31, 24, 0.6); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
+  .email-auth-card { background: #FFFFFF; border-radius: 20px; width: 100%; max-width: 360px; padding: 32px; box-shadow: 0 24px 60px rgba(13,61,46,0.25); position: relative; }
+  .email-auth-close { position: absolute; top: 16px; right: 16px; background: none; border: none; cursor: pointer; color: var(--muted); font-size: 20px; line-height: 1; padding: 4px; }
+  .email-auth-brand { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; font-size: 18px; color: var(--forest); margin: 0 0 20px; }
+  .email-auth-brand span { color: var(--lime-dark, #8FAF1C); }
+  .email-auth-title { font-size: 20px; font-weight: 800; color: var(--forest); margin: 0 0 6px; }
+  .email-auth-sub { font-size: 13px; color: var(--muted); margin: 0 0 20px; line-height: 1.5; }
+  .email-auth-sub strong { color: var(--dark-text); }
+  .email-auth-code-row { display: flex; gap: 8px; justify-content: center; margin-bottom: 8px; }
+  .email-auth-code-input { width: 42px; height: 52px; text-align: center; font-size: 20px; font-weight: 700; border-radius: 10px; border: 1px solid var(--border, #ddd); }
+  .email-auth-code-input:focus { outline: none; border-color: var(--forest); box-shadow: 0 0 0 2px rgba(13,61,46,0.15); }
+  .email-auth-error { font-size: 12px; color: #B91C1C; text-align: center; margin: 8px 0 0; }
+  .email-auth-btn { width: 100%; margin-top: 20px; padding: 14px 0; font-size: 14px; border-radius: 12px; background: var(--forest); color: var(--lime); font-weight: 700; border: none; cursor: pointer; }
+  .email-auth-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+  .email-auth-resend { width: 100%; margin-top: 10px; padding: 8px 0; font-size: 12px; font-weight: 600; color: var(--forest); background: none; border: none; cursor: pointer; }
+  .email-auth-resend:disabled { color: var(--muted); cursor: not-allowed; }
+
+  .profile-meta { font-size: 13px; color: var(--muted); margin: 8px 0 22px; display: flex; flex-wrap: wrap; align-items: center; gap: 0; }
+  .profile-meta .dot { margin: 0 6px; }
+  .profile-meta a { color: var(--forest); font-weight: 600; }
+  .profile-meta .open-txt { color: #15803D; font-weight: 600; }
+  .profile-meta .closed-txt { color: var(--clay); font-weight: 600; }
+
+  .profile-gallery { display: grid; gap: 8px; border-radius: var(--radius); overflow: hidden; height: 320px; margin-bottom: 28px; }
+  .gallery-hero { background-size: cover; background-position: center; cursor: pointer; }
+  .gallery-fallback { display: flex; align-items: center; justify-content: center; font-size: 72px; background: #E8F5EF; }
+  .gallery-side { display: grid; grid-template-rows: 1fr 1fr; gap: 8px; }
+  .gallery-side-img { background-size: cover; background-position: center; cursor: pointer; position: relative; }
+  .gallery-more-btn { position: absolute; bottom: 12px; right: 12px; background: white; border: none; border-radius: 100px; padding: 8px 16px; font-size: 12px; font-weight: 600; cursor: pointer; box-shadow: 0 2px 10px rgba(0,0,0,0.2); }
+
+  .profile-body { display: grid; grid-template-columns: 1fr 320px; gap: 32px; align-items: start; }
+  .profile-sidebar-card { background: var(--near-white); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; position: sticky; top: 20px; }
+  .profile-sidebar-card h3 { font-size: 18px; font-weight: 800; color: var(--forest); margin-bottom: 8px; }
+  .chip { display: inline-block; font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 100px; margin-bottom: 14px; }
+  .chip-featured { background: var(--sand); color: var(--forest); }
+  .chip-plan-pro { background: var(--sand); color: var(--forest); }
+  .chip-plan-business { background: var(--forest); color: #fff; }
+  .sidebar-divider { height: 1px; background: var(--border); margin: 4px 0; }
+  .sidebar-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; font-size: 13px; color: var(--dark-text); padding: 12px 0; cursor: default; }
+  .sidebar-row + .sidebar-row { border-top: 1px solid var(--border); }
+  .sidebar-row.clickable { cursor: pointer; }
+  .hours-list { padding: 0 0 6px; width: 100%; }
+  .hours-row { display: flex; justify-content: space-between; font-size: 12.5px; padding: 3px 0; color: var(--muted); }
+  .hours-row.today { color: var(--dark-text); font-weight: 700; }
+
+  .reviews-summary { display: flex; align-items: center; gap: 14px; margin-bottom: 22px; }
+  .reviews-summary .big-rating { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 36px; font-weight: 800; color: var(--forest); line-height: 1; }
+  .reviews-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 4px 32px; }
+
+  .service-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 0; border-bottom: 1px solid var(--border); }
+  .service-row:last-child { border-bottom: none; }
+  .portfolio-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .portfolio-thumb { width: 100%; aspect-ratio: 1 / 1; object-fit: cover; border-radius: 10px; cursor: pointer; border: 1px solid var(--border); transition: opacity .15s; }
+  .portfolio-thumb:hover { opacity: .85; }
+  .review-card { padding: 14px 0; border-bottom: 1px solid var(--border); }
+  .review-card:last-child { border-bottom: none; }
+  .lightbox-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: flex; align-items: center; justify-content: center; z-index: 300; padding: 24px; cursor: zoom-out; }
+  .lightbox-overlay img { max-width: 92vw; max-height: 92vh; border-radius: 10px; object-fit: contain; }
+
+  .tab-row { display: flex; gap: 4px; margin-bottom: 24px; background: white; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 4px; }
+  .tab { flex: 1; text-align: center; padding: 8px; font-size: 13px; font-weight: 500; color: var(--muted); cursor: pointer; border-radius: 6px; transition: all .2s; }
+  .tab.active { background: var(--forest); color: var(--near-white); }
+
+  .input-group { margin-bottom: 14px; }
+  .input-group label { font-size: 12px; font-weight: 600; color: var(--dark-text); display: block; margin-bottom: 6px; letter-spacing: .02em; }
+  .input-group input, .input-group select, .input-group textarea { width: 100%; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px 14px; font-size: 14px; font-family: 'Plus Jakarta Sans', sans-serif; color: var(--dark-text); background: white; outline: none; transition: border-color .2s; }
+  .input-group input:focus, .input-group select:focus, .input-group textarea:focus { border-color: var(--forest); }
+  .input-group input:disabled { background: var(--sand); color: var(--muted); cursor: default; }
+  .input-group textarea { resize: vertical; height: 80px; }
+  .btn-sm { padding: 8px 16px; font-size: 13px; font-weight: 600; border-radius: var(--radius-sm); cursor: pointer; border: none; transition: opacity .2s; }
+  .btn-sm:hover { opacity: .85; }
+  .btn-sm.forest { background: var(--forest); color: var(--near-white); }
+  .btn-sm.lime { background: var(--lime); color: var(--forest); }
+  .btn-sm.ghost { background: transparent; border: 1px solid var(--border); color: var(--dark-text); }
+
+  /* MULTI-SERVICE CHECKOUT (tappable service cards + sticky total bar) */
+  .service-card { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 16px; border-radius: 12px; cursor: pointer; transition: background .15s, box-shadow .15s; border: 1.5px solid transparent; margin-bottom: 8px; }
+  .service-card:not(.active):hover { background: var(--sand); }
+  .service-card.active { background: var(--forest); border-color: var(--lime); box-shadow: 0 0 0 1px var(--lime) inset; }
+  .service-card.active .service-card-name, .service-card.active .service-card-meta { color: var(--near-white); }
+  .service-card-check { width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--border); flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 13px; color: transparent; font-weight: 800; }
+  .service-card.active .service-card-check { background: var(--lime); border-color: var(--lime); color: var(--forest); }
+  .multi-fab { position: sticky; bottom: 8px; background: var(--forest); color: var(--near-white); border-radius: 16px; padding: 14px 18px; display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 14px; box-shadow: 0 8px 24px rgba(13,61,46,0.35); z-index: 5; }
+  .multi-fab .totals { font-size: 12px; line-height: 1.4; color: rgba(255,255,255,0.8); }
+  .multi-fab .totals strong { color: var(--lime); font-size: 17px; display: block; }
+  .multi-fab button { background: var(--lime); color: var(--forest); border: none; padding: 13px 18px; border-radius: 10px; font-weight: 800; font-size: 14px; cursor: pointer; white-space: nowrap; }
+
+  /* BOTTOM SHEET (mobile-first — replaces a modal for quick provider actions) */
+  .sheet-overlay { position: fixed; inset: 0; background: rgba(13,61,46,0.55); display: flex; align-items: flex-end; justify-content: center; z-index: 300; }
+  .sheet-panel { background: white; width: 100%; max-width: 520px; border-radius: 20px 20px 0 0; padding: 14px 20px calc(22px + env(safe-area-inset-bottom)); animation: sheetUp .22s ease-out; }
+  @keyframes sheetUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  .sheet-handle { width: 40px; height: 4px; background: var(--border); border-radius: 2px; margin: 0 auto 18px; }
+  .preset-row { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 20px; }
+  .preset-btn { flex: 1 1 21%; min-width: 78px; padding: 16px 0; border-radius: 12px; border: 1.5px solid var(--border); background: #fff; font-weight: 800; font-size: 14px; color: var(--dark-text); cursor: pointer; }
+  .preset-btn.active { border-color: var(--lime); background: var(--forest); color: var(--near-white); }
+
+  /* PANIC BUTTON */
+  .panic-btn { width: 100%; background: var(--lime); color: var(--forest); border: none; border-radius: 16px; padding: 22px 16px; font-size: 19px; font-weight: 800; cursor: pointer; box-shadow: 0 6px 0 var(--forest-light); letter-spacing: -0.01em; transition: transform .08s, box-shadow .08s; }
+  .panic-btn:active { transform: translateY(4px); box-shadow: 0 2px 0 var(--forest-light); }
+  .panic-btn:disabled { opacity: .55; cursor: not-allowed; box-shadow: none; }
+  /* Secondary quick action — same touch target size as .panic-btn so it
+     reads as an equally-tappable option, just visually quieter (outline,
+     no fill) so Walk-In stays the obvious primary choice. */
+  .panic-btn-secondary { width: 100%; background: #fff; color: var(--forest); border: 2px solid var(--forest); border-radius: 16px; padding: 20px 16px; font-size: 17px; font-weight: 800; cursor: pointer; letter-spacing: -0.01em; transition: transform .08s, background .15s; }
+  .panic-btn-secondary:active { transform: translateY(2px); background: var(--sand); }
+  .panic-btn-secondary:disabled { opacity: .55; cursor: not-allowed; }
+  .block-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .block-row .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--clay); flex-shrink: 0; }
+
+  /* CALENDAR */
+  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+  .cal-day-label { text-align: center; font-size: 11px; font-weight: 600; color: var(--muted); padding: 4px 0; }
+  .cal-day { text-align: center; padding: 8px 4px; border-radius: 6px; font-size: 13px; cursor: pointer; position: relative; }
+  .cal-day:hover { background: var(--sand); }
+  .cal-day.today { background: var(--forest); color: white; font-weight: 600; }
+  .cal-day.has-booking::after { content: ''; position: absolute; bottom: 3px; left: 50%; transform: translateX(-50%); width: 4px; height: 4px; background: var(--lime); border-radius: 50%; }
+  .cal-day.today.has-booking::after { background: var(--lime); }
+  .cal-day.empty { cursor: default; }
+
+  @media (max-width: 768px) {
+    .nav { padding: 14px 20px; }
+    .nav-strip { padding: 10px 20px; gap: 20px; }
+    /* NAV — "Provide my service"/"List your business" moves out of the bar
+       and into the Menu dropdown below this width (it's already duplicated
+       there as a .mobile-only-item), which is what actually keeps the row
+       — language toggle + log in/avatar + this button — from squishing or
+       overflowing on phone-width screens. See the matching .mobile-only-item
+       override right below, and the icon-only Menu button at 480px further
+       down for the narrowest phones. */
+    .nav-signup-btn { display: none; }
+    .nav-dropdown .mobile-only-item { display: block; }
+    .nav-account-dropdown .mobile-only-item { display: flex; }
+    .hero { grid-template-columns: 1fr; padding: 60px 24px; min-height: auto; }
+    .hero-card-wrap { display: none; }
+    /* HERO CTAs — stacked and full-width instead of a tight side-by-side
+       row, so each is an easy, unambiguous thumb target rather than two
+       medium buttons fighting for a narrow row. */
+    .hero-actions { flex-direction: column; align-items: stretch; }
+    .hero-actions .btn-primary, .hero-actions .btn-outline-white { width: 100%; text-align: center; }
+    /* FOOTER — the 5-across flex row (brand + 4 link columns) wraps, but
+       unevenly (each column is only as wide as its own content), which is
+       what reads as "not wrapping properly" on a phone. A real 2-column
+       grid below this width makes every row line up cleanly; the brand
+       block spans both columns since its description paragraph needs the
+       room. */
+    .footer-top { display: grid; grid-template-columns: 1fr 1fr; gap: 28px 24px; }
+    .footer-brand { grid-column: 1 / -1; }
+    .footer-brand p { max-width: none; }
+    /* TOUCH TARGETS — forms and primary buttons meet the ~44px minimum tap
+       size on mobile. Nav-bar controls (avatar/lang toggle/login link/menu
+       button) only get the height bump, never width:100%, since they still
+       share one horizontal row; standalone form fields and CTA buttons get
+       both. Chips/pills (.service-pill, .cx-discover-pill) keep their
+       compact shape — they're meant to be scanned and tapped in a row, not
+       stretched — but still clear 44px tall. */
+    .nav-login-link, .nav-menu-btn, .nav-avatar-btn, .lang-toggle { min-height: 44px; }
+    .btn-primary, .btn-outline-white, .btn-ghost, .btn-lime, .btn-forest, .btn-outline-forest,
+    .search-submit, .help-form-submit, .for-business-btn,
+    .provider-hero-cta.btn-lime, .provider-hero-cta-secondary.btn-ghost,
+    .auth-option-card, .service-card { min-height: 44px; }
+    .input-group input, .input-group select, .input-group textarea,
+    .help-form-group input, .help-form-group select, .help-form-group textarea,
+    .search-bar-pill .field input, .search-bar-pill .field select { min-height: 44px; }
+    .service-pill, .cx-discover-pill { min-height: 44px; }
+    .help-form-submit { width: 100%; }
+    .section { padding: 60px 24px; }
+    /* Matches .section's side padding (was 20px, set in its own separate
+       640px breakpoint below) so the hero lines up with every row below it
+       all the way down to phone widths, not just above 768px. */
+    .search-hero { padding: 80px 24px 64px; }
+    .marketing-strip { padding: 32px 24px; }
+    .portal-content { padding: 20px; }
+    .provider-topbar { padding: 0 16px; gap: 12px; }
+    .provider-topbar-left .nav-logo { font-size: 16px; }
+    .provider-status-pill { display: none; }
+    .provider-topnav-links { display: none; }
+    .provider-hamburger { display: flex; align-items: center; justify-content: center; }
+    .provider-mobile-nav { display: flex; flex-direction: column; position: absolute; top: 64px; left: 0; right: 0; background: var(--forest); border-top: 1px solid rgba(255,255,255,0.1); box-shadow: 0 16px 30px rgba(0,0,0,0.25); z-index: 149; padding: 8px; }
+    .provider-mobile-nav-item { background: none; border: none; color: rgba(255,255,255,0.75); font-family: 'Plus Jakarta Sans', sans-serif; font-size: 15px; font-weight: 600; text-align: left; padding: 13px 12px; border-radius: 8px; cursor: pointer; }
+    .provider-mobile-nav-item.active { color: var(--lime); background: rgba(198,241,53,0.1); }
+    .grid-2 { grid-template-columns: 1fr; }
+    .grid-3 { grid-template-columns: 1fr; }
+    .metric-grid { grid-template-columns: 1fr 1fr; }
+    .services-section { padding: 60px 24px; }
+    /* Full-bleed edge-to-edge scroll on mobile, same technique as the
+       Home Feed's .cx-dropzone-row — the row's own padding restores the
+       page's 24px gutter so the first/last pill still lines up with the
+       heading above it, but the scroll region itself runs to the screen edge. */
+    .lp-theme .services-pills { margin: 0 -24px; padding: 0 24px 6px; }
+    .tny-row { margin: 0 -24px; padding: 0 24px 6px; }
+    .tny-card { flex-basis: 200px; }
+    .for-business-cta { padding: 72px 20px; }
+    .for-business-headline { font-size: 30px; }
+    .for-business-sub { font-size: 15.5px; }
+    .vai-media-banner { padding: 36px 22px; margin-top: 40px; }
+    .vai-media-title { font-size: 22px; }
+    .footer { padding: 40px 24px 24px; }
+    .a2hs-banner { left: 12px; right: 12px; bottom: 12px; padding: 12px; }
+    .profile-scroll { padding: 20px; }
+    .profile-body { grid-template-columns: 1fr; gap: 20px; }
+    .profile-sidebar { order: -1; }
+    .profile-sidebar-card { position: static; }
+    .profile-gallery { height: 220px; }
+    .profile-name-row h2 { font-size: 21px; }
+    .reviews-grid { grid-template-columns: 1fr; }
+
+    /* Customer dashboard — 95% of bookings happen from a phone, so this
+       is the layout that actually matters most: tight padding, native-app
+       tap targets, no horizontal overflow. Rebook rows are already
+       full-width and stack fine as-is; only the ticket notches/divider
+       and discovery pills need their own tuned spacing at this width. */
+    .cx-hero { padding: 24px 20px; border-radius: 18px; }
+    .cx-hero-service { font-size: 21px; }
+    .cx-hero-countdown { font-size: 38px; margin-top: 12px; }
+    .cx-hero-divider { margin: 18px -20px 0; }
+    .cx-hero-actions { margin-top: 20px; gap: 8px; }
+    .cx-btn-neon, .cx-btn-ghost { font-size: 13px; padding: 11px 16px; }
+    .cx-rebook-thumb { width: 46px; height: 46px; border-radius: 10px; font-size: 20px; }
+    .cx-discover-search { padding: 13px 18px; }
+    .cx-discover-pills { flex-wrap: nowrap; overflow-x: auto; margin: 0 -20px; padding: 0 20px 4px; }
+    .cx-discover-pills::-webkit-scrollbar { display: none; }
+    .cx-discover-pill { flex-shrink: 0; }
+    .cx-dropzone-row { margin: 0 -20px; padding: 0 20px 4px; }
+    .cx-lookbook-book { opacity: 1; transform: none; }
+  }
+
+  /* NAV — keep the top row on one line without pushing "Menu"/the avatar
+     off-screen on phone-width viewports (Log in + the language toggle +
+     Menu, the narrowest realistic combination, still won't fit every
+     label at full size below ~480px). Below this width the Menu button
+     drops its "Menu" text and shows just the bars icon, and the language
+     toggle shrinks slightly, freeing the room login-link/avatar needs. */
+  .mobile-only-item { display: none; }
+  @media (max-width: 480px) {
+    .quick-actions-row { flex-direction: column; }
+    .panic-btn, .panic-btn-secondary { font-size: 17px; padding: 18px 16px; }
+    .dopamine-card { flex-direction: column; align-items: stretch; gap: 16px; }
+    .dopamine-divider { width: auto; height: 1px; margin: 0; }
+    .dopamine-value { font-size: 28px; }
+    .next-chair-body { flex-wrap: wrap; }
+    .shopfront-actions { flex-direction: column; }
+    .rebook-radar { flex-direction: column; align-items: stretch; text-align: center; }
+    .nav { padding: 14px 16px; }
+    .nav-logo { font-size: 18px; }
+    .nav-cta { gap: 8px; }
+    .nav-signup-btn { display: none; }
+    .nav-login-link { font-size: 13px; padding: 4px 2px; }
+    .nav-menu-btn { padding: 10px 12px; font-size: 13px; gap: 6px; min-width: 44px; justify-content: center; }
+    .nav-menu-btn-label { display: none; }
+    .nav-menu-btn .bars span { width: 13px; }
+    .nav-avatar-btn { padding: 3px 8px 3px 3px; gap: 6px; }
+    .lang-toggle { min-width: 34px; padding: 0 8px; }
+    .nav-dropdown .mobile-only-item { display: block; }
+    .nav-account-dropdown .mobile-only-item { display: flex; }
+    .carousel-arrow { display: none; }
+    .carousel-card { flex-basis: 200px; }
+    /* FOOTER — one column at phone width; 2-up (set at 768px) can still
+       feel tight once link labels get long or the app is in Spanish. */
+    .footer-top { grid-template-columns: 1fr; }
+  }
+
+  .a2hs-banner {
+    position: fixed;
+    left: 20px;
+    right: 20px;
+    bottom: 20px;
+    max-width: 420px;
+    margin: 0 auto;
+    background: var(--forest);
+    color: white;
+    border-radius: var(--radius);
+    box-shadow: 0 16px 40px rgba(13,61,46,0.35);
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    z-index: 500;
+    animation: a2hsSlideUp .35s ease;
+  }
+  @keyframes a2hsSlideUp {
+    from { transform: translateY(24px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+  .a2hs-banner-icon { font-size: 24px; flex-shrink: 0; }
+  .a2hs-banner-text { flex: 1; min-width: 0; }
+  .a2hs-banner-title { font-size: 13px; font-weight: 700; line-height: 1.3; }
+  .a2hs-banner-sub { font-size: 12px; color: rgba(255,255,255,0.65); margin-top: 2px; }
+  .a2hs-banner-cta { background: var(--lime); color: var(--forest); border: none; border-radius: 100px; padding: 8px 14px; font-size: 13px; font-weight: 700; cursor: pointer; flex-shrink: 0; white-space: nowrap; }
+  .a2hs-banner-close { background: none; border: none; color: rgba(255,255,255,0.5); font-size: 14px; cursor: pointer; padding: 4px; flex-shrink: 0; }
+  .a2hs-banner-close:hover { color: white; }
+
+  .a2hs-modal { max-width: 380px; text-align: center; position: relative; padding: 32px 28px 28px; }
+  .a2hs-modal-close { position: absolute; top: 16px; right: 16px; background: none; border: none; font-size: 16px; color: var(--muted); cursor: pointer; }
+  .a2hs-modal-close:hover { color: var(--forest); }
+  .a2hs-modal-icon { font-size: 40px; margin-bottom: 8px; }
+  .a2hs-modal-title { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 20px; font-weight: 800; color: var(--forest); margin: 0 0 8px; }
+  .a2hs-modal-sub { font-size: 13px; color: var(--muted); line-height: 1.5; margin: 0 0 20px; }
+  .a2hs-install-btn { width: 100%; padding: 12px; font-size: 14px; margin-bottom: 16px; }
+  .a2hs-tabs { display: flex; gap: 8px; background: var(--sand); border-radius: 100px; padding: 4px; margin-bottom: 20px; }
+  .a2hs-tab { flex: 1; background: none; border: none; padding: 8px 12px; border-radius: 100px; font-size: 13px; font-weight: 600; color: var(--muted); cursor: pointer; }
+  .a2hs-tab.active { background: white; color: var(--forest); box-shadow: 0 2px 8px rgba(13,61,46,0.12); }
+  .a2hs-steps { list-style: none; margin: 0; padding: 0; text-align: left; display: flex; flex-direction: column; gap: 14px; }
+  .a2hs-steps li { display: flex; align-items: flex-start; gap: 12px; font-size: 14px; color: var(--dark-text); line-height: 1.4; }
+  .a2hs-step-num { flex-shrink: 0; width: 22px; height: 22px; border-radius: 50%; background: var(--forest); color: white; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+  .a2hs-glyph { font-size: 13px; }
+
+  /* ── GLOBAL PREMIUM UI COMPONENTS ──────────────────────────────────
+     Single source of truth for the "premium dark SaaS" look that
+     started on the Customer Portal Home tab — its glass-morphism
+     cards/pills/search (.cx-drop-card, .cx-discover-pill,
+     .cx-discover-search) and neon-glow button (.cx-btn-neon) — so any
+     other page (starting with the Landing Page) gets the *identical*
+     look via one shared class instead of a second, slightly-different
+     copy of the same CSS. Dark-mode values below are copied verbatim
+     from those .cx-* originals, so anywhere both appear on screen in
+     dark mode they're pixel-identical. .cx-* itself is untouched and
+     stays exactly as shipped (Customer Home is intentionally always
+     dark, not wired to the toggle — see the note by .cx-account-page) —
+     these are the reusable, theme-aware versions of the same design,
+     for pages (like the Landing Page) that DO respond to the toggle.
+
+     Deliberately placed at the very end of this stylesheet: these
+     classes are meant to be layered onto existing component classes
+     (e.g. className="carousel-card card-premium") without editing
+     every one of those older rules, and CSS resolves same-specificity
+     conflicts (one class vs. one class) by source order — last
+     declared wins. Living here, after everything else, is what makes
+     that layering actually take effect. */
+
+  .card-premium {
+    background: var(--bg-elevated) !important;
+    border: 1px solid var(--card-border) !important;
+    border-radius: 16px !important;
+    transition: transform .15s ease, box-shadow .2s ease, background .2s ease !important;
+  }
+  .card-premium:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--card-shadow) !important;
+    background: var(--bg-elevated-hover) !important;
+  }
+
+  .btn-neon {
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    background: var(--accent-neon) !important; color: var(--accent-neon-text) !important;
+    font-weight: 800; font-size: 14px; padding: 13px 22px;
+    border-radius: 100px !important; border: none; cursor: pointer; text-decoration: none;
+    box-shadow: 0 0 0 rgba(198,241,53,0.5);
+    transition: box-shadow .2s ease, transform .15s ease;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+  }
+  .btn-neon:hover { box-shadow: 0 0 24px rgba(198,241,53,0.55) !important; transform: translateY(-1px); }
+
+  .badge-pill {
+    display: inline-flex; align-items: center; gap: 7px;
+    background: var(--glass-bg) !important;
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.06);
+    color: var(--text-secondary) !important; font-weight: 600; font-size: 13px;
+    padding: 10px 18px; border-radius: 100px !important; border: 1px solid var(--glass-border) !important;
+    cursor: pointer; transition: border-color .2s ease, color .2s ease, box-shadow .2s ease, background .2s ease;
+  }
+  .badge-pill:hover { border-color: var(--lime) !important; color: var(--accent-text) !important; box-shadow: 0 0 16px rgba(198,241,53,0.25); }
+
+  .search-glass {
+    position: relative;
+    background: var(--glass-bg) !important;
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border: 1px solid var(--glass-border) !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.06) !important;
+    border-radius: 100px;
+    transition: border-color .2s ease;
+  }
+  .search-glass:focus-within { border-color: rgba(198,241,53,0.5) !important; }
+  .search-glass input, .search-glass select { color: var(--text-primary) !important; }
+  .search-glass input::placeholder { color: var(--text-tertiary) !important; }
+`;
+
+// ── BRAND MARK ─────────────────────────────────────────────────
+// Stepped-triangle mark: three ascending terraces reading left-to-right,
+// moss green climbing to the lime accent — the "growth" motif agreed on
+// for VaiBook. Renders as a plain <svg> so it drops in anywhere the
+// wordmark appears, at any size, without an external image file.
+function VaiBookMark({ size = 26, style }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 100 100"
+      style={{ flexShrink: 0, display: "block", ...style }}
+      aria-hidden="true"
+    >
+      <rect x="6" y="62" width="26" height="32" rx="6" fill="#3F6B4A" />
+      <rect x="37" y="38" width="26" height="56" rx="6" fill="#5C8A68" />
+      <rect x="68" y="6" width="26" height="88" rx="6" fill="var(--lime, #C6F135)" />
+    </svg>
+  );
+}
+
+// Sleek, minimal line-icon sun/moon for the nav's theme toggle — plain
+// inline SVG rather than an emoji glyph, which renders inconsistently
+// across OS/browsers and reads as decorative rather than a crisp control
+// (the "Apple/Stripe" premium bar this feature was explicitly asked to
+// clear). Shows the icon for the mode a click switches TO, same
+// convention as a physical light switch.
+// ── DATA ────────────────────────────────────────────────────────
+// VaiBook is scoped to the self-care niche (like Fresha/Mangomint), not a
+// general local-services directory — this list is the merged set of
+// categories those two platforms cover. Home Cleaning/Car Wash/Handyman
+// were dropped from here (they're still findable by direct search, just no
+// longer featured in nav/homepage/footer/browse) — that's the "everyday
+// services" side of the business, slated for its own "Vai Services" product
+// later rather than folded into VaiBook's self-care identity.
+// NOTE ON i18n: `name` here stays the canonical English label — it's matched
+// directly against provider.service_type from Supabase (plain English data,
+// not translated) for search/filtering. Display-only text uses `key` to look
+// up a translated label via t(`services.${key}.name`) / `.desc` instead of
+// reading `.name`/`.desc` directly — see SERVICES.map() call sites.
+const SERVICES = [
+  { key: "barbers", icon: "✂️", name: "Barbers", desc: "Cuts & styles", bg: "#1A5C44" },
+  { key: "hairSalons", icon: "💇", name: "Hair Salons", desc: "Color & styling", bg: "#2A4A3E" },
+  { key: "nailTechs", icon: "💅", name: "Nail Techs", desc: "Nails & art", bg: "#1E4035" },
+  { key: "spas", icon: "🧖", name: "Spas", desc: "Full-body relaxation", bg: "#163626" },
+  { key: "medSpas", icon: "🩺", name: "Med Spas", desc: "Injectables & clinical", bg: "#1C4A38" },
+  { key: "massage", icon: "💆", name: "Massage", desc: "Therapeutic & relaxation", bg: "#244530" },
+  { key: "skincareFacials", icon: "🧴", name: "Skincare & Facials", desc: "Cleanses & glow-ups", bg: "#1A5C44" },
+  { key: "hairRemoval", icon: "🪒", name: "Hair Removal", desc: "Waxing & laser", bg: "#2A4A3E" },
+  { key: "tattooPiercing", icon: "🖋️", name: "Tattoo & Piercing", desc: "Ink & piercings", bg: "#1E4035" },
+  { key: "wellnessCenters", icon: "🌿", name: "Wellness Centers", desc: "Holistic & recovery", bg: "#163626" },
+  { key: "petGrooming", icon: "🐾", name: "Pet Grooming", desc: "All breeds", bg: "#1C4A38" },
+  { key: "fitnessRecovery", icon: "🏋️", name: "Fitness & Recovery", desc: "Training & recovery", bg: "#2A4A3E" },
+  { key: "physicalTherapy", icon: "🦵", name: "Physical Therapy", desc: "Rehab & mobility", bg: "#1E4035" },
+];
+
+// ── BUSINESS CATEGORIES & FEATURE FLAGS ──────────────────────────
+// Every provider belongs to one business category, chosen at signup. Core
+// features are on for every category; industry-specific "modules" default
+// on/off per category and can be overridden per-provider in Settings →
+// Modules. The canonical data lives in Supabase (business_categories /
+// feature_flags / category_default_features / provider_feature_overrides —
+// see supabase_feature_flags.sql); this is the client-side mirror used for
+// labels/icons and for computing category_key at signup time.
+const CORE_FEATURES = ["calendar_scheduling", "client_crm", "pos", "reporting_analytics"];
+
+const CORE_FEATURE_CATALOG = {
+  calendar_scheduling: { label: "Calendar & Scheduling", icon: "🗓️", desc: "Staff availability, shift management, booking interface" },
+  client_crm: { label: "Client CRM", icon: "👥", desc: "Client profiles, booking history, automated reminders" },
+  pos: { label: "Point of Sale", icon: "💳", desc: "Checkout, deposit collection, payment processing" },
+  reporting_analytics: { label: "Reporting & Analytics", icon: "📊", desc: "Revenue tracking, commission payouts" },
+};
+
+const BUSINESS_CATEGORIES = [
+  { key: "general", label: "General Service", icon: "🛠️" },
+  { key: "hair_salon", label: "Hair Salons, Barbershops & Nail Studios", icon: "✂️" },
+  { key: "spa_massage", label: "Spas & Massage Therapy", icon: "💆" },
+  { key: "med_spa", label: "Med Spas & Clinics", icon: "🩺" },
+  { key: "tattoo_piercing", label: "Tattoo & Piercing Studios", icon: "🖋️" },
+];
+
+const SERVICE_TYPE_TO_CATEGORY = {
+  "Barber": "hair_salon",
+  "Hair Salon": "hair_salon",
+  "Nail Tech": "hair_salon",
+  "Hair Removal Studio": "hair_salon",
+  "Spa": "spa_massage",
+  "Massage": "spa_massage",
+  "Skincare Studio": "spa_massage",
+  "Med Spa / Clinic": "med_spa",
+  "Physical Therapy": "med_spa",
+  "Tattoo & Piercing Studio": "tattoo_piercing",
+  "Wellness Center": "general",
+  "Pet Grooming": "general",
+  "Fitness & Recovery": "general",
+  "Photography": "general",
+  "Other": "general",
+  // Kept for backward compatibility with providers who signed up before
+  // VaiBook narrowed to the self-care niche — no longer offered at signup,
+  // but existing profiles with these values still resolve correctly.
+  "Beauty Salon": "hair_salon",
+  "Home Cleaning": "general",
+  "Car Wash": "general",
+  "Handyman": "general",
+};
+const categoryForServiceType = (serviceType) => SERVICE_TYPE_TO_CATEGORY[serviceType] || "general";
+
+// Small icon per service_type, used on provider cards that don't have a
+// portfolio photo yet. Kept as its own lookup (rather than reusing SERVICES,
+// whose names are plural/marketing-flavored) since it's keyed by the exact
+// singular strings providers pick at signup.
+const SERVICE_TYPE_ICON = {
+  "Barber": "✂️",
+  "Hair Salon": "💇",
+  "Nail Tech": "💅",
+  "Spa": "🧖",
+  "Med Spa / Clinic": "🩺",
+  "Massage": "💆",
+  "Skincare Studio": "🧴",
+  "Hair Removal Studio": "🪒",
+  "Tattoo & Piercing Studio": "🖋️",
+  "Wellness Center": "🌿",
+  "Pet Grooming": "🐾",
+  "Fitness & Recovery": "🏋️",
+  "Physical Therapy": "🦵",
+  "Photography": "📸",
+  "Other": "🛠️",
+  // Legacy values from before the self-care narrowing — still shown
+  // correctly on any provider card that has one.
+  "Beauty Salon": "💇",
+  "Home Cleaning": "🏠",
+  "Car Wash": "🚗",
+  "Handyman": "🔧",
+};
+const iconForServiceType = (serviceType) => SERVICE_TYPE_ICON[serviceType] || "🛠️";
+
+// Cover image shown on every card/carousel thumbnail: the dedicated
+// profile photo if the provider has set one, falling back to the first
+// portfolio/gallery photo (the old default) for providers who haven't —
+// and finally to the service-type emoji, handled by each call site same
+// as before.
+const coverImageUrl = (provider) => provider?.profile_photo_url || (provider?.portfolio_urls && provider.portfolio_urls[0]) || null;
+
+// Shared provider helpers — module-level so both the landing page's
+// discover carousels and the customer portal's browse grid compute rating
+// and starting price the same way, off the same provider shape
+// (getActiveProviders' `*, services(*), reviews(rating)` embed).
+const providerRating = (p) => {
+  const ratings = (p.reviews || []).map((r) => r.rating).filter((r) => r != null);
+  if (!ratings.length) return null;
+  return (ratings.reduce((a, b) => a + b, 0) / ratings.length).toFixed(1);
+};
+
+const providerFromPrice = (p) => {
+  const prices = (p.services || []).filter((s) => s.is_active !== false).map((s) => Number(s.price) || 0);
+  if (!prices.length) return null;
+  return Math.min(...prices);
+};
+
+// Compact open/closed check for list cards — same "is right now inside
+// today's working hours" logic as CustomerPortal's getOpenStatus, just a
+// plain boolean (no "opens tomorrow at 9am" detail, there's no room for
+// that on a card). Needs `working_hours` embedded on the provider row —
+// see getActiveProviders' `*, services(*), reviews(rating), working_hours(*)`
+// select. Returns null (render nothing) when hours were never set at all,
+// rather than guessing — same honesty rule the rest of the hours UI follows.
+const providerOpenNow = (p) => {
+  const hours = p?.working_hours;
+  if (!hours || !hours.length) return null;
+  const now = new Date();
+  const dow = now.getDay();
+  const nowM = now.getHours() * 60 + now.getMinutes();
+  const today = hours.find((h) => h.day_of_week === dow);
+  if (!today || !today.is_open || !today.start_time || !today.end_time) return false;
+  const startM = hhmmToMinutes(today.start_time);
+  const endM = hhmmToMinutes(today.end_time);
+  return nowM >= startM && nowM < endM;
+};
+
+// Small badge that literally reflects a provider's plan tier ("✓ Pro" /
+// "✓ Business") so customers can see they're on a paid plan. Deliberately
+// NOT worded as "Verified" or "Certified" — VaiBook doesn't vet or inspect
+// paid listings any differently from free ones, so the badge only ever
+// claims what's actually true: which plan they're paying for. Separate
+// from the "⭐ Featured" chip, which signals a provider chose to pay extra
+// to rank higher in search — a provider can have neither, either, or both.
+const planBadge = (p) => {
+  const plan = p?.plan;
+  if (plan === "business") return { label: "✓ Team", bg: "var(--forest)", color: "#fff" };
+  if (plan === "pro") return { label: "✓ Pro", bg: "var(--sand)", color: "var(--forest)" };
+  return null;
+};
+
+
+// "New to VaiBook" badge window — providers who joined in the last 30 days
+// get the pill; older ones can still appear in the row (as the most
+// recently joined of what's available) without being mislabeled as new.
+const isRecentlyJoined = (p, days = 30) => {
+  if (!p.created_at) return false;
+  const joined = new Date(p.created_at).getTime();
+  if (Number.isNaN(joined)) return false;
+  return (Date.now() - joined) / (1000 * 60 * 60 * 24) <= days;
+};
+
+// One horizontally-scrolling row of provider cards, used by the landing
+// page's Recommended / New to VaiBook / Trending sections. `badgeFor` is an
+// optional (provider) => string|null that puts a pill in the top-left
+// corner of a card (e.g. "New", "Featured").
+function ProviderCarousel({ providers, badgeFor, onCardClick, ctaLabel }) {
+  const { t } = useTranslation();
+  const rowRef = useRef(null);
+  const scrollNext = () => {
+    if (rowRef.current) rowRef.current.scrollBy({ left: 260, behavior: "smooth" });
+  };
+  return (
+    <div style={{ position: "relative" }}>
+      <div className="carousel-row" ref={rowRef}>
+        {providers.map((p) => {
+          const rating = providerRating(p);
+          const openNow = providerOpenNow(p);
+          const badge = badgeFor ? badgeFor(p) : null;
+          return (
+            <div className="carousel-card card-premium" key={p.id} onClick={() => onCardClick(p)}>
+              {badge && <span className="carousel-badge">{badge}</span>}
+              {/* The Trending Local row (ctaLabel="Book") gets a visible CTA
+                  instead of the heart icon — a save/favorite action reads
+                  as an odd primary interaction on a "here's who to book
+                  right now" row, so this swaps it for the action that row
+                  is actually selling. */}
+              {ctaLabel ? null : (
+                <button
+                  className="carousel-heart"
+                  onClick={(e) => { e.stopPropagation(); onCardClick(p); }}
+                  aria-label="Save this provider"
+                >
+                  🤍
+                </button>
+              )}
+              {coverImageUrl(p) ? (
+                <div className="carousel-card-img" style={{ background: `center/cover no-repeat url(${coverImageUrl(p)})` }} />
+              ) : (
+                <div className="carousel-card-img">{iconForServiceType(p.service_type)}</div>
+              )}
+              <div className="carousel-card-body">
+                <h4>{p.business_name}</h4>
+                <div className="loc">{p.district}</div>
+                <div className="meta">
+                  {p.service_type}
+                  {rating ? <> · ⭐ {rating} ({p.reviews.length})</> : null}
+                </div>
+                {openNow !== null && (
+                  <span className={`open-status ${openNow ? "is-open" : "is-closed"}`} style={{ marginTop: 4, display: "inline-flex" }}>
+                    {openNow ? t("customerPortal.hours.openNow") : t("customerPortal.hours.closed")}
+                  </span>
+                )}
+                {ctaLabel && (
+                  <button className="carousel-cta btn-neon" onClick={(e) => { e.stopPropagation(); onCardClick(p); }}>
+                    {ctaLabel}
+                  </button>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      {providers.length > 3 && (
+        <button className="carousel-arrow" onClick={scrollNext} aria-label="Scroll for more">→</button>
+      )}
+    </div>
+  );
+}
+
+// Industry-specific adaptive modules. `label`/`icon`/`desc` drive the
+// Settings → Modules UI; which ones default on per category lives in the
+// `category_default_features` table (mirrored below only for reference).
+const INDUSTRY_FEATURE_CATALOG = {
+  hipaa_compliance_mode: { label: "Restricted Access Mode", icon: "🔒", desc: "Limits who on your team can view sensitive client records" },
+  soap_charting: { label: "SOAP Medical Charting", icon: "📋", desc: "Structured clinical notes per completed visit" },
+  digital_consent_forms: { label: "Digital Consent Forms", icon: "✍️", desc: "Client e-signs consent before treatment" },
+  secure_photo_storage: { label: "Secure Photo Storage", icon: "🖼️", desc: "Access-controlled before/after photos" },
+  processing_time_buffers: { label: "Processing Time Buffers", icon: "⏱️", desc: "Extra unbookable time after a service (e.g. color processing)" },
+  hair_formula_tracking: { label: "Hair Formula Tracking", icon: "🎨", desc: "Save color/chemical formulas per client" },
+  virtual_waiting_room: { label: "Virtual Waiting Room", icon: "🪑", desc: "Check-in queue shown to walk-ins" },
+  express_walkin_checkout: { label: "Express Walk-in Checkout", icon: "⚡", desc: "Fast checkout flow for walk-in clients" },
+  room_resource_booking: { label: "Room & Resource Booking", icon: "🚪", desc: "Assign a specific room or equipment to an appointment" },
+  digital_liability_waivers: { label: "Digital Liability Waivers", icon: "📝", desc: "Client e-signs a liability waiver" },
+  id_verification_upload: { label: "ID Verification Upload", icon: "🪪", desc: "Client uploads ID for age/identity verification" },
+  reference_art_upload: { label: "Reference Art Upload", icon: "🖌️", desc: "Client uploads reference images for the artist" },
+};
+
+const FeatureFlagsContext = createContext({ flags: {}, loading: true, categoryKey: "general", setOverride: async () => {} });
+const useFeatureFlags = () => useContext(FeatureFlagsContext);
+
+// Wraps the provider portal. Merges this provider's category defaults with
+// any manual per-provider overrides into a single `flags` map, and exposes
+// `setOverride` so Settings → Modules can flip a module on/off live.
+function FeatureFlagsProvider({ providerId, categoryKey, children }) {
+  const [defaults, setDefaults] = useState([]);
+  const [overrides, setOverrides] = useState({});
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    Promise.all([
+      getCategoryDefaultFeatures(categoryKey),
+      getProviderFeatureOverrides(providerId),
+    ]).then(([defs, ovr]) => {
+      if (cancelled) return;
+      setDefaults(defs || []);
+      setOverrides(ovr || {});
+      setLoading(false);
+    });
+    return () => { cancelled = true; };
+  }, [providerId, categoryKey]);
+
+  const flags = {};
+  CORE_FEATURES.forEach((k) => { flags[k] = true; });
+  Object.keys(INDUSTRY_FEATURE_CATALOG).forEach((k) => {
+    flags[k] = overrides[k] != null ? overrides[k] : defaults.includes(k);
+  });
+
+  const setOverride = async (featureKey, enabled) => {
+    setOverrides((prev) => ({ ...prev, [featureKey]: enabled }));
+    await setProviderFeatureOverride(providerId, featureKey, enabled);
+  };
+
+  return (
+    <FeatureFlagsContext.Provider value={{ flags, loading, categoryKey, defaults, overrides, setOverride }}>
+      {children}
+    </FeatureFlagsContext.Provider>
+  );
+}
+
+// Gate for conditionally rendering a flag-dependent module anywhere in the
+// tree, e.g. `<FeatureGate flag="soap_charting"><VisitNotesButton .../></FeatureGate>`.
+function FeatureGate({ flag, children, fallback = null }) {
+  const { flags, loading } = useFeatureFlags();
+  if (loading) return fallback;
+  return flags[flag] ? children : fallback;
+}
+
+// Which industry modules are actually wired to real functionality
+// somewhere in the app. Checked directly against every <FeatureGate> usage
+// — soap_charting is the only one that gates anything (the Visit Notes
+// button on completed bookings). The rest of INDUSTRY_FEATURE_CATALOG are
+// scaffolding for features that don't exist yet: nothing reads their flag,
+// so toggling them on used to look like it worked (even
+// pre-toggled "on" by category default) while silently doing nothing.
+// Rather than let providers flip switches that go nowhere, anything not in
+// this list now renders locked with a "Coming soon" badge instead of a
+// working toggle. Add a key here the day it actually gets wired up.
+const LIVE_INDUSTRY_FEATURES = ["soap_charting"];
+
+// Settings → Modules: shows core features (always on), the one live
+// industry module (soap_charting, pre-toggled from the provider's category
+// defaults, with a manual per-provider override switch), and every other
+// industry module as a locked "Coming soon" row. This is the live UI for
+// the adaptive feature-flag system described in the architecture doc.
+function ModulesPanel() {
+  const { flags, loading, defaults, categoryKey, setOverride } = useFeatureFlags();
+  const categoryLabel = (BUSINESS_CATEGORIES.find((c) => c.key === categoryKey) || {}).label || "General Service";
+
+  return (
+    <>
+      <div className="portal-header">
+        <h2>Modules</h2>
+        <p>Your default modules come from your business category ({categoryLabel}). These are free — nothing here is a paid add-on. Most industry modules are still in development; only the ones marked live actually do anything yet.</p>
+      </div>
+      <div className="card" style={{ maxWidth: 560 }}>
+        <div className="card-title">Core — included for every provider</div>
+        {CORE_FEATURES.map((key) => (
+          <div key={key} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", borderBottom: "1px solid var(--border)" }}>
+            <div>
+              <div style={{ fontSize: 14 }}>{CORE_FEATURE_CATALOG[key].icon} {CORE_FEATURE_CATALOG[key].label}</div>
+              <div style={{ fontSize: 12, color: "var(--muted)" }}>{CORE_FEATURE_CATALOG[key].desc}</div>
+            </div>
+            <div className="toggle on" style={{ opacity: 0.5, cursor: "not-allowed" }} title="Always on"></div>
+          </div>
+        ))}
+
+        <div className="card-title" style={{ marginTop: 24 }}>Industry-specific modules</div>
+        {loading ? (
+          <p style={{ fontSize: 13, color: "var(--muted)" }}>Loading modules...</p>
+        ) : (
+          <>
+            {/* Live modules first, so the one real toggle isn't buried
+                between locked rows — then a labeled break, then every
+                locked "Coming soon" module grouped together below it. */}
+            {Object.keys(INDUSTRY_FEATURE_CATALOG).filter((key) => LIVE_INDUSTRY_FEATURES.includes(key)).map((key) => {
+              const f = INDUSTRY_FEATURE_CATALOG[key];
+              const isOn = !!flags[key];
+              const isDefault = defaults.includes(key);
+              return (
+                <div key={key} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", borderBottom: "1px solid var(--border)" }}>
+                  <div>
+                    <div style={{ fontSize: 14 }}>
+                      {f.icon} {f.label}
+                      {isDefault && <span style={{ fontSize: 10, color: "var(--forest-light)", fontWeight: 700, marginLeft: 6 }}>RECOMMENDED FOR YOUR CATEGORY</span>}
+                    </div>
+                    <div style={{ fontSize: 12, color: "var(--muted)" }}>{f.desc}</div>
+                  </div>
+                  <div className={`toggle ${isOn ? "on" : ""}`} onClick={() => setOverride(key, !isOn)}></div>
+                </div>
+              );
+            })}
+            <div style={{ fontSize: 11, color: "var(--muted)", fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.4, marginTop: 20, marginBottom: 4 }}>
+              In development
+            </div>
+            {Object.keys(INDUSTRY_FEATURE_CATALOG).filter((key) => !LIVE_INDUSTRY_FEATURES.includes(key)).map((key) => {
+              const f = INDUSTRY_FEATURE_CATALOG[key];
+              return (
+                <div key={key} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", borderBottom: "1px solid var(--border)", opacity: 0.5 }}>
+                  <div>
+                    <div style={{ fontSize: 14 }}>
+                      {f.icon} {f.label}
+                      <span style={{ fontSize: 10, color: "var(--muted)", fontWeight: 700, marginLeft: 6 }}>COMING SOON</span>
+                    </div>
+                    <div style={{ fontSize: 12, color: "var(--muted)" }}>{f.desc}</div>
+                  </div>
+                  <div className="toggle" style={{ cursor: "not-allowed" }} title="Coming soon"></div>
+                </div>
+              );
+            })}
+          </>
+        )}
+      </div>
+    </>
+  );
+}
+
+// Bookings → completed appointments: minimal working example of a flag-gated
+// module (soap_charting). Saves structured Subjective/Objective/Assessment/
+// Plan notes per booking.
+function VisitNotesButton({ booking }) {
+  const [open, setOpen] = useState(false);
+  const [note, setNote] = useState({ subjective: "", objective: "", assessment: "", plan: "" });
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    let cancelled = false;
+    getVisitNotes(booking.id).then((existing) => {
+      if (cancelled || !existing) return;
+      setNote({
+        subjective: existing.subjective || "",
+        objective: existing.objective || "",
+        assessment: existing.assessment || "",
+        plan: existing.plan || "",
+      });
+      setSaved(true);
+    });
+    return () => { cancelled = true; };
+  }, [open, booking.id]);
+
+  const save = async () => {
+    setSaving(true);
+    const ok = await upsertVisitNote({ booking_id: booking.id, provider_id: booking.provider_id, ...note });
+    setSaving(false);
+    if (ok) setSaved(true);
+  };
+
+  return (
+    <div style={{ marginTop: 8 }}>
+      <button className="btn-sm ghost" onClick={() => setOpen((o) => !o)}>{saved ? "View / edit visit notes" : "Add visit notes (SOAP)"}</button>
+      {open && (
+        <div style={{ marginTop: 8, padding: 12, background: "var(--sand)", borderRadius: 8 }}>
+          {["subjective", "objective", "assessment", "plan"].map((k) => (
+            <div key={k} className="input-group" style={{ marginBottom: 8 }}>
+              <label style={{ textTransform: "capitalize" }}>{k}</label>
+              <textarea style={{ width: "100%", minHeight: 44 }} value={note[k] || ""} onChange={(e) => setNote((n) => ({ ...n, [k]: e.target.value }))} />
+            </div>
+          ))}
+          <button className="btn-sm forest" disabled={saving} onClick={save}>{saving ? "Saving..." : "Save visit notes"}</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// A collapsible message thread tied to one specific booking. Works the
+// same in both portals — only `currentRole`/`recipientUserId` differ
+// depending on which side is rendering it. Polls every 15s (same pattern
+// as the notification list in Nav()) rather than a realtime subscription,
+// to match how the rest of the app is built.
+function BookingChat({ bookingId, currentUserId, currentRole, recipientUserId }) {
+  const [open, setOpen] = useState(false);
+  const [messages, setMessages] = useState([]);
+  const [draft, setDraft] = useState("");
+  const [sending, setSending] = useState(false);
+  const [unread, setUnread] = useState(0);
+  const [sendError, setSendError] = useState("");
+  const bottomRef = useRef(null);
+
+  const load = async (markRead) => {
+    const data = await getBookingMessages(bookingId);
+    setMessages(data);
+    setUnread(data.filter((m) => !m.read_at && m.sender_id !== currentUserId).length);
+    if (markRead && data.some((m) => !m.read_at && m.sender_id !== currentUserId)) {
+      await markBookingMessagesRead(bookingId, currentUserId);
+      setUnread(0);
+    }
+  };
+
+  useEffect(() => {
+    load(false);
+    const interval = setInterval(() => load(open), 15000);
+    return () => clearInterval(interval);
+  }, [bookingId, open]);
+
+  useEffect(() => {
+    if (open) load(true);
+  }, [open]);
+
+  useEffect(() => {
+    if (open) bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, open]);
+
+  const send = async () => {
+    const body = draft.trim();
+    if (!body || sending) return;
+    setSending(true);
+    setSendError("");
+    let ok = false;
+    try {
+      ok = await sendBookingMessage({ booking_id: bookingId, sender_id: currentUserId, sender_role: currentRole, body });
+    } catch (err) {
+      setSending(false);
+      setSendError(err?.code === "RATE_LIMITED"
+        ? "You're sending messages quickly — please slow down a bit."
+        : "Something went wrong sending that. Please try again.");
+      return;
+    }
+    if (ok) {
+      setDraft("");
+      await load(false);
+      if (recipientUserId) {
+        createNotification({
+          user_id: recipientUserId,
+          title: "New message",
+          body: body.length > 80 ? body.slice(0, 80) + "…" : body,
+          type: "message",
+          booking_id: bookingId,
+        });
+      }
+    } else {
+      setSendError("Something went wrong sending that. Please try again.");
+    }
+    setSending(false);
+  };
+
+  return (
+    <div style={{ marginTop: 8 }}>
+      <button className="btn-sm ghost" style={{ position: "relative" }} onClick={() => setOpen((v) => !v)}>
+        💬 {open ? "Hide messages" : "Message"}
+        {!open && unread > 0 && (
+          <span className="notif-badge" style={{ position: "absolute", top: -6, right: -6 }}>{unread > 9 ? "9+" : unread}</span>
+        )}
+      </button>
+      {open && (
+        <div style={{ marginTop: 8, background: "var(--sand)", borderRadius: 10, padding: 12 }}>
+          <div style={{ maxHeight: 220, overflowY: "auto", display: "flex", flexDirection: "column", gap: 8, marginBottom: 10 }}>
+            {messages.length === 0 && <p style={{ fontSize: 12, color: "var(--muted)" }}>No messages yet — say hello about this booking.</p>}
+            {messages.map((m) => {
+              const mine = m.sender_id === currentUserId;
+              return (
+                <div key={m.id} style={{ alignSelf: mine ? "flex-end" : "flex-start", maxWidth: "80%" }}>
+                  <div style={{ background: mine ? "var(--forest)" : "#fff", color: mine ? "#fff" : "inherit", borderRadius: 10, padding: "8px 10px", fontSize: 13, lineHeight: 1.4 }}>
+                    {m.body}
+                  </div>
+                  <div style={{ fontSize: 10, color: "var(--muted)", marginTop: 2, textAlign: mine ? "right" : "left" }}>{timeAgo(m.created_at)}</div>
+                </div>
+              );
+            })}
+            <div ref={bottomRef} />
+          </div>
+          <div style={{ display: "flex", gap: 8 }}>
+            <input
+              value={draft}
+              placeholder="Type a message..."
+              style={{ flex: 1 }}
+              disabled={sending}
+              onChange={(e) => setDraft(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }}
+            />
+            <button className="btn-sm forest" disabled={sending || !draft.trim()} onClick={send}>Send</button>
+          </div>
+          {sendError && <p style={{ fontSize: 11, color: "#B91C1C", marginTop: 6 }}>{sendError}</p>}
+        </div>
+      )}
+    </div>
+  );
+}
+
+const MONTH_ABBR = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+
+// Supabase returns month_start as a plain "YYYY-MM-DD" string — parsed by
+// splitting rather than `new Date(...)`, since the latter reads it as UTC
+// midnight and can render as the *previous* day's month in timezones west
+// of UTC.
+function monthLabelFromDateStr(s) {
+  if (!s) return "";
+  const m = parseInt(String(s).split("-")[1], 10);
+  return MONTH_ABBR[m - 1] || s;
+}
+
+// A small, dependency-free line/bar chart for one monthly-trend series.
+// Values are few (a handful of months) so every point gets a direct label
+// and a native tooltip rather than a full interactive-tooltip layer — kept
+// intentionally simple to match how the rest of this app is built (plain
+// inline SVG, no charting library).
+function TrendChart({ points, kind = "line", color, formatValue }) {
+  const width = 560;
+  const height = 170;
+  const padTop = 30;
+  const padBottom = 26;
+  const padSide = 22;
+  const plotW = width - padSide * 2;
+  const plotH = height - padTop - padBottom;
+
+  const values = points.map((p) => p.y).filter((v) => v != null);
+  const hasData = values.some((v) => v > 0);
+  const maxV = values.length ? Math.max(...values, 0) : 0;
+  const niceMax = maxV === 0 ? 1 : maxV * 1.2;
+
+  const stepX = points.length > 1 ? plotW / (points.length - 1) : 0;
+  const xFor = (i) => padSide + (points.length > 1 ? i * stepX : plotW / 2);
+  const yFor = (v) => padTop + plotH - (Math.max(v || 0, 0) / niceMax) * plotH;
+  const fmt = (v) => (formatValue ? formatValue(v) : v);
+
+  if (!hasData) {
+    return (
+      <div style={{ height, display: "flex", alignItems: "center", justifyContent: "center", color: "var(--muted)", fontSize: 13 }}>
+        Not enough data yet
+      </div>
+    );
+  }
+
+  return (
+    <svg viewBox={`0 0 ${width} ${height}`} style={{ width: "100%", height: "auto", display: "block" }}>
+      <line x1={padSide} y1={padTop + plotH} x2={width - padSide} y2={padTop + plotH} style={{ stroke: "var(--border)" }} strokeWidth="1" />
+
+      {kind === "bar" && points.map((p, i) => {
+        const barW = Math.min(34, stepX * 0.5) || 34;
+        const x = xFor(i) - barW / 2;
+        const y = yFor(p.y || 0);
+        const barH = padTop + plotH - y;
+        return (
+          <g key={i}>
+            <rect x={x} y={y} width={barW} height={Math.max(barH, 0)} rx={4} fill={color}>
+              <title>{`${p.label}: ${p.y == null ? "—" : fmt(p.y)}`}</title>
+            </rect>
+            {p.y != null && (
+              <text x={xFor(i)} y={y - 8} textAnchor="middle" fontSize="11" fontWeight="700" style={{ fill: "var(--dark-text)" }}>{fmt(p.y)}</text>
+            )}
+            <text x={xFor(i)} y={padTop + plotH + 18} textAnchor="middle" fontSize="11" style={{ fill: "var(--muted)" }}>{p.label}</text>
+          </g>
+        );
+      })}
+
+      {kind === "line" && (
+        <>
+          <path
+            d={points
+              .map((p, i) => (p.y == null ? null : `${xFor(i)} ${yFor(p.y)}`))
+              .reduce((acc, seg, idx) => (seg == null ? { d: acc.d, pen: false } : { d: `${acc.d}${acc.pen ? " L " : `${acc.d ? " " : ""}M `}${seg}`, pen: true }), { d: "", pen: false }).d}
+            fill="none"
+            stroke={color}
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          {points.map((p, i) => (
+            <g key={i}>
+              {p.y != null && (
+                <circle cx={xFor(i)} cy={yFor(p.y)} r="4" fill="white" stroke={color} strokeWidth="2">
+                  <title>{`${p.label}: ${fmt(p.y)}`}</title>
+                </circle>
+              )}
+              {p.y != null && (
+                <text x={xFor(i)} y={yFor(p.y) - 11} textAnchor="middle" fontSize="11" fontWeight="700" style={{ fill: "var(--dark-text)" }}>{fmt(p.y)}</text>
+              )}
+              <text x={xFor(i)} y={padTop + plotH + 18} textAnchor="middle" fontSize="11" style={{ fill: "var(--muted)" }}>{p.label}</text>
+            </g>
+          ))}
+        </>
+      )}
+    </svg>
+  );
+}
+
+// YYYY-MM-DD in the BROWSER'S LOCAL calendar day — not toISOString().slice(0,10),
+// which is UTC and rolls over to the next date once local time passes
+// (24 - |UTC offset|):00. Belize is UTC-6, so any use of the UTC form for
+// "today" silently became "tomorrow" for every Belize visitor after 6pm,
+// which is exactly when a booking app is busiest — it broke the default
+// booking date, the "today" cutoff that hides already-passed time slots,
+// and the reschedule date picker's minimum, all the same way in each spot.
+const localDateStr = (d = new Date()) => {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+};
+
+// "HH:MM" for a Date, in local time — matches the start_time/end_time format
+// provider_blocks stores, so it can be compared against them directly.
+const localTimeStr = (d = new Date()) => `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+// "HH:MM"/"HH:MM:SS" -> minutes since midnight, for comparing times stored
+// as text (bookings.booking_time, provider_blocks start/end, working_hours).
+const hhmmToMinutes = (t) => {
+  const [h, m] = String(t).slice(0, 5).split(":").map(Number);
+  return (h || 0) * 60 + (m || 0);
+};
+
+const DAYS = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+const DAY_NAMES = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+const DEFAULT_HOURS = DAY_NAMES.map((day, i) => ({
+  day, day_of_week: i, is_open: i !== 0, start_time: i === 6 ? "09:00" : "08:00", end_time: i === 6 ? "15:00" : "18:00",
+}));
+
+function bookingStatusClass(status) {
+  if (status === "confirmed") return "confirmed";
+  if (status === "pending") return "pending";
+  if (status === "awaiting_payment") return "awaiting";
+  // A no-show is a failed appointment, not a finished one — it shares the
+  // cancelled/declined styling so it can't be mistaken for completed work.
+  if (status === "rejected" || status === "cancelled" || status === "no_show") return "rejected";
+  return "done";
+}
+
+function statusLabel(status) {
+  if (status === "awaiting_payment") return "awaiting payment";
+  if (status === "no_show") return "no-show";
+  return status;
+}
+
+// ── DATES AND TIMES ─────────────────────────────────────────────
+// booking_date is a Postgres `date` ("2026-08-31") and booking_time a
+// separate `time` ("14:30:00"). `new Date("2026-08-31")` is parsed as UTC
+// midnight, which in Belize (UTC−6) is 6:00 PM the DAY BEFORE — so every
+// date rendered that way was off by one, and every "time" rendered from
+// booking_date alone printed a constant 6:00 PM instead of the real
+// appointment time. Always go through these.
+function bookingDateTime(dateStr, timeStr) {
+  if (!dateStr) return null;
+  const d = new Date(`${String(dateStr).slice(0, 10)}T${String(timeStr || "00:00").slice(0, 5)}:00`);
+  return isNaN(d.getTime()) ? null : d;
+}
+function bookingDateOnly(dateStr) {
+  return bookingDateTime(dateStr, "00:00");
+}
+function formatBookingDate(dateStr, opts) {
+  const d = bookingDateOnly(dateStr);
+  return d ? d.toLocaleDateString([], opts) : "—";
+}
+function formatBookingTime(timeStr) {
+  if (!timeStr) return "";
+  const d = bookingDateTime("2000-01-01", timeStr);
+  return d ? d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }) : String(timeStr).slice(0, 5);
+}
+// "Aug 31, 2:30 PM" — the one-line form used in every booking list.
+function formatBookingWhen(b) {
+  const datePart = formatBookingDate(b?.booking_date, { month: "short", day: "numeric" });
+  const timePart = formatBookingTime(b?.booking_time);
+  return timePart ? `${datePart}, ${timePart}` : datePart;
+}
+// "2d 4h" / "5h 12m" / "38m" / "Starting now" — the customer dashboard's
+// "Next Appointment" hero countdown. Pure function (takes `now` as a plain
+// timestamp) so the component just re-renders it off a ticking state value
+// instead of this needing its own timer.
+function formatCountdown(target, now) {
+  if (!target) return "";
+  const diffMs = target.getTime() - now;
+  if (diffMs <= 0) return "Starting now";
+  const mins = Math.round(diffMs / 60000);
+  if (mins < 60) return `${mins}m`;
+  const hrs = Math.floor(mins / 60);
+  const remMins = mins % 60;
+  if (hrs < 24) return remMins ? `${hrs}h ${remMins}m` : `${hrs}h`;
+  const days = Math.floor(hrs / 24);
+  const remHrs = hrs % 24;
+  return remHrs ? `${days}d ${remHrs}h` : `${days}d`;
+}
+function isSameLocalDay(dateStr, d) {
+  const bd = bookingDateOnly(dateStr);
+  if (!bd || !d) return false;
+  return bd.getFullYear() === d.getFullYear() && bd.getMonth() === d.getMonth() && bd.getDate() === d.getDate();
+}
+
+// ── HOME FEED — "Last-Minute Drops" ─────────────────────────────
+// Standalone (not reused from the booking modal's own slot picker on
+// purpose — that logic is load-bearing for real checkout and this is a
+// separate, lower-stakes "is there anything open today" read used only to
+// decide what to show on the home feed; keeping them apart means a change
+// to one can never accidentally break the other).
+const minutesToHHMM = (m) => `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
+
+// Every real opening for `provider` on `dateStr`, exactly like the booking
+// modal's own picker: working hours minus busy windows (real bookings +
+// provider_blocks) minus the daily lunch break minus anything already in
+// the past today. Never returns a slot that wasn't actually computed from
+// that provider's real data — there is no placeholder/fallback path here.
+function computeDaySlots({ hours, busy, dateStr, durationMin, lunchBreakStart, lunchBreakMinutes, step = 30 }) {
+  if (!dateStr || !durationMin) return [];
+  const dow = new Date(`${dateStr}T00:00:00`).getDay();
+  const dayHours = (hours || []).find((h) => h.day_of_week === dow);
+  if (!dayHours || !dayHours.is_open || !dayHours.start_time || !dayHours.end_time) return [];
+  const startM = hhmmToMinutes(dayHours.start_time);
+  const endM = hhmmToMinutes(dayHours.end_time);
+  const isToday = dateStr === localDateStr();
+  const now = new Date();
+  const nowM = isToday ? now.getHours() * 60 + now.getMinutes() : -1;
+  const lunchWindow = lunchBreakStart && Number(lunchBreakMinutes) > 0
+    ? { start_time: lunchBreakStart, end_time: minutesToHHMM(hhmmToMinutes(lunchBreakStart) + Number(lunchBreakMinutes)) }
+    : null;
+  const allBusy = lunchWindow ? [...(busy || []), lunchWindow] : (busy || []);
+  const slots = [];
+  for (let m = startM; m + durationMin <= endM; m += step) {
+    if (isToday && m <= nowM) continue;
+    const slotEnd = m + durationMin;
+    const isBusy = allBusy.some((w) => {
+      const wStart = hhmmToMinutes(w.start_time);
+      const wEnd = hhmmToMinutes(w.end_time);
+      return m < wEnd && wStart < slotEnd;
+    });
+    if (!isBusy) slots.push(minutesToHHMM(m));
+  }
+  return slots;
+}
+
+// Renders the actual score rather than five hardcoded stars — a 2-star
+// provider used to display ★★★★★ with only the small number beside it
+// telling the truth.
+function StarRating({ value, size = 13 }) {
+  const v = Math.max(0, Math.min(5, Number(value) || 0));
+  const pct = (v / 5) * 100;
+  return (
+    <span
+      aria-label={`${v} out of 5`}
+      title={`${v} out of 5`}
+      style={{ position: "relative", display: "inline-block", fontSize: size, lineHeight: 1, letterSpacing: 1, whiteSpace: "nowrap" }}
+    >
+      <span style={{ color: "var(--border)" }}>★★★★★</span>
+      <span style={{ position: "absolute", left: 0, top: 0, width: `${pct}%`, overflow: "hidden", color: "#F5A623" }}>★★★★★</span>
+    </span>
+  );
+}
+
+// ── BOOKING SEARCH + SORT ───────────────────────────────────────
+// Shared by both the customer's "My bookings" list and the provider's
+// "Bookings" list: text search by name (nameFn picks which name field
+// to match per side) plus a "recently booked" sort — by when the
+// booking was created (created_at), falling back to the appointment
+// date/time for older rows or walk-ins where created_at might be
+// missing, so sorting never silently breaks.
+function filterAndSortBookings(list, search, sort, nameFn) {
+  const q = (search || "").trim().toLowerCase();
+  const filtered = q ? list.filter((b) => (nameFn(b) || "").toLowerCase().includes(q)) : list;
+  const bookedAt = (b) => {
+    const t = b.created_at ? new Date(b.created_at).getTime() : NaN;
+    if (!isNaN(t)) return t;
+    return new Date(`${b.booking_date}T${b.booking_time || "00:00"}`).getTime() || 0;
+  };
+  const sorted = [...filtered].sort((a, b) => sort === "oldest" ? bookedAt(a) - bookedAt(b) : bookedAt(b) - bookedAt(a));
+  return sorted;
+}
+
+// ── INVOICES ────────────────────────────────────────────────────
+// VaiBook doesn't process payments itself, so this isn't a payment
+// receipt from VaiBook — it's a record of the transaction between the
+// provider and the customer, built entirely client-side from data
+// already on the booking. Only offered on "completed" bookings (see
+// callers), matching the same definition of real, delivered revenue
+// already used everywhere else in the app (Earnings tab, Monthly review).
+// Takes a flat options object so both portals can build it from whatever
+// shape their own booking join happens to have.
+function buildInvoiceHtml({
+  orderNumber, bookingDate, bookingTime, serviceName, amount, depositAmount,
+  providerName, providerTaxId, providerDistrict, providerWhatsapp,
+  customerName, customerEmail,
+}) {
+  const dateLabel = bookingDate ? formatBookingDate(bookingDate, { year: "numeric", month: "long", day: "numeric" }) : "—";
+  const timeLabel = bookingTime ? String(bookingTime).slice(0, 5) : "";
+  const esc = (s) => String(s ?? "").replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+
+  return `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Invoice ${esc(orderNumber)}</title>
+<style>
+  body { font-family: Arial, sans-serif; color: #0D1F18; max-width: 640px; margin: 40px auto; padding: 0 20px; }
+  .head { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid #0D3D2E; padding-bottom: 16px; margin-bottom: 24px; }
+  .logo { font-size: 22px; font-weight: 800; color: #0D3D2E; }
+  .logo span { color: #7A9E1F; }
+  .meta { text-align: right; font-size: 13px; color: #555; }
+  h1 { font-size: 18px; margin: 0 0 4px; }
+  .parties { display: flex; justify-content: space-between; margin-bottom: 24px; gap: 24px; }
+  .party { font-size: 13px; line-height: 1.6; }
+  .party h3 { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: #888; margin: 0 0 6px; }
+  table { width: 100%; border-collapse: collapse; margin-bottom: 24px; }
+  th, td { text-align: left; padding: 10px 0; border-bottom: 1px solid #E5E5E5; font-size: 13px; }
+  th { color: #888; font-weight: 600; text-transform: uppercase; font-size: 11px; letter-spacing: .04em; }
+  .amount-col { text-align: right; }
+  .total-row td { border-bottom: none; padding-top: 14px; font-size: 16px; font-weight: 800; }
+  .footnote { font-size: 11.5px; color: #888; line-height: 1.6; margin-top: 32px; border-top: 1px solid #E5E5E5; padding-top: 16px; }
+  @media print { body { margin: 0; padding: 20px; } }
+</style>
+</head>
+<body>
+  <div class="head">
+    <div class="logo">vai<span>book</span></div>
+    <div class="meta">
+      <h1>Invoice</h1>
+      <div>#${esc(orderNumber)}</div>
+      <div>${dateLabel}${timeLabel ? " · " + timeLabel : ""}</div>
+    </div>
+  </div>
+  <div class="parties">
+    <div class="party">
+      <h3>From</h3>
+      <div><strong>${esc(providerName)}</strong></div>
+      ${providerDistrict ? `<div>${esc(providerDistrict)}, Belize</div>` : ""}
+      ${providerWhatsapp ? `<div>${esc(providerWhatsapp)}</div>` : ""}
+      ${providerTaxId ? `<div>Business reg./TIN: ${esc(providerTaxId)}</div>` : ""}
+    </div>
+    <div class="party">
+      <h3>Billed to</h3>
+      <div><strong>${esc(customerName)}</strong></div>
+      ${customerEmail ? `<div>${esc(customerEmail)}</div>` : ""}
+    </div>
+  </div>
+  <table>
+    <thead><tr><th>Description</th><th class="amount-col">Amount</th></tr></thead>
+    <tbody>
+      <tr><td>${esc(serviceName)}</td><td class="amount-col">BZ$${Number(amount || 0).toFixed(2)}</td></tr>
+      ${depositAmount ? `<tr><td style="color:#888;">— of which deposit paid in advance</td><td class="amount-col" style="color:#888;">BZ$${Number(depositAmount).toFixed(2)}</td></tr>` : ""}
+      <tr class="total-row"><td>Total</td><td class="amount-col">BZ$${Number(amount || 0).toFixed(2)}</td></tr>
+    </tbody>
+  </table>
+  <div class="footnote">
+    VaiBook is a booking marketplace, not a payment processor — this invoice reflects a transaction directly between the customer and the service provider named above, generated from their VaiBook booking record. It is not issued by VaiBook.
+  </div>
+</body>
+</html>`;
+}
+
+// Opens the invoice in a new tab and triggers the browser's native
+// print dialog, where "Save as PDF" is a standard destination — avoids
+// needing a PDF-generation library for something the browser already
+// does well.
+function printInvoice(html) {
+  const w = window.open("", "_blank");
+  if (!w) {
+    // Otherwise the button just looks dead.
+    window.alert("Your browser blocked the new tab this opens in. Allow pop-ups for VaiBook and try again.");
+    return;
+  }
+  w.document.write(html);
+  w.document.close();
+  // The invoice is static markup with no external resources to wait on,
+  // so a short delay (rather than onload, which can be unreliable on a
+  // document.write'd window) is enough for the new tab to paint before print.
+  setTimeout(() => { try { w.print(); } catch (e) { /* window may already be closed */ } }, 250);
+}
+
+// ── SALES & TAX LEDGER ──────────────────────────────────────────
+// Deliberately separate from buildInvoiceHtml above rather than bolted
+// onto it: an invoice is a per-transaction document handed to one
+// customer; a ledger is the provider's own register of every completed
+// booking over a period, for filing taxes — one row per booking,
+// listing the same order number each booking's individual invoice
+// uses, so the two stay reconcilable without being the same document.
+// Built entirely client-side from bookings already loaded, same as
+// invoices — no new table or migration needed.
+function buildLedgerHtml({ providerName, providerTaxId, periodLabel, rows, taxRate = 0 }) {
+  const esc = (s) => String(s ?? "").replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+  const total = rows.reduce((sum, r) => sum + (Number(r.amount) || 0), 0);
+  // Amounts collected from customers are tax-inclusive, so the tax portion
+  // is backed out of the total rather than added on top: at 12.5%, BZ$100
+  // collected is BZ$88.89 net + BZ$11.11 tax.
+  const rate = Number(taxRate) || 0;
+  const taxPortion = rate > 0 ? total - total / (1 + rate / 100) : 0;
+  const netOfTax = total - taxPortion;
+  const rowsHtml = rows.length
+    ? rows.map((r) => `<tr><td>${esc(r.dateLabel)}</td><td>${esc(r.orderNumber)}</td><td>${esc(r.serviceName)}</td><td>${esc(r.customerName)}</td><td class="amount-col">BZ$${Number(r.amount || 0).toFixed(2)}</td></tr>`).join("")
+    : `<tr><td colspan="5" style="color:#888;text-align:center;padding:24px 0;">No completed bookings in this period.</td></tr>`;
+
+  return `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Sales &amp; tax ledger — ${esc(periodLabel)}</title>
+<style>
+  body { font-family: Arial, sans-serif; color: #0D1F18; max-width: 760px; margin: 40px auto; padding: 0 20px; }
+  .head { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid #0D3D2E; padding-bottom: 16px; margin-bottom: 24px; }
+  .logo { font-size: 22px; font-weight: 800; color: #0D3D2E; }
+  .logo span { color: #7A9E1F; }
+  .meta { text-align: right; font-size: 13px; color: #555; }
+  h1 { font-size: 18px; margin: 0 0 4px; }
+  .party { font-size: 13px; line-height: 1.6; margin-bottom: 24px; }
+  table { width: 100%; border-collapse: collapse; margin-bottom: 24px; }
+  th, td { text-align: left; padding: 8px 10px 8px 0; border-bottom: 1px solid #E5E5E5; font-size: 12.5px; }
+  th { color: #888; font-weight: 600; text-transform: uppercase; font-size: 10.5px; letter-spacing: .04em; }
+  .amount-col { text-align: right; }
+  .total-row td { border-bottom: none; padding-top: 14px; font-size: 16px; font-weight: 800; }
+  .footnote { font-size: 11.5px; color: #888; line-height: 1.6; margin-top: 32px; border-top: 1px solid #E5E5E5; padding-top: 16px; }
+  @media print { body { margin: 0; padding: 20px; } }
+</style>
+</head>
+<body>
+  <div class="head">
+    <div class="logo">vai<span>book</span></div>
+    <div class="meta">
+      <h1>Sales &amp; tax ledger</h1>
+      <div>${esc(periodLabel)}</div>
+    </div>
+  </div>
+  <div class="party">
+    <div><strong>${esc(providerName)}</strong></div>
+    ${providerTaxId ? `<div>Business reg./TIN: ${esc(providerTaxId)}</div>` : ""}
+  </div>
+  <table>
+    <thead><tr><th>Date</th><th>Order #</th><th>Service</th><th>Customer</th><th class="amount-col">Amount</th></tr></thead>
+    <tbody>
+      ${rowsHtml}
+      <tr class="total-row"><td colspan="4">Total collected (${rows.length} completed booking${rows.length === 1 ? "" : "s"})</td><td class="amount-col">BZ$${total.toFixed(2)}</td></tr>
+      ${rate > 0 ? `
+      <tr><td colspan="4" style="padding-top:10px;">Net of tax</td><td class="amount-col">BZ$${netOfTax.toFixed(2)}</td></tr>
+      <tr><td colspan="4"><strong>Tax included at ${rate}%</strong></td><td class="amount-col"><strong>BZ$${taxPortion.toFixed(2)}</strong></td></tr>` : ""}
+    </tbody>
+  </table>
+  <div class="footnote">
+    VaiBook is a booking marketplace, not a payment processor — every amount here reflects a transaction directly between this provider and their customer, generated from their VaiBook booking records for their own tax filing use. It is not issued by VaiBook and is not a formal receipt of taxes paid.${rate > 0 ? ` The tax figure above is a straight ${rate}% calculation on the amounts collected, provided for convenience — confirm your actual liability with your accountant or the tax department.` : ""}
+  </div>
+</body>
+</html>`;
+}
+
+// ── COMPONENTS ──────────────────────────────────────────────────
+
+function getInitials(name) {
+  return (name || "?")
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => w[0].toUpperCase())
+    .join("");
+}
+
+function scrollToSection(id, onNav, current) {
+  const jump = () => document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+  if (current !== "home") {
+    onNav("home");
+    setTimeout(jump, 60);
+  } else {
+    jump();
+  }
+}
+
+// Same jump-to-section pattern as scrollToSection above, but for the B2B
+// provider landing page (pricing now lives there, not on the consumer
+// home page — see ProviderLandingPage) — every nav "Pricing" link should
+// land on that page's pricing section, from anywhere in the app.
+function scrollToProvidersSection(id, onNav, current) {
+  const jump = () => document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+  if (current !== "providers") {
+    onNav("providers");
+    setTimeout(jump, 60);
+  } else {
+    jump();
+  }
+}
+
+// Web Push subscription keys are handed to the browser as a base64url
+// string (VAPID public key) but the Push API wants a raw Uint8Array —
+// this is the standard conversion every Web Push tutorial uses.
+function urlBase64ToUint8Array(base64String) {
+  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+  const rawData = window.atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+  for (let i = 0; i < rawData.length; i++) outputArray[i] = rawData.charCodeAt(i);
+  return outputArray;
+}
+
+// Shared by both the provider's and the customer's "Push notifications on
+// this device" toggle in Settings — subscribes this browser/device to Web
+// Push for whichever user id owns the screen it's used from, and keeps the
+// toggle's state in sync with whatever this browser already has registered
+// (so a reload doesn't lose the "✓ On" state). Pulled out into one hook
+// instead of writing this twice so provider and customer push behave
+// identically and only need fixing in one place.
+// FIXED (dropdown glitch): the avatar/account dropdowns used to close only
+// via onMouseLeave, which on a trackpad or a slightly diagonal mouse path
+// fires the instant the cursor crosses the gap between the avatar button
+// and the dropdown panel — so opening it often felt like it "didn't take"
+// and needed a second or third click. A real click-outside listener is the
+// standard fix: it closes the menu only when the user actually clicks
+// somewhere else, and stays open no matter how the mouse wanders over it.
+// `mousedown` (not `click`) so this fires and closes any OTHER open menu
+// before a click on a different toggle button's own onClick handler runs.
+// The toggle button itself must stopPropagation() in its onClick (done at
+// each call site below) — otherwise the same click that OPENS the menu
+// would immediately bubble to this document listener and close it again.
+function useClickOutside(active, onOutsideClick) {
+  const ref = useRef(null);
+  useEffect(() => {
+    if (!active) return;
+    const handleClick = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) onOutsideClick();
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [active, onOutsideClick]);
+  return ref;
+}
+
+function usePushSubscription(userId) {
+  const [pushEnabled, setPushEnabled] = useState(false);
+  const [subscribingPush, setSubscribingPush] = useState(false);
+  const [pushError, setPushError] = useState("");
+
+  useEffect(() => {
+    if (!("serviceWorker" in navigator) || !("PushManager" in window)) return;
+    navigator.serviceWorker.ready.then((reg) => reg.pushManager.getSubscription()).then((sub) => {
+      setPushEnabled(!!sub);
+    }).catch(() => {});
+  }, []);
+
+  const enablePushNotifications = async () => {
+    setPushError("");
+    if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
+      setPushError("Push notifications aren't supported in this browser. On iPhone, add VaiBook to your Home Screen first (Share -> Add to Home Screen), then try again from there.");
+      return;
+    }
+    const vapidKey = process.env.REACT_APP_VAPID_PUBLIC_KEY;
+    if (!vapidKey) {
+      setPushError("Push notifications aren't configured yet.");
+      return;
+    }
+    if (!userId) {
+      setPushError("Please finish signing in first.");
+      return;
+    }
+    setSubscribingPush(true);
+    try {
+      const permission = await Notification.requestPermission();
+      if (permission !== "granted") {
+        setPushError("Notifications are blocked. Enable them for this site in your browser settings to turn this on.");
+        return;
+      }
+      const registration = await navigator.serviceWorker.ready;
+      const subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(vapidKey),
+      });
+      const { error } = await savePushSubscription(userId, subscription);
+      if (error) throw error;
+      setPushEnabled(true);
+    } catch (err) {
+      console.error("Push subscription failed:", err);
+      setPushError("Couldn't turn on push notifications. Please try again.");
+    } finally {
+      setSubscribingPush(false);
+    }
+  };
+
+  return { pushEnabled, subscribingPush, pushError, enablePushNotifications };
+}
+
+// Shared by enterCustomerPortal/enterProviderPortal below.
+//
+// FIXED (P0 — providers getting bounced to "List a business"/"No provider
+// profile yet" when switching portals): this used to force a full
+// Supabase sign-out + re-authenticate through Google (account picker and
+// all) any time vaibook_last_view didn't already match the target portal,
+// on the theory that switching portals should always require an explicit,
+// deliberate re-choice (see AuthChoice). That theory is still right — the
+// click itself already IS the deliberate choice, nothing here ever fires
+// automatically — but forcing a real sign-out to enforce it was the bug:
+// it sent an already-authenticated account back through Google's account
+// picker (prompt: 'select_account', see signInWithGoogle) purely to
+// re-derive state (providerProfile/staffProfile) that App() already has
+// loaded in memory for this session. Any hiccup in that unnecessary
+// round-trip — the wrong Google account getting picked, or a timing race
+// in the profile reload right after the redirect — landed a real business
+// owner on the "no provider profile yet" screen even though their
+// business was never touched. Trusting the already-loaded profile state
+// instead removes that failure path entirely: no session ever needs to be
+// torn down just to look at a different portal of the SAME signed-in
+// account. A genuinely profile-less account still correctly sees
+// ProviderPortal's own "No provider profile yet" screen (or StaffPortal,
+// if it's a staff seat) — that's real, not a bug.
+function switchToPortal(targetPortal, onNav, session, onSignIn) {
+  if (!session) {
+    try { localStorage.setItem("vaibook_pending_view", targetPortal); } catch (e) { /* ignore */ }
+    onSignIn();
+    return;
+  }
+  onNav(targetPortal);
+}
+
+function enterCustomerPortal(onNav, session, onSignIn) {
+  switchToPortal("customer", onNav, session, onSignIn);
+}
+
+function enterProviderPortal(onNav, session, onSignIn) {
+  switchToPortal("provider", onNav, session, onSignIn);
+}
+
+function AuthChoice({ onNav, session, onSignIn, onSignOut }) {
+  const { t } = useTranslation();
+  // GAP FIX: this card used to go straight to Google sign-in, as if
+  // "For professionals" on a page titled "Sign up / log in" could only
+  // mean "I already have an approved business." A brand-new provider has
+  // no provider_profiles row yet, so that sign-in just dead-ended them on
+  // ProviderPortal's "No business found on this account" screen —
+  // technically correct, but only after a confusing detour through an
+  // account picker that had nothing to do with actually signing up.
+  // Clicking the card now reveals the real fork instead of assuming an
+  // answer: "already listed" still goes through the same sign-in as
+  // before; "new business" routes to view "signup" — the real,
+  // admin-reviewed application form (ProviderSignup/submitProviderApplication)
+  // — with no sign-in required first. Deliberately NOT onOpenProviderSignup:
+  // that opens ProviderSignupModal, which per its own file header is a
+  // front-end-only mockup with no backend wiring at all (submitting it
+  // creates no auth user, no provider row, nothing — see
+  // ProviderSignupModal.jsx). Routing "new business" through the mockup
+  // would make this fork look fixed while actually leaving new providers
+  // right back at a dead end, just a prettier one.
+  const [showProviderFork, setShowProviderFork] = useState(false);
+  return (
+    <>
+    <div className="auth-choice">
+      <div className="auth-choice-left">
+        <button className="auth-back" onClick={() => onNav("home")} aria-label={t("auth.back")}>←</button>
+        <div className="auth-choice-body">
+          <h1>{t("auth.signUpLogIn")}</h1>
+          {/* Hidden once the professional fork is showing, per explicit
+              request — "once the click for professionals the following
+              page shouldn't have the [for customers]" — so that screen
+              is just the two real provider options, not those plus an
+              unrelated customer card. The back link below still returns
+              to both cards. */}
+          {!showProviderFork && (
+            <div className="auth-option-card" onClick={() => enterCustomerPortal(onNav, session, onSignIn)}>
+              <div>
+                <h3>{t("auth.forCustomers")}</h3>
+                <p>{t("auth.bookLocalServices")}</p>
+              </div>
+              <span className="auth-option-arrow">→</span>
+            </div>
+          )}
+          {!showProviderFork ? (
+            <div className="auth-option-card" onClick={() => setShowProviderFork(true)}>
+              <div>
+                <h3>{t("auth.forProfessionals")}</h3>
+                <p>{t("auth.manageAndGrow")}</p>
+              </div>
+              <span className="auth-option-arrow">→</span>
+            </div>
+          ) : (
+            <div className="auth-provider-fork">
+              <div className="auth-provider-fork-heading">{t("auth.forProfessionals")}</div>
+              <div className="auth-option-card auth-option-card-sm" onClick={() => enterProviderPortal(onNav, session, onSignIn)}>
+                <div>
+                  <h3>{t("auth.alreadyListed")}</h3>
+                  <p>{t("auth.alreadyListedDesc")}</p>
+                </div>
+                <span className="auth-option-arrow">→</span>
+              </div>
+              <div className="auth-option-card auth-option-card-sm" onClick={() => onNav("signup")}>
+                <div>
+                  <h3>{t("auth.newBusiness")}</h3>
+                  <p>{t("auth.newBusinessDesc")}</p>
+                </div>
+                <span className="auth-option-arrow">→</span>
+              </div>
+              <a className="auth-provider-fork-back" onClick={() => setShowProviderFork(false)}>{t("auth.back")}</a>
+            </div>
+          )}
+        </div>
+      </div>
+      <div className="auth-choice-panel">
+        {/* Swap this for a real photo later: <img src="/your-photo.jpg" style={{width:"100%",height:"100%",objectFit:"cover"}} /> */}
+        <div className="auth-choice-panel-logo" style={{ display: "flex", alignItems: "center", gap: 12 }}><VaiBookMark size={38} />vai<span>book</span></div>
+      </div>
+    </div>
+    <SiteFooter />
+    </>
+  );
+}
+
+// HELP & SUPPORT — reached from "Help and support" in either version of the
+// Menu dropdown (customer-side and business-side). Deliberately a different
+// layout from AuthChoice's full-screen split panel (per explicit request,
+// "in a different format") — a simple centered page with two cards, using
+// VaiBook's own icon-block style (like the SERVICES pills) instead of stock
+// photography, since there isn't a real photo library to draw from.
+//
+// The two cards now lead to two different real destinations rather than
+// both firing an instant mailto (per explicit instruction: "customer
+// support is the one with the email. and the one for professionals is with
+// the faq") — "For customers" opens a proper contact form (HelpContactForm,
+// below), "For professionals" opens a searchable FAQ (HelpFAQ, below) that
+// only answers with real, already-built app behavior.
+function HelpCenter({ onNav }) {
+  const { t } = useTranslation();
+  return (
+    <div className="lp-theme help-shell">
+      <div className="help-center-page">
+        <h1 className="help-title">{t("help.title")}</h1>
+        <p className="help-sub">{t("help.sub")}</p>
+        <div className="help-cards">
+          <button type="button" className="help-card" onClick={() => onNav("help-contact")}>
+            <div className="help-card-icon">🛍️</div>
+            <h3>{t("help.forCustomers")}</h3>
+            <p>{t("help.forCustomersDesc")}</p>
+            <span className="help-card-arrow">→</span>
+          </button>
+          <button type="button" className="help-card" onClick={() => onNav("help-faq")}>
+            <div className="help-card-icon">🏪</div>
+            <h3>{t("help.forProfessionals")}</h3>
+            <p>{t("help.forProfessionalsDesc")}</p>
+            <span className="help-card-arrow">→</span>
+          </button>
+        </div>
+      </div>
+      <SiteFooter />
+    </div>
+  );
+}
+
+// HELP — EMAIL US — reached from the "For customers" card above. A real
+// contact form instead of an instant mailto, but still honest about what it
+// is: there's no ticketing backend behind VaiBook to receive a form post, so
+// submitting composes a pre-filled email and hands it to the visitor's own
+// mail client, addressed to support@vaibook.bz. Deliberately no fake
+// "attach a screenshot" dropzone (unlike the Fresha reference) since nothing
+// on VaiBook's end could actually receive an attachment yet, and one shared
+// topic dropdown rather than Fresha's redundant two-dropdown structure.
+function HelpContactForm({ onNav }) {
+  const { t } = useTranslation();
+  const [topic, setTopic] = useState("");
+  const [email, setEmail] = useState("");
+  const [description, setDescription] = useState("");
+  const [error, setError] = useState("");
+  const DESCRIPTION_MAX = 1000;
+
+  const handleSend = () => {
+    if (!topic || !email.trim() || !description.trim()) {
+      setError(t("help.contact.validation"));
+      return;
+    }
+    setError("");
+    const topicLabel = t(`help.contact.topics.${topic}`);
+    const subject = `${t("help.contact.emailSubjectPrefix")} — ${topicLabel}`;
+    const body = `${t("help.contact.emailBodyFrom")}: ${email.trim()}\n\n${description.trim()}`;
+    window.location.href = helpMailtoUrl(subject, body);
+  };
+
+  return (
+    <div className="lp-theme help-shell">
+      <div className="help-form-page">
+        <button type="button" className="help-back-link" onClick={() => onNav("help")}>← {t("help.backToHelp")}</button>
+        <h1 className="help-title">{t("help.contact.title")}</h1>
+        <p className="help-sub">{t("help.contact.sub")}</p>
+
+        <div className="help-form-card">
+          <div className="help-form-group">
+            <label>{t("help.contact.topicLabel")}</label>
+            <select value={topic} onChange={(e) => setTopic(e.target.value)}>
+              <option value="">{t("help.contact.topicPlaceholder")}</option>
+              {CONTACT_REASONS.map((r) => (
+                <option key={r} value={r}>{t(`help.contact.topics.${r}`)}</option>
+              ))}
+            </select>
+          </div>
+          <div className="help-form-group">
+            <label>{t("help.contact.emailLabel")}</label>
+            <input type="email" placeholder="you@email.com" value={email} onChange={(e) => setEmail(e.target.value)} />
+            <span className="help-form-hint">{t("help.contact.emailHint")}</span>
+          </div>
+          <div className="help-form-group">
+            <label>{t("help.contact.descriptionLabel")}</label>
+            <textarea
+              rows={6}
+              maxLength={DESCRIPTION_MAX}
+              placeholder={t("help.contact.descriptionPlaceholder")}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+            />
+            <span className="help-form-hint help-form-charcount">{description.length}/{DESCRIPTION_MAX}</span>
+          </div>
+          {error && <p className="help-form-error">{error}</p>}
+          <button type="button" className="help-form-submit" onClick={handleSend}>{t("help.contact.send")}</button>
+          <p className="help-form-footnote">{t("help.contact.sendHint")}</p>
+        </div>
+      </div>
+      <SiteFooter />
+    </div>
+  );
+}
+
+// HELP — FAQ — reached from the "For professionals" card above. A real,
+// client-side-searchable FAQ rather than a mailto — every answer here
+// describes real, already-built VaiBook behavior (see the FAQ_ITEMS comment
+// near the top of this file for the honesty reasoning); nothing aspirational.
+// Still ends with a link into HelpContactForm above, since there's no
+// separate professional-only inbox on the other end.
+function HelpFAQ({ onNav }) {
+  const { t } = useTranslation();
+  const [query, setQuery] = useState("");
+  const [openId, setOpenId] = useState(null);
+
+  const q = query.trim().toLowerCase();
+  const items = FAQ_ITEMS.filter((id) => {
+    if (!q) return true;
+    const question = t(`help.faq.${id}.q`).toLowerCase();
+    const answer = t(`help.faq.${id}.a`).toLowerCase();
+    return question.includes(q) || answer.includes(q);
+  });
+
+  return (
+    <div className="lp-theme help-shell">
+      <div className="help-faq-page">
+        <button type="button" className="help-back-link" onClick={() => onNav("help")}>← {t("help.backToHelp")}</button>
+        <h1 className="help-title">{t("help.faq.title")}</h1>
+        <p className="help-sub">{t("help.faq.sub")}</p>
+
+        <div className="help-faq-search">
+          <span className="help-faq-search-icon" aria-hidden="true">🔍</span>
+          <input placeholder={t("help.faq.searchPlaceholder")} value={query} onChange={(e) => setQuery(e.target.value)} />
+        </div>
+
+        <div className="help-faq-list">
+          {items.length === 0 && <p className="help-faq-empty">{t("help.faq.noResults")}</p>}
+          {items.map((id) => {
+            const isOpen = openId === id;
+            return (
+              <div key={id} className={`help-faq-item ${isOpen ? "open" : ""}`}>
+                <button type="button" className="help-faq-question" onClick={() => setOpenId(isOpen ? null : id)}>
+                  <span>{t(`help.faq.${id}.q`)}</span>
+                  <span className="help-faq-chevron" aria-hidden="true">{isOpen ? "−" : "+"}</span>
+                </button>
+                {isOpen && <p className="help-faq-answer">{t(`help.faq.${id}.a`)}</p>}
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="help-faq-cta">
+          <p>{t("help.faq.stillNeedHelp")}</p>
+          <button type="button" className="help-faq-cta-btn" onClick={() => onNav("help-contact")}>{t("help.faq.emailUs")}</button>
+        </div>
+      </div>
+      <SiteFooter />
+    </div>
+  );
+}
+
+function openInstallAppGuide() {
+  window.dispatchEvent(new Event("vaibook-open-install-guide"));
+}
+
+function InstallAppGuide() {
+  const [open, setOpen] = useState(false);
+  const [platform, setPlatform] = useState("ios");
+  const [showBanner, setShowBanner] = useState(false);
+  const [deferredPrompt, setDeferredPrompt] = useState(null);
+
+  // How long a dismiss (or an "install"/"show me" tap that didn't end in a
+  // real install) snoozes the banner before it's allowed to reappear on a
+  // later visit. It only stops reappearing for good once the app is
+  // actually installed — detected live via standalone mode below, not by
+  // remembering a one-time dismiss forever.
+  const SNOOZE_MS = 3 * 24 * 60 * 60 * 1000; // 3 days
+
+  useEffect(() => {
+    const ua = window.navigator.userAgent || "";
+    const isIOSPhone = /iPhone|iPod/.test(ua) && !window.MSStream;
+    // iPadOS Safari reports itself as a desktop Mac by default (since iOS
+    // 13), so a plain UA check misses iPads entirely. A touch-capable
+    // "MacIntel" is the standard way to still catch it.
+    const isIPad = /iPad/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+    const isIOS = isIOSPhone || isIPad;
+    const isAndroid = /Android/.test(ua); // covers Android phones and tablets alike
+    const isMobileOrTablet = isIOS || isAndroid;
+    setPlatform(isIOS ? "ios" : "android");
+
+    const isStandalone =
+      (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) ||
+      window.navigator.standalone === true;
+
+    const onBeforeInstall = (e) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+    window.addEventListener("beforeinstallprompt", onBeforeInstall);
+
+    const onOpenGuide = () => setOpen(true);
+    window.addEventListener("vaibook-open-install-guide", onOpenGuide);
+
+    let bannerTimer = null;
+    if (isMobileOrTablet && !isStandalone) {
+      let snoozedAt = null;
+      try { snoozedAt = Number(localStorage.getItem("vaibook_a2hs_snoozed_at")) || null; } catch (e) { /* ignore */ }
+      const stillSnoozed = snoozedAt && (Date.now() - snoozedAt < SNOOZE_MS);
+      if (!stillSnoozed) {
+        bannerTimer = setTimeout(() => setShowBanner(true), 2500);
+      }
+    }
+
+    return () => {
+      window.removeEventListener("beforeinstallprompt", onBeforeInstall);
+      window.removeEventListener("vaibook-open-install-guide", onOpenGuide);
+      if (bannerTimer) clearTimeout(bannerTimer);
+    };
+  }, []);
+
+  const snoozeBanner = () => {
+    setShowBanner(false);
+    try { localStorage.setItem("vaibook_a2hs_snoozed_at", String(Date.now())); } catch (e) { /* ignore */ }
+  };
+
+  const dismissBanner = snoozeBanner;
+
+  const handleInstallClick = async () => {
+    snoozeBanner();
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      try { await deferredPrompt.userChoice; } catch (e) { /* ignore */ }
+      setDeferredPrompt(null);
+    } else {
+      setOpen(true);
+    }
+  };
+
+  return (
+    <>
+      {showBanner && (
+        <div className="a2hs-banner">
+          <span className="a2hs-banner-icon">📲</span>
+          <div className="a2hs-banner-text">
+            <div className="a2hs-banner-title">Add VaiBook to your Home Screen</div>
+            <div className="a2hs-banner-sub">Quick access, just like an app.</div>
+          </div>
+          <button className="a2hs-banner-cta" onClick={handleInstallClick}>{deferredPrompt ? "Install" : "Show me"}</button>
+          <button className="a2hs-banner-close" onClick={dismissBanner} aria-label="Dismiss">✕</button>
+        </div>
+      )}
+      {open && (
+        <div className="modal-overlay" onClick={() => setOpen(false)}>
+          <div className="modal-panel a2hs-modal" onClick={(e) => e.stopPropagation()}>
+            <button className="a2hs-modal-close" onClick={() => setOpen(false)} aria-label="Close">✕</button>
+            <div className="a2hs-modal-icon">📲</div>
+            <h2 className="a2hs-modal-title">Add VaiBook to your Home Screen</h2>
+            <p className="a2hs-modal-sub">Get one-tap access and a full-screen app experience — no App Store needed.</p>
+
+            {deferredPrompt && (
+              <button className="btn-lime a2hs-install-btn" onClick={handleInstallClick}>Install App</button>
+            )}
+
+            <div className="a2hs-tabs">
+              <button className={`a2hs-tab ${platform === "ios" ? "active" : ""}`} onClick={() => setPlatform("ios")}>📱 iPhone</button>
+              <button className={`a2hs-tab ${platform === "android" ? "active" : ""}`} onClick={() => setPlatform("android")}>🤖 Android</button>
+            </div>
+
+            {platform === "ios" ? (
+              <ol className="a2hs-steps">
+                <li><span className="a2hs-step-num">1</span> Tap the <strong>Share</strong> icon <span className="a2hs-glyph">⬆️</span> in Safari's toolbar.</li>
+                <li><span className="a2hs-step-num">2</span> Scroll down and tap <strong>"Add to Home Screen"</strong>.</li>
+                <li><span className="a2hs-step-num">3</span> Tap <strong>"Add"</strong> in the top right.</li>
+              </ol>
+            ) : (
+              <ol className="a2hs-steps">
+                <li><span className="a2hs-step-num">1</span> Tap the <strong>⋮ menu</strong> icon in Chrome's top right.</li>
+                <li><span className="a2hs-step-num">2</span> Tap <strong>"Add to Home screen"</strong> or <strong>"Install app"</strong>.</li>
+                <li><span className="a2hs-step-num">3</span> Tap <strong>"Add"</strong> / <strong>"Install"</strong> to confirm.</li>
+              </ol>
+            )}
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
+// Where clicking a notification should take you — keyed by the
+// `notifications.type` values created throughout the app (booking
+// requests/responses, receipts, reviews, monthly review, messages).
+// "message" isn't included here since it can go to either portal
+// depending on who's being notified — handled separately below.
+const NOTIF_DESTINATIONS = {
+  booking_requested: { view: "provider", tab: "bookings" },
+  booking_cancelled: { view: "provider", tab: "bookings" },
+  receipt_uploaded: { view: "provider", tab: "bookings" },
+  review: { view: "provider", tab: "bookings" },
+  monthly_review: { view: "provider", tab: "review" },
+  booking_rejected: { view: "customer", tab: "bookings" },
+  payment_confirmed: { view: "customer", tab: "bookings" },
+  booking_completed: { view: "customer", tab: "bookings" },
+  // These were missing, so the two notifications that matter most to a
+  // customer — "you've been accepted, go pay your deposit" and "you're
+  // confirmed" — silently did nothing when tapped.
+  booking_accepted_deposit: { view: "customer", tab: "bookings" },
+  booking_confirmed: { view: "customer", tab: "bookings" },
+  booking_cancelled_by_provider: { view: "customer", tab: "bookings" },
+  booking_rescheduled: { view: "customer", tab: "bookings" },
+  booking_no_show: { view: "customer", tab: "bookings" },
+  review_reply: { view: "customer", tab: "bookings" },
+  payment_due_reminder: { view: "provider", tab: "billing" },
+  payment_overdue_suspended: { view: "provider", tab: "billing" },
+};
+
+// Site-wide banner for the admin-only emergency maintenance switch (see
+// supabase_security_hardening.sql / AdminPortal's "Emergency" tab). Polls
+// rather than subscribing, matching how the rest of the app already
+// checks for updates (e.g. the notification list in Nav()) — this is a
+// rare admin action, not something that needs to be instant, and the flag
+// is also enforced server-side regardless of whether this banner has
+// caught up yet.
+function MaintenanceBanner() {
+  const [status, setStatus] = useState({ on: false, message: "" });
+
+  useEffect(() => {
+    let cancelled = false;
+    const check = async () => {
+      const s = await getMaintenanceStatus();
+      if (!cancelled) setStatus(s);
+    };
+    check();
+    const interval = setInterval(check, 60000);
+    return () => { cancelled = true; clearInterval(interval); };
+  }, []);
+
+  if (!status.on) return null;
+  return (
+    <div style={{ background: "#b45309", color: "#fff", textAlign: "center", padding: "10px 16px", fontSize: 13, fontWeight: 600, position: "relative", zIndex: 500 }}>
+      🚧 {status.message || "New bookings and signups are temporarily paused for maintenance. Everything else still works — please try again shortly."}
+    </div>
+  );
+}
+
+// Full-site takeover shown to everyone except a signed-in admin while
+// "Site offline" is on (see AdminPortal's Emergency tab / set_site_offline
+// in supabase_site_offline.sql) — the Vai-Buy-style "we'll be back
+// shortly" screen, so planned changes can be made with the public site
+// hidden, while the admin can still sign in and see the real thing.
+function SiteOffline({ message, onSignIn }) {
+  return (
+    <>
+      <style>{css}</style>
+      <div style={{ minHeight: "100vh", background: "var(--sand)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
+        <div style={{ maxWidth: 440, width: "100%", background: "white", borderRadius: "var(--radius)", overflow: "hidden", boxShadow: "0 20px 60px rgba(13,61,46,0.16)" }}>
+          <div style={{ background: "var(--forest)", padding: "20px 28px", display: "flex", alignItems: "center", gap: 10 }}>
+            <span style={{ width: 9, height: 9, borderRadius: "50%", background: "var(--lime)", flexShrink: 0 }} />
+            <span style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 19, fontWeight: 800, color: "var(--near-white)", display: "flex", alignItems: "center", gap: 8 }}>
+              <VaiBookMark size={19} />vai<span style={{ color: "var(--lime)" }}>book</span>
+            </span>
+          </div>
+          <div style={{ padding: "32px 28px" }}>
+            <h1 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 23, fontWeight: 800, color: "var(--dark-text)", margin: "0 0 12px" }}>We'll be back shortly</h1>
+            <p style={{ color: "var(--muted)", fontSize: 15, lineHeight: 1.6, margin: "0 0 10px" }}>
+              {message || "VaiBook is offline while we make some improvements."}
+            </p>
+            <p style={{ color: "var(--muted)", fontSize: 15, lineHeight: 1.6, margin: 0 }}>Thanks for your patience — check back soon.</p>
+            <div style={{ marginTop: 26, borderTop: "1px solid var(--border)", paddingTop: 16 }}>
+              <a style={{ fontSize: 13, color: "var(--muted)", cursor: "pointer" }} onClick={onSignIn}>Site owner? Sign in</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
+function EmailAuthModal({ email, onClose, onResend, onVerified }) {
+  // Step-2-only modal: by the time this opens, the caller (guest checkout,
+  // or a "Sign in" entry point elsewhere) has already collected the email
+  // and triggered sendEmailOtp once. This just handles entering + verifying
+  // the 6-digit code, and re-sending it. No password ever exists to check.
+  const [code, setCode] = useState(["", "", "", "", "", ""]);
+  const [verifying, setVerifying] = useState(false);
+  const [resending, setResending] = useState(false);
+  const [error, setError] = useState("");
+  const [resendCooldown, setResendCooldown] = useState(30);
+  const inputRefs = useRef([]);
+
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const t = setTimeout(() => setResendCooldown((s) => s - 1), 1000);
+    return () => clearTimeout(t);
+  }, [resendCooldown]);
+
+  useEffect(() => {
+    setTimeout(() => inputRefs.current[0]?.focus(), 50);
+  }, []);
+
+  const handleCodeChange = (index, value) => {
+    const digit = value.replace(/\D/g, "").slice(-1);
+    const next = [...code];
+    next[index] = digit;
+    setCode(next);
+    if (digit && index < 5) inputRefs.current[index + 1]?.focus();
+  };
+
+  const handleCodeKeyDown = (index, e) => {
+    if (e.key === "Backspace" && !code[index] && index > 0) inputRefs.current[index - 1]?.focus();
+  };
+
+  const handleCodePaste = (e) => {
+    const pasted = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
+    if (!pasted) return;
+    e.preventDefault();
+    const next = ["", "", "", "", "", ""];
+    for (let i = 0; i < pasted.length; i++) next[i] = pasted[i];
+    setCode(next);
+    inputRefs.current[Math.min(pasted.length, 5)]?.focus();
+  };
+
+  const handleVerify = async () => {
+    const joined = code.join("");
+    if (joined.length !== 6) { setError("Enter the 6-digit code."); return; }
+    setError("");
+    setVerifying(true);
+    const { data, error: verifyError } = await verifyEmailOtp(email, joined);
+    setVerifying(false);
+    if (verifyError || !data?.session) {
+      setError("That code didn't work. Check it and try again.");
+      return;
+    }
+    onVerified(data);
+  };
+
+  const handleResend = async () => {
+    if (resendCooldown > 0) return;
+    setResending(true);
+    setError("");
+    await onResend?.();
+    setResending(false);
+    setResendCooldown(30);
+  };
+
+  return (
+    <div className="email-auth-overlay" onClick={onClose}>
+      <div className="email-auth-card" onClick={(e) => e.stopPropagation()}>
+        <button className="email-auth-close" onClick={onClose} aria-label="Close">×</button>
+        <p className="email-auth-brand">vai <span>book</span></p>
+        <h2 className="email-auth-title">Enter the code</h2>
+        <p className="email-auth-sub">We sent a 6-digit code to <strong>{email}</strong>.</p>
+
+        <div className="email-auth-code-row" onPaste={handleCodePaste}>
+          {code.map((digit, i) => (
+            <input
+              key={i}
+              ref={(el) => (inputRefs.current[i] = el)}
+              type="text"
+              inputMode="numeric"
+              maxLength={1}
+              value={digit}
+              onChange={(e) => handleCodeChange(i, e.target.value)}
+              onKeyDown={(e) => handleCodeKeyDown(i, e)}
+              className="email-auth-code-input"
+            />
+          ))}
+        </div>
+
+        {error && <p className="email-auth-error">{error}</p>}
+
+        <button className="email-auth-btn" disabled={verifying} onClick={handleVerify}>
+          {verifying ? "Verifying..." : "Verify & continue"}
+        </button>
+        <button className="email-auth-resend" disabled={resendCooldown > 0 || resending} onClick={handleResend}>
+          {resending ? "Resending..." : resendCooldown > 0 ? `Resend code in ${resendCooldown}s` : "Resend code"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// NotificationBell (the standalone bell icon that used to sit at the far
+// right of the nav) was retired in favor of folding alerts into the avatar
+// dropdown — see the notifications state/handlers inside Nav() below, and
+// the .nav-avatar-badge / "Notifications" dropdown row it renders.
+
+const PORTAL_TOOLS_BY_VIEW = {
+  customer: [
+    { id: "home", icon: "🏠", label: "Home" },
+    { id: "browse", icon: "🔍", label: "Find services" },
+    { id: "favorites", icon: "❤️", label: "Favorites" },
+    { id: "bookings", icon: "📅", label: "My bookings" },
+    { id: "payments", icon: "💳", label: "Payments" },
+    { id: "reviews", icon: "⭐", label: "My reviews" },
+    { id: "settings", icon: "⚙️", label: "Settings" },
+  ],
+  provider: [
+    { id: "dashboard", icon: "📊", label: "Dashboard" },
+    { id: "bookings", icon: "📅", label: "Bookings" },
+    { id: "calendar", icon: "🗓️", label: "Availability" },
+    { id: "services", icon: "✂️", label: "My services" },
+    { id: "earnings", icon: "💰", label: "Earnings" },
+    { id: "billing", icon: "🧾", label: "My plan & billing" },
+    { id: "staff", icon: "👥", label: "My staff" },
+    { id: "reviews", icon: "⭐", label: "My reviews" },
+    { id: "review", icon: "📈", label: "Monthly review" },
+    { id: "profile", icon: "👤", label: "Public profile" },
+    { id: "modules", icon: "🧩", label: "Modules" },
+    { id: "settings", icon: "⚙️", label: "Settings" },
+  ],
+  admin: [
+    { id: "overview", icon: "🎛️", label: "Command Center" },
+    { id: "pending", icon: "⏳", label: "Pending" },
+    { id: "active", icon: "✅", label: "Active" },
+    { id: "rejected", icon: "✖", label: "Rejected" },
+    { id: "providers", icon: "🏪", label: "Providers" },
+    { id: "payments", icon: "🧾", label: "Payments" },
+    { id: "refunds", icon: "↩️", label: "Refunds" },
+    { id: "security", icon: "🚨", label: "Emergency" },
+  ],
+};
+
+function setPortalTab(tabId) {
+  window.dispatchEvent(new CustomEvent("vaibook-set-portal-tab", { detail: { tab: tabId } }));
+}
+
+function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignOut, onOpenProviderSignup }) {
+  const { t } = useTranslation();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [accountOpen, setAccountOpen] = useState(false);
+  const closeMenu = () => setMenuOpen(false);
+  const closeAccount = () => { setAccountOpen(false); setNotifListOpen(false); };
+  // FIXED (dropdown glitch) — see useClickOutside above. Declared once here
+  // (hooks can't be conditional) and the same ref/handler is attached to
+  // whichever of the render branches below actually renders, since only
+  // one is ever mounted at a time.
+  const accountRef = useClickOutside(accountOpen, closeAccount);
+  const menuRef = useClickOutside(menuOpen, closeMenu);
+
+  // NOTIFICATIONS — previously a standalone bell icon in the nav
+  // (NotificationBell), now folded into the avatar dropdown per the
+  // minimalist-nav redesign: a lime unread badge on the avatar itself
+  // (.nav-avatar-badge, position:absolute on a position:relative
+  // .nav-avatar-wrap), plus a "Notifications" row at the top of the
+  // dropdown (styled as a plain .nav-dropdown-item so it automatically
+  // matches Settings/Bookings/Log Out) that expands the same list inline
+  // — preserving the ability to open/mark-read individual notifications
+  // that the old bell's own dropdown offered.
+  const [notifications, setNotifications] = useState([]);
+  const [notifListOpen, setNotifListOpen] = useState(false);
+  const userId = user?.id;
+
+  useEffect(() => {
+    if (!userId) return;
+    const load = async () => {
+      const data = await getNotifications(userId);
+      setNotifications(data || []);
+    };
+    load();
+    const interval = setInterval(load, 30000);
+    return () => clearInterval(interval);
+  }, [userId]);
+
+  const unreadCount = notifications.filter((n) => !n.read).length;
+
+  const openNotification = async (n) => {
+    if (!n.read) {
+      setNotifications((prev) => prev.map((x) => (x.id === n.id ? { ...x, read: true } : x)));
+      await markNotificationRead(n.id);
+    }
+    setNotifListOpen(false);
+    setAccountOpen(false);
+    // "message" notifications can belong to either portal depending on who
+    // sent it — best guess without more context is: send them to whichever
+    // portal this account actually has (a dual customer+provider account
+    // is the one case this can guess wrong).
+    const dest = NOTIF_DESTINATIONS[n.type]
+      || (n.type === "message" ? { view: providerProfile ? "provider" : "customer", tab: "bookings" } : null);
+    if (!dest) return;
+    onNav(dest.view);
+    // The target portal only starts listening for a tab switch once it has
+    // mounted — give the nav change one render cycle before dispatching.
+    setTimeout(() => setPortalTab(dest.tab), 60);
+  };
+
+  const markAllRead = async () => {
+    setNotifications((prev) => prev.map((x) => ({ ...x, read: true })));
+    await markAllNotificationsRead(userId);
+  };
+
+  // Rendered as the first item in both .nav-account-dropdown blocks below.
+  const notifRow = session && user && (
+    <>
+      <button className="nav-dropdown-item" onClick={() => setNotifListOpen((v) => !v)}>
+        <span className="icn">🔔</span> {t("nav.notifications")}
+        {unreadCount > 0 && <span className="nav-dropdown-badge">{unreadCount > 9 ? "9+" : unreadCount}</span>}
+      </button>
+      {notifListOpen && (
+        <div className="notif-inline-list">
+          <div className="notif-dropdown-header">
+            <strong>{t("nav.notifications")}</strong>
+            {unreadCount > 0 && <a onClick={markAllRead}>{t("nav.markAllRead")}</a>}
+          </div>
+          {notifications.length === 0 ? (
+            <p className="notif-empty">{t("nav.noNotifications")}</p>
+          ) : (
+            notifications.map((n) => (
+              <div key={n.id} className={`notif-item ${n.read ? "" : "unread"}`} onClick={() => openNotification(n)}>
+                <div className="notif-title">{n.title}</div>
+                {n.body && <div className="notif-body">{n.body}</div>}
+                <div className="notif-time">{timeAgo(n.created_at)}</div>
+              </div>
+            ))
+          )}
+        </div>
+      )}
+      <hr />
+    </>
+  );
+
+  // Pinned search — lives in the nav itself so it's reachable from any page,
+  // but should only actually show once the page's own "main" search bar
+  // (the hero pill on the landing page, or the browse-tab bar in the
+  // customer portal) has scrolled out of view — or isn't present at all.
+  const [navQuery, setNavQuery] = useState("");
+  const [showNavSuggestions, setShowNavSuggestions] = useState(false);
+  const [navDirectory, setNavDirectory] = useState([]);
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+  const [navSearchActive, setNavSearchActive] = useState(false);
+  const navRef = useRef(null);
+
+  useEffect(() => {
+    getProviderDirectory().then((data) => setNavDirectory(data || []));
+  }, []);
+
+  useLayoutEffect(() => {
+    let rafId = null;
+    const check = () => {
+      const target = document.getElementById("main-search-bar");
+      if (!target) { setNavSearchActive(true); return; }
+      const rect = target.getBoundingClientRect();
+      const navHeight = navRef.current ? navRef.current.getBoundingClientRect().height : 0;
+      const visible = rect.bottom > navHeight && rect.top < window.innerHeight;
+      setNavSearchActive(!visible);
+    };
+    const scheduleCheck = () => {
+      if (rafId) cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(check);
+    };
+    check();
+    window.addEventListener("scroll", scheduleCheck, { passive: true });
+    window.addEventListener("resize", scheduleCheck);
+    const mo = new MutationObserver(scheduleCheck);
+    mo.observe(document.body, { childList: true, subtree: true });
+    return () => {
+      window.removeEventListener("scroll", scheduleCheck);
+      window.removeEventListener("resize", scheduleCheck);
+      mo.disconnect();
+      if (rafId) cancelAnimationFrame(rafId);
+    };
+  }, [current]);
+
+  const navSuggestions = buildSuggestions(navDirectory, navQuery);
+
+  const submitNavSearch = (queryOverride) => {
+    const q = (queryOverride != null ? queryOverride : navQuery).trim();
+    try {
+      localStorage.setItem("vaibook_pending_search", JSON.stringify({ query: q, district: "All" }));
+    } catch (e) { /* ignore storage errors */ }
+    setShowNavSuggestions(false);
+    setMobileSearchOpen(false);
+    enterCustomerPortal(onNav, session, onSignIn);
+  };
+
+  const selectNavSuggestion = (s) => {
+    setNavQuery(s.label);
+    submitNavSearch(s.label);
+  };
+
+  const go = (fn) => { fn(); closeMenu(); };
+  const goAccount = (fn) => { fn(); closeAccount(); };
+
+  const openTab = (tabId) => {
+    try { localStorage.setItem("vaibook_pending_tab", tabId); } catch (e) { /* ignore */ }
+    // Routed through enterCustomerPortal (not a bare onNav) so this still
+    // works correctly for a dual-role account currently parked in the
+    // provider portal — it lands them in customer settings under the
+    // same signed-in account rather than assuming they're already there.
+    enterCustomerPortal(onNav, session, onSignIn);
+  };
+
+  const initials = getInitials(user?.full_name);
+
+  // Same check the account cluster below already uses to decide whether
+  // it's rendering the marketing nav-cta (logged-out / home) or an
+  // authenticated portal's avatar-only nav. The floating "compact search"
+  // (nav-search-wrap/toggle + its mobile panel) only makes sense on those
+  // same customer-acquisition pages — nobody needs to search for a barber
+  // from inside their own admin/provider/customer dashboard. Reusing the
+  // condition here also fixes a real layout bug, not just a cosmetic one:
+  // navSearchActive defaults to true on any page without #main-search-bar
+  // (i.e. every portal page), and nav-search-wrap is position:absolute,
+  // centered on the whole nav bar regardless of flexbox. On a portal page
+  // the account cluster is just a lone avatar button (not the wider
+  // nav-cta), so with only [logo, avatar, bell] as real flex children,
+  // justify-content:space-between centers the avatar almost exactly where
+  // that floating search box also centers itself — landing the avatar
+  // visually inside the search input. Not rendering the search UI at all
+  // on portal pages removes the collision outright, rather than trying to
+  // out-position an absolutely-centered overlay with flex ordering.
+  const showNavSearch = current === "home" || (current === "customer" && !session);
+
+  return (
+    <div className="nav-outer" ref={navRef}>
+    <nav className="nav">
+      <span className="nav-logo" style={{ cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 8 }} onClick={() => onNav("home")}><VaiBookMark size={24} />vai<span>book</span></span>
+
+      {showNavSearch && (
+      <div className={`nav-search-wrap ${navSearchActive ? "visible" : ""}`}>
+        <div className="nav-search">
+          <div className="nav-search-input-wrap">
+            <span className="nav-search-icon">🔍</span>
+            <input
+              placeholder={t("nav.searchPlaceholder")}
+              value={navQuery}
+              onChange={e => { setNavQuery(e.target.value); setShowNavSuggestions(true); }}
+              onFocus={() => setShowNavSuggestions(true)}
+              onBlur={() => setTimeout(() => setShowNavSuggestions(false), 150)}
+              onKeyDown={e => { if (e.key === "Enter") submitNavSearch(); }}
+            />
+          </div>
+          {showNavSuggestions && navSuggestions.length > 0 && (
+            <div className="suggestions-dropdown">
+              {navSuggestions.map((s) => (
+                <div key={s.key} className="suggestion-item" onMouseDown={() => selectNavSuggestion(s)}>
+                  <span className="suggestion-icon">{s.icon}</span>
+                  <span className="suggestion-label">{s.label}</span>
+                  <span className="suggestion-sub">{s.sublabel}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+      )}
+      {showNavSearch && (
+      <button className={`nav-search-toggle ${navSearchActive ? "visible" : ""}`} onClick={() => setMobileSearchOpen(v => !v)} aria-label={t("nav.searchAriaLabel")}>🔍</button>
+      )}
+
+      {(current === "home" || current === "providers" || (current === "customer" && !session)) ? (
+        <div className="nav-cta">
+          {/* LANGUAGE SELECTOR — moved here, as the first child of the
+              right-side cluster, so it sits immediately to the left of the
+              avatar/account dropdown (or the login link, on pages where
+              there's no session yet) instead of floating as its own
+              top-level nav child. .nav-cta's existing `gap: 18px` and
+              `align-items: center` give it the same vertical alignment and
+              spacing as every other item in this cluster, with no extra
+              CSS needed. */}
+          <LanguageSelector />
+          {session ? (
+            <div style={{ position: "relative" }} ref={accountRef}>
+              <button className="nav-avatar-btn" onClick={(e) => { e.stopPropagation(); setAccountOpen((v) => !v); }}>
+                <span className="nav-avatar-wrap">
+                  <span className="nav-avatar-circle">{initials}</span>
+                  {unreadCount > 0 && <span className="nav-avatar-badge">{unreadCount > 9 ? "9+" : unreadCount}</span>}
+                </span>
+                <span className="nav-avatar-caret">▾</span>
+              </button>
+              {accountOpen && (
+                <div className="nav-account-dropdown">
+                  <div className="nav-account-name">{user?.full_name || t("nav.myAccount")}</div>
+                  {notifRow}
+                  <button className="nav-dropdown-item" onClick={() => goAccount(() => openTab("settings"))}>
+                    <span className="icn">👤</span> {t("nav.profile")}
+                  </button>
+                  <button className="nav-dropdown-item" onClick={() => goAccount(() => openTab("bookings"))}>
+                    <span className="icn">📅</span> {t("nav.myBookings")}
+                  </button>
+                  <button className="nav-dropdown-item" onClick={() => goAccount(() => openTab("payments"))}>
+                    <span className="icn">💳</span> {t("nav.payments")}
+                  </button>
+                  <button className="nav-dropdown-item" onClick={() => goAccount(() => openTab("reviews"))}>
+                    <span className="icn">⭐</span> {t("nav.myReviews")}
+                  </button>
+                  <button className="nav-dropdown-item" onClick={() => goAccount(() => openTab("settings"))}>
+                    <span className="icn">⚙️</span> {t("nav.settings")}
+                  </button>
+                  <hr />
+                  <button className="nav-dropdown-item" onClick={() => goAccount(onSignOut)}>
+                    <span className="icn">↪</span> {t("nav.logOut")}
+                  </button>
+                  <hr />
+                  <a onClick={() => goAccount(() => onNav("home"))}>{t("nav.home")}</a>
+                  <a onClick={() => goAccount(() => scrollToSection("services", onNav, current))}>{t("nav.services")}</a>
+                  <a onClick={() => goAccount(() => scrollToSection("trending-local", onNav, current))}>{t("nav.trending")}</a>
+                  <a onClick={() => goAccount(() => scrollToProvidersSection("pricing", onNav, current))}>{t("nav.pricing")}</a>
+                  <hr />
+                  <button className="nav-dropdown-item mobile-only-item" onClick={() => goAccount(onOpenProviderSignup)}>
+                    <span className="icn">🏪</span> {t("nav.provideMyService")}
+                  </button>
+                  <button className="nav-dropdown-item for-biz" onClick={() => goAccount(() => enterProviderPortal(onNav, session, onSignIn))}>
+                    {t("nav.forBusinesses")} <span>→</span>
+                  </button>
+                  <hr />
+                  <button className="nav-dropdown-item" onClick={() => goAccount(openInstallAppGuide)}>
+                    <span className="icn">📲</span> {t("nav.addToHomeScreen")}
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <button className="nav-login-link" onClick={() => onNav("auth")}>{t("nav.logIn")}</button>
+          )}
+          {current === "home" && (
+            <button className="nav-signup-btn" onClick={onOpenProviderSignup}>{t("nav.provideMyService")}</button>
+          )}
+          {current === "providers" && (
+            <>
+              {/* Business-nav links, Fresha's "Business types / Features /
+                  Pricing" pattern — only shown on the business marketing
+                  page itself, scrolling within it rather than duplicating
+                  these as separate routes. */}
+              <a className="nav-link-inline" onClick={() => scrollToProvidersSection("features", onNav, current)}>{t("nav.features")}</a>
+              <a className="nav-link-inline" onClick={() => scrollToProvidersSection("pricing", onNav, current)}>{t("nav.pricing")}</a>
+              <button className="nav-signup-btn" onClick={() => onNav("home")}>{t("nav.findAProfessional")}</button>
+            </>
+          )}
+          {!session && (
+          <div style={{ position: "relative" }} ref={menuRef}>
+            <button className="nav-menu-btn" onClick={(e) => { e.stopPropagation(); setMenuOpen((v) => !v); }}>
+              <span className="nav-menu-btn-label">{t("nav.menu")}</span>
+              <span className="bars"><span /><span /></span>
+            </button>
+            {menuOpen && (
+              <div className="nav-dropdown">
+                {/* Page-specific quick links — desktop gets these as
+                    .nav-link-inline buttons in the nav bar itself (see
+                    above), so they only need to live here as a mobile
+                    fallback (.mobile-only-item). Everything else below
+                    matches the reference screenshot's clean "For
+                    customers" menu 1:1, with no site-nav links cluttering
+                    it — Home/Services/Trending are just a scroll away on
+                    the homepage itself. */}
+                {current === "providers" ? (
+                  <>
+                    {/* MIRROR of the "For customers" menu below, for the
+                        business marketing page — same shape as Fresha's
+                        own business-side menu: "For businesses" heading,
+                        an emphasized direct provider login, the same
+                        utility rows, then a "For customers →" link back
+                        to the consumer side at the bottom. No "Home" or
+                        "Blog" item here (unlike Fresha's) — this page has
+                        no sub-pages of its own to return to, and there's
+                        no blog to link, so copying those would just be
+                        dead links. */}
+                    <a className="mobile-only-item" onClick={() => go(() => scrollToProvidersSection("features", onNav, current))}>{t("nav.features")}</a>
+                    <a className="mobile-only-item" onClick={() => go(() => scrollToProvidersSection("pricing", onNav, current))}>{t("nav.pricing")}</a>
+                    <hr className="mobile-only-item" />
+                    <div className="nav-dropdown-heading">{t("nav.forBusinessesHeading")}</div>
+                    <a className="nav-dropdown-primary-link" onClick={() => go(() => onNav("auth"))}>{t("nav.logInOrSignUp")}</a>
+                    <button className="nav-dropdown-item" onClick={() => go(openInstallAppGuide)}>{t("nav.addToHomeScreen")}</button>
+                    <a onClick={() => go(() => onNav("help"))}>{t("nav.helpAndSupport")}</a>
+                    <LanguageSelector variant="menu" onAfterChange={closeMenu} />
+                    <hr />
+                    <button className="nav-dropdown-item for-biz" onClick={() => go(() => onNav("home"))}>
+                      {t("nav.forCustomers")} <span>→</span>
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <div className="nav-dropdown-heading">{t("nav.forCustomersHeading")}</div>
+                    <a className="nav-dropdown-primary-link" onClick={() => go(() => onNav("auth"))}>{t("nav.logInOrSignUp")}</a>
+                    <button className="nav-dropdown-item" onClick={() => go(openInstallAppGuide)}>{t("nav.addToHomeScreen")}</button>
+                    <a onClick={() => go(() => onNav("help"))}>{t("nav.helpAndSupport")}</a>
+                    <LanguageSelector variant="menu" onAfterChange={closeMenu} />
+                    <hr />
+                    <button className="nav-dropdown-item for-biz" onClick={() => go(() => onNav("providers"))}>
+                      {t("nav.forBusinesses")} <span>→</span>
+                    </button>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+          )}
+        </div>
+      ) : session && PORTAL_TOOLS_BY_VIEW[current] ? (
+        // .nav-cta (reused here, not just on the branch above) — on a
+        // portal page this is the only other real flex child besides
+        // .nav-logo (search is hidden here, see showNavSearch above), and
+        // plain space-between would center a lone middle item instead of
+        // hugging it to the right. .nav-cta's own `margin-left: auto`
+        // claims all the free space to its left, pinning the whole
+        // cluster — language selector + avatar together — to the right
+        // edge, with the same `gap: 18px` spacing between them as the
+        // branch above.
+        <div className="nav-cta">
+          <LanguageSelector />
+          <div style={{ position: "relative" }} ref={accountRef}>
+          <button className="nav-avatar-btn" onClick={(e) => { e.stopPropagation(); setAccountOpen((v) => !v); }}>
+            <span className="nav-avatar-wrap">
+              <span className="nav-avatar-circle">{initials}</span>
+              {unreadCount > 0 && <span className="nav-avatar-badge">{unreadCount > 9 ? "9+" : unreadCount}</span>}
+            </span>
+            <span className="nav-avatar-caret">▾</span>
+          </button>
+          {accountOpen && (
+            <div className={`nav-account-dropdown${current === "customer" ? " cx-account-dropdown" : ""}`}>
+              <div className="nav-account-name">{user?.full_name || t("nav.myAccount")}</div>
+              {notifRow}
+              {PORTAL_TOOLS_BY_VIEW[current].map((item) => (
+                <button key={item.id} className="nav-dropdown-item" onClick={() => goAccount(() => setPortalTab(item.id))}>
+                  <span className="icn">{item.icon}</span> {item.label}
+                </button>
+              ))}
+              {(current === "customer" || current === "provider") && (
+                <>
+                  <hr />
+                  {current === "provider" ? (
+                    <button className="nav-dropdown-item" onClick={() => goAccount(() => enterCustomerPortal(onNav, session, onSignIn))}>
+                      <span className="icn">🛍️</span> {t("nav.switchToCustomer")}
+                    </button>
+                  ) : (
+                    <button className="nav-dropdown-item for-biz" onClick={() => goAccount(() => enterProviderPortal(onNav, session, onSignIn))}>
+                      <span className="icn">🏪</span> {t("nav.switchToProvider")}
+                    </button>
+                  )}
+                </>
+              )}
+              <hr />
+              <LanguageSelector variant="menu" />
+              <hr />
+              <button className="nav-dropdown-item" onClick={() => goAccount(openInstallAppGuide)}>
+                <span className="icn">📲</span> {t("nav.addToHomeScreen")}
+              </button>
+              <hr />
+              <button className="nav-dropdown-item" onClick={() => goAccount(onSignOut)}>
+                <span className="icn">↪</span> {t("nav.logOut")}
+              </button>
+            </div>
+          )}
+          </div>
+        </div>
+      ) : (
+        <div className="nav-cta">
+          {/* Same right-side cluster shape as the two branches above —
+              language selector immediately left of the primary control,
+              here the Menu button since this fallback has no avatar. */}
+          <LanguageSelector />
+          <div style={{ position: "relative" }} ref={menuRef}>
+          <button className="nav-menu-btn" onClick={(e) => { e.stopPropagation(); setMenuOpen((v) => !v); }}>
+            <span className="nav-menu-btn-label">{t("nav.menu")}</span>
+            <span className="bars"><span /><span /></span>
+          </button>
+          {menuOpen && (
+            <div className="nav-dropdown">
+              <a onClick={() => go(() => onNav("home"))}>{t("nav.home")}</a>
+              <a onClick={() => go(() => scrollToSection("services", onNav, current))}>{t("nav.services")}</a>
+              <a onClick={() => go(() => scrollToSection("trending-local", onNav, current))}>{t("nav.trending")}</a>
+              <a onClick={() => go(() => scrollToSection("browse", onNav, current))}>{t("nav.browseByDistrict")}</a>
+              <a onClick={() => go(() => scrollToProvidersSection("pricing", onNav, current))}>{t("nav.pricing")}</a>
+              <hr />
+              <button className="nav-dropdown-item" onClick={() => go(openInstallAppGuide)}>{t("nav.addToHomeScreen")}</button>
+            </div>
+          )}
+          </div>
+        </div>
+      )}
+
+      {mobileSearchOpen && navSearchActive && (
+        <div className="nav-search-mobile-panel">
+          <div className="nav-search-input-wrap">
+            <span className="nav-search-icon">🔍</span>
+            <input
+              autoFocus
+              placeholder={t("nav.searchPlaceholder")}
+              value={navQuery}
+              onChange={e => setNavQuery(e.target.value)}
+              onKeyDown={e => { if (e.key === "Enter") submitNavSearch(); }}
+            />
+          </div>
+          {navSuggestions.length > 0 && (
+            <div className="suggestions-dropdown" style={{ position: "static", boxShadow: "none", border: "none", marginTop: 8 }}>
+              {navSuggestions.map((s) => (
+                <div key={s.key} className="suggestion-item" onMouseDown={() => selectNavSuggestion(s)}>
+                  <span className="suggestion-icon">{s.icon}</span>
+                  <span className="suggestion-label">{s.label}</span>
+                  <span className="suggestion-sub">{s.sublabel}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Standalone notification bell removed — alerts now live on the
+          avatar itself (.nav-avatar-badge) and inside its dropdown
+          (notifRow, rendered above as the first item in each
+          .nav-account-dropdown), so nothing extra renders here. */}
+    </nav>
+    {/* nav-strip (the 13-category pill row) removed per explicit request —
+        aggressive simplification. Its CSS rules (.nav-strip*) are left in
+        the stylesheet, unused, rather than pulled, in case this is
+        revisited; they cost nothing sitting idle. */}
+    </div>
+  );
+}
+
+function LandingPage({ onNav, session, onSignIn, onSignOut }) {
+  const { t } = useTranslation();
+  const [heroQuery, setHeroQuery] = useState("");
+  const [heroDistrict, setHeroDistrict] = useState("");
+  const [heroDirectory, setHeroDirectory] = useState([]);
+  const [showHeroSuggestions, setShowHeroSuggestions] = useState(false);
+  // Powers the three "discover" carousels below (Recommended / New to
+  // VaiBook / Trending) — one fetch, three client-side sorts, rather than
+  // three separate queries.
+  const [discoverProviders, setDiscoverProviders] = useState([]);
+  const [loadingDiscover, setLoadingDiscover] = useState(true);
+
+  useEffect(() => {
+    getProviderDirectory().then((data) => setHeroDirectory(data || []));
+    getActiveProviders().then((data) => { setDiscoverProviders(data || []); setLoadingDiscover(false); });
+  }, []);
+
+  // "Trending near you" — a real (not guessed) district, from the
+  // browser's own geolocation matched to the nearest of Belize's 6
+  // districts (see nearestDistrict/DISTRICT_CENTERS above). Permission
+  // is the browser's own native prompt; declining or it failing just
+  // leaves this null and the section below falls back to a
+  // sitewide-trending, non-district-specific heading — never a fabricated
+  // district guess.
+  const [geoDistrict, setGeoDistrict] = useState(null);
+  useEffect(() => {
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(
+      (pos) => setGeoDistrict(nearestDistrict(pos.coords.latitude, pos.coords.longitude)),
+      () => { /* declined or unavailable — silent, no error UI on a marketing page */ },
+      { timeout: 6000, maximumAge: 600000 }
+    );
+  }, []);
+
+  const heroSuggestions = buildSuggestions(heroDirectory, heroQuery);
+
+  // Recommended: highest-rated first, 2+ reviews required so one 5-star
+  // review can't dominate.
+  const recommendedProviders = discoverProviders
+    .filter((p) => providerRating(p) != null && (p.reviews || []).length >= 2)
+    .sort((a, b) => providerRating(b) - providerRating(a))
+    .slice(0, 8);
+
+  // New to VaiBook: most recently joined, regardless of reviews yet — the
+  // "New" pill only shows on the ones actually within the last 30 days
+  // (see isRecentlyJoined), so this never mislabels an older provider.
+  const newProviders = [...discoverProviders]
+    .sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime())
+    .slice(0, 8);
+
+  // Trending: VaiBook doesn't track view/booking velocity yet, so this
+  // stands in with the closest honest signal available today — providers
+  // who opted into "Featured" placement (a paid visibility boost, i.e.
+  // providers actively investing in being seen), tie-broken by review
+  // count as a rough popularity proxy. Worth swapping for real recent-
+  // booking-volume data once there's enough traffic to make that
+  // meaningful.
+  const trendingProviders = [...discoverProviders]
+    .sort((a, b) => {
+      const bf = b.is_featured ? 1 : 0, af = a.is_featured ? 1 : 0;
+      if (bf !== af) return bf - af;
+      return (b.reviews || []).length - (a.reviews || []).length;
+    })
+    .slice(0, 8);
+
+  // "Trending near you" — same ranking as trendingProviders above, but
+  // narrowed to a real known district (geolocation first, the hero's own
+  // district picker as a fallback signal) when there's enough real data
+  // there to justify naming it in the heading. Falls back to the
+  // sitewide trending list — never an empty section — when there's no
+  // known district yet, or too few providers in it (a 1-card "trending in
+  // Toledo" row would look broken, not impressive, same reasoning as the
+  // Discover rows' own 2-provider threshold below).
+  const trendingDistrict = geoDistrict || heroDistrict || null;
+  const districtTrending = trendingDistrict
+    ? trendingProviders.filter((p) => p.district === trendingDistrict)
+    : [];
+  const trendingNearYou = districtTrending.length >= 2 ? districtTrending : trendingProviders;
+  const trendingNearYouHeading = districtTrending.length >= 2 ? t("landing.trendingIn", { district: trendingDistrict }) : t("landing.trendingNearYou");
+
+  const goToProvider = (p) => {
+    try {
+      localStorage.setItem("vaibook_pending_search", JSON.stringify({ query: p.business_name, district: "All" }));
+    } catch (e) { /* ignore storage errors */ }
+    enterCustomerPortal(onNav, session, onSignIn);
+  };
+
+  const submitHeroSearch = (queryOverride) => {
+    const q = (queryOverride != null ? queryOverride : heroQuery).trim();
+    try {
+      localStorage.setItem("vaibook_pending_search", JSON.stringify({ query: q, district: heroDistrict || "All" }));
+    } catch (e) { /* ignore storage errors */ }
+    enterCustomerPortal(onNav, session, onSignIn);
+  };
+
+  const selectHeroSuggestion = (s) => {
+    setHeroQuery(s.label);
+    setShowHeroSuggestions(false);
+    submitHeroSearch(s.label);
+  };
+
+  return (
+    <div className="lp-theme">
+      {/* HERO — full swing back to customer-facing (per explicit request):
+          hero copy sits above the search bar, which is the primary action
+          again. The B2B eyebrow and trial-signup CTA from the earlier pivot
+          are removed here (they still exist elsewhere — nav CTA, pricing
+          section, signup page). Headline drops its trailing period, same
+          fix as before: Plus Jakarta Sans ExtraBold (800) draws a period
+          glyph with a wide left side-bearing that reads as a stray gap at
+          large display size — confirmed on the live site. */}
+      <section className="search-hero">
+        <h1><span className="line1">{t("hero.titleLine1")}</span><span className="line2">{t("hero.titleLine2")}</span></h1>
+        <p className="search-sub">{t("hero.subtitle")}</p>
+        <div className="search-bar-pill search-glass" id="main-search-bar">
+          <div className="field">
+            <span>🔍</span>
+            <input
+              placeholder={t("hero.searchPlaceholder")}
+              value={heroQuery}
+              onChange={e => { setHeroQuery(e.target.value); setShowHeroSuggestions(true); }}
+              onFocus={() => setShowHeroSuggestions(true)}
+              onBlur={() => setTimeout(() => setShowHeroSuggestions(false), 150)}
+              onKeyDown={e => { if (e.key === "Enter") { setShowHeroSuggestions(false); submitHeroSearch(); } }}
+            />
+          </div>
+          <div className="sep" />
+          <div className="field">
+            <span>📍</span>
+            <select value={heroDistrict} onChange={e => setHeroDistrict(e.target.value)}>
+              <option value="">{t("hero.anyDistrict")}</option>
+              {DISTRICTS.map(d => <option key={d} value={d}>{d}</option>)}
+            </select>
+          </div>
+          <button className="search-submit btn-neon" onClick={() => { setShowHeroSuggestions(false); submitHeroSearch(); }}>{t("hero.searchButton")}</button>
+          {showHeroSuggestions && heroSuggestions.length > 0 && (
+            <div className="suggestions-dropdown">
+              {heroSuggestions.map((s) => (
+                <div key={s.key} className="suggestion-item" onMouseDown={() => selectHeroSuggestion(s)}>
+                  <span className="suggestion-icon">{s.icon}</span>
+                  <span className="suggestion-label">{s.label}</span>
+                  <span className="suggestion-sub">{s.sublabel}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+        {!loadingDiscover && discoverProviders.length > 0 && (
+          <p className="hero-stat-line">
+            {t("hero.trustedProfessionals", { count: discoverProviders.length })}
+          </p>
+        )}
+        <button className="hero-get-app-btn" onClick={openInstallAppGuide}>
+          {t("nav.addToHomeScreen")} <span aria-hidden="true">⊞</span>
+        </button>
+      </section>
+
+      {/* SERVICES */}
+      <section className="services-section" id="services">
+        <div style={{ textAlign: "center", marginBottom: 40 }}>
+          <div className="section-eyebrow" style={{ justifyContent: "center", display: "flex" }}>{t("landing.whatsOnVaiBook")}</div>
+          <h2 className="section-title">{t("landing.everyLocalService")}</h2>
+          <p className="section-sub" style={{ margin: "0 auto" }}>{t("landing.fromFreshFade")}</p>
+        </div>
+        <div className="services-pills">
+          {SERVICES.map((s, i) => (
+            <button className="service-pill badge-pill" key={i} onClick={() => enterCustomerPortal(onNav, session, onSignIn)}>
+              <span className="icon">{s.icon}</span> {t(`services.${s.key}.name`)}
+            </button>
+          ))}
+        </div>
+      </section>
+
+      {/* TRENDING NEAR YOU — replaces the old "Trending Local" carousel
+          (moved from under the hero to here, below the category pills,
+          and redesigned as the dopamine/social-proof moment: full image
+          card, gradient overlay, rating, and a "Book Now" CTA baked right
+          into the card instead of a plain link-out).
+          The heading only ever names a district VaiBook actually knows —
+          from the visitor's own browser geolocation (permission-gated,
+          see the geoDistrict effect above) or the hero search's district
+          picker — and only when that district has ≥2 real trending
+          providers to back it up; otherwise it falls back to the
+          sitewide trending list under a generic heading. Never a
+          fabricated "Trending in Corozal" claim with nothing there. */}
+      {trendingNearYou.length >= 2 && (
+        <section className="section tny-section" id="trending-near-you">
+          <h2 className="section-title tny-heading">{trendingNearYouHeading}</h2>
+          <div className="tny-row">
+            {trendingNearYou.map((p) => {
+              const rating = providerRating(p);
+              const openNow = providerOpenNow(p);
+              return (
+                <div className="tny-card card-premium" key={p.id} onClick={() => goToProvider(p)}>
+                  <div className="tny-card-img">
+                    {coverImageUrl(p) ? (
+                      <img src={coverImageUrl(p)} alt="" />
+                    ) : (
+                      <div className="tny-card-img-fallback">{iconForServiceType(p.service_type)}</div>
+                    )}
+                    <div className="tny-card-img-overlay" />
+                    {/* "High demand" is a real signal, not decoration — it
+                        only shows on providers who actually opted into
+                        Featured placement, the same honest proxy the
+                        trending sort itself ranks on above. */}
+                    {p.is_featured && <span className="tny-scarcity">{t("landing.highDemand")}</span>}
+                  </div>
+                  <div className="tny-card-body">
+                    <h4>{p.business_name}</h4>
+                    <div className="tny-card-loc">{p.service_type}{p.service_type && p.district ? " · " : ""}{p.district}</div>
+                    <div className="tny-card-meta-row">
+                      {rating ? (
+                        <span className="tny-card-rating">⭐ {rating} ({p.reviews.length})</span>
+                      ) : (
+                        <span className="tny-card-rating tny-card-rating-new">{t("landing.newOnVaiBook")}</span>
+                      )}
+                      {openNow !== null && (
+                        <span className={`open-status ${openNow ? "is-open" : "is-closed"}`}>
+                          {openNow ? t("customerPortal.hours.openNow") : t("customerPortal.hours.closed")}
+                        </span>
+                      )}
+                    </div>
+                    <button className="tny-book-btn btn-neon" onClick={(e) => { e.stopPropagation(); goToProvider(p); }}>
+                      {t("landing.bookNow")}
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
+      {/* DISCOVER — Fresha-style horizontal carousels. Each row only
+          renders once it has at least 2 real providers to show — a thin
+          market showing 1 card (or the same provider) across three rows
+          would look broken rather than impressive, so this grows in on its
+          own as more providers join instead of needing to be toggled on.
+          Trending itself now lives in its own section above (Trending
+          Near You) instead of as a third row here, so the same providers
+          never show up twice on one page load. */}
+      {!loadingDiscover && (recommendedProviders.length >= 2 || newProviders.length >= 2) && (
+        <section className="section" id="discover">
+          {recommendedProviders.length >= 2 && (
+            <div style={{ marginBottom: 44 }}>
+              <div className="section-eyebrow">{t("landing.lovedByCustomers")}</div>
+              <h2 className="section-title" style={{ marginBottom: 20 }}>{t("landing.recommended")}</h2>
+              <ProviderCarousel providers={recommendedProviders} onCardClick={goToProvider} />
+            </div>
+          )}
+          {newProviders.length >= 2 && (
+            <div>
+              <div className="section-eyebrow">{t("landing.justJoined")}</div>
+              <h2 className="section-title" style={{ marginBottom: 20 }}>{t("landing.newToVaiBook")}</h2>
+              <ProviderCarousel providers={newProviders} badgeFor={(p) => (isRecentlyJoined(p) ? t("landing.newBadge") : null)} onCardClick={goToProvider} />
+            </div>
+          )}
+        </section>
+      )}
+
+      {/* The old static "Instant booking / Verified providers / Secure
+          payments / All of Belize" features strip (.marketing-strip) has
+          been removed per explicit request — that real estate now goes to
+          Trending Near You above. Its CSS is left in place, unused, same
+          convention as other retired sections in this file (e.g.
+          .nav-strip, .step-card): cheap to leave idle, in case it's
+          wanted again, and it costs nothing sitting unreferenced. */}
+
+      <SiteFooter />
+    </div>
+  );
+}
+
+// ── SITE FOOTER — shared by the consumer home page and the B2B provider
+// landing page. Pulled out once both pages needed it, rather than each
+// page carrying its own copy of the same static markup. ─────────────
+function SiteFooter() {
+  const { t } = useTranslation();
+  return (
+    <footer className="footer">
+      <div className="footer-top">
+        <div className="footer-brand">
+          <span className="nav-logo" style={{ display: "inline-flex", alignItems: "center", gap: 8 }}><VaiBookMark size={20} />vai<span>book</span></span>
+          <p>{t("footer.tagline")}</p>
+        </div>
+        <div className="footer-links">
+          <h5>{t("footer.services")}</h5>
+          <ul>
+            {SERVICES.map((s) => <li key={s.name}>{t(`services.${s.key}.name`)}</li>)}
+          </ul>
+        </div>
+        <div className="footer-links">
+          <h5>{t("footer.company")}</h5>
+          <ul>
+            <li>{t("footer.aboutVai")}</li><li>{t("footer.howItWorks")}</li><li>{t("footer.districts")}</li><li>{t("footer.blog")}</li>
+          </ul>
+        </div>
+        <div className="footer-links">
+          <h5>{t("footer.support")}</h5>
+          <ul>
+            <li>{t("footer.helpCenter")}</li><li>{t("footer.contactUs")}</li><li>{t("footer.privacyPolicy")}</li><li>{t("footer.terms")}</li>
+          </ul>
+        </div>
+        <div className="footer-links">
+          <h5>{t("footer.moreFromVaiPlaza")}</h5>
+          <ul>
+            <li><a href="https://vaibuyandsell.bz/shop?category=Home%20%26%20Living" target="_blank" rel="noopener noreferrer" style={{ color: "inherit", textDecoration: "none" }}>{t("footer.vaiBuy")}</a></li>
+            {/* Vai Media entry goes here once its link/handle is confirmed */}
+          </ul>
+        </div>
+      </div>
+      <div className="footer-bottom">
+        <span>{t("footer.copyright")}</span>
+        <span>{t("footer.productOf")}</span>
+      </div>
+    </footer>
+  );
+}
+
+// ── B2B PROVIDER LANDING PAGE ("/#providers") ────────────────────────
+// Everything business-facing that used to live mixed into the consumer
+// home page (LandingPage above) — the pricing cards, the Vai Media
+// agency upsell, and the platform/dashboard preview — now lives here on
+// its own route instead, so a customer looking for a haircut never sees
+// SaaS pricing, and a shop owner evaluating VaiBook never has to scroll
+// past a consumer search bar to find it. Reached only via the nav's
+// "Pricing" link (scrollToProvidersSection) or a direct #providers visit
+// — the nav's main "Provide my service" CTA and every "Apply to Join"
+// button on this page now short-circuit straight to ProviderSignupModal
+// (see onOpenProviderSignup below) instead of landing here or on the real
+// application form (ProviderSignup, view "signup"), per the frictionless
+// direct-to-app funnel. This page still exists for anyone who scrolls in
+// from "Pricing" wanting the full pitch before they commit.
+function ProviderLandingPage({ onNav, session, onSignIn, onSignOut, onOpenProviderSignup }) {
+  const { t } = useTranslation();
+  return (
+    <>
+      {/* HERO — deliberately dark/high-status rather than reusing the
+          consumer search-hero, so the two routes read as visually
+          distinct the instant either one loads, not just different copy
+          on the same page. */}
+      <section className="provider-hero">
+        <div className="provider-hero-eyebrow">{t("providerLanding.eyebrow")}</div>
+        <h1 className="provider-hero-title">{t("providerLanding.title")}</h1>
+        <p className="provider-hero-sub">{t("providerLanding.sub")}</p>
+        <div className="trial-badge">{t("providerLanding.trialBadge")}</div>
+        <div className="provider-hero-ctas">
+          <button className="btn-lime provider-hero-cta" onClick={onOpenProviderSignup}>
+            {t("providerLanding.applyToJoin14")}
+          </button>
+          <button className="btn-ghost provider-hero-cta-secondary" onClick={() => document.getElementById("pricing")?.scrollIntoView({ behavior: "smooth" })}>
+            {t("providerLanding.seePricing")}
+          </button>
+        </div>
+        <p className="provider-hero-note">{t("providerLanding.note")}</p>
+
+        {/* PLATFORM PREVIEW — moved inside the hero itself (Fresha's own
+            business-page hero puts its scheduling-calendar screenshot right
+            under the CTAs, in the same panel, rather than a separate plain
+            section below). A marketing collage showing the scheduling
+            dashboard + a customer-facing booking screen side by side — an
+            illustrative mockup (fictional salon/business names and review
+            counts), not a live screenshot or a real usage claim. */}
+        <picture>
+          <source srcSet="/platform-preview.webp" type="image/webp" />
+          <img
+            className="platform-preview-img provider-hero-screenshot"
+            src="/platform-preview.jpg"
+            alt="VaiBook scheduling dashboard and customer booking screen preview"
+            width={1600}
+            height={1100}
+            loading="lazy"
+            decoding="async"
+          />
+        </picture>
+      </section>
+
+      {/* FEATURES INTRO — the copy that used to caption the screenshot
+          above now introduces the page's feature/pricing content on its
+          own, since the screenshot lives in the hero now. */}
+      <section className="section platform-preview-section" id="features">
+        <div style={{ textAlign: "center" }}>
+          <div className="section-eyebrow" style={{ justifyContent: "center", display: "flex" }}>{t("providerLanding.seeItInAction")}</div>
+          <h2 className="section-title">{t("providerLanding.builtForHow")}</h2>
+          <p className="section-sub" style={{ margin: "0 auto" }}>{t("providerLanding.oneDashboard")}</p>
+        </div>
+      </section>
+
+      {/* PRICING — for prospective providers. "Recommended" on Pro is
+          VaiBook's own editorial call, not a "Most popular" claim — there's
+          no real usage data yet to honestly back that. Every feature line
+          comes straight from PLANS above, which only lists things that are
+          actually built (and, for Starter's booking cap, actually
+          enforced) — nothing here is aspirational.
+          NOTE: the "14-Day Free Trial" badge below is marketing copy the
+          user explicitly asked for — there is no trial mechanism in the
+          backend (no trial_ends_at, no auto-expiry/downgrade). Every
+          signup, trial-badged or not, still goes through the same manual
+          bank-transfer + admin-confirms flow as before. If a real
+          system-enforced trial is wanted, that's separate schema/logic
+          work, not just this copy change. */}
+      <section className="section pricing-section" id="pricing">
+        <div style={{ textAlign: "center", marginBottom: 40 }}>
+          <div className="section-eyebrow" style={{ justifyContent: "center", display: "flex" }}>{t("providerLanding.forBusinessOwners")}</div>
+          <h2 className="section-title">{t("providerLanding.simplePricing")}</h2>
+          <p className="section-sub" style={{ margin: "0 auto" }}>{t("providerLanding.noContractsApply")}</p>
+        </div>
+        <div className="pricing-grid">
+          {PUBLIC_PLANS.map((p) => (
+            <div className={`pricing-card ${p.recommended ? "recommended" : ""}`} key={p.id}>
+              {p.recommended && <div className="pricing-badge">{t("providerLanding.recommended")}</div>}
+              {/* Plan name/tagline/features/priceNote come straight from the
+                  PLANS data array (shared with billing/admin logic across the
+                  whole app) — translating those would mean restructuring that
+                  core array, not just this page's copy, so they stay English
+                  for now; everything else on this page is translated. */}
+              <div className="pricing-name">{p.name}</div>
+              <div className="pricing-trial-badge">{t("providerLanding.trialBadgeShort")}</div>
+              <div className="pricing-price">
+                {p.monthly > 0 ? p.price : <>BZ$0<span> /month</span></>}
+              </div>
+              {p.monthly > 0 && <div className="pricing-price-note">{t("providerLanding.billedPerMonth", { amount: p.monthly.toFixed(2) })}</div>}
+              {p.priceNote && <div className="pricing-price-note">{p.priceNote}</div>}
+              {p.monthly > 0 && (
+                <div className="pricing-daily-note">{t("providerLanding.paysForItself")}</div>
+              )}
+              <div className="pricing-tagline">{p.tagline}</div>
+              <ul className="pricing-features">
+                {p.features.map((f, i) => (
+                  <li key={i}><span className="check">✓</span>{f}</li>
+                ))}
+              </ul>
+              <button
+                className={p.recommended ? "btn-lime pricing-cta" : "btn-sm forest pricing-cta"}
+                onClick={onOpenProviderSignup}
+              >
+                {t("providerLanding.applyToJoin")}
+              </button>
+            </div>
+          ))}
+        </div>
+        <p className="pricing-foot-note">{t("providerLanding.pricingFootNote")}</p>
+
+        {/* VAI MEDIA — a premium agency add-on, deliberately separated
+            from the Solo/Team self-serve pricing above: no price shown (the
+            two tiers below are priced case-by-case), no "Buy" button, just
+            an inquiry CTA, so it never adds checkout friction to the core
+            SaaS signup. */}
+        <div className="vai-media-banner">
+          <div className="vai-media-eyebrow">{t("providerLanding.vaiMediaEyebrow")}</div>
+          <h3 className="vai-media-title">{t("providerLanding.vaiMediaTitle")}</h3>
+          <p className="vai-media-copy">{t("providerLanding.vaiMediaCopy")}</p>
+          <div className="vai-media-tiers">
+            <div className="vai-media-tier">
+              <div className="vai-media-tier-name">{t("providerLanding.tier1Name")}</div>
+              <div className="vai-media-tier-desc">{t("providerLanding.tier1Desc")}</div>
+              <div className="vai-media-tier-price">BZ$XXX</div>
+            </div>
+            <div className="vai-media-tier">
+              <div className="vai-media-tier-name">{t("providerLanding.tier2Name")}</div>
+              <div className="vai-media-tier-desc">{t("providerLanding.tier2Desc")}</div>
+              <div className="vai-media-tier-price">BZ$XXX/mo</div>
+            </div>
+          </div>
+          <a className="vai-media-btn" href={vaiMediaWhatsAppUrl("pricing page")} target="_blank" rel="noreferrer">{t("providerLanding.applyForVaiMedia")}</a>
+          <p className="vai-media-alt"><a href={vaiMediaMailtoUrl()}>{t("providerLanding.orEmailUs")}</a></p>
+        </div>
+      </section>
+
+      {/* FOR BUSINESS — conversion block, right above the footer. Deliberately
+          plain: no icons, no images, just a high-contrast dark-green break
+          to sell the trial CTA one more time before the page ends. */}
+      <section className="for-business-cta">
+        <div className="for-business-inner">
+          <h2 className="for-business-headline">{t("providerLanding.stopLosing")}</h2>
+          <p className="for-business-sub">
+            {t("providerLanding.forBusinessSub")}
+          </p>
+          <button className="btn-lime for-business-btn" onClick={onOpenProviderSignup}>
+            {t("providerLanding.applyToJoin")}
+          </button>
+        </div>
+      </section>
+
+      <SiteFooter />
+    </>
+  );
+}
+
+// ── CUSTOMER PORTAL ─────────────────────────────────────────────
+function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLinkProviderId, onDeepLinkConsumed }) {
+  const { t } = useTranslation();
+  const [tab, setTab] = useState("home");
+
+  // Lets the top nav's account dropdown (with the same tools list as the
+  // sidebar) switch tabs while already inside the customer portal,
+  // since the sidebar itself is hidden on mobile.
+  useEffect(() => {
+    const onSetTab = (e) => { if (e.detail && e.detail.tab) setTab(e.detail.tab); };
+    window.addEventListener("vaibook-set-portal-tab", onSetTab);
+    return () => window.removeEventListener("vaibook-set-portal-tab", onSetTab);
+  }, []);
+  const displayName = user?.full_name || session?.user?.email || "there";
+  const firstName = displayName.split(" ")[0].split("@")[0];
+  const [bookingTab, setBookingTab] = useState("upcoming");
+  const [bookingSearch, setBookingSearch] = useState("");
+  const [bookingSort, setBookingSort] = useState("newest");
+
+  const [editingProfile, setEditingProfile] = useState(false);
+  const [profileForm, setProfileForm] = useState({ firstName: "", lastName: "", phone: "" });
+  const [savingProfile, setSavingProfile] = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+    const [fn, ...rest] = (user.full_name || "").split(" ");
+    setProfileForm({ firstName: fn || "", lastName: rest.join(" "), phone: user.phone || "" });
+  }, [user]);
+
+  const startEditProfile = () => setEditingProfile(true);
+  const cancelEditProfile = () => {
+    const [fn, ...rest] = (user?.full_name || "").split(" ");
+    setProfileForm({ firstName: fn || "", lastName: rest.join(" "), phone: user?.phone || "" });
+    setEditingProfile(false);
+  };
+  const saveProfile = async () => {
+    setSavingProfile(true);
+    const full_name = [profileForm.firstName.trim(), profileForm.lastName.trim()].filter(Boolean).join(" ") || user?.full_name;
+    const updated = await updateUserProfile(user.id, { full_name, phone: profileForm.phone.trim() || null });
+    setSavingProfile(false);
+    if (updated) {
+      onUserUpdate && onUserUpdate(updated);
+      setEditingProfile(false);
+    }
+  };
+
+  const [providers, setProviders] = useState([]);
+  const [loadingProviders, setLoadingProviders] = useState(false);
+  const [providerSearch, setProviderSearch] = useState("");
+  const [districtFilter, setDistrictFilter] = useState("All");
+
+  const [bookings, setBookings] = useState([]);
+  const [loadingBookings, setLoadingBookings] = useState(false);
+
+  const [selectedProvider, setSelectedProvider] = useState(null);
+
+  // Lets a customer share a specific service (not just the provider as a
+  // whole) with someone else — mirrors the existing QR-code deep link
+  // ("#book-<provider id>") so the shared link lands straight on that
+  // provider's booking page. Native share sheet where the browser
+  // supports it (navigator.share — covers Amazon's own "share" pattern on
+  // mobile); clipboard copy with a brief inline confirmation otherwise.
+  const [copiedServiceId, setCopiedServiceId] = useState(null);
+  const shareService = async (service) => {
+    if (!selectedProvider) return;
+    const url = `${window.location.origin}/#book-${selectedProvider.id}`;
+    const text = `${service.name} at ${selectedProvider.business_name} — book it on VaiBook`;
+    if (navigator.share) {
+      try { await navigator.share({ title: text, url }); } catch (e) { /* user cancelled — not an error */ }
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(`${text}\n${url}`);
+      setCopiedServiceId(service.id);
+      setTimeout(() => setCopiedServiceId((id) => (id === service.id ? null : id)), 1800);
+    } catch (e) { /* clipboard unavailable — nothing more we can do here */ }
+  };
+
+  // Same share pattern, one level up: shares the provider's whole profile
+  // (not one specific service) — this is the icon-button version that sits
+  // beside the profile heart/favorite button, mirroring the share+heart
+  // icon pair pattern used by marketplace apps like Amazon/Fresha.
+  const [providerLinkCopied, setProviderLinkCopied] = useState(false);
+  const shareProvider = async (provider) => {
+    if (!provider) return;
+    const url = `${window.location.origin}/#book-${provider.id}`;
+    const text = `${provider.business_name} on VaiBook`;
+    if (navigator.share) {
+      try { await navigator.share({ title: text, url }); } catch (e) { /* user cancelled — not an error */ }
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(`${text}\n${url}`);
+      setProviderLinkCopied(true);
+      setTimeout(() => setProviderLinkCopied(false), 1800);
+    } catch (e) { /* clipboard unavailable — nothing more we can do here */ }
+  };
+
+  // Per-booking unread message counts, so a waiting message is visible from
+  // the list instead of only after opening that booking's chat.
+  const [unreadByBooking, setUnreadByBooking] = useState({});
+  const loadUnreadMessages = async () => {
+    if (!user?.id) return;
+    const rows = await getUnreadBookingMessages(user.id);
+    const map = {};
+    (rows || []).forEach((r) => { map[r.booking_id] = (map[r.booking_id] || 0) + 1; });
+    setUnreadByBooking(map);
+  };
+  useEffect(() => {
+    loadUnreadMessages();
+    const t = setInterval(loadUnreadMessages, 30000);
+    return () => clearInterval(t);
+  }, [user?.id]);
+
+  // Ticks the "Next Appointment" hero's countdown every 30s — cheap enough
+  // to re-render on, and frequent enough that "in 12m" doesn't visibly go
+  // stale while someone's actually looking at it.
+  const [nowTick, setNowTick] = useState(() => Date.now());
+  useEffect(() => {
+    const t = setInterval(() => setNowTick(Date.now()), 30000);
+    return () => clearInterval(t);
+  }, []);
+
+  // A QR code / booking-link deep link ("#book-<id>") jumps straight to
+  // that provider's booking view, same modal as clicking them from search —
+  // no account needed just to look, same as browsing normally.
+  useEffect(() => {
+    if (!deepLinkProviderId) return;
+    let cancelled = false;
+    (async () => {
+      const p = await getProviderById(deepLinkProviderId);
+      if (!cancelled && p) {
+        setSelectedProvider(p);
+        // Without this the booking form has no working hours to build time
+        // slots from, so every QR/NFC scan dead-ended on "this provider
+        // hasn't set their working hours yet" — openBooking() loads them,
+        // and this path has to do exactly the same.
+        setProviderHours([]);
+        setBusyWindows([]);
+        getWorkingHours(p.id).then((hrs) => { if (!cancelled) setProviderHours(hrs || []); });
+        if (p.loyalty_enabled && user?.id) {
+          getLoyaltyAccount(p.id, user.id).then((acc) => { if (!cancelled) setMyLoyalty(acc); });
+        }
+      }
+      if (!cancelled) onDeepLinkConsumed && onDeepLinkConsumed();
+    })();
+    return () => { cancelled = true; };
+  }, [deepLinkProviderId]);
+
+  const [bookingForm, setBookingForm] = useState({ service_id: "", service_ids: [], date: "", time: "10:00", notes: "" });
+  // Multi-service checkout: tapping a service card toggles it in/out of this
+  // set (see the service-card list below) — a totally separate interaction
+  // from the existing single-service "Book" button, which still books that
+  // one service instantly and is untouched.
+  const [selectedServiceIds, setSelectedServiceIds] = useState([]);
+  const [submittingBooking, setSubmittingBooking] = useState(false);
+  const [bookingError, setBookingError] = useState("");
+  const [guestCheckoutForm, setGuestCheckoutForm] = useState({ name: "", email: "", whatsapp: "" });
+  const [showEmailAuthModal, setShowEmailAuthModal] = useState(false);
+  const [sendingBookingOtp, setSendingBookingOtp] = useState(false);
+  const { pushEnabled, subscribingPush, pushError, enablePushNotifications } = usePushSubscription(user?.id);
+  const [providerHours, setProviderHours] = useState([]);
+  const [busyWindows, setBusyWindows] = useState([]);
+  const [myLoyalty, setMyLoyalty] = useState(null);
+  const [loadingSlots, setLoadingSlots] = useState(false);
+  const [cancellingId, setCancellingId] = useState(null);
+  const [rescheduleRespondingId, setRescheduleRespondingId] = useState(null);
+  const [rescheduleRespondError, setRescheduleRespondError] = useState({});
+  const [profileTab, setProfileTab] = useState("services");
+  const [hoursExpanded, setHoursExpanded] = useState(false);
+  const [bookingService, setBookingService] = useState(null);
+  // Multi-service checkout — independent time per service. Keyed by
+  // service id: { [serviceId]: { date, time } }. Each selected service gets
+  // its own date/time picker instead of being collapsed into one combined
+  // back-to-back block, so a customer can e.g. put a lash lift at 9:30am and
+  // a bridal makeup trial at 2pm on a different day. multiBusyWindowsByDate
+  // caches get_busy_windows results per date string so multiple services
+  // sharing the same date don't each trigger their own fetch.
+  const [multiBookingTimes, setMultiBookingTimes] = useState({});
+  const [multiBusyWindowsByDate, setMultiBusyWindowsByDate] = useState({});
+  const [loadingMultiSlots, setLoadingMultiSlots] = useState(false);
+  const [providerReviews, setProviderReviews] = useState([]);
+  const [loadingReviews, setLoadingReviews] = useState(false);
+  const [lightboxUrl, setLightboxUrl] = useState(null);
+  const [showBrowseSuggestions, setShowBrowseSuggestions] = useState(false);
+
+  // HOME FEED — "Last-Minute Drops": real same-day openings, computed from
+  // each candidate provider's actual working hours + actual busy windows
+  // (bookings + provider_blocks), never a placeholder time. See
+  // computeDaySlots above.
+  const [lastMinuteDrops, setLastMinuteDrops] = useState([]);
+  const [loadingLastMinute, setLoadingLastMinute] = useState(false);
+  const lastMinuteComputedForRef = useRef("");
+
+  const [uploadingReceiptId, setUploadingReceiptId] = useState(null);
+  const [reviewingId, setReviewingId] = useState(null);
+  const [reviewForm, setReviewForm] = useState({ rating: 5, comment: "" });
+  const [submittingReview, setSubmittingReview] = useState(false);
+
+  const [favoriteIds, setFavoriteIds] = useState(new Set());
+  const [favoriteProviders, setFavoriteProviders] = useState([]);
+  const [loadingFavorites, setLoadingFavorites] = useState(false);
+  const [togglingFavoriteId, setTogglingFavoriteId] = useState(null);
+
+  const loadFavoriteIds = async () => {
+    if (!user?.id) return;
+    const ids = await getFavoriteProviderIds(user.id);
+    setFavoriteIds(new Set(ids));
+  };
+
+  const loadFavoriteProviders = async () => {
+    if (!user?.id) return;
+    setLoadingFavorites(true);
+    const data = await getFavoriteProviders(user.id);
+    setFavoriteProviders(data);
+    setLoadingFavorites(false);
+  };
+
+  useEffect(() => {
+    loadFavoriteIds();
+    loadFavoriteProviders();
+  }, [user?.id]);
+
+  const toggleFavorite = async (e, providerId) => {
+    e.stopPropagation();
+    if (!user?.id || togglingFavoriteId === providerId) return;
+    setTogglingFavoriteId(providerId);
+    const isFav = favoriteIds.has(providerId);
+    // Optimistic update so the heart flips instantly.
+    setFavoriteIds((prev) => {
+      const next = new Set(prev);
+      isFav ? next.delete(providerId) : next.add(providerId);
+      return next;
+    });
+    const ok = isFav ? await removeFavorite(user.id, providerId) : await addFavorite(user.id, providerId);
+    if (ok) {
+      if (isFav) {
+        setFavoriteProviders((prev) => prev.filter((p) => p.id !== providerId));
+      } else {
+        loadFavoriteProviders();
+      }
+    } else {
+      // Revert on failure.
+      setFavoriteIds((prev) => {
+        const next = new Set(prev);
+        isFav ? next.add(providerId) : next.delete(providerId);
+        return next;
+      });
+    }
+    setTogglingFavoriteId(null);
+  };
+
+  const loadProviders = async () => {
+    setLoadingProviders(true);
+    const data = await getActiveProviders(districtFilter !== "All" ? { district: districtFilter } : {});
+    setProviders(data || []);
+    setLoadingProviders(false);
+  };
+
+  useEffect(() => {
+    loadProviders();
+  }, [districtFilter]);
+
+  // HOME FEED — "Last-Minute Drops": for a capped set of candidate
+  // providers, fetch their REAL working hours + REAL busy windows (same
+  // data source the booking modal itself uses) and keep only the ones with
+  // a genuine opening left today. Capped at a bounded candidate set (12)
+  // so this stays a handful of parallel requests regardless of how many
+  // providers are on the network, not one request per provider on the
+  // whole platform. Recomputes when the visible provider list or the
+  // calendar day changes (a ref, not state, so it doesn't itself trigger a
+  // re-render loop).
+  useEffect(() => {
+    if (tab !== "home" || providers.length === 0) return;
+    const today = localDateStr();
+    const key = `${today}:${providers.map((p) => p.id).slice(0, 12).join(",")}`;
+    if (lastMinuteComputedForRef.current === key) return;
+    lastMinuteComputedForRef.current = key;
+
+    const candidates = providers
+      .map((p) => {
+        const activeServices = (p.services || []).filter((s) => s.is_active !== false);
+        if (activeServices.length === 0) return null;
+        // The shortest active service gives same-day availability the best
+        // chance of actually fitting before closing — a fair, provider-
+        // agnostic way to pick which service this card represents.
+        const repService = activeServices.slice().sort((a, b) => (Number(a.duration_min) || 30) - (Number(b.duration_min) || 30))[0];
+        return { provider: p, repService };
+      })
+      .filter(Boolean)
+      .slice(0, 12);
+
+    if (candidates.length === 0) { setLastMinuteDrops([]); return; }
+
+    let cancelled = false;
+    setLoadingLastMinute(true);
+    Promise.all(
+      candidates.map(({ provider, repService }) =>
+        Promise.all([getWorkingHours(provider.id), getProviderBusyWindows(provider.id, today)]).then(([hours, busy]) => {
+          const slots = computeDaySlots({
+            hours,
+            busy,
+            dateStr: today,
+            durationMin: Number(repService.duration_min) || 30,
+            lunchBreakStart: provider.lunch_break_start,
+            lunchBreakMinutes: provider.lunch_break_minutes,
+          });
+          if (slots.length === 0) return null;
+          return { provider, service: repService, time: slots[0] };
+        })
+      )
+    ).then((results) => {
+      if (cancelled) return;
+      const drops = results
+        .filter(Boolean)
+        .sort((a, b) => hhmmToMinutes(a.time) - hhmmToMinutes(b.time))
+        .slice(0, 8);
+      setLastMinuteDrops(drops);
+      setLoadingLastMinute(false);
+    });
+    return () => { cancelled = true; };
+  }, [tab, providers]);
+
+  const loadBookings = async () => {
+    if (!user?.id) return;
+    setLoadingBookings(true);
+    const data = await getCustomerBookings(user.id);
+    setBookings(data || []);
+    setLoadingBookings(false);
+  };
+
+  useEffect(() => {
+    loadBookings();
+  }, [user?.id]);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("vaibook_pending_search");
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        setTab("browse");
+        if (parsed.query) setProviderSearch(parsed.query);
+        setDistrictFilter(parsed.district || "All");
+        localStorage.removeItem("vaibook_pending_search");
+      }
+    } catch (e) { /* ignore malformed/missing storage */ }
+  }, []);
+
+  useEffect(() => {
+    try {
+      const pendingTab = localStorage.getItem("vaibook_pending_tab");
+      if (pendingTab) {
+        setTab(pendingTab);
+        localStorage.removeItem("vaibook_pending_tab");
+      }
+    } catch (e) { /* ignore malformed/missing storage */ }
+  }, []);
+
+  const openBooking = (provider) => {
+    setBookingError("");
+    setProfileTab("services");
+    setHoursExpanded(false);
+    setBookingService(null);
+    setSelectedServiceIds([]);
+    setMultiBookingTimes({});
+    setMultiBusyWindowsByDate({});
+    setProviderReviews([]);
+    setLightboxUrl(null);
+    setSelectedProvider(provider);
+    setProviderHours([]);
+    setBusyWindows([]);
+    setMyLoyalty(null);
+    if (provider?.id) {
+      getWorkingHours(provider.id).then((hrs) => setProviderHours(hrs || []));
+      if (provider.loyalty_enabled && user?.id) {
+        getLoyaltyAccount(provider.id, user.id).then((acc) => setMyLoyalty(acc));
+      }
+    }
+  };
+
+  // "Claim" on a Last-Minute Drop card — same entry point as any other
+  // booking, just pre-landed on the exact service + real open slot the
+  // home feed already found, so there's no re-picking a time that was
+  // only ever going to be the same one.
+  const claimLastMinuteDrop = (drop) => {
+    openBooking(drop.provider);
+    setBookingForm({
+      service_id: drop.service.id,
+      service_ids: [],
+      date: localDateStr(),
+      time: drop.time,
+      notes: "",
+    });
+    setBookingService(drop.service);
+  };
+
+  const startBookingForService = (service) => {
+    setBookingForm({
+      service_id: service.id,
+      service_ids: [],
+      date: localDateStr(),
+      time: "",
+      notes: "",
+    });
+    setBookingError("");
+    setBookingService(service);
+  };
+
+  // ── Multi-service checkout ────────────────────────────────────────
+  // Tapping a service card (not the "Book" button) toggles it into this
+  // running selection instead of jumping straight into the date/time step —
+  // the sticky total bar below the list is what actually advances.
+  const toggleServiceSelect = (service) => {
+    setSelectedServiceIds((ids) => (ids.includes(service.id) ? ids.filter((id) => id !== service.id) : [...ids, service.id]));
+  };
+  const selectedServicesList = (selectedProvider?.services || []).filter((s) => selectedServiceIds.includes(s.id));
+  const multiTotalPrice = selectedServicesList.reduce((sum, s) => sum + (Number(s.price) || 0), 0);
+  const multiTotalDuration = selectedServicesList.reduce((sum, s) => sum + (Number(s.duration_min) || 0), 0);
+
+  // "Next: Pick time" — each selected service gets its OWN date/time picker
+  // (multiBookingTimes, keyed by service id) instead of being collapsed into
+  // one combined back-to-back block. bookingService itself just becomes a
+  // marker ({isMulti:true}) so the existing "!bookingService && ..." gating
+  // elsewhere (gallery/tabs/sidebar) still hides correctly during this step.
+  const proceedToMultiServiceTime = () => {
+    if (selectedServicesList.length === 0) return;
+    const today = localDateStr();
+    setMultiBookingTimes(Object.fromEntries(selectedServicesList.map((s) => [s.id, { date: today, time: "" }])));
+    setBookingError("");
+    setBookingService({ isMulti: true });
+  };
+
+  // Every distinct date currently chosen across the multi-service pickers —
+  // used below to fetch (and cache) get_busy_windows once per date instead
+  // of once per service, since two services can share the same day.
+  const multiBookingDates = Array.from(new Set(Object.values(multiBookingTimes).map((v) => v.date).filter(Boolean)));
+
+  useEffect(() => {
+    if (!selectedProvider?.id || multiBookingDates.length === 0) return;
+    const missing = multiBookingDates.filter((d) => !(d in multiBusyWindowsByDate));
+    if (missing.length === 0) return;
+    let cancelled = false;
+    setLoadingMultiSlots(true);
+    Promise.all(missing.map((d) => getProviderBusyWindows(selectedProvider.id, d).then((w) => [d, w || []]))).then((pairs) => {
+      if (cancelled) return;
+      setMultiBusyWindowsByDate((prev) => {
+        const next = { ...prev };
+        pairs.forEach(([d, w]) => { next[d] = w; });
+        return next;
+      });
+      setLoadingMultiSlots(false);
+    });
+    return () => { cancelled = true; };
+  }, [selectedProvider?.id, multiBookingDates.join(",")]);
+
+  // Bookable slots for ONE service within the multi-service picker: that
+  // service's own duration, that date's real provider hours/busy windows/
+  // lunch break (same rules as the single-service picker below), PLUS the
+  // times already chosen for every OTHER selected service that shares the
+  // same date — so two services in the same cart can never be scheduled to
+  // overlap each other, not just against the provider's existing calendar.
+  const getMultiServiceSlots = (service) => {
+    const picked = multiBookingTimes[service.id];
+    if (!picked?.date) return [];
+    const durationMin = Number(service.duration_min) || 30;
+    const dow = new Date(picked.date + "T00:00:00").getDay();
+    const dayHours = providerHours.find((h) => h.day_of_week === dow);
+    if (!dayHours || !dayHours.is_open || !dayHours.start_time || !dayHours.end_time) return [];
+    const startM = timeToMinutes(dayHours.start_time);
+    const endM = timeToMinutes(dayHours.end_time);
+    const isToday = picked.date === localDateStr();
+    const nowM = isToday ? new Date().getHours() * 60 + new Date().getMinutes() : -1;
+    const step = 30;
+    const lunchWindow = (selectedProvider?.lunch_break_start && Number(selectedProvider?.lunch_break_minutes) > 0)
+      ? { start_time: selectedProvider.lunch_break_start, end_time: minutesToTime(timeToMinutes(selectedProvider.lunch_break_start) + Number(selectedProvider.lunch_break_minutes)) }
+      : null;
+    const otherPicksSameDay = selectedServicesList
+      .filter((s) => s.id !== service.id && multiBookingTimes[s.id]?.date === picked.date && multiBookingTimes[s.id]?.time)
+      .map((s) => {
+        const t = multiBookingTimes[s.id].time;
+        const start = timeToMinutes(t);
+        return { start_time: t, end_time: minutesToTime(start + (Number(s.duration_min) || 30)) };
+      });
+    const allBusy = [
+      ...(multiBusyWindowsByDate[picked.date] || []),
+      ...(lunchWindow ? [lunchWindow] : []),
+      ...otherPicksSameDay,
+    ];
+    const slots = [];
+    for (let m = startM; m + durationMin <= endM; m += step) {
+      if (isToday && m <= nowM) continue;
+      const slotEnd = m + durationMin;
+      const busy = allBusy.some((w) => {
+        const wStart = timeToMinutes(w.start_time);
+        const wEnd = timeToMinutes(w.end_time);
+        return m < wEnd && wStart < slotEnd;
+      });
+      if (!busy) slots.push(minutesToTime(m));
+    }
+    return slots;
+  };
+
+  // Reload the provider's busy windows whenever the chosen date changes so the
+  // slot picker reflects live availability (not just what was true when the
+  // modal first opened).
+  useEffect(() => {
+    if (!selectedProvider?.id || !bookingForm.date) { setBusyWindows([]); return; }
+    let cancelled = false;
+    setLoadingSlots(true);
+    getProviderBusyWindows(selectedProvider.id, bookingForm.date).then((windows) => {
+      if (!cancelled) { setBusyWindows(windows || []); setLoadingSlots(false); }
+    });
+    return () => { cancelled = true; };
+  }, [selectedProvider?.id, bookingForm.date]);
+
+  const timeToMinutes = (t) => {
+    const [h, m] = String(t).slice(0, 5).split(":").map(Number);
+    return h * 60 + m;
+  };
+  const minutesToTime = (m) => `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
+  const formatTimeLabel = (t) => {
+    const mins = timeToMinutes(t);
+    const h24 = Math.floor(mins / 60);
+    const m = mins % 60;
+    const ampm = h24 >= 12 ? "PM" : "AM";
+    const h12 = h24 % 12 === 0 ? 12 : h24 % 12;
+    return `${h12}:${String(m).padStart(2, "0")} ${ampm}`;
+  };
+
+  // Open/closed status for the profile header + sidebar, computed from the
+  // provider's own working_hours rows — no separate "is open" field to fake,
+  // just today's (or the next open day's) real hours.
+  const getOpenStatus = (hours) => {
+    if (!hours || !hours.length) return { open: null, label: t("customerPortal.hours.notListed") };
+    const now = new Date();
+    const dow = now.getDay();
+    const nowM = now.getHours() * 60 + now.getMinutes();
+    const today = hours.find((h) => h.day_of_week === dow);
+    if (today && today.is_open && today.start_time && today.end_time) {
+      const startM = timeToMinutes(today.start_time);
+      const endM = timeToMinutes(today.end_time);
+      if (nowM >= startM && nowM < endM) return { open: true, label: t("customerPortal.hours.openNowCloses", { time: formatTimeLabel(today.end_time) }) };
+      if (nowM < startM) return { open: false, label: t("customerPortal.hours.closedOpensTodayAt", { time: formatTimeLabel(today.start_time) }) };
+    }
+    for (let i = 1; i <= 7; i++) {
+      const nextDow = (dow + i) % 7;
+      const day = hours.find((h) => h.day_of_week === nextDow);
+      if (day && day.is_open && day.start_time) {
+        const dayLabel = i === 1 ? t("customerPortal.hours.tomorrow") : DAY_NAMES[nextDow];
+        return { open: false, label: t("customerPortal.hours.closedOpensDayAt", { day: dayLabel, time: formatTimeLabel(day.start_time) }) };
+      }
+    }
+    return { open: false, label: t("customerPortal.hours.closed") };
+  };
+
+  // Builds the list of bookable slots for the currently selected date + service:
+  // provider working hours minus already-busy windows minus times in the past.
+  const availableSlots = (() => {
+    if (!bookingForm.date) return [];
+    // Multi-service checkout: bookingForm.service_ids (set by
+    // proceedToMultiServiceTime) carries the full selection, so the slot
+    // picker only shows times with enough room for ALL of them back-to-back
+    // — never a single service's duration once more than one is selected.
+    const durationMin = (bookingForm.service_ids || []).length > 0
+      ? bookingForm.service_ids.reduce((sum, id) => {
+          const s = (selectedProvider?.services || []).find((sv) => sv.id === id);
+          return sum + (Number(s?.duration_min) || 0);
+        }, 0) || 30
+      : Number((selectedProvider?.services || []).find((s) => s.id === bookingForm.service_id)?.duration_min) || 30;
+    const dow = new Date(bookingForm.date + "T00:00:00").getDay();
+    const dayHours = providerHours.find((h) => h.day_of_week === dow);
+    if (!dayHours || !dayHours.is_open || !dayHours.start_time || !dayHours.end_time) return [];
+    const startM = timeToMinutes(dayHours.start_time);
+    const endM = timeToMinutes(dayHours.end_time);
+    const isToday = bookingForm.date === localDateStr();
+    const nowM = isToday ? new Date().getHours() * 60 + new Date().getMinutes() : -1;
+    const step = 30;
+    // "Set-and-forget" daily lunch break — subtracted from every day's
+    // availability the same way a real booking would be, without the
+    // provider having to block it themselves. Treated as just another busy
+    // window for this one calculation, so it never touches busyWindows
+    // (and therefore never shows on the provider's own schedule as a
+    // ghost appointment).
+    const lunchWindow = (selectedProvider?.lunch_break_start && Number(selectedProvider?.lunch_break_minutes) > 0)
+      ? { start_time: selectedProvider.lunch_break_start, end_time: minutesToTime(timeToMinutes(selectedProvider.lunch_break_start) + Number(selectedProvider.lunch_break_minutes)) }
+      : null;
+    const allBusy = lunchWindow ? [...busyWindows, lunchWindow] : busyWindows;
+    const slots = [];
+    for (let m = startM; m + durationMin <= endM; m += step) {
+      if (isToday && m <= nowM) continue;
+      const slotEnd = m + durationMin;
+      const busy = allBusy.some((w) => {
+        const wStart = timeToMinutes(w.start_time);
+        const wEnd = timeToMinutes(w.end_time);
+        return m < wEnd && wStart < slotEnd;
+      });
+      if (!busy) slots.push(minutesToTime(m));
+    }
+    return slots;
+  })();
+
+  const backToServices = () => {
+    setBookingService(null);
+    setSelectedServiceIds([]);
+    setMultiBookingTimes({});
+    setMultiBusyWindowsByDate({});
+    setBookingError("");
+  };
+
+  const openReviewsTab = () => {
+    setProfileTab("reviews");
+    if (selectedProvider && providerReviews.length === 0 && !loadingReviews) {
+      setLoadingReviews(true);
+      getProviderReviews(selectedProvider.id).then((data) => {
+        setProviderReviews(data || []);
+        setLoadingReviews(false);
+      });
+    }
+  };
+
+  // Creates one booking (service_id/date/time/total/downpayment) via the
+  // hardened create_booking_safe RPC, then fires the provider notification +
+  // email. Shared by the single-service flow below and, called once per
+  // service in sequence, by submitMultiServiceBooking — the per-booking
+  // logic (deposit math, notification copy, email) is identical either way,
+  // only which service/date/time/notes feed it differs.
+  const createOneBooking = async ({ bookingCustomerId, service, dateStr, timeStr, notes }) => {
+    const total = Number(service.price) || 0;
+    const dpPct = selectedProvider.downpayment_required ? (selectedProvider.downpayment_pct || 50) : 0;
+    const downpayment = dpPct ? Math.round(total * dpPct) / 100 : null;
+    const order_number = `VB-${Date.now().toString(36).toUpperCase()}${Math.random().toString(36).slice(2, 5).toUpperCase()}`;
+    const created = await createBookingSafe({
+      order_number,
+      customer_id: bookingCustomerId,
+      provider_id: selectedProvider.id,
+      service_id: service.id,
+      booking_date: dateStr,
+      booking_time: timeStr,
+      total_amount: total,
+      downpayment_amount: downpayment,
+      notes: notes ? notes.trim() : null,
+    });
+    if (created) {
+      const finalTotal = Number(created.total_amount) || total;
+      const whenLabel = `${formatBookingDate(dateStr)} at ${formatBookingTime(timeStr)}`;
+      if (selectedProvider.user_id) {
+        await createNotification({
+          user_id: selectedProvider.user_id,
+          title: "New booking request",
+          body: `${user?.full_name || guestCheckoutForm.name || "A customer"} requested ${service.name} on ${whenLabel}.`,
+          type: "booking_requested",
+          booking_id: created.id,
+        });
+      }
+      // A provider who isn't sitting in the app had no way of knowing a
+      // request had come in. The address is resolved server-side for this
+      // one booking (and only if they still want these emails) rather than
+      // being published on every provider's public profile row.
+      const providerEmail = await getProviderNotifyEmail(created.id);
+      if (providerEmail) {
+        await sendBookingEmail({
+          to: providerEmail,
+          subject: `New booking request — ${service.name}, ${whenLabel}`,
+          html: `<p>Hi ${selectedProvider.business_name || "there"},</p><p><strong>${user?.full_name || guestCheckoutForm.name || "A customer"}</strong> just requested <strong>${service.name}</strong> for <strong>${whenLabel}</strong> (BZ$${finalTotal.toFixed(2)}).</p>${notes ? `<p>Their note: "${notes.trim()}"</p>` : ""}<p>Open VaiBook to accept or decline it. You can turn these emails off under Settings → Notifications.</p>`,
+        });
+      }
+    }
+    return created;
+  };
+
+  const submitBooking = async (overrideCustomerId) => {
+    const bookingCustomerId = overrideCustomerId || user?.id;
+    if (!bookingCustomerId) { setBookingError(t("customerPortal.booking.signInAgain")); return; }
+    if (!bookingForm.service_id || !bookingForm.date || !bookingForm.time) {
+      setBookingError(t("customerPortal.booking.chooseServiceDateTime"));
+      return;
+    }
+    const check = validate(bookingRequestSchema, {
+      service_id: bookingForm.service_id,
+      date: bookingForm.date,
+      time: bookingForm.time,
+      notes: bookingForm.notes || null,
+    });
+    if (!check.ok) { setBookingError(check.message); return; }
+    const service = (selectedProvider.services || []).find((s) => s.id === bookingForm.service_id);
+    if (!service) { setBookingError(t("customerPortal.booking.chooseService")); return; }
+
+    setSubmittingBooking(true);
+    setBookingError("");
+
+    let created = null;
+    try {
+      created = await createOneBooking({ bookingCustomerId, service, dateStr: bookingForm.date, timeStr: bookingForm.time, notes: bookingForm.notes });
+    } catch (err) {
+      setSubmittingBooking(false);
+      if (err?.code === "SLOT_TAKEN") {
+        setBookingError(t("customerPortal.booking.slotTaken"));
+        // Refresh so the now-taken slot disappears from the picker.
+        getProviderBusyWindows(selectedProvider.id, bookingForm.date).then((w) => setBusyWindows(w || []));
+        setBookingForm((f) => ({ ...f, time: "" }));
+      } else if (err?.code === "RATE_LIMITED") {
+        setBookingError(t("customerPortal.booking.rateLimited"));
+      } else if (err?.code === "MAINTENANCE_MODE") {
+        setBookingError(t("customerPortal.booking.maintenanceMode"));
+      } else if (err?.code === "STARTER_LIMIT_REACHED") {
+        setBookingError(t("customerPortal.booking.starterLimitReached", { providerName: selectedProvider?.business_name || t("customerPortal.booking.thisProvider") }));
+      } else {
+        setBookingError(t("customerPortal.booking.genericError"));
+      }
+      return;
+    }
+
+    setSubmittingBooking(false);
+
+    if (created) {
+      setSelectedProvider(null);
+      setBookingService(null);
+      setSelectedServiceIds([]);
+      await loadBookings();
+      setTab("bookings");
+      setBookingTab("upcoming");
+    } else {
+      setBookingError(t("customerPortal.booking.genericError"));
+    }
+  };
+
+  // Multi-service checkout — each selected service becomes its OWN booking
+  // (own order_number, own notification), submitted one at a time in
+  // selection order so create_booking_safe's own overlap check (which looks
+  // at every booking for that provider/date, not just this customer's) sees
+  // each prior one as already-busy by the time the next is checked — on top
+  // of the client-side same-cart overlap prevention in getMultiServiceSlots
+  // above, this is what stops two of the customer's own picks from landing
+  // on the same time even under a race. "Request booking" is one button for
+  // the whole cart, so a failure partway through rolls back every booking
+  // already created rather than leaving a partial cart confirmed — the
+  // customer sees one clear error naming the service that couldn't be
+  // booked, not a silent partial success.
+  const submitMultiServiceBooking = async (overrideCustomerId) => {
+    const bookingCustomerId = overrideCustomerId || user?.id;
+    if (!bookingCustomerId) { setBookingError(t("customerPortal.booking.signInAgain")); return; }
+    const missingTime = selectedServicesList.find((s) => !multiBookingTimes[s.id]?.date || !multiBookingTimes[s.id]?.time);
+    if (missingTime) {
+      setBookingError(t("customerPortal.booking.chooseTimeForEach", { service: missingTime.name }));
+      return;
+    }
+    for (const s of selectedServicesList) {
+      const check = validate(bookingRequestSchema, {
+        service_id: s.id,
+        date: multiBookingTimes[s.id].date,
+        time: multiBookingTimes[s.id].time,
+        notes: bookingForm.notes || null,
+      });
+      if (!check.ok) { setBookingError(check.message); return; }
+    }
+
+    setSubmittingBooking(true);
+    setBookingError("");
+
+    const createdSoFar = [];
+    for (const service of selectedServicesList) {
+      const { date: dateStr, time: timeStr } = multiBookingTimes[service.id];
+      let created = null;
+      try {
+        created = await createOneBooking({ bookingCustomerId, service, dateStr, timeStr, notes: bookingForm.notes });
+      } catch (err) {
+        // Undo everything already created in this same cart — the customer
+        // only ever clicked "Request booking" once, so a failure on service
+        // 3 of 3 shouldn't quietly leave services 1 and 2 booked without
+        // them having confirmed that's still what they want.
+        await Promise.all(createdSoFar.map((b) => cancelBooking(b.id)));
+        setSubmittingBooking(false);
+        if (err?.code === "SLOT_TAKEN") {
+          setBookingError(t("customerPortal.booking.multiSlotTaken", { service: service.name }));
+          setMultiBusyWindowsByDate((prev) => { const next = { ...prev }; delete next[dateStr]; return next; });
+          setMultiBookingTimes((prev) => ({ ...prev, [service.id]: { ...prev[service.id], time: "" } }));
+        } else if (err?.code === "RATE_LIMITED") {
+          setBookingError(t("customerPortal.booking.rateLimited"));
+        } else if (err?.code === "MAINTENANCE_MODE") {
+          setBookingError(t("customerPortal.booking.maintenanceMode"));
+        } else if (err?.code === "STARTER_LIMIT_REACHED") {
+          setBookingError(t("customerPortal.booking.starterLimitReached", { providerName: selectedProvider?.business_name || t("customerPortal.booking.thisProvider") }));
+        } else {
+          setBookingError(t("customerPortal.booking.genericError"));
+        }
+        return;
+      }
+      if (!created) {
+        await Promise.all(createdSoFar.map((b) => cancelBooking(b.id)));
+        setSubmittingBooking(false);
+        setBookingError(t("customerPortal.booking.genericError"));
+        return;
+      }
+      createdSoFar.push(created);
+    }
+
+    setSubmittingBooking(false);
+    setSelectedProvider(null);
+    setBookingService(null);
+    setSelectedServiceIds([]);
+    setMultiBookingTimes({});
+    setMultiBusyWindowsByDate({});
+    await loadBookings();
+    setTab("bookings");
+    setBookingTab("upcoming");
+  };
+
+  const handleCancelBooking = async (bookingId) => {
+    if (!window.confirm(t("customerPortal.booking.cancelConfirm"))) return;
+    setCancellingId(bookingId);
+    const cancelled = bookings.find((b) => b.id === bookingId);
+    await cancelBooking(bookingId);
+    if (cancelled?.provider_profiles?.user_id) {
+      await createNotification({
+        user_id: cancelled.provider_profiles.user_id,
+        title: "Booking cancelled",
+        body: `${user?.full_name || "A customer"} cancelled their booking${cancelled?.services?.name ? ` for ${cancelled.services.name}` : ""} on ${new Date(cancelled.booking_date).toLocaleDateString()}.`,
+        type: "booking_cancelled",
+        booking_id: bookingId,
+      });
+    }
+    await loadBookings();
+    setCancellingId(null);
+  };
+
+  const handleConfirmReschedule = async (booking) => {
+    setRescheduleRespondingId(booking.id);
+    setRescheduleRespondError((e) => ({ ...e, [booking.id]: "" }));
+    try {
+      await confirmBookingReschedule(booking.id);
+    } catch (err) {
+      setRescheduleRespondingId(null);
+      setRescheduleRespondError((e) => ({
+        ...e,
+        [booking.id]: err.code === "SLOT_TAKEN"
+          ? t("customerPortal.booking.rescheduleTimeTaken")
+          : t("customerPortal.booking.rescheduleConfirmFailed"),
+      }));
+      return;
+    }
+    if (booking.provider_profiles?.user_id) {
+      await createNotification({
+        user_id: booking.provider_profiles.user_id,
+        title: "Customer confirmed the new time",
+        body: `${user?.full_name || "The customer"} confirmed the new time for their ${booking.services?.name || "appointment"}.`,
+        type: "booking_reschedule_confirmed",
+        booking_id: booking.id,
+      });
+    }
+    await loadBookings();
+    setRescheduleRespondingId(null);
+  };
+
+  const handleDeclineReschedule = async (booking) => {
+    setRescheduleRespondingId(booking.id);
+    setRescheduleRespondError((e) => ({ ...e, [booking.id]: "" }));
+    try {
+      await declineBookingReschedule(booking.id);
+    } catch (err) {
+      setRescheduleRespondingId(null);
+      setRescheduleRespondError((e) => ({ ...e, [booking.id]: t("customerPortal.booking.genericActionFailed") }));
+      return;
+    }
+    if (booking.provider_profiles?.user_id) {
+      await createNotification({
+        user_id: booking.provider_profiles.user_id,
+        title: "Customer kept the original time",
+        body: `${user?.full_name || "The customer"} would like to keep the original time for their ${booking.services?.name || "appointment"}.`,
+        type: "booking_reschedule_declined",
+        booking_id: booking.id,
+      });
+    }
+    await loadBookings();
+    setRescheduleRespondingId(null);
+  };
+
+  const handleUploadReceipt = async (bookingId, file) => {
+    if (!file) return;
+    if (file.size > 10 * 1024 * 1024) {
+      window.alert(t("customerPortal.booking.fileTooLarge"));
+      return;
+    }
+    setUploadingReceiptId(bookingId);
+    const savedPath = await uploadReceipt(bookingId, file);
+    if (!savedPath) {
+      // Used to notify the provider and carry on as if it worked, leaving
+      // the customer sure they'd sent proof they hadn't.
+      setUploadingReceiptId(null);
+      window.alert(t("customerPortal.booking.receiptUploadFailed"));
+      return;
+    }
+    const uploadedBooking = bookings.find((b) => b.id === bookingId);
+    if (uploadedBooking?.provider_profiles?.user_id) {
+      await createNotification({
+        user_id: uploadedBooking.provider_profiles.user_id,
+        title: "Deposit receipt uploaded",
+        body: `${user?.full_name || "A customer"} uploaded a receipt for ${uploadedBooking.services?.name || "their booking"}. Confirm payment to finalize.`,
+        type: "receipt_uploaded",
+        booking_id: bookingId,
+      });
+    }
+    await loadBookings();
+    setUploadingReceiptId(null);
+  };
+
+  // Passing the existing review pre-fills the form for editing instead of
+  // starting a fresh one — see submitBookingReview below, which routes to
+  // an UPDATE when there's an existing review id to edit.
+  const openReview = (bookingId, existingReview) => {
+    setReviewingId(bookingId);
+    setReviewForm(existingReview
+      ? { rating: existingReview.rating, comment: existingReview.comment || "" }
+      : { rating: 5, comment: "" });
+  };
+
+  const submitBookingReview = async (booking) => {
+    if (!user?.id) return;
+    // A provider account is also a customer account, so nothing stopped
+    // someone booking their own business, completing it and reviewing it.
+    if (booking.provider_profiles?.user_id && booking.provider_profiles.user_id === user.id) {
+      window.alert(t("customerPortal.reviews.cantReviewOwnBusiness"));
+      return;
+    }
+    const existing = booking.reviews && booking.reviews[0];
+    setSubmittingReview(true);
+    try {
+      const saved = existing
+        ? await updateReview(existing.id, {
+            rating: reviewForm.rating,
+            comment: reviewForm.comment ? reviewForm.comment.trim() : null,
+          })
+        : await submitReview({
+            booking_id: booking.id,
+            customer_id: user.id,
+            provider_id: booking.provider_id,
+            rating: reviewForm.rating,
+            comment: reviewForm.comment ? reviewForm.comment.trim() : null,
+          });
+      if (!saved) {
+        window.alert(t("customerPortal.reviews.saveFailedAlreadyReviewed"));
+        setSubmittingReview(false);
+        return;
+      }
+      if (!existing && booking.provider_profiles?.user_id) {
+        await createNotification({
+          user_id: booking.provider_profiles.user_id,
+          title: "New review received",
+          body: `${user?.full_name || "A customer"} left a ${reviewForm.rating}-star review${reviewForm.comment ? `: "${reviewForm.comment.trim().slice(0, 80)}"` : "."}`,
+          type: "review",
+          booking_id: booking.id,
+        });
+      }
+    } catch (err) {
+      if (err?.code === "REVIEW_LOCKED") {
+        window.alert(t("customerPortal.reviews.reviewLocked"));
+      } else {
+        window.alert(t("customerPortal.reviews.saveFailed"));
+      }
+      setSubmittingReview(false);
+      return;
+    }
+    await loadBookings();
+    setReviewingId(null);
+    setSubmittingReview(false);
+  };
+
+  const upcomingBookings = bookings.filter((b) => ["pending", "awaiting_payment", "confirmed"].includes(b.status));
+  const completedBookings = bookings.filter((b) => b.status === "completed");
+  const rejectedBookings = bookings.filter((b) => b.status === "rejected" || b.status === "cancelled");
+  const bookingNameFn = (b) => b.provider_profiles?.business_name || b.services?.name || "";
+  const visibleBookings = filterAndSortBookings(
+    bookingTab === "upcoming" ? upcomingBookings : bookingTab === "completed" ? completedBookings : rejectedBookings,
+    bookingSearch,
+    bookingSort,
+    bookingNameFn
+  );
+  const totalSpent = completedBookings.reduce((sum, b) => sum + (Number(b.total_amount) || 0), 0);
+  const reviewedBookings = bookings.filter((b) => b.reviews && b.reviews.length > 0);
+
+  // ── Dashboard redesign: "VIP Pass" next-appointment ticket ────────────
+  // Earliest upcoming by actual date/time, not just first-in-list — the
+  // `bookings` query orders newest-booked-first, which isn't the same as
+  // "what's happening soonest."
+  const nextAppointment = upcomingBookings
+    .filter((b) => bookingDateTime(b.booking_date, b.booking_time))
+    .sort((a, b) => bookingDateTime(a.booking_date, a.booking_time) - bookingDateTime(b.booking_date, b.booking_time))[0] || null;
+  const nextAppointmentAt = nextAppointment ? bookingDateTime(nextAppointment.booking_date, nextAppointment.booking_time) : null;
+  const nextAppointmentProvider = nextAppointment?.provider_profiles;
+  const nextAppointmentHasMap = nextAppointmentProvider?.latitude != null && nextAppointmentProvider?.longitude != null;
+  // "Check In" — a real action (opens WhatsApp with a pre-filled arrival
+  // message to the provider), not a cosmetic button that does nothing.
+  // Only appears when the provider actually has a WhatsApp number on file.
+  const nextAppointmentCheckInUrl = nextAppointmentProvider?.whatsapp
+    ? `https://wa.me/${nextAppointmentProvider.whatsapp.replace(/[^\d]/g, "")}?text=${encodeURIComponent(`Hi! I'm checking in for my ${nextAppointment.services?.name || "appointment"} at ${formatBookingTime(nextAppointment.booking_time)}.`)}`
+    : null;
+
+  // ── Dashboard redesign: "Quick Rebook" ────────────────────────────────
+  // Most recently visited providers, deduped, in booking-history order
+  // (already newest-first). Cross-referenced against the live `providers`
+  // list for a photo/rating — a past booking's own provider_profiles embed
+  // is a slim snapshot (see getCustomerBookings) with no portfolio_urls.
+  const rebookProviders = [];
+  bookings.forEach((b) => {
+    const pid = b.provider_profiles?.id;
+    if (!pid || b.status === "rejected" || b.status === "cancelled") return;
+    if (rebookProviders.some((p) => p.id === pid)) return;
+    const live = providers.find((p) => p.id === pid);
+    rebookProviders.push(live || b.provider_profiles);
+  });
+
+  const filteredProviders = providers.filter((p) => {
+    if (!providerSearch.trim()) return true;
+    const q = providerSearch.trim().toLowerCase();
+    const nameMatch = (p.business_name || "").toLowerCase().includes(q);
+    const categoryMatch = (p.service_type || "").toLowerCase().includes(q);
+    const serviceMatch = (p.services || []).some((s) => (s.name || "").toLowerCase().includes(q));
+    return nameMatch || categoryMatch || serviceMatch;
+  });
+
+  const browseSuggestions = buildSuggestions(providers, providerSearch);
+  const selectBrowseSuggestion = (s) => {
+    setProviderSearch(s.label);
+    setShowBrowseSuggestions(false);
+  };
+
+  const providerRating = (p) => {
+    const ratings = (p.reviews || []).map((r) => r.rating).filter((r) => r != null);
+    if (!ratings.length) return null;
+    return (ratings.reduce((a, b) => a + b, 0) / ratings.length).toFixed(1);
+  };
+
+  const providerFromPrice = (p) => {
+    const prices = (p.services || []).filter((s) => s.is_active !== false).map((s) => Number(s.price) || 0);
+    if (!prices.length) return null;
+    return Math.min(...prices);
+  };
+
+  // HOME FEED — "The Lookbook": every photo already on file comes straight
+  // from provider.portfolio_urls (the same photos shown on each provider's
+  // own profile gallery) — round-robin across providers rather than
+  // provider-by-provider, so one shop with a big gallery can't crowd out
+  // everyone else's work, capped at a sensible feed length.
+  const lookbookPhotos = (() => {
+    const byProvider = providers
+      .map((p) => ({ provider: p, urls: p.portfolio_urls || [] }))
+      .filter((x) => x.urls.length > 0);
+    const photos = [];
+    let round = 0;
+    while (photos.length < 24) {
+      let addedAny = false;
+      for (const { provider, urls } of byProvider) {
+        if (round < urls.length) {
+          photos.push({ url: urls[round], provider });
+          addedAny = true;
+          if (photos.length >= 24) break;
+        }
+      }
+      if (!addedAny) break;
+      round += 1;
+    }
+    return photos;
+  })();
+
+  return (
+    <div className="portal-layout">
+      {/* The persistent left sidebar was removed — every link it held
+          (Home, Find services, Favorites, My bookings, Payments, My
+          reviews, Settings, Sign out) now lives exclusively in the top
+          header's avatar dropdown (see PORTAL_TOOLS_BY_VIEW.customer and
+          the Nav component), so nothing here was left unreachable. */}
+      {/* Every account page except Home shares one dark "account page"
+          treatment (see the .cx-account-page CSS block) — same dark card
+          style, inputs, and buttons the Home dashboard established,
+          applied via ONE class switch here rather than per-tab custom
+          CSS, so Settings/Bookings/Payments/Reviews/Browse/Favorites all
+          read as the same app instead of drifting back to the old light
+          theme one page at a time. Home keeps its own light-canvas +
+          dark-card look exactly as shipped — untouched. */}
+      <main className={`portal-content${tab === "home" ? "" : " cx-account-page"}`}>
+        {tab === "home" && (
+          <>
+            {/* VIP PASS — replaces the generic greeting + 4 metric cards.
+                Styled like a digital ticket/boarding pass: header info,
+                a perforated tear line, then actions below it. This is the
+                one thing a customer actually opens the app to check, so
+                it's the biggest, first thing they see. */}
+            <div className="cx-hero">
+              {nextAppointment ? (
+                <>
+                  <div className="cx-hero-eyebrow">🎟️ {t("customerPortal.home.securedSpot")}</div>
+                  <div className="cx-hero-service">{nextAppointment.services?.name || t("customerPortal.home.appointmentFallback")}</div>
+                  <div className="cx-hero-provider">{nextAppointmentProvider?.business_name || t("customerPortal.home.providerFallback")}</div>
+                  <div className="cx-hero-countdown">{formatCountdown(nextAppointmentAt, nowTick)}</div>
+                  <div className="cx-hero-when">{formatBookingWhen(nextAppointment)}</div>
+                  <div className="cx-hero-divider" />
+                  <div className="cx-hero-actions">
+                    {nextAppointmentHasMap && (
+                      <a
+                        className="cx-btn-neon"
+                        href={directionsUrl(nextAppointmentProvider.latitude, nextAppointmentProvider.longitude)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        📍 {t("customerPortal.home.getDirections")}
+                      </a>
+                    )}
+                    {nextAppointmentCheckInUrl && (
+                      <a className="cx-btn-ghost" href={nextAppointmentCheckInUrl} target="_blank" rel="noopener noreferrer">
+                        ✅ {t("customerPortal.home.checkIn")}
+                      </a>
+                    )}
+                    <button className="cx-btn-ghost" onClick={() => setTab("bookings")}>
+                      {upcomingBookings.length > 1 ? t("customerPortal.home.viewAllCount", { count: upcomingBookings.length }) : t("customerPortal.home.viewDetails")}
+                    </button>
+                  </div>
+                  <div className="cx-hero-barcode" />
+                </>
+              ) : (
+                <>
+                  <div className="cx-hero-eyebrow">{t("customerPortal.home.noUpcomingAppointments")}</div>
+                  <div className="cx-hero-service">{t("customerPortal.home.readyWhenYouAre", { firstName })}</div>
+                  <div className="cx-hero-actions">
+                    <button className="cx-btn-neon" onClick={() => setTab("browse")}>{t("customerPortal.home.findAProvider")}</button>
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* LAST-MINUTE DROPS — real same-day openings only (see the
+                lastMinuteDrops effect above): a provider only shows up
+                here because computeDaySlots found it an actual free slot
+                today from its real working hours and real busy windows.
+                Horizontal scroll, hidden scrollbar, compact "snag it" cards. */}
+            {(loadingLastMinute || lastMinuteDrops.length > 0) && (
+              <div className="cx-dropzone">
+                <div className="cx-section-heading">{t("customerPortal.home.snagASpotToday")} 🔥</div>
+                {loadingLastMinute && lastMinuteDrops.length === 0 ? (
+                  <div className="cx-dropzone-loading">{t("customerPortal.home.checkingWhosFree")}</div>
+                ) : (
+                  <div className="cx-dropzone-row">
+                    {lastMinuteDrops.map((drop) => (
+                      <div className="cx-drop-card" key={drop.provider.id}>
+                        <div
+                          className="cx-drop-avatar"
+                          style={coverImageUrl(drop.provider) ? { background: `center/cover no-repeat url(${coverImageUrl(drop.provider)})` } : undefined}
+                        >
+                          {!coverImageUrl(drop.provider) && <span>{iconForServiceType(drop.provider.service_type)}</span>}
+                        </div>
+                        <div className="cx-drop-shop">{drop.provider.business_name}</div>
+                        <div className="cx-drop-time">{t("customerPortal.home.todayAt", { time: formatBookingTime(drop.time) })}</div>
+                        <button className="cx-drop-claim" onClick={() => claimLastMinuteDrop(drop)}>{t("customerPortal.home.claim")}</button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* BOOK AGAIN — sleek horizontal rows for recently visited
+                shops, one tap straight into the booking flow. No detour
+                through the full provider profile. */}
+            {rebookProviders.length > 0 && (
+              <div className="cx-rebook">
+                <div className="cx-section-heading">{t("customerPortal.home.bookAgain")}</div>
+                <div className="cx-rebook-list">
+                  {rebookProviders.slice(0, 4).map((p) => (
+                    <div className="cx-rebook-row" key={p.id} onClick={() => openBooking(p)}>
+                      <div
+                        className="cx-rebook-thumb"
+                        style={coverImageUrl(p) ? { background: `center/cover no-repeat url(${coverImageUrl(p)})` } : undefined}
+                      >
+                        {!coverImageUrl(p) && <span>{iconForServiceType(p.service_type)}</span>}
+                      </div>
+                      <div className="cx-rebook-info">
+                        <div className="cx-rebook-name">{p.business_name}</div>
+                        <div className="cx-rebook-type">{p.service_type}</div>
+                      </div>
+                      <button className="cx-rebook-btn" onClick={(e) => { e.stopPropagation(); openBooking(p); }}>{t("customerPortal.home.rebook")}</button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* SEARCH / DISCOVER — same search + category shortcuts as
+                before, restyled as dark premium pills instead of a boxed,
+                shadowed form card. */}
+            <div className="cx-discover">
+              <div className="cx-section-heading">{t("customerPortal.home.findYourNextService")}</div>
+              <div className="cx-discover-search">
+                <span className="search-icon">🔍</span>
+                <input
+                  placeholder={t("customerPortal.home.searchPlaceholder")}
+                  value={providerSearch}
+                  onChange={e => { setProviderSearch(e.target.value); setShowBrowseSuggestions(true); }}
+                  onFocus={() => setShowBrowseSuggestions(true)}
+                  onBlur={() => setTimeout(() => setShowBrowseSuggestions(false), 150)}
+                  onKeyDown={e => { if (e.key === "Enter") { setShowBrowseSuggestions(false); setTab("browse"); } }}
+                />
+                {showBrowseSuggestions && browseSuggestions.length > 0 && (
+                  <div className="suggestions-dropdown">
+                    {browseSuggestions.map((s) => (
+                      <div key={s.key} className="suggestion-item" onMouseDown={() => { selectBrowseSuggestion(s); setTab("browse"); }}>
+                        <span className="suggestion-icon">{s.icon}</span>
+                        <span className="suggestion-label">{s.label}</span>
+                        <span className="suggestion-sub">{s.sublabel}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <div className="cx-discover-pills">
+                {SERVICES.slice(0, 6).map((s, i) => (
+                  <button key={i} className="cx-discover-pill" onClick={() => { setProviderSearch(s.name); setShowBrowseSuggestions(false); setTab("browse"); }}>
+                    <span>{s.icon}</span>{t(`services.${s.key}.name`)}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* THE LOOKBOOK — real portfolio photos (provider.portfolio_urls),
+                interleaved across providers, masonry-style via CSS columns
+                so it never looks like a rigid directory grid. Tap/hover
+                reveals the shop name + a direct "Book this look". */}
+            {lookbookPhotos.length > 0 && (
+              <div className="cx-lookbook">
+                <div className="cx-section-heading">{t("customerPortal.home.getInspired")}</div>
+                <div className="cx-lookbook-grid">
+                  {lookbookPhotos.map((photo, i) => (
+                    <div className="cx-lookbook-item" key={`${photo.provider.id}-${i}`} onClick={() => openBooking(photo.provider)}>
+                      <img src={photo.url} alt={t("customerPortal.home.recentWorkAlt", { businessName: photo.provider.business_name })} loading="lazy" />
+                      <div className="cx-lookbook-overlay">
+                        <span className="cx-lookbook-name">{photo.provider.business_name}</span>
+                        <button className="cx-lookbook-book" onClick={(e) => { e.stopPropagation(); openBooking(photo.provider); }}>{t("customerPortal.home.bookThisLook")}</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
+        )}
+
+        {tab === "browse" && (
+          <>
+            <div className="portal-header"><h2>{t("customerPortal.browse.title")}</h2><p>{t("customerPortal.browse.subtitle")}</p></div>
+            <div className="search-bar" id="main-search-bar">
+              <span className="search-icon">🔍</span>
+              <input
+                placeholder={t("customerPortal.browse.searchPlaceholder")}
+                value={providerSearch}
+                onChange={e => { setProviderSearch(e.target.value); setShowBrowseSuggestions(true); }}
+                onFocus={() => setShowBrowseSuggestions(true)}
+                onBlur={() => setTimeout(() => setShowBrowseSuggestions(false), 150)}
+              />
+              {showBrowseSuggestions && browseSuggestions.length > 0 && (
+                <div className="suggestions-dropdown">
+                  {browseSuggestions.map((s) => (
+                    <div key={s.key} className="suggestion-item" onMouseDown={() => selectBrowseSuggestion(s)}>
+                      <span className="suggestion-icon">{s.icon}</span>
+                      <span className="suggestion-label">{s.label}</span>
+                      <span className="suggestion-sub">{s.sublabel}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 20 }}>
+              {["All", ...DISTRICTS].map((f, i) => (
+                <button key={i} className="btn-sm" style={{ background: f === districtFilter ? "var(--lime)" : "rgba(255,255,255,0.06)", color: f === districtFilter ? "var(--forest)" : "var(--muted)", border: "1px solid var(--border)" }} onClick={() => setDistrictFilter(f)}>{f === "All" ? t("customerPortal.browse.allDistricts") : f}</button>
+              ))}
+            </div>
+            {loadingProviders && <p style={{ fontSize: 13, color: "var(--muted)" }}>{t("customerPortal.browse.loadingProviders")}</p>}
+            {!loadingProviders && filteredProviders.length === 0 && (
+              <p style={{ fontSize: 13, color: "var(--muted)" }}>{t("customerPortal.browse.noProvidersFound")}</p>
+            )}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px,1fr))", gap: 16 }}>
+              {filteredProviders.map((p) => {
+                const rating = providerRating(p);
+                const fromPrice = providerFromPrice(p);
+                const openNow = providerOpenNow(p);
+                return (
+                  <div className="provider-card" key={p.id} style={{ cursor: "pointer", position: "relative" }} onClick={() => openBooking(p)}>
+                    <button
+                      onClick={(e) => toggleFavorite(e, p.id)}
+                      aria-label={favoriteIds.has(p.id) ? t("customerPortal.browse.removeFromFavorites") : t("customerPortal.browse.addToFavorites")}
+                      style={{ position: "absolute", top: 10, right: 10, zIndex: 2, width: 30, height: 30, borderRadius: "50%", border: "none", background: "rgba(255,255,255,0.9)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: 15, boxShadow: "0 2px 6px rgba(0,0,0,0.15)" }}
+                    >
+                      {favoriteIds.has(p.id) ? "❤️" : "🤍"}
+                    </button>
+                    {coverImageUrl(p) ? (
+                      <div className="provider-card-img" style={{ background: `center/cover no-repeat url(${coverImageUrl(p)})` }} />
+                    ) : (
+                      <div className="provider-card-img" style={{ background: "linear-gradient(160deg, #1E6B50 0%, #0E241B 100%)" }}>{iconForServiceType(p.service_type)}</div>
+                    )}
+                    <div className="provider-card-body">
+                      <h4>{p.business_name}{(() => { const badge = planBadge(p); return badge && <span className="cx-plan-badge">{badge.label}</span>; })()}{p.is_featured && <span style={{ marginLeft: 6, fontSize: 11, fontWeight: 700, color: "var(--lime)", background: "rgba(198,241,53,0.15)", padding: "2px 7px", borderRadius: 5, verticalAlign: "middle" }}>⭐ {t("customerPortal.browse.featuredBadge")}</span>}</h4>
+                      <div className="trade">{p.service_type} · {p.district}</div>
+                      <div className="stars">{rating ? <StarRating value={rating} /> : t("customerPortal.browse.noReviewsYet")}<span style={{ color: "var(--muted)", fontSize: 12 }}>{rating ? ` ${rating} (${p.reviews.length})` : ""}</span></div>
+                      {openNow !== null && (
+                        <span className={`open-status ${openNow ? "is-open" : "is-closed"}`} style={{ marginTop: 4, display: "inline-flex" }}>
+                          {openNow ? t("customerPortal.hours.openNow") : t("customerPortal.hours.closed")}
+                        </span>
+                      )}
+                      {p.whatsapp && <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 4 }}>📞 {p.whatsapp}</div>}
+                      <div className="provider-card-footer">
+                        <span className="price-tag">{fromPrice != null ? t("customerPortal.browse.fromPrice", { price: fromPrice }) : t("customerPortal.browse.contactForPricing")}</span>
+                        {p.downpayment_required ? <span style={{ fontSize: 11, color: "var(--muted)" }}>{t("customerPortal.browse.depositPct", { pct: p.downpayment_pct || 50 })}</span> : <span className="avail-badge">{t("customerPortal.browse.noDeposit")}</span>}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </>
+        )}
+
+        {tab === "favorites" && (
+          <>
+            <div className="portal-header"><h2>{t("customerPortal.favorites.title")}</h2><p>{t("customerPortal.favorites.subtitle")}</p></div>
+            {loadingFavorites && <p style={{ fontSize: 13, color: "var(--muted)" }}>{t("customerPortal.favorites.loading")}</p>}
+            {!loadingFavorites && favoriteProviders.length === 0 && (
+              <p style={{ fontSize: 13, color: "var(--muted)" }}>{t("customerPortal.favorites.emptyState")}</p>
+            )}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px,1fr))", gap: 16 }}>
+              {favoriteProviders.map((p) => {
+                const rating = providerRating(p);
+                const fromPrice = providerFromPrice(p);
+                const openNow = providerOpenNow(p);
+                return (
+                  <div className="provider-card" key={p.id} style={{ cursor: "pointer", position: "relative" }} onClick={() => openBooking(p)}>
+                    <button
+                      onClick={(e) => toggleFavorite(e, p.id)}
+                      aria-label={t("customerPortal.browse.removeFromFavorites")}
+                      style={{ position: "absolute", top: 10, right: 10, zIndex: 2, width: 30, height: 30, borderRadius: "50%", border: "none", background: "rgba(255,255,255,0.9)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: 15, boxShadow: "0 2px 6px rgba(0,0,0,0.15)" }}
+                    >
+                      ❤️
+                    </button>
+                    {coverImageUrl(p) ? (
+                      <div className="provider-card-img" style={{ background: `center/cover no-repeat url(${coverImageUrl(p)})` }} />
+                    ) : (
+                      <div className="provider-card-img" style={{ background: "linear-gradient(160deg, #1E6B50 0%, #0E241B 100%)" }}>{iconForServiceType(p.service_type)}</div>
+                    )}
+                    <div className="provider-card-body">
+                      <h4>{p.business_name}{(() => { const badge = planBadge(p); return badge && <span className="cx-plan-badge">{badge.label}</span>; })()}{p.is_featured && <span style={{ marginLeft: 6, fontSize: 11, fontWeight: 700, color: "var(--lime)", background: "rgba(198,241,53,0.15)", padding: "2px 7px", borderRadius: 5, verticalAlign: "middle" }}>⭐ {t("customerPortal.browse.featuredBadge")}</span>}</h4>
+                      <div className="trade">{p.service_type} · {p.district}</div>
+                      <div className="stars">{rating ? <StarRating value={rating} /> : t("customerPortal.browse.noReviewsYet")}<span style={{ color: "var(--muted)", fontSize: 12 }}>{rating ? ` ${rating} (${p.reviews.length})` : ""}</span></div>
+                      {openNow !== null && (
+                        <span className={`open-status ${openNow ? "is-open" : "is-closed"}`} style={{ marginTop: 4, display: "inline-flex" }}>
+                          {openNow ? t("customerPortal.hours.openNow") : t("customerPortal.hours.closed")}
+                        </span>
+                      )}
+                      <div className="provider-card-footer">
+                        <span className="price-tag">{fromPrice != null ? t("customerPortal.browse.fromPrice", { price: fromPrice }) : t("customerPortal.browse.contactForPricing")}</span>
+                        {p.downpayment_required ? <span style={{ fontSize: 11, color: "var(--muted)" }}>{t("customerPortal.browse.depositPct", { pct: p.downpayment_pct || 50 })}</span> : <span className="avail-badge">{t("customerPortal.browse.noDeposit")}</span>}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </>
+        )}
+
+        {tab === "bookings" && (
+          <>
+            <div className="portal-header"><h2>{t("customerPortal.bookings.title")}</h2><p>{t("customerPortal.bookings.subtitle")}</p></div>
+            <div className="tab-row">
+              {[
+                { key: "upcoming", label: t("customerPortal.bookings.tabUpcoming") },
+                { key: "completed", label: t("customerPortal.bookings.tabCompleted") },
+                { key: "cancelled", label: t("customerPortal.bookings.tabCancelled") },
+              ].map((opt, i) => (
+                <div key={i} className={`tab ${bookingTab === opt.key ? "active" : ""}`} onClick={() => setBookingTab(opt.key)}>{opt.label}</div>
+              ))}
+            </div>
+            <div className="form-row" style={{ marginBottom: 12 }}>
+              <div className="input-group" style={{ flex: 2 }}>
+                <input placeholder={t("customerPortal.bookings.searchPlaceholder")} value={bookingSearch} onChange={e => setBookingSearch(e.target.value)} />
+              </div>
+              <div className="input-group" style={{ flex: 1 }}>
+                <select value={bookingSort} onChange={e => setBookingSort(e.target.value)}>
+                  <option value="newest">{t("customerPortal.bookings.sortNewest")}</option>
+                  <option value="oldest">{t("customerPortal.bookings.sortOldest")}</option>
+                </select>
+              </div>
+            </div>
+            <div className="card">
+              {loadingBookings && <p style={{ fontSize: 13, color: "var(--muted)", padding: "16px 0" }}>{t("customerPortal.common.loading")}</p>}
+              {!loadingBookings && visibleBookings.length === 0 && (
+                <p style={{ fontSize: 13, color: "var(--muted)", padding: "16px 0" }}>{bookingSearch.trim() ? t("customerPortal.bookings.noSearchMatch") : t("customerPortal.bookings.emptyState")}</p>
+              )}
+              {visibleBookings.map((b) => {
+                const hasReview = b.reviews && b.reviews.length > 0;
+                // Low-star reviews are held privately for 48 hours before
+                // going public (see supabase_review_privacy.sql) — while
+                // held, the customer can still edit it in place.
+                const reviewIsHeld = hasReview && b.reviews[0].hold_until && new Date(b.reviews[0].hold_until) > new Date();
+                return (
+                  <div key={b.id} style={{ padding: "14px 0", borderBottom: "1px solid var(--border)" }}>
+                    <div className="booking-item" style={{ padding: 0, border: "none" }}>
+                      <div className={`booking-dot ${bookingStatusClass(b.status)}`}></div>
+                      <div className="booking-info">
+                        <div className="title">
+                          {b.services?.name || t("customerPortal.common.serviceFallback")}
+                        </div>
+                        <div className="meta">
+                          {b.provider_profiles?.business_name || t("customerPortal.home.providerFallback")} · {formatBookingWhen(b)}
+                          {unreadByBooking[b.id] > 0 && (
+                            <span style={{ marginLeft: 8, fontSize: 11, fontWeight: 700, color: "var(--forest)", background: "var(--lime)", padding: "2px 7px", borderRadius: 999 }}>
+                              💬 {t("customerPortal.bookings.newMessages", { count: unreadByBooking[b.id] })}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <span className="booking-amount">BZ${b.total_amount ?? "—"}</span>
+                        <span className={`status-pill ${bookingStatusClass(b.status)}`}>{statusLabel(b.status)}</span>
+                      </div>
+                    </div>
+
+                    {b.status === "rejected" && b.provider_message && (
+                      <p style={{ fontSize: 12, color: "#B91C1C", marginTop: 6 }}>{t("customerPortal.bookings.providersNote")} {b.provider_message}</p>
+                    )}
+                    {b.status !== "rejected" && b.provider_message && (
+                      <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 6 }}>{t("customerPortal.bookings.providersNote")} {b.provider_message}</p>
+                    )}
+
+                    {["cancelled", "rejected"].includes(b.status) && b.booking_refunds && b.booking_refunds.length > 0 && (
+                      <div style={{ marginTop: 8, background: "rgba(34,197,94,0.12)", borderRadius: 8, padding: 12 }}>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: "#4ADE80" }}>💸 {t("customerPortal.bookings.refundedAmount", { amount: b.booking_refunds[0].amount })}</div>
+                        {b.booking_refunds[0].note && <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 4 }}>{b.booking_refunds[0].note}</p>}
+                        {b.booking_refunds[0].receipt_url && <a href="#" onClick={(e) => { e.preventDefault(); openPrivateFile(b.booking_refunds[0].receipt_url); }} style={{ fontSize: 12 }}>{t("customerPortal.bookings.viewProof")}</a>}
+                      </div>
+                    )}
+
+                    {b.pending_reschedule_date && (
+                      <div style={{ marginTop: 8, background: "var(--sand)", borderRadius: 10, padding: 12 }}>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: "var(--lime)", marginBottom: 4 }}>{t("customerPortal.bookings.newTimeProposed")}</div>
+                        <p style={{ fontSize: 12.5, color: "var(--dark-text)", marginBottom: 10 }}>
+                          {t("customerPortal.bookings.rescheduleProposedText", { providerName: b.provider_profiles?.business_name || t("customerPortal.bookings.yourProvider") })} <strong>{formatBookingWhen({ booking_date: b.pending_reschedule_date, booking_time: b.pending_reschedule_time })}</strong>. {t("customerPortal.bookings.rescheduleOriginalStaysBooked")}
+                        </p>
+                        {rescheduleRespondError[b.id] && <p style={{ color: "#B91C1C", fontSize: 12, marginBottom: 8 }}>{rescheduleRespondError[b.id]}</p>}
+                        <div style={{ display: "flex", gap: 8 }}>
+                          <button className="btn-sm lime" disabled={rescheduleRespondingId === b.id} onClick={() => handleConfirmReschedule(b)}>
+                            {rescheduleRespondingId === b.id ? t("customerPortal.bookings.confirming") : t("customerPortal.bookings.confirmNewTime")}
+                          </button>
+                          <button className="btn-sm ghost" disabled={rescheduleRespondingId === b.id} onClick={() => handleDeclineReschedule(b)}>
+                            {t("customerPortal.bookings.keepOriginalTime")}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {["pending", "awaiting_payment", "confirmed"].includes(b.status) && (
+                      <button
+                        className="btn-sm ghost"
+                        style={{ marginTop: 8, color: "#B91C1C" }}
+                        disabled={cancellingId === b.id}
+                        onClick={() => handleCancelBooking(b.id)}
+                      >
+                        {cancellingId === b.id ? t("customerPortal.bookings.cancelling") : t("customerPortal.bookings.cancelBooking")}
+                      </button>
+                    )}
+
+                    {b.status === "awaiting_payment" && b.payments && b.payments.find((p) => p.payment_status === "pending") && (
+                      <p style={{ fontSize: 11, color: "var(--muted)", marginTop: 6 }}>
+                        {t("customerPortal.bookings.paymentStatus")} <strong style={{ color: "var(--lime)" }}>{t("customerPortal.bookings.pending")}</strong> — BZ${b.payments.find((p) => p.payment_status === "pending").amount}
+                      </p>
+                    )}
+                    {b.status === "awaiting_payment" && b.payment_status === "unpaid" && (
+                      <div style={{ marginTop: 8 }}>
+                        {(b.provider_profiles?.payment_methods && b.provider_profiles.payment_methods.length > 0) ? (
+                          <div style={{ background: "var(--sand)", borderRadius: 10, padding: "10px 12px", marginBottom: 10, fontSize: 12.5, lineHeight: 1.6 }}>
+                            <div style={{ fontWeight: 700, marginBottom: 4 }}>{t("customerPortal.bookings.sendAmountToOneOf", { amount: b.downpayment_amount ?? "—" })}</div>
+                            {b.provider_profiles.payment_methods.map((m) => (
+                              <div key={m.id} style={{ marginBottom: 6 }}>
+                                <div>{m.type === "wallet" ? "📱" : "🏦"} {m.name}{m.account_name ? ` — ${m.account_name}` : ""}{m.account_number ? ` — ${m.account_number}` : ""}</div>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <p style={{ fontSize: 12, color: "var(--muted)", marginBottom: 10 }}>{t("customerPortal.bookings.noPaymentDetailsYet")}</p>
+                        )}
+                        <label className="btn-sm lime" style={{ cursor: "pointer" }}>
+                          {uploadingReceiptId === b.id ? t("customerPortal.bookings.uploading") : t("customerPortal.bookings.uploadDepositReceipt")}
+                          <input type="file" accept="image/*,application/pdf" style={{ display: "none" }} disabled={uploadingReceiptId === b.id} onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ""; handleUploadReceipt(b.id, f); }} />
+                        </label>
+                      </div>
+                    )}
+                    {b.status === "awaiting_payment" && b.payment_status === "receipt_uploaded" && (
+                      <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 6 }}>{t("customerPortal.bookings.receiptSubmittedWaiting")}</p>
+                    )}
+
+                    {b.status === "confirmed" && b.provider_profiles?.payment_methods && b.provider_profiles.payment_methods.length > 0 && (
+                      <details style={{ marginTop: 8 }}>
+                        <summary style={{ fontSize: 12, color: "var(--lime)", cursor: "pointer", fontWeight: 600 }}>{t("customerPortal.bookings.paymentDetails")}</summary>
+                        <div style={{ background: "var(--sand)", borderRadius: 10, padding: "10px 12px", marginTop: 8, fontSize: 12.5, lineHeight: 1.6 }}>
+                          {b.provider_profiles.payment_methods.map((m) => (
+                            <div key={m.id} style={{ marginBottom: 6 }}>
+                              <div style={{ fontWeight: 700 }}>{m.type === "wallet" ? "📱" : "🏦"} {m.name}</div>
+                              {m.account_name && <div>{t("customerPortal.bookings.accountName")} {m.account_name}</div>}
+                              {m.account_number && <div>{m.type === "wallet" ? t("customerPortal.bookings.walletNumber") : t("customerPortal.bookings.accountNumber")}: {m.account_number}</div>}
+                            </div>
+                          ))}
+                        </div>
+                      </details>
+                    )}
+
+                    {b.status === "completed" && (
+                      <button
+                        className="btn-sm ghost"
+                        style={{ marginTop: 8, marginRight: 8, fontSize: 12 }}
+                        onClick={() => printInvoice(buildInvoiceHtml({
+                          orderNumber: b.order_number,
+                          bookingDate: b.booking_date,
+                          bookingTime: b.booking_time,
+                          serviceName: b.services?.name || t("customerPortal.common.serviceFallback"),
+                          amount: b.total_amount,
+                          depositAmount: b.downpayment_amount,
+                          providerName: b.provider_profiles?.business_name,
+                          providerTaxId: b.provider_profiles?.tax_id,
+                          providerDistrict: b.provider_profiles?.district,
+                          providerWhatsapp: b.provider_profiles?.whatsapp,
+                          customerName: user?.full_name || session?.user?.email,
+                          customerEmail: user?.email || session?.user?.email,
+                        }))}
+                      >
+                        🧾 {t("customerPortal.bookings.printDownloadInvoice")}
+                      </button>
+                    )}
+                    {b.status === "completed" && !hasReview && reviewingId !== b.id && (
+                      <button className="btn-sm ghost" style={{ marginTop: 8 }} onClick={() => openReview(b.id, null)}>{t("customerPortal.reviews.leaveAReview")}</button>
+                    )}
+                    {b.status === "completed" && reviewingId === b.id && (
+                      <div style={{ marginTop: 10, background: "var(--sand)", borderRadius: 8, padding: 12 }}>
+                        <div className="star-picker">
+                          {[1,2,3,4,5].map(n => (
+                            <span key={n} className={n <= reviewForm.rating ? "on" : ""} onClick={() => setReviewForm(f => ({ ...f, rating: n }))}>★</span>
+                          ))}
+                        </div>
+                        <div className="input-group" style={{ marginBottom: 0 }}>
+                          <textarea placeholder={t("customerPortal.reviews.howWasIt")} value={reviewForm.comment} onChange={e => setReviewForm(f => ({ ...f, comment: e.target.value }))} style={{ width: "100%", minHeight: 60, marginBottom: 8 }} />
+                        </div>
+                        <div style={{ display: "flex", gap: 8 }}>
+                          <button className="btn-sm forest" disabled={submittingReview} onClick={() => submitBookingReview(b)}>{submittingReview ? t("customerPortal.reviews.submitting") : t("customerPortal.reviews.submitReview")}</button>
+                          <button className="btn-sm ghost" onClick={() => setReviewingId(null)}>{t("customerPortal.common.cancel")}</button>
+                        </div>
+                      </div>
+                    )}
+                    {b.status === "completed" && hasReview && reviewingId !== b.id && (
+                      <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 6 }}>
+                        {t("customerPortal.reviews.youRatedThis")} {"★".repeat(b.reviews[0].rating)}{b.reviews[0].comment ? ` — "${b.reviews[0].comment}"` : ""}
+                        {reviewIsHeld && (
+                          <>
+                            {" "}
+                            <span style={{ color: "var(--lime)" }}>
+                              {t("customerPortal.reviews.notPublicYetUntil", { until: new Date(b.reviews[0].hold_until).toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) })}
+                            </span>{" "}
+                            <button className="btn-sm ghost" style={{ marginLeft: 4, fontSize: 11, padding: "3px 8px" }} onClick={() => openReview(b.id, b.reviews[0])}>{t("customerPortal.reviews.editReview")}</button>
+                          </>
+                        )}
+                      </p>
+                    )}
+
+                    {["pending", "awaiting_payment", "confirmed"].includes(b.status) && (
+                      <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 8 }}>
+                        {t("customerPortal.bookings.needDifferentTime")}
+                      </p>
+                    )}
+
+                    {["pending", "awaiting_payment", "confirmed", "completed"].includes(b.status) && (
+                      <BookingChat
+                        bookingId={b.id}
+                        currentUserId={user?.id}
+                        currentRole="customer"
+                        recipientUserId={b.provider_profiles?.user_id}
+                      />
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </>
+        )}
+
+        {tab === "payments" && (
+          <>
+            <div className="portal-header"><h2>{t("customerPortal.payments.title")}</h2><p>{t("customerPortal.payments.subtitle")}</p></div>
+            <div className="metric-grid" style={{ gridTemplateColumns: "1fr 1fr 1fr" }}>
+              <div className="metric"><div className="metric-label">{t("customerPortal.payments.totalSpent")}</div><div className="metric-value" style={{ color: "var(--clay)" }}>BZ${totalSpent.toFixed(0)}</div><div className="metric-sub">{t("customerPortal.payments.allTime")}</div></div>
+              <div className="metric"><div className="metric-label">{t("customerPortal.payments.awaitingPayment")}</div><div className="metric-value">{bookings.filter(b => b.status === "awaiting_payment").length}</div><div className="metric-sub">{t("customerPortal.payments.bookings")}</div></div>
+              <div className="metric"><div className="metric-label">{t("customerPortal.bookings.tabCompleted")}</div><div className="metric-value">{completedBookings.length}</div><div className="metric-sub">{t("customerPortal.payments.bookings")}</div></div>
+            </div>
+            <div className="card">
+              <div className="card-title">{t("customerPortal.payments.recentTransactions")}</div>
+              {bookings.length === 0 && <p style={{ fontSize: 13, color: "var(--muted)", padding: "16px 0" }}>{loadingBookings ? t("customerPortal.common.loading") : t("customerPortal.payments.noTransactionsYet")}</p>}
+              {bookings.map((b) => (
+                <div className="booking-item" key={b.id}>
+                  <div style={{ width: 36, height: 36, background: "var(--sand)", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18 }}>💳</div>
+                  <div className="booking-info"><div className="title">{b.services?.name || t("customerPortal.common.serviceFallback")}</div><div className="meta">{b.provider_profiles?.business_name || t("customerPortal.home.providerFallback")}{b.receipt_url ? " · " : ""}{b.receipt_url && <a href="#" onClick={(e) => { e.preventDefault(); openPrivateFile(b.receipt_url); }}>{t("customerPortal.payments.receipt")}</a>}</div></div>
+                  <div>
+                    <span className="booking-amount">BZ${b.total_amount ?? "—"}</span>
+                    <span className={`status-pill ${bookingStatusClass(b.status)}`}>{b.payment_status === "paid" ? t("customerPortal.payments.paid") : statusLabel(b.status)}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+
+        {(tab === "reviews" || tab === "settings") && (
+          <>
+            <div className="portal-header"><h2>{tab === "reviews" ? t("customerPortal.reviews.myReviews") : t("customerPortal.settings.title")}</h2></div>
+            <div className="card" style={{ maxWidth: 480 }}>
+              {tab === "settings" ? (
+                <>
+                  <div className="card-title" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    {t("customerPortal.settings.profile")}
+                    {!editingProfile && (
+                      <span style={{ color: "var(--lime)", fontWeight: 600, fontSize: 13, cursor: "pointer" }} onClick={startEditProfile}>{t("customerPortal.common.edit")}</span>
+                    )}
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "center", margin: "8px 0 20px" }}>
+                    <div className="profile-avatar-circle">{getInitials(user?.full_name)}</div>
+                  </div>
+                  <div className="input-group">
+                    <label>{t("customerPortal.settings.firstName")}</label>
+                    <input
+                      value={profileForm.firstName}
+                      disabled={!editingProfile}
+                      onChange={(e) => setProfileForm({ ...profileForm, firstName: e.target.value })}
+                    />
+                  </div>
+                  <div className="input-group">
+                    <label>{t("customerPortal.settings.lastName")}</label>
+                    <input
+                      value={profileForm.lastName}
+                      disabled={!editingProfile}
+                      onChange={(e) => setProfileForm({ ...profileForm, lastName: e.target.value })}
+                    />
+                  </div>
+                  <div className="input-group">
+                    <label>{t("customerPortal.settings.phoneNumber")}</label>
+                    <input
+                      value={profileForm.phone}
+                      disabled={!editingProfile}
+                      placeholder="+501 600 0000"
+                      onChange={(e) => setProfileForm({ ...profileForm, phone: e.target.value })}
+                    />
+                  </div>
+                  <div className="input-group"><label>{t("customerPortal.settings.email")}</label><input defaultValue={user?.email || session?.user?.email || ""} disabled /></div>
+                  <p style={{ fontSize: 12, color: "var(--muted)" }}>{t("customerPortal.settings.emailManagedByGoogle")}</p>
+                  {editingProfile && (
+                    <div style={{ display: "flex", gap: 10, marginTop: 14 }}>
+                      <button className="btn-primary" onClick={saveProfile} disabled={savingProfile}>
+                        {savingProfile ? t("customerPortal.settings.saving") : t("customerPortal.common.save")}
+                      </button>
+                      <button className="btn-ghost" onClick={cancelEditProfile} disabled={savingProfile}>{t("customerPortal.common.cancel")}</button>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <>
+                  <div className="card-title">{t("customerPortal.reviews.reviewsYouveLeft")}</div>
+                  {reviewedBookings.length === 0 && <p style={{ fontSize: 13, color: "var(--muted)" }}>{t("customerPortal.reviews.noReviewsYetLeaveOne")}</p>}
+                  {reviewedBookings.map((b) => (
+                    <div key={b.id} style={{ padding: "14px 0", borderBottom: "1px solid var(--border)" }}>
+                      <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 4 }}>{b.provider_profiles?.business_name || t("customerPortal.home.providerFallback")}</div>
+                      <div className="stars" style={{ marginBottom: 6 }}>{"★".repeat(b.reviews[0].rating)}</div>
+                      <div style={{ fontSize: 13, color: "var(--muted)" }}>{b.reviews[0].comment}</div>
+                    </div>
+                  ))}
+                </>
+              )}
+            </div>
+
+            {tab === "settings" && (
+              <div className="card" style={{ maxWidth: 480, marginTop: 20 }}>
+                <div className="card-title">{t("customerPortal.settings.notifications")}</div>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", gap: 16 }}>
+                  <div>
+                    <div style={{ fontSize: 14, fontWeight: 600 }}>{t("customerPortal.settings.pushNotificationsOnDevice")}</div>
+                    <div style={{ fontSize: 12, color: "var(--muted)" }}>
+                      {t("customerPortal.settings.pushNotificationsDesc")}
+                    </div>
+                  </div>
+                  {pushEnabled ? (
+                    <span style={{ fontSize: 12, fontWeight: 700, color: "var(--lime)", flexShrink: 0 }}>✓ {t("customerPortal.settings.on")}</span>
+                  ) : (
+                    <button className="btn-sm forest" style={{ flexShrink: 0 }} onClick={enablePushNotifications} disabled={subscribingPush}>
+                      {subscribingPush ? t("customerPortal.settings.turningOn") : t("customerPortal.settings.turnOn")}
+                    </button>
+                  )}
+                </div>
+                {pushError && <p style={{ fontSize: 12, color: "#B91C1C", marginTop: 4 }}>{pushError}</p>}
+              </div>
+            )}
+
+          </>
+        )}
+      </main>
+
+      <SiteFooter />
+
+      {selectedProvider && (() => {
+        const photos = selectedProvider.portfolio_urls || [];
+        const rating = providerRating(selectedProvider);
+        const openStatus = getOpenStatus(providerHours);
+        const hoursRows = DAY_NAMES.map((day, i) => {
+          const h = providerHours.find((x) => x.day_of_week === i);
+          return { day, i, isToday: i === new Date().getDay(), text: h && h.is_open && h.start_time && h.end_time ? `${formatTimeLabel(h.start_time)} – ${formatTimeLabel(h.end_time)}` : "Closed" };
+        });
+        return (
+          <div className="modal-overlay" onClick={() => setSelectedProvider(null)}>
+            <div className="modal-panel profile-panel" onClick={(e) => e.stopPropagation()}>
+              <div className="profile-scroll">
+                <span className="modal-close" onClick={() => setSelectedProvider(null)}>✕ {t("customerPortal.common.close")}</span>
+
+                <div className="profile-header-row">
+                  <div className="profile-name-row">
+                    <h2>{selectedProvider.business_name}</h2>
+                    <button
+                      className="profile-icon-btn"
+                      onClick={() => shareProvider(selectedProvider)}
+                      aria-label={t("customerPortal.profile.shareThisBusiness")}
+                      title={providerLinkCopied ? t("customerPortal.profile.linkCopied") : t("customerPortal.profile.share")}
+                    >
+                      {providerLinkCopied ? (
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5" /></svg>
+                      ) : (
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 6l-4-4-4 4" /><path d="M12 2v13" /><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" /></svg>
+                      )}
+                    </button>
+                    <button
+                      className="profile-icon-btn"
+                      onClick={(e) => toggleFavorite(e, selectedProvider.id)}
+                      aria-label={favoriteIds.has(selectedProvider.id) ? t("customerPortal.browse.removeFromFavorites") : t("customerPortal.browse.addToFavorites")}
+                    >
+                      <svg viewBox="0 0 24 24" fill={favoriteIds.has(selectedProvider.id) ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={favoriteIds.has(selectedProvider.id) ? "heart-filled" : ""}><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21.2l7.8-7.8 1-1a5.5 5.5 0 0 0 0-7.8z" /></svg>
+                    </button>
+                  </div>
+                </div>
+                <div className="profile-meta">
+                  {rating ? (
+                    <span className="stars"><StarRating value={rating} size={15} /> {rating} <span style={{ color: "var(--muted)" }}>({selectedProvider.reviews.length})</span></span>
+                  ) : <span>{t("customerPortal.browse.noReviewsYet")}</span>}
+                  <span className="dot">·</span>
+                  <span className={openStatus.open ? "open-txt" : "closed-txt"}>{openStatus.label}</span>
+                  <span className="dot">·</span>
+                  <span>{selectedProvider.service_type}</span>
+                  <span className="dot">·</span>
+                  <span>{selectedProvider.district}</span>
+                  {selectedProvider.latitude != null && selectedProvider.longitude != null && (
+                    <>
+                      <span className="dot">·</span>
+                      <a href={directionsUrl(selectedProvider.latitude, selectedProvider.longitude)} target="_blank" rel="noreferrer">{t("customerPortal.profile.getDirections")}</a>
+                    </>
+                  )}
+                </div>
+
+                {/* Booking-in-progress hides the gallery, loyalty banner, tab
+                    switcher and sidebar below — a customer who has already
+                    picked a service shouldn't be re-tempted to browse photos
+                    or tab away mid-flow. This is purely presentational: none
+                    of the booking logic (bookingForm/submitBooking/slot
+                    computation) changed, only what's rendered around it. */}
+                {!bookingService && (
+                  <div className="profile-gallery" style={{ gridTemplateColumns: photos.length > 1 ? "2fr 1fr" : "1fr" }}>
+                    {photos.length === 0 ? (
+                      <div className="gallery-hero gallery-fallback">{iconForServiceType(selectedProvider.service_type)}</div>
+                    ) : (
+                      <>
+                        <div className="gallery-hero" style={{ backgroundImage: `url(${photos[0]})` }} onClick={() => setLightboxUrl(photos[0])} />
+                        {photos.length > 1 && (
+                          <div className="gallery-side">
+                            {photos.slice(1, 3).map((url, i) => (
+                              <div key={url} className="gallery-side-img" style={{ backgroundImage: `url(${url})` }} onClick={() => (photos.length > 3 && i === 1 ? setProfileTab("portfolio") : setLightboxUrl(url))}>
+                                {i === 1 && photos.length > 3 && (
+                                  <button className="gallery-more-btn" onClick={(e) => { e.stopPropagation(); setProfileTab("portfolio"); }}>{t("customerPortal.profile.seeAllPhotos")}</button>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
+                )}
+
+                {!bookingService && selectedProvider.loyalty_enabled && (
+                  <div style={{ background: "var(--sand)", borderRadius: 8, padding: "10px 14px", marginBottom: 16, fontSize: 13 }}>
+                    {(() => {
+                      const threshold = Number(selectedProvider.loyalty_reward_threshold) || 0;
+                      const balance = myLoyalty?.points_balance || 0;
+                      const reward = selectedProvider.loyalty_reward_description || t("customerPortal.profile.loyaltyRewardFallback");
+                      if (!user) return <>⭐ {t("customerPortal.profile.loyaltyGuestIntro")} <strong>{reward}</strong> {t("customerPortal.profile.loyaltyGuestOutro")}</>;
+                      if (threshold > 0 && balance >= threshold) return <>⭐ {t("customerPortal.profile.loyaltyEarnedIntro")} <strong>{reward}</strong>{t("customerPortal.profile.loyaltyEarnedOutro")}</>;
+                      return <>⭐ {t("customerPortal.profile.loyaltyHaveIntro")} <strong>{balance}</strong> {t("customerPortal.profile.loyaltyPoints", { count: balance })} {t("customerPortal.profile.loyaltyHere")}{threshold > 0 ? ` ${t("customerPortal.profile.loyaltyMoreFor", { count: threshold - balance, reward })}` : ""}.</>;
+                    })()}
+                  </div>
+                )}
+
+                <div className="profile-body" style={bookingService ? { gridTemplateColumns: "1fr" } : undefined}>
+                  <div className="profile-main">
+                    {!bookingService && (
+                      <div className="tab-row">
+                        {[
+                          { id: "services", label: t("customerPortal.profile.tabServices") },
+                          { id: "portfolio", label: t("customerPortal.profile.tabPortfolio") },
+                          { id: "reviews", label: t("customerPortal.profile.tabReviews") },
+                          { id: "about", label: t("customerPortal.profile.tabAbout") },
+                        ].map((opt) => (
+                          <div key={opt.id} className={`tab ${profileTab === opt.id ? "active" : ""}`} onClick={() => (opt.id === "reviews" ? openReviewsTab() : setProfileTab(opt.id))}>
+                            {opt.label}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {profileTab === "services" && (
+                      bookingService ? (
+                        <div style={{ maxWidth: 440, margin: "0 auto" }}>
+                          <div onClick={backToServices} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: "var(--forest)", fontWeight: 700, cursor: "pointer", marginBottom: 20 }}>
+                            <span style={{ fontSize: 16 }}>←</span> {t("customerPortal.booking.backToServices")}
+                          </div>
+                          <h3 style={{ fontSize: 20, fontWeight: 800, color: "var(--dark-text)", margin: "0 0 4px" }}>{bookingService.isMulti ? t("customerPortal.booking.pickTimesForEach") : t("customerPortal.booking.pickDateAndTime")}</h3>
+                          <p style={{ fontSize: 13, color: "var(--muted)", margin: "0 0 18px" }}>{t("customerPortal.booking.at")} {selectedProvider.business_name}</p>
+
+                          {bookingService.isMulti ? (
+                            <>
+                              <div style={{ background: "var(--sand)", borderRadius: 10, padding: "14px 16px", marginBottom: 8, fontSize: 13 }}>
+                                <strong>BZ${multiTotalPrice.toFixed(2)} · {t("customerPortal.booking.durationMin", { count: multiTotalDuration })}</strong> · {t("customerPortal.profile.servicesSelected", { count: selectedServicesList.length })}
+                              </div>
+                              <p style={{ fontSize: 12, color: "var(--muted)", margin: "0 0 18px" }}>{t("customerPortal.booking.eachServiceOwnTime")}</p>
+                              {selectedServicesList.map((service) => {
+                                const picked = multiBookingTimes[service.id] || { date: localDateStr(), time: "" };
+                                const slots = getMultiServiceSlots(service);
+                                return (
+                                  <div key={service.id} style={{ border: "1px solid var(--border)", borderRadius: 12, padding: "14px 16px", marginBottom: 14 }}>
+                                    <div style={{ fontSize: 13, marginBottom: 12 }}>
+                                      <strong>{service.name}</strong> — BZ${service.price} · {t("customerPortal.booking.durationMin", { count: service.duration_min })}
+                                    </div>
+                                    <div className="input-group">
+                                      <label>{t("customerPortal.booking.date")}</label>
+                                      <input
+                                        type="date"
+                                        min={localDateStr()}
+                                        value={picked.date}
+                                        onChange={e => setMultiBookingTimes(prev => ({ ...prev, [service.id]: { date: e.target.value, time: "" } }))}
+                                        style={{ padding: "13px 14px", fontSize: 15 }}
+                                      />
+                                    </div>
+                                    <div className="input-group">
+                                      <label>{t("customerPortal.booking.availableTimes")}</label>
+                                      {loadingMultiSlots ? (
+                                        <p style={{ fontSize: 12, color: "var(--muted)" }}>{t("customerPortal.booking.checkingLiveAvailability")}</p>
+                                      ) : !providerHours.length ? (
+                                        <p style={{ fontSize: 12, color: "var(--muted)" }}>{t("customerPortal.booking.hoursNotSetYet")}</p>
+                                      ) : slots.length === 0 ? (
+                                        <p style={{ fontSize: 12, color: "var(--clay)" }}>{t("customerPortal.booking.noOpenSlots")}</p>
+                                      ) : (
+                                        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(92px, 1fr))", gap: 9, maxHeight: 220, overflowY: "auto", paddingTop: 4 }}>
+                                          {slots.map((t) => (
+                                            <button
+                                              type="button"
+                                              key={t}
+                                              onClick={() => setMultiBookingTimes(prev => ({ ...prev, [service.id]: { ...prev[service.id], time: t } }))}
+                                              className="btn-sm"
+                                              style={{
+                                                padding: "11px 4px",
+                                                fontSize: 13,
+                                                fontWeight: 700,
+                                                border: picked.time === t ? "1.5px solid var(--forest)" : "1px solid var(--border, #ddd)",
+                                                background: picked.time === t ? "var(--forest)" : "#fff",
+                                                color: picked.time === t ? "#fff" : "var(--dark-text)",
+                                                borderRadius: 10,
+                                                cursor: "pointer",
+                                              }}
+                                            >
+                                              {formatTimeLabel(t)}
+                                            </button>
+                                          ))}
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </>
+                          ) : (
+                            <>
+                              <div style={{ background: "var(--sand)", borderRadius: 10, padding: "14px 16px", marginBottom: 20, fontSize: 13 }}>
+                                <strong>{bookingService.name}</strong> — BZ${bookingService.price} · {t("customerPortal.booking.durationMin", { count: bookingService.duration_min })}
+                              </div>
+                              <div className="input-group">
+                                <label>{t("customerPortal.booking.date")}</label>
+                                <input type="date" min={localDateStr()} value={bookingForm.date} onChange={e => setBookingForm(f => ({ ...f, date: e.target.value, time: "" }))} style={{ padding: "13px 14px", fontSize: 15 }} />
+                              </div>
+                              <div className="input-group">
+                                <label>{t("customerPortal.booking.availableTimes")}</label>
+                                {loadingSlots ? (
+                                  <p style={{ fontSize: 12, color: "var(--muted)" }}>{t("customerPortal.booking.checkingLiveAvailability")}</p>
+                                ) : !providerHours.length ? (
+                                  <p style={{ fontSize: 12, color: "var(--muted)" }}>{t("customerPortal.booking.hoursNotSetYet")}</p>
+                                ) : availableSlots.length === 0 ? (
+                                  <p style={{ fontSize: 12, color: "var(--clay)" }}>{t("customerPortal.booking.noOpenSlots")}</p>
+                                ) : (
+                                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(92px, 1fr))", gap: 9, maxHeight: 220, overflowY: "auto", paddingTop: 4 }}>
+                                    {availableSlots.map((t) => (
+                                      <button
+                                        type="button"
+                                        key={t}
+                                        onClick={() => setBookingForm(f => ({ ...f, time: t }))}
+                                        className="btn-sm"
+                                        style={{
+                                          padding: "11px 4px",
+                                          fontSize: 13,
+                                          fontWeight: 700,
+                                          border: bookingForm.time === t ? "1.5px solid var(--forest)" : "1px solid var(--border, #ddd)",
+                                          background: bookingForm.time === t ? "var(--forest)" : "#fff",
+                                          color: bookingForm.time === t ? "#fff" : "var(--dark-text)",
+                                          borderRadius: 10,
+                                          cursor: "pointer",
+                                        }}
+                                      >
+                                        {formatTimeLabel(t)}
+                                      </button>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            </>
+                          )}
+
+                          <div className="input-group"><label>{t("customerPortal.booking.notesOptional")}</label><textarea placeholder={t("customerPortal.booking.notesPlaceholder")} value={bookingForm.notes} onChange={e => setBookingForm(f => ({ ...f, notes: e.target.value }))} style={{ minHeight: 60 }} /></div>
+
+                          {selectedProvider.downpayment_required && (
+                            <p style={{ fontSize: 12, color: "var(--clay)", marginBottom: 12 }}>{t("customerPortal.booking.depositRequired", { pct: selectedProvider.downpayment_pct || 50 })}</p>
+                          )}
+
+                          {!user?.id && (
+                            <div className="guest-checkout-fields">
+                              <p className="guest-checkout-label">{t("customerPortal.booking.yourDetails")}</p>
+                              <div className="input-group">
+                                <label>{t("customerPortal.booking.fullName")}</label>
+                                <input type="text" placeholder={t("customerPortal.booking.fullNamePlaceholder")} value={guestCheckoutForm.name} onChange={e => setGuestCheckoutForm(f => ({ ...f, name: e.target.value }))} />
+                              </div>
+                              <div className="input-group">
+                                <label>{t("customerPortal.booking.emailAddress")}</label>
+                                <input type="email" placeholder="you@example.com" value={guestCheckoutForm.email} onChange={e => setGuestCheckoutForm(f => ({ ...f, email: e.target.value }))} />
+                              </div>
+                              <div className="input-group">
+                                <label>{t("customerPortal.booking.whatsappNumber")} <span className="optional-tag">({t("customerPortal.common.optional")})</span></label>
+                                <input type="tel" placeholder="+501 622 1234" value={guestCheckoutForm.whatsapp} onChange={e => setGuestCheckoutForm(f => ({ ...f, whatsapp: e.target.value }))} />
+                              </div>
+                              <p className="guest-checkout-note">{t("customerPortal.booking.emailCodeNote")}</p>
+                            </div>
+                          )}
+
+                          {bookingError && <p style={{ fontSize: 12, color: "#B91C1C", marginBottom: 12 }}>{bookingError}</p>}
+
+                          <button
+                            className="btn-sm forest"
+                            style={{ width: "100%", padding: "15px 0", fontSize: 15, borderRadius: 12, marginTop: 4 }}
+                            disabled={submittingBooking || sendingBookingOtp}
+                            onClick={async () => {
+                              if (user?.id) { bookingService.isMulti ? submitMultiServiceBooking() : submitBooking(); return; }
+                              const guestName = guestCheckoutForm.name.trim();
+                              const guestEmail = guestCheckoutForm.email.trim().toLowerCase();
+                              if (!guestName) { setBookingError(t("customerPortal.booking.enterFullName")); return; }
+                              if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(guestEmail)) { setBookingError(t("customerPortal.booking.enterValidEmail")); return; }
+                              setBookingError("");
+                              setSendingBookingOtp(true);
+                              const { error } = await sendEmailOtp(guestEmail, { full_name: guestName });
+                              setSendingBookingOtp(false);
+                              if (error) { setBookingError(t("customerPortal.booking.codeSendFailed")); return; }
+                              setShowEmailAuthModal(true);
+                            }}
+                          >
+                            {submittingBooking ? t("customerPortal.booking.sendingRequest") : sendingBookingOtp ? t("customerPortal.booking.sendingCode") : user?.id ? t("customerPortal.booking.requestBooking") : t("customerPortal.common.continue")}
+                          </button>
+                          <p className="checkout-liability-note">
+                            {t("customerPortal.booking.liabilityNote")}
+                          </p>
+
+                          {showEmailAuthModal && (
+                            <EmailAuthModal
+                              email={guestCheckoutForm.email.trim().toLowerCase()}
+                              onClose={() => setShowEmailAuthModal(false)}
+                              onResend={() => sendEmailOtp(guestCheckoutForm.email.trim().toLowerCase(), { full_name: guestCheckoutForm.name.trim() })}
+                              onVerified={async (data) => {
+                                setShowEmailAuthModal(false);
+                                const uid = data?.user?.id;
+                                const whatsapp = guestCheckoutForm.whatsapp.trim();
+                                if (whatsapp && uid) {
+                                  updateUserProfile(uid, { whatsapp_number: whatsapp }).catch(() => {});
+                                }
+                                bookingService.isMulti ? submitMultiServiceBooking(uid) : submitBooking(uid);
+                              }}
+                            />
+                          )}
+                        </div>
+                      ) : (
+                        (selectedProvider.services || []).filter(s => s.is_active !== false).length === 0 ? (
+                          <p style={{ fontSize: 13, color: "var(--muted)" }}>{t("customerPortal.profile.noServicesListed")}</p>
+                        ) : (
+                          <div>
+                            <p style={{ fontSize: 12, color: "var(--muted)", margin: "0 0 4px" }}>{t("customerPortal.profile.tapServiceToAdd")}</p>
+                            {(selectedProvider.services || []).filter(s => s.is_active !== false).map(s => {
+                              const active = selectedServiceIds.includes(s.id);
+                              return (
+                                <div key={s.id} className={`service-card ${active ? "active" : ""}`} onClick={() => toggleServiceSelect(s)}>
+                                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                                    <span className="service-card-check">✓</span>
+                                    <div>
+                                      <div className="service-card-name" style={{ fontWeight: 600, fontSize: 14, color: "var(--dark-text)" }}>{s.name}</div>
+                                      <div className="service-card-meta" style={{ fontSize: 12, color: "var(--muted)" }}>{t("customerPortal.booking.durationMin", { count: s.duration_min })} · BZ${s.price}</div>
+                                      {s.description && <div style={{ fontSize: 12.5, color: "var(--muted)", marginTop: 3, maxWidth: 280 }}>{s.description}</div>}
+                                    </div>
+                                  </div>
+                                  <div style={{ display: "flex", gap: 6 }} onClick={(e) => e.stopPropagation()}>
+                                    <button
+                                      className="btn-sm ghost"
+                                      onClick={() => shareService(s)}
+                                      aria-label={t("customerPortal.profile.shareServiceAria", { serviceName: s.name })}
+                                      title={t("customerPortal.profile.shareThisService")}
+                                    >
+                                      {copiedServiceId === s.id ? t("customerPortal.profile.linkCopied") : `📤 ${t("customerPortal.profile.share")}`}
+                                    </button>
+                                    <button className="btn-sm forest" onClick={() => startBookingForService(s)}>{t("customerPortal.profile.book")}</button>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                            {selectedServiceIds.length > 0 && (
+                              <div className="multi-fab">
+                                <div className="totals">
+                                  <strong>BZ${multiTotalPrice.toFixed(2)} · {t("customerPortal.booking.durationMin", { count: multiTotalDuration })}</strong>
+                                  {t("customerPortal.profile.servicesSelected", { count: selectedServicesList.length })}
+                                </div>
+                                <button onClick={proceedToMultiServiceTime}>{t("customerPortal.profile.nextPickTime")}</button>
+                              </div>
+                            )}
+                          </div>
+                        )
+                      )
+                    )}
+
+                    {profileTab === "portfolio" && (
+                      photos.length > 0 ? (
+                        <div className="portfolio-grid">
+                          {photos.map((url) => (
+                            <img key={url} src={url} alt={t("customerPortal.profile.providerWorkAlt")} className="portfolio-thumb" loading="lazy" decoding="async" onClick={() => setLightboxUrl(url)} />
+                          ))}
+                        </div>
+                      ) : (
+                        <p style={{ fontSize: 13, color: "var(--muted)" }}>{t("customerPortal.profile.noPortfolioPhotosYet")}</p>
+                      )
+                    )}
+
+                    {profileTab === "reviews" && (
+                      loadingReviews ? (
+                        <p style={{ fontSize: 13, color: "var(--muted)" }}>{t("customerPortal.profile.loadingReviews")}</p>
+                      ) : providerReviews.length === 0 ? (
+                        <p style={{ fontSize: 13, color: "var(--muted)" }}>{t("customerPortal.browse.noReviewsYet")}</p>
+                      ) : (
+                        <div>
+                          <div className="reviews-summary">
+                            <span className="big-rating">{rating || "—"}</span>
+                            <div>
+                              {rating ? <StarRating value={rating} size={16} /> : null}
+                              <div style={{ fontSize: 12, color: "var(--muted)" }}>{t("customerPortal.profile.reviewCount", { count: providerReviews.length })}</div>
+                            </div>
+                          </div>
+                          <div className="reviews-grid">
+                            {providerReviews.map((r) => (
+                              <div key={r.id} className="review-card">
+                                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                                  <strong style={{ fontSize: 13 }}>{r.users?.full_name || t("customerPortal.profile.customerFallback")}</strong>
+                                  <span className="stars">{"★".repeat(r.rating || 0)}{"☆".repeat(5 - (r.rating || 0))}</span>
+                                </div>
+                                {r.comment && <p style={{ fontSize: 13, color: "var(--dark-text)", marginTop: 4 }}>{r.comment}</p>}
+                                {r.created_at && <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 4 }}>{new Date(r.created_at).toLocaleDateString()}</div>}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )
+                    )}
+
+                    {profileTab === "about" && (
+                      <div>
+                        {selectedProvider.bio ? (
+                          <p style={{ fontSize: 13, color: "var(--dark-text)", marginBottom: 20, lineHeight: 1.6 }}>{selectedProvider.bio}</p>
+                        ) : (
+                          <p style={{ fontSize: 13, color: "var(--muted)", marginBottom: 20 }}>{t("customerPortal.profile.noDescriptionYet")}</p>
+                        )}
+
+                        {selectedProvider.latitude != null && selectedProvider.longitude != null && (
+                          <div style={{ marginBottom: 22 }}>
+                            <div style={{ fontSize: 13, fontWeight: 700, color: "var(--forest)", marginBottom: 10 }}>{t("customerPortal.profile.location")}</div>
+                            <div style={{ borderRadius: 10, overflow: "hidden", border: "1px solid var(--border)", marginBottom: 8 }}>
+                              <Suspense fallback={<MapLoadingFallback height={200} />}>
+                                <ProviderMiniMap lat={selectedProvider.latitude} lng={selectedProvider.longitude} height={200} />
+                              </Suspense>
+                            </div>
+                            <p style={{ fontSize: 13 }}>
+                              {selectedProvider.location_label || `${selectedProvider.district}, Belize`}{" "}
+                              <a href={directionsUrl(selectedProvider.latitude, selectedProvider.longitude)} target="_blank" rel="noreferrer" style={{ color: "var(--forest)", fontWeight: 600 }}>{t("customerPortal.profile.getDirections")}</a>
+                            </p>
+                          </div>
+                        )}
+
+                        <div style={{ marginBottom: 22 }}>
+                          <div style={{ fontSize: 13, fontWeight: 700, color: "var(--forest)", marginBottom: 10 }}>{t("customerPortal.profile.openingTimes")}</div>
+                          <div className="hours-list">
+                            {hoursRows.map((h) => (
+                              <div key={h.i} className={`hours-row ${h.isToday ? "today" : ""}`}>
+                                <span>{h.day}</span>
+                                <span>{h.text}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        {selectedProvider.whatsapp && (
+                          <a href={`https://wa.me/${selectedProvider.whatsapp.replace(/[^\d]/g, "")}`} target="_blank" rel="noreferrer" style={{ display: "inline-block", fontSize: 13, color: "var(--forest)", fontWeight: 600, background: "var(--sand)", borderRadius: 8, padding: "10px 14px" }}>📞 {selectedProvider.whatsapp}</a>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {!bookingService && (
+                  <aside className="profile-sidebar">
+                    <div className="profile-sidebar-card">
+                      <h3>{selectedProvider.business_name}</h3>
+                      <div className="stars" style={{ marginBottom: 4, display: "block" }}>
+                        {rating ? <>{"★".repeat(Math.round(rating))}{"☆".repeat(5 - Math.round(rating))} <span style={{ color: "var(--muted)", fontWeight: 400 }}>{rating} ({selectedProvider.reviews.length})</span></> : <span style={{ color: "var(--muted)" }}>{t("customerPortal.browse.noReviewsYet")}</span>}
+                      </div>
+                      {(() => { const badge = planBadge(selectedProvider); return badge && <span className={`chip ${selectedProvider.plan === "business" ? "chip-plan-business" : "chip-plan-pro"}`} style={{ marginRight: selectedProvider.is_featured ? 6 : 0 }}>{badge.label}</span>; })()}
+                      {selectedProvider.is_featured && <span className="chip chip-featured">⭐ {t("customerPortal.browse.featuredBadge")}</span>}
+                      <button className="btn-sm forest" style={{ width: "100%", padding: "13px 0", marginTop: 4 }} onClick={() => setProfileTab("services")}>{t("customerPortal.profile.bookNow")}</button>
+
+                      <div className="sidebar-row clickable" onClick={() => setHoursExpanded(v => !v)}>
+                        <span>🕐 <span className={openStatus.open ? "open-txt" : "closed-txt"}>{openStatus.label}</span></span>
+                        <span style={{ color: "var(--muted)" }}>{hoursExpanded ? "▲" : "▼"}</span>
+                      </div>
+                      {hoursExpanded && (
+                        <div className="hours-list">
+                          {hoursRows.map((h) => (
+                            <div key={h.i} className={`hours-row ${h.isToday ? "today" : ""}`}>
+                              <span>{h.day}</span>
+                              <span>{h.text}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {(selectedProvider.district || selectedProvider.location_label) && (
+                        <div className="sidebar-row">
+                          <span>📍 {selectedProvider.location_label || `${selectedProvider.district}, Belize`}</span>
+                        </div>
+                      )}
+                      {selectedProvider.latitude != null && selectedProvider.longitude != null && (
+                        <a href={directionsUrl(selectedProvider.latitude, selectedProvider.longitude)} target="_blank" rel="noreferrer" style={{ fontSize: 12, color: "var(--forest)", fontWeight: 600 }}>{t("customerPortal.profile.getDirections")}</a>
+                      )}
+                    </div>
+                  </aside>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
+      {lightboxUrl && (
+        <div className="lightbox-overlay" onClick={() => setLightboxUrl(null)}>
+          <img src={lightboxUrl} alt={t("customerPortal.profile.providerWorkAlt")} decoding="async" />
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── STAFF PORTAL ─────────────────────────────────────────────────
+// A cut-down portal for a staff member's own login (separate from the
+// business owner's account) — see supabase_staff_accounts.sql. Shows
+// only bookings assigned to them; everything else about the business
+// (settings, pricing, billing, other staff, loyalty) stays owner-only,
+// only reachable from the owner's own login via ProviderPortal.
+function StaffPortal({ onNav, session, staffProfile, onSignOut }) {
+  const { t } = useTranslation();
+  const [bookings, setBookings] = useState([]);
+  const [loadingBookings, setLoadingBookings] = useState(false);
+  const [bookingTab, setBookingTab] = useState("upcoming");
+  const [bookingSearch, setBookingSearch] = useState("");
+  const [bookingSort, setBookingSort] = useState("newest");
+  const [busyId, setBusyId] = useState(null);
+
+  const staffId = staffProfile?.id;
+
+  const loadBookings = async () => {
+    if (!staffId) return;
+    setLoadingBookings(true);
+    const data = await getStaffBookings(staffId);
+    setBookings(data || []);
+    setLoadingBookings(false);
+  };
+
+  useEffect(() => {
+    loadBookings();
+  }, [staffId]);
+
+  const markDone = async (bookingId) => {
+    setBusyId(bookingId);
+    const finished = bookings.find((b) => b.id === bookingId);
+    const updated = await updateBooking(bookingId, { status: "completed" });
+    if (!updated) {
+      setBusyId(null);
+      window.alert(t("staffPortal.markDoneFailed"));
+      return;
+    }
+    // Same business event as the owner marking it done, so the customer
+    // gets the same "leave a review" prompt — before, bookings finished by
+    // a staff member silently never asked for a review.
+    if (finished?.customer_id) {
+      await createNotification({
+        user_id: finished.customer_id,
+        title: "Booking complete",
+        body: `Your ${finished.services?.name || "appointment"} with ${staffProfile?.provider_profiles?.business_name || "the provider"} is marked done. Leave a review to let others know how it went!`,
+        type: "booking_completed",
+        booking_id: bookingId,
+      });
+    }
+    await loadBookings();
+    setBusyId(null);
+  };
+
+  if (!session) {
+    return (
+      <div style={{ minHeight: "100vh", background: "var(--forest)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
+        <div style={{ textAlign: "center", maxWidth: 360 }}>
+          <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 28, fontWeight: 800, color: "var(--near-white)", marginBottom: 8, display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}>
+            <VaiBookMark size={30} />vai<span style={{ color: "var(--lime)" }}>book</span>
+          </div>
+          <p style={{ color: "rgba(255,255,255,0.6)", fontSize: 14, marginBottom: 24 }}>{t("staffPortal.signInWithGoogle")}</p>
+          <button className="btn-lime" style={{ width: "100%", padding: "12px 0" }} onClick={() => onNav("home")}>← {t("staffPortal.backToSite")}</button>
+        </div>
+      </div>
+    );
+  }
+
+  const upcomingBookings = bookings.filter((b) => ["pending", "awaiting_payment", "confirmed"].includes(b.status));
+  const completedBookings = bookings.filter((b) => b.status === "completed");
+  const rejectedBookings = bookings.filter((b) => b.status === "rejected" || b.status === "cancelled");
+  const bookingNameFn = (b) => b.users?.full_name || b.walkin_customer_name || "";
+  const visibleBookings = filterAndSortBookings(
+    bookingTab === "upcoming" ? upcomingBookings : bookingTab === "completed" ? completedBookings : rejectedBookings,
+    bookingSearch,
+    bookingSort,
+    bookingNameFn
+  );
+
+  return (
+    <>
+    <div style={{ maxWidth: 760, margin: "0 auto", padding: "32px 20px" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+        <div>
+          <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 20, fontWeight: 800, display: "flex", alignItems: "center", gap: 8 }}><VaiBookMark size={20} />vai<span style={{ color: "var(--lime)" }}>book</span> <span style={{ fontWeight: 500, fontSize: 14, color: "var(--muted)" }}>staff</span></div>
+          <p style={{ fontSize: 13, color: "var(--muted)", marginTop: 2 }}>
+            {staffProfile?.name} · {staffProfile?.provider_profiles?.business_name || t("staffPortal.yourTeam")}
+          </p>
+        </div>
+        <a style={{ fontSize: 13, color: "var(--muted)", cursor: "pointer" }} onClick={onSignOut}>{t("staffPortal.signOut")}</a>
+      </div>
+
+      <div className="portal-header"><h2>{t("staffPortal.myBookings")}</h2><p>{t("staffPortal.onlyAssignedAppointments")}</p></div>
+      <div className="tab-row">
+        {[
+          { key: "upcoming", label: t("staffPortal.tabUpcoming") },
+          { key: "completed", label: t("staffPortal.tabCompleted") },
+          { key: "cancelled", label: t("staffPortal.tabCancelled") },
+        ].map((opt, i) => (
+          <div key={i} className={`tab ${bookingTab === opt.key ? "active" : ""}`} onClick={() => setBookingTab(opt.key)}>{opt.label}</div>
+        ))}
+      </div>
+      <div className="form-row" style={{ marginBottom: 12 }}>
+        <div className="input-group" style={{ flex: 2 }}>
+          <input placeholder={t("staffPortal.searchByClientName")} value={bookingSearch} onChange={e => setBookingSearch(e.target.value)} />
+        </div>
+        <div className="input-group" style={{ flex: 1 }}>
+          <select value={bookingSort} onChange={e => setBookingSort(e.target.value)}>
+            <option value="newest">{t("customerPortal.bookings.sortNewest")}</option>
+            <option value="oldest">{t("customerPortal.bookings.sortOldest")}</option>
+          </select>
+        </div>
+      </div>
+      <div className="card">
+        {loadingBookings && <p style={{ fontSize: 13, color: "var(--muted)", padding: "16px 0" }}>{t("customerPortal.common.loading")}</p>}
+        {!loadingBookings && visibleBookings.length === 0 && (
+          <p style={{ fontSize: 13, color: "var(--muted)", padding: "16px 0" }}>{bookingSearch.trim() ? t("customerPortal.bookings.noSearchMatch") : t("customerPortal.bookings.emptyState")}</p>
+        )}
+        {visibleBookings.map((b) => (
+          <div key={b.id} style={{ padding: "14px 0", borderBottom: "1px solid var(--border)" }}>
+            <div className="booking-item" style={{ padding: 0, border: "none" }}>
+              <div className={`booking-dot ${bookingStatusClass(b.status)}`}></div>
+              <div className="booking-info">
+                <div className="title">{b.services?.name || t("customerPortal.common.serviceFallback")}</div>
+                <div className="meta">
+                  {b.users?.full_name || b.walkin_customer_name || t("staffPortal.customerFallback")}
+                  {" · "}{formatBookingWhen(b)}
+                </div>
+              </div>
+              <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                <span className="booking-amount">BZ${b.total_amount ?? b.services?.price ?? "—"}</span>
+                <span className={`status-pill ${bookingStatusClass(b.status)}`}>{statusLabel(b.status)}</span>
+                {b.status === "confirmed" && (
+                  <button className="btn-sm forest" disabled={busyId === b.id} onClick={() => markDone(b.id)}>{busyId === b.id ? t("staffPortal.saving") : t("staffPortal.markDone")}</button>
+                )}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+    <SiteFooter />
+    </>
+  );
+}
+
+// ── PROVIDER PORTAL ─────────────────────────────────────────────
+function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSignOut, onProviderProfileUpdate }) {
+  const { t } = useTranslation();
+  const [tab, setTab] = useState("dashboard");
+
+  // Lets the top nav's account dropdown (with the same tools list as the
+  // sidebar) switch tabs while already inside the provider portal,
+  // since the sidebar itself is hidden on mobile.
+  useEffect(() => {
+    const onSetTab = (e) => { if (e.detail && e.detail.tab) setTab(e.detail.tab); };
+    window.addEventListener("vaibook-set-portal-tab", onSetTab);
+    return () => window.removeEventListener("vaibook-set-portal-tab", onSetTab);
+  }, []);
+  const [bookings, setBookings] = useState([]);
+  const [loadingBookings, setLoadingBookings] = useState(false);
+  const [bookingSearch, setBookingSearch] = useState("");
+  const [bookingSort, setBookingSort] = useState("newest");
+  const [bookingStatusFilter, setBookingStatusFilter] = useState("all");
+  const [busyId, setBusyId] = useState(null);
+
+  // Every hook in this component has to be declared up here, above the
+  // "not signed in" / "no provider profile yet" early returns further
+  // down — React requires the same number of hooks on every render, and
+  // ledgerStart/ledgerEnd used to be declared *after* those returns, which
+  // white-screens the portal the moment either condition flips while the
+  // component stays mounted.
+  const nowForState = new Date();
+  const [ledgerStart, setLedgerStart] = useState(new Date(nowForState.getFullYear(), nowForState.getMonth(), 1).toISOString().slice(0, 10));
+  const [ledgerEnd, setLedgerEnd] = useState(new Date(nowForState.getFullYear(), nowForState.getMonth() + 1, 0).toISOString().slice(0, 10));
+  const [ledgerTaxRate, setLedgerTaxRate] = useState("");
+  // Calendar month being viewed, as an offset from the current month.
+  const [calOffset, setCalOffset] = useState(0);
+  // The provider's own reviews.
+  const [myReviews, setMyReviews] = useState([]);
+  const [loadingMyReviews, setLoadingMyReviews] = useState(false);
+  // Rescheduling an existing booking.
+  const [reschedulingId, setReschedulingId] = useState(null);
+  const [rescheduleForm, setRescheduleForm] = useState({ date: "", time: "" });
+  const [savingReschedule, setSavingReschedule] = useState(false);
+  const [rescheduleError, setRescheduleError] = useState("");
+  // The one real notification preference (see supabase_audit_fixes.sql).
+  const [emailOnNewBooking, setEmailOnNewBooking] = useState(true);
+  const [savingNotifyPref, setSavingNotifyPref] = useState(false);
+  // Not every provider takes walk-ins (some are appointment-only) — this
+  // gates whether the dashboard's Walk-In button shows at all. Defaults to
+  // true so existing providers see no change until they turn it off.
+  const [acceptsWalkins, setAcceptsWalkins] = useState(true);
+  const [savingWalkinPref, setSavingWalkinPref] = useState(false);
+  const { pushEnabled, subscribingPush, pushError, enablePushNotifications } = usePushSubscription(user?.id);
+
+  // Per-booking unread message counts, so a waiting message is visible from
+  // the list instead of only after opening that booking's chat.
+  const [unreadByBooking, setUnreadByBooking] = useState({});
+  const loadUnreadMessages = async () => {
+    if (!user?.id) return;
+    const rows = await getUnreadBookingMessages(user.id);
+    const map = {};
+    (rows || []).forEach((r) => { map[r.booking_id] = (map[r.booking_id] || 0) + 1; });
+    setUnreadByBooking(map);
+  };
+  useEffect(() => {
+    loadUnreadMessages();
+    const t = setInterval(loadUnreadMessages, 30000);
+    return () => clearInterval(t);
+  }, [user?.id]);
+  const [hours, setHours] = useState(DEFAULT_HOURS);
+  const [savingHours, setSavingHours] = useState(false);
+  const [selectedDay, setSelectedDay] = useState(null);
+  const [profileForm, setProfileForm] = useState({ business_name: "", bio: "", district: "", whatsapp: "", tax_id: "", is_featured: false });
+  const [savingFeatured, setSavingFeatured] = useState(false);
+
+  // Loyalty & rewards program (Business plan) — provider-configurable,
+  // saved as its own small form rather than folded into profileForm so
+  // toggling it on doesn't require touching every other profile field.
+  const [loyaltyForm, setLoyaltyForm] = useState({ enabled: false, pointsPerDollar: 1, threshold: 100, description: "" });
+  const [savingLoyalty, setSavingLoyalty] = useState(false);
+  const [loyaltyCustomers, setLoyaltyCustomers] = useState([]);
+  const [loadingLoyaltyCustomers, setLoadingLoyaltyCustomers] = useState(false);
+
+  const [redeemingId, setRedeemingId] = useState(null);
+  const [savingProfile, setSavingProfile] = useState(false);
+  const [photos, setPhotos] = useState([]);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+
+  // Single profile photo (distinct from the portfolio gallery above) —
+  // the square photo shown next to the business name on this tab, and
+  // used as the cover image on search cards once set (see the
+  // profile_photo_url handling further down and in the card renderers).
+  const [profilePhotoUrl, setProfilePhotoUrl] = useState(null);
+  const [profilePhotoFile, setProfilePhotoFile] = useState(null);
+  const [showProfilePhotoModal, setShowProfilePhotoModal] = useState(false);
+  const [savingProfilePhoto, setSavingProfilePhoto] = useState(false);
+  const [profilePhotoError, setProfilePhotoError] = useState(null);
+  const profilePhotoInputRef = useRef(null);
+  const [mapPosition, setMapPosition] = useState(null);
+  const [locationLabel, setLocationLabel] = useState("");
+  const [savingLocation, setSavingLocation] = useState(false);
+  const [services, setServices] = useState([]);
+  const [serviceForm, setServiceForm] = useState({ name: "", price: "", duration_min: 15, description: "" });
+  const [savingService, setSavingService] = useState(false);
+  const [editingServiceId, setEditingServiceId] = useState(null);
+  const [editServiceForm, setEditServiceForm] = useState({ name: "", price: "", duration_min: 15, description: "" });
+  const [savingServiceEdit, setSavingServiceEdit] = useState(false);
+  const [respondingId, setRespondingId] = useState(null);
+  const [responseType, setResponseType] = useState(null);
+  const [responseMessage, setResponseMessage] = useState("");
+  const [confirmingPaymentId, setConfirmingPaymentId] = useState(null);
+  const [depositForm, setDepositForm] = useState({ downpayment_required: false, downpayment_pct: 50, auto_confirm_bookings: false });
+  const [savingDeposit, setSavingDeposit] = useState(false);
+  // Set-and-forget daily lunch break — lives only in Settings, never on the
+  // main dashboard, since the whole point is the provider sets it once and
+  // never has to think about it again (see availableSlots in CustomerPortal
+  // for where this actually gets subtracted from the calendar every day).
+  const [lunchForm, setLunchForm] = useState({ enabled: false, lunch_break_start: "13:00", lunch_break_minutes: 30 });
+  const [savingLunch, setSavingLunch] = useState(false);
+  const [paymentMethods, setPaymentMethods] = useState([]);
+  const [paymentMethodForm, setPaymentMethodForm] = useState({ type: "bank", name: "", account_name: "", account_number: "" });
+  const [savingPaymentMethod, setSavingPaymentMethod] = useState(false);
+
+  const providerId = providerProfile?.id;
+
+  // ── 1-tap dashboard blocking (walk-in "panic button" + custom block) ──
+  // A block is a standalone row in provider_blocks — never a fake booking —
+  // that just gets merged into busy windows for the customer-facing slot
+  // picker (see getProviderBusyWindows). Nothing here needs a confirmation
+  // step: the whole point is a barber mid-haircut can kill the next slot in
+  // one tap without touching a form.
+  const [blocks, setBlocks] = useState([]);
+  const [loadingBlocks, setLoadingBlocks] = useState(false);
+  const [resumingNow, setResumingNow] = useState(false);
+  // Full-screen QR (Your Shopfront card) and the Rebooking Radar's
+  // check-in modal — both dashboard-only, no data of their own to load.
+  const [showQrModal, setShowQrModal] = useState(false);
+  const [showCheckInModal, setShowCheckInModal] = useState(false);
+  const [copiedShopfrontLink, setCopiedShopfrontLink] = useState(false);
+  // "Elite Welcome" launch graphic — the "you're live!" banner dismisses
+  // permanently per provider via localStorage (no DB column for this; it's
+  // a one-time nudge, not something worth a schema change to track).
+  const [showLaunchGraphic, setShowLaunchGraphic] = useState(false);
+  const [launchBannerDismissed, setLaunchBannerDismissed] = useState(true);
+  useEffect(() => {
+    if (!providerId) return;
+    try {
+      setLaunchBannerDismissed(localStorage.getItem(`vaibook_launch_graphic_seen_${providerId}`) === "1");
+    } catch (e) {
+      setLaunchBannerDismissed(false);
+    }
+  }, [providerId]);
+  const dismissLaunchBanner = () => {
+    setLaunchBannerDismissed(true);
+    try { if (providerId) localStorage.setItem(`vaibook_launch_graphic_seen_${providerId}`, "1"); } catch (e) { /* localStorage unavailable — banner just won't persist as dismissed */ }
+  };
+  // TOP NAV REDESIGN — the persistent left sidebar is gone; these drive the
+  // new top bar's mobile hamburger (Dashboard/Bookings/Clients) and the
+  // avatar's grouped "everything else" dropdown, both closed by default.
+  const [providerMobileNavOpen, setProviderMobileNavOpen] = useState(false);
+  const [providerMenuOpen, setProviderMenuOpen] = useState(false);
+  // FIXED (dropdown glitch) — same onMouseLeave-only closing bug as the
+  // shared Nav's account dropdown (see useClickOutside above); replaced
+  // with a real click-outside listener here too.
+  const providerMenuRef = useClickOutside(providerMenuOpen, () => setProviderMenuOpen(false));
+  const [showBlockSheet, setShowBlockSheet] = useState(false);
+  // "in15m" | "in30m" | "in1h" | "custom" — the bottom sheet asks "when
+  // will you be back" and works out the end time from that, rather than
+  // asking for a duration. blockSheetResumeAt is only used when mode is
+  // "custom", as an <input type="time"> value ("HH:MM").
+  const [blockSheetResumeMode, setBlockSheetResumeMode] = useState("in15m");
+  const [blockSheetResumeAt, setBlockSheetResumeAt] = useState("");
+  const [savingBlock, setSavingBlock] = useState(false);
+  const [blockError, setBlockError] = useState("");
+
+  // Forces a re-render every 30s purely so "is a block active right now"
+  // (and the Resume Bookings Now button below) stays accurate as the clock
+  // ticks past a block's end time, without needing any user action.
+  const [, setClockTick] = useState(0);
+  useEffect(() => {
+    const t = setInterval(() => setClockTick((x) => x + 1), 30000);
+    return () => clearInterval(t);
+  }, []);
+
+  const loadBlocks = async () => {
+    if (!providerId) return;
+    setLoadingBlocks(true);
+    const data = await getProviderBlocks(providerId, localDateStr());
+    setBlocks(data || []);
+    setLoadingBlocks(false);
+  };
+
+  useEffect(() => {
+    loadBlocks();
+  }, [providerId]);
+
+  // Builds a { block_date, start_time, end_time } window starting right now
+  // and ending at `end` (a Date), for whichever resume-time option the
+  // Custom Block sheet's submit picked.
+  const buildBlockWindow = (end) => {
+    const now = new Date();
+    return { block_date: localDateStr(now), start_time: localTimeStr(now), end_time: localTimeStr(end) };
+  };
+
+  // The block (if any) whose window covers this exact moment, today — drives
+  // the "Resume Bookings Now" button. provider_blocks has no end_date, so a
+  // block never spans midnight; "today" is the only day worth checking.
+  const activeBlock = blocks.find((bl) => {
+    if (bl.block_date !== localDateStr()) return false;
+    const nowT = localTimeStr();
+    return nowT >= bl.start_time && nowT < bl.end_time;
+  }) || null;
+
+  const openBlockSheet = () => {
+    setBlockSheetResumeMode("in15m");
+    setBlockSheetResumeAt(localTimeStr(new Date(Date.now() + 60 * 60000)));
+    setBlockError("");
+    setShowBlockSheet(true);
+  };
+  const closeBlockSheet = () => setShowBlockSheet(false);
+
+  // Works out the actual end-of-block Date from whichever resume option is
+  // selected. Returns null if a custom time hasn't been picked yet.
+  const resolveBlockSheetEnd = () => {
+    const now = new Date();
+    if (blockSheetResumeMode === "in15m") return new Date(now.getTime() + 15 * 60000);
+    if (blockSheetResumeMode === "in30m") return new Date(now.getTime() + 30 * 60000);
+    if (blockSheetResumeMode === "in1h") return new Date(now.getTime() + 60 * 60000);
+    if (!blockSheetResumeAt) return null;
+    const [h, m] = blockSheetResumeAt.split(":").map(Number);
+    const end = new Date(now);
+    end.setHours(h, m, 0, 0);
+    return end;
+  };
+
+  const submitBlockSheet = async () => {
+    if (!providerId) return;
+    const end = resolveBlockSheetEnd();
+    if (!end || end <= new Date()) {
+      setBlockError(t("providerPortal.blockSheet.pickResumeTimeError"));
+      return;
+    }
+    setSavingBlock(true);
+    setBlockError("");
+    const window_ = buildBlockWindow(end);
+    // Custom Block is now the only pause/break entry point on the
+    // dashboard — "walk-in" is a separate, dedicated revenue action (see
+    // Walk-In above), so every block created here is just "away from the
+    // business" and tagged 'break' (the provider_blocks CHECK constraint
+    // only allows 'walkin' | 'break' — no schema change needed to drop the
+    // now-pointless walk-in/break choice from the UI).
+    const created = await insertProviderBlock({ provider_id: providerId, block_type: "break", ...window_ });
+    setSavingBlock(false);
+    if (!created) { setBlockError(t("providerPortal.blockSheet.saveError")); return; }
+    setShowBlockSheet(false);
+    await loadBlocks();
+  };
+
+  const removeBlock = async (blockId) => {
+    if (!window.confirm(t("providerPortal.confirm.removeBlock"))) return;
+    await deleteProviderBlock(blockId);
+    await loadBlocks();
+  };
+
+  // "I'm Back" — resuming early is the whole point of this feature, so it's
+  // one tap and no confirmation dialog, unlike manually removing a block
+  // from the list above.
+  const resumeBookingsNow = async () => {
+    if (!activeBlock || resumingNow) return;
+    setResumingNow(true);
+    await deleteProviderBlock(activeBlock.id);
+    await loadBlocks();
+    setResumingNow(false);
+  };
+
+  // WALK-IN SALE (POS) — for a customer standing right in front of you,
+  // paying now. Different from "+ Add appointment" below (which schedules
+  // someone in for a date/time and leaves them "confirmed" until you mark
+  // the job done later): this logs the sale as done immediately — tap
+  // their service(s), submit, and it counts toward today's revenue on the
+  // spot, no second "mark complete" step.
+  const [showWalkInSheet, setShowWalkInSheet] = useState(false);
+  const [walkInSaleServiceIds, setWalkInSaleServiceIds] = useState([]);
+  const [savingWalkInSale, setSavingWalkInSale] = useState(false);
+  const [walkInSaleError, setWalkInSaleError] = useState("");
+
+  const openWalkInSheet = () => {
+    setWalkInSaleServiceIds([]);
+    setWalkInSaleError("");
+    setShowWalkInSheet(true);
+  };
+  const closeWalkInSheet = () => setShowWalkInSheet(false);
+  const toggleWalkInSaleService = (id) => {
+    setWalkInSaleServiceIds((ids) => (ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id]));
+  };
+
+  const activeServices = services.filter((s) => s.is_active !== false);
+  const walkInSaleServices = activeServices.filter((s) => walkInSaleServiceIds.includes(s.id));
+  const walkInSaleTotal = walkInSaleServices.reduce((sum, s) => sum + (Number(s.price) || 0), 0);
+  const walkInSaleDuration = walkInSaleServices.reduce((sum, s) => sum + (Number(s.duration_min) || 0), 0);
+
+  const submitWalkInSale = async () => {
+    if (!providerId || walkInSaleServiceIds.length === 0 || savingWalkInSale) return;
+    setSavingWalkInSale(true);
+    setWalkInSaleError("");
+    const now = new Date();
+    const order_number = `VB-${Date.now().toString(36).toUpperCase()}${Math.random().toString(36).slice(2, 5).toUpperCase()}`;
+    let created = null;
+    try {
+      created = await createWalkInBooking({
+        order_number,
+        provider_id: providerId,
+        service_id: walkInSaleServiceIds[0],
+        booking_date: localDateStr(now),
+        booking_time: localTimeStr(now),
+        customer_name: "Walk-in",
+        customer_phone: null,
+        notes: null,
+      });
+      if (created && walkInSaleServiceIds.length > 1) {
+        await attachBookingServices(created.id, walkInSaleServiceIds, walkInSaleDuration);
+      }
+    } catch (err) {
+      setSavingWalkInSale(false);
+      if (err?.code === "RATE_LIMITED") {
+        setWalkInSaleError(t("providerPortal.walkInSheet.rateLimited"));
+      } else if (err?.code === "MAINTENANCE_MODE") {
+        setWalkInSaleError(t("providerPortal.errors.maintenanceMode"));
+      } else if (err?.code === "STARTER_LIMIT_REACHED") {
+        setWalkInSaleError(t("providerPortal.errors.starterLimitReached"));
+      } else {
+        setWalkInSaleError(t("providerPortal.walkInSheet.genericError"));
+      }
+      return;
+    }
+    if (!created) {
+      setSavingWalkInSale(false);
+      setWalkInSaleError(t("providerPortal.walkInSheet.genericError"));
+      return;
+    }
+    // The customer is being served right now — count the revenue
+    // immediately rather than waiting on a separate "mark complete" tap.
+    // No notification fires for this: create_walkin_booking never sets a
+    // customer_id, so there's no account to notify.
+    await updateBookingStatus(created.id, "completed");
+    setSavingWalkInSale(false);
+    setShowWalkInSheet(false);
+    await loadBookings();
+  };
+
+  const loadPaymentMethods = async () => {
+    if (!providerId) return;
+    const data = await getPaymentMethods(providerId);
+    setPaymentMethods(data);
+  };
+
+  useEffect(() => {
+    loadPaymentMethods();
+  }, [providerId]);
+
+  const loadBookings = async () => {
+    if (!providerId) return;
+    setLoadingBookings(true);
+    const data = await getProviderBookings(providerId);
+    setBookings(data || []);
+    setLoadingBookings(false);
+  };
+
+  useEffect(() => {
+    loadBookings();
+  }, [providerId]);
+
+  // Walk-in / "add appointment for someone" — for a client who calls or
+  // asks in person and doesn't have (or want) a VaiBook account, like an
+  // older customer. No sign-in required on their end.
+  const [addingWalkIn, setAddingWalkIn] = useState(false);
+  const [walkInForm, setWalkInForm] = useState({ service_id: "", date: "", time: "10:00", name: "", phone: "", notes: "" });
+  const [savingWalkIn, setSavingWalkIn] = useState(false);
+  const [walkInError, setWalkInError] = useState("");
+
+  const openWalkInForm = () => {
+    setWalkInForm({ service_id: services[0]?.id || "", date: "", time: "10:00", name: "", phone: "", notes: "" });
+    setWalkInError("");
+    setAddingWalkIn(true);
+  };
+  const closeWalkInForm = () => { setAddingWalkIn(false); setWalkInError(""); };
+
+  const submitWalkIn = async () => {
+    if (!walkInForm.service_id || !walkInForm.date || !walkInForm.time) {
+      setWalkInError(t("providerPortal.walkIn.chooseServiceDateTime"));
+      return;
+    }
+    if (!walkInForm.name.trim()) {
+      setWalkInError(t("providerPortal.walkIn.enterClientName"));
+      return;
+    }
+    setSavingWalkIn(true);
+    setWalkInError("");
+
+    // Walk-ins skipped every availability check, so a provider could put an
+    // appointment straight on top of a customer's confirmed booking without
+    // either of them being told. Warn first — but still allow it, since a
+    // provider sometimes genuinely does double up on purpose.
+    const walkInService = services.find((sv) => sv.id === walkInForm.service_id);
+    const clash = bookings.find((b) => {
+      if (!["pending", "awaiting_payment", "confirmed"].includes(b.status)) return false;
+      if (String(b.booking_date).slice(0, 10) !== walkInForm.date) return false;
+      const startA = String(walkInForm.time).slice(0, 5);
+      const startB = String(b.booking_time || "").slice(0, 5);
+      const toMin = (t) => { const [h, m] = t.split(":").map(Number); return (h || 0) * 60 + (m || 0); };
+      const aStart = toMin(startA);
+      const aEnd = aStart + (Number(walkInService?.duration_min) || 60);
+      const bStart = toMin(startB);
+      const bEnd = bStart + (Number(b.services?.duration_min) || 60);
+      return aStart < bEnd && bStart < aEnd;
+    });
+    if (clash) {
+      const who = clash.users?.full_name || clash.walkin_customer_name || "another client";
+      if (!window.confirm(t("providerPortal.walkIn.overlapConfirm", { time: formatBookingTime(clash.booking_time), who }))) {
+        setSavingWalkIn(false);
+        return;
+      }
+    }
+
+    const order_number = `VB-${Date.now().toString(36).toUpperCase()}${Math.random().toString(36).slice(2, 5).toUpperCase()}`;
+    let created = null;
+    try {
+      created = await createWalkInBooking({
+        order_number,
+        provider_id: providerId,
+        service_id: walkInForm.service_id,
+        booking_date: walkInForm.date,
+        booking_time: walkInForm.time,
+        customer_name: walkInForm.name.trim(),
+        customer_phone: walkInForm.phone.trim() || null,
+        notes: walkInForm.notes.trim() || null,
+      });
+    } catch (err) {
+      setSavingWalkIn(false);
+      if (err?.code === "RATE_LIMITED") {
+        setWalkInError(t("providerPortal.walkIn.rateLimited"));
+      } else if (err?.code === "MAINTENANCE_MODE") {
+        setWalkInError(t("providerPortal.errors.maintenanceMode"));
+      } else if (err?.code === "STARTER_LIMIT_REACHED") {
+        setWalkInError(t("providerPortal.errors.starterLimitReached"));
+      } else {
+        setWalkInError(t("providerPortal.walkIn.genericError"));
+      }
+      return;
+    }
+    setSavingWalkIn(false);
+    if (created) {
+      await loadBookings();
+      setAddingWalkIn(false);
+    } else {
+      setWalkInError(t("providerPortal.walkIn.genericError"));
+    }
+  };
+
+  // Refund proof — VaiBook doesn't process payments itself, so a refund
+  // is the provider sending money back to the customer directly; this
+  // just records proof of it on the specific cancelled/rejected booking.
+  const [refundingBookingId, setRefundingBookingId] = useState(null);
+  const [refundForm, setRefundForm] = useState({ amount: "", receipt: null, note: "" });
+  const [refundFileKey, setRefundFileKey] = useState(0);
+  const [savingRefund, setSavingRefund] = useState(false);
+  const [refundError, setRefundError] = useState("");
+
+  const openRefundForm = (booking) => {
+    // If the customer only ever paid a deposit, that's what there is to
+    // refund — prefilling the full price made a double-value refund one
+    // click away, and refund records can't be edited afterwards.
+    const paidDeposit = booking.payment_status === "paid" || booking.payment_status === "receipt_uploaded";
+    const suggested = paidDeposit && booking.downpayment_amount
+      ? booking.downpayment_amount
+      : (booking.downpayment_amount || booking.total_amount || "");
+    setRefundForm({ amount: suggested, receipt: null, note: "" });
+    setRefundError("");
+    setRefundingBookingId(booking.id);
+  };
+  const closeRefundForm = () => { setRefundingBookingId(null); setRefundError(""); };
+
+  const submitRefund = async (bookingId) => {
+    if (!refundForm.receipt) { setRefundError(t("providerPortal.refund.attachReceipt")); return; }
+    if (!refundForm.amount || Number(refundForm.amount) <= 0) { setRefundError(t("providerPortal.refund.enterAmount")); return; }
+    setSavingRefund(true);
+    setRefundError("");
+    const ok = await submitBookingRefund(bookingId, providerId, refundForm.receipt, {
+      amount: Number(refundForm.amount),
+      note: refundForm.note.trim() || null,
+    });
+    setSavingRefund(false);
+    if (ok) {
+      setRefundFileKey((k) => k + 1);
+      await loadBookings();
+      setRefundingBookingId(null);
+    } else {
+      setRefundError(t("providerPortal.errors.uploadFailed"));
+    }
+  };
+
+  // Plan & billing — the provider's own VaiBook subscription payment,
+  // separate from anything a customer pays for a booking.
+  const [payments, setPayments] = useState([]);
+  const [loadingPayments, setLoadingPayments] = useState(false);
+  const [paymentForm, setPaymentForm] = useState({ periodLabel: "", receipt: null });
+  const [submittingPayment, setSubmittingPayment] = useState(false);
+  const [paymentError, setPaymentError] = useState("");
+  // Which plan this payment is for. Providers couldn't change plan from
+  // inside the portal at all before — every "View plans" button just
+  // dropped them on a screen that showed the plan they already had.
+  const [payingForPlan, setPayingForPlan] = useState("");
+  // Bumping this key remounts the file input so it stops showing the name
+  // of a file that's already been submitted.
+  const [paymentFileKey, setPaymentFileKey] = useState(0);
+  // Team plan seat count, for the per-seat pricing picker below. Starts at
+  // null so it defaults to this provider's actual current staff count
+  // (`staff.length`, loaded further down) until the provider explicitly
+  // types a different number — see teamPlanTotal below.
+  const [teamSeatsOverride, setTeamSeatsOverride] = useState(null);
+
+  const loadPayments = async () => {
+    if (!providerId) return;
+    setLoadingPayments(true);
+    const data = await getMyProviderPayments(providerId);
+    setPayments(data || []);
+    setLoadingPayments(false);
+  };
+
+  useEffect(() => {
+    loadPayments();
+    // Default the period label to the current month whenever the tab's
+    // form is fresh (e.g. after a submit resets it).
+    setPaymentForm((f) => (f.periodLabel ? f : { ...f, periodLabel: new Date().toLocaleDateString([], { month: "long", year: "numeric" }) }));
+  }, [providerId]);
+
+  const submitPayment = async () => {
+    if (!paymentForm.receipt) { setPaymentError(t("providerPortal.billing.attachReceipt")); return; }
+    if (!paymentForm.periodLabel.trim()) { setPaymentError(t("providerPortal.billing.sayPeriod")); return; }
+    // Same "starter defaults to pro" fallback as the picker's chosenPlan
+    // above — keeps this in sync with whichever plan looked selected on
+    // screen even if the provider never explicitly clicked a radio button.
+    const effectivePlan = providerProfile?.plan && providerProfile.plan !== "starter" ? providerProfile.plan : "pro";
+    const plan = PLANS.find((p) => p.id === (payingForPlan || effectivePlan));
+    if (!plan || plan.monthly <= 0) { setPaymentError(t("providerPortal.billing.pickPlanFirst")); return; }
+    // Team is the one plan whose real price isn't just plan.monthly — it's
+    // the base fee plus whatever's owed for seats beyond the free ones
+    // (teamPlanTotal, computed above from the seat-count picker below).
+    const amountDue = plan.id === "business" ? teamPlanTotal : plan.monthly;
+    setSubmittingPayment(true);
+    setPaymentError("");
+    const ok = await submitProviderPayment(providerId, paymentForm.receipt, {
+      plan: plan.id,
+      amount: amountDue,
+      periodLabel: paymentForm.periodLabel.trim(),
+    });
+    setSubmittingPayment(false);
+    if (ok) {
+      setPaymentForm({ periodLabel: "", receipt: null });
+      setPaymentFileKey((k) => k + 1);
+      await loadPayments();
+    } else {
+      setPaymentError(t("providerPortal.errors.uploadFailed"));
+    }
+  };
+
+  // Staff seats (Business plan) — owner-managed, no separate staff
+  // logins. See supabase_provider_staff.sql.
+  const [staff, setStaff] = useState([]);
+  const [loadingStaff, setLoadingStaff] = useState(false);
+  const [newStaffName, setNewStaffName] = useState("");
+  const [newStaffPhone, setNewStaffPhone] = useState("");
+  const [newStaffEmail, setNewStaffEmail] = useState("");
+  const [savingStaff, setSavingStaff] = useState(false);
+  const [staffError, setStaffError] = useState("");
+  const [staffFilter, setStaffFilter] = useState("all");
+  const [editingStaffEmailId, setEditingStaffEmailId] = useState(null);
+  const [editStaffEmailValue, setEditStaffEmailValue] = useState("");
+  // Scopes the dashboard's "Chairs Filled" metric to one staff member's
+  // own bookings — only meaningful (and only shown) for a Business-plan
+  // shop with staff added; a solo provider has nothing to scope by.
+  const [chairsStaffFilter, setChairsStaffFilter] = useState("all");
+  const isBusinessPlan = (providerProfile?.plan || "starter") === "business";
+  // Loyalty & rewards is Pro-and-above (staff seats and featured placement
+  // stay Business-only).
+  const isProOrAbove = (providerProfile?.plan || "starter") !== "starter";
+
+  // Team plan per-seat pricing (see TEAM_FREE_SEATS/TEAM_PER_SEAT_PRICE near
+  // the PLANS array). Defaults to this provider's actual current staff
+  // count until they type a different number in the billing picker below —
+  // covers both "I already have staff, just paying/renewing" and "I'm
+  // upgrading fresh and telling you how many seats I'll need."
+  const teamSeats = teamSeatsOverride !== null ? teamSeatsOverride : staff.length;
+  const teamExtraSeats = Math.max(0, teamSeats - TEAM_FREE_SEATS);
+  const teamBaseFee = PLANS.find((p) => p.id === "business")?.monthly ?? 149.7;
+  const teamPlanTotal = teamBaseFee + teamExtraSeats * TEAM_PER_SEAT_PRICE;
+
+  const loadStaff = async () => {
+    if (!providerId) return;
+    setLoadingStaff(true);
+    const data = await getProviderStaff(providerId);
+    setStaff(data || []);
+    setLoadingStaff(false);
+  };
+
+  useEffect(() => {
+    loadStaff();
+  }, [providerId]);
+
+  const addStaff = async () => {
+    if (!providerId || !newStaffName.trim()) { setStaffError(t("providerPortal.staff.enterName")); return; }
+    if (!newStaffEmail.trim()) { setStaffError(t("providerPortal.staff.enterEmail")); return; }
+    setSavingStaff(true);
+    setStaffError("");
+    const created = await addProviderStaff(providerId, { name: newStaffName.trim(), phone: newStaffPhone.trim(), email: newStaffEmail.trim() });
+    setSavingStaff(false);
+    if (created) {
+      setNewStaffName("");
+      setNewStaffPhone("");
+      setNewStaffEmail("");
+      await loadStaff();
+    } else {
+      setStaffError(t("providerPortal.staff.addError"));
+    }
+  };
+
+  const toggleStaffActive = async (member) => {
+    await updateProviderStaff(member.id, { is_active: !member.is_active });
+    await loadStaff();
+  };
+
+  const startEditStaffEmail = (member) => {
+    setEditingStaffEmailId(member.id);
+    setEditStaffEmailValue(member.email || "");
+  };
+
+  const saveStaffEmail = async (member) => {
+    if (!editStaffEmailValue.trim()) return;
+    await updateProviderStaff(member.id, { email: editStaffEmailValue.trim() });
+    setEditingStaffEmailId(null);
+    await loadStaff();
+  };
+
+  const removeStaff = async (member) => {
+    if (!window.confirm(t("providerPortal.staff.removeConfirm", { name: member.name }))) return;
+    await deleteProviderStaff(member.id);
+    await loadStaff();
+  };
+
+  const assignBookingStaff = async (bookingId, staffId) => {
+    await updateBooking(bookingId, { staff_id: staffId || null });
+    await loadBookings();
+  };
+
+  const [monthlyTrend, setMonthlyTrend] = useState([]);
+  const [loadingTrend, setLoadingTrend] = useState(false);
+
+  const loadMonthlyTrend = async () => {
+    if (!providerId) return;
+    setLoadingTrend(true);
+    const data = await getProviderMonthlyTrend(6);
+    setMonthlyTrend(data || []);
+    setLoadingTrend(false);
+  };
+
+  useEffect(() => {
+    loadMonthlyTrend();
+  }, [providerId]);
+
+  useEffect(() => {
+    (async () => {
+      if (!providerId) return;
+      const wh = await getWorkingHours(providerId);
+      if (wh && wh.length) {
+        setHours(DAY_NAMES.map((day, i) => {
+          const match = wh.find(w => w.day_of_week === i);
+          return match
+            ? { day, day_of_week: i, is_open: !!match.is_open, start_time: match.start_time || "08:00", end_time: match.end_time || "18:00" }
+            : { day, day_of_week: i, is_open: false, start_time: "08:00", end_time: "18:00" };
+        }));
+      }
+    })();
+  }, [providerId]);
+
+  useEffect(() => {
+    if (providerProfile) {
+      setProfileForm({
+        business_name: providerProfile.business_name || "",
+        bio: providerProfile.bio || "",
+        district: providerProfile.district || "",
+        whatsapp: providerProfile.whatsapp || "",
+        tax_id: providerProfile.tax_id || "",
+        is_featured: !!providerProfile.is_featured,
+      });
+      setLoyaltyForm({
+        enabled: !!providerProfile.loyalty_enabled,
+        pointsPerDollar: providerProfile.loyalty_points_per_dollar ?? 1,
+        threshold: providerProfile.loyalty_reward_threshold ?? 100,
+        description: providerProfile.loyalty_reward_description || "",
+      });
+      setPhotos(providerProfile.portfolio_urls || []);
+      setProfilePhotoUrl(providerProfile.profile_photo_url || null);
+      setServices(providerProfile.services || []);
+      if (providerProfile.latitude != null && providerProfile.longitude != null) {
+        setMapPosition([providerProfile.latitude, providerProfile.longitude]);
+      }
+      setLocationLabel(providerProfile.location_label || "");
+      setDepositForm({
+        downpayment_required: !!providerProfile.downpayment_required,
+        downpayment_pct: providerProfile.downpayment_pct || 50,
+        auto_confirm_bookings: !!providerProfile.auto_confirm_bookings,
+      });
+      setLunchForm({
+        enabled: Number(providerProfile.lunch_break_minutes) > 0,
+        lunch_break_start: providerProfile.lunch_break_start ? String(providerProfile.lunch_break_start).slice(0, 5) : "13:00",
+        lunch_break_minutes: providerProfile.lunch_break_minutes || 30,
+      });
+      setEmailOnNewBooking(providerProfile.notify_email_new_booking !== false);
+      setAcceptsWalkins(providerProfile.accepts_walkins !== false);
+    }
+  }, [providerProfile]);
+
+  const act = async (id, status) => {
+    const target = bookings.find((b) => b.id === id);
+    // Cancelling and marking a no-show both end a booking the provider
+    // already accepted, so both ask first — there's no undo.
+    if (status === "cancelled" && !window.confirm(t("providerPortal.confirm.cancelBooking"))) return;
+    if (status === "no_show" && !window.confirm(t("providerPortal.confirm.markNoShow"))) return;
+
+    setBusyId(id);
+    const updated = await updateBookingStatus(id, status);
+    if (!updated) {
+      setBusyId(null);
+      window.alert(t("providerPortal.errors.updateBookingFailed"));
+      return;
+    }
+
+    if (status === "completed" && target?.customer_id) {
+      await createNotification({
+        user_id: target.customer_id,
+        title: "Booking complete",
+        body: `Your ${target.services?.name || "appointment"} with ${providerProfile?.business_name || "the provider"} is marked done. Leave a review to let others know how it went!`,
+        type: "booking_completed",
+        booking_id: id,
+      });
+    }
+    if (status === "cancelled" && target?.customer_id) {
+      await createNotification({
+        user_id: target.customer_id,
+        title: "Booking cancelled",
+        body: `${providerProfile?.business_name || "The provider"} had to cancel your ${target.services?.name || "appointment"} on ${formatBookingWhen(target)}. Get in touch with them to rebook.`,
+        type: "booking_cancelled_by_provider",
+        booking_id: id,
+      });
+      if (target.users?.email) {
+        // Same "#book-<provider id>" deep link used for QR codes/share
+        // links — lands the customer straight back on this provider's
+        // public booking page so rescheduling is a single tap, not a
+        // "go find them again" chore right after bad news.
+        const rebookUrl = `${window.location.origin}/#book-${target.provider_id}`;
+        await sendBookingEmail({
+          to: target.users.email,
+          subject: `Your booking with ${providerProfile?.business_name || "your provider"} was cancelled`,
+          html: `<p>Hi ${target.users?.full_name || "there"},</p><p>${providerProfile?.business_name || "Your provider"} had to cancel your <strong>${target.services?.name || "appointment"}</strong> on <strong>${formatBookingWhen(target)}</strong>.</p>` +
+            `<p style="text-align:center;margin:24px 0;"><a href="${rebookUrl}" style="background:#0D3D2E;color:#F5EFE0;padding:12px 28px;border-radius:100px;text-decoration:none;font-weight:700;display:inline-block;">Reschedule now</a></p>` +
+            `<p style="font-size:13px;color:#5b6b62;">Or copy this link: ${rebookUrl}</p>`,
+        });
+      }
+    }
+    if (status === "no_show" && target?.customer_id) {
+      await createNotification({
+        user_id: target.customer_id,
+        title: "Marked as a no-show",
+        body: `${providerProfile?.business_name || "The provider"} marked your ${formatBookingWhen(target)} appointment as a no-show.`,
+        type: "booking_no_show",
+        booking_id: id,
+      });
+    }
+    await loadBookings();
+    // Points are awarded by a database trigger the moment a booking
+    // completes, so the loyalty list on screen is now out of date.
+    if (status === "completed" && providerProfile?.loyalty_enabled) await loadLoyaltyCustomers();
+    setBusyId(null);
+  };
+
+  // ── RESCHEDULING ──────────────────────────────────────────────
+  const openReschedule = (booking) => {
+    setRescheduleForm({ date: String(booking.booking_date || "").slice(0, 10), time: String(booking.booking_time || "").slice(0, 5) });
+    setRescheduleError("");
+    setReschedulingId(booking.id);
+  };
+  const closeReschedule = () => { setReschedulingId(null); setRescheduleError(""); };
+
+  const submitReschedule = async (booking) => {
+    if (!rescheduleForm.date || !rescheduleForm.time) { setRescheduleError(t("providerPortal.reschedule.pickDateTime")); return; }
+    const check = validate(rescheduleProposalSchema, { date: rescheduleForm.date, time: rescheduleForm.time });
+    if (!check.ok) { setRescheduleError(check.message); return; }
+    setSavingReschedule(true);
+    setRescheduleError("");
+    const proposedWhen = formatBookingWhen({ booking_date: rescheduleForm.date, booking_time: rescheduleForm.time });
+    try {
+      await proposeBookingReschedule(booking.id, rescheduleForm.date, rescheduleForm.time);
+    } catch (err) {
+      setSavingReschedule(false);
+      setRescheduleError(err.code === "SLOT_TAKEN"
+        ? t("providerPortal.reschedule.slotTaken")
+        : t("providerPortal.reschedule.proposeError"));
+      return;
+    }
+    setSavingReschedule(false);
+
+    if (booking.customer_id) {
+      await createNotification({
+        user_id: booking.customer_id,
+        title: "New time proposed for your booking",
+        body: `${providerProfile?.business_name || "Your provider"} would like to move your ${booking.services?.name || "appointment"} to ${proposedWhen}. Please confirm.`,
+        type: "booking_reschedule_proposed",
+        booking_id: booking.id,
+      });
+      if (booking.users?.email) {
+        await sendBookingEmail({
+          to: booking.users.email,
+          subject: `${providerProfile?.business_name || "Your provider"} proposed a new time for your booking`,
+          html: `<p>Hi ${booking.users?.full_name || "there"},</p><p>${providerProfile?.business_name || "Your provider"} would like to move your <strong>${booking.services?.name || "appointment"}</strong> to <strong>${proposedWhen}</strong>.</p><p>Nothing has changed yet — open VaiBook and confirm or keep your original time from your bookings list.</p>`,
+        });
+      }
+    }
+    setReschedulingId(null);
+    await loadBookings();
+  };
+
+  const [withdrawingId, setWithdrawingId] = useState(null);
+  const withdrawReschedule = async (booking) => {
+    setWithdrawingId(booking.id);
+    try {
+      await withdrawBookingReschedule(booking.id);
+    } catch (err) {
+      setWithdrawingId(null);
+      return;
+    }
+    setWithdrawingId(null);
+    await loadBookings();
+  };
+
+  // ── THE PROVIDER'S OWN REVIEWS ───────────────────────────────
+  const loadMyReviews = async () => {
+    if (!providerId) return;
+    setLoadingMyReviews(true);
+    const data = await getProviderReviews(providerId);
+    setMyReviews(data || []);
+    setLoadingMyReviews(false);
+  };
+  useEffect(() => { loadMyReviews(); }, [providerId]);
+
+  const toggleEmailOnNewBooking = async () => {
+    if (!providerId || savingNotifyPref) return;
+    const next = !emailOnNewBooking;
+    setSavingNotifyPref(true);
+    setEmailOnNewBooking(next);
+    const saved = await upsertProviderProfile({ id: providerProfile.id, user_id: providerProfile.user_id, notify_email_new_booking: next });
+    setSavingNotifyPref(false);
+    if (saved) {
+      onProviderProfileUpdate && onProviderProfileUpdate(saved);
+    } else {
+      setEmailOnNewBooking(!next);
+      window.alert(t("providerPortal.errors.saveSettingFailed"));
+    }
+  };
+
+  const toggleAcceptsWalkins = async () => {
+    if (!providerId || savingWalkinPref) return;
+    const next = !acceptsWalkins;
+    setSavingWalkinPref(true);
+    setAcceptsWalkins(next);
+    const saved = await upsertProviderProfile({ id: providerProfile.id, user_id: providerProfile.user_id, accepts_walkins: next });
+    setSavingWalkinPref(false);
+    if (saved) {
+      onProviderProfileUpdate && onProviderProfileUpdate(saved);
+    } else {
+      setAcceptsWalkins(!next);
+      window.alert(t("providerPortal.errors.saveSettingFailed"));
+    }
+  };
+
+  const openResponse = (bookingId, type) => {
+    setRespondingId(bookingId);
+    setResponseType(type);
+    setResponseMessage("");
+  };
+
+  const cancelResponse = () => {
+    setRespondingId(null);
+    setResponseType(null);
+    setResponseMessage("");
+  };
+
+  const submitResponse = async (booking) => {
+    setBusyId(booking.id);
+    const msg = responseMessage.trim() || null;
+    const custEmail = booking.users?.email;
+    const custName = booking.users?.full_name;
+    const serviceName = booking.services?.name || "your service";
+    const dateStr = formatBookingDate(booking.booking_date);
+    const timeStr = booking.booking_time?.slice(0, 5);
+
+    if (responseType === "accept") {
+      const requiresDeposit = !!providerProfile?.downpayment_required;
+      const nextStatus = requiresDeposit ? "awaiting_payment" : "confirmed";
+      await updateBooking(booking.id, { status: nextStatus, provider_message: msg });
+      if (custEmail) {
+        const subject = requiresDeposit
+          ? `${providerProfile.business_name} accepted your booking — deposit needed`
+          : `${providerProfile.business_name} confirmed your booking`;
+        const html = requiresDeposit
+          ? `<p>Your booking for ${serviceName} on ${dateStr} has been accepted.</p>` +
+            (msg ? `<p>Message from the provider: ${msg}</p>` : "") +
+            `<p>Please upload your deposit receipt (BZ$${booking.downpayment_amount ?? ""}) in your VaiBook account to confirm your appointment.</p>`
+          : bookingConfirmedEmailHtml({
+              customerName: custName,
+              providerProfile,
+              serviceName,
+              dateStr,
+              timeStr,
+              total: booking.total_amount,
+              deposit: null,
+            }) + (msg ? `<p style="max-width:520px;margin:12px auto 0;font-size:13px;color:#5b6b62;">Message from ${providerProfile.business_name}: ${msg}</p>` : "");
+        await sendBookingEmail({ to: custEmail, subject, html });
+      }
+      if (booking.customer_id) {
+        await createNotification({
+          user_id: booking.customer_id,
+          title: requiresDeposit ? "Booking accepted — deposit needed" : "Booking confirmed!",
+          body: requiresDeposit
+            ? `${providerProfile.business_name} accepted your ${serviceName} request. Upload your deposit to confirm.`
+            : `${providerProfile.business_name} confirmed your ${serviceName} booking on ${dateStr}.`,
+          type: requiresDeposit ? "booking_accepted_deposit" : "booking_confirmed",
+          booking_id: booking.id,
+        });
+      }
+    } else {
+      await updateBooking(booking.id, { status: "rejected", provider_message: msg });
+      if (custEmail) {
+        await sendBookingEmail({
+          to: custEmail,
+          subject: `${providerProfile.business_name} declined your booking request`,
+          html: `<p>Unfortunately your booking request for ${serviceName} on ${dateStr} was declined.</p>` +
+            (msg ? `<p>Message from the provider: ${msg}</p>` : ""),
+        });
+      }
+      if (booking.customer_id) {
+        await createNotification({
+          user_id: booking.customer_id,
+          title: "Booking declined",
+          body: `${providerProfile.business_name} declined your ${serviceName} request for ${dateStr}.`,
+          type: "booking_rejected",
+          booking_id: booking.id,
+        });
+      }
+    }
+
+    await loadBookings();
+    setBusyId(null);
+    cancelResponse();
+  };
+
+  const confirmPayment = async (booking) => {
+    setConfirmingPaymentId(booking.id);
+    await updateBooking(booking.id, { status: "confirmed", payment_status: "paid" });
+    const custEmail = booking.users?.email;
+    const serviceName = booking.services?.name || "your service";
+    const dateStr = formatBookingDate(booking.booking_date);
+    const timeStr = booking.booking_time?.slice(0, 5);
+    if (custEmail) {
+      await sendBookingEmail({
+        to: custEmail,
+        subject: `Payment confirmed — ${providerProfile.business_name}`,
+        html: bookingConfirmedEmailHtml({
+          customerName: booking.users?.full_name,
+          providerProfile,
+          serviceName,
+          dateStr,
+          timeStr,
+          total: booking.total_amount,
+          deposit: booking.downpayment_amount,
+        }),
+      });
+    }
+    if (booking.customer_id) {
+      await createNotification({
+        user_id: booking.customer_id,
+        title: "Payment confirmed!",
+        body: `Your deposit for ${serviceName} on ${dateStr} was confirmed. See you soon!`,
+        type: "payment_confirmed",
+        booking_id: booking.id,
+      });
+    }
+    await loadBookings();
+    setConfirmingPaymentId(null);
+  };
+
+  const saveDepositSettings = async () => {
+    if (!providerId) return;
+    setSavingDeposit(true);
+    await upsertProviderProfile({
+      id: providerProfile.id,
+      user_id: providerProfile.user_id,
+      downpayment_required: depositForm.downpayment_required,
+      downpayment_pct: Number(depositForm.downpayment_pct) || 50,
+      // Only meaningful when a deposit ISN'T required — a booking that
+      // needs a deposit always waits for manual accept regardless of
+      // this flag (see auto_confirm_no_deposit_booking() in the DB).
+      auto_confirm_bookings: depositForm.auto_confirm_bookings,
+    });
+    setSavingDeposit(false);
+  };
+
+  const saveLunchSettings = async () => {
+    if (!providerId) return;
+    setSavingLunch(true);
+    await upsertProviderProfile({
+      id: providerProfile.id,
+      user_id: providerProfile.user_id,
+      lunch_break_start: lunchForm.enabled ? lunchForm.lunch_break_start : null,
+      lunch_break_minutes: lunchForm.enabled ? Number(lunchForm.lunch_break_minutes) || 0 : 0,
+    });
+    setSavingLunch(false);
+  };
+
+  const toggleDay = (i) => setHours(h => h.map((d, idx) => (idx === i ? { ...d, is_open: !d.is_open } : d)));
+  const setDayTime = (i, field, value) => setHours(h => h.map((d, idx) => (idx === i ? { ...d, [field]: value } : d)));
+
+  const saveHours = async () => {
+    if (!providerId) return;
+    setSavingHours(true);
+    await upsertWorkingHours(providerId, hours.map(h => ({ day_of_week: h.day_of_week, is_open: h.is_open, start_time: h.start_time, end_time: h.end_time })));
+    setSavingHours(false);
+  };
+
+  const saveProfile = async () => {
+    if (!providerId) return;
+    setSavingProfile(true);
+    const updated = await upsertProviderProfile({ id: providerProfile.id, user_id: providerProfile.user_id, ...profileForm });
+    if (updated) onProviderProfileUpdate && onProviderProfileUpdate(updated);
+    setSavingProfile(false);
+  };
+
+  // "Featured in district search" — Business plan only, saves immediately
+  // on toggle rather than waiting for the main "Save profile" button.
+  // Reads the value back from what the server actually saved (not just
+  // the optimistic flip) since a Business-plan-only trigger silently
+  // resets this to false for anyone not on that plan.
+  const toggleFeatured = async () => {
+    if (!providerId || savingFeatured) return;
+    setSavingFeatured(true);
+    const updated = await upsertProviderProfile({ id: providerProfile.id, user_id: providerProfile.user_id, is_featured: !profileForm.is_featured });
+    if (updated) {
+      setProfileForm((f) => ({ ...f, is_featured: !!updated.is_featured }));
+      onProviderProfileUpdate && onProviderProfileUpdate(updated);
+    }
+    setSavingFeatured(false);
+  };
+
+  // Saves loyalty program settings as one batch (the toggle plus the rate,
+  // threshold, and reward text) rather than saving the toggle immediately
+  // like is_featured — these fields are meant to be set together.
+  const saveLoyaltySettings = async () => {
+    if (!providerId) return;
+    setSavingLoyalty(true);
+    const updated = await upsertProviderProfile({
+      id: providerProfile.id,
+      user_id: providerProfile.user_id,
+      loyalty_enabled: loyaltyForm.enabled,
+      loyalty_points_per_dollar: Number(loyaltyForm.pointsPerDollar) || 0,
+      loyalty_reward_threshold: Number(loyaltyForm.threshold) || 0,
+      loyalty_reward_description: loyaltyForm.description.trim() || null,
+    });
+    if (updated) {
+      setLoyaltyForm({
+        enabled: !!updated.loyalty_enabled,
+        pointsPerDollar: updated.loyalty_points_per_dollar ?? 1,
+        threshold: updated.loyalty_reward_threshold ?? 100,
+        description: updated.loyalty_reward_description || "",
+      });
+      onProviderProfileUpdate && onProviderProfileUpdate(updated);
+    }
+    setSavingLoyalty(false);
+  };
+
+  const loadLoyaltyCustomers = async () => {
+    if (!providerId) return;
+    setLoadingLoyaltyCustomers(true);
+    const data = await getProviderLoyaltyCustomers(providerId);
+    setLoyaltyCustomers(data || []);
+    setLoadingLoyaltyCustomers(false);
+  };
+
+  useEffect(() => {
+    loadLoyaltyCustomers();
+  }, [providerId]);
+
+  // Redeeming subtracts the reward threshold rather than resetting to
+  // zero, so any points earned past the threshold carry forward toward
+  // the next reward instead of being lost.
+  const redeemReward = async (account) => {
+    if (redeemingId === account.id) return;
+    const threshold = Number(providerProfile?.loyalty_reward_threshold) || 0;
+    if (account.points_balance < threshold) return;
+    if (!window.confirm(t("providerPortal.loyalty.redeemConfirm", { name: account.users?.full_name || t("providerPortal.loyalty.thisCustomerFallback"), threshold }))) return;
+    setRedeemingId(account.id);
+    // Deducts against the balance as it stands in the database right now —
+    // the figure on screen may be minutes old and points may have been
+    // earned since.
+    const updated = await redeemLoyaltyReward(account.id);
+    await loadLoyaltyCustomers();
+    setRedeemingId(null);
+    if (!updated) window.alert(t("providerPortal.loyalty.redeemError"));
+  };
+
+  const handlePhotoUpload = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file || !providerProfile?.user_id) return;
+    setUploadingPhoto(true);
+    const optimized = await compressImageFile(file);
+    const url = await uploadProviderPhoto(providerProfile.user_id, optimized);
+    if (url) {
+      const next = [...photos, url];
+      setPhotos(next);
+      await upsertProviderProfile({ id: providerProfile.id, user_id: providerProfile.user_id, portfolio_urls: next });
+    }
+    setUploadingPhoto(false);
+  };
+
+  const handleDeletePhoto = async (url) => {
+    if (!providerProfile?.user_id) return;
+    const next = photos.filter((p) => p !== url);
+    setPhotos(next);
+    await deleteProviderPhoto(providerProfile.user_id, url);
+    await upsertProviderProfile({ id: providerProfile.id, user_id: providerProfile.user_id, portfolio_urls: next });
+  };
+
+  // Single profile photo — picking a file just opens the crop modal;
+  // nothing uploads until the provider confirms the crop there.
+  const handleProfilePhotoFileSelect = (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    setProfilePhotoFile(file);
+    setShowProfilePhotoModal(true);
+  };
+
+  const handleSaveProfilePhoto = async (croppedFile) => {
+    if (!providerProfile?.user_id) return;
+    setSavingProfilePhoto(true);
+    setProfilePhotoError(null);
+    const previousUrl = profilePhotoUrl;
+    const url = await uploadProviderPhoto(providerProfile.user_id, croppedFile);
+    if (!url) {
+      setProfilePhotoError(t("providerPortal.profile.photoSaveError"));
+      setSavingProfilePhoto(false);
+      return;
+    }
+    // Only treat this as "saved" once the database row itself actually
+    // updates — upsertProviderProfile logs and swallows its own errors
+    // (see supabase.js), so without this check a failed save (e.g. the
+    // profile_photo_url column not existing yet because the patch's SQL
+    // migration hasn't been run) would still close the modal and show
+    // the new photo right here, while the database — and therefore every
+    // search card pulling from it — never actually got it. That mismatch
+    // is exactly what silently shipping this would look like from the
+    // provider's side: "I set it" in their own portal, but customer-facing
+    // cards keep showing the old cover image.
+    const updated = await upsertProviderProfile({ id: providerProfile.id, user_id: providerProfile.user_id, profile_photo_url: url });
+    if (updated) {
+      setProfilePhotoUrl(url);
+      onProviderProfileUpdate && onProviderProfileUpdate(updated);
+      // Clean up the old photo now that the new one is saved — same
+      // bucket as the gallery (uploadProviderPhoto always writes a fresh,
+      // uniquely-named file), so the old file would otherwise just sit
+      // there unused forever.
+      if (previousUrl) await deleteProviderPhoto(providerProfile.user_id, previousUrl);
+      setShowProfilePhotoModal(false);
+      setProfilePhotoFile(null);
+    } else {
+      // The database write failed — don't leave an orphaned file sitting
+      // in storage with nothing pointing to it, and tell the provider
+      // plainly instead of acting like it worked. Modal stays open so
+      // they can retry without re-picking and re-cropping the file.
+      await deleteProviderPhoto(providerProfile.user_id, url);
+      setProfilePhotoError(t("providerPortal.profile.photoSaveError"));
+    }
+    setSavingProfilePhoto(false);
+  };
+
+  const closeProfilePhotoModal = () => {
+    if (savingProfilePhoto) return;
+    setShowProfilePhotoModal(false);
+    setProfilePhotoFile(null);
+    setProfilePhotoError(null);
+  };
+
+  const saveLocation = async () => {
+    if (!providerId || !mapPosition) return;
+    setSavingLocation(true);
+    await upsertProviderProfile({
+      id: providerProfile.id,
+      user_id: providerProfile.user_id,
+      latitude: mapPosition[0],
+      longitude: mapPosition[1],
+      location_label: locationLabel,
+    });
+    setSavingLocation(false);
+  };
+
+  const handleAddService = async () => {
+    if (!providerId || !serviceForm.name.trim()) return;
+    setSavingService(true);
+    const created = await createService({
+      provider_id: providerId,
+      name: serviceForm.name.trim(),
+      price: Number(serviceForm.price) || 0,
+      duration_min: Number(serviceForm.duration_min) || 15,
+      description: serviceForm.description.trim() || null,
+      is_active: true,
+    });
+    if (created) {
+      setServices((prev) => [...prev, created]);
+      setServiceForm({ name: "", price: "", duration_min: 15, description: "" });
+    }
+    setSavingService(false);
+  };
+
+  const handleDeleteService = async (serviceId) => {
+    setServices((prev) => prev.filter((s) => s.id !== serviceId));
+    await deleteService(serviceId);
+  };
+
+  const handleStartEditService = (s) => {
+    setEditingServiceId(s.id);
+    setEditServiceForm({
+      name: s.name || "",
+      price: s.price ?? "",
+      duration_min: s.duration_min || 15,
+      description: s.description || "",
+    });
+  };
+
+  const handleCancelEditService = () => {
+    setEditingServiceId(null);
+  };
+
+  const handleSaveEditService = async (serviceId) => {
+    if (!editServiceForm.name.trim()) return;
+    setSavingServiceEdit(true);
+    const updated = await updateService(serviceId, {
+      name: editServiceForm.name.trim(),
+      price: Number(editServiceForm.price) || 0,
+      duration_min: Number(editServiceForm.duration_min) || 15,
+      description: editServiceForm.description.trim() || null,
+    });
+    if (updated) {
+      setServices((prev) => prev.map((s) => (s.id === serviceId ? updated : s)));
+      setEditingServiceId(null);
+    }
+    setSavingServiceEdit(false);
+  };
+
+  // TOP NAV REDESIGN — same destinations the old sidebar had, regrouped:
+  // the 3 daily-use ones live in the top bar itself, the rest move into the
+  // avatar dropdown in three labeled groups. The old "VIP clients"
+  // (manually-starred subset) feature is gone entirely — "Clients" is now a
+  // real directory built straight from booking history (see `allClients`
+  // below), not a curated list. "Earnings" and "Monthly review" (not part
+  // of the original 3-group spec) were folded into Operations rather than
+  // dropped.
+  const PROVIDER_TOP_NAV = [
+    { id: "dashboard", label: t("providerPortal.nav.dashboard") },
+    { id: "bookings", label: t("providerPortal.nav.bookings") },
+    { id: "clients", label: t("providerPortal.nav.clients") },
+  ];
+  const PROVIDER_MENU_GROUPS = [
+    {
+      label: t("providerPortal.nav.groupOperations"),
+      items: [
+        { id: "services", icon: "✂️", label: t("providerPortal.nav.services") },
+        { id: "calendar", icon: "🗓️", label: t("providerPortal.nav.availability") },
+        { id: "staff", icon: "👥", label: t("providerPortal.nav.staff") },
+        { id: "earnings", icon: "💰", label: t("providerPortal.nav.earnings") },
+        { id: "review", icon: "📈", label: t("providerPortal.nav.monthlyReview") },
+      ],
+    },
+    {
+      label: t("providerPortal.nav.groupGrowth"),
+      items: [
+        { id: "reviews", icon: "⭐", label: t("providerPortal.nav.reviews") },
+        { id: "modules", icon: "🧩", label: t("providerPortal.nav.addons") },
+      ],
+    },
+    {
+      label: t("providerPortal.nav.groupAccount"),
+      items: [
+        { id: "profile", icon: "👤", label: t("providerPortal.nav.profile") },
+        { id: "billing", icon: "🧾", label: t("providerPortal.nav.billing") },
+        { id: "settings", icon: "⚙️", label: t("providerPortal.nav.settings") },
+      ],
+    },
+  ];
+  const providerCategoryKey = providerProfile?.category_key || categoryForServiceType(providerProfile?.service_type);
+
+  // Not signed in at all
+  if (!session) {
+    return (
+      <div style={{ minHeight: "100vh", background: "var(--forest)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
+        <div style={{ textAlign: "center", maxWidth: 360 }}>
+          <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 28, fontWeight: 800, color: "var(--near-white)", marginBottom: 8, display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}>
+            <VaiBookMark size={30} />vai<span style={{ color: "var(--lime)" }}>book</span> <span style={{ color: "rgba(255,255,255,0.5)", fontWeight: 600, fontSize: 16 }}>providers</span>
+          </div>
+          <p style={{ color: "rgba(255,255,255,0.6)", fontSize: 14, marginBottom: 24 }}>{t("providerPortal.signIn.subtitle")}</p>
+          <button className="btn-lime" style={{ width: "100%", padding: "12px 0" }} onClick={onSignIn}>{t("providerPortal.signIn.button")}</button>
+          <div style={{ marginTop: 20 }}>
+            <a style={{ color: "rgba(255,255,255,0.4)", fontSize: 13, cursor: "pointer" }} onClick={() => onNav("home")}>{t("providerPortal.signIn.backToSite")}</a>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Signed in but no provider profile yet
+  //
+  // STILL P0, round 2: the routing/switching fix (see switchToPortal and
+  // loadProviderProfile's comments) stopped the app from mishandling a
+  // REAL provider profile, but it can't help when getProviderProfile is
+  // correctly, genuinely finding no row — because the Google account
+  // that's actually signed in isn't the one the business is registered
+  // under. signInWithGoogle forces the account picker on every sign-in
+  // (prompt: 'select_account'), which makes this an easy mistake for
+  // anyone with more than one Google account. That's almost certainly
+  // what's still happening, and no amount of app-side routing logic can
+  // detect "your business" for an identity it genuinely has no record of
+  // — so this screen now leads with the actual signed-in email and a
+  // one-click way to try a different Google account, instead of reading
+  // like the business itself is gone.
+  if (!providerProfile) {
+    const switchGoogleAccount = async () => {
+      // Land straight back on the provider portal once they've picked
+      // the right account, the same way switching portals while
+      // signed-out stages a destination (see switchToPortal) — otherwise
+      // they'd land on the generic homepage after re-authenticating.
+      try { localStorage.setItem("vaibook_pending_view", "provider"); } catch (e) { /* ignore */ }
+      await onSignOut();
+      onSignIn();
+    };
+    return (
+      <div style={{ minHeight: "100vh", background: "var(--forest)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
+        <div style={{ textAlign: "center", maxWidth: 400 }}>
+          <div style={{ fontSize: 40, marginBottom: 12 }}>✂️</div>
+          <h2 style={{ color: "var(--near-white)", fontFamily: "'Plus Jakarta Sans', sans-serif", marginBottom: 8 }}>{t("providerPortal.noProfile.title")}</h2>
+          <p style={{ color: "rgba(255,255,255,0.65)", fontSize: 14, marginBottom: 4 }}>
+            {t("providerPortal.noProfile.signedInAs")}
+          </p>
+          <p style={{ color: "var(--near-white)", fontWeight: 700, fontSize: 15, marginBottom: 16, wordBreak: "break-all" }}>
+            {session?.user?.email || t("providerPortal.noProfile.unknownAccount")}
+          </p>
+          <p style={{ color: "rgba(255,255,255,0.6)", fontSize: 14, marginBottom: 20, lineHeight: 1.5 }}>
+            {t("providerPortal.noProfile.wrongAccountHint")}
+          </p>
+          <button className="btn-lime" style={{ width: "100%", padding: "13px 0", marginBottom: 12, fontWeight: 700 }} onClick={switchGoogleAccount}>
+            {t("providerPortal.noProfile.switchAccountButton")}
+          </button>
+          <p style={{ color: "rgba(255,255,255,0.45)", fontSize: 12, marginTop: 20, marginBottom: 8, lineHeight: 1.6 }}>
+            {t("providerPortal.noProfile.newBusinessHint")}
+          </p>
+          <button
+            style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.3)", color: "var(--near-white)", padding: "10px 20px", borderRadius: 8, cursor: "pointer", fontSize: 13 }}
+            onClick={() => onNav("signup")}
+          >
+            {t("providerPortal.noProfile.listBusinessButton")}
+          </button>
+          <p style={{ color: "rgba(255,255,255,0.45)", fontSize: 12, marginTop: 20, marginBottom: 0, lineHeight: 1.6 }}>
+            {t("providerPortal.noProfile.staffHint")}
+          </p>
+          <div style={{ marginTop: 16 }}>
+            <a style={{ color: "rgba(255,255,255,0.4)", fontSize: 13, cursor: "pointer" }} onClick={onSignOut}>{t("providerPortal.nav.signOut")}</a>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const now = new Date();
+  const todaysBookings = bookings.filter(b => isSameLocalDay(b.booking_date, now));
+  const pendingBookings = bookings.filter(b => b.status === "pending");
+  const confirmedBookings = bookings.filter(b => b.status === "confirmed");
+  const completedBookings = bookings.filter(b => b.status === "completed" || b.status === "done");
+  const thisMonthCompleted = completedBookings
+    .filter(b => { const d = bookingDateOnly(b.booking_date); return d && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear(); });
+  const thisMonthCompletedCount = thisMonthCompleted.length;
+  const thisMonthEarnings = thisMonthCompleted.reduce((sum, b) => sum + (Number(b.total_amount) || 0), 0);
+
+  // "Today's Take" — same definition as thisMonthEarnings above (completed
+  // revenue), just scoped to today. Walk-in sales are auto-completed at
+  // creation, so they count the moment they're logged; a real appointment
+  // counts once you mark it done.
+  const todayRevenue = todaysBookings
+    .filter((b) => b.status === "completed" || b.status === "done")
+    .reduce((sum, b) => sum + (Number(b.total_amount) || 0), 0);
+
+  // "Chairs Filled" — how much of today's open hours are actually spoken
+  // for right now. Capacity is today's working hours minus the lunch
+  // break, sliced into the same 30-minute step the booking flow itself
+  // uses; filled time is every minute a live booking or an active block
+  // occupies, rounded to that same slot size.
+  const CHAIR_SLOT_MIN = 30;
+  const todayHoursRow = hours.find((h) => h.day_of_week === now.getDay());
+  let totalChairSlots = 0;
+  if (todayHoursRow && todayHoursRow.is_open && todayHoursRow.start_time && todayHoursRow.end_time) {
+    const openMin = Math.max(0, hhmmToMinutes(todayHoursRow.end_time) - hhmmToMinutes(todayHoursRow.start_time));
+    const lunchMin = lunchForm.enabled ? Number(lunchForm.lunch_break_minutes) || 0 : 0;
+    totalChairSlots = Math.round(Math.max(0, openMin - lunchMin) / CHAIR_SLOT_MIN);
+  }
+  // Staff-scoped when a Business-plan shop has picked a specific staff
+  // member above "Chairs Filled" — blocks stay shop-wide either way since
+  // there's no per-staff calendar in this schema, only per-staff bookings.
+  const chairsScopedBookings = (isBusinessPlan && staff.length > 0 && chairsStaffFilter !== "all")
+    ? todaysBookings.filter((b) => (b.staff_id || "") === chairsStaffFilter)
+    : todaysBookings;
+  const bookedMinutesToday = chairsScopedBookings
+    .filter((b) => ["pending", "awaiting_payment", "confirmed", "completed", "done"].includes(b.status))
+    .reduce((sum, b) => sum + (Number(b.total_duration_min) || Number(b.services?.duration_min) || 30), 0);
+  const blockedMinutesToday = blocks
+    .filter((bl) => bl.block_date === localDateStr())
+    .reduce((sum, bl) => sum + Math.max(0, hhmmToMinutes(bl.end_time) - hhmmToMinutes(bl.start_time)), 0);
+  const filledChairSlots = totalChairSlots > 0
+    ? Math.min(totalChairSlots, Math.round((bookedMinutesToday + blockedMinutesToday) / CHAIR_SLOT_MIN))
+    : 0;
+  const chairsBookedPct = totalChairSlots > 0 ? Math.round((filledChairSlots / totalChairSlots) * 100) : 0;
+
+  // "Next in the Chair" — the next CONFIRMED appointment still ahead of
+  // right now (pending doesn't count — it isn't locked in yet).
+  const nowMinutes = now.getHours() * 60 + now.getMinutes();
+  const nextBooking = todaysBookings
+    .filter((b) => b.status === "confirmed" && hhmmToMinutes(b.booking_time) >= nowMinutes)
+    .sort((a, b) => hhmmToMinutes(a.booking_time) - hhmmToMinutes(b.booking_time))[0] || null;
+  const nextBookingName = nextBooking ? (nextBooking.users?.full_name || nextBooking.walkin_customer_name || t("providerPortal.common.customerFallback")) : "";
+  const nextBookingPhone = nextBooking ? (nextBooking.users?.phone || nextBooking.walkin_customer_phone || null) : null;
+  const nextBookingWhatsAppUrl = nextBooking && nextBookingPhone
+    ? `https://wa.me/${nextBookingPhone.replace(/[^\d]/g, "")}?text=${encodeURIComponent(`Hey ${nextBookingName}, ready for you at ${formatBookingTime(nextBooking.booking_time)}!`)}`
+    : null;
+
+  // "Your Shopfront" — same booking-link/QR logic the standalone "My QR
+  // code" tab used to have; that tab is gone now, this dashboard card is
+  // the one place it lives.
+  //
+  // The link/QR feeding this card (and the Elite Welcome launch graphic,
+  // which is meant to be downloaded, printed and posted permanently) must
+  // always point at VaiBook's real, stable domain — never at whatever host
+  // happens to be serving the page right now. Left as window.location.origin,
+  // a provider who opened their dashboard from a Vercel *preview* deployment
+  // (a branch/PR build, not the live site) would get a QR encoding that
+  // temporary preview URL: it can go stale or vanish the moment that preview
+  // is torn down, so a code printed from it would eventually stop working.
+  // Localhost is kept as-is purely so local development can still generate
+  // a working link while testing.
+  const CANONICAL_SITE_ORIGIN = "https://vai-book.vercel.app";
+  const siteOrigin = window.location.hostname === "localhost" ? window.location.origin : CANONICAL_SITE_ORIGIN;
+  const bookingUrl = `${siteOrigin}/#book-${providerId}`;
+  const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=480x480&margin=12&data=${encodeURIComponent(bookingUrl)}`;
+
+  // "Rebooking Radar" — registered (non-walk-in) customers with 2+ real
+  // visits, no upcoming booking on the books, whose last visit was 3+
+  // weeks ago. Walk-ins are excluded: they have no customer_id, so there's
+  // no reliable identity to track repeat visits by.
+  const REBOOK_QUIET_DAYS = 21;
+  const customerHistory = {};
+  bookings.forEach((b) => {
+    if (!b.customer_id) return;
+    if (!["completed", "done", "confirmed", "pending", "awaiting_payment"].includes(b.status)) return;
+    const d = bookingDateOnly(b.booking_date);
+    if (!d) return;
+    const entry = customerHistory[b.customer_id] || { id: b.customer_id, name: t("providerPortal.common.customerFallback"), email: null, phone: null, visits: 0, lastDate: null, hasUpcoming: false };
+    entry.visits += 1;
+    if (b.users?.full_name) entry.name = b.users.full_name;
+    if (b.users?.email) entry.email = b.users.email;
+    if (b.users?.phone) entry.phone = b.users.phone;
+    if (!entry.lastDate || d > entry.lastDate) entry.lastDate = d;
+    if (d >= bookingDateOnly(localDateStr()) && ["pending", "awaiting_payment", "confirmed"].includes(b.status)) entry.hasUpcoming = true;
+    customerHistory[b.customer_id] = entry;
+  });
+  const quietSince = new Date(now.getTime() - REBOOK_QUIET_DAYS * 24 * 60 * 60 * 1000);
+  const quietRegulars = Object.values(customerHistory)
+    .filter((c) => c.visits >= 2 && !c.hasUpcoming && c.lastDate && c.lastDate < quietSince)
+    .sort((a, b) => a.lastDate - b.lastDate);
+
+  // "Clients" tab — replaces the old manually-starred "VIP clients" list
+  // with a real directory: every registered customer who has ever actually
+  // booked with this provider (walk-ins have no account/customer_id, so
+  // they can't appear here), most recent visit first.
+  const allClients = Object.values(customerHistory).sort((a, b) => (b.lastDate?.getTime() || 0) - (a.lastDate?.getTime() || 0));
+  const [clientSearch, setClientSearch] = useState("");
+  const filteredClients = clientSearch.trim()
+    ? allClients.filter((c) => c.name.toLowerCase().includes(clientSearch.trim().toLowerCase()))
+    : allClients;
+
+  // Only bookings that actually reached an outcome count — pending and
+  // upcoming ones aren't failures, and including them held the rate down
+  // permanently for busy providers.
+  const settledBookings = bookings.filter(b => ["completed", "done", "cancelled", "rejected", "no_show"].includes(b.status));
+  const completionRate = settledBookings.length ? Math.round((completedBookings.length / settledBookings.length) * 100) : null;
+  const bookingNameFn = (b) => b.users?.full_name || b.walkin_customer_name || "";
+  // If the staff member being filtered on has since been removed, fall back
+  // to everyone rather than showing a permanently empty list with no way to
+  // clear the filter (their name is gone from the dropdown).
+  const staffFilterActive = staffFilter === "all" || staffFilter === "unassigned" || staff.some((m) => m.id === staffFilter);
+  const effectiveStaffFilter = staffFilterActive ? staffFilter : "all";
+  const staffFilteredBookings = effectiveStaffFilter === "all"
+    ? bookings
+    : effectiveStaffFilter === "unassigned"
+      ? bookings.filter((b) => !b.staff_id)
+      : bookings.filter((b) => b.staff_id === effectiveStaffFilter);
+  const statusFilteredBookings = bookingStatusFilter === "all"
+    ? staffFilteredBookings
+    : bookingStatusFilter === "needs_action"
+      ? staffFilteredBookings.filter((b) => b.status === "pending" || (b.status === "awaiting_payment" && b.payment_status === "receipt_uploaded"))
+      : bookingStatusFilter === "completed"
+        ? staffFilteredBookings.filter((b) => b.status === "completed" || b.status === "done")
+        : bookingStatusFilter === "cancelled"
+          ? staffFilteredBookings.filter((b) => b.status === "cancelled" || b.status === "rejected")
+          : staffFilteredBookings.filter((b) => b.status === bookingStatusFilter);
+  const visibleBookings = filterAndSortBookings(statusFilteredBookings, bookingSearch, bookingSort, bookingNameFn);
+
+  // VaiBook never touches the money — providers collect 100% directly and
+  // pay only their monthly subscription — so every figure here is the real
+  // amount taken, matching the invoices and the tax ledger exactly. (There
+  // used to be a hardcoded 7% "platform fee" deducted from all of these,
+  // which understated every provider's income by 7%.)
+  const netAmount = (b) => (Number(b.total_amount) || 0);
+  const totalNetEarned = completedBookings.reduce((sum, b) => sum + netAmount(b), 0);
+  // Confirmed only: an awaiting_payment booking may never have its deposit
+  // paid, so counting it as money on the way was wishful.
+  const pendingEarnings = bookings
+    .filter(b => b.status === "confirmed")
+    .reduce((sum, b) => sum + netAmount(b), 0);
+  const lastMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const thisMonthNetEarnings = completedBookings
+    .filter(b => { const d = bookingDateOnly(b.booking_date); return d && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear(); })
+    .reduce((sum, b) => sum + netAmount(b), 0);
+  const lastMonthNetEarnings = completedBookings
+    .filter(b => { const d = bookingDateOnly(b.booking_date); return d && d.getMonth() === lastMonthDate.getMonth() && d.getFullYear() === lastMonthDate.getFullYear(); })
+    .reduce((sum, b) => sum + netAmount(b), 0);
+  const monthOverMonthPct = lastMonthNetEarnings > 0
+    ? Math.round(((thisMonthNetEarnings - lastMonthNetEarnings) / lastMonthNetEarnings) * 100)
+    : null;
+  const currentMonthLabel = now.toLocaleDateString("en-US", { month: "long" });
+
+  // Sales & tax ledger — separate from per-booking invoices on purpose,
+  // see buildLedgerHtml. Defaults to the current calendar month (its state
+  // is declared at the top of the component with every other hook).
+  const printLedger = () => {
+    const start = ledgerStart ? bookingDateOnly(ledgerStart) : null;
+    const end = ledgerEnd ? bookingDateOnly(ledgerEnd) : null;
+    if (end) end.setHours(23, 59, 59, 999);
+    const rows = completedBookings
+      .filter((b) => {
+        const d = bookingDateOnly(b.booking_date);
+        return (!start || d >= start) && (!end || d <= end);
+      })
+      .sort((a, b) => (bookingDateTime(a.booking_date, a.booking_time) || 0) - (bookingDateTime(b.booking_date, b.booking_time) || 0))
+      .map((b) => ({
+        dateLabel: formatBookingDate(b.booking_date),
+        orderNumber: b.order_number || b.id?.slice(0, 8) || "—",
+        serviceName: b.services?.name || "Service",
+        customerName: b.users?.full_name || b.walkin_customer_name || "Customer",
+        amount: b.total_amount,
+      }));
+    const periodLabel = ledgerStart && ledgerEnd
+      ? `${formatBookingDate(ledgerStart)} – ${formatBookingDate(ledgerEnd)}`
+      : "All completed bookings";
+    printInvoice(buildLedgerHtml({
+      providerName: providerProfile?.business_name || "Provider",
+      providerTaxId: providerProfile?.tax_id || "",
+      periodLabel,
+      rows,
+      taxRate: Number(ledgerTaxRate) || 0,
+    }));
+  };
+
+  const handleAddPaymentMethod = async () => {
+    if (!providerId || !paymentMethodForm.name.trim()) return;
+    setSavingPaymentMethod(true);
+    const created = await addPaymentMethod({
+      provider_id: providerId,
+      type: paymentMethodForm.type,
+      name: paymentMethodForm.name.trim(),
+      account_name: paymentMethodForm.account_name.trim() || null,
+      account_number: paymentMethodForm.account_number.trim() || null,
+    });
+    if (created) {
+      setPaymentMethods((prev) => [...prev, created]);
+      setPaymentMethodForm({ type: "bank", name: "", account_name: "", account_number: "" });
+    }
+    setSavingPaymentMethod(false);
+  };
+
+  const handleDeletePaymentMethod = async (id) => {
+    setPaymentMethods((prev) => prev.filter((m) => m.id !== id));
+    await deletePaymentMethod(id);
+  };
+
+  const calCursor = new Date(now.getFullYear(), now.getMonth() + calOffset, 1);
+  const calYear = calCursor.getFullYear();
+  const calMonth = calCursor.getMonth();
+  const monthLabel = calCursor.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+  const firstWeekday = new Date(calYear, calMonth, 1).getDay();
+  const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+  const calendarDays = [...Array(firstWeekday).fill(null), ...Array.from({ length: daysInMonth }, (_, i) => i + 1)];
+  const bookedDaysInMonth = new Set(
+    bookings
+      .filter(b => { const d = bookingDateOnly(b.booking_date); return d && d.getFullYear() === calYear && d.getMonth() === calMonth; })
+      .map(b => bookingDateOnly(b.booking_date).getDate())
+  );
+  const selectedDayBookings = selectedDay
+    ? bookings.filter(b => { const d = bookingDateOnly(b.booking_date); return d && d.getFullYear() === calYear && d.getMonth() === calMonth && d.getDate() === selectedDay; })
+    : [];
+
+  return (
+    <FeatureFlagsProvider providerId={providerId} categoryKey={providerCategoryKey}>
+    <div className="provider-shell">
+      <header className="provider-topbar">
+        <div className="provider-topbar-left">
+          <span className="nav-logo" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 18, color: "var(--near-white)", display: "inline-flex", alignItems: "center", gap: 7 }}><VaiBookMark size={19} />vai<span style={{ color: "var(--lime)" }}>book</span></span>
+          <span className={`provider-status-pill ${providerProfile.is_active ? "" : "pending"}`}>
+            {providerProfile.is_active ? t("providerPortal.status.verified") : t("providerPortal.status.pending")}
+          </span>
+        </div>
+
+        {/* Daily-use links, front and center — everything else lives in the
+            avatar dropdown on the right. */}
+        <nav className="provider-topnav-links">
+          {PROVIDER_TOP_NAV.map((item) => (
+            <button
+              key={item.id}
+              className={`provider-nav-link ${tab === item.id ? "active" : ""}`}
+              onClick={() => setTab(item.id)}
+            >
+              {item.label}
+            </button>
+          ))}
+        </nav>
+
+        {/* Mobile-only: the same 3 links collapse behind a hamburger since
+            there's no room for them inline on a phone screen. */}
+        <button
+          className="provider-hamburger"
+          onClick={() => setProviderMobileNavOpen((v) => !v)}
+          aria-label={t("providerPortal.aria.menu")}
+          aria-expanded={providerMobileNavOpen}
+        >
+          ☰
+        </button>
+
+        <div className="provider-topbar-right" style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          {/* Provider Portal has its own topbar and never renders the
+              shared Nav once a provider is signed in (see App()'s render
+              condition), so this is its only language selector. (The
+              theme toggle that used to sit here was removed along with
+              dark mode.) */}
+          <LanguageSelector />
+          <div className="provider-avatar-wrap" ref={providerMenuRef}>
+            <button
+              className="provider-avatar-btn"
+              onClick={(e) => { e.stopPropagation(); setProviderMenuOpen((v) => !v); }}
+              aria-label={t("providerPortal.aria.accountMenu")}
+              aria-expanded={providerMenuOpen}
+            >
+              <span className="avatar">{(providerProfile.business_name || "V")[0].toUpperCase()}</span>
+            </button>
+            {providerMenuOpen && (
+              <div className="nav-dropdown provider-account-dropdown">
+                <div className="provider-dropdown-header">
+                  <div className="name">{providerProfile.business_name || t("providerPortal.nav.yourBusinessFallback")}</div>
+                  <div className="sub">{providerProfile.service_type} · {providerProfile.district}</div>
+                </div>
+                <hr />
+                {PROVIDER_MENU_GROUPS.map((group, gi) => (
+                  <div key={group.label}>
+                    <div className="provider-dropdown-group-label">{group.label}</div>
+                    {group.items.map((item) => (
+                      <button
+                        key={item.id}
+                        className="nav-dropdown-item"
+                        onClick={() => { setTab(item.id); setProviderMenuOpen(false); }}
+                      >
+                        <span className="icn">{item.icon}</span>{item.label}
+                      </button>
+                    ))}
+                    {gi < PROVIDER_MENU_GROUPS.length - 1 && <hr />}
+                  </div>
+                ))}
+                <hr />
+                <button className="nav-dropdown-item" onClick={onSignOut}>
+                  <span className="icn">↪</span>{t("providerPortal.nav.signOut")}
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {providerMobileNavOpen && (
+          <div className="provider-mobile-nav">
+            {PROVIDER_TOP_NAV.map((item) => (
+              <button
+                key={item.id}
+                className={`provider-mobile-nav-item ${tab === item.id ? "active" : ""}`}
+                onClick={() => { setTab(item.id); setProviderMobileNavOpen(false); }}
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
+        )}
+      </header>
+
+      <main className="portal-content">
+        {tab === "dashboard" && (
+          <>
+            {/* ELITE WELCOME — one-time "you're live" nudge, only for an
+                active provider who hasn't dismissed it. Dismissing (with
+                or without downloading) hides it for good. */}
+            {providerProfile.is_active && !launchBannerDismissed && (
+              <div className="launch-banner">
+                <div>
+                  <div className="launch-banner-title">🎉 {t("providerPortal.dashboard.launchBannerTitle")}</div>
+                  <div className="launch-banner-sub">{t("providerPortal.dashboard.launchBannerSub")}</div>
+                </div>
+                <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
+                  <button className="btn-sm ghost" onClick={dismissLaunchBanner}>{t("providerPortal.dashboard.dismiss")}</button>
+                  <button className="btn-sm lime" onClick={() => setShowLaunchGraphic(true)}>{t("providerPortal.dashboard.getLaunchGraphic")}</button>
+                </div>
+              </div>
+            )}
+
+            <div className="portal-header">
+              <h2>{t("providerPortal.nav.dashboard")}</h2>
+              {/* The exact "today" count used to also repeat in the
+                  "Bookings today" stat card just below, and again in the
+                  "Today's appointments" list — three restatements of the
+                  same number. This subtitle now just anchors the date; the
+                  stat card is the one canonical place for the count. */}
+              <p>{now.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}</p>
+            </div>
+
+            {/* THE DOPAMINE CARD — instant financial payoff the moment the
+                dashboard opens. Today's Take is completed revenue only
+                (same definition as "This month earnings" below, just for
+                today); Chairs Filled is today's booked+blocked time against
+                today's open hours.
+                Chairs Filled context fix: this metric is really "% of
+                today's open hours booked," computed from one shared
+                open-hours schedule — there's no separate calendar per
+                chair. For a Business-plan shop with staff, a scope select
+                at least lets it answer "whose bookings" rather than being
+                an unexplained shop-wide number; a solo provider has no one
+                to scope by, so the metric is just shown smaller/quieter
+                instead, since it's a secondary stat next to Today's Take. */}
+            <div className="dopamine-card">
+              <div className="dopamine-metric">
+                <div className="dopamine-label">{t("providerPortal.dashboard.todaysTake")}</div>
+                <div className="dopamine-value">BZ${todayRevenue.toFixed(0)}</div>
+              </div>
+              <div className="dopamine-divider"></div>
+              {isBusinessPlan && staff.length > 0 ? (
+                <div className="dopamine-metric">
+                  <div className="dopamine-label-row">
+                    <span className="dopamine-label">{t("providerPortal.dashboard.chairsFilled")}</span>
+                    <select
+                      className="dopamine-staff-select"
+                      value={chairsStaffFilter}
+                      onChange={(e) => setChairsStaffFilter(e.target.value)}
+                      aria-label={t("providerPortal.dashboard.chairsFilledAriaLabel")}
+                    >
+                      <option value="all">{t("providerPortal.dashboard.wholeShop")}</option>
+                      {staff.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
+                    </select>
+                  </div>
+                  <div className="dopamine-value dopamine-value-sm">
+                    {filledChairSlots}/{totalChairSlots} <span className="dopamine-pct">{t("providerPortal.dashboard.pctBooked", { pct: chairsBookedPct })}</span>
+                  </div>
+                </div>
+              ) : (
+                <div className="dopamine-metric dopamine-metric-quiet">
+                  <div className="dopamine-label">{t("providerPortal.dashboard.chairsFilled")}</div>
+                  <div className="dopamine-value dopamine-value-xs">
+                    {filledChairSlots}/{totalChairSlots} <span className="dopamine-pct">{t("providerPortal.dashboard.pctOnly", { pct: chairsBookedPct })}</span>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* ZERO-FRICTION QUICK ACTIONS. Normally: Walk-In (primary,
+                revenue-right-now) + New Appointment (secondary, schedule
+                something for later) + Custom Block (secondary, pause) —
+                but Walk-In only shows for providers who take walk-ins (see
+                Settings); appointment-only providers get New Appointment as
+                the primary action instead, paired with Custom Block. New
+                Appointment opens the existing "+ Add appointment" form on
+                the Bookings tab (date/time/service/client, with
+                overlap-clash checking) rather than duplicating that form
+                here. The instant a block is active, everything collapses
+                into a single massive Resume Bookings Now button. */}
+            {activeBlock ? (
+              <button
+                className="panic-btn"
+                style={{ width: "100%", marginBottom: 20 }}
+                onClick={resumeBookingsNow}
+                disabled={resumingNow}
+              >
+                {resumingNow ? t("providerPortal.dashboard.reopening") : t("providerPortal.dashboard.resumeBookingsNow", { time: formatBookingTime(activeBlock.end_time) })}
+              </button>
+            ) : acceptsWalkins ? (
+              <>
+                <div className="quick-actions-row" style={{ display: "flex", gap: 10, alignItems: "stretch", marginBottom: activeServices.length === 0 ? 4 : 20 }}>
+                  <button
+                    className="panic-btn"
+                    style={{ flex: 3, marginBottom: 0 }}
+                    onClick={openWalkInSheet}
+                    disabled={activeServices.length === 0}
+                  >
+                    🧾 {t("providerPortal.dashboard.walkInButton")}
+                  </button>
+                  <button className="panic-btn-secondary" style={{ flex: 3 }} onClick={() => { setTab("bookings"); openWalkInForm(); }}>
+                    🗓️ {t("providerPortal.dashboard.newAppointmentButton")}
+                  </button>
+                  <button className="panic-btn-secondary" style={{ flex: 2 }} onClick={openBlockSheet}>
+                    ⏸ {t("providerPortal.dashboard.customBlockButton")}
+                  </button>
+                </div>
+                {activeServices.length === 0 && (
+                  <p style={{ fontSize: 12, color: "var(--muted)", margin: "0 0 20px" }}>{t("providerPortal.dashboard.addServiceHint")}</p>
+                )}
+              </>
+            ) : (
+              <div className="quick-actions-row" style={{ display: "flex", gap: 10, alignItems: "stretch", marginBottom: 20 }}>
+                <button className="panic-btn" style={{ flex: 3, marginBottom: 0 }} onClick={() => { setTab("bookings"); openWalkInForm(); }}>
+                  🗓️ {t("providerPortal.dashboard.newAppointmentButton")}
+                </button>
+                <button className="panic-btn-secondary" style={{ flex: 2 }} onClick={openBlockSheet}>
+                  ⏸ {t("providerPortal.dashboard.customBlockButton")}
+                </button>
+              </div>
+            )}
+
+            <div className="metric-grid">
+              <div className="metric"><div className="metric-label">{t("providerPortal.dashboard.thisMonthEarnings")}</div><div className="metric-value" style={{ color: "var(--forest-light)" }}>BZ${thisMonthEarnings.toFixed(0)}</div><div className="metric-sub">{t("providerPortal.dashboard.completedThisMonth", { count: thisMonthCompletedCount })}</div></div>
+              <div className="metric"><div className="metric-label">{t("providerPortal.dashboard.bookingsToday")}</div><div className="metric-value">{todaysBookings.length}</div><div className="metric-sub">{t("providerPortal.dashboard.confirmedAwaitingReply", { confirmed: todaysBookings.filter(b => b.status === "confirmed").length, pending: pendingBookings.length })}</div></div>
+              <div className="metric"><div className="metric-label">{t("providerPortal.dashboard.totalBookings")}</div><div className="metric-value">{bookings.length}</div><div className="metric-sub">{t("providerPortal.dashboard.allTime")}</div></div>
+              <div className="metric"><div className="metric-label">{t("providerPortal.dashboard.completionRate")}</div><div className="metric-value">{completionRate === null ? "—" : `${completionRate}%`}</div><div className="metric-sub">{completionRate === null ? t("providerPortal.dashboard.noFinishedBookings") : t("providerPortal.dashboard.ofFinishedBookings", { count: settledBookings.length })}</div></div>
+            </div>
+
+            {/* NEXT IN THE CHAIR — spotlight on the next confirmed
+                appointment, with a one-tap WhatsApp heads-up. The full
+                ordered list still lives in "Today's appointments" below;
+                this just calls out the very next one so it isn't missed
+                among blocks and past bookings. */}
+            {nextBooking && (
+              <div className="next-chair-card">
+                <div className="next-chair-label">⏭ {t("providerPortal.dashboard.nextInChair")}</div>
+                <div className="next-chair-body">
+                  <div>
+                    <div className="next-chair-name">{nextBookingName}</div>
+                    <div className="next-chair-meta">{nextBooking.services?.name || "Service"} · {formatBookingTime(nextBooking.booking_time)}</div>
+                  </div>
+                  {nextBookingWhatsAppUrl && (
+                    <a className="next-chair-whatsapp" href={nextBookingWhatsAppUrl} target="_blank" rel="noreferrer" aria-label={t("providerPortal.dashboard.messageAriaLabel", { name: nextBookingName })} title={t("providerPortal.dashboard.messageOnWhatsapp")}>💬</a>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* YOUR SHOPFRONT — the booking link + QR code, chairside-ready.
+                This used to be its own "My QR code" tab; it lives here now
+                so it's one tap away while the client is literally sitting
+                in front of you, instead of buried in the sidebar. */}
+            <div className="shopfront-card">
+              <div className="shopfront-label">{t("providerPortal.dashboard.yourShopfront")}</div>
+              <div className="shopfront-url">{bookingUrl}</div>
+              <div className="shopfront-actions">
+                <button
+                  className="shopfront-btn shopfront-btn-outline"
+                  onClick={async () => {
+                    try {
+                      await navigator.clipboard.writeText(bookingUrl);
+                      setCopiedShopfrontLink(true);
+                      setTimeout(() => setCopiedShopfrontLink(false), 2000);
+                    } catch (e) { /* clipboard unavailable — link is shown above already */ }
+                  }}
+                >
+                  {copiedShopfrontLink ? t("providerPortal.dashboard.copied") : t("providerPortal.dashboard.copyLink")}
+                </button>
+                <button className="shopfront-btn shopfront-btn-outline" onClick={() => setShowQrModal(true)}>
+                  {t("providerPortal.dashboard.showQrCode")}
+                </button>
+              </div>
+            </div>
+
+            <div className="grid-2">
+              <div className="card">
+                <div className="card-title" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <span>{t("providerPortal.dashboard.todaysAppointments")}</span>
+                  <button className="btn-sm ghost" onClick={loadBookings} disabled={loadingBookings}>{loadingBookings ? "Refreshing..." : "Refresh"}</button>
+                </div>
+                {todaysBookings.length === 0 && blocks.filter(bl => bl.block_date === localDateStr()).length === 0 && <p style={{ fontSize: 13, color: "var(--muted)", padding: "16px 0" }}>{t("providerPortal.dashboard.nothingToday")}</p>}
+                {blocks.filter(bl => bl.block_date === localDateStr()).map((bl) => (
+                  <div className="block-row" key={bl.id}>
+                    <div className="dot"></div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: "var(--dark-text)" }}>⏸ {t("providerPortal.dashboard.away")}</div>
+                      <div style={{ fontSize: 12, color: "var(--muted)" }}>{formatBookingTime(bl.start_time)} – {formatBookingTime(bl.end_time)} · {t("providerPortal.dashboard.calendarBlocked")}</div>
+                    </div>
+                    <button className="btn-sm ghost" style={{ fontSize: 11, padding: "5px 10px" }} onClick={() => removeBlock(bl.id)}>{t("providerPortal.common.remove")}</button>
+                  </div>
+                ))}
+                {todaysBookings.map((b) => (
+                  <div className="booking-item" key={b.id}>
+                    <div className={`booking-dot ${bookingStatusClass(b.status)}`}></div>
+                    <div className="booking-info">
+                      <div className="title">{b.services?.name || "Service"}</div>
+                      <div className="meta">{b.users?.full_name || b.walkin_customer_name || "Customer"} · {formatBookingTime(b.booking_time)}</div>
+                    </div>
+                    <div>
+                      <span className="booking-amount">BZ${b.total_amount ?? b.services?.price ?? "—"}</span>
+                      <span className={`status-pill ${bookingStatusClass(b.status)}`}>{statusLabel(b.status)}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="card">
+                <div className="card-title">{t("providerPortal.dashboard.recentBookings")}</div>
+                {bookings.length === 0 && <p style={{ fontSize: 13, color: "var(--muted)", padding: "16px 0" }}>{loadingBookings ? t("providerPortal.common.loading") : t("providerPortal.dashboard.noBookingsYet")}</p>}
+                {bookings.slice(0, 6).map((b) => (
+                  <div key={b.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: "1px solid var(--border)" }}>
+                    <div>
+                      <div style={{ fontSize: 13, fontWeight: 600 }}>{b.services?.name || "Service"}</div>
+                      <div style={{ fontSize: 12, color: "var(--muted)" }}>{formatBookingWhen(b)}</div>
+                    </div>
+                    <span className={`status-pill ${bookingStatusClass(b.status)}`}>{statusLabel(b.status)}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* REBOOKING RADAR — a quiet retention nudge, not another
+                inbox to manage: only surfaces when there's actually
+                someone worth reaching out to. */}
+            {quietRegulars.length > 0 && (
+              <div className="rebook-radar">
+                <div className="rebook-radar-text">
+                  🔁 {t("providerPortal.dashboard.rebookRadarText", { count: quietRegulars.length, weeks: REBOOK_QUIET_DAYS / 7 })}
+                </div>
+                <button className="rebook-radar-btn" onClick={() => setShowCheckInModal(true)}>{t("providerPortal.dashboard.sendCheckIn")}</button>
+              </div>
+            )}
+          </>
+        )}
+
+        {tab === "clients" && (
+          <>
+            <div className="portal-header"><h2>{t("providerPortal.nav.clients")}</h2><p>{t("providerPortal.clients.subtitle")}</p></div>
+            <div className="card">
+              <div className="card-title" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span>{t("providerPortal.clients.allClients", { count: allClients.length })}</span>
+                <button className="btn-sm forest" onClick={loadBookings} disabled={loadingBookings}>{loadingBookings ? "Refreshing..." : "Refresh"}</button>
+              </div>
+              {allClients.length > 0 && (
+                <div className="input-group" style={{ marginBottom: 12 }}>
+                  <input placeholder={t("providerPortal.clients.searchPlaceholder")} value={clientSearch} onChange={(e) => setClientSearch(e.target.value)} />
+                </div>
+              )}
+              {allClients.length === 0 && (
+                <p style={{ fontSize: 13, color: "var(--muted)", padding: "16px 0" }}>
+                  {loadingBookings ? t("providerPortal.common.loading") : t("providerPortal.clients.noClientsYet")}
+                </p>
+              )}
+              {allClients.length > 0 && filteredClients.length === 0 && (
+                <p style={{ fontSize: 13, color: "var(--muted)", padding: "16px 0" }}>{t("providerPortal.clients.noMatch", { query: clientSearch })}</p>
+              )}
+              {filteredClients.map((c) => (
+                <div key={c.id} className="booking-item" style={{ alignItems: "center" }}>
+                  <div className="booking-info" style={{ flex: 1 }}>
+                    <div className="title">
+                      {c.name}
+                      {c.hasUpcoming && (
+                        <span style={{ marginLeft: 8, fontSize: 11, fontWeight: 700, color: "var(--forest)", background: "var(--lime)", padding: "2px 7px", borderRadius: 5, verticalAlign: "middle" }}>{t("providerPortal.common.upcoming")}</span>
+                      )}
+                    </div>
+                    <div className="meta">
+                      {c.email || c.phone || t("providerPortal.clients.noContact")}
+                      {" · "}{t("providerPortal.clients.visits", { count: c.visits })}
+                      {c.lastDate && ` · last ${c.lastDate.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {isProOrAbove && providerProfile?.loyalty_enabled && (
+              <div className="card" style={{ marginTop: 20 }}>
+                <div className="card-title" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <span>{t("providerPortal.clients.loyaltyRewards")}</span>
+                  <button className="btn-sm forest" onClick={loadLoyaltyCustomers} disabled={loadingLoyaltyCustomers}>{loadingLoyaltyCustomers ? "Refreshing..." : "Refresh"}</button>
+                </div>
+                <p style={{ fontSize: 12, color: "var(--muted)", marginTop: -8, marginBottom: 12 }}>
+                  {t("providerPortal.clients.loyaltySummary", { points: providerProfile.loyalty_points_per_dollar, threshold: providerProfile.loyalty_reward_threshold, reward: providerProfile.loyalty_reward_description || t("providerPortal.clients.aRewardFallback") })}
+                </p>
+                {loyaltyCustomers.length === 0 && (
+                  <p style={{ fontSize: 13, color: "var(--muted)", padding: "16px 0" }}>{loadingLoyaltyCustomers ? t("providerPortal.common.loading") : t("providerPortal.clients.noPointsYet")}</p>
+                )}
+                {loyaltyCustomers.map((account) => {
+                  const threshold = Number(providerProfile.loyalty_reward_threshold) || 0;
+                  const eligible = threshold > 0 && account.points_balance >= threshold;
+                  return (
+                    <div key={account.id} className="booking-item" style={{ alignItems: "center" }}>
+                      <div className="booking-info" style={{ flex: 1 }}>
+                        <div className="title">{account.users?.full_name || t("providerPortal.common.customerFallback")}</div>
+                        <div className="meta">{t("providerPortal.clients.pointsBalance", { count: account.points_balance })}{threshold > 0 && !eligible ? t("providerPortal.clients.pointsToGo", { remaining: threshold - account.points_balance }) : ""}</div>
+                      </div>
+                      {eligible && (
+                        <button className="btn-sm lime" disabled={redeemingId === account.id} onClick={() => redeemReward(account)}>
+                          {redeemingId === account.id ? t("providerPortal.clients.redeeming") : t("providerPortal.clients.markRewardGiven")}
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </>
+        )}
+
+        {tab === "bookings" && (
+          <>
+            <div className="portal-header"><h2>{t("providerPortal.nav.bookings")}</h2><p>{t("providerPortal.bookings.subtitle")}</p></div>
+            <div className="card">
+              <div className="card-title" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span>{t("providerPortal.bookings.allBookings")}</span>
+                <div style={{ display: "flex", gap: 8 }}>
+                  <button className="btn-sm lime" onClick={openWalkInForm}>+ {t("providerPortal.bookings.addAppointment")}</button>
+                  <button className="btn-sm forest" onClick={loadBookings} disabled={loadingBookings}>{loadingBookings ? "Refreshing..." : "Refresh"}</button>
+                </div>
+              </div>
+              <p style={{ fontSize: 12, color: "var(--muted)", marginTop: -8, marginBottom: 12 }}>
+                {t("providerPortal.bookings.addAppointmentHint")}
+              </p>
+
+              <div className="form-row" style={{ marginBottom: 12 }}>
+                <div className="input-group" style={{ flex: 2 }}>
+                  <input placeholder={t("providerPortal.bookings.searchPlaceholder")} value={bookingSearch} onChange={e => setBookingSearch(e.target.value)} />
+                </div>
+                <div className="input-group" style={{ flex: 1 }}>
+                  <select value={bookingSort} onChange={e => setBookingSort(e.target.value)}>
+                    <option value="newest">{t("providerPortal.bookings.sortNewest")}</option>
+                    <option value="oldest">{t("providerPortal.bookings.sortOldest")}</option>
+                  </select>
+                </div>
+                <div className="input-group" style={{ flex: 1 }}>
+                  <select value={bookingStatusFilter} onChange={e => setBookingStatusFilter(e.target.value)}>
+                    <option value="all">{t("providerPortal.bookings.allStatuses")}</option>
+                    <option value="needs_action">{t("providerPortal.bookings.needsAction", { count: pendingBookings.length })}</option>
+                    <option value="pending">{t("providerPortal.bookings.statusPending")}</option>
+                    <option value="awaiting_payment">{t("providerPortal.bookings.statusAwaitingPayment")}</option>
+                    <option value="confirmed">{t("providerPortal.bookings.statusConfirmed")}</option>
+                    <option value="completed">{t("providerPortal.bookings.statusCompleted")}</option>
+                    <option value="cancelled">{t("providerPortal.bookings.statusCancelled")}</option>
+                    <option value="no_show">{t("providerPortal.bookings.statusNoShow")}</option>
+                  </select>
+                </div>
+                {isBusinessPlan && staff.length > 0 && (
+                  <div className="input-group" style={{ flex: 1 }}>
+                    <select value={staffFilter} onChange={e => setStaffFilter(e.target.value)}>
+                      <option value="all">{t("providerPortal.bookings.everyonesBookings")}</option>
+                      <option value="unassigned">{t("providerPortal.bookings.unassigned")}</option>
+                      {staff.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
+                    </select>
+                  </div>
+                )}
+              </div>
+
+              {addingWalkIn && (
+                <div style={{ background: "var(--sand)", borderRadius: 10, padding: 16, marginBottom: 16 }}>
+                  <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 10 }}>{t("providerPortal.bookings.addAnAppointment")}</div>
+                  {services.length === 0 ? (
+                    <p style={{ fontSize: 13, color: "var(--muted)" }}>{t("providerPortal.bookings.addServiceFirst")}</p>
+                  ) : (
+                    <>
+                      <div className="input-group">
+                        <label>{t("providerPortal.bookings.clientName")}</label>
+                        <input placeholder={t("providerPortal.bookings.clientNamePlaceholder")} value={walkInForm.name} onChange={e => setWalkInForm(f => ({ ...f, name: e.target.value }))} />
+                      </div>
+                      <div className="input-group">
+                        <label>{t("providerPortal.bookings.clientPhone")}</label>
+                        <input placeholder={t("providerPortal.common.phonePlaceholder")} value={walkInForm.phone} onChange={e => setWalkInForm(f => ({ ...f, phone: e.target.value }))} />
+                      </div>
+                      <div className="input-group">
+                        <label>{t("providerPortal.bookings.serviceLabel")}</label>
+                        <select value={walkInForm.service_id} onChange={e => setWalkInForm(f => ({ ...f, service_id: e.target.value }))}>
+                          {services.map(s => <option key={s.id} value={s.id}>{s.name} — BZ${s.price}</option>)}
+                        </select>
+                      </div>
+                      <div className="form-row">
+                        <div className="input-group">
+                          <label>{t("providerPortal.bookings.dateLabel")}</label>
+                          <input type="date" value={walkInForm.date} onChange={e => setWalkInForm(f => ({ ...f, date: e.target.value }))} />
+                        </div>
+                        <div className="input-group">
+                          <label>{t("providerPortal.bookings.timeLabel")}</label>
+                          <input type="time" value={walkInForm.time} onChange={e => setWalkInForm(f => ({ ...f, time: e.target.value }))} />
+                        </div>
+                      </div>
+                      <div className="input-group">
+                        <label>{t("providerPortal.bookings.notesLabel")}</label>
+                        <textarea placeholder={t("providerPortal.bookings.notesPlaceholder")} value={walkInForm.notes} onChange={e => setWalkInForm(f => ({ ...f, notes: e.target.value }))} style={{ minHeight: 50 }} />
+                      </div>
+                      {walkInError && <p style={{ fontSize: 12, color: "#B91C1C", marginBottom: 8 }}>{walkInError}</p>}
+                      <div style={{ display: "flex", gap: 8 }}>
+                        <button className="btn-sm lime" disabled={savingWalkIn} onClick={submitWalkIn}>{savingWalkIn ? t("providerPortal.common.saving") : t("providerPortal.bookings.saveAppointment")}</button>
+                        <button className="btn-sm ghost" onClick={closeWalkInForm}>{t("providerPortal.common.cancel")}</button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
+
+              {visibleBookings.length === 0 && (
+                <p style={{ fontSize: 13, color: "var(--muted)", padding: "16px 0" }}>{loadingBookings ? t("providerPortal.common.loading") : bookingSearch.trim() ? t("providerPortal.bookings.noMatch") : t("providerPortal.bookings.noneYet")}</p>
+              )}
+              {visibleBookings.map((b) => (
+                <div key={b.id} style={{ padding: "14px 0", borderBottom: "1px solid var(--border)" }}>
+                  <div className="booking-item" style={{ padding: 0, border: "none" }}>
+                    <div className={`booking-dot ${bookingStatusClass(b.status)}`}></div>
+                    <div className="booking-info">
+                      <div className="title">
+                        {b.services?.name || "Service"}
+                        {b.created_by_provider && (
+                          <span style={{ marginLeft: 8, fontSize: 11, fontWeight: 600, color: "var(--accent-text)", background: "var(--sand)", padding: "2px 7px", borderRadius: 5, verticalAlign: "middle" }}>{t("providerPortal.bookings.walkInBadge")}</span>
+                        )}
+                      </div>
+                      <div className="meta">
+                        {b.users?.full_name || b.walkin_customer_name || "Customer"}
+                        {b.walkin_customer_phone && ` · ${b.walkin_customer_phone}`}
+                        {" · "}{formatBookingWhen(b)}
+                        {unreadByBooking[b.id] > 0 && (
+                          <span style={{ marginLeft: 8, fontSize: 11, fontWeight: 700, color: "var(--forest)", background: "var(--lime)", padding: "2px 7px", borderRadius: 999 }}>
+                            💬 {t("providerPortal.bookings.newMessages", { count: unreadByBooking[b.id] })}
+                          </span>
+                        )}
+                      </div>
+                      {isBusinessPlan && staff.length > 0 && (
+                        <div style={{ marginTop: 4 }}>
+                          <select
+                            value={b.staff_id || ""}
+                            onChange={(e) => assignBookingStaff(b.id, e.target.value || null)}
+                            style={{ fontSize: 12, padding: "2px 6px" }}
+                          >
+                            <option value="">{t("providerPortal.bookings.unassigned")}</option>
+                            {staff.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
+                          </select>
+                        </div>
+                      )}
+                    </div>
+                    <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", justifyContent: "flex-end" }}>
+                      <span className="booking-amount">BZ${b.total_amount ?? b.services?.price ?? "—"}</span>
+                      <span className={`status-pill ${bookingStatusClass(b.status)}`}>{statusLabel(b.status)}</span>
+                      {b.status === "pending" && respondingId !== b.id && (
+                        <>
+                          <button className="btn-sm lime" disabled={busyId === b.id} onClick={() => openResponse(b.id, "accept")}>{t("providerPortal.bookings.accept")}</button>
+                          <button className="btn-sm ghost" disabled={busyId === b.id} onClick={() => openResponse(b.id, "reject")}>{t("providerPortal.bookings.decline")}</button>
+                        </>
+                      )}
+                      {b.status === "confirmed" && (
+                        <button className="btn-sm forest" disabled={busyId === b.id} onClick={() => act(b.id, "completed")}>{t("providerPortal.bookings.markDone")}</button>
+                      )}
+                      {/* A booking you've already accepted has to be movable and
+                          cancellable — otherwise a sick day, or a customer who
+                          never pays their deposit, blocks that slot forever and
+                          no refund can be recorded against it. */}
+                      {["pending", "awaiting_payment", "confirmed"].includes(b.status) && reschedulingId !== b.id && !b.pending_reschedule_date && (
+                        <button className="btn-sm ghost" disabled={busyId === b.id} onClick={() => openReschedule(b)}>{t("providerPortal.bookings.reschedule")}</button>
+                      )}
+                      {b.pending_reschedule_date && (
+                        <button className="btn-sm ghost" disabled={withdrawingId === b.id} onClick={() => withdrawReschedule(b)}>
+                          {withdrawingId === b.id ? t("providerPortal.bookings.withdrawing") : t("providerPortal.bookings.withdrawProposal")}
+                        </button>
+                      )}
+                      {["awaiting_payment", "confirmed"].includes(b.status) && (
+                        <button className="btn-sm ghost" disabled={busyId === b.id} onClick={() => act(b.id, "cancelled")}>{t("providerPortal.common.cancel")}</button>
+                      )}
+                      {b.status === "confirmed" && (
+                        <button className="btn-sm ghost" disabled={busyId === b.id} onClick={() => act(b.id, "no_show")}>{t("providerPortal.bookings.noShowButton")}</button>
+                      )}
+                    </div>
+                  </div>
+
+                  {b.notes && <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 6 }}>{t("providerPortal.bookings.customerNote", { notes: b.notes })}</p>}
+
+                  {b.pending_reschedule_date && (
+                    <p style={{ fontSize: 12, color: "var(--accent-text)", marginTop: 6, fontWeight: 600 }}>
+                      {t("providerPortal.bookings.waitingConfirmNewTime", { when: formatBookingWhen({ booking_date: b.pending_reschedule_date, booking_time: b.pending_reschedule_time }) })}
+                    </p>
+                  )}
+
+                  {reschedulingId === b.id && (
+                    <div style={{ marginTop: 10, background: "var(--sand)", borderRadius: 8, padding: 12 }}>
+                      <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 8 }}>{t("providerPortal.bookings.proposeNewTime")}</div>
+                      <div className="form-row">
+                        <div className="input-group">
+                          <label>{t("providerPortal.bookings.newDate")}</label>
+                          <input type="date" value={rescheduleForm.date} min={localDateStr()} onChange={e => setRescheduleForm(f => ({ ...f, date: e.target.value }))} />
+                        </div>
+                        <div className="input-group">
+                          <label>{t("providerPortal.bookings.newTime")}</label>
+                          <input type="time" value={rescheduleForm.time} onChange={e => setRescheduleForm(f => ({ ...f, time: e.target.value }))} />
+                        </div>
+                      </div>
+                      {rescheduleError && <p style={{ color: "#B91C1C", fontSize: 12, marginBottom: 8 }}>{rescheduleError}</p>}
+                      <div style={{ display: "flex", gap: 8 }}>
+                        <button className="btn-sm lime" disabled={savingReschedule} onClick={() => submitReschedule(b)}>{savingReschedule ? t("providerPortal.common.sending") : t("providerPortal.bookings.proposeNewTime")}</button>
+                        <button className="btn-sm ghost" onClick={closeReschedule}>{t("providerPortal.common.cancel")}</button>
+                      </div>
+                      <p style={{ fontSize: 11, color: "var(--muted)", marginTop: 8 }}>
+                        {t("providerPortal.bookings.rescheduleNote")}
+                      </p>
+                    </div>
+                  )}
+
+                  {respondingId === b.id && (
+                    <div style={{ marginTop: 10, background: "var(--sand)", borderRadius: 8, padding: 12 }}>
+                      <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 6 }}>
+                        {responseType === "accept" ? t("providerPortal.bookings.acceptThisBooking") : t("providerPortal.bookings.declineThisBooking")}
+                      </div>
+                      <textarea
+                        placeholder={responseType === "accept" ? t("providerPortal.bookings.optionalMessagePlaceholder") : t("providerPortal.bookings.optionalReasonPlaceholder")}
+                        value={responseMessage}
+                        onChange={e => setResponseMessage(e.target.value)}
+                        style={{ width: "100%", minHeight: 60, marginBottom: 8 }}
+                      />
+                      <div style={{ display: "flex", gap: 8 }}>
+                        <button className={`btn-sm ${responseType === "accept" ? "lime" : "forest"}`} disabled={busyId === b.id} onClick={() => submitResponse(b)}>
+                          {busyId === b.id ? t("providerPortal.common.sending") : responseType === "accept" ? t("providerPortal.bookings.confirmAccept") : t("providerPortal.bookings.confirmDecline")}
+                        </button>
+                        <button className="btn-sm ghost" onClick={cancelResponse}>{t("providerPortal.common.cancel")}</button>
+                      </div>
+                    </div>
+                  )}
+
+                  {b.status !== "pending" && b.provider_message && (
+                    <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 6 }}>{t("providerPortal.bookings.yourNoteToCustomer", { note: b.provider_message })}</p>
+                  )}
+
+                  {b.status === "awaiting_payment" && b.payment_status !== "receipt_uploaded" && (
+                    <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 6 }}>{t("providerPortal.bookings.waitingDepositReceipt")}</p>
+                  )}
+                  {b.status === "awaiting_payment" && b.payment_status === "receipt_uploaded" && (
+                    <div style={{ marginTop: 8, background: "var(--sand)", borderRadius: 8, padding: 12 }}>
+                      <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 6 }}>{t("providerPortal.bookings.depositReceiptUploaded")}</div>
+                      {b.receipt_url && <a href="#" onClick={(e) => { e.preventDefault(); openPrivateFile(b.receipt_url); }} style={{ fontSize: 12 }}>{t("providerPortal.common.viewReceipt")}</a>}
+                      <div style={{ marginTop: 8 }}>
+                        <button className="btn-sm lime" disabled={confirmingPaymentId === b.id} onClick={() => confirmPayment(b)}>
+                          {confirmingPaymentId === b.id ? t("providerPortal.bookings.confirming") : t("providerPortal.bookings.confirmPaymentReceived")}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {b.status === "completed" && (
+                    <>
+                      <button
+                        className="btn-sm ghost"
+                        style={{ marginTop: 8, marginRight: 8, fontSize: 12 }}
+                        onClick={() => printInvoice(buildInvoiceHtml({
+                          orderNumber: b.order_number,
+                          bookingDate: b.booking_date,
+                          bookingTime: b.booking_time,
+                          serviceName: b.services?.name || "Service",
+                          amount: b.total_amount ?? b.services?.price,
+                          depositAmount: b.downpayment_amount,
+                          providerName: providerProfile?.business_name,
+                          providerTaxId: providerProfile?.tax_id,
+                          providerDistrict: providerProfile?.district,
+                          providerWhatsapp: providerProfile?.whatsapp,
+                          customerName: b.users?.full_name || b.walkin_customer_name || "Customer",
+                          customerEmail: b.users?.email,
+                        }))}
+                      >
+                        🧾 {t("providerPortal.bookings.printInvoice")}
+                      </button>
+                      <FeatureGate flag="soap_charting">
+                        <VisitNotesButton booking={b} />
+                      </FeatureGate>
+                    </>
+                  )}
+
+                  {["cancelled", "rejected"].includes(b.status) && (
+                    b.booking_refunds && b.booking_refunds.length > 0 ? (
+                      <div style={{ marginTop: 8, background: "#E7F5EC", borderRadius: 8, padding: 12 }}>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: "var(--forest)" }}>💸 {t("providerPortal.bookings.refundRecorded", { amount: b.booking_refunds[0].amount })}</div>
+                        {b.booking_refunds[0].note && <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 4 }}>{b.booking_refunds[0].note}</p>}
+                        {b.booking_refunds[0].receipt_url && <a href="#" onClick={(e) => { e.preventDefault(); openPrivateFile(b.booking_refunds[0].receipt_url); }} style={{ fontSize: 12 }}>{t("providerPortal.common.viewReceipt")}</a>}
+                      </div>
+                    ) : refundingBookingId === b.id ? (
+                      <div style={{ marginTop: 8, background: "var(--sand)", borderRadius: 8, padding: 12 }}>
+                        <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 8 }}>{t("providerPortal.bookings.recordRefundTitle")}</div>
+                        <div className="input-group">
+                          <label>{t("providerPortal.bookings.amountRefunded")}</label>
+                          <input type="number" min="0" step="0.01" value={refundForm.amount} onChange={e => setRefundForm(f => ({ ...f, amount: e.target.value }))} />
+                        </div>
+                        <div className="input-group">
+                          <label>{t("providerPortal.bookings.screenshotOrReceipt")}</label>
+                          <input key={refundFileKey} type="file" accept="image/*,application/pdf" onChange={e => setRefundForm(f => ({ ...f, receipt: e.target.files?.[0] || null }))} />
+                        </div>
+                        <div className="input-group">
+                          <label>{t("providerPortal.bookings.noteOptional")}</label>
+                          <input value={refundForm.note} onChange={e => setRefundForm(f => ({ ...f, note: e.target.value }))} placeholder={t("providerPortal.bookings.refundNotePlaceholder")} />
+                        </div>
+                        {refundError && <p style={{ fontSize: 12, color: "#B91C1C", marginBottom: 8 }}>{refundError}</p>}
+                        <div style={{ display: "flex", gap: 8 }}>
+                          <button className="btn-sm lime" disabled={savingRefund} onClick={() => submitRefund(b.id)}>{savingRefund ? t("providerPortal.common.saving") : t("providerPortal.bookings.saveRefund")}</button>
+                          <button className="btn-sm ghost" onClick={closeRefundForm}>{t("providerPortal.common.cancel")}</button>
+                        </div>
+                      </div>
+                    ) : (
+                      <button className="btn-sm ghost" style={{ marginTop: 8, fontSize: 12 }} onClick={() => openRefundForm(b)}>{t("providerPortal.bookings.recordRefund")}</button>
+                    )
+                  )}
+
+                  {b.customer_id && ["pending", "awaiting_payment", "confirmed", "completed"].includes(b.status) && (
+                    <BookingChat
+                      bookingId={b.id}
+                      currentUserId={user?.id}
+                      currentRole="provider"
+                      recipientUserId={b.customer_id}
+                    />
+                  )}
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+
+        {tab === "calendar" && (
+          <>
+            <div className="portal-header"><h2>{t("providerPortal.nav.availability")}</h2><p>{t("providerPortal.calendar.subtitle")}</p></div>
+            <div className="grid-2">
+              <div className="card">
+                <div className="card-title" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+                  <button className="btn-sm ghost" onClick={() => { setCalOffset(o => o - 1); setSelectedDay(null); }} aria-label={t("providerPortal.calendar.previousMonth")}>‹</button>
+                  <span>{monthLabel}</span>
+                  <span style={{ display: "flex", gap: 6 }}>
+                    {calOffset !== 0 && <button className="btn-sm ghost" onClick={() => { setCalOffset(0); setSelectedDay(null); }}>{t("providerPortal.calendar.today")}</button>}
+                    <button className="btn-sm ghost" onClick={() => { setCalOffset(o => o + 1); setSelectedDay(null); }} aria-label={t("providerPortal.calendar.nextMonth")}>›</button>
+                  </span>
+                </div>
+                <div className="cal-grid">
+                  {DAYS.map(d => <div key={d} className="cal-day-label">{d}</div>)}
+                  {calendarDays.map((d, i) => (
+                    <div
+                      key={i}
+                      className={`cal-day ${d === null ? "empty" : ""} ${d === now.getDate() && calOffset === 0 ? "today" : ""} ${d && bookedDaysInMonth.has(d) ? "has-booking" : ""}`}
+                      style={d && d === selectedDay ? { boxShadow: "inset 0 0 0 2px var(--forest)" } : undefined}
+                      onClick={() => d && setSelectedDay(d === selectedDay ? null : d)}
+                    >
+                      {d || ""}
+                    </div>
+                  ))}
+                </div>
+                <div style={{ marginTop: 12, display: "flex", gap: 16, fontSize: 12, color: "var(--muted)" }}>
+                  <span>● {t("providerPortal.calendar.today")}</span>
+                  <span style={{ color: "var(--lime)", fontSize: 14 }}>● </span><span>{t("providerPortal.calendar.hasBooking")}</span>
+                </div>
+                {selectedDay && (
+                  <div style={{ marginTop: 16, paddingTop: 14, borderTop: "1px solid var(--border)" }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 8 }}>{monthLabel.split(" ")[0]} {selectedDay}</div>
+                    {selectedDayBookings.length === 0 && <p style={{ fontSize: 12, color: "var(--muted)" }}>{t("providerPortal.calendar.noBookingsThisDay")}</p>}
+                    {selectedDayBookings.map(b => (
+                      <div key={b.id} style={{ fontSize: 12, color: "var(--muted)", padding: "4px 0" }}>
+                        {formatBookingTime(b.booking_time)} · {b.services?.name || "Service"} · {b.users?.full_name || b.walkin_customer_name || "Customer"}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <div className="card">
+                <div className="card-title">{t("providerPortal.calendar.workingHours")}</div>
+                {hours.map((d, i) => (
+                  <div key={i} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 0", borderBottom: "1px solid var(--border)" }}>
+                    <span style={{ fontSize: 14, fontWeight: 500 }}>{d.day}</span>
+                    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                      {d.is_open ? (
+                        <>
+                          <input type="time" value={d.start_time} onChange={e => setDayTime(i, "start_time", e.target.value)} style={{ fontSize: 12, border: "1px solid var(--border)", borderRadius: 6, padding: "4px 6px" }} />
+                          <span style={{ fontSize: 12, color: "var(--muted)" }}>–</span>
+                          <input type="time" value={d.end_time} onChange={e => setDayTime(i, "end_time", e.target.value)} style={{ fontSize: 12, border: "1px solid var(--border)", borderRadius: 6, padding: "4px 6px" }} />
+                        </>
+                      ) : (
+                        <span style={{ fontSize: 12, color: "var(--muted)" }}>{t("providerPortal.calendar.closed")}</span>
+                      )}
+                      <div className={`toggle ${d.is_open ? "on" : ""}`} onClick={() => toggleDay(i)}></div>
+                    </div>
+                  </div>
+                ))}
+                <button className="btn-sm forest" style={{ marginTop: 12 }} onClick={saveHours} disabled={savingHours}>{savingHours ? t("providerPortal.common.saving") : t("providerPortal.calendar.saveHours")}</button>
+
+                <div className="card-title" style={{ marginTop: 28 }}>{t("providerPortal.calendar.dailyLunchBreak")}</div>
+                <p style={{ fontSize: 13, color: "var(--muted)", marginTop: -8, marginBottom: 16 }}>{t("providerPortal.calendar.lunchBreakHint")}</p>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", borderBottom: lunchForm.enabled ? "1px solid var(--border)" : "none" }}>
+                  <span style={{ fontSize: 14 }}>{t("providerPortal.calendar.blockLunchToggle")}</span>
+                  <div className={`toggle ${lunchForm.enabled ? "on" : ""}`} onClick={() => setLunchForm(f => ({ ...f, enabled: !f.enabled }))}></div>
+                </div>
+                {lunchForm.enabled && (
+                  <div className="form-row" style={{ marginTop: 12 }}>
+                    <div className="input-group">
+                      <label>{t("providerPortal.calendar.startTime")}</label>
+                      <select value={lunchForm.lunch_break_start} onChange={e => setLunchForm(f => ({ ...f, lunch_break_start: e.target.value }))}>
+                        {Array.from({ length: 28 }, (_, i) => { const m = 6 * 60 + i * 30; const h = String(Math.floor(m / 60)).padStart(2, "0"); const mm = String(m % 60).padStart(2, "0"); return `${h}:${mm}`; }).map(t => {
+                          const [h24, m] = t.split(":").map(Number);
+                          const ampm = h24 >= 12 ? t("providerPortal.calendar.pm") : t("providerPortal.calendar.am");
+                          const h12 = h24 % 12 === 0 ? 12 : h24 % 12;
+                          return <option key={t} value={t}>{`${h12}:${String(m).padStart(2, "0")} ${ampm}`}</option>;
+                        })}
+                      </select>
+                    </div>
+                    <div className="input-group">
+                      <label>{t("providerPortal.common.duration")}</label>
+                      <select value={lunchForm.lunch_break_minutes} onChange={e => setLunchForm(f => ({ ...f, lunch_break_minutes: e.target.value }))}>
+                        {[15, 30, 45, 60, 90].map(m => <option key={m} value={m}>{t("providerPortal.common.durationMin", { count: m })}</option>)}
+                      </select>
+                    </div>
+                  </div>
+                )}
+                <button className="btn-sm forest" style={{ marginTop: 12 }} onClick={saveLunchSettings} disabled={savingLunch}>{savingLunch ? t("providerPortal.common.saving") : t("providerPortal.calendar.saveLunchBreak")}</button>
+              </div>
+            </div>
+
+            {/* VAI MEDIA — non-intrusive promo, bottom of Availability. */}
+            <div className="vai-media-promo">
+              <div className="vai-media-promo-text">
+                <strong>✨ Vai Media</strong>
+                <span>{t("providerPortal.calendar.vaiMediaPromo")}</span>
+              </div>
+              <a className="vai-media-promo-btn" href={vaiMediaWhatsAppUrl("provider dashboard")} target="_blank" rel="noreferrer">{t("providerPortal.calendar.applyNow")}</a>
+            </div>
+          </>
+        )}
+
+        {tab === "services" && (
+          <>
+            <div className="portal-header"><h2>{t("providerPortal.nav.services")}</h2><p>{t("providerPortal.services.subtitle")}</p></div>
+            <div className="card" style={{ maxWidth: 560 }}>
+              <div className="card-title">{t("providerPortal.services.activeServices")}</div>
+              {services.length === 0 && (
+                <p style={{ fontSize: 13, color: "var(--muted)", padding: "12px 0" }}>{t("providerPortal.services.noneYet")}</p>
+              )}
+              {services.map((s) => (
+                <div className="provider-service" key={s.id} style={{ display: "block" }}>
+                  {editingServiceId === s.id ? (
+                    <div style={{ padding: "8px 0" }}>
+                      <div className="input-group"><label>{t("providerPortal.services.serviceName")}</label><input placeholder={t("providerPortal.services.serviceNamePlaceholder")} value={editServiceForm.name} onChange={e => setEditServiceForm(f => ({ ...f, name: e.target.value }))} /></div>
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                        <div className="input-group"><label>{t("providerPortal.services.price")}</label><input type="number" placeholder="0" value={editServiceForm.price} onChange={e => setEditServiceForm(f => ({ ...f, price: e.target.value }))} /></div>
+                        <div className="input-group">
+                          <label>{t("providerPortal.common.duration")}</label>
+                          <select value={editServiceForm.duration_min} onChange={e => setEditServiceForm(f => ({ ...f, duration_min: e.target.value }))}>
+                            <option value={15}>{t("providerPortal.common.durationMin", { count: 15 })}</option>
+                            <option value={30}>{t("providerPortal.common.durationMin", { count: 30 })}</option>
+                            <option value={45}>{t("providerPortal.common.durationMin", { count: 45 })}</option>
+                            <option value={60}>{t("providerPortal.common.durationMin", { count: 60 })}</option>
+                            <option value={90}>{t("providerPortal.common.durationMin", { count: 90 })}</option>
+                          </select>
+                        </div>
+                      </div>
+                      <div className="input-group">
+                        <label>{t("providerPortal.services.descriptionLabel")}</label>
+                        <textarea rows={2} placeholder={t("providerPortal.services.descriptionPlaceholder")} value={editServiceForm.description} onChange={e => setEditServiceForm(f => ({ ...f, description: e.target.value }))} />
+                      </div>
+                      <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+                        <button className="btn-sm lime" disabled={savingServiceEdit || !editServiceForm.name.trim()} onClick={() => handleSaveEditService(s.id)}>{savingServiceEdit ? t("providerPortal.common.saving") : t("providerPortal.common.save")}</button>
+                        <button className="btn-sm ghost" onClick={handleCancelEditService}>{t("providerPortal.common.cancel")}</button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                      <div>
+                        <div style={{ fontSize: 14, fontWeight: 600 }}>{s.name}</div>
+                        <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 2 }}>{t("providerPortal.common.durationMin", { count: s.duration_min })}</div>
+                        {s.description && <div style={{ fontSize: 12.5, color: "var(--muted)", marginTop: 4, maxWidth: 320 }}>{s.description}</div>}
+                      </div>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <span style={{ fontWeight: 700, color: "var(--accent-text)" }}>BZ${s.price}</span>
+                        <button className="btn-sm ghost" style={{ fontSize: 12 }} onClick={() => handleStartEditService(s)}>{t("providerPortal.common.edit")}</button>
+                        <button className="btn-sm ghost" style={{ fontSize: 12 }} onClick={() => handleDeleteService(s.id)}>{t("providerPortal.common.remove")}</button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+              <div style={{ marginTop: 20, paddingTop: 16, borderTop: "1px solid var(--border)" }}>
+                <div className="card-title">{t("providerPortal.services.addService")}</div>
+                <div className="input-group"><label>{t("providerPortal.services.serviceName")}</label><input placeholder={t("providerPortal.services.serviceNamePlaceholder")} value={serviceForm.name} onChange={e => setServiceForm(f => ({ ...f, name: e.target.value }))} /></div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                  <div className="input-group"><label>{t("providerPortal.services.price")}</label><input type="number" placeholder="0" value={serviceForm.price} onChange={e => setServiceForm(f => ({ ...f, price: e.target.value }))} /></div>
+                  <div className="input-group">
+                    <label>{t("providerPortal.common.duration")}</label>
+                    <select value={serviceForm.duration_min} onChange={e => setServiceForm(f => ({ ...f, duration_min: e.target.value }))}>
+                      <option value={15}>{t("providerPortal.common.durationMin", { count: 15 })}</option>
+                      <option value={30}>{t("providerPortal.common.durationMin", { count: 30 })}</option>
+                      <option value={45}>{t("providerPortal.common.durationMin", { count: 45 })}</option>
+                      <option value={60}>{t("providerPortal.common.durationMin", { count: 60 })}</option>
+                      <option value={90}>{t("providerPortal.common.durationMin", { count: 90 })}</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="input-group">
+                  <label>{t("providerPortal.services.descriptionLabel")}</label>
+                  <textarea rows={2} placeholder={t("providerPortal.services.descriptionPlaceholder")} value={serviceForm.description} onChange={e => setServiceForm(f => ({ ...f, description: e.target.value }))} />
+                </div>
+                <button className="btn-sm lime" onClick={handleAddService} disabled={savingService || !serviceForm.name.trim()}>{savingService ? t("providerPortal.services.adding") : t("providerPortal.services.addService")}</button>
+              </div>
+            </div>
+          </>
+        )}
+
+        {tab === "earnings" && (
+          <>
+            <div className="portal-header"><h2>{t("providerPortal.nav.earnings")}</h2><p>{t("providerPortal.earnings.subtitle")}</p></div>
+            <div className="metric-grid" style={{ gridTemplateColumns: "1fr 1fr 1fr" }}>
+              <div className="metric"><div className="metric-label">{t("providerPortal.earnings.totalEarned")}</div><div className="metric-value" style={{ color: "var(--forest-light)" }}>BZ${totalNetEarned.toFixed(2)}</div><div className="metric-sub">{t("providerPortal.earnings.allTimePaidInFull")}</div></div>
+              <div className="metric"><div className="metric-label">{t("providerPortal.common.upcoming")}</div><div className="metric-value">BZ${pendingEarnings.toFixed(2)}</div><div className="metric-sub">{t("providerPortal.earnings.confirmedNotCompleted")}</div></div>
+              <div className="metric"><div className="metric-label">{t("providerPortal.earnings.thisMonthLabel", { month: currentMonthLabel })}</div><div className="metric-value">BZ${thisMonthNetEarnings.toFixed(2)}</div><div className="metric-sub">{monthOverMonthPct === null ? t("providerPortal.common.noDataLastMonth") : t("providerPortal.common.vsLastMonth", { arrow: monthOverMonthPct >= 0 ? "↑" : "↓", pct: Math.abs(monthOverMonthPct) })}</div></div>
+            </div>
+            <div className="card">
+              <div className="card-title">{t("providerPortal.earnings.salesTaxLedger")}</div>
+              <p style={{ fontSize: 13, color: "var(--muted)", marginBottom: 12 }}>
+                {t("providerPortal.earnings.ledgerHint")}
+              </p>
+              <div className="form-row">
+                <div className="input-group">
+                  <label>{t("providerPortal.earnings.from")}</label>
+                  <input type="date" value={ledgerStart} onChange={e => setLedgerStart(e.target.value)} />
+                </div>
+                <div className="input-group">
+                  <label>{t("providerPortal.earnings.to")}</label>
+                  <input type="date" value={ledgerEnd} onChange={e => setLedgerEnd(e.target.value)} />
+                </div>
+                <div className="input-group">
+                  <label>{t("providerPortal.earnings.taxRate")}</label>
+                  <input
+                    type="number"
+                    min="0"
+                    max="100"
+                    step="0.5"
+                    placeholder={t("providerPortal.earnings.taxRatePlaceholder")}
+                    value={ledgerTaxRate}
+                    onChange={e => setLedgerTaxRate(e.target.value)}
+                  />
+                </div>
+              </div>
+              <p style={{ fontSize: 12, color: "var(--muted)", marginBottom: 12 }}>
+                {t("providerPortal.earnings.taxRateExplain")}
+              </p>
+              <button className="btn-sm forest" onClick={printLedger}>🧾 {t("providerPortal.earnings.printLedger")}</button>
+            </div>
+            <div className="card">
+              <div className="card-title">{t("providerPortal.earnings.paymentDetailsTitle")}</div>
+              <p style={{ fontSize: 13, color: "var(--muted)", marginBottom: 16 }}>{t("providerPortal.earnings.paymentDetailsHint")}</p>
+
+              {paymentMethods.length === 0 && (
+                <p style={{ fontSize: 13, color: "var(--muted)", padding: "8px 0" }}>{t("providerPortal.earnings.noPaymentMethods")}</p>
+              )}
+              {paymentMethods.map((m) => (
+                <div key={m.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: "1px solid var(--border)" }}>
+                  <div>
+                    <div style={{ fontSize: 14, fontWeight: 600 }}>{m.type === "wallet" ? "📱" : "🏦"} {m.name}</div>
+                    <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 2 }}>{[m.account_name, m.account_number].filter(Boolean).join(" · ")}</div>
+                  </div>
+                  <button className="btn-sm ghost" style={{ fontSize: 12 }} onClick={() => handleDeletePaymentMethod(m.id)}>{t("providerPortal.common.remove")}</button>
+                </div>
+              ))}
+
+              <div style={{ marginTop: 20, paddingTop: 16, borderTop: "1px solid var(--border)" }}>
+                <div className="card-title">{t("providerPortal.earnings.addPaymentMethod")}</div>
+                <div className="input-group">
+                  <label>{t("providerPortal.earnings.type")}</label>
+                  <select value={paymentMethodForm.type} onChange={e => setPaymentMethodForm(f => ({ ...f, type: e.target.value }))}>
+                    <option value="bank">{t("providerPortal.earnings.bankAccount")}</option>
+                    <option value="wallet">{t("providerPortal.earnings.mobileWallet")}</option>
+                  </select>
+                </div>
+                <div className="grid-2">
+                  <div className="input-group">
+                    <label>{paymentMethodForm.type === "wallet" ? t("providerPortal.earnings.walletName") : t("providerPortal.earnings.bankName")}</label>
+                    <input value={paymentMethodForm.name} onChange={e => setPaymentMethodForm(f => ({ ...f, name: e.target.value }))} placeholder={paymentMethodForm.type === "wallet" ? t("providerPortal.earnings.walletNamePlaceholder") : t("providerPortal.earnings.bankNamePlaceholder")} />
+                  </div>
+                  <div className="input-group"><label>{t("providerPortal.earnings.accountHolderName")}</label><input value={paymentMethodForm.account_name} onChange={e => setPaymentMethodForm(f => ({ ...f, account_name: e.target.value }))} placeholder={t("providerPortal.earnings.accountHolderPlaceholder")} /></div>
+                </div>
+                <div className="input-group">
+                  <label>{paymentMethodForm.type === "wallet" ? t("providerPortal.earnings.walletNumberLabel") : t("providerPortal.earnings.accountNumberLabel")}</label>
+                  <input value={paymentMethodForm.account_number} onChange={e => setPaymentMethodForm(f => ({ ...f, account_number: e.target.value }))} placeholder={paymentMethodForm.type === "wallet" ? t("providerPortal.earnings.walletNumberPlaceholder") : t("providerPortal.earnings.accountNumberPlaceholder")} />
+                </div>
+                <button className="btn-sm lime" disabled={savingPaymentMethod || !paymentMethodForm.name.trim()} onClick={handleAddPaymentMethod}>{savingPaymentMethod ? t("providerPortal.common.adding") : t("providerPortal.earnings.addPaymentMethod")}</button>
+              </div>
+            </div>
+          </>
+        )}
+
+        {tab === "billing" && (() => {
+          const currentPlan = PLANS.find((p) => p.id === (providerProfile?.plan || "starter")) || PLANS[0];
+          const statusColor = { pending: "#B45309", confirmed: "var(--forest)", rejected: "#B91C1C" };
+          const statusBg = { pending: "#FEF3C7", confirmed: "#E7F5EC", rejected: "#FEE2E2" };
+          // FIX ("every provider is providing a service, they must be
+          // paying"): VaiBook has no backend trial-date tracking (no
+          // trial_ends_at column) — this is copy-only, the same
+          // marketing-copy-not-enforcement approach already used for the
+          // pricing page's "14-Day Free Trial" badge. `next_payment_due_date`
+          // is never set anywhere in this codebase except by an admin (or
+          // directly in Supabase), so its absence is a safe, already-existing
+          // signal for "hasn't been billed yet" — used here only to decide
+          // which copy to show, no new field and no changed gating logic.
+          const inTrial = currentPlan.monthly > 0 && !providerProfile?.next_payment_due_date;
+          return (
+            <>
+              <div className="portal-header"><h2>{t("providerPortal.nav.billing")}</h2><p>{t("providerPortal.billing.subtitle")}</p></div>
+
+              <div className="card" style={{ maxWidth: 560 }}>
+                <div className="card-title">{t("providerPortal.billing.currentPlan")}</div>
+                <div style={{ fontSize: 20, fontWeight: 700 }}>{currentPlan.name} <span style={{ fontSize: 14, fontWeight: 500, color: "var(--muted)" }}>— {currentPlan.price}</span></div>
+                {currentPlan.monthly > 0 && (
+                  inTrial ? (
+                    <div style={{ marginTop: 10, background: "#E7F5EC", border: "1px solid var(--forest)", borderRadius: 8, padding: "10px 14px" }}>
+                      <p style={{ fontSize: 13, fontWeight: 700, color: "var(--forest)", margin: 0 }}>🎉 {t("providerPortal.billing.trialBannerTitle", { plan: currentPlan.name })}</p>
+                      <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 4, marginBottom: 0 }}>
+                        {t("providerPortal.billing.trialBannerSub", { amount: (Math.round((currentPlan.monthly / 30) * 100) / 100).toFixed(2) })}
+                      </p>
+                    </div>
+                  ) : (
+                    <div style={{ marginTop: 6 }}>
+                      <span style={{ display: "inline-block", background: "var(--forest)", color: "var(--lime)", fontSize: 12, fontWeight: 800, padding: "4px 10px", borderRadius: 100 }}>
+                        {t("providerPortal.billing.justPerDay", { amount: (Math.round((currentPlan.monthly / 30) * 100) / 100).toFixed(2) })}
+                      </span>
+                      <div style={{ fontSize: 11, color: "var(--muted)", fontStyle: "italic", marginTop: 4 }}>{t("providerPortal.billing.paysForItself")}</div>
+                    </div>
+                  )
+                )}
+                <p style={{ fontSize: 13, color: "var(--muted)", marginTop: 4 }}>{currentPlan.desc}</p>
+
+                {currentPlan.monthly > 0 && providerProfile?.next_payment_due_date && (
+                  <p style={{ fontSize: 13, fontWeight: 600, marginTop: 10, color: providerProfile.is_active ? "var(--dark-text)" : "#B91C1C" }}>
+                    {t("providerPortal.billing.nextPaymentDue", { date: new Date(providerProfile.next_payment_due_date).toLocaleDateString([], { month: "long", day: "numeric", year: "numeric" }) })}
+                  </p>
+                )}
+                {currentPlan.monthly > 0 && !providerProfile?.is_active && (
+                  <div style={{ marginTop: 12, background: "#FEE2E2", border: "1px solid #FCA5A5", borderRadius: 8, padding: "10px 14px", fontSize: 13, color: "#B91C1C" }}>
+                    {t("providerPortal.billing.listingHidden")}
+                  </div>
+                )}
+
+                {currentPlan.monthly === 0 && (() => {
+                  const monthStart = new Date(); monthStart.setDate(1); monthStart.setHours(0, 0, 0, 0);
+                  const usedThisMonth = bookings.filter((b) => new Date(b.created_at) >= monthStart).length;
+                  const STARTER_CAP = 30;
+                  const atCap = usedThisMonth >= STARTER_CAP;
+                  return (
+                    <>
+                      <p style={{ fontSize: 13, color: "var(--accent-text)", fontWeight: 600, marginTop: 16 }}>
+                        {t("providerPortal.billing.trialNoPlanYet")}
+                      </p>
+                      <div style={{ marginTop: 10 }}>
+                        <div style={{ fontSize: 12, color: atCap ? "#B91C1C" : "var(--muted)", fontWeight: 600, marginBottom: 4 }}>
+                          {t("providerPortal.billing.bookingsUsedThisMonth", { used: Math.min(usedThisMonth, STARTER_CAP), cap: STARTER_CAP })}
+                        </div>
+                        <div style={{ height: 6, borderRadius: 3, background: "var(--sand)", overflow: "hidden" }}>
+                          <div style={{ height: "100%", width: `${(Math.min(usedThisMonth, STARTER_CAP) / STARTER_CAP) * 100}%`, background: atCap ? "#B91C1C" : "var(--forest)", borderRadius: 3 }} />
+                        </div>
+                        {atCap && (
+                          <p style={{ fontSize: 12, color: "#B91C1C", marginTop: 6 }}>
+                            {t("providerPortal.billing.hitLimit")}
+                          </p>
+                        )}
+                      </div>
+                    </>
+                  );
+                })()}
+              </div>
+
+              {(() => {
+                // FIX (Task 1, "keep only Pro and Team"): a Starter provider
+                // opening this card used to see Starter re-listed here too
+                // (marked "YOUR PLAN") right below the "You're on the free
+                // Starter plan" summary above — Starter's already covered by
+                // that summary, so it shouldn't also be a selectable row in
+                // the upgrade picker. Restricting the picker to PUBLIC_PLANS
+                // (Pro/Team only) matches the public pricing page; a Starter
+                // user's default selection falls back to "pro" instead of
+                // "starter" so a Pro/Team radio is pre-selected on first
+                // open rather than showing nothing checked.
+                const chosenPlan = PLANS.find((p) => p.id === (payingForPlan || (currentPlan.monthly === 0 ? "pro" : currentPlan.id))) || currentPlan;
+                const isUpgrade = chosenPlan.id !== currentPlan.id;
+                return (
+                  <div className="card" style={{ maxWidth: 560, marginTop: 20 }}>
+                    <div className="card-title">{currentPlan.monthly === 0 ? t("providerPortal.billing.upgradeYourPlan") : t("providerPortal.billing.payForYourPlan")}</div>
+                    <p style={{ fontSize: 13, color: "var(--muted)", marginBottom: 12 }}>
+                      {t("providerPortal.billing.pickPlanHint")}
+                    </p>
+
+                    {PUBLIC_PLANS.map((pl) => {
+                      const selected = chosenPlan.id === pl.id;
+                      return (
+                        <label
+                          key={pl.id}
+                          style={{
+                            display: "flex", gap: 10, alignItems: "flex-start", padding: "12px 14px", marginBottom: 8,
+                            border: `1px solid ${selected ? "var(--forest)" : "var(--border)"}`,
+                            background: selected ? "var(--sand)" : "transparent",
+                            borderRadius: 10, cursor: "pointer",
+                          }}
+                        >
+                          <input
+                            type="radio"
+                            name="plan-choice"
+                            checked={selected}
+                            onChange={() => setPayingForPlan(pl.id)}
+                            style={{ marginTop: 3 }}
+                          />
+                          <div style={{ flex: 1 }}>
+                            <div style={{ fontSize: 14, fontWeight: 700 }}>
+                              {pl.name} <span style={{ fontWeight: 500, color: "var(--muted)" }}>— {pl.price}</span>
+                              {pl.id === currentPlan.id && <span style={{ marginLeft: 8, fontSize: 11, fontWeight: 700, color: "var(--accent-text)" }}>{t("providerPortal.billing.yourPlanBadge")}</span>}
+                            </div>
+                            {pl.monthly > 0 && (
+                              <div style={{ fontSize: 11.5, fontWeight: 700, color: "var(--accent-text)", marginTop: 2 }}>
+                                {t("providerPortal.billing.justPerDay", { amount: (Math.round((pl.monthly / 30) * 100) / 100).toFixed(2) })}
+                              </div>
+                            )}
+                            <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 2 }}>{pl.desc}</div>
+                          </div>
+                        </label>
+                      );
+                    })}
+
+                    {chosenPlan.id === "business" && (
+                      <div style={{ marginTop: 4, marginBottom: 4, padding: "12px 14px", border: "1px solid var(--border)", borderRadius: 10 }}>
+                        <div className="input-group" style={{ marginBottom: 6 }}>
+                          <label>{t("providerPortal.billing.teamSeatsLabel")}</label>
+                          <input
+                            type="number"
+                            min={0}
+                            step={1}
+                            value={teamSeats}
+                            onChange={(e) => {
+                              const n = parseInt(e.target.value, 10);
+                              setTeamSeatsOverride(Number.isNaN(n) || n < 0 ? 0 : n);
+                            }}
+                            style={{ maxWidth: 120 }}
+                          />
+                        </div>
+                        <p style={{ fontSize: 12, color: "var(--muted)", margin: 0 }}>
+                          {t("providerPortal.billing.teamSeatsHint", { free: TEAM_FREE_SEATS, rate: TEAM_PER_SEAT_PRICE })}
+                        </p>
+                        {teamExtraSeats > 0 && (
+                          <p style={{ fontSize: 12.5, fontWeight: 700, color: "var(--accent-text)", marginTop: 6, marginBottom: 0 }}>
+                            {t("providerPortal.billing.teamSeatsBreakdown", {
+                              base: teamBaseFee.toFixed(2),
+                              extra: teamExtraSeats,
+                              rate: TEAM_PER_SEAT_PRICE,
+                              total: teamPlanTotal.toFixed(2),
+                            })}
+                          </p>
+                        )}
+                      </div>
+                    )}
+
+                    {chosenPlan.monthly === 0 ? (
+                      <p style={{ fontSize: 13, color: "var(--muted)", marginTop: 8 }}>
+                        {t("providerPortal.billing.freeTrialNote")}
+                      </p>
+                    ) : (
+                      <div style={{ marginTop: 8, paddingTop: 16, borderTop: "1px solid var(--border)" }}>
+                        <p style={{ fontSize: 13, marginBottom: 12 }}>
+                          {isUpgrade
+                            ? t("providerPortal.billing.sendForUpgrade", { amount: (chosenPlan.id === "business" ? teamPlanTotal : chosenPlan.monthly).toFixed(2), plan: chosenPlan.name })
+                            : t("providerPortal.billing.sendForRenewal", { amount: (chosenPlan.id === "business" ? teamPlanTotal : chosenPlan.monthly).toFixed(2), plan: chosenPlan.name })}
+                        </p>
+                        <div className="input-group">
+                          <label>{t("providerPortal.billing.whichPeriod")}</label>
+                          <input value={paymentForm.periodLabel} onChange={e => setPaymentForm(f => ({ ...f, periodLabel: e.target.value }))} placeholder={t("providerPortal.billing.periodPlaceholder")} />
+                        </div>
+                        <div className="input-group">
+                          <label>{t("providerPortal.billing.receiptLabel")}</label>
+                          <input key={paymentFileKey} type="file" accept="image/*,application/pdf" onChange={e => setPaymentForm(f => ({ ...f, receipt: e.target.files?.[0] || null }))} />
+                        </div>
+                        {paymentError && <p style={{ fontSize: 12, color: "#B91C1C", marginBottom: 8 }}>{paymentError}</p>}
+                        <button className="btn-sm lime" disabled={submittingPayment} onClick={submitPayment}>
+                          {submittingPayment ? t("providerPortal.billing.uploading") : isUpgrade ? t("providerPortal.billing.submitPaymentForPlan", { plan: chosenPlan.name }) : t("providerPortal.billing.submitPayment")}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
+
+              <div className="card" style={{ maxWidth: 560, marginTop: 20 }}>
+                <div className="card-title" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <span>{t("providerPortal.billing.paymentHistory")}</span>
+                  <button className="btn-sm forest" onClick={loadPayments} disabled={loadingPayments}>{loadingPayments ? "Refreshing..." : "Refresh"}</button>
+                </div>
+                {payments.length === 0 ? (
+                  <p style={{ fontSize: 13, color: "var(--muted)", padding: "16px 0" }}>{loadingPayments ? t("providerPortal.common.loading") : t("providerPortal.billing.noPaymentsYet")}</p>
+                ) : (
+                  payments.map((pmt) => (
+                    <div key={pmt.id} style={{ padding: "12px 0", borderBottom: "1px solid var(--border)", display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                      <div>
+                        <div style={{ fontSize: 14, fontWeight: 600 }}>{pmt.period_label} — BZ${pmt.amount}</div>
+                        <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 2 }}>{t("providerPortal.billing.submittedDate", { date: new Date(pmt.submitted_at).toLocaleDateString() })}</div>
+                        {pmt.admin_note && <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 2, fontStyle: "italic" }}>{t("providerPortal.billing.adminNote", { note: pmt.admin_note })}</div>}
+                        {pmt.receipt_url && <a href="#" onClick={(e) => { e.preventDefault(); openPrivateFile(pmt.receipt_url); }} style={{ fontSize: 12 }}>{t("providerPortal.common.viewReceipt")}</a>}
+                      </div>
+                      <span style={{ fontSize: 12, fontWeight: 600, color: statusColor[pmt.status] || "var(--muted)", background: statusBg[pmt.status] || "var(--sand)", padding: "3px 8px", borderRadius: 6, whiteSpace: "nowrap" }}>
+                        {t(`providerPortal.billing.status_${pmt.status}`, { defaultValue: pmt.status.charAt(0).toUpperCase() + pmt.status.slice(1) })}
+                      </span>
+                    </div>
+                  ))
+                )}
+              </div>
+            </>
+          );
+        })()}
+
+        {tab === "staff" && (
+          <>
+            <div className="portal-header"><h2>{t("providerPortal.nav.staff")}</h2><p>{t("providerPortal.staff.subtitle")}</p></div>
+
+            {!isBusinessPlan ? (
+              <div className="card" style={{ maxWidth: 560 }}>
+                <div className="card-title">{t("providerPortal.staff.businessPlanFeatureTitle")}</div>
+                <p style={{ fontSize: 13, color: "var(--muted)", marginBottom: 12 }}>
+                  {t("providerPortal.staff.businessPlanHint", { amount: (PLANS.find(p => p.id === "business")?.monthly || 0).toFixed(2) })}
+                </p>
+                <button className="btn-sm lime" onClick={() => setTab("billing")}>{t("providerPortal.staff.viewPlansBilling")}</button>
+              </div>
+            ) : (
+              <>
+                <div className="card" style={{ maxWidth: 560 }}>
+                  <div className="card-title">{t("providerPortal.staff.addStaffMember")}</div>
+                  <div className="form-row">
+                    <div className="input-group">
+                      <label>{t("providerPortal.staff.nameLabel")}</label>
+                      <input placeholder={t("providerPortal.staff.namePlaceholder")} value={newStaffName} onChange={e => setNewStaffName(e.target.value)} />
+                    </div>
+                    <div className="input-group">
+                      <label>{t("providerPortal.staff.phoneLabel")}</label>
+                      <input placeholder={t("providerPortal.common.phonePlaceholder")} value={newStaffPhone} onChange={e => setNewStaffPhone(e.target.value)} />
+                    </div>
+                  </div>
+                  <div className="input-group">
+                    <label>{t("providerPortal.staff.emailLabel")}</label>
+                    <input type="email" placeholder={t("providerPortal.staff.emailPlaceholder")} value={newStaffEmail} onChange={e => setNewStaffEmail(e.target.value)} />
+                  </div>
+                  {staffError && <p style={{ fontSize: 12, color: "#B91C1C", marginBottom: 8 }}>{staffError}</p>}
+                  <button className="btn-sm lime" disabled={savingStaff} onClick={addStaff}>{savingStaff ? t("providerPortal.common.adding") : t("providerPortal.staff.addStaffMember")}</button>
+                  <p style={{ fontSize: 11, color: "var(--muted)", marginTop: 10 }}>
+                    {t("providerPortal.staff.noAccountNeededHint")}
+                  </p>
+                </div>
+
+                <div className="card" style={{ maxWidth: 560, marginTop: 20 }}>
+                  <div className="card-title" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <span>{t("providerPortal.staff.yourTeam")}</span>
+                    <button className="btn-sm forest" onClick={loadStaff} disabled={loadingStaff}>{loadingStaff ? "Refreshing..." : "Refresh"}</button>
+                  </div>
+                  {staff.length === 0 && (
+                    <p style={{ fontSize: 13, color: "var(--muted)", padding: "16px 0" }}>{loadingStaff ? t("providerPortal.common.loading") : t("providerPortal.staff.noneYet")}</p>
+                  )}
+                  {staff.map((member) => (
+                    <div key={member.id} style={{ padding: "12px 0", borderBottom: "1px solid var(--border)" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                        <div>
+                          <div style={{ fontSize: 14, fontWeight: 600 }}>
+                            {member.name}{!member.is_active && <span style={{ fontWeight: 500, color: "var(--muted)" }}> — {t("providerPortal.staff.inactiveSuffix")}</span>}
+                            {" "}
+                            <span style={{ fontSize: 11, fontWeight: 600, padding: "2px 7px", borderRadius: 5, background: member.user_id ? "#E7F5EC" : "var(--sand)", color: member.user_id ? "var(--forest)" : "var(--muted)" }}>
+                              {member.user_id ? t("providerPortal.staff.signedIn") : t("providerPortal.staff.invitedNotSignedIn")}
+                            </span>
+                          </div>
+                          {member.phone && <div style={{ fontSize: 12, color: "var(--muted)" }}>{member.phone}</div>}
+                          {editingStaffEmailId === member.id ? (
+                            <div style={{ display: "flex", gap: 6, marginTop: 4 }}>
+                              <input type="email" style={{ fontSize: 12, padding: "3px 6px" }} value={editStaffEmailValue} onChange={e => setEditStaffEmailValue(e.target.value)} />
+                              <button className="btn-sm forest" style={{ padding: "2px 8px" }} onClick={() => saveStaffEmail(member)}>{t("providerPortal.common.save")}</button>
+                              <button className="btn-sm ghost" style={{ padding: "2px 8px" }} onClick={() => setEditingStaffEmailId(null)}>{t("providerPortal.common.cancel")}</button>
+                            </div>
+                          ) : (
+                            <div style={{ fontSize: 12, color: "var(--muted)" }}>
+                              {member.email || t("providerPortal.staff.noEmailSet")}
+                              {!member.user_id && (
+                                <a href="#" style={{ marginLeft: 8 }} onClick={(e) => { e.preventDefault(); startEditStaffEmail(member); }}>{member.email ? t("providerPortal.staff.editEmail") : t("providerPortal.staff.addEmail")}</a>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                        <div style={{ display: "flex", gap: 8 }}>
+                          <button className="btn-sm ghost" onClick={() => toggleStaffActive(member)}>{member.is_active ? t("providerPortal.staff.setInactive") : t("providerPortal.staff.setActive")}</button>
+                          <button className="btn-sm ghost" style={{ color: "#B91C1C" }} onClick={() => removeStaff(member)}>{t("providerPortal.common.remove")}</button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+          </>
+        )}
+
+        {tab === "reviews" && (
+          <>
+            <div className="portal-header"><h2>{t("providerPortal.nav.reviews")}</h2><p>{t("providerPortal.reviews.subtitle")}</p></div>
+            <div className="card">
+              <div className="card-title" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span>
+                  {myReviews.length > 0 && (
+                    <>
+                      <StarRating value={(myReviews.reduce((sum, r) => sum + (Number(r.rating) || 0), 0) / myReviews.length).toFixed(1)} size={15} />{" "}
+                      {(myReviews.reduce((sum, r) => sum + (Number(r.rating) || 0), 0) / myReviews.length).toFixed(1)}{" "}
+                    </>
+                  )}
+                  <span style={{ color: "var(--muted)", fontWeight: 500, fontSize: 13 }}>
+                    {t("providerPortal.reviews.reviewCount", { count: myReviews.length })}
+                  </span>
+                </span>
+                <button className="btn-sm forest" onClick={loadMyReviews} disabled={loadingMyReviews}>{loadingMyReviews ? "Refreshing..." : "Refresh"}</button>
+              </div>
+
+              {myReviews.length === 0 && (
+                <p style={{ fontSize: 13, color: "var(--muted)", padding: "20px 0" }}>
+                  {loadingMyReviews ? t("providerPortal.common.loading") : t("providerPortal.reviews.noneYet")}
+                </p>
+              )}
+
+              {myReviews.map((r) => {
+                const isHeld = r.hold_until && new Date(r.hold_until) > new Date();
+                return (
+                  <div key={r.id} className="booking-item" style={{ alignItems: "flex-start" }}>
+                    <div className="booking-info" style={{ flex: 1 }}>
+                      <div className="title" style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                        <StarRating value={r.rating} />
+                        <span>{r.users?.full_name || t("providerPortal.common.customerFallback")}</span>
+                        {isHeld && (
+                          <span style={{ fontSize: 11, fontWeight: 700, color: "var(--accent-text)", background: "var(--sand)", padding: "2px 8px", borderRadius: 999 }}>
+                            🔒 {t("providerPortal.reviews.privateUntil", { date: new Date(r.hold_until).toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) })}
+                          </span>
+                        )}
+                      </div>
+                      {r.comment && <p style={{ fontSize: 13, marginTop: 6, lineHeight: 1.6 }}>{r.comment}</p>}
+                      <div className="meta" style={{ marginTop: 6 }}>
+                        {r.created_at ? new Date(r.created_at).toLocaleDateString() : ""}
+                      </div>
+                      {isHeld && (
+                        <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 6, lineHeight: 1.6 }}>
+                          {t("providerPortal.reviews.privateHint")}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+
+              <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 16, lineHeight: 1.6 }}>
+                {t("providerPortal.reviews.cannotEditHint")}
+              </p>
+            </div>
+          </>
+        )}
+
+        {tab === "review" && (() => {
+          const thisMonth = monthlyTrend.length ? monthlyTrend[monthlyTrend.length - 1] : null;
+          const prevMonth = monthlyTrend.length > 1 ? monthlyTrend[monthlyTrend.length - 2] : null;
+          const revenueDeltaPct = thisMonth && prevMonth && Number(prevMonth.revenue_total) > 0
+            ? Math.round(((Number(thisMonth.revenue_total) - Number(prevMonth.revenue_total)) / Number(prevMonth.revenue_total)) * 100)
+            : null;
+          const completionPct = thisMonth && thisMonth.bookings_total > 0
+            ? Math.round((thisMonth.bookings_completed / thisMonth.bookings_total) * 100)
+            : null;
+          const revenuePoints = monthlyTrend.map((m) => ({ label: monthLabelFromDateStr(m.month_start), y: Number(m.revenue_total) }));
+          const bookingPoints = monthlyTrend.map((m) => ({ label: monthLabelFromDateStr(m.month_start), y: m.bookings_total }));
+          const ratingPoints = monthlyTrend.map((m) => ({ label: monthLabelFromDateStr(m.month_start), y: m.avg_rating != null ? Number(m.avg_rating) : null }));
+
+          return (
+            <>
+              <div className="portal-header">
+                <h2>{t("providerPortal.nav.monthlyReview")}</h2>
+                <p>{t("providerPortal.monthlyReview.subtitle")}</p>
+              </div>
+
+              {loadingTrend && monthlyTrend.length === 0 ? (
+                <p style={{ fontSize: 13, color: "var(--muted)", padding: "16px 0" }}>{t("providerPortal.common.loading")}</p>
+              ) : (
+                <>
+                  <div className="metric-grid" style={{ gridTemplateColumns: "1fr 1fr 1fr" }}>
+                    <div className="metric">
+                      <div className="metric-label">{t("providerPortal.monthlyReview.revenueThisMonth")}</div>
+                      <div className="metric-value" style={{ color: "var(--clay)" }}>BZ${thisMonth ? Number(thisMonth.revenue_total).toFixed(0) : "0"}</div>
+                      <div className="metric-sub">{revenueDeltaPct === null ? t("providerPortal.common.noDataLastMonth") : t("providerPortal.common.vsLastMonth", { arrow: revenueDeltaPct >= 0 ? "↑" : "↓", pct: Math.abs(revenueDeltaPct) })}</div>
+                    </div>
+                    <div className="metric">
+                      <div className="metric-label">{t("providerPortal.monthlyReview.bookingsThisMonth")}</div>
+                      <div className="metric-value">{thisMonth ? thisMonth.bookings_total : 0}</div>
+                      <div className="metric-sub">{completionPct === null ? t("providerPortal.monthlyReview.noBookingsYet") : t("providerPortal.monthlyReview.pctCompleted", { pct: completionPct })}</div>
+                    </div>
+                    <div className="metric">
+                      <div className="metric-label">{t("providerPortal.monthlyReview.avgRating")}</div>
+                      <div className="metric-value">{thisMonth && thisMonth.avg_rating != null ? Number(thisMonth.avg_rating).toFixed(1) : "—"}</div>
+                      <div className="metric-sub">{thisMonth && thisMonth.reviews_count ? t("providerPortal.monthlyReview.reviewsThisMonth", { count: thisMonth.reviews_count }) : t("providerPortal.monthlyReview.noReviewsYet")}</div>
+                    </div>
+                  </div>
+
+                  <div className="card" style={{ marginBottom: 20 }}>
+                    <div className="card-title">{t("providerPortal.monthlyReview.revenueTrend")}</div>
+                    <p style={{ fontSize: 12.5, color: "var(--muted)", marginTop: -8, marginBottom: 12 }}>{t("providerPortal.monthlyReview.revenueTrendHint")}</p>
+                    <TrendChart points={revenuePoints} kind="line" color="#D4795A" formatValue={(v) => `$${Math.round(v)}`} />
+                  </div>
+
+                  <div className="card" style={{ marginBottom: 20 }}>
+                    <div className="card-title">{t("providerPortal.monthlyReview.bookingVolume")}</div>
+                    <p style={{ fontSize: 12.5, color: "var(--muted)", marginTop: -8, marginBottom: 12 }}>{t("providerPortal.monthlyReview.bookingVolumeHint")}</p>
+                    <TrendChart points={bookingPoints} kind="bar" color="#1BAF7A" formatValue={(v) => `${v}`} />
+                  </div>
+
+                  <div className="card">
+                    <div className="card-title">{t("providerPortal.monthlyReview.reviewsRatings")}</div>
+                    <p style={{ fontSize: 12.5, color: "var(--muted)", marginTop: -8, marginBottom: 12 }}>{t("providerPortal.monthlyReview.reviewsRatingsHint")}</p>
+                    <TrendChart points={ratingPoints} kind="line" color="#F59E0B" formatValue={(v) => `${v.toFixed(1)}★`} />
+                    {monthlyTrend.some((m) => m.reviews_count > 0) && (
+                      <div style={{ display: "flex", justifyContent: "space-around", marginTop: 4, paddingTop: 10, borderTop: "1px solid var(--border)" }}>
+                        {monthlyTrend.map((m) => (
+                          <div key={m.month_start} style={{ textAlign: "center", fontSize: 11, color: "var(--muted)" }}>
+                            {t("providerPortal.reviews.reviewCount", { count: m.reviews_count })}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 16 }}>
+                    {t("providerPortal.monthlyReview.emailSummaryNote")}
+                  </p>
+                </>
+              )}
+            </>
+          );
+        })()}
+
+        {tab === "profile" && (
+          <>
+            <div className="portal-header"><h2>{t("providerPortal.nav.profile")}</h2><p>{t("providerPortal.profile.subtitle")}</p></div>
+            <div className="card" style={{ maxWidth: 560 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 24, paddingBottom: 20, borderBottom: "1px solid var(--border)" }}>
+                <div style={{ position: "relative", width: 72, height: 72, flexShrink: 0 }}>
+                  {profilePhotoUrl ? (
+                    <img
+                      src={profilePhotoUrl}
+                      alt=""
+                      style={{ width: 72, height: 72, borderRadius: 14, objectFit: "cover", display: "block" }}
+                    />
+                  ) : (
+                    <div style={{ width: 72, height: 72, background: "var(--forest)", borderRadius: 14, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 36 }}>✂️</div>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => profilePhotoInputRef.current?.click()}
+                    title={profilePhotoUrl ? t("providerPortal.profile.changePhoto") : t("providerPortal.profile.uploadPhoto")}
+                    aria-label={profilePhotoUrl ? t("providerPortal.profile.changePhoto") : t("providerPortal.profile.uploadPhoto")}
+                    style={{ position: "absolute", bottom: -4, right: -4, width: 26, height: 26, borderRadius: "50%", background: "#fff", border: "1px solid var(--border)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, cursor: "pointer", boxShadow: "0 1px 3px rgba(0,0,0,0.18)", padding: 0 }}
+                  >
+                    ✎
+                  </button>
+                  <input
+                    ref={profilePhotoInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleProfilePhotoFileSelect}
+                    style={{ display: "none" }}
+                  />
+                </div>
+                <div>
+                  <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 20, fontWeight: 700 }}>{providerProfile.business_name}</div>
+                  <div style={{ color: "var(--muted)", fontSize: 14 }}>{providerProfile.service_type} · {providerProfile.district}</div>
+                </div>
+                <span className={`status-pill ${providerProfile.is_active ? "confirmed" : "pending"}`} style={{ marginLeft: "auto" }}>{providerProfile.is_active ? t("providerPortal.status.verified") : t("providerPortal.profile.pendingActivation")}</span>
+              </div>
+              <div className="input-group"><label>{t("providerPortal.profile.businessName")}</label><input value={profileForm.business_name} onChange={e => setProfileForm(f => ({ ...f, business_name: e.target.value }))} /></div>
+              <div className="input-group"><label>{t("providerPortal.profile.about")}</label><textarea value={profileForm.bio} onChange={e => setProfileForm(f => ({ ...f, bio: e.target.value }))} /></div>
+              <div className="input-group">
+                <label>{t("providerPortal.profile.district")}</label>
+                <select value={profileForm.district} onChange={e => setProfileForm(f => ({ ...f, district: e.target.value }))}>
+                  {DISTRICTS.map(d => <option key={d}>{d}</option>)}
+                </select>
+              </div>
+              <div className="input-group"><label>{t("providerPortal.profile.whatsappPhone")}</label><input placeholder="+501 600 0000" value={profileForm.whatsapp} onChange={e => setProfileForm(f => ({ ...f, whatsapp: e.target.value }))} /></div>
+              <div className="input-group">
+                <label>{t("providerPortal.profile.taxIdLabel")}</label>
+                <input placeholder={t("providerPortal.profile.taxIdPlaceholder")} value={profileForm.tax_id} onChange={e => setProfileForm(f => ({ ...f, tax_id: e.target.value }))} />
+              </div>
+              <button className="btn-sm forest" onClick={saveProfile} disabled={savingProfile}>{savingProfile ? t("providerPortal.common.saving") : t("providerPortal.profile.saveProfile")}</button>
+            </div>
+
+            <div className="card" style={{ maxWidth: 560, marginTop: 20 }}>
+              <div className="card-title">{t("providerPortal.profile.featuredTitle")}</div>
+              {isBusinessPlan ? (
+                <>
+                  <p style={{ fontSize: 13, color: "var(--muted)", marginBottom: 12 }}>
+                    {t("providerPortal.profile.featuredHint")}
+                  </p>
+                  <button className={profileForm.is_featured ? "btn-sm forest" : "btn-sm ghost"} disabled={savingFeatured} onClick={toggleFeatured}>
+                    {savingFeatured ? t("providerPortal.common.saving") : profileForm.is_featured ? t("providerPortal.profile.featuredOn") : t("providerPortal.profile.featuredOff")}
+                  </button>
+                </>
+              ) : (
+                <p style={{ fontSize: 13, color: "var(--muted)" }}>
+                  {t("providerPortal.profile.featuredUpsell")} <a href="#" onClick={(e) => { e.preventDefault(); setTab("billing"); }}>{t("providerPortal.profile.viewPlans")}</a>.
+                </p>
+              )}
+            </div>
+
+            <div className="card" style={{ maxWidth: 560, marginTop: 20 }}>
+              <div className="card-title">{t("providerPortal.profile.loyaltyTitle")}</div>
+              {isProOrAbove ? (
+                <>
+                  <p style={{ fontSize: 13, color: "var(--muted)", marginBottom: 12 }}>
+                    {t("providerPortal.profile.loyaltyHint")}
+                  </p>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+                    <div className={`toggle ${loyaltyForm.enabled ? "on" : ""}`} onClick={() => setLoyaltyForm(f => ({ ...f, enabled: !f.enabled }))}></div>
+                    <span style={{ fontSize: 13, fontWeight: 600 }}>{loyaltyForm.enabled ? t("providerPortal.common.on") : t("providerPortal.common.off")}</span>
+                  </div>
+                  <div className="form-row">
+                    <div className="input-group">
+                      <label>{t("providerPortal.profile.pointsPerDollar")}</label>
+                      <input type="number" min="0" step="0.1" value={loyaltyForm.pointsPerDollar} onChange={e => setLoyaltyForm(f => ({ ...f, pointsPerDollar: e.target.value }))} />
+                    </div>
+                    <div className="input-group">
+                      <label>{t("providerPortal.profile.pointsNeeded")}</label>
+                      <input type="number" min="1" step="1" value={loyaltyForm.threshold} onChange={e => setLoyaltyForm(f => ({ ...f, threshold: e.target.value }))} />
+                    </div>
+                  </div>
+                  <div className="input-group">
+                    <label>{t("providerPortal.profile.whatsTheReward")}</label>
+                    <input placeholder={t("providerPortal.profile.rewardPlaceholder")} value={loyaltyForm.description} onChange={e => setLoyaltyForm(f => ({ ...f, description: e.target.value }))} />
+                  </div>
+                  <button className="btn-sm forest" onClick={saveLoyaltySettings} disabled={savingLoyalty}>{savingLoyalty ? t("providerPortal.common.saving") : t("providerPortal.profile.saveLoyalty")}</button>
+                  <p style={{ fontSize: 11, color: "var(--muted)", marginTop: 10 }}>
+                    {t("providerPortal.profile.loyaltyWalkinNote")}
+                  </p>
+                </>
+              ) : (
+                <p style={{ fontSize: 13, color: "var(--muted)" }}>
+                  {t("providerPortal.profile.loyaltyUpsell")} <a href="#" onClick={(e) => { e.preventDefault(); setTab("billing"); }}>{t("providerPortal.profile.viewPlans")}</a>.
+                </p>
+              )}
+            </div>
+
+            <div className="card" style={{ maxWidth: 560, marginTop: 20 }}>
+              <div className="card-title">{t("providerPortal.profile.photosTitle")}</div>
+              <p style={{ color: "var(--muted)", fontSize: 13, marginTop: -8, marginBottom: 16 }}>{t("providerPortal.profile.photosHint")}</p>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginBottom: 16 }}>
+                {photos.map((url) => (
+                  <div key={url} style={{ position: "relative", width: 96, height: 96 }}>
+                    <img src={url} alt={t("providerPortal.profile.photoAlt")} loading="lazy" decoding="async" width={96} height={96} style={{ width: 96, height: 96, objectFit: "cover", borderRadius: 10, border: "1px solid var(--border)" }} />
+                    <button
+                      onClick={() => handleDeletePhoto(url)}
+                      style={{ position: "absolute", top: -6, right: -6, width: 22, height: 22, borderRadius: "50%", background: "var(--forest)", color: "#fff", border: "none", cursor: "pointer", fontSize: 12, lineHeight: "22px" }}
+                      title={t("providerPortal.profile.removePhotoTitle")}
+                    >×</button>
+                  </div>
+                ))}
+                <label style={{ width: 96, height: 96, borderRadius: 10, border: "1px dashed var(--border)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "var(--muted)", fontSize: 12, textAlign: "center" }}>
+                  {uploadingPhoto ? t("providerPortal.profile.uploadingPhoto") : `+ ${t("providerPortal.profile.addPhoto")}`}
+                  <input type="file" accept="image/*" onChange={handlePhotoUpload} disabled={uploadingPhoto} style={{ display: "none" }} />
+                </label>
+              </div>
+            </div>
+
+            <div className="card" style={{ maxWidth: 560, marginTop: 20 }}>
+              <div className="card-title">{t("providerPortal.profile.locationTitle")}</div>
+              <p style={{ color: "var(--muted)", fontSize: 13, marginTop: -8, marginBottom: 16 }}>{t("providerPortal.profile.locationHint")}</p>
+              <div style={{ borderRadius: 10, overflow: "hidden", border: "1px solid var(--border)", marginBottom: 12 }}>
+                <Suspense fallback={<MapLoadingFallback height={260} />}>
+                  <ProviderLocationMap center={mapPosition || BELIZE_CENTER} zoom={mapPosition ? 15 : 8} position={mapPosition} onPick={setMapPosition} height={260} />
+                </Suspense>
+              </div>
+              <div className="input-group"><label>{t("providerPortal.profile.locationLabelField")}</label><input placeholder={t("providerPortal.profile.locationLabelPlaceholder")} value={locationLabel} onChange={e => setLocationLabel(e.target.value)} /></div>
+              {mapPosition && (
+                <p style={{ fontSize: 12, color: "var(--muted)", marginBottom: 12 }}>
+                  {t("providerPortal.profile.pinSetAt", { lat: mapPosition[0].toFixed(5), lng: mapPosition[1].toFixed(5) })}{" "}
+                  <a href={directionsUrl(mapPosition[0], mapPosition[1])} target="_blank" rel="noreferrer">{t("providerPortal.profile.previewDirections")}</a>
+                </p>
+              )}
+              <button className="btn-sm forest" onClick={saveLocation} disabled={savingLocation || !mapPosition}>{savingLocation ? t("providerPortal.common.saving") : t("providerPortal.profile.saveLocation")}</button>
+            </div>
+          </>
+        )}
+
+        {tab === "modules" && <ModulesPanel />}
+
+        {tab === "settings" && (
+          <>
+            <div className="portal-header"><h2>{t("providerPortal.nav.settings")}</h2></div>
+            <div className="card" style={{ maxWidth: 480 }}>
+              <div className="card-title">{t("providerPortal.settings.walkInsTitle")}</div>
+              <p style={{ fontSize: 13, color: "var(--muted)", marginTop: -8, marginBottom: 16 }}>{t("providerPortal.settings.walkInsHint")}</p>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", gap: 16 }}>
+                <div>
+                  <div style={{ fontSize: 14, fontWeight: 600 }}>{t("providerPortal.settings.acceptWalkins")}</div>
+                  <div style={{ fontSize: 12, color: "var(--muted)" }}>{t("providerPortal.settings.acceptWalkinsHint")}</div>
+                </div>
+                <div
+                  className={`toggle ${acceptsWalkins ? "on" : ""}`}
+                  style={{ opacity: savingWalkinPref ? 0.5 : 1, flexShrink: 0 }}
+                  onClick={toggleAcceptsWalkins}
+                ></div>
+              </div>
+            </div>
+
+            <div className="card" style={{ maxWidth: 480, marginTop: 20 }}>
+              <div className="card-title">{t("providerPortal.settings.depositTitle")}</div>
+              <p style={{ fontSize: 13, color: "var(--muted)", marginTop: -8, marginBottom: 16 }}>{t("providerPortal.settings.depositHint")}</p>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", borderBottom: "1px solid var(--border)" }}>
+                <span style={{ fontSize: 14 }}>{t("providerPortal.settings.requireDeposit")}</span>
+                <div className={`toggle ${depositForm.downpayment_required ? "on" : ""}`} onClick={() => setDepositForm(f => ({ ...f, downpayment_required: !f.downpayment_required }))}></div>
+              </div>
+              {depositForm.downpayment_required && (
+                <div className="input-group" style={{ marginTop: 12 }}>
+                  <label>{t("providerPortal.settings.depositPercentage")}</label>
+                  <select value={depositForm.downpayment_pct} onChange={e => setDepositForm(f => ({ ...f, downpayment_pct: e.target.value }))}>
+                    {[25, 50, 75, 100].map(p => <option key={p} value={p}>{p}%</option>)}
+                  </select>
+                </div>
+              )}
+
+              {!depositForm.downpayment_required && (
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", borderBottom: "1px solid var(--border)", gap: 16 }}>
+                  <div>
+                    <span style={{ fontSize: 14 }}>{t("providerPortal.settings.skipReview")}</span>
+                    <div style={{ fontSize: 12, color: "var(--muted)" }}>
+                      {t("providerPortal.settings.skipReviewHint")}
+                    </div>
+                  </div>
+                  <div className={`toggle ${depositForm.auto_confirm_bookings ? "on" : ""}`} onClick={() => setDepositForm(f => ({ ...f, auto_confirm_bookings: !f.auto_confirm_bookings }))}></div>
+                </div>
+              )}
+              <button className="btn-sm forest" style={{ marginTop: 12 }} onClick={saveDepositSettings} disabled={savingDeposit}>{savingDeposit ? t("providerPortal.common.saving") : t("providerPortal.settings.saveDepositSettings")}</button>
+
+              <div className="card-title" style={{ marginTop: 28 }}>{t("providerPortal.settings.notificationsTitle")}</div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", borderBottom: "1px solid var(--border)", gap: 16 }}>
+                <div>
+                  <div style={{ fontSize: 14, fontWeight: 600 }}>{t("providerPortal.settings.emailNewBookings")}</div>
+                  <div style={{ fontSize: 12, color: "var(--muted)" }}>
+                    {t("providerPortal.settings.emailNewBookingsHint")}
+                  </div>
+                </div>
+                <div
+                  className={`toggle ${emailOnNewBooking ? "on" : ""}`}
+                  style={{ opacity: savingNotifyPref ? 0.5 : 1, flexShrink: 0 }}
+                  onClick={toggleEmailOnNewBooking}
+                ></div>
+              </div>
+              <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 12, lineHeight: 1.6 }}>
+                {t("providerPortal.settings.everythingElseNote")}
+              </p>
+
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", borderBottom: "1px solid var(--border)", gap: 16, marginTop: 8 }}>
+                <div>
+                  <div style={{ fontSize: 14, fontWeight: 600 }}>{t("providerPortal.settings.pushNotifications")}</div>
+                  <div style={{ fontSize: 12, color: "var(--muted)" }}>
+                    {t("providerPortal.settings.pushNotificationsHint")}
+                  </div>
+                </div>
+                {pushEnabled ? (
+                  <span style={{ fontSize: 12, fontWeight: 700, color: "var(--accent-text)", flexShrink: 0 }}>✓ {t("providerPortal.settings.onBadge")}</span>
+                ) : (
+                  <button className="btn-sm forest" style={{ flexShrink: 0 }} onClick={enablePushNotifications} disabled={subscribingPush}>
+                    {subscribingPush ? t("providerPortal.settings.turningOn") : t("providerPortal.settings.turnOn")}
+                  </button>
+                )}
+              </div>
+              {pushError && <p style={{ fontSize: 12, color: "#B91C1C", marginTop: 8 }}>{pushError}</p>}
+
+              <div className="card-title" style={{ marginTop: 24 }}>{t("providerPortal.settings.whatVaibookCharges")}</div>
+              <p style={{ fontSize: 13, color: "var(--muted)", lineHeight: 1.6 }}>
+                {t("providerPortal.settings.chargesExplain")}
+              </p>
+            </div>
+          </>
+        )}
+      </main>
+
+      <SiteFooter />
+
+      {/* CUSTOM BLOCK — bottom sheet, not a modal: say when you'll be back —
+          "15m", "30m", "1h", or an exact resume time. Purely a pause from
+          the business (lunch, an errand, stepping away) — no "walk-in"
+          option in here, since that word now means the separate revenue
+          action above. The block always starts right now; only the end
+          time is asked for. This is the ONLY pause/break entry point on
+          the dashboard — the old standalone one-tap 30-min button was
+          removed so there's exactly one place this can happen. */}
+      {showBlockSheet && (
+        <div className="sheet-overlay" onClick={closeBlockSheet}>
+          <div className="sheet-panel" onClick={(e) => e.stopPropagation()}>
+            <div className="sheet-handle"></div>
+            <h3 style={{ fontSize: 17, fontWeight: 800, margin: "0 0 4px", color: "var(--dark-text)" }}>{t("providerPortal.blockSheet.title")}</h3>
+            <p style={{ fontSize: 13, color: "var(--muted)", margin: "0 0 16px" }}>{t("providerPortal.blockSheet.subtitle")}</p>
+            <div className="preset-row">
+              <button className={`preset-btn ${blockSheetResumeMode === "in15m" ? "active" : ""}`} onClick={() => setBlockSheetResumeMode("in15m")}>{t("providerPortal.blockSheet.in15m")}</button>
+              <button className={`preset-btn ${blockSheetResumeMode === "in30m" ? "active" : ""}`} onClick={() => setBlockSheetResumeMode("in30m")}>{t("providerPortal.blockSheet.in30m")}</button>
+              <button className={`preset-btn ${blockSheetResumeMode === "in1h" ? "active" : ""}`} onClick={() => setBlockSheetResumeMode("in1h")}>{t("providerPortal.blockSheet.in1h")}</button>
+              <button className={`preset-btn ${blockSheetResumeMode === "custom" ? "active" : ""}`} onClick={() => setBlockSheetResumeMode("custom")}>{t("providerPortal.blockSheet.resumeAt")}</button>
+            </div>
+            {blockSheetResumeMode === "custom" && (
+              <div className="input-group" style={{ marginBottom: 12 }}>
+                <label>{t("providerPortal.blockSheet.resumeAtLabel")}</label>
+                <input type="time" value={blockSheetResumeAt} onChange={(e) => setBlockSheetResumeAt(e.target.value)} />
+              </div>
+            )}
+            {blockError && <p style={{ fontSize: 12, color: "#B91C1C", marginBottom: 12 }}>{blockError}</p>}
+            <button className="btn-sm forest" style={{ width: "100%", padding: "14px 0", fontSize: 15, borderRadius: 12 }} disabled={savingBlock} onClick={submitBlockSheet}>
+              {savingBlock ? t("providerPortal.blockSheet.blocking") : (() => {
+                const end = resolveBlockSheetEnd();
+                return end && end > new Date() ? t("providerPortal.blockSheet.blockUntil", { time: formatBookingTime(localTimeStr(end)) }) : t("providerPortal.blockSheet.blockCalendar");
+              })()}
+            </button>
+            <button className="btn-sm ghost" style={{ width: "100%", padding: "12px 0", marginTop: 8 }} onClick={closeBlockSheet}>{t("providerPortal.common.cancel")}</button>
+          </div>
+        </div>
+      )}
+
+      {/* WALK-IN SALE — bottom sheet: tap the service(s) this customer is
+          getting right now, see the running total, submit. Creates the
+          booking as done and paid on the spot — no date/time/name form,
+          unlike "+ Add appointment" in the Bookings tab. */}
+      {showWalkInSheet && (
+        <div className="sheet-overlay" onClick={closeWalkInSheet}>
+          <div className="sheet-panel" onClick={(e) => e.stopPropagation()}>
+            <div className="sheet-handle"></div>
+            <h3 style={{ fontSize: 17, fontWeight: 800, margin: "0 0 4px", color: "var(--dark-text)" }}>{t("providerPortal.walkInSheet.title")}</h3>
+            <p style={{ fontSize: 13, color: "var(--muted)", margin: "0 0 16px" }}>{t("providerPortal.walkInSheet.subtitle")}</p>
+            <div style={{ maxHeight: "45vh", overflowY: "auto", marginBottom: 12 }}>
+              {activeServices.map((s) => {
+                const active = walkInSaleServiceIds.includes(s.id);
+                return (
+                  <div key={s.id} className={`service-card ${active ? "active" : ""}`} onClick={() => toggleWalkInSaleService(s.id)}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                      <span className="service-card-check">✓</span>
+                      <div>
+                        <div className="service-card-name" style={{ fontWeight: 600, fontSize: 14, color: "var(--dark-text)" }}>{s.name}</div>
+                        <div className="service-card-meta" style={{ fontSize: 12, color: "var(--muted)" }}>{t("providerPortal.common.durationMin", { count: s.duration_min })} · BZ${s.price}</div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            {walkInSaleServiceIds.length > 0 && (
+              <p style={{ fontSize: 14, fontWeight: 700, color: "var(--dark-text)", margin: "0 0 12px" }}>
+                {t("providerPortal.walkInSheet.totalSummary", { total: walkInSaleTotal.toFixed(2), duration: walkInSaleDuration, count: walkInSaleServiceIds.length })}
+              </p>
+            )}
+            {walkInSaleError && <p style={{ fontSize: 12, color: "#B91C1C", marginBottom: 12 }}>{walkInSaleError}</p>}
+            <button
+              className="btn-sm forest"
+              style={{ width: "100%", padding: "14px 0", fontSize: 15, borderRadius: 12 }}
+              disabled={savingWalkInSale || walkInSaleServiceIds.length === 0}
+              onClick={submitWalkInSale}
+            >
+              {savingWalkInSale ? t("providerPortal.walkInSheet.loggingSale") : walkInSaleServiceIds.length > 0 ? t("providerPortal.walkInSheet.logSaleWithTotal", { total: walkInSaleTotal.toFixed(2) }) : t("providerPortal.walkInSheet.logSale")}
+            </button>
+            <button className="btn-sm ghost" style={{ width: "100%", padding: "12px 0", marginTop: 8 }} onClick={closeWalkInSheet}>{t("providerPortal.common.cancel")}</button>
+          </div>
+        </div>
+      )}
+
+      {/* ELITE WELCOME — the launch graphic modal. Lazy-loaded (pulls in
+          the qrcode package) so it only costs bandwidth the moment a
+          provider actually opens it. */}
+      {showLaunchGraphic && (
+        <div className="qr-modal-overlay" onClick={() => setShowLaunchGraphic(false)}>
+          <button className="qr-modal-close" onClick={() => setShowLaunchGraphic(false)} aria-label={t("providerPortal.launchGraphic.closeAriaLabel")}>✕</button>
+          <div className="plaque-modal-panel" onClick={(e) => e.stopPropagation()}>
+            <Suspense fallback={<div className="plaque-loading">{t("providerPortal.launchGraphic.preparing")}</div>}>
+              <WelcomePlaqueGenerator businessName={providerProfile.business_name} bookingUrl={bookingUrl} />
+            </Suspense>
+          </div>
+        </div>
+      )}
+
+      {/* SHOW QR CODE — full-screen so a customer standing next to you can
+          just point their camera at the phone, no pinch-zooming a small
+          card. Same qrserver.com-generated image the old QR tab used. */}
+      {showQrModal && (
+        <div className="qr-modal-overlay" onClick={() => setShowQrModal(false)}>
+          <button className="qr-modal-close" onClick={() => setShowQrModal(false)} aria-label={t("providerPortal.qrModal.closeAriaLabel")}>✕</button>
+          <div className="qr-modal-panel" onClick={(e) => e.stopPropagation()}>
+            <img
+              src={qrImageUrl}
+              alt={t("providerPortal.qrModal.altText", { business: providerProfile?.business_name || t("providerPortal.qrModal.yourFallback") })}
+              className="qr-modal-img"
+            />
+            <div className="qr-modal-business">{providerProfile?.business_name || t("providerPortal.qrModal.bookWithUsFallback")}</div>
+            <p className="qr-modal-hint">{t("providerPortal.qrModal.scanHint")}</p>
+          </div>
+        </div>
+      )}
+
+      {/* SEND CHECK-IN — no bulk SMS/WhatsApp API behind this (VaiBook has
+          no messaging backend), so each quiet regular gets their own
+          prefilled wa.me link, one tap each, instead of a fake "blast". */}
+      {showCheckInModal && (
+        <div className="sheet-overlay" onClick={() => setShowCheckInModal(false)}>
+          <div className="sheet-panel" onClick={(e) => e.stopPropagation()}>
+            <div className="sheet-handle"></div>
+            <h3 style={{ fontSize: 17, fontWeight: 800, margin: "0 0 4px", color: "var(--dark-text)" }}>{t("providerPortal.checkInModal.title")}</h3>
+            <p style={{ fontSize: 13, color: "var(--muted)", margin: "0 0 16px" }}>{t("providerPortal.checkInModal.subtitle")}</p>
+            <div style={{ maxHeight: "50vh", overflowY: "auto" }}>
+              {quietRegulars.map((c, i) => {
+                const daysAgo = Math.round((now.getTime() - c.lastDate.getTime()) / (24 * 60 * 60 * 1000));
+                const msg = `Hi ${c.name}, it's been a while — ready to book your next appointment with ${providerProfile?.business_name || "us"}? You can grab a time right on VaiBook: ${bookingUrl}`;
+                const waUrl = c.phone ? `https://wa.me/${c.phone.replace(/[^\d]/g, "")}?text=${encodeURIComponent(msg)}` : null;
+                return (
+                  <div className="block-row" key={i}>
+                    <div className="dot"></div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: "var(--dark-text)" }}>{c.name}</div>
+                      <div style={{ fontSize: 12, color: "var(--muted)" }}>{t("providerPortal.checkInModal.lastVisit", { days: daysAgo })}</div>
+                    </div>
+                    {waUrl ? (
+                      <a className="btn-sm forest" style={{ textDecoration: "none" }} href={waUrl} target="_blank" rel="noreferrer">💬 {t("providerPortal.checkInModal.messageButton")}</a>
+                    ) : (
+                      <span style={{ fontSize: 11, color: "var(--muted)" }}>{t("providerPortal.checkInModal.noPhone")}</span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+            <button className="btn-sm ghost" style={{ width: "100%", padding: "12px 0", marginTop: 16 }} onClick={() => setShowCheckInModal(false)}>{t("providerPortal.common.close")}</button>
+          </div>
+        </div>
+      )}
+
+      <ProfilePhotoModal
+        open={showProfilePhotoModal}
+        file={profilePhotoFile}
+        onClose={closeProfilePhotoModal}
+        onSave={handleSaveProfilePhoto}
+        saving={savingProfilePhoto}
+        error={profilePhotoError}
+      />
+    </div>
+    </FeatureFlagsProvider>
+  );
+}
+
+// ── PROVIDER SIGNUP ─────────────────────────────────────────────
+const SIGNUP_CSS = `
+  .signup-wrap {
+    min-height: calc(100vh - 64px);
+    background: var(--sand);
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 48px 24px 80px;
+  }
+  .signup-box {
+    width: 100%;
+    max-width: 640px;
+  }
+  .signup-header {
+    text-align: center;
+    margin-bottom: 36px;
+  }
+  .signup-header h1 {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 34px;
+    font-weight: 800;
+    color: var(--forest);
+    margin-bottom: 8px;
+  }
+  .signup-header p {
+    font-size: 15px;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+  .plan-selector {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 28px;
+  }
+  .plan-option {
+    border: 2px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    cursor: pointer;
+    background: white;
+    transition: all .2s;
+    text-align: center;
+  }
+  .plan-option:hover { border-color: var(--forest); }
+  .plan-option.selected { border-color: var(--forest); background: var(--forest); }
+  .plan-option.selected .plan-name { color: var(--lime); }
+  .plan-option.selected .plan-price { color: white; }
+  .plan-option.selected .plan-desc { color: rgba(255,255,255,0.6); }
+  .plan-name { font-size: 13px; font-weight: 700; color: var(--forest); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 4px; }
+  .plan-price { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 22px; font-weight: 800; color: var(--forest); margin-bottom: 4px; }
+  .plan-desc { font-size: 11px; color: var(--muted); line-height: 1.4; }
+  .signup-form-card {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 32px;
+    margin-bottom: 20px;
+  }
+  .form-section-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--forest);
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    margin-bottom: 18px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .signup-submit {
+    width: 100%;
+    padding: 16px;
+    background: var(--forest);
+    color: var(--near-white);
+    border: none;
+    border-radius: var(--radius-sm);
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: opacity .2s;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+  }
+  .signup-submit:hover { opacity: .88; }
+  .signup-submit:disabled { opacity: .5; cursor: not-allowed; }
+  .signup-success {
+    text-align: center;
+    padding: 60px 32px;
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+  }
+  .signup-success .check { font-size: 56px; margin-bottom: 16px; }
+  .signup-success h2 { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 26px; color: var(--forest); margin-bottom: 10px; }
+  .signup-success p { font-size: 15px; color: var(--muted); line-height: 1.6; max-width: 380px; margin: 0 auto 24px; }
+  .payment-info {
+    background: var(--sand);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 16px 20px;
+    margin-top: 16px;
+    text-align: left;
+  }
+  .payment-info h4 { font-size: 13px; font-weight: 700; color: var(--forest); margin-bottom: 8px; }
+  .payment-info p { font-size: 13px; color: var(--muted); line-height: 1.65; }
+  .payment-info strong { color: var(--dark-text); }
+  @media (max-width: 600px) {
+    .plan-selector { grid-template-columns: 1fr; }
+    .form-row { grid-template-columns: 1fr; }
+    .signup-form-card { padding: 20px; }
+  }
+`;
+
+// PROVIDER LANDING — the premium, dark/neon marketing preamble that sits
+// above the (light-mode, unchanged) application form below it. Written
+// mobile-first on purpose: every rule here is the phone layout by default,
+// and the @media (min-width: 860px) block is what adds the wider desktop
+// treatment, not the other way around.
+const PROVIDER_LANDING_CSS = `
+  .pl-root { background: #081F17; overflow: hidden; }
+
+  /* HERO */
+  .pl-hero {
+    position: relative;
+    padding: 64px 20px 56px;
+    background: radial-gradient(circle at 50% 0%, #123F2E 0%, #081F17 62%);
+    text-align: center;
+  }
+  .pl-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--lime);
+    background: rgba(198,241,53,0.1);
+    border: 1px solid rgba(198,241,53,0.35);
+    padding: 7px 14px;
+    border-radius: 100px;
+    margin-bottom: 22px;
+  }
+  .pl-hero h1 {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 800;
+    font-size: 34px;
+    line-height: 1.12;
+    letter-spacing: -0.01em;
+    color: #FFFFFF;
+    max-width: 640px;
+    margin: 0 auto 18px;
+  }
+  .pl-hero-sub {
+    font-size: 15.5px;
+    line-height: 1.6;
+    color: rgba(245,239,224,0.68);
+    max-width: 460px;
+    margin: 0 auto 30px;
+  }
+  .pl-cta {
+    display: inline-block;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 16.5px;
+    font-weight: 800;
+    color: #081F17;
+    background: var(--lime);
+    border: none;
+    padding: 19px 40px;
+    border-radius: 100px;
+    cursor: pointer;
+    box-shadow: 0 0 0 1px rgba(198,241,53,0.4), 0 18px 40px rgba(198,241,53,0.28);
+    transition: transform .15s ease, box-shadow .15s ease;
+  }
+  .pl-cta:hover { transform: translateY(-2px); box-shadow: 0 0 0 1px rgba(198,241,53,0.55), 0 22px 48px rgba(198,241,53,0.38); }
+
+  /* PHONE MOCKUP — a CSS-drawn placeholder standing in for the real
+     dashboard, not a screenshot, so it never goes stale as that UI evolves. */
+  .pl-phone-stage { position: relative; margin: 52px auto 0; width: 260px; height: 360px; }
+  .pl-phone-glow { position: absolute; inset: -30px; background: radial-gradient(circle, rgba(198,241,53,0.35) 0%, rgba(198,241,53,0) 70%); filter: blur(6px); }
+  .pl-phone {
+    position: relative;
+    width: 260px;
+    height: 360px;
+    background: linear-gradient(160deg, #0D3D2E 0%, #061711 100%);
+    border: 3px solid rgba(255,255,255,0.12);
+    border-radius: 34px;
+    box-shadow: 0 40px 80px rgba(0,0,0,0.55);
+    transform: rotate(-6deg);
+    padding: 20px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .pl-phone::before {
+    content: '';
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 64px;
+    height: 6px;
+    border-radius: 4px;
+    background: rgba(255,255,255,0.18);
+  }
+  .pl-phone-card { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 14px; margin-top: 14px; }
+  .pl-phone-label { font-size: 9px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: rgba(245,239,224,0.5); margin-bottom: 6px; }
+  .pl-phone-value { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 24px; font-weight: 800; color: var(--lime); }
+  .pl-phone-row { display: flex; align-items: center; justify-content: space-between; }
+  .pl-phone-chip { font-size: 10px; font-weight: 700; color: #081F17; background: var(--lime); padding: 3px 8px; border-radius: 100px; }
+  .pl-phone-name { font-size: 13px; font-weight: 700; color: #FFFFFF; margin-top: 10px; }
+  .pl-phone-meta { font-size: 11px; color: rgba(245,239,224,0.55); margin-top: 2px; }
+
+  /* FEATURES — alternating full-width rows, not a grid. */
+  .pl-features { background: #081F17; padding: 64px 0 24px; }
+  .pl-feature-row {
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+    align-items: center;
+    padding: 40px 24px;
+    border-top: 1px solid rgba(255,255,255,0.08);
+  }
+  .pl-feature-row:first-child { border-top: none; }
+  .pl-feature-visual { width: 100%; max-width: 320px; flex-shrink: 0; }
+  .pl-feature-text { max-width: 460px; text-align: center; }
+  .pl-feature-kicker { font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--lime); margin-bottom: 10px; }
+  .pl-feature-text h3 { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 26px; font-weight: 800; color: #FFFFFF; margin-bottom: 12px; line-height: 1.2; }
+  .pl-feature-text p { font-size: 15px; line-height: 1.6; color: rgba(245,239,224,0.65); }
+
+  /* Feature 1 visual — the "2-Tap" idea: two big numbered taps collapsing
+     into a logged sale, echoing the real Walk-In flow. */
+  .pl-tap-demo { display: flex; align-items: center; justify-content: center; gap: 14px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 20px; padding: 28px 16px; }
+  .pl-tap-circle { width: 56px; height: 56px; border-radius: 50%; background: rgba(198,241,53,0.12); border: 1.5px solid var(--lime); color: var(--lime); font-weight: 800; font-size: 20px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .pl-tap-arrow { color: rgba(245,239,224,0.35); font-size: 18px; }
+  .pl-tap-result { background: var(--lime); color: #081F17; font-weight: 800; font-size: 13px; padding: 10px 14px; border-radius: 12px; white-space: nowrap; }
+
+  /* Feature 2 visual — a stylized (non-functional, decorative) QR block. */
+  .pl-qr-demo { display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 20px; padding: 28px; }
+  .pl-qr-card { background: #FAFAF7; border-radius: 14px; padding: 16px; display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; width: 132px; height: 132px; box-shadow: 0 0 0 1px rgba(198,241,53,0.3), 0 0 30px rgba(198,241,53,0.25); }
+  .pl-qr-card span { background: #0D3D2E; border-radius: 2px; }
+  .pl-qr-card span.off { background: transparent; }
+
+  /* SOCIAL PROOF */
+  .pl-social { background: linear-gradient(180deg, #081F17 0%, #0D3D2E 100%); padding: 56px 24px 0; text-align: center; }
+  .pl-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: .04em;
+    color: var(--lime);
+    background: rgba(198,241,53,0.1);
+    border: 1px solid rgba(198,241,53,0.4);
+    padding: 9px 18px;
+    border-radius: 100px;
+    margin-bottom: 20px;
+    box-shadow: 0 0 24px rgba(198,241,53,0.35);
+  }
+  .pl-social p { font-size: 16px; font-weight: 600; color: #FFFFFF; max-width: 420px; margin: 0 auto 36px; line-height: 1.5; }
+  .pl-ticker-mask { overflow: hidden; border-top: 1px solid rgba(255,255,255,0.08); padding: 22px 0; }
+  .pl-ticker-track { display: flex; width: max-content; gap: 40px; animation: pl-scroll 22s linear infinite; }
+  .pl-ticker-track span { font-size: 13px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: rgba(245,239,224,0.4); white-space: nowrap; }
+  @keyframes pl-scroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+  @media (prefers-reduced-motion: reduce) {
+    .pl-ticker-track { animation: none; }
+  }
+
+  /* PENDING APPROVAL — shown right after an application is submitted.
+     Deliberately no payment instructions here: the trial only starts once
+     admin activates the account, so asking for money before that would
+     contradict the promise below. */
+  .pl-pending {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    background: radial-gradient(circle at 50% 0%, #123F2E 0%, #081F17 62%);
+    text-align: center;
+  }
+  .pl-pending-card { max-width: 440px; }
+  .pl-pending-icon-wrap { position: relative; width: 88px; height: 88px; margin: 0 auto 28px; }
+  .pl-pending-icon-glow { position: absolute; inset: -18px; background: radial-gradient(circle, rgba(198,241,53,0.35) 0%, rgba(198,241,53,0) 70%); filter: blur(4px); }
+  .pl-pending-icon {
+    position: relative; width: 88px; height: 88px; border-radius: 50%;
+    background: rgba(198,241,53,0.1); border: 1.5px solid var(--lime);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 34px; color: var(--lime);
+  }
+  .pl-pending-eyebrow {
+    display: inline-flex; align-items: center; gap: 7px; font-size: 11px; font-weight: 700;
+    letter-spacing: .12em; text-transform: uppercase; color: var(--lime);
+    background: rgba(198,241,53,0.1); border: 1px solid rgba(198,241,53,0.35);
+    padding: 7px 14px; border-radius: 100px; margin-bottom: 20px;
+  }
+  .pl-pending h2 {
+    font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; font-size: 28px;
+    line-height: 1.2; color: #FFFFFF; margin: 0 0 16px;
+  }
+  .pl-pending p { font-size: 15px; line-height: 1.65; color: rgba(245,239,224,0.72); margin: 0 0 12px; }
+  .pl-pending .pl-pending-meta { font-size: 13px; color: rgba(245,239,224,0.5); margin-top: 24px; }
+  .pl-pending .pl-pending-meta strong { color: rgba(245,239,224,0.8); }
+  .pl-pending-back {
+    display: inline-block; margin-top: 28px; font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 14px; font-weight: 700; color: var(--lime); background: transparent;
+    border: 1px solid rgba(198,241,53,0.4); padding: 12px 28px; border-radius: 100px; cursor: pointer;
+  }
+
+  @media (min-width: 860px) {
+    .pl-hero { padding: 100px 24px 80px; text-align: left; }
+    .pl-hero-inner { display: flex; align-items: center; justify-content: center; gap: 72px; max-width: 1080px; margin: 0 auto; }
+    .pl-hero-copy { flex: 1; max-width: 480px; }
+    .pl-hero h1 { font-size: 48px; margin: 0 0 20px; }
+    .pl-hero-sub { margin: 0 0 34px; }
+    .pl-phone-stage { margin: 0; flex-shrink: 0; }
+    .pl-feature-row { flex-direction: row; text-align: left; padding: 56px 48px; gap: 64px; max-width: 1080px; margin: 0 auto; }
+    .pl-feature-row.reverse { flex-direction: row-reverse; }
+    .pl-feature-text { text-align: left; }
+    .pl-feature-visual { max-width: 380px; }
+  }
+`;
+
+// `desc` stays a short one-liner for the compact pickers already using it
+// (signup form, billing tab); `tagline`/`features`/`recommended` are for
+// the public pricing section on the landing page. Every line in
+// `features` is something actually built and enforced — nothing here
+// should overclaim beyond what the app actually does.
+//
+// Loyalty & rewards moved from Business-only to Pro-and-above (both plans
+// share it now — the only differences between Pro and Business are staff
+// seats and featured search placement). The "✓ Pro"/"✓ Business" badge on
+// a provider's listing is likewise real and enforced (see planBadge()) —
+// it only reflects which plan a provider is paying for, nothing more.
+// ── VAI MEDIA — a separate, high-end agency add-on (photo/video shoots,
+// social management), deliberately kept OUT of the self-serve plan grid
+// above so it never shows a price or a "Buy" button next to it — it's an
+// inquiry, not a checkout. Both CTAs below open a prefilled WhatsApp chat;
+// TODO Abner: replace this placeholder number (and the fallback email) with
+// Vai Media's real contact info before this goes live.
+const VAI_MEDIA_WHATSAPP = "50100000000"; // digits only: country code + number, no +, no spaces
+const VAI_MEDIA_EMAIL = "media@vaibook.bz";
+const vaiMediaWhatsAppUrl = (source) =>
+  `https://wa.me/${VAI_MEDIA_WHATSAPP}?text=${encodeURIComponent(`Hi! I'm interested in a Vai Media photo/video shoot for my shop. (via ${source})`)}`;
+const vaiMediaMailtoUrl = () =>
+  `mailto:${VAI_MEDIA_EMAIL}?subject=${encodeURIComponent("Vai Media inquiry")}&body=${encodeURIComponent("Hi, I'd like to book a Vai Media photo/video shoot for my shop.")}`;
+
+// Team plan per-seat pricing. The plan picker previously advertised
+// "Base fee + per-seat pricing" with nothing behind it — submitPayment
+// always charged the flat base fee no matter how many staff seats a
+// provider had. These two constants are the actual numbers now: the first
+// TEAM_FREE_SEATS staff seats are covered by the base fee, each one after
+// that adds TEAM_PER_SEAT_PRICE/month. See the seat-count picker in
+// ProviderPortal's billing card (search "teamSeats") for where this is
+// actually computed and charged.
+const TEAM_FREE_SEATS = 2;
+const TEAM_PER_SEAT_PRICE = 20;
+
+const PLANS = [
+  {
+    // Renamed "Starter" -> "Trial" (display name only — `id` stays
+    // "starter" so STARTER_CAP booking-limit enforcement, the
+    // `providerProfile?.plan || "starter"` no-plan-set fallback used
+    // everywhere, and admin tooling all keep working unchanged). Per
+    // explicit instruction: "Starter" as a plan name/concept should never
+    // be user-visible — every provider is on a real (trial-then-paid)
+    // plan, never something that reads as a permanent free tier.
+    id: "starter", name: "Trial", price: "Free", desc: "Up to 30 bookings/month", monthly: 0,
+    tagline: "Get listed and start taking bookings — no cost, no card required.",
+    features: [
+      "Up to 30 bookings a month",
+      "Your own booking page & calendar",
+      "Customer messaging & notifications",
+      "Client reviews",
+      "Invoices, refunds & sales ledger",
+    ],
+  },
+  {
+    // Renamed "Pro" -> "Solo" (display name only — `id` stays "pro" so
+    // existing providers' stored plan value, admin tooling, and every
+    // `PLANS.find(p => p.id === "pro")` lookup keep working unchanged).
+    // Repriced to BZ$1.99/day per the user's explicit pricing update
+    // (was BZ$50/mo ~= BZ$1.67/day). monthly is set to exactly 59.7 so
+    // the existing (monthly/30) day-rate math lands on 1.99 everywhere
+    // it's computed, not just in this label.
+    id: "pro", name: "Solo", price: "BZ$1.99/day", desc: "For solo practitioners", monthly: 59.7,
+    tagline: "For solo practitioners who want frictionless booking, automated reminders, and deposits handled for them.",
+    recommended: true,
+    features: [
+      "24/7 guest booking — no app download for your clients",
+      "Automated appointment reminders to cut no-shows",
+      "Customizable deposits routed to your bank",
+      "Your own booking page & calendar",
+      "Loyalty & rewards program",
+      "A \"Solo\" badge customers see on your listing",
+    ],
+  },
+  {
+    // Repriced to BZ$4.99/day per the user's explicit pricing update
+    // (was BZ$120/mo ~= BZ$4.00/day). monthly = 149.7 so (monthly/30)
+    // lands on exactly 4.99 wherever that math runs.
+    id: "business", name: "Team", price: "BZ$4.99/day for 1 month", desc: `Base fee + BZ$${TEAM_PER_SEAT_PRICE}/seat after your first ${TEAM_FREE_SEATS}`, monthly: 149.7,
+    priceNote: `Base fee includes your first ${TEAM_FREE_SEATS} staff seats — BZ$${TEAM_PER_SEAT_PRICE}/month for each seat after that`,
+    tagline: "For teams — a base plan covering your shop, plus staff seats you add as you grow.",
+    features: [
+      "Everything in Solo",
+      "Staff seats with their own logins",
+      "Featured placement in district search",
+      "A \"Team\" badge customers see on your listing",
+    ],
+  },
+];
+
+// Public-facing plan list for the marketing pricing section and the new
+// provider signup picker — deliberately excludes "starter". Existing
+// providers already on the free Starter plan (and the booking-cap
+// enforcement in create_booking_safe / STARTER_CAP) are untouched: PLANS
+// itself still carries the starter entry so every lookup that resolves an
+// existing provider's plan (billing tab, admin, badges) keeps working.
+// This list only controls what a NEW visitor is offered.
+const PUBLIC_PLANS = PLANS.filter((p) => p.id !== "starter");
+
+
+const DISTRICTS = ["Belize City", "Cayo", "Corozal", "Orange Walk", "Stann Creek", "Toledo"];
+
+// Approximate district-town centroids, used only to turn a real browser
+// geolocation fix into "closest of Belize's 6 districts" — a plain
+// nearest-neighbor comparison, no geocoding API/network call needed, so
+// it costs nothing and never blocks the page if the visitor declines the
+// permission prompt. See LandingPage's "Trending near you" section: this
+// is what lets that heading name a real district instead of a guess.
+const DISTRICT_CENTERS = {
+  "Belize City": [17.5046, -88.1962],
+  "Cayo": [17.1554, -89.0637],
+  "Corozal": [18.4000, -88.3936],
+  "Orange Walk": [18.0833, -88.5500],
+  "Stann Creek": [16.9707, -88.2306],
+  "Toledo": [16.1500, -88.7667],
+};
+function nearestDistrict(lat, lng) {
+  let best = null, bestDist = Infinity;
+  for (const name of Object.keys(DISTRICT_CENTERS)) {
+    const [dlat, dlng] = DISTRICT_CENTERS[name];
+    const d = (lat - dlat) ** 2 + (lng - dlng) ** 2;
+    if (d < bestDist) { bestDist = d; best = name; }
+  }
+  return best;
+}
+const SERVICE_TYPES = ["Barber", "Hair Salon", "Nail Tech", "Spa", "Med Spa / Clinic", "Massage", "Skincare Studio", "Hair Removal Studio", "Tattoo & Piercing Studio", "Wellness Center", "Pet Grooming", "Fitness & Recovery", "Physical Therapy", "Photography", "Other"];
+
+function ProviderSignup({ onNav }) {
+  const { t } = useTranslation();
+  const [plan, setPlan] = useState(() => {
+    try {
+      const stashed = localStorage.getItem("vaibook_signup_plan");
+      localStorage.removeItem("vaibook_signup_plan");
+      if (stashed && PUBLIC_PLANS.some((p) => p.id === stashed)) return stashed;
+    } catch (e) { /* ignore */ }
+    return "pro";
+  });
+  const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [submitError, setSubmitError] = useState("");
+  const [form, setForm] = useState({
+    businessName: "", ownerName: "", email: "", phone: "",
+    serviceType: "", district: "", description: "",
+  });
+
+  const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+
+  const handleSubmit = async () => {
+    const required = ["businessName", "ownerName", "email", "phone", "serviceType", "district"];
+    if (required.some(k => !form[k].trim())) {
+      alert(t("providerSignup.validation.requiredFields"));
+      return;
+    }
+    setLoading(true);
+    setSubmitError("");
+
+    const selectedPlan = PLANS.find(p => p.id === plan);
+
+    // Save the application to Supabase so it shows up in the admin portal
+    let saved = false;
+    try {
+      saved = await submitProviderApplication({
+        business_name: form.businessName,
+        owner_name: form.ownerName,
+        email: form.email.trim().toLowerCase(),
+        phone: form.phone,
+        service_type: form.serviceType,
+        district: form.district,
+        description: form.description || null,
+        plan: selectedPlan.id,
+        status: "pending",
+      });
+    } catch (err) {
+      setLoading(false);
+      if (err?.code === "RATE_LIMITED") {
+        setSubmitError(t("providerSignup.validation.rateLimited"));
+      } else if (err?.code === "MAINTENANCE_MODE") {
+        setSubmitError(t("providerSignup.validation.maintenanceMode"));
+      } else {
+        setSubmitError(t("providerSignup.validation.saveFailed"));
+      }
+      return;
+    }
+
+    if (!saved) {
+      setLoading(false);
+      setSubmitError(t("providerSignup.validation.saveFailed"));
+      return;
+    }
+
+    // Notify admin by real email rather than window.open("mailto:") — that
+    // ran two awaits after the click, so browsers blocked it as a popup,
+    // and on a phone there's often no mail handler at all. The application
+    // is already saved either way; this is just the heads-up.
+    await sendBookingEmail({
+      to: "martinezabner287@gmail.com",
+      subject: `New VaiBook provider signup — ${form.businessName} (${selectedPlan.name})`,
+      html: `<h3>New provider signup on VaiBook</h3>
+<p><strong>Business:</strong> ${form.businessName}<br/>
+<strong>Owner:</strong> ${form.ownerName}<br/>
+<strong>Email:</strong> ${form.email}<br/>
+<strong>Phone:</strong> ${form.phone}<br/>
+<strong>Service:</strong> ${form.serviceType}<br/>
+<strong>District:</strong> ${form.district}<br/>
+<strong>Plan:</strong> ${selectedPlan.name} (${selectedPlan.price})<br/>
+<strong>Description:</strong> ${form.description || "N/A"}</p>
+<p>Activate them in the admin dashboard.</p>`,
+    });
+
+    // Send the applicant a confirmation too, so they know it arrived.
+    await sendBookingEmail({
+      to: form.email.trim().toLowerCase(),
+      subject: "We got your VaiBook application",
+      html: `<p>Hi ${form.ownerName},</p><p>Thanks for applying to list <strong>${form.businessName}</strong> on VaiBook. We review applications by hand — you'll get an email as soon as yours is approved, and then you sign in with <strong>${form.email.trim().toLowerCase()}</strong> to open your portal.</p><p>— VaiBook</p>`,
+    });
+
+    setLoading(false);
+    setSubmitted(true);
+  };
+
+  const selectedPlan = PLANS.find(p => p.id === plan);
+
+  if (submitted) {
+    // "Velvet Rope" pending screen — deliberately carries no payment
+    // instructions. The old version asked paid-plan applicants to wire
+    // money immediately on submission, before any review; that directly
+    // contradicted the promise below that the trial only starts once
+    // admin approves, so it was removed rather than kept alongside it.
+    // Billing for paid plans is still handled the normal way once a
+    // provider is live, from the "My plan & billing" tab in their portal.
+    return (
+      <div className="pl-pending">
+        <style>{PROVIDER_LANDING_CSS}</style>
+        <div className="pl-pending-card">
+          <div className="pl-pending-icon-wrap">
+            <div className="pl-pending-icon-glow"></div>
+            <div className="pl-pending-icon">✓</div>
+          </div>
+          <span className="pl-pending-eyebrow">{t("providerSignup.pending.eyebrow")}</span>
+          <h2>{t("providerSignup.pending.title")}</h2>
+          <p>{t("providerSignup.pending.body")}</p>
+          <p className="pl-pending-meta">
+            {t("providerSignup.pending.submittedFor")} <strong>{form.businessName}</strong> {t("providerSignup.pending.planEmailLead", { planName: selectedPlan.name })} <strong>{form.email}</strong> {t("providerSignup.pending.approvedSuffix")}
+            {" "}{t("providerSignup.pending.loginPrefix")} <strong>{t("nav.providerLogin")}</strong> {t("providerSignup.pending.loginSuffix")}
+          </p>
+          <button className="pl-pending-back" onClick={() => onNav("home")}>{t("providerSignup.pending.backToHome")}</button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <style>{PROVIDER_LANDING_CSS}</style>
+      <div className="pl-root">
+        {/* HERO — the pitch runs first; the actual application form (below,
+            unchanged, still light-mode) starts the moment someone scrolls
+            or taps the CTA. */}
+        <section className="pl-hero">
+          <div className="pl-hero-inner">
+            <div className="pl-hero-copy">
+              <span className="pl-eyebrow">✓ {t("providerSignup.hero.eyebrow")}</span>
+              <h1>{t("providerSignup.hero.title")}</h1>
+              <p className="pl-hero-sub">{t("providerSignup.hero.subtitle")}</p>
+              <button className="pl-cta" onClick={() => document.getElementById("signup-form")?.scrollIntoView({ behavior: "smooth" })}>
+                {t("providerSignup.hero.cta")}
+              </button>
+            </div>
+            <div className="pl-phone-stage">
+              <div className="pl-phone-glow"></div>
+              {/* Illustrative mockup of the real Dashboard's "Dopamine Card" +
+                  "Next in the Chair" — not a live screenshot, so it never
+                  drifts out of sync with that UI. */}
+              <div className="pl-phone">
+                <div className="pl-phone-card">
+                  <div className="pl-phone-label">{t("providerSignup.hero.mockup.todaysTake")}</div>
+                  <div className="pl-phone-value">BZ$482</div>
+                </div>
+                <div className="pl-phone-card">
+                  <div className="pl-phone-row">
+                    <div className="pl-phone-label" style={{ marginBottom: 0 }}>{t("providerSignup.hero.mockup.nextInChair")}</div>
+                    <span className="pl-phone-chip">2:30 PM</span>
+                  </div>
+                  <div className="pl-phone-name">Maria S.</div>
+                  <div className="pl-phone-meta">{t("providerSignup.hero.mockup.signatureFade")}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* FEATURES — alternating full-width rows, not a 3-column grid. */}
+        <section className="pl-features">
+          <div className="pl-feature-row">
+            <div className="pl-feature-visual">
+              <div className="pl-tap-demo">
+                <span className="pl-tap-circle">1</span>
+                <span className="pl-tap-arrow">→</span>
+                <span className="pl-tap-circle">2</span>
+                <span className="pl-tap-arrow">→</span>
+                <span className="pl-tap-result">{t("providerSignup.hero.mockup.tapResult")}</span>
+              </div>
+            </div>
+            <div className="pl-feature-text">
+              <div className="pl-feature-kicker">{t("providerSignup.features.kicker")}</div>
+              <h3>{t("providerSignup.features.walkIn.title")}</h3>
+              <p>{t("providerSignup.features.walkIn.body")}</p>
+            </div>
+          </div>
+
+          <div className="pl-feature-row reverse">
+            <div className="pl-feature-visual">
+              <div className="pl-qr-demo">
+                <div className="pl-qr-card">
+                  {Array.from({ length: 25 }).map((_, i) => (
+                    <span key={i} className={[0,1,2,3,4,5,9,10,14,15,19,20,21,22,23,24].includes(i) || i % 7 === 0 ? "" : "off"}></span>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <div className="pl-feature-text">
+              <div className="pl-feature-kicker">{t("providerSignup.features.kicker")}</div>
+              <h3>{t("providerSignup.features.qrBooking.title")}</h3>
+              <p>{t("providerSignup.features.qrBooking.body")}</p>
+            </div>
+          </div>
+        </section>
+
+        {/* SOCIAL PROOF */}
+        <section className="pl-social">
+          <span className="pl-badge">✓ {t("providerSignup.social.badge")}</span>
+          <p>{t("providerSignup.social.body")}</p>
+          <div className="pl-ticker-mask">
+            <div className="pl-ticker-track">
+              {[...DISTRICTS, ...DISTRICTS].map((d, i) => (
+                <span key={i}>{d}</span>
+              ))}
+            </div>
+          </div>
+        </section>
+      </div>
+
+    <div className="signup-wrap" id="signup-form">
+      <style>{SIGNUP_CSS}</style>
+      <div className="signup-box">
+        <div className="signup-header">
+          <h1>{t("providerSignup.form.header")}</h1>
+          <p>{t("providerSignup.form.subheader")}</p>
+        </div>
+
+        {/* Plan selector */}
+        <div style={{ marginBottom: 8 }}>
+          <div className="form-section-title" style={{ borderBottom: "none", paddingBottom: 0, marginBottom: 12 }}>{t("providerSignup.form.choosePlan")}</div>
+        </div>
+        <div className="plan-selector">
+          {PUBLIC_PLANS.map(p => (
+            <div key={p.id} className={`plan-option ${plan === p.id ? "selected" : ""}`} onClick={() => setPlan(p.id)}>
+              <div className="plan-name">{p.name}</div>
+              <div className="plan-price">{p.price}</div>
+              <div className="plan-desc">{p.desc}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Form */}
+        <div className="signup-form-card">
+          <div className="form-section-title">{t("providerSignup.form.businessDetails")}</div>
+          <div className="form-row">
+            <div className="input-group">
+              <label>{t("providerSignup.form.businessName")}</label>
+              <input placeholder={t("providerSignup.form.businessNamePlaceholder")} value={form.businessName} onChange={e => set("businessName", e.target.value)} />
+            </div>
+            <div className="input-group">
+              <label>{t("providerSignup.form.ownerName")}</label>
+              <input placeholder={t("providerSignup.form.ownerNamePlaceholder")} value={form.ownerName} onChange={e => set("ownerName", e.target.value)} />
+            </div>
+          </div>
+          <div className="form-row">
+            <div className="input-group">
+              <label>{t("providerSignup.form.email")}</label>
+              <input type="email" placeholder="you@email.com" value={form.email} onChange={e => set("email", e.target.value)} />
+            </div>
+            <div className="input-group">
+              <label>{t("providerSignup.form.whatsappPhone")}</label>
+              <input placeholder="+501 600 0000" value={form.phone} onChange={e => set("phone", e.target.value)} />
+            </div>
+          </div>
+          <div className="form-row">
+            <div className="input-group">
+              <label>{t("providerSignup.form.serviceType")}</label>
+              <select value={form.serviceType} onChange={e => set("serviceType", e.target.value)}>
+                <option value="">{t("providerSignup.form.selectService")}</option>
+                {SERVICE_TYPES.map(s => <option key={s}>{s}</option>)}
+              </select>
+            </div>
+            <div className="input-group">
+              <label>{t("providerSignup.form.district")}</label>
+              <select value={form.district} onChange={e => set("district", e.target.value)}>
+                <option value="">{t("providerSignup.form.selectDistrict")}</option>
+                {DISTRICTS.map(d => <option key={d}>{d}</option>)}
+              </select>
+            </div>
+          </div>
+          <div className="input-group">
+            <label>{t("providerSignup.form.description")}</label>
+            <textarea placeholder={t("providerSignup.form.descriptionPlaceholder")} value={form.description} onChange={e => set("description", e.target.value)} />
+          </div>
+        </div>
+
+        <button className="signup-submit" onClick={handleSubmit} disabled={loading}>
+          {loading ? t("providerSignup.form.submitting") : t("providerSignup.form.applyForPlan", { planName: selectedPlan.name })}
+        </button>
+        {submitError && (
+          <p style={{ textAlign: "center", fontSize: 13, color: "#B91C1C", marginTop: 12, fontWeight: 600 }}>
+            {submitError}
+          </p>
+        )}
+        <p style={{ textAlign: "center", fontSize: 12, color: "var(--muted)", marginTop: 12 }}>
+          {t("providerSignup.form.footerNote")}
+        </p>
+      </div>
+    </div>
+    <SiteFooter />
+    </>
+  );
+}
+
+// ── Duplicate-application detection ──────────────────────────────
+// Catches the exact mess that caused the "approved but he still can't
+// sign in" bug: someone submits more than one application, or fat-fingers
+// their email on one, so the "active" record on file doesn't match what
+// they actually type in later. Flags it for the admin BEFORE approval
+// instead of after, when it's much harder to untangle.
+
+const normalizeForCompare = (s) => (s || "").trim().toLowerCase().replace(/\s+/g, " ");
+
+// Plain Levenshtein edit distance — small and dependency-free, good enough
+// for "is this basically the same email/name with a typo" at this scale.
+function editDistance(a, b) {
+  if (a === b) return 0;
+  const m = a.length, n = b.length;
+  if (!m) return n;
+  if (!n) return m;
+  const dp = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
+  for (let i = 0; i <= m; i++) dp[i][0] = i;
+  for (let j = 0; j <= n; j++) dp[0][j] = j;
+  for (let i = 1; i <= m; i++) {
+    for (let j = 1; j <= n; j++) {
+      dp[i][j] = a[i - 1] === b[j - 1]
+        ? dp[i - 1][j - 1]
+        : 1 + Math.min(dp[i - 1][j - 1], dp[i - 1][j], dp[i][j - 1]);
+    }
+  }
+  return dp[m][n];
+}
+
+// Returns the other applications that look like they might be the same
+// business/person as `app` — same or near-identical business name, or a
+// near-identical (typo-distance) email — excluding rejected duplicates
+// once one of the pair is already rejected, since that's the normal
+// "they fixed the typo and reapplied" flow, not a live conflict.
+const findSimilarApplications = (app, allApps) => {
+  const name = normalizeForCompare(app.business_name);
+  const email = normalizeForCompare(app.email);
+  return allApps.filter((other) => {
+    if (other.id === app.id) return false;
+    if (app.status === "rejected" || other.status === "rejected") return false;
+    const otherName = normalizeForCompare(other.business_name);
+    const otherEmail = normalizeForCompare(other.email);
+    const nameMatch = name.length > 2 && otherName.length > 2 && (name === otherName || editDistance(name, otherName) <= 2);
+    const emailMatch = email && otherEmail && (email === otherEmail || editDistance(email, otherEmail) <= 2);
+    return nameMatch || emailMatch;
+  });
+};
+
+function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
+  const [checkingAdmin, setCheckingAdmin] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [apps, setApps] = useState([]);
+  const [loadingApps, setLoadingApps] = useState(false);
+  const [tab, setTab] = useState("overview");
+
+  const [providers, setProviders] = useState([]);
+  const [loadingProviders, setLoadingProviders] = useState(false);
+  const [editingProviderId, setEditingProviderId] = useState(null);
+  const [providerEditForm, setProviderEditForm] = useState({});
+  const [savingProviderId, setSavingProviderId] = useState(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null);
+  const [deletingId, setDeletingId] = useState(null);
+
+  const [payments, setPayments] = useState([]);
+  const [loadingPayments, setLoadingPayments] = useState(false);
+  const [reviewingPaymentId, setReviewingPaymentId] = useState(null);
+
+  const [refunds, setRefunds] = useState([]);
+  const [loadingRefunds, setLoadingRefunds] = useState(false);
+
+  // Emergency maintenance-mode switch — see supabase_security_hardening.sql.
+  // Pauses new bookings and new provider applications app-wide, independent
+  // of Vercel/DNS/Supabase dashboards, for the moment something looks
+  // actively wrong and new writes need to stop while it's investigated.
+  const [maintenance, setMaintenanceState] = useState({ on: false, message: "" });
+  const [maintenanceDraft, setMaintenanceDraft] = useState("");
+  const [loadingMaintenance, setLoadingMaintenance] = useState(false);
+  const [savingMaintenance, setSavingMaintenance] = useState(false);
+
+  const loadMaintenance = async () => {
+    setLoadingMaintenance(true);
+    const s = await getMaintenanceStatus();
+    setMaintenanceState(s);
+    setMaintenanceDraft(s.message || "");
+    setLoadingMaintenance(false);
+  };
+
+  // Site offline — a separate, stronger switch from the pause above: it
+  // hides the whole site behind a "we'll be back shortly" page for
+  // everyone except a signed-in admin (see SiteOffline / supabase_site_offline.sql),
+  // for planned changes/deploys rather than an in-progress incident.
+  const [siteOffline, setSiteOfflineState] = useState({ on: false, message: "" });
+  const [siteOfflineDraft, setSiteOfflineDraft] = useState("");
+  const [loadingSiteOffline, setLoadingSiteOffline] = useState(false);
+  const [savingSiteOffline, setSavingSiteOffline] = useState(false);
+
+  const loadSiteOffline = async () => {
+    setLoadingSiteOffline(true);
+    const s = await getSiteOfflineStatus();
+    setSiteOfflineState(s);
+    setSiteOfflineDraft(s.message || "");
+    setLoadingSiteOffline(false);
+  };
+
+  const toggleSiteOffline = async () => {
+    const turningOn = !siteOffline.on;
+    if (turningOn && !window.confirm("Take VaiBook offline for everyone except admins? Visitors will see a \"we'll be back shortly\" page until you turn this off — you'll still be able to sign in and use the real site to make your changes.")) {
+      return;
+    }
+    setSavingSiteOffline(true);
+    const ok = await setSiteOffline(turningOn, turningOn ? siteOfflineDraft.trim() : null);
+    if (ok) {
+      await loadSiteOffline();
+    } else {
+      window.alert("Couldn't update site offline mode. Please check your connection and try again.");
+    }
+    setSavingSiteOffline(false);
+  };
+
+  // Lets the top nav's account dropdown (with the same tools list as the
+  // sidebar) switch tabs while already inside the admin portal,
+  // since the sidebar itself is hidden on mobile.
+  useEffect(() => {
+    const onSetTab = (e) => { if (e.detail && e.detail.tab) setTab(e.detail.tab); };
+    window.addEventListener("vaibook-set-portal-tab", onSetTab);
+    return () => window.removeEventListener("vaibook-set-portal-tab", onSetTab);
+  }, []);
+  const [busyId, setBusyId] = useState(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (!session?.user?.email) {
+        setIsAdmin(false);
+        setCheckingAdmin(false);
+        return;
+      }
+      setCheckingAdmin(true);
+      const ok = await checkIsAdmin(session.user.email);
+      if (!cancelled) {
+        setIsAdmin(ok);
+        setCheckingAdmin(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [session]);
+
+  const loadApps = async () => {
+    setLoadingApps(true);
+    const data = await getProviderApplications();
+    setApps(data);
+    setLoadingApps(false);
+  };
+
+  const loadProviders = async () => {
+    setLoadingProviders(true);
+    const data = await adminListProviders();
+    setProviders(data);
+    setLoadingProviders(false);
+  };
+
+  const loadPayments = async () => {
+    setLoadingPayments(true);
+    const data = await adminListProviderPayments();
+    setPayments(data);
+    setLoadingPayments(false);
+  };
+
+  const reviewPayment = async (payment, status) => {
+    const paymentId = payment.id || payment;
+    const label = payment.business_name || "this provider";
+    const planName = (PLANS.find((pl) => pl.id === payment.plan) || {}).name || payment.plan || "the plan on this payment";
+    // Confirming extends the paid-through date and applies the plan the
+    // payment was for; rejecting is what the provider sees as "declined".
+    // Neither can be undone from this screen, so both ask first.
+    if (status === "confirmed" && !window.confirm(`Confirm this payment from ${label}? Their plan moves to ${planName} and their next due date shifts a month forward.`)) return;
+
+    let note = null;
+    if (status === "rejected") {
+      note = window.prompt(`Why is this payment being rejected? ${label} will see this note in their billing tab.`, "");
+      if (note === null) return;   // cancelled the prompt
+      note = note.trim() || null;
+    }
+
+    setReviewingPaymentId(paymentId);
+    const ok = await adminReviewProviderPayment(paymentId, status, note);
+    setReviewingPaymentId(null);
+    if (ok) {
+      await loadPayments();
+      // Confirming can reactivate a provider suspended for non-payment, so
+      // the Providers tab is stale until it's reloaded too.
+      await loadProviders();
+    } else {
+      window.alert("That didn't save. Please try again.");
+    }
+  };
+
+  const loadRefunds = async () => {
+    setLoadingRefunds(true);
+    const data = await adminListBookingRefunds();
+    setRefunds(data);
+    setLoadingRefunds(false);
+  };
+
+  useEffect(() => {
+    if (isAdmin) { loadApps(); loadProviders(); loadPayments(); loadRefunds(); loadMaintenance(); loadSiteOffline(); }
+  }, [isAdmin]);
+
+  const toggleMaintenance = async () => {
+    const turningOn = !maintenance.on;
+    if (turningOn && !window.confirm("Pause new bookings and new provider applications site-wide? Everything else (sign-in, existing bookings, payments, messages) keeps working. You can turn this off again the moment you're ready.")) {
+      return;
+    }
+    setSavingMaintenance(true);
+    const ok = await setMaintenanceMode(turningOn, turningOn ? maintenanceDraft.trim() : null);
+    if (ok) {
+      await loadMaintenance();
+    } else {
+      window.alert("Couldn't update maintenance mode. Please check your connection and try again.");
+    }
+    setSavingMaintenance(false);
+  };
+
+  const act = async (id, status) => {
+    const app = apps.find((a) => a.id === id);
+
+    // Rejecting someone who is already live has to actually take them
+    // offline — before, it only changed the application row, and the
+    // provider stayed bookable and in search.
+    let alsoSuspend = null;
+    if (status === "rejected" && app?.email) {
+      alsoSuspend = providers.find((p) => (p.contact_email || "").toLowerCase() === app.email.toLowerCase() && p.is_active);
+      if (alsoSuspend && !window.confirm(`${alsoSuspend.business_name} is currently live on VaiBook. Rejecting this application will also suspend their listing. Continue?`)) return;
+    }
+
+    setBusyId(id);
+    const updated = await updateApplicationStatus(id, status);
+    if (!updated) {
+      setBusyId(null);
+      window.alert("That didn't save — the application wasn't changed. Please try again.");
+      return;
+    }
+
+    if (alsoSuspend) await adminUpdateProvider(alsoSuspend.id, { is_active: false });
+
+    // Activation alone doesn't make them live — they still need to sign in
+    // once with this email for their provider profile to be created (see
+    // loadProviderProfile). Tell them so, or they'll never know to. Sent
+    // only after the status change actually succeeded.
+    if (status === "active" && app?.email) {
+      const sent = await sendBookingEmail({
+        to: app.email,
+        subject: "You're approved on VaiBook!",
+        html: providerApprovedEmailHtml({ businessName: app.business_name, ownerName: app.owner_name }),
+      });
+      if (!sent) window.alert(`${app.business_name} is approved, but the approval email didn't go out. Let them know directly that they can sign in now.`);
+    }
+    await loadApps();
+    await loadProviders();
+    setBusyId(null);
+  };
+
+  const startEditProvider = (p) => {
+    setEditingProviderId(p.id);
+    setProviderEditForm({
+      business_name: p.business_name || "",
+      district: p.district || "",
+      service_type: p.service_type || "",
+      whatsapp: p.whatsapp || "",
+      bio: p.bio || "",
+      plan: p.plan || "starter",
+    });
+  };
+  const cancelEditProvider = () => { setEditingProviderId(null); setProviderEditForm({}); };
+
+  const saveProviderEdit = async (providerId) => {
+    setSavingProviderId(providerId);
+    const updated = await adminUpdateProvider(providerId, {
+      ...providerEditForm,
+      category_key: categoryForServiceType(providerEditForm.service_type),
+    });
+    setSavingProviderId(null);
+    if (updated) {
+      setProviders((prev) => prev.map((p) => (p.id === providerId ? updated : p)));
+      setEditingProviderId(null);
+    } else {
+      // Every admin action used to fail in total silence — the spinner
+      // stopped, nothing changed, and there was no way to tell a rejected
+      // permission apart from a no-op.
+      window.alert("That change didn't save. Please try again.");
+    }
+  };
+
+  // Changing the plan here (a direct grant — no receipt, no payment
+  // record) only ever touches the plan column itself. That's correct on
+  // its own, but a plan alone doesn't help if the provider is currently
+  // suspended: is_active is a separate field, so "Business" would sit on
+  // their profile while they're still invisible to customers and can't
+  // take bookings. Rather than silently reactivate them (which is exactly
+  // the bug the 2026-09-01 audit fixed on the payment-confirmation side —
+  // a suspension for unrelated reasons shouldn't be quietly undone), ask.
+  const changeProviderPlan = async (providerId, plan) => {
+    const provider = providers.find((p) => p.id === providerId);
+    let alsoReactivate = false;
+    if (provider && !provider.is_active && plan !== "starter") {
+      const planName = PLANS.find((pl) => pl.id === plan)?.name || plan;
+      alsoReactivate = window.confirm(
+        `${provider.business_name} is currently suspended, so they still won't show up for customers or take bookings even on ${planName}. Reactivate them too?`
+      );
+    }
+    setSavingProviderId(providerId);
+    const updated = await adminUpdateProvider(providerId, alsoReactivate ? { plan, is_active: true } : { plan });
+    setSavingProviderId(null);
+    if (updated) setProviders((prev) => prev.map((p) => (p.id === providerId ? updated : p)));
+    else window.alert("Couldn't change that plan. Please try again.");
+  };
+
+  const toggleProviderActive = async (provider) => {
+    setSavingProviderId(provider.id);
+    const updated = await adminUpdateProvider(provider.id, { is_active: !provider.is_active });
+    setSavingProviderId(null);
+    if (updated) setProviders((prev) => prev.map((p) => (p.id === provider.id ? updated : p)));
+    else window.alert(`Couldn't ${provider.is_active ? "suspend" : "reactivate"} that provider. Please try again.`);
+  };
+
+  const confirmDeleteProvider = async (providerId) => {
+    setDeletingId(providerId);
+    const ok = await adminDeleteProvider(providerId);
+    setDeletingId(null);
+    setConfirmDeleteId(null);
+    if (ok) setProviders((prev) => prev.filter((p) => p.id !== providerId));
+    else window.alert("Couldn't delete that provider. Please try again.");
+  };
+
+  // Not signed in at all
+  if (!session) {
+    return (
+      <div style={{ minHeight: "100vh", background: "var(--forest)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
+        <div style={{ textAlign: "center", maxWidth: 360 }}>
+          <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 28, fontWeight: 800, color: "var(--near-white)", marginBottom: 8, display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}>
+            <VaiBookMark size={30} />vai<span style={{ color: "var(--lime)" }}>book</span> <span style={{ color: "rgba(255,255,255,0.5)", fontWeight: 600, fontSize: 16 }}>admin</span>
+          </div>
+          <p style={{ color: "rgba(255,255,255,0.6)", fontSize: 14, marginBottom: 24 }}>Sign in with the Google account approved for admin access.</p>
+          <button className="btn-lime" style={{ width: "100%", padding: "12px 0" }} onClick={onSignIn}>Sign in with Google</button>
+          <div style={{ marginTop: 20 }}>
+            <a style={{ color: "rgba(255,255,255,0.4)", fontSize: 13, cursor: "pointer" }} onClick={() => onNav("home")}>← Back to site</a>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Signed in, checking admin status
+  if (checkingAdmin) {
+    return (
+      <div style={{ minHeight: "100vh", background: "var(--forest)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ color: "rgba(255,255,255,0.5)", fontSize: 14 }}>Checking access...</div>
+      </div>
+    );
+  }
+
+  // Signed in but not on the admin allowlist
+  if (!isAdmin) {
+    return (
+      <div style={{ minHeight: "100vh", background: "var(--forest)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
+        <div style={{ textAlign: "center", maxWidth: 380 }}>
+          <div style={{ fontSize: 40, marginBottom: 12 }}>🔒</div>
+          <h2 style={{ color: "var(--near-white)", fontFamily: "'Plus Jakarta Sans', sans-serif", marginBottom: 8 }}>Not authorized</h2>
+          <p style={{ color: "rgba(255,255,255,0.6)", fontSize: 14, marginBottom: 24 }}>
+            {session.user.email} isn't on the VaiBook admin list. Ask an existing admin to add you in Supabase.
+          </p>
+          <button className="btn-ghost" onClick={onSignOut}>Sign out</button>
+        </div>
+      </div>
+    );
+  }
+
+  const counts = {
+    pending: apps.filter(a => a.status === "pending").length,
+    active: apps.filter(a => a.status === "active").length,
+    rejected: apps.filter(a => a.status === "rejected").length,
+  };
+  const filtered = apps.filter(a => a.status === tab);
+
+  // An "active" application isn't actually live until the applicant signs
+  // in once (that's what creates their real provider_profiles row — see
+  // loadProviderProfile). Cross-reference by business name against the
+  // real provider list so admins can see who's still waiting, since the
+  // application list alone can't tell the two apart.
+  const liveBusinessNames = new Set(providers.map((p) => (p.business_name || "").trim().toLowerCase()));
+  const isApplicationLive = (app) => liveBusinessNames.has((app.business_name || "").trim().toLowerCase());
+
+  const planLabel = (id) => (PLANS.find(p => p.id === id)?.name) || id;
+
+  return (
+    <div className="portal-layout">
+      {/* The persistent left sidebar was removed — every link and live badge
+          count it held (Pending/Active/Rejected, Providers, Payments,
+          Refunds, Emergency, Sign out) now lives exclusively in the top
+          header's avatar dropdown (PORTAL_TOOLS_BY_VIEW.admin) plus the
+          Command Center's quick-jump status strip below, so nothing here
+          was left unreachable or invisible. */}
+      <main className="portal-content">
+        {tab === "overview" && (
+          <AdminDashboard
+            pendingApps={apps.filter((a) => a.status === "pending")}
+            activeProviders={providers.filter((p) => p.is_active).map((p) => {
+              const planDef = PLANS.find((pl) => pl.id === (p.plan || "starter")) || PLANS[0];
+              return { id: p.id, business_name: p.business_name, planName: planDef.name, planMonthly: planDef.monthly };
+            })}
+            mrr={providers.filter((p) => p.is_active).reduce((sum, p) => {
+              const planDef = PLANS.find((pl) => pl.id === (p.plan || "starter"));
+              return sum + (planDef?.monthly || 0);
+            }, 0)}
+            busyId={busyId}
+            onApprove={(id) => act(id, "active")}
+            onDeny={(id) => act(id, "rejected")}
+            onManage={() => setTab("providers")}
+            paymentsPending={payments.filter((p) => p.status === "pending").length}
+            refundsCount={refunds.length}
+            emergencyLabel={siteOffline.on ? "Offline" : maintenance.on ? "Paused" : null}
+            onJump={setTab}
+          />
+        )}
+
+        {tab !== "overview" && tab !== "providers" && tab !== "payments" && tab !== "refunds" && tab !== "security" && (
+          <>
+            <div className="portal-header">
+              <h2>Provider applications</h2>
+              <p>Review new signups, confirm bank transfer payment, then activate.</p>
+            </div>
+
+            <div className="metric-grid">
+              <div className="metric"><div className="metric-label">Pending</div><div className="metric-value">{counts.pending}</div><div className="metric-sub">Awaiting review</div></div>
+              <div className="metric"><div className="metric-label">Active</div><div className="metric-value" style={{ color: "var(--lime)" }}>{counts.active}</div><div className="metric-sub">Live on VaiBook</div></div>
+              <div className="metric"><div className="metric-label">Rejected</div><div className="metric-value">{counts.rejected}</div><div className="metric-sub">Declined</div></div>
+              <div className="metric"><div className="metric-label">Total</div><div className="metric-value">{apps.length}</div><div className="metric-sub">All time</div></div>
+            </div>
+
+            <div className="card">
+              <div className="card-title" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span>{tab.charAt(0).toUpperCase() + tab.slice(1)} applications</span>
+                <button className="btn-sm forest" onClick={loadApps} disabled={loadingApps}>{loadingApps ? "Refreshing..." : "Refresh"}</button>
+              </div>
+
+              {filtered.length === 0 && (
+                <p style={{ fontSize: 13, color: "var(--muted)", padding: "16px 0" }}>
+                  {loadingApps ? "Loading..." : `No ${tab} applications.`}
+                </p>
+              )}
+
+              {filtered.map(app => (
+                <div key={app.id} className="booking-item" style={{ alignItems: "flex-start" }}>
+                  <div className="booking-info" style={{ flex: 1 }}>
+                    <div className="title">{app.business_name} <span style={{ fontWeight: 500, color: "var(--muted)", fontSize: 12 }}>— {planLabel(app.plan)}</span></div>
+                    <div className="meta">{app.owner_name} · {app.service_type} · {app.district}</div>
+                    <div className="meta">{app.email} · {app.phone}</div>
+                    {app.description && <div className="meta" style={{ marginTop: 4, fontStyle: "italic" }}>{app.description}</div>}
+                    <div className="meta" style={{ marginTop: 4, fontSize: 11 }}>Applied {new Date(app.created_at).toLocaleDateString()}</div>
+                    {(() => {
+                      const similar = findSimilarApplications(app, apps);
+                      if (!similar.length) return null;
+                      return (
+                        <div style={{ marginTop: 6, fontSize: 12, fontWeight: 600, color: "#B91C1C", background: "#FEE2E2", display: "inline-block", padding: "3px 8px", borderRadius: 6 }}>
+                          ⚠️ Possible duplicate — looks similar to {similar.map((s) => `"${s.business_name}" (${s.email}, ${s.status})`).join(", ")}. Double-check before activating so the wrong email doesn't end up "active."
+                        </div>
+                      );
+                    })()}
+                    {app.status === "active" && (
+                      isApplicationLive(app) ? (
+                        <div style={{ marginTop: 6, fontSize: 12, fontWeight: 600, color: "var(--forest)" }}>✅ Live on VaiBook</div>
+                      ) : (
+                        <div style={{ marginTop: 6, fontSize: 12, fontWeight: 600, color: "#B45309", background: "#FEF3C7", display: "inline-block", padding: "3px 8px", borderRadius: 6 }}>
+                          ⏳ Approved, but not live yet — they haven't signed in to VaiBook with {app.email}. Follow up with them directly ({app.phone || "no phone on file"}); we've also emailed them, but it may not have gone through yet.
+                        </div>
+                      )
+                    )}
+                  </div>
+                  <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
+                    {app.status !== "active" && (
+                      <button className="btn-sm forest" disabled={busyId === app.id} onClick={() => act(app.id, "active")}>Activate</button>
+                    )}
+                    {app.status !== "rejected" && (
+                      <button className="btn-sm" style={{ background: "transparent", border: "1px solid var(--muted)", color: "var(--muted)" }} disabled={busyId === app.id} onClick={() => act(app.id, "rejected")}>Reject</button>
+                    )}
+                    {app.status !== "pending" && (
+                      <button className="btn-sm" style={{ background: "transparent", border: "1px solid var(--muted)", color: "var(--muted)" }} disabled={busyId === app.id} onClick={() => act(app.id, "pending")}>Reset</button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+
+        {tab === "providers" && (
+          <>
+            <div className="portal-header">
+              <h2>Providers</h2>
+              <p>Change a provider's plan, suspend or reactivate them, edit their business details, or permanently delete their account.</p>
+            </div>
+
+            <div className="metric-grid">
+              <div className="metric"><div className="metric-label">Total</div><div className="metric-value">{providers.length}</div><div className="metric-sub">All providers</div></div>
+              <div className="metric"><div className="metric-label">Live providers</div><div className="metric-value" style={{ color: "var(--lime)" }}>{providers.filter(p => p.is_active).length}</div><div className="metric-sub">Signed in and visible in search</div></div>
+              <div className="metric"><div className="metric-label">Suspended</div><div className="metric-value">{providers.filter(p => !p.is_active).length}</div><div className="metric-sub">Hidden from customers</div></div>
+            </div>
+
+            <div className="card">
+              <div className="card-title" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span>All providers</span>
+                <button className="btn-sm forest" onClick={loadProviders} disabled={loadingProviders}>{loadingProviders ? "Refreshing..." : "Refresh"}</button>
+              </div>
+
+              {providers.length === 0 && (
+                <p style={{ fontSize: 13, color: "var(--muted)", padding: "16px 0" }}>
+                  {loadingProviders ? "Loading..." : "No providers yet."}
+                </p>
+              )}
+
+              {providers.map(p => {
+                const isEditing = editingProviderId === p.id;
+                const isSaving = savingProviderId === p.id;
+                const isConfirmingDelete = confirmDeleteId === p.id;
+                const isDeleting = deletingId === p.id;
+
+                if (isEditing) {
+                  return (
+                    <div key={p.id} className="booking-item" style={{ alignItems: "flex-start", flexDirection: "column", gap: 10 }}>
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, width: "100%" }}>
+                        <input className="input" placeholder="Business name" value={providerEditForm.business_name || ""} onChange={e => setProviderEditForm(f => ({ ...f, business_name: e.target.value }))} />
+                        <input className="input" placeholder="District" value={providerEditForm.district || ""} onChange={e => setProviderEditForm(f => ({ ...f, district: e.target.value }))} />
+                        <select className="input" value={providerEditForm.service_type || ""} onChange={e => setProviderEditForm(f => ({ ...f, service_type: e.target.value }))}>
+                          {SERVICE_TYPES.map(st => <option key={st} value={st}>{st}</option>)}
+                        </select>
+                        <input className="input" placeholder="WhatsApp" value={providerEditForm.whatsapp || ""} onChange={e => setProviderEditForm(f => ({ ...f, whatsapp: e.target.value }))} />
+                      </div>
+                      <textarea className="input" placeholder="Bio" style={{ width: "100%", minHeight: 60 }} value={providerEditForm.bio || ""} onChange={e => setProviderEditForm(f => ({ ...f, bio: e.target.value }))} />
+                      <div style={{ display: "flex", gap: 8 }}>
+                        <button className="btn-sm forest" disabled={isSaving} onClick={() => saveProviderEdit(p.id)}>{isSaving ? "Saving..." : "Save"}</button>
+                        <button className="btn-sm" style={{ background: "transparent", border: "1px solid var(--muted)", color: "var(--muted)" }} disabled={isSaving} onClick={cancelEditProvider}>Cancel</button>
+                      </div>
+                    </div>
+                  );
+                }
+
+                return (
+                  <div key={p.id} className="booking-item" style={{ alignItems: "flex-start" }}>
+                    <div className="booking-info" style={{ flex: 1 }}>
+                      <div className="title">
+                        {p.business_name}{" "}
+                        <span style={{ fontWeight: 500, color: p.is_active ? "var(--lime)" : "var(--muted)", fontSize: 12 }}>
+                          — {p.is_active ? "Active" : "Suspended"}
+                        </span>
+                      </div>
+                      <div className="meta">{p.service_type} · {p.district}</div>
+                      {p.whatsapp && <div className="meta">{p.whatsapp}</div>}
+                    </div>
+
+                    <div style={{ display: "flex", flexDirection: "column", gap: 8, alignItems: "flex-end", flexShrink: 0 }}>
+                      <select
+                        className="input"
+                        style={{ padding: "4px 8px", fontSize: 12 }}
+                        value={p.plan || "starter"}
+                        disabled={isSaving}
+                        onChange={e => changeProviderPlan(p.id, e.target.value)}
+                      >
+                        {PLANS.map(pl => <option key={pl.id} value={pl.id}>{pl.name}</option>)}
+                      </select>
+                      {(p.plan || "starter") !== "starter" && p.next_payment_due_date && (
+                        <span style={{ fontSize: 11, color: new Date(p.next_payment_due_date) < new Date() ? "#B91C1C" : "var(--muted)" }}>
+                          {new Date(p.next_payment_due_date) < new Date() ? "Overdue since " : "Next due "}
+                          {new Date(p.next_payment_due_date).toLocaleDateString([], { month: "short", day: "numeric", year: "numeric" })}
+                        </span>
+                      )}
+
+                      {!isConfirmingDelete && (
+                        <div style={{ display: "flex", gap: 8 }}>
+                          <button className="btn-sm" style={{ background: "transparent", border: "1px solid var(--muted)", color: "var(--muted)" }} disabled={isSaving} onClick={() => startEditProvider(p)}>Edit</button>
+                          <button className="btn-sm" style={{ background: "transparent", border: "1px solid var(--muted)", color: "var(--muted)" }} disabled={isSaving} onClick={() => toggleProviderActive(p)}>
+                            {isSaving ? "..." : p.is_active ? "Suspend" : "Reactivate"}
+                          </button>
+                          <button className="btn-sm" style={{ background: "transparent", border: "1px solid #e05252", color: "#e05252" }} onClick={() => setConfirmDeleteId(p.id)}>Delete</button>
+                        </div>
+                      )}
+
+                      {isConfirmingDelete && (
+                        <div style={{ display: "flex", flexDirection: "column", gap: 6, alignItems: "flex-end" }}>
+                          <div style={{ fontSize: 12, color: "#e05252", maxWidth: 220, textAlign: "right" }}>
+                            Delete {p.business_name} permanently? This removes their bookings, reviews, and services too.
+                          </div>
+                          <div style={{ display: "flex", gap: 8 }}>
+                            <button className="btn-sm" style={{ background: "#e05252", border: "1px solid #e05252", color: "#fff" }} disabled={isDeleting} onClick={() => confirmDeleteProvider(p.id)}>
+                              {isDeleting ? "Deleting..." : "Confirm delete"}
+                            </button>
+                            <button className="btn-sm" style={{ background: "transparent", border: "1px solid var(--muted)", color: "var(--muted)" }} disabled={isDeleting} onClick={() => setConfirmDeleteId(null)}>Cancel</button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </>
+        )}
+
+        {tab === "payments" && (() => {
+          const statusColor = { pending: "#B45309", confirmed: "var(--forest)", rejected: "#B91C1C" };
+          const statusBg = { pending: "#FEF3C7", confirmed: "#E7F5EC", rejected: "#FEE2E2" };
+          return (
+            <>
+              <div className="portal-header">
+                <h2>Provider payments</h2>
+                <p>Plan-fee receipts providers have submitted — confirm the ones that check out.</p>
+              </div>
+              <div className="card">
+                <div className="card-title" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <span>All submissions</span>
+                  <button className="btn-sm forest" onClick={loadPayments} disabled={loadingPayments}>{loadingPayments ? "Refreshing..." : "Refresh"}</button>
+                </div>
+                {payments.length === 0 && (
+                  <p style={{ fontSize: 13, color: "var(--muted)", padding: "16px 0" }}>{loadingPayments ? "Loading..." : "No payments submitted yet."}</p>
+                )}
+                {payments.map((pmt) => (
+                  <div key={pmt.id} className="booking-item" style={{ alignItems: "flex-start" }}>
+                    <div className="booking-info" style={{ flex: 1 }}>
+                      <div className="title">{pmt.business_name} <span style={{ fontWeight: 500, color: "var(--muted)", fontSize: 12 }}>— {planLabel(pmt.plan)}</span></div>
+                      <div className="meta">{pmt.period_label} · BZ${pmt.amount}</div>
+                      <div className="meta" style={{ fontSize: 11 }}>Submitted {new Date(pmt.submitted_at).toLocaleDateString()}</div>
+                      {pmt.receipt_url && <a href="#" onClick={(e) => { e.preventDefault(); openPrivateFile(pmt.receipt_url); }} style={{ fontSize: 12 }}>View receipt</a>}
+                      {pmt.reviewed_at && (
+                        <div className="meta" style={{ fontSize: 11, marginTop: 4 }}>Reviewed {new Date(pmt.reviewed_at).toLocaleDateString()} by {pmt.reviewed_by}</div>
+                      )}
+                    </div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 8, alignItems: "flex-end", flexShrink: 0 }}>
+                      <span style={{ fontSize: 12, fontWeight: 600, color: statusColor[pmt.status] || "var(--muted)", background: statusBg[pmt.status] || "var(--sand)", padding: "3px 8px", borderRadius: 6, whiteSpace: "nowrap" }}>
+                        {pmt.status.charAt(0).toUpperCase() + pmt.status.slice(1)}
+                      </span>
+                      {pmt.status === "pending" && (
+                        <div style={{ display: "flex", gap: 8 }}>
+                          <button className="btn-sm lime" disabled={reviewingPaymentId === pmt.id} onClick={() => reviewPayment(pmt, "confirmed")}>Confirm</button>
+                          <button className="btn-sm" style={{ background: "transparent", border: "1px solid var(--muted)", color: "var(--muted)" }} disabled={reviewingPaymentId === pmt.id} onClick={() => reviewPayment(pmt, "rejected")}>Reject</button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          );
+        })()}
+
+        {tab === "refunds" && (
+          <>
+            <div className="portal-header">
+              <h2>Refunds</h2>
+              <p>Refund proof providers have recorded on cancelled/rejected bookings — VaiBook doesn't process the refund itself, this is just the record.</p>
+            </div>
+            <div className="card">
+              <div className="card-title" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span>All refunds</span>
+                <button className="btn-sm forest" onClick={loadRefunds} disabled={loadingRefunds}>{loadingRefunds ? "Refreshing..." : "Refresh"}</button>
+              </div>
+              {refunds.length === 0 && (
+                <p style={{ fontSize: 13, color: "var(--muted)", padding: "16px 0" }}>{loadingRefunds ? "Loading..." : "No refunds recorded yet."}</p>
+              )}
+              {refunds.map((r) => (
+                <div key={r.id} className="booking-item" style={{ alignItems: "flex-start" }}>
+                  <div className="booking-info" style={{ flex: 1 }}>
+                    <div className="title">{r.business_name} <span style={{ fontWeight: 500, color: "var(--muted)", fontSize: 12 }}>— {r.order_number}</span></div>
+                    <div className="meta">BZ${r.amount} refunded · {new Date(r.created_at).toLocaleDateString()}</div>
+                    {r.note && <div className="meta" style={{ fontStyle: "italic" }}>{r.note}</div>}
+                  </div>
+                  {r.receipt_url && <a href="#" onClick={(e) => { e.preventDefault(); openPrivateFile(r.receipt_url); }} style={{ fontSize: 12, flexShrink: 0 }}>View receipt</a>}
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+        {tab === "security" && (
+          <>
+            <div className="portal-header">
+              <h2>Emergency</h2>
+              <p>Two independent switches: take the whole site offline for planned changes, or just pause new bookings and applications if something looks actively wrong. Both work in about a second, without touching Vercel, DNS, or Supabase.</p>
+            </div>
+            <div className="card">
+              <div className="card-title">
+                <span>{siteOffline.on ? "🚨 Site is OFFLINE to visitors" : "Site is online"}</span>
+              </div>
+              {loadingSiteOffline ? (
+                <p style={{ fontSize: 13, color: "var(--muted)", padding: "12px 0" }}>Loading...</p>
+              ) : (
+                <>
+                  <p style={{ fontSize: 13, color: "var(--muted)", lineHeight: 1.6, marginBottom: 12 }}>
+                    While on, every visitor sees a "we'll be back shortly" page instead of the site. You stay signed in as an admin and can use the real site normally to make your changes — flip it back off when you're done.
+                  </p>
+                  {siteOffline.on && siteOffline.message && (
+                    <p style={{ fontSize: 13, color: "var(--muted)", marginBottom: 12 }}>Message shown to visitors: "{siteOffline.message}"</p>
+                  )}
+                  {!siteOffline.on && (
+                    <div style={{ marginBottom: 12 }}>
+                      <label style={{ fontSize: 12, fontWeight: 600, color: "var(--muted)", display: "block", marginBottom: 4 }}>Message to show visitors while offline (optional)</label>
+                      <input
+                        type="text"
+                        value={siteOfflineDraft}
+                        onChange={(e) => setSiteOfflineDraft(e.target.value)}
+                        placeholder="e.g. Quick update in progress — back in a few minutes."
+                        style={{ width: "100%" }}
+                      />
+                    </div>
+                  )}
+                  <button
+                    className={siteOffline.on ? "btn-sm forest" : "btn-sm"}
+                    style={!siteOffline.on ? { background: "#B91C1C", color: "#fff" } : undefined}
+                    onClick={toggleSiteOffline}
+                    disabled={savingSiteOffline}
+                  >
+                    {savingSiteOffline ? "Saving..." : siteOffline.on ? "Bring site back online" : "🚨 Take site offline"}
+                  </button>
+                </>
+              )}
+            </div>
+            <div className="card">
+              <div className="card-title">
+                <span>{maintenance.on ? "🚨 New bookings & signups are PAUSED" : "New bookings & signups are open"}</span>
+              </div>
+              {loadingMaintenance ? (
+                <p style={{ fontSize: 13, color: "var(--muted)", padding: "12px 0" }}>Loading...</p>
+              ) : (
+                <>
+                  {maintenance.on && maintenance.message && (
+                    <p style={{ fontSize: 13, color: "var(--muted)", marginBottom: 12 }}>Message shown to visitors: "{maintenance.message}"</p>
+                  )}
+                  {!maintenance.on && (
+                    <div style={{ marginBottom: 12 }}>
+                      <label style={{ fontSize: 12, fontWeight: 600, color: "var(--muted)", display: "block", marginBottom: 4 }}>Message to show visitors while paused (optional)</label>
+                      <input
+                        type="text"
+                        value={maintenanceDraft}
+                        onChange={(e) => setMaintenanceDraft(e.target.value)}
+                        placeholder="e.g. We're doing quick maintenance — back in a few minutes."
+                        style={{ width: "100%" }}
+                      />
+                    </div>
+                  )}
+                  <button
+                    className={maintenance.on ? "btn-sm forest" : "btn-sm"}
+                    style={!maintenance.on ? { background: "#B91C1C", color: "#fff" } : undefined}
+                    onClick={toggleMaintenance}
+                    disabled={savingMaintenance}
+                  >
+                    {savingMaintenance ? "Saving..." : maintenance.on ? "Resume new bookings & signups" : "🚨 Pause new bookings & signups"}
+                  </button>
+                </>
+              )}
+            </div>
+            <div className="card">
+              <div className="card-title"><span>What each switch does</span></div>
+              <p style={{ fontSize: 13, color: "var(--muted)", lineHeight: 1.6, marginBottom: 12 }}>
+                <strong>Site offline</strong> hides the entire site behind a "we'll be back shortly" page for anyone who isn't signed in as an admin — use it while you (or Claude) are making changes you don't want visitors to see mid-update. It doesn't delete or change any data, and existing sessions/bookings are untouched — it's purely a front door that stays shut to the public until you reopen it.
+              </p>
+              <p style={{ fontSize: 13, color: "var(--muted)", lineHeight: 1.6 }}>
+                <strong>Pausing new bookings &amp; signups</strong> is narrower: it blocks new rows being written to bookings and provider_applications, but leaves the rest of the site browsable — sign-in, existing bookings, payments, chat, and reviews all keep working. New booking requests, walk-ins, and new provider applications are declined with a friendly message until you resume. Use this if you suspect the site is being flooded or abused and want to stop new writes while you look into it, without hiding the whole site.
+              </p>
+            </div>
+          </>
+        )}
+      </main>
+
+      <SiteFooter />
+    </div>
+  );
+}
+
+// ── APP ROOT ────────────────────────────────────────────────────
+// ── AUTH-AWARE APP ROOT ──────────────────────────────────────────
+// A provider's QR code links to "#book-<provider id>" so scanning it jumps
+// straight to their booking page inside VaiBook, instead of the generic
+// homepage. Kept as a plain helper so both the initial-load state and the
+// hashchange listener below parse it identically.
+const parseBookingHash = (h) => (h.startsWith("book-") ? h.slice(5) : null);
+
+export default function App() {
+  const [view, setView] = useState(() => {
+    const h = window.location.hash.replace("#", "");
+    if (parseBookingHash(h)) return "customer";
+    return h === "admin" || h === "customer" || h === "provider" || h === "providers" ? h : "home";
+  });
+
+  // Which provider a QR-code / booking-link deep link pointed at, if any —
+  // consumed once by CustomerPortal to jump straight to that provider's
+  // booking view instead of making the visitor search for them.
+  const [deepLinkProviderId, setDeepLinkProviderId] = useState(() => {
+    const h = window.location.hash.replace("#", "");
+    return parseBookingHash(h);
+  });
+
+  // Keep view in sync if the URL hash changes without a full page reload
+  // (e.g. typing/pasting a #admin or #customer link into an already-open tab).
+  useEffect(() => {
+    const onHashChange = () => {
+      const h = window.location.hash.replace("#", "");
+      const bookingId = parseBookingHash(h);
+      if (bookingId) {
+        setDeepLinkProviderId(bookingId);
+        setView("customer");
+      } else if (h === "admin" || h === "customer" || h === "provider" || h === "providers") {
+        setView(h);
+      }
+    };
+    window.addEventListener("hashchange", onHashChange);
+    return () => window.removeEventListener("hashchange", onHashChange);
+  }, []);
+
+  // Direct-to-app provider signup modal — one global instance, opened from
+  // anywhere (nav CTA, pricing cards, etc. — see onOpenProviderSignup
+  // below) so every "provide my service" / "apply to join" entry point
+  // pops the same frictionless overlay instead of routing to a marketing
+  // page or the real ProviderSignup application form.
+  const [showProviderSignup, setShowProviderSignup] = useState(false);
+
+  // Site-wide offline takeover (see SiteOffline / AdminPortal's Emergency
+  // tab). Checked independently of the session/loading flow below so it
+  // still shows up even if, say, Google sign-in itself is having issues —
+  // an admin can always get past it via the "Site owner? Sign in" link.
+  const [siteOffline, setSiteOfflineState] = useState({ on: false, message: "" });
+  const [siteOfflineAdminOk, setSiteOfflineAdminOk] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    const check = async () => {
+      const s = await getSiteOfflineStatus();
+      if (!cancelled) setSiteOfflineState(s);
+    };
+    check();
+    const interval = setInterval(check, 30000);
+    return () => { cancelled = true; clearInterval(interval); };
+  }, []);
+
+  const [session, setSession] = useState(null);
+  const [user, setUser] = useState(null);
+  const [providerProfile, setProviderProfile] = useState(null);
+  const [staffProfile, setStaffProfile] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  // getOrCreateUser can now throw on a real query failure (see
+  // supabase.js) rather than silently treating it as "no users row yet"
+  // and attempting to insert a duplicate. Catch it here so a transient
+  // hiccup never overwrites the current `user` state with undefined —
+  // the next auth event (a token refresh, another tab action) naturally
+  // retries this whole flow if it was transient.
+  const safeGetOrCreateUser = async (authUser) => {
+    try {
+      return await getOrCreateUser(authUser);
+    } catch (err) {
+      console.error('Could not load/create user row this cycle:', err?.message);
+      return undefined;
+    }
+  };
+
+  // If this account doesn't have a provider profile yet, check whether an
+  // admin already activated an application submitted with this email — if
+  // so, create the provider profile now so the portal has something to show.
+  //
+  // FIXED (P0 — registered providers occasionally seeing "no provider
+  // profile yet"): getProviderProfile now THROWS on a real query failure
+  // (network blip, or the client's session/JWT not fully attached yet —
+  // most likely right after an OAuth redirect, exactly when this runs)
+  // rather than returning null the same way it does for "confirmed: no
+  // business". Previously any such failure was indistinguishable from a
+  // genuinely business-less account, and the caller would happily
+  // overwrite a real providerProfile already in state with null. This
+  // retries once (most transient failures clear immediately), and on a
+  // second failure returns `undefined` — distinct from `null` — so the
+  // caller below knows to leave the existing provider/staff state alone
+  // instead of concluding the business is gone.
+  const loadProviderProfile = async (authUser, attempt = 0) => {
+    let p;
+    try {
+      p = await getProviderProfile(authUser.id);
+    } catch (err) {
+      if (attempt < 1) {
+        await new Promise((resolve) => setTimeout(resolve, 800));
+        return loadProviderProfile(authUser, attempt + 1);
+      }
+      console.error('Could not confirm provider profile after retry — leaving existing state as-is:', err?.message);
+      return undefined;
+    }
+    if (!p) {
+      const app = await getActiveApplicationByEmail(authUser.email);
+      if (app) {
+        const created = await createProviderProfile({
+          user_id: authUser.id,
+          business_name: app.business_name,
+          service_type: app.service_type,
+          category_key: categoryForServiceType(app.service_type),
+          district: app.district,
+          bio: app.description,
+          whatsapp: app.phone || null,
+          is_active: true,
+          // Carried over from the application row, where they were stamped
+          // the moment admin hit "Activate" — never set on sign-up itself.
+          trial_start_date: app.trial_start_date || null,
+          trial_end_date: app.trial_end_date || null,
+        });
+        if (created) {
+          try {
+            p = await getProviderProfile(authUser.id);
+          } catch (err) {
+            // The profile really was just created a moment ago — a failure
+            // re-reading it is "unknown", not "doesn't exist".
+            console.error('Created provider profile but could not re-read it:', err?.message);
+            return undefined;
+          }
+        }
+      }
+    }
+    return p;
+  };
+
+  // Same "claim on first sign-in" idea as loadProviderProfile above, for
+  // a staff seat instead of a whole business — only called once we
+  // already know this account doesn't own a business itself.
+  const loadStaffProfile = async () => {
+    // Both of these are SECURITY DEFINER RPCs that work off the caller's own
+    // JWT, so they take no arguments — see supabase_audit_fixes.sql.
+    let sp = await getMyStaffProfile();
+    if (!sp) sp = await claimStaffSeatByEmail();
+    return sp;
+  };
+
+  const applyPendingView = () => {
+    try {
+      const pending = localStorage.getItem("vaibook_pending_view");
+      if (pending === "admin" || pending === "customer" || pending === "provider") {
+        setView(pending);
+        localStorage.removeItem("vaibook_pending_view");
+        return true;
+      }
+    } catch (e) { /* ignore */ }
+    return false;
+  };
+
+  // Mirrors Vai Buy: once an admin account is signed in, land straight in
+  // the admin portal instead of the regular homepage. Skipped when a deep
+  // link (a QR booking link, or an explicit #customer/#provider URL) or a
+  // pending "sign in to do X" flow already decided where to go — an admin
+  // opening a booking link or the provider portal on purpose should still
+  // land there, not get bounced.
+  const maybeGoToAdmin = async (email, hadPendingView) => {
+    if (hadPendingView) return false;
+    const h = window.location.hash.replace("#", "");
+    if (h === "customer" || h === "provider" || parseBookingHash(h)) return false;
+    const ok = await checkIsAdmin(email);
+    if (ok) { setView("admin"); return true; }
+    return false;
+  };
+
+  // A plain refresh re-derives `view` from the URL hash alone (see the
+  // useState initializer above) — but navigating BETWEEN portals in-app
+  // (the account-switcher, "For business" links, etc.) only ever calls
+  // setView, never touches window.location.hash. So someone who signed
+  // in, switched into the provider portal, and hit refresh would have
+  // the hash still pointing at whatever it last was (often empty, or a
+  // stale #customer from earlier in the session) and land back on the
+  // generic homepage or the wrong portal — not where they actually were.
+  // This restores the last portal the account was sitting in, but only
+  // when nothing more specific already claimed the view (an explicit
+  // #admin/#customer/#provider/#book- link, a pending "sign in to do X"
+  // redirect, or this being an admin account).
+  const restoreLastPortalView = (hadPendingView, wasAdmin, canUseProviderPortal) => {
+    if (hadPendingView || wasAdmin) return;
+    const h = window.location.hash.replace("#", "");
+    if (h === "customer" || h === "provider" || h === "admin" || parseBookingHash(h)) return;
+    try {
+      const last = localStorage.getItem("vaibook_last_view");
+      if (last === "provider" && canUseProviderPortal) setView("provider");
+      else if (last === "customer") setView("customer");
+    } catch (e) { /* ignore */ }
+  };
+
+  useEffect(() => {
+    // Get initial session
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      setSession(session);
+      if (session) {
+        const u = await safeGetOrCreateUser(session.user);
+        if (u !== undefined) setUser(u);
+        const p = await loadProviderProfile(session.user);
+        // p === undefined means the check itself failed after a retry (see
+        // loadProviderProfile) — not that there's no business. Skip the
+        // state update entirely rather than risk overwriting a real
+        // profile with null.
+        let sp = null;
+        if (p !== undefined) {
+          setProviderProfile(p);
+          sp = p ? null : await loadStaffProfile();
+          setStaffProfile(sp);
+        }
+        const hadPending = applyPendingView();
+        const wasAdmin = await maybeGoToAdmin(session.user.email, hadPending);
+        restoreLastPortalView(hadPending, wasAdmin, !!p || !!sp);
+      }
+      setLoading(false);
+    });
+
+    // Listen for auth changes. Gated to the actual SIGNED_IN event (not
+    // TOKEN_REFRESHED, which also fires this callback roughly hourly) so an
+    // admin who's deliberately browsing the customer/provider portal isn't
+    // suddenly bounced back to the admin portal mid-session.
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      setSession(session);
+      if (session) {
+        const u = await safeGetOrCreateUser(session.user);
+        if (u !== undefined) setUser(u);
+        const p = await loadProviderProfile(session.user);
+        // Same "unknown, don't overwrite" guard as the initial-session
+        // check above — this is the more important spot for it, since
+        // this handler fires repeatedly through a session (including
+        // TOKEN_REFRESHED roughly hourly), each time with a REAL, already
+        // -correct providerProfile in state that a transient query hiccup
+        // must not stomp on.
+        if (p !== undefined) {
+          setProviderProfile(p);
+          setStaffProfile(p ? null : await loadStaffProfile());
+        }
+        const hadPending = applyPendingView();
+        if (event === "SIGNED_IN") {
+          const wasAdmin = await maybeGoToAdmin(session.user.email, hadPending);
+          // FIXED (P0, requirement #1): a registered business owner must
+          // never land on the customer dashboard just because they signed
+          // in through a generic, customer-facing entry point (the plain
+          // "Log in" link, the nav/hero search bar, a service pill) rather
+          // than explicitly picking "VaiBook for professionals" on
+          // AuthChoice — those generic entry points can't know who's about
+          // to sign in, so they always stage vaibook_pending_view as
+          // "customer" (or nothing) before kicking off Google auth. This
+          // is the one place that actually knows the account's real
+          // identity (p, just loaded above), so it's the right place to
+          // correct course. Deliberately scoped to:
+          //  - a genuine fresh sign-in only (event === "SIGNED_IN"), never
+          //    a background TOKEN_REFRESHED, so a provider who deliberately
+          //    switched to the customer view mid-session is never yanked
+          //    back out of it;
+          //  - !hadPending, so an explicit AuthChoice pick — including a
+          //    dual-role account deliberately choosing "VaiBook for
+          //    customers" — is always respected, never overridden;
+          //  - !wasAdmin, admin already wins;
+          //  - not mid booking-deep-link, so opening a #book-... link
+          //    someone sent them is never hijacked into the provider
+          //    portal just because they also happen to own a business.
+          if (p && !wasAdmin && !hadPending) {
+            const h = window.location.hash.replace("#", "");
+            if (!parseBookingHash(h)) setView("provider");
+          }
+        }
+      } else {
+        setUser(null);
+        setProviderProfile(null);
+        setStaffProfile(null);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  // SOLO-PLAN SINGLE SESSION (Starter/Pro only — "Team"/business plan is
+  // exempt, since multiple staff are expected to be signed in concurrently
+  // on their own devices). Runs whenever providerProfile settles onto a
+  // real Starter/Pro business: rotates this device's session token (which
+  // silently invalidates whatever device was previously logged into this
+  // same account), then listens for the token changing again — meaning a
+  // newer login happened somewhere else — and signs this device out the
+  // moment that happens, rather than leaving it quietly logged in. See
+  // supabase_solo_single_session.sql / the new helpers in supabase.js.
+  useEffect(() => {
+    if (!providerProfile || providerProfile.plan === "business") return;
+    let unsubscribe;
+    let cancelled = false;
+
+    const forceSignOutHere = async () => {
+      clearLocalSoloSessionToken();
+      await signOut();
+      setView("home");
+      alert("You've been signed out because this account just signed in on another device.");
+    };
+
+    (async () => {
+      // One-shot backstop: if the server's token already doesn't match what
+      // this device has cached (e.g. this tab was asleep/backgrounded while
+      // another device logged in and the Realtime socket missed it), don't
+      // wait for a future change event — catch it right away.
+      const existingLocal = getLocalSoloSessionToken();
+      if (existingLocal) {
+        const serverToken = await getServerSoloSessionToken(providerProfile.user_id);
+        if (serverToken && serverToken !== existingLocal) {
+          if (!cancelled) await forceSignOutHere();
+          return;
+        }
+      }
+
+      await establishSoloSession(providerProfile.id);
+      if (cancelled) return;
+      unsubscribe = subscribeToSoloSessionReplacement(providerProfile.user_id, () => {
+        if (!cancelled) forceSignOutHere();
+      });
+    })();
+
+    return () => {
+      cancelled = true;
+      unsubscribe?.();
+    };
+  }, [providerProfile?.id, providerProfile?.plan, providerProfile?.user_id]);
+
+  // AUTO-PROMPT FOR PUSH NOTIFICATIONS, once, right after sign-in. Before
+  // this, turning push on required finding a "Turn on" button buried in
+  // Settings — most people never would, and every one of them is someone
+  // who could miss a booking update they'd have wanted. This asks once per
+  // device (not once per login — the "already asked" flag persists across
+  // sessions) via the browser's own permission prompt, for both customers
+  // and providers; it never re-asks after that, whichever way they answer,
+  // same as the browser itself (a "Block" decision can't be re-prompted
+  // short of the visitor changing it in their own browser settings).
+  // Applies for every signed-in account regardless of which portal they're
+  // in, since this effect lives in App() itself rather than inside either
+  // portal component.
+  const { pushEnabled: autoPushEnabled, enablePushNotifications: autoEnablePush } = usePushSubscription(user?.id);
+  useEffect(() => {
+    if (!user?.id) return;
+    if (autoPushEnabled) return;
+    if (typeof window === "undefined" || !("Notification" in window)) return;
+    let alreadyPrompted = false;
+    try { alreadyPrompted = localStorage.getItem("vaibook_push_auto_prompted") === "1"; } catch (e) { /* ignore */ }
+    if (alreadyPrompted) return;
+    try { localStorage.setItem("vaibook_push_auto_prompted", "1"); } catch (e) { /* ignore */ }
+    // Only actually show the browser's prompt when nothing's been decided
+    // yet — if it's already "granted" there's nothing to do, and if it's
+    // already "denied" calling requestPermission again wouldn't show
+    // anything anyway (browsers don't re-prompt after a block).
+    if (Notification.permission !== "default") return;
+    autoEnablePush();
+  }, [user?.id, autoPushEnabled]);
+
+  // Re-check admin status whenever the site is offline and we have (or
+  // gain) a signed-in user — this is what lets the "Site owner? Sign in"
+  // link on SiteOffline actually get you past it once you're recognized.
+  useEffect(() => {
+    let cancelled = false;
+    if (!siteOffline.on) { setSiteOfflineAdminOk(false); return; }
+    if (!session?.user?.email) { setSiteOfflineAdminOk(false); return; }
+    checkIsAdmin(session.user.email).then((ok) => { if (!cancelled) setSiteOfflineAdminOk(ok); });
+    return () => { cancelled = true; };
+  }, [siteOffline.on, session?.user?.email]);
+
+  // Remembers whichever real portal the account is currently sitting in,
+  // so restoreLastPortalView (above) can put a refresh back where it
+  // belongs instead of always falling back to the homepage.
+  useEffect(() => {
+    if (view !== "provider" && view !== "customer" && view !== "admin") return;
+    try { localStorage.setItem("vaibook_last_view", view); } catch (e) { /* ignore */ }
+  }, [view]);
+
+  const handleSignOut = async () => {
+    clearLocalSoloSessionToken();
+    await signOut();
+    setView("home");
+    try { localStorage.removeItem("vaibook_last_view"); } catch (e) { /* ignore */ }
+  };
+
+  if (loading) {
+    return (
+      <>
+        <style>{css}</style>
+        <div style={{ minHeight: "100vh", background: "var(--forest)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div style={{ textAlign: "center" }}>
+            <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 32, fontWeight: 800, color: "var(--near-white)", marginBottom: 12, display: "flex", alignItems: "center", justifyContent: "center", gap: 12 }}>
+              <VaiBookMark size={34} />vai<span style={{ color: "var(--lime)" }}>book</span>
+            </div>
+            <div style={{ color: "rgba(255,255,255,0.5)", fontSize: 14 }}>Loading...</div>
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  // Checked after the loading splash (not before) so we know the real
+  // session first — otherwise a returning admin would flash-see this
+  // page for a moment before the admin check catches up.
+  if (siteOffline.on && !siteOfflineAdminOk) {
+    return <SiteOffline message={siteOffline.message} onSignIn={signInWithGoogle} />;
+  }
+
+  const authProps = {
+    session, user, providerProfile,
+    onSignIn: signInWithGoogle, onSignOut: handleSignOut,
+    onUserUpdate: setUser, onProviderProfileUpdate: setProviderProfile,
+    onOpenProviderSignup: () => setShowProviderSignup(true),
+  };
+
+  return (
+    <>
+      <style>{css}</style>
+      <MaintenanceBanner />
+      <InstallAppGuide />
+      {/* Rendered once, globally, so it can pop over whatever page/view is
+          currently showing — see the showProviderSignup state above. */}
+      <ProviderSignupModal
+        open={showProviderSignup}
+        onClose={() => setShowProviderSignup(false)}
+        onEnterDashboard={() => { setShowProviderSignup(false); setView("provider"); }}
+      />
+      {/* The Provider Portal now has its own top bar (logo, nav links, avatar
+          menu) replacing the persistent sidebar, so the global site nav
+          would just be a redundant second header above it. Every other
+          view — including the Staff Portal, which still uses the old
+          sidebar layout — keeps the global nav as before. */}
+      {view !== "auth" && !(view === "provider" && providerProfile) && <Nav onNav={setView} current={view} {...authProps} />}
+      {view === "home" && <LandingPage onNav={setView} {...authProps} />}
+      {view === "providers" && <ProviderLandingPage onNav={setView} {...authProps} />}
+      {view === "customer" && (
+        <CustomerPortal
+          onNav={setView}
+          {...authProps}
+          deepLinkProviderId={deepLinkProviderId}
+          onDeepLinkConsumed={() => setDeepLinkProviderId(null)}
+        />
+      )}
+      {view === "provider" && (
+        !providerProfile && staffProfile
+          ? <StaffPortal onNav={setView} session={session} staffProfile={staffProfile} onSignOut={handleSignOut} />
+          : <ProviderPortal onNav={setView} {...authProps} />
+      )}
+      {view === "signup" && <ProviderSignup onNav={setView} {...authProps} />}
+      {view === "admin" && <AdminPortal onNav={setView} {...authProps} />}
+      {view === "auth" && <AuthChoice onNav={setView} {...authProps} />}
+      {view === "help" && <HelpCenter onNav={setView} />}
+      {view === "help-contact" && <HelpContactForm onNav={setView} />}
+      {view === "help-faq" && <HelpFAQ onNav={setView} />}
+    </>
+  );
+}
+
+import { useState, useEffect, useLayoutEffect, useRef, useContext, createContext, lazy, Suspense } from "react";
+import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, updateService, deleteService, getActiveProviders, getProviderDirectory, createBooking, getProviderBusyWindows, createBookingSafe, cancelBooking, getCustomerBookings, uploadReceipt, submitReview, getProviderReviews, updateReview, sendBookingEmail, updateUserProfile, getPaymentMethods, addPaymentMethod, deletePaymentMethod, createNotification, getNotifications, markNotificationRead, markAllNotificationsRead, getCategoryDefaultFeatures, getProviderFeatureOverrides, setProviderFeatureOverride, getVisitNotes, upsertVisitNote, adminListProviders, adminUpdateProvider, adminDeleteProvider, getFavoriteProviderIds, getFavoriteProviders, addFavorite, removeFavorite, getBookingMessages, sendBookingMessage, markBookingMessagesRead, getUnreadBookingMessages, getProviderMonthlyTrend, createProviderProfile, getProviderById, createWalkInBooking, submitProviderPayment, getMyProviderPayments, adminListProviderPayments, adminReviewProviderPayment, submitBookingRefund, adminListBookingRefunds, openPrivateFile, getProviderStaff, addProviderStaff, updateProviderStaff, deleteProviderStaff, getLoyaltyAccount, getProviderLoyaltyCustomers, redeemLoyaltyReward, getMyStaffProfile, claimStaffSeatByEmail, getStaffBookings, getProviderNotifyEmail, getMaintenanceStatus, setMaintenanceMode, getSiteOfflineStatus, setSiteOffline, sendEmailOtp, verifyEmailOtp, savePushSubscription, attachBookingServices, getProviderBlocks, insertProviderBlock, deleteProviderBlock, proposeBookingReschedule, confirmBookingReschedule, declineBookingReschedule, withdrawBookingReschedule, establishSoloSession, getServerSoloSessionToken, getLocalSoloSessionToken, clearLocalSoloSessionToken, subscribeToSoloSessionReplacement } from "./supabase";
+import AdminDashboard from "./AdminDashboard";
+import ProviderSignupModal from "./ProviderSignupModal";
+import ProfilePhotoModal from "./ProfilePhotoModal";
+import LanguageSelector from "./LanguageSelector";
+import { useTranslation } from "react-i18next";
+import { compressImageFile } from "./imageUtils";
+import { bookingRequestSchema, rescheduleProposalSchema, validate } from "./validation";
+
+// Default map center: Belize (roughly Belmopan) for providers who haven't set a pin yet.
+const BELIZE_CENTER = [17.25, -88.77];
+
+// Contact address for the Help & Support page. Same domain-handle pattern
+// as VAI_MEDIA_EMAIL further down.
+const SUPPORT_EMAIL = "support@vaibook.bz";
+
+// Pre-fills the subject line so a support email already says which side of
+// the app it's coming from, without needing a real ticketing system —
+// same lightweight "just mailto, but a little smarter" approach as
+// vaiMediaMailtoUrl further down.
+const helpMailtoUrl = (subject, body) =>
+  `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent(subject)}${body ? `&body=${encodeURIComponent(body)}` : ""}`;
+
+// The combined list of "what's this about" reasons for the Email Us form —
+// deliberately one shared list covering both customer and business
+// questions rather than two separate flows, since it all lands in the same
+// inbox at VaiBook's end regardless of which "For customers"/"For
+// professionals" card someone started from.
+const CONTACT_REASONS = ["booking", "charge", "providerIssue", "account", "planBilling", "dashboard", "other"];
+
+// Real, accurate answers about how VaiBook actually behaves today — every
+// one of these matches the app's real logic elsewhere in this file (the
+// 14-day trial has no backend enforcement, billing is manual bank-transfer,
+// Chairs Filled is shop-wide unless staff-scoped, etc.). Nothing aspirational
+// here — if a feature isn't built, it isn't answered as if it were.
+const FAQ_ITEMS = ["trial", "plans", "staff", "walkins", "chairsFilled", "billing", "changePlan", "findMe", "language", "blocks"];
+
+// react-leaflet + leaflet only ever gets fetched when one of these two
+// components actually renders — see the comment atop MapWidgets.jsx.
+const ProviderMiniMap = lazy(() => import("./MapWidgets").then((m) => ({ default: m.ProviderMiniMap })));
+const ProviderLocationMap = lazy(() => import("./MapWidgets").then((m) => ({ default: m.ProviderLocationMap })));
+// Pulls in the `qrcode` package, so it's code-split and only fetched the
+// moment a provider actually opens their launch graphic — not on every
+// dashboard load.
+const WelcomePlaqueGenerator = lazy(() => import("./WelcomePlaqueGenerator"));
+function MapLoadingFallback({ height }) {
+  return (
+    <div style={{ height, width: "100%", display: "flex", alignItems: "center", justifyContent: "center", background: "var(--sand)", fontSize: 12.5, color: "var(--muted)" }}>
+      Loading map...
+    </div>
+  );
+}
+
+function directionsUrl(lat, lng) {
+  return `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
+}
+
+// Builds the professional "you're booked" confirmation email: a thank-you
+// note, an appointment card, a proper invoice breakdown, and the provider's
+// location with a one-tap directions link. Used once a booking is actually
+// confirmed (immediately for no-deposit bookings, or once the deposit
+// payment is confirmed) — not for the earlier accept/deposit-request emails.
+function bookingConfirmedEmailHtml({ customerName, providerProfile, serviceName, dateStr, timeStr, total, deposit }) {
+  const balance = deposit != null ? (Number(total || 0) - Number(deposit || 0)).toFixed(2) : null;
+  const hasLocation = providerProfile?.latitude != null && providerProfile?.longitude != null;
+  const mapsUrl = hasLocation ? directionsUrl(providerProfile.latitude, providerProfile.longitude) : null;
+  const addressLine = providerProfile?.location_label || providerProfile?.district || "";
+  const providerName = providerProfile?.business_name || "your provider";
+
+  return `
+  <div style="font-family: -apple-system, Helvetica, Arial, sans-serif; max-width: 520px; margin: 0 auto; color: #1a2e22;">
+    <div style="background: #0D3D2E; padding: 22px 28px; border-radius: 10px 10px 0 0;">
+      <span style="font-size: 20px; font-weight: 700; color: #FAFAF7;">vai<span style="color: #C6F135;">book</span></span>
+    </div>
+    <div style="background: #ffffff; border: 1px solid #E5E0D3; border-top: none; border-radius: 0 0 10px 10px; padding: 28px;">
+      <h2 style="margin: 0 0 6px; font-size: 20px; color: #0D3D2E;">Thank you for booking with VaiBook${customerName ? `, ${customerName}` : ""}!</h2>
+      <p style="margin: 0 0 20px; font-size: 14px; color: #5b6b62; line-height: 1.5;">Your appointment with <strong>${providerName}</strong> is confirmed. Here's everything you need for your visit.</p>
+
+      <div style="background: #F5EFE0; border-radius: 8px; padding: 16px 18px; margin-bottom: 16px;">
+        <div style="font-size: 12px; color: #5b6b62; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.4px;">Appointment</div>
+        <div style="font-size: 15px; font-weight: 600;">${serviceName}</div>
+        <div style="font-size: 13px; color: #5b6b62; margin-top: 2px;">${dateStr}${timeStr ? ` at ${timeStr}` : ""}</div>
+      </div>
+
+      <div style="border: 1px solid #E5E0D3; border-radius: 8px; padding: 16px 18px; margin-bottom: 16px;">
+        <div style="font-size: 12px; font-weight: 600; color: #0D3D2E; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.4px;">Invoice</div>
+        <table style="width: 100%; font-size: 14px; border-collapse: collapse;">
+          <tr><td style="padding: 4px 0; color: #5b6b62;">Total</td><td style="padding: 4px 0; text-align: right;">BZ$${Number(total || 0).toFixed(2)}</td></tr>
+          ${deposit != null ? `<tr><td style="padding: 4px 0; color: #5b6b62;">Deposit paid</td><td style="padding: 4px 0; text-align: right;">BZ$${Number(deposit).toFixed(2)}</td></tr>
+          <tr><td style="padding: 8px 0 0; font-weight: 600; border-top: 1px solid #E5E0D3;">Balance due at appointment</td><td style="padding: 8px 0 0; text-align: right; font-weight: 600; border-top: 1px solid #E5E0D3;">BZ$${balance}</td></tr>` : ""}
+        </table>
+      </div>
+
+      ${addressLine || mapsUrl ? `
+      <div style="border: 1px solid #E5E0D3; border-radius: 8px; padding: 16px 18px; margin-bottom: 16px;">
+        <div style="font-size: 12px; font-weight: 600; color: #0D3D2E; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.4px;">Location</div>
+        ${addressLine ? `<div style="font-size: 14px; margin-bottom: 10px;">${addressLine}</div>` : ""}
+        ${mapsUrl ? `<a href="${mapsUrl}" style="display: inline-block; background: #0D3D2E; color: #FAFAF7; text-decoration: none; font-size: 13px; font-weight: 600; padding: 9px 18px; border-radius: 100px;">Get directions</a>` : ""}
+      </div>` : ""}
+
+      <p style="font-size: 13px; color: #5b6b62; line-height: 1.5; margin-top: 24px;">We look forward to seeing you. If anything comes up, you can reach ${providerName} directly.</p>
+      <p style="font-size: 13px; color: #5b6b62; margin-top: 16px;">— The VaiBook Team</p>
+    </div>
+  </div>`;
+}
+
+// Sent the moment an admin activates a provider application. Important:
+// activation alone does NOT put the business live — the very first time
+// this person signs in to VaiBook with the same email, their provider
+// profile is created automatically (see loadProviderProfile). This email
+// exists so they actually know to go do that, rather than the admin
+// approving someone who never finds out and never shows up in search.
+function providerApprovedEmailHtml({ businessName, ownerName }) {
+  return `
+  <div style="font-family: -apple-system, Helvetica, Arial, sans-serif; max-width: 520px; margin: 0 auto; color: #1a2e22;">
+    <div style="background: #0D3D2E; padding: 22px 28px; border-radius: 10px 10px 0 0;">
+      <span style="font-size: 20px; font-weight: 700; color: #FAFAF7;">vai<span style="color: #C6F135;">book</span></span>
+    </div>
+    <div style="background: #ffffff; border: 1px solid #E5E0D3; border-top: none; border-radius: 0 0 10px 10px; padding: 28px;">
+      <h2 style="margin: 0 0 6px; font-size: 20px; color: #0D3D2E;">You're approved${ownerName ? `, ${ownerName}` : ""}! 🎉</h2>
+      <p style="margin: 0 0 20px; font-size: 14px; color: #5b6b62; line-height: 1.5;"><strong>${businessName}</strong> has been approved on VaiBook. One last step to go live:</p>
+      <div style="background: #F5EFE0; border-radius: 8px; padding: 16px 18px; margin-bottom: 16px;">
+        <div style="font-size: 14px; line-height: 1.6;">
+          Sign in at <strong>vai-book.vercel.app/#provider</strong> with Google, using this same email address. The moment you do, your business goes live and customers can start finding and booking you.
+        </div>
+      </div>
+      <p style="font-size: 13px; color: #5b6b62; line-height: 1.5;">Nothing else is needed — no forms, no re-applying. Just sign in once and you're live.</p>
+      <p style="font-size: 13px; color: #5b6b62; margin-top: 16px;">— The VaiBook Team</p>
+    </div>
+  </div>`;
+}
+
+// Compact relative-time formatter for the notification list ("2h ago").
+function timeAgo(dateStr) {
+  const diffMs = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(diffMs / 60000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  const days = Math.floor(hrs / 24);
+  if (days < 7) return `${days}d ago`;
+  return new Date(dateStr).toLocaleDateString();
+}
+
+// Builds a small, deduplicated list of search suggestions from a list of
+// providers (each with business_name, service_type, and services[].name).
+// Matches happen against three things: the provider's business name, its
+// category (service_type), and the individual services it offers — so
+// typing "the nigglet cuts", "barber", or "haircut" all surface results.
+function buildSuggestions(list, query) {
+  const q = (query || "").trim().toLowerCase();
+  if (!q || !list || list.length === 0) return [];
+  const results = [];
+  const seen = new Set();
+
+  list.forEach((p) => {
+    if ((p.business_name || "").toLowerCase().includes(q)) {
+      const key = `p-${p.id}`;
+      if (!seen.has(key)) {
+        seen.add(key);
+        results.push({ key, type: "provider", icon: "🏪", label: p.business_name, sublabel: p.service_type || "" });
+      }
+    }
+  });
+
+  const categories = new Set();
+  list.forEach((p) => {
+    if (p.service_type && p.service_type.toLowerCase().includes(q)) categories.add(p.service_type);
+  });
+  categories.forEach((cat) => {
+    const key = `c-${cat}`;
+    if (!seen.has(key)) {
+      seen.add(key);
+      results.push({ key, type: "category", icon: "🏷️", label: cat, sublabel: "Category" });
+    }
+  });
+
+  const serviceNames = new Map();
+  list.forEach((p) => {
+    (p.services || []).forEach((s) => {
+      if (s.name && s.name.toLowerCase().includes(q)) {
+        const k = s.name.toLowerCase();
+        if (!serviceNames.has(k)) serviceNames.set(k, { name: s.name, count: 0 });
+        serviceNames.get(k).count += 1;
+      }
+    });
+  });
+  serviceNames.forEach(({ name, count }) => {
+    const key = `s-${name.toLowerCase()}`;
+    if (!seen.has(key)) {
+      seen.add(key);
+      results.push({ key, type: "service", icon: "✂️", label: name, sublabel: `Service · ${count} provider${count === 1 ? "" : "s"}` });
+    }
+  });
+
+  return results.slice(0, 8);
+}
+
+// ── DESIGN TOKENS ──────────────────────────────────────────────
+// Palette: deep forest green (#0D3D2E) + warm sand (#F5EFE0) + 
+// electric lime accent (#C6F135) + soft clay (#D4795A) + near-white (#FAFAF7)
+// Type: "Plus Jakarta Sans" throughout (display + body) — matches Vai Buy & Sell
+// Signature: the lime accent used sparingly — only on the ONE thing that matters per screen
+
+const css = `
+  @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --forest: #0D3D2E;
+    --forest-mid: #164D3A;
+    --forest-light: #1E6B50;
+    --sand: #F5EFE0;
+    --lime: #C6F135;
+    --clay: #D4795A;
+    --near-white: #FAFAF7;
+    --dark-text: #0D1F18;
+    --muted: #6B7F76;
+    --border: #D9E4DF;
+    --radius: 12px;
+    --radius-sm: 8px;
+
+    /* THEME TOKENS — a separate, additive design-token layer for the
+       light/dark toggle (App.jsx sets data-theme on <html>, localStorage-
+       backed). Deliberately NEW variable names, not a redefinition of
+       --forest/--near-white/etc. above: those are consumed unscoped by
+       most of the app (Provider/Admin/Customer portals, every modal),
+       which is still light-only today, and flipping their root values
+       would repaint all of it, not just the page(s) that have opted into
+       theming. Only selectors that explicitly use these new tokens — for
+       now, LandingPage's .lp-theme tree — respond to the toggle; every
+       other page is completely unaffected, by construction, so the
+       rollout can continue page by page later without risk to what's
+       already shipped. Default (no [data-theme] override) is dark — this
+       site's existing premium look — for a first-time visitor.
+       --accent-neon/--accent-neon-text are the literal brand lime, kept
+       IDENTICAL in both themes per the brief ("maintain the exact same
+       neon lime for primary buttons and hover states"). --accent-text is
+       a separate token for lime used as plain TEXT directly on the page
+       background (an eyebrow label, a rating line): lime-on-near-white
+       fails contrast, so in light mode that specific usage swaps to the
+       deep forest accent instead — brand color stays reserved for
+       surfaces (buttons, borders, glowing badges) where it's actually
+       legible in both themes. */
+    --bg-primary: #081F17;
+    --bg-elevated: rgba(255,255,255,0.04);
+    --bg-elevated-hover: rgba(255,255,255,0.07);
+    --text-primary: #FFFFFF;
+    --text-secondary: rgba(245,239,224,0.62);
+    --text-tertiary: rgba(245,239,224,0.5);
+    --border-subtle: rgba(255,255,255,0.14);
+    --card-border: transparent;
+    --card-shadow: 0 14px 34px rgba(0,0,0,0.35);
+    --accent-neon: var(--lime);
+    --accent-neon-text: var(--forest);
+    --accent-text: var(--lime);
+    /* Near-black glass, verbatim from .cx-discover-search/.cx-discover-pill
+       (Customer Portal Home) — see the GLOBAL PREMIUM UI COMPONENTS note
+       below for why .card-premium/.btn-neon/.badge-pill/.search-glass
+       exist as their own shared classes. */
+    --glass-bg: rgba(14,36,27,0.94);
+    --glass-border: rgba(255,255,255,0.1);
+  }
+
+  :root[data-theme="light"] {
+    /* Premium off-white, never pure #fff — and rich charcoal-forest text,
+       never pure black, per the brief. */
+    --bg-primary: #F6F5F0;
+    --bg-elevated: #FFFFFF;
+    --bg-elevated-hover: #FDFCF8;
+    --text-primary: #17281F;
+    --text-secondary: rgba(23,40,31,0.6);
+    --text-tertiary: rgba(23,40,31,0.46);
+    --border-subtle: rgba(23,40,31,0.12);
+    --card-border: rgba(23,40,31,0.10);
+    --card-shadow: 0 10px 28px rgba(23,40,31,0.08);
+    --accent-text: var(--forest);
+    --glass-bg: rgba(255,255,255,0.85);
+    --glass-border: rgba(23,40,31,0.12);
+  }
+
+  html, body { max-width: 100%; overflow-x: hidden; }
+  body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--near-white); color: var(--dark-text); }
+
+  /* NAV — carries its own visible dark-to-green fade over its own (short)
+     height, ending on the exact color the hero starts from, so nav and
+     hero read as one continuous fade rather than nav sitting as a flat
+     dark cap on top of a graded hero. Earlier version only moved from
+     near-black to dark forest here (#030B08→#0D3D2E) — too small a jump
+     over ~108px to look like it was fading at all next to the hero's much
+     bigger swing. Widening nav's own jump (near-black to a clearly lighter
+     mid-green) makes the brightening visible within the nav bar itself.
+     Kept as two independent percentage-based gradients (not a shared
+     canvas) so the hero always still reaches full vivid green at its own
+     bottom edge regardless of actual rendered height.
+     nav/nav-strip stay transparent so nav-outer's gradient shows through
+     both rows uninterrupted. This nav renders on every view (not just the
+     homepage), so the same graded top bar now carries through the
+     customer/provider/admin portals too. */
+  .nav-outer { position: sticky; top: 0; z-index: 100; background: linear-gradient(180deg, #02100A 0%, #17593F 100%); }
+  .nav {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 48px; background: transparent; position: relative;
+  }
+  .nav-logo { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 22px; color: var(--near-white); letter-spacing: -0.5px; }
+  .nav-logo span { color: var(--lime); }
+  /* margin-left: auto — .nav has only 2 real flex children when signed in
+     (nav-search-wrap is position:absolute so it doesn't count, and
+     nav-search-toggle is display:none above the 1180px breakpoint): logo
+     and this block. justify-content: space-between only pins the FIRST
+     and LAST child to the true edges — a middle child floats and centers
+     itself in whatever space is left, which is exactly what put the
+     avatar/"List your business" behind the floating compact search once
+     scrolled (it was centering, not overlapping by accident). auto-margin
+     claims all free space to this block's left instead, pinning it to the
+     right edge — the same fix already applied to the portal-only avatar
+     div below, needed here too since this is a separate render branch. */
+  .nav-cta { display: flex; align-items: center; gap: 18px; position: relative; margin-left: auto; }
+
+  /* NAV STRIP (second row — category shortcuts, Vai Buy-style) */
+  .nav-strip {
+    display: flex; align-items: center; gap: 26px; padding: 10px 48px;
+    background: transparent; border-top: 1px solid rgba(255,255,255,0.08);
+    overflow-x: auto; scrollbar-width: none;
+  }
+  .nav-strip::-webkit-scrollbar { display: none; }
+  .nav-strip-link { background: none; border: none; color: rgba(250,250,247,0.82); font-family: 'Plus Jakarta Sans', sans-serif; font-size: 13px; font-weight: 500; cursor: pointer; padding: 2px 0; white-space: nowrap; transition: color .2s; }
+  .nav-strip-link:hover { color: var(--lime); }
+  .nav-strip-cta { color: var(--lime); font-weight: 600; margin-left: auto; }
+  .nav-strip-district { margin-left: auto; font-size: 12px; color: rgba(250,250,247,0.55); white-space: nowrap; padding-left: 18px; }
+  .nav-strip-cta ~ .nav-strip-district { margin-left: 0; }
+
+  /* NAV SEARCH (pinned between the logo and menu/account controls).
+     Positioned absolutely and centered on .nav itself (left:50% + translateX
+     -50%), NOT centered-within-leftover-flex-space — the logo (~112px) and
+     the cta group (~337px) are different widths, so a flex:1 middle slot
+     centers itself around the midpoint of the SPACE BETWEEN them, which
+     sits well left of the bar's true center once the cta group's width is
+     counted. Absolute + translate ties it to the nav's actual center
+     regardless of how wide the logo or cta group are.
+     There isn't enough room for a centered bar next to the fixed-width cta
+     group below ~1180px, so that range keeps the toggle-button + slide-down
+     panel pattern (already the mobile-accessible fallback) instead of
+     shrinking/overlapping it — bumped up from the old 768px cutoff to cover
+     that gap, not just phones. */
+  .nav-search-wrap {
+    position: absolute; left: 50%; top: 50%; width: 380px;
+    opacity: 0; pointer-events: none;
+    transform: translate(-50%, calc(-50% - 4px));
+    transition: opacity .2s ease, transform .2s ease;
+  }
+  .nav-search-wrap.visible { opacity: 1; pointer-events: auto; transform: translate(-50%, -50%); }
+  .nav-search { position: relative; width: 100%; }
+  .nav-search-input-wrap { display: flex; align-items: center; gap: 8px; background: var(--sand); border-radius: 100px; padding: 9px 16px; }
+  .nav-search-input-wrap input { border: none; outline: none; background: transparent; font-size: 13px; width: 100%; font-family: 'Plus Jakarta Sans', sans-serif; color: var(--dark-text); }
+  .nav-search-icon { font-size: 14px; color: var(--muted); flex-shrink: 0; }
+  /* margin-left: 12px — now that .nav-cta/the avatar div claim their own
+     margin-left: auto (see .nav-cta above) to stay pinned right, there's
+     no free space left for justify-content to put between this and the
+     logo at the <1180px widths where this button is actually visible, so
+     it needs its own fixed gap rather than relying on the parent's
+     distribution. */
+  .nav-search-toggle { display: none; background: transparent; border: 1px solid rgba(255,255,255,0.35); width: 38px; height: 38px; border-radius: 50%; align-items: center; justify-content: center; cursor: pointer; font-size: 15px; color: var(--near-white); flex-shrink: 0; opacity: 0; pointer-events: none; transition: opacity .2s ease; margin-left: 12px; }
+  .nav-search-toggle.visible { opacity: 1; pointer-events: auto; }
+  .nav-search-mobile-panel { display: none; }
+  @media (max-width: 1180px) {
+    .nav-search-wrap { display: none; }
+    .nav-search-toggle { display: flex; }
+    .nav-search-mobile-panel { display: block; position: absolute; top: 100%; left: 0; right: 0; background: white; border-bottom: 1px solid var(--border); padding: 14px 20px 18px; box-shadow: 0 12px 24px rgba(13,61,46,0.08); }
+  }
+
+  /* NOTIFICATIONS — the standalone bell (.notif-bell-btn) is gone; alerts
+     now surface via .nav-avatar-badge (on the avatar itself) and the
+     "Notifications" row + .notif-inline-list inside .nav-account-dropdown
+     (see notifRow in Nav()). .notif-badge stays — it's reused by the
+     per-booking message thread's own unread dot. .notif-item/.notif-title/
+     .notif-body/.notif-time/.notif-empty/.notif-dropdown-header are reused
+     as-is for the inline list; .notif-dropdown (the old floating panel)
+     is unused now but left in place, same as other retired-but-harmless
+     rules in this file. */
+  .notif-badge { position: absolute; top: -4px; right: -4px; background: var(--clay); color: white; font-size: 10px; font-weight: 700; min-width: 16px; height: 16px; border-radius: 8px; display: flex; align-items: center; justify-content: center; padding: 0 3px; }
+  .notif-dropdown { position: absolute; top: calc(100% + 10px); right: 0; width: 320px; max-height: 420px; overflow-y: auto; background: white; border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 16px 36px rgba(13,61,46,0.16); z-index: 150; }
+  .notif-inline-list { max-height: 280px; overflow-y: auto; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); margin: 2px 0 8px; }
+  .notif-dropdown-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid var(--border); font-size: 13px; }
+  .notif-dropdown-header a { color: var(--forest); font-weight: 600; cursor: pointer; font-size: 12px; }
+  .notif-empty { padding: 24px 16px; font-size: 13px; color: var(--muted); text-align: center; margin: 0; }
+  .notif-item { padding: 12px 16px; border-bottom: 1px solid var(--border); cursor: pointer; position: relative; }
+  .notif-item:last-child { border-bottom: none; }
+  .notif-item:hover { background: var(--sand); }
+  .notif-item.unread { background: #F3F8EE; }
+  .notif-item.unread::before { content: ''; position: absolute; top: 16px; left: 6px; width: 6px; height: 6px; border-radius: 50%; background: var(--clay); }
+  .notif-item.unread .notif-title { padding-left: 12px; }
+  .notif-title { font-size: 13px; font-weight: 600; color: var(--dark-text); }
+  .notif-body { font-size: 12px; color: var(--muted); margin-top: 2px; line-height: 1.4; }
+  .notif-time { font-size: 11px; color: var(--muted); margin-top: 4px; }
+  .nav-login-link { background: none; border: none; color: var(--near-white); font-size: 14px; font-weight: 500; cursor: pointer; padding: 4px; }
+  .nav-login-link:hover { color: var(--lime); }
+  .nav-link-inline { color: var(--near-white); font-size: 14px; font-weight: 500; cursor: pointer; padding: 4px; text-decoration: none; white-space: nowrap; }
+  .nav-link-inline:hover { color: var(--lime); }
+  @media (max-width: 860px) { .nav-link-inline { display: none; } }
+  .btn-ghost { background: transparent; border: 1px solid rgba(255,255,255,0.35); color: var(--near-white); padding: 9px 20px; border-radius: 100px; font-size: 14px; font-weight: 500; cursor: pointer; transition: all .2s; }
+  .btn-ghost:hover { border-color: var(--lime); color: var(--lime); }
+  .btn-lime { background: var(--lime); border: none; color: var(--forest); padding: 8px 20px; border-radius: var(--radius-sm); font-size: 14px; font-weight: 600; cursor: pointer; transition: opacity .2s; }
+  .btn-lime:hover { opacity: 0.85; }
+  .nav-menu-btn { display: flex; align-items: center; gap: 8px; background: transparent; border: 1px solid rgba(255,255,255,0.35); color: var(--near-white); padding: 9px 18px 9px 22px; border-radius: 100px; font-size: 14px; font-weight: 500; cursor: pointer; transition: all .2s; }
+  .nav-menu-btn:hover { border-color: var(--lime); color: var(--lime); }
+  .nav-signup-btn { background: var(--lime); border: none; color: var(--forest); padding: 9px 20px; border-radius: 100px; font-size: 14px; font-weight: 700; cursor: pointer; transition: all .2s; box-shadow: 0 0 0 rgba(198,241,53,0); }
+  .nav-signup-btn:hover { box-shadow: 0 0 14px rgba(198,241,53,0.6); transform: translateY(-1px); }
+  .nav-menu-btn .bars { display: flex; flex-direction: column; gap: 3px; }
+  .nav-menu-btn .bars span { width: 16px; height: 2px; background: currentColor; border-radius: 2px; }
+  /* THEME TOGGLE — the nav bar itself is a fixed dark-green gradient in
+     every theme (same reasoning as the hero staying unthemed below), so
+     this button uses the nav's own always-dark chrome colors
+     (--near-white/--lime), not the light/dark THEME TOKENS — those only
+     apply to the page content the nav sits on top of. */
+  .theme-toggle {
+    display: flex; align-items: center; justify-content: center;
+    width: 34px; height: 34px; background: transparent; border: 1px solid rgba(255,255,255,0.25);
+    border-radius: 50%; color: var(--near-white); cursor: pointer; transition: all .2s; flex-shrink: 0;
+  }
+  .theme-toggle:hover { border-color: var(--lime); color: var(--lime); background: rgba(198,241,53,0.08); }
+  /* LANGUAGE SELECTOR — same always-dark nav chrome treatment as the theme
+     toggle right above (see its comment): a pill instead of a circle since
+     this shows two letters (EN/ES), not a single icon glyph. */
+  .lang-toggle {
+    display: flex; align-items: center; justify-content: center;
+    min-width: 40px; height: 34px; padding: 0 12px; background: transparent;
+    border: 1px solid rgba(255,255,255,0.25); border-radius: 100px;
+    color: var(--near-white); cursor: pointer; transition: all .2s; flex-shrink: 0;
+    font-size: 12px; font-weight: 800; letter-spacing: .04em; font-family: 'Plus Jakarta Sans', sans-serif;
+  }
+  .lang-toggle:hover { border-color: var(--lime); color: var(--lime); background: rgba(198,241,53,0.08); }
+  .nav-dropdown { position: absolute; top: calc(100% + 12px); right: 0; background: white; border-radius: 20px; box-shadow: 0 20px 50px rgba(13,61,46,0.20); border: 1px solid var(--border); min-width: 300px; max-width: calc(100vw - 32px); padding: 22px; z-index: 200; }
+  .nav-dropdown a, .nav-dropdown button.nav-dropdown-item { display: block; width: 100%; text-align: left; background: none; border: none; padding: 12px 8px; border-radius: 10px; font-size: 16px; font-weight: 500; color: var(--dark-text); cursor: pointer; text-decoration: none; }
+  .nav-dropdown a:hover, .nav-dropdown button.nav-dropdown-item:hover { background: var(--sand); }
+  .nav-dropdown hr { border: none; border-top: 1px solid var(--border); margin: 14px 0; }
+  /* Fresha-style section label inside a dropdown ("For customers") — a
+     real heading (not a small all-caps caption), matching the reference
+     screenshot: bold, near-black, roomy margin below before the list. */
+  .nav-dropdown-heading { padding: 0 8px 12px; font-size: 20px; font-weight: 800; color: var(--dark-text); }
+  /* The one emphasized action in the menu (screenshot shows it in a
+     distinct accent color) — using the brand's own forest green here
+     rather than copying Fresha's literal purple. */
+  .nav-dropdown a.nav-dropdown-primary-link { color: var(--forest); font-weight: 700; }
+  .nav-dropdown button.nav-dropdown-item.for-biz,
+  .nav-dropdown a.for-biz { display: flex; align-items: center; justify-content: space-between; font-weight: 800; font-size: 17px; }
+
+  /* AUTH CHOICE */
+  .auth-choice { min-height: 100vh; display: grid; grid-template-columns: 1fr 1fr; background: var(--near-white); }
+  .auth-choice-left { position: relative; padding: 40px; display: flex; flex-direction: column; }
+  .auth-back { width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--border); background: white; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 18px; color: var(--dark-text); }
+  .auth-back:hover { border-color: var(--forest); color: var(--forest); }
+  .auth-choice-body { flex: 1; display: flex; flex-direction: column; justify-content: center; max-width: 420px; margin: 0 auto; width: 100%; }
+  .auth-choice-body h1 { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 30px; font-weight: 800; color: var(--forest); margin-bottom: 32px; text-align: center; }
+  .auth-option-card { display: flex; align-items: center; justify-content: space-between; gap: 16px; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 20px 22px; margin-bottom: 16px; cursor: pointer; transition: all .2s; background: white; }
+  .auth-option-card:hover { border-color: var(--forest); box-shadow: 0 6px 20px rgba(13,61,46,0.08); }
+  .auth-option-card h3 { font-size: 16px; font-weight: 700; color: var(--dark-text); margin-bottom: 4px; }
+  .auth-option-card p { font-size: 13px; color: var(--muted); }
+  .auth-option-arrow { font-size: 18px; color: var(--forest); flex-shrink: 0; }
+  .auth-provider-fork-heading { font-size: 13px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .03em; margin-bottom: 10px; }
+  .auth-option-card-sm { padding: 14px 18px; margin-bottom: 10px; }
+  .auth-option-card-sm h3 { font-size: 14px; }
+  .auth-provider-fork-back { display: inline-block; font-size: 13px; color: var(--muted); cursor: pointer; margin-top: 2px; }
+  .auth-provider-fork-back:hover { color: var(--forest); }
+  .auth-choice-panel { position: relative; overflow: hidden; background: var(--forest); display: flex; align-items: center; justify-content: center; }
+  .auth-choice-panel::before {
+    content: '';
+    position: absolute; inset: -20%;
+    background:
+      radial-gradient(circle at 25% 30%, rgba(198,241,53,0.35), transparent 50%),
+      radial-gradient(circle at 80% 70%, rgba(212,121,90,0.30), transparent 55%);
+    filter: blur(60px);
+  }
+  .auth-choice-panel-logo { position: relative; z-index: 1; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 44px; font-weight: 800; color: var(--near-white); }
+  .auth-choice-panel-logo span { color: var(--lime); }
+  @media (max-width: 768px) {
+    .auth-choice { grid-template-columns: 1fr; }
+    .auth-choice-panel { display: none; }
+  }
+
+  /* HELP & SUPPORT — deliberately a different shape from AuthChoice's
+     full-screen split panel: a simple centered page, using theme-aware
+     variables (--bg-elevated/--text-primary/etc., same ones .lp-theme's
+     other children use) so it's correct in dark mode automatically,
+     rather than the hardcoded white/near-black colors most of the
+     marketing-page components below use. */
+  .help-center-page { max-width: 880px; margin: 0 auto; padding: 100px 24px 96px; text-align: center; }
+  .help-title { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; font-size: clamp(30px, 4vw, 44px); color: var(--text-primary); margin: 0 0 12px; letter-spacing: -0.5px; }
+  .help-sub { font-size: 16px; color: var(--text-secondary); margin: 0 0 44px; }
+  .help-cards { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; }
+  .help-card {
+    flex: 1 1 320px; max-width: 380px; text-align: left; text-decoration: none; color: inherit;
+    background: var(--bg-elevated); border: 1px solid var(--border-subtle); border-radius: 20px;
+    padding: 28px; display: flex; flex-direction: column; transition: transform .15s, box-shadow .15s;
+    font: inherit; cursor: pointer; appearance: none; -webkit-appearance: none;
+  }
+  .help-card:hover { transform: translateY(-3px); box-shadow: 0 16px 40px rgba(13,61,46,0.16); }
+  .help-card-icon { width: 52px; height: 52px; border-radius: 14px; background: var(--forest); color: var(--lime); display: flex; align-items: center; justify-content: center; font-size: 24px; margin-bottom: 18px; }
+  .help-card h3 { font-size: 20px; font-weight: 800; margin: 0 0 8px; color: var(--text-primary); }
+  .help-card p { font-size: 14px; color: var(--text-tertiary); margin: 0 0 22px; line-height: 1.5; flex: 1; }
+  .help-card-arrow { width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--border-subtle); display: flex; align-items: center; justify-content: center; font-size: 17px; align-self: flex-end; color: var(--text-primary); }
+  @media (max-width: 640px) {
+    .help-center-page { padding: 80px 20px 72px; }
+  }
+
+  /* .help-shell is the full-bleed, full-height surface behind all three
+     Help pages (Center/Contact/FAQ) — nesting the centered/max-width
+     content inside it (rather than putting the page classes directly on
+     the themed element) means this surface covers the whole screen, not
+     just a content-height box, so there's no gap on any side. Plain
+     white, not the --bg-primary token's off-white — per explicit
+     request ("no background color") the page should read as clean white
+     behind the white cards, not a tinted surface. */
+  .help-shell { min-height: 100vh; background: #FFFFFF; }
+
+  /* HELP — EMAIL US / FAQ — the two destinations the cards above lead to.
+     Same theme-aware-variable approach as .help-center-page so both are
+     correct in dark mode automatically. */
+  .help-back-link {
+    display: inline-flex; align-items: center; gap: 6px; background: none; border: none; cursor: pointer;
+    font: inherit; font-size: 14px; font-weight: 700; color: var(--text-secondary); padding: 0; margin: 0 0 20px;
+  }
+  .help-back-link:hover { color: var(--forest); }
+  .help-form-page, .help-faq-page { max-width: 640px; margin: 0 auto; padding: 60px 24px 96px; }
+  .help-form-card {
+    background: var(--bg-elevated); border: 1px solid var(--border-subtle); border-radius: 20px;
+    padding: 28px; display: flex; flex-direction: column; gap: 20px;
+  }
+  .help-form-group { display: flex; flex-direction: column; gap: 6px; }
+  .help-form-group label { font-size: 13px; font-weight: 700; color: var(--text-primary); }
+  .help-form-group input, .help-form-group select, .help-form-group textarea {
+    background: var(--bg-primary); border: 1px solid var(--border-subtle); border-radius: 12px;
+    padding: 12px 14px; font-size: 14px; color: var(--text-primary); font-family: inherit; resize: vertical;
+  }
+  .help-form-group input:focus, .help-form-group select:focus, .help-form-group textarea:focus {
+    outline: none; border-color: var(--forest);
+  }
+  .help-form-hint { font-size: 12px; color: var(--text-tertiary); }
+  .help-form-charcount { align-self: flex-end; }
+  .help-form-error { font-size: 13px; font-weight: 700; color: #DC5A4A; margin: -8px 0 0; }
+  .help-form-submit {
+    background: var(--forest); color: var(--lime); border: none; border-radius: 100px;
+    padding: 14px 24px; font-size: 15px; font-weight: 800; cursor: pointer; transition: opacity .15s;
+  }
+  .help-form-submit:hover { opacity: 0.9; }
+  .help-form-footnote { font-size: 12px; color: var(--text-tertiary); text-align: center; margin: 0; }
+  .help-faq-search {
+    display: flex; align-items: center; gap: 10px; background: var(--bg-elevated);
+    border: 1px solid var(--border-subtle); border-radius: 14px; padding: 12px 16px; margin-bottom: 24px;
+  }
+  .help-faq-search input { flex: 1; border: none; background: none; outline: none; font-size: 15px; color: var(--text-primary); font-family: inherit; }
+  .help-faq-search-icon { font-size: 15px; opacity: 0.6; }
+  .help-faq-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 36px; }
+  .help-faq-empty { font-size: 14px; color: var(--text-tertiary); text-align: center; padding: 24px 0; }
+  .help-faq-item { background: var(--bg-elevated); border: 1px solid var(--border-subtle); border-radius: 14px; overflow: hidden; }
+  .help-faq-question {
+    width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    background: none; border: none; cursor: pointer; font: inherit; text-align: left;
+    padding: 16px 18px; font-size: 15px; font-weight: 700; color: var(--text-primary);
+  }
+  .help-faq-item.open .help-faq-question { color: var(--forest); }
+  .help-faq-chevron { font-size: 18px; flex-shrink: 0; color: var(--text-tertiary); }
+  .help-faq-answer { margin: 0; padding: 0 18px 18px; font-size: 14px; line-height: 1.6; color: var(--text-secondary); }
+  .help-faq-cta {
+    text-align: center; padding: 28px 20px; border-radius: 16px; background: var(--bg-elevated);
+    border: 1px solid var(--border-subtle);
+  }
+  .help-faq-cta p { margin: 0 0 14px; font-size: 14px; color: var(--text-secondary); font-weight: 600; }
+  .help-faq-cta-btn {
+    background: var(--forest); color: var(--lime); border: none; border-radius: 100px;
+    padding: 11px 22px; font-size: 14px; font-weight: 800; cursor: pointer; transition: opacity .15s;
+  }
+  .help-faq-cta-btn:hover { opacity: 0.9; }
+  @media (max-width: 640px) {
+    .help-form-page, .help-faq-page { padding: 44px 20px 72px; }
+  }
+
+  /* ACCOUNT DROPDOWN */
+  .nav-avatar-btn { display: flex; align-items: center; gap: 8px; background: transparent; border: 1px solid rgba(255,255,255,0.35); border-radius: 100px; padding: 4px 12px 4px 4px; cursor: pointer; transition: border-color .2s; }
+  .nav-avatar-btn:hover { border-color: var(--lime); }
+  .nav-avatar-circle { width: 30px; height: 30px; border-radius: 50%; background: var(--lime); color: var(--forest); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; flex-shrink: 0; }
+  .profile-avatar-circle { width: 84px; height: 84px; border-radius: 50%; background: var(--lime); color: var(--forest); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 30px; }
+  .nav-avatar-caret { font-size: 10px; color: rgba(250,250,247,0.7); }
+  /* Wraps just the avatar circle (not the whole nav-avatar-btn, which also
+     has the caret) so the unread badge sits pinned to the circle's own
+     top-right corner regardless of button padding/caret width. */
+  .nav-avatar-wrap { position: relative; display: inline-flex; flex-shrink: 0; }
+  .nav-avatar-badge { position: absolute; top: -3px; right: -3px; background: var(--lime); color: var(--forest); font-size: 10px; font-weight: 800; min-width: 16px; height: 16px; border-radius: 8px; display: flex; align-items: center; justify-content: center; padding: 0 3px; border: 1.5px solid var(--forest); box-shadow: 0 0 6px rgba(198,241,53,0.6); line-height: 1; }
+  .nav-account-dropdown { position: absolute; top: calc(100% + 12px); right: 0; background: white; border-radius: var(--radius-sm); box-shadow: 0 16px 40px rgba(13,61,46,0.18); border: 1px solid var(--border); min-width: 250px; padding: 10px; z-index: 200; }
+  .nav-account-name { padding: 10px 14px 14px; font-weight: 700; font-size: 16px; color: var(--dark-text); }
+  .nav-account-dropdown button.nav-dropdown-item { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; background: none; border: none; padding: 11px 14px; border-radius: 8px; font-size: 14px; font-weight: 500; color: var(--dark-text); cursor: pointer; }
+  .nav-dropdown-badge { margin-left: auto; background: var(--lime); color: var(--forest); font-size: 11px; font-weight: 800; min-width: 18px; height: 18px; border-radius: 9px; display: flex; align-items: center; justify-content: center; padding: 0 5px; flex-shrink: 0; }
+  .nav-account-dropdown button.nav-dropdown-item:hover { background: var(--sand); }
+  .nav-account-dropdown button.nav-dropdown-item .icn { width: 18px; text-align: center; }
+  .nav-account-dropdown button.nav-dropdown-item.for-biz { justify-content: space-between; font-weight: 600; }
+  .nav-account-dropdown a { display: block; width: 100%; text-align: left; padding: 11px 14px; border-radius: 8px; font-size: 14px; font-weight: 500; color: var(--dark-text); cursor: pointer; text-decoration: none; }
+  .nav-account-dropdown a:hover { background: var(--sand); }
+  .nav-account-dropdown hr { border: none; border-top: 1px solid var(--border); margin: 8px 4px; }
+
+  /* Customer-only dark variant of the same dropdown (Provider's own
+     account dropdown reuses .nav-account-dropdown unmodified — this
+     only applies when the signed-in view is the customer portal, see
+     the accountOpen dropdown in Nav()). No default browser <ul>/<li>
+     styling to begin with (it's already div/button-based), so this is
+     purely the color treatment matching the rest of the dark pages. */
+  .cx-account-dropdown { background: #0E241B; border: none; box-shadow: 0 20px 50px rgba(0,0,0,0.4); }
+  .cx-account-dropdown .nav-account-name { color: rgba(245,239,224,0.5); }
+  .cx-account-dropdown button.nav-dropdown-item,
+  .cx-account-dropdown a { color: #FFFFFF; }
+  .cx-account-dropdown button.nav-dropdown-item:hover,
+  .cx-account-dropdown a:hover { background: rgba(255,255,255,0.08); }
+  .cx-account-dropdown hr { border-top-color: rgba(255,255,255,0.1); }
+  /* The inline notification list (notifRow in Nav()) reuses .notif-item/
+     .notif-title/etc., which default to light-page colors — retint them
+     here the same way the rest of this dropdown is retinted above. */
+  .cx-account-dropdown .notif-inline-list,
+  .cx-account-dropdown .notif-dropdown-header,
+  .cx-account-dropdown .notif-item { border-color: rgba(255,255,255,0.1); }
+  .cx-account-dropdown .notif-dropdown-header a { color: var(--lime); }
+  .cx-account-dropdown .notif-item:hover { background: rgba(255,255,255,0.08); }
+  .cx-account-dropdown .notif-item.unread { background: rgba(198,241,53,0.08); }
+  .cx-account-dropdown .notif-title { color: #FFFFFF; }
+  .cx-account-dropdown .notif-body,
+  .cx-account-dropdown .notif-time,
+  .cx-account-dropdown .notif-empty { color: rgba(245,239,224,0.6); }
+
+  /* HERO */
+  .hero {
+    background: var(--forest);
+    padding: 96px 48px 80px;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 64px; align-items: center;
+    min-height: 85vh;
+  }
+  .hero-eyebrow { font-size: 12px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--lime); margin-bottom: 20px; }
+  .hero-title { font-family: 'Plus Jakarta Sans', sans-serif; font-size: clamp(40px, 5vw, 64px); line-height: 1.05; color: var(--near-white); margin-bottom: 24px; }
+  .hero-title em { font-style: normal; color: var(--lime); }
+  .hero-body { font-size: 17px; line-height: 1.7; color: rgba(255,255,255,0.65); max-width: 440px; margin-bottom: 40px; }
+  .hero-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+  .btn-primary { background: var(--lime); color: var(--forest); border: none; padding: 14px 28px; border-radius: var(--radius-sm); font-size: 15px; font-weight: 600; cursor: pointer; transition: opacity .2s; }
+  .btn-primary:hover { opacity: .85; }
+  .btn-outline-white { background: transparent; color: var(--near-white); border: 1px solid rgba(255,255,255,0.35); padding: 14px 28px; border-radius: var(--radius-sm); font-size: 15px; font-weight: 500; cursor: pointer; transition: all .2s; }
+  .btn-outline-white:hover { border-color: var(--lime); color: var(--lime); }
+
+  /* HERO CARD */
+  .hero-card-wrap { display: flex; flex-direction: column; gap: 16px; }
+  .service-card {
+    background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
+    border-radius: var(--radius); padding: 20px 24px;
+    display: flex; align-items: center; gap: 16px; cursor: pointer;
+    transition: background .2s, border-color .2s;
+  }
+  .service-card:hover { background: rgba(198,241,53,0.08); border-color: rgba(198,241,53,0.3); }
+  .service-icon { width: 48px; height: 48px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; }
+  .service-info h4 { font-size: 15px; font-weight: 600; color: var(--near-white); margin-bottom: 2px; }
+  .service-info p { font-size: 13px; color: rgba(255,255,255,0.5); }
+  .service-badge { margin-left: auto; background: var(--lime); color: var(--forest); font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 6px; }
+  .service-badge.open { background: rgba(198,241,53,0.15); color: var(--lime); }
+
+  /* SEARCH HERO — light marketplace-style hero: small eyebrow label, bold
+     two-line statement headline (2nd line in a mid-green accent), then the
+     search pill, all sitting on a near-white surface with a few large,
+     blurred, softly-colored shapes drifting slowly behind the content
+     (Fresha's own hero uses this exact technique with pink/purple blobs —
+     here it's built from VaiBook's own lime/forest palette instead, so the
+     motion reads as on-brand rather than borrowed). Dark text throughout
+     is a deliberate departure from the old dark-hero's white/lime text:
+     white text is illegible against a light, moving background, so once
+     the background went light the text had to follow — confirmed with the
+     user via an explicit before/after comparison. */
+  .search-hero {
     position: relative; overflow: hidden; padding: 100px 24px 88px; text-align: left;
     background: var(--bg-primary);
   }
