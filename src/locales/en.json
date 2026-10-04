@@ -944,6 +944,7 @@
       "photoModalTitle": "Crop your photo",
       "photoModalHint": "Drag to reposition, use the slider to zoom. This exact crop is what customers will see.",
       "zoom": "Zoom",
+      "photoSaveError": "Couldn't save your photo — please try again.",
       "locationTitle": "Location",
       "locationHint": "Click the map to drop a pin at your exact location. Customers will get a \"Get Directions\" link straight to it.",
       "locationLabelField": "Location label (optional)",
