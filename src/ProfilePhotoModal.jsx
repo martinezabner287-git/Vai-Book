@@ -25,20 +25,32 @@ export default function ProfilePhotoModal({ open, file, onClose, onSave, saving 
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
 
-  // Fresh object URL per file, and a fresh crop/zoom state every time the
-  // modal opens — a stale crop from a previous photo should never carry
-  // over. Revoke on the way out so we don't leak blob URLs.
+  // Fresh image per file, and a fresh crop/zoom state every time the modal
+  // opens — a stale crop from a previous photo should never carry over.
+  //
+  // Deliberately a data: URL (FileReader.readAsDataURL), not a blob: URL
+  // (URL.createObjectURL) — this site's CSP (vercel.json) locks img-src
+  // down to 'self' data: plus the specific hosts it actually needs
+  // (Supabase storage, map tiles, the QR service) and does not include
+  // blob:. A blob: URL here gets silently dropped by the browser: no
+  // image renders, nothing can be cropped, and cropImageToFile's own
+  // image load (same CSP, same reason) never resolves either. data: is
+  // already on the allowlist, so this needs no CSP change.
   useEffect(() => {
     if (!open || !file) {
       setImageSrc(null);
       return;
     }
-    const url = URL.createObjectURL(file);
-    setImageSrc(url);
+    let cancelled = false;
     setCrop({ x: 0, y: 0 });
     setZoom(1);
     setCroppedAreaPixels(null);
-    return () => URL.revokeObjectURL(url);
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (!cancelled) setImageSrc(reader.result);
+    };
+    reader.readAsDataURL(file);
+    return () => { cancelled = true; };
   }, [open, file]);
 
   useEffect(() => {
