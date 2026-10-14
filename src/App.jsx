@@ -409,6 +409,20 @@ const css = `
   .nav-menu-btn:hover { border-color: var(--lime); color: var(--lime); }
   .nav-signup-btn { background: var(--lime); border: none; color: var(--forest); padding: 9px 20px; border-radius: 100px; font-size: 14px; font-weight: 700; cursor: pointer; transition: all .2s; box-shadow: 0 0 0 rgba(198,241,53,0); }
   .nav-signup-btn:hover { box-shadow: 0 0 14px rgba(198,241,53,0.6); transform: translateY(-1px); }
+  /* NAV "FOR BUSINESSES" PILL — same outline-pill treatment as
+     .nav-menu-btn (transparent fill, faint white border) rather than
+     .nav-signup-btn's solid lime, and deliberately NOT hidden at any
+     mobile breakpoint — it sits visibly between Log in/avatar and Menu
+     at every width, matching the user's own mockup. See the removal
+     note where this renders in JSX (search nav-business-btn) for why
+     this replaced the old hide-on-mobile .nav-signup-btn usage there. */
+  .nav-business-btn { display: flex; align-items: center; gap: 8px; background: transparent; border: 1px solid rgba(255,255,255,0.35); color: var(--near-white); padding: 9px 18px; border-radius: 100px; font-size: 14px; font-weight: 500; cursor: pointer; transition: all .2s; white-space: nowrap; }
+  .nav-business-btn:hover { border-color: var(--lime); color: var(--lime); }
+  /* Icon stays hidden above the 400px breakpoint further down — full
+     "For businesses" text is the normal, intended look (matches the
+     user's mockup). Below 400px the label hides and this icon becomes
+     the whole button, same pattern as .nav-menu-btn's text-hiding. */
+  .nav-business-btn-icon { display: none; }
   .nav-menu-btn .bars { display: flex; flex-direction: column; gap: 3px; }
   .nav-menu-btn .bars span { width: 16px; height: 2px; background: currentColor; border-radius: 2px; }
   /* THEME TOGGLE — the nav bar itself is a fixed dark-green gradient in
@@ -876,14 +890,27 @@ const css = `
   .lp-theme .section-sub { color: var(--text-secondary); }
 
   /* CATEGORY PILLS — centered/wrapping row → horizontal-scrolling row of
-     translucent pills, purpose-built for a mobile thumb swipe. */
-  .lp-theme .services-pills {
-    flex-wrap: nowrap; overflow-x: auto; justify-content: flex-start;
-    max-width: 100%; margin: 0; padding-bottom: 6px;
-    scroll-snap-type: x mandatory; scrollbar-width: none;
+     translucent pills, purpose-built for a mobile thumb swipe. Gated to
+     max-width:768px (this file's standard mobile breakpoint) — it used to
+     apply at every width with no media query at all, which is why this
+     row ran edge-to-edge and left-aligned even on desktop instead of
+     matching the hero's centered 1320px column above it (the hero's own
+     alignment, .search-hero > *, was never touched — only this pill row
+     was escaping it). Outside 768px, the plain .services-pills rule below
+     now governs instead: centered, capped at the same 1320px as the hero,
+     so desktop lines up edge-to-edge with everything above it, while
+     nothing here changes on phones — this rule's own content (nowrap +
+     overflow-x) already filled the narrower viewport either way, so the
+     centering above 768px has no effect down there. */
+  @media (max-width: 768px) {
+    .lp-theme .services-pills {
+      flex-wrap: nowrap; overflow-x: auto; justify-content: flex-start;
+      max-width: 100%; margin: 0; padding-bottom: 6px;
+      scroll-snap-type: x mandatory; scrollbar-width: none;
+    }
+    .lp-theme .services-pills::-webkit-scrollbar { display: none; }
+    .lp-theme .services-pills .service-pill { flex: 0 0 auto; scroll-snap-align: start; }
   }
-  .lp-theme .services-pills::-webkit-scrollbar { display: none; }
-  .lp-theme .services-pills .service-pill { flex: 0 0 auto; scroll-snap-align: start; }
   .lp-theme .service-pill { background: var(--bg-elevated); border-color: var(--border-subtle); color: var(--text-primary); }
   .lp-theme .service-pill:hover { border-color: var(--accent-neon); color: var(--accent-text); background: rgba(198,241,53,0.08); box-shadow: none; }
 
@@ -921,10 +948,19 @@ const css = `
      so — like the carousel cards above — they stay a fixed green/lime
      regardless of theme rather than needing their own light variant. */
   .tny-heading { margin-bottom: 20px; }
+  /* max-width/margin added to match .search-hero > * and .services-pills
+     above — same desktop-alignment fix, same reasoning: this row had no
+     width cap at all, so it ran edge-to-edge instead of lining up with
+     the hero. The existing mobile override right below (.tny-row inside
+     the 768px media query, margin: 0 -24px) still wins on phones since it
+     comes later in the cascade at that width, so nothing changes there —
+     this only takes effect above 768px, where that override doesn't
+     match. */
   .tny-row {
     display: flex; gap: 16px; overflow-x: auto; padding-bottom: 6px;
     scroll-snap-type: x mandatory; scroll-behavior: smooth;
     -webkit-overflow-scrolling: touch; scrollbar-width: none;
+    max-width: 1320px; margin: 0 auto;
   }
   .tny-row::-webkit-scrollbar { display: none; }
   .tny-card {
@@ -975,7 +1011,11 @@ const css = `
 
   /* SERVICES SECTION */
   .services-section { padding: 80px 48px; }
-  .services-pills { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; max-width: 1040px; margin: 0 auto; }
+  /* 1320px to match .search-hero > *'s own max-width — above 768px this is
+     what actually governs now that the .lp-theme horizontal-scroll variant
+     above is mobile-gated, so the pills line up with the hero instead of
+     stopping 280px short of it. */
+  .services-pills { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; max-width: 1320px; margin: 0 auto; }
   .service-pill { display: inline-flex; align-items: center; gap: 9px; background: #fff; border: 1px solid var(--border); color: var(--dark-text); padding: 13px 22px; border-radius: 100px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all .2s; }
   .service-pill:hover { border-color: var(--forest); color: var(--forest); box-shadow: 0 2px 10px rgba(13,61,46,0.08); }
   .service-pill .icon { font-size: 18px; line-height: 1; }
@@ -1628,7 +1668,12 @@ const css = `
   .open-status.is-closed::before { background: var(--clay); }
 
   /* DISCOVER CAROUSELS (Recommended / New to VaiBook / Trending) */
-  .carousel-row { display: flex; gap: 16px; overflow-x: auto; scroll-behavior: smooth; scrollbar-width: none; padding-bottom: 6px; }
+  /* Same desktop-alignment fix as .services-pills/.tny-row above — no
+     width cap meant Recommended/New to VaiBook ran edge-to-edge instead
+     of lining up with the hero. No separate mobile override exists for
+     this one (unlike .tny-row), so nothing else needs touching — below
+     1320px (every phone/tablet) this max-width is simply never reached. */
+  .carousel-row { display: flex; gap: 16px; overflow-x: auto; scroll-behavior: smooth; scrollbar-width: none; padding-bottom: 6px; max-width: 1320px; margin: 0 auto; }
   .carousel-row::-webkit-scrollbar { display: none; }
   .carousel-card { flex: 0 0 240px; background: var(--near-white); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; cursor: pointer; transition: box-shadow .2s; position: relative; }
   .carousel-card:hover { box-shadow: 0 4px 20px rgba(13,61,46,0.1); }
@@ -1790,14 +1835,15 @@ const css = `
   @media (max-width: 768px) {
     .nav { padding: 14px 20px; }
     .nav-strip { padding: 10px 20px; gap: 20px; }
-    /* NAV — "Provide my service"/"List your business" moves out of the bar
-       and into the Menu dropdown below this width (it's already duplicated
-       there as a .mobile-only-item), which is what actually keeps the row
-       — language toggle + log in/avatar + this button — from squishing or
-       overflowing on phone-width screens. See the matching .mobile-only-item
-       override right below, and the icon-only Menu button at 480px further
-       down for the narrowest phones. */
+    /* NAV — this only ever hid the OLD "Provide my service" solid-lime
+       button (.nav-signup-btn), still used as-is on the providers
+       marketing page's "Find a Professional" CTA. The renamed/restyled
+       "For businesses" outline pill (.nav-business-btn, see where it
+       renders in JSX) is deliberately NOT in this hide list — it stays
+       visible in the bar at every width per the user's own mockup, with
+       its own tighter sizing at 480px below instead of disappearing. */
     .nav-signup-btn { display: none; }
+    .nav-business-btn { padding: 9px 14px; font-size: 13px; }
     .nav-dropdown .mobile-only-item { display: block; }
     .nav-account-dropdown .mobile-only-item { display: flex; }
     .hero { grid-template-columns: 1fr; padding: 60px 24px; min-height: auto; }
@@ -1896,10 +1942,14 @@ const css = `
 
   /* NAV — keep the top row on one line without pushing "Menu"/the avatar
      off-screen on phone-width viewports (Log in + the language toggle +
-     Menu, the narrowest realistic combination, still won't fit every
-     label at full size below ~480px). Below this width the Menu button
-     drops its "Menu" text and shows just the bars icon, and the language
-     toggle shrinks slightly, freeing the room login-link/avatar needs. */
+     the "For businesses" pill + Menu, the narrowest realistic combination,
+     still won't fit every label at full size below ~480px). Below this
+     width the Menu button drops its "Menu" text and shows just the bars
+     icon, the "For businesses" pill tightens its own padding/font (see
+     .nav-business-btn below — it still keeps its text, just more snugly,
+     per the user's call to keep it visible rather than hide it here too),
+     and the language toggle shrinks slightly, freeing the room
+     login-link/avatar needs. */
   .mobile-only-item { display: none; }
   @media (max-width: 480px) {
     .quick-actions-row { flex-direction: column; }
@@ -1912,14 +1962,24 @@ const css = `
     .rebook-radar { flex-direction: column; align-items: stretch; text-align: center; }
     .nav { padding: 14px 16px; }
     .nav-logo { font-size: 18px; }
-    .nav-cta { gap: 8px; }
+    .nav-cta { gap: 6px; }
     .nav-signup-btn { display: none; }
-    .nav-login-link { font-size: 13px; padding: 4px 2px; }
+    /* .lang-toggle (the standalone EN/ES pill) is hidden here rather than
+       shrunk further — adding the always-visible "For businesses" pill
+       (.nav-business-btn) to this row meant four items (language, Log in,
+       For businesses, Menu) no longer fit below ~480px without "Log in"
+       wrapping to two lines or "For businesses" getting clipped, confirmed
+       with real viewport screenshots at 320/375/390/414px. Language
+       switching stays reachable at this width via the identical toggle
+       already inside the Menu dropdown (LanguageSelector variant="menu") —
+       nothing is actually lost, just moved one tap deeper on phones. */
+    .lang-toggle { display: none; }
+    .nav-business-btn { padding: 8px 14px; font-size: 13px; }
+    .nav-login-link { font-size: 13px; padding: 4px 2px; white-space: nowrap; }
     .nav-menu-btn { padding: 10px 12px; font-size: 13px; gap: 6px; min-width: 44px; justify-content: center; }
     .nav-menu-btn-label { display: none; }
     .nav-menu-btn .bars span { width: 13px; }
     .nav-avatar-btn { padding: 3px 8px 3px 3px; gap: 6px; }
-    .lang-toggle { min-width: 34px; padding: 0 8px; }
     .nav-dropdown .mobile-only-item { display: block; }
     .nav-account-dropdown .mobile-only-item { display: flex; }
     .carousel-arrow { display: none; }
@@ -1927,6 +1987,31 @@ const css = `
     /* FOOTER — one column at phone width; 2-up (set at 768px) can still
        feel tight once link labels get long or the app is in Spanish. */
     .footer-top { grid-template-columns: 1fr; }
+  }
+
+  /* NAV — real device-width screenshots turned up TWO separate overflow
+     gaps once the always-visible "For businesses" pill was added, neither
+     caught by the existing 480px breakpoint alone:
+     1. 320–400px (iPhone SE/mini-class phones) — logo + "Log in" + the
+        full-text pill + Menu still doesn't fit even with the 480px
+        block's other tightening. Fixed by collapsing "For businesses" to
+        an icon-only circle here, the same treatment .nav-menu-btn already
+        uses for its own label.
+     2. 481–539px — a gap ABOVE the 480px breakpoint where none of that
+        tightening applies yet (language toggle back at full size, Menu
+        back to showing its text label), but the row is still too narrow
+        for all of it plus the new pill. Fixed by re-applying the same
+        language-toggle-hide / Menu-label-hide / icon-only-pill treatment
+        up to 540px instead of stopping at 480px.
+     Confirmed overflow-free with real viewport measurements from 320px
+     through 1280px after adding this. Untouched at 540px and up, where
+     the full-text pill from the user's mockup is the normal look. */
+  @media (max-width: 540px) {
+    .lang-toggle { display: none; }
+    .nav-menu-btn-label { display: none; }
+    .nav-business-btn-label { display: none; }
+    .nav-business-btn-icon { display: inline-flex; font-size: 15px; }
+    .nav-business-btn { padding: 9px; min-width: 40px; justify-content: center; }
   }
 
   .a2hs-banner {
@@ -3795,8 +3880,23 @@ function EmailAuthModal({ email, onClose, onResend, onVerified }) {
     if (resendCooldown > 0) return;
     setResending(true);
     setError("");
-    await onResend?.();
+    // FIXED — this used to ignore whatever onResend() resolved to, so a
+    // failed resend (Supabase's own per-address rate limit, a network
+    // blip, the project's email-sending quota) looked IDENTICAL to a
+    // successful one: the cooldown still reset to "Resend code in 30s"
+    // with zero indication anything went wrong. Someone whose first code
+    // never arrived, who then taps Resend hoping for better luck, would
+    // see the button behave as if it worked every single time even if
+    // every attempt was silently failing — which is exactly the kind of
+    // "I never got the code" report with no error on screen to go on.
+    const result = await onResend?.();
     setResending(false);
+    if (result?.error) {
+      setError("Couldn't send the code. Check your connection and try again — and double-check the email address above is correct.");
+      return; // Cooldown deliberately NOT reset on failure — no sense
+               // making someone wait another 30s before they can retry
+               // a send that never went out in the first place.
+    }
     setResendCooldown(30);
   };
 
@@ -3806,7 +3906,7 @@ function EmailAuthModal({ email, onClose, onResend, onVerified }) {
         <button className="email-auth-close" onClick={onClose} aria-label="Close">×</button>
         <p className="email-auth-brand">vai <span>book</span></p>
         <h2 className="email-auth-title">Enter the code</h2>
-        <p className="email-auth-sub">We sent a 6-digit code to <strong>{email}</strong>.</p>
+        <p className="email-auth-sub">We sent a 6-digit code to <strong>{email}</strong>. Not seeing it after a minute or two? Check your spam/junk folder — it can land there on the first email from a new sender.</p>
 
         <div className="email-auth-code-row" onPaste={handleCodePaste}>
           {code.map((digit, i) => (
@@ -4177,7 +4277,24 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
             // ProviderSignupModal mockup straight at someone who hasn't even
             // been told what VaiBook-for-business is yet. See the removal note
             // near ProviderLandingPage below.
-            <button className="nav-signup-btn" onClick={() => onNav("providers")}>{t("nav.provideMyService")}</button>
+            //
+            // Relabeled "Provide my service" → "For businesses" and restyled
+            // from the solid-lime .nav-signup-btn to the outline-pill
+            // .nav-business-btn (matching .nav-menu-btn) per the user's own
+            // mockup — and deliberately kept visible at every width instead
+            // of hiding below 768px like the old button did, so it now sits
+            // between Log in/avatar and Menu at phone widths too. The
+            // signed-in account dropdown still keeps its own
+            // .mobile-only-item copy of this link further down (search
+            // "icn">🏪") — left in place rather than removed, since that
+            // dropdown also renders on the "providers" page itself (where
+            // this top-bar button doesn't show at all, current === "home"
+            // only), so it's still the only mobile path there even though
+            // it's now a redundant second path to the same place on "home".
+            <button className="nav-business-btn" onClick={() => onNav("providers")}>
+              <span className="nav-business-btn-icon" aria-hidden="true">🏪</span>
+              <span className="nav-business-btn-label">{t("nav.forBusinesses")}</span>
+            </button>
           )}
           {current === "providers" && (
             <>
