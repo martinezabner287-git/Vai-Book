@@ -4744,7 +4744,7 @@ function LandingPage({ onNav, session, user, onSignIn, onSignOut }) {
                 <div className="tny-card card-premium" key={p.id} onClick={() => goToProvider(p)}>
                   <div className="tny-card-img">
                     {coverImageUrl(p) ? (
-                      <img src={coverImageUrl(p)} alt="" />
+                      <img src={coverImageUrl(p)} alt="" loading="lazy" decoding="async" />
                     ) : (
                       <div className="tny-card-img-fallback">{iconForServiceType(p.service_type)}</div>
                     )}
@@ -5882,9 +5882,14 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
     if (!window.confirm(t("customerPortal.booking.cancelConfirm"))) return;
     setCancellingId(bookingId);
     const cancelled = bookings.find((b) => b.id === bookingId);
-    await cancelBooking(bookingId);
+    const updated = await cancelBooking(bookingId);
+    // cancelBooking already returns the updated row — patch it in place
+    // instead of re-fetching this customer's entire booking history (every
+    // past booking, with four joined tables) just to show one status flip.
+    if (updated) setBookings((prev) => prev.map((b) => (b.id === bookingId ? { ...b, ...updated } : b)));
+    setCancellingId(null);
     if (cancelled?.provider_profiles?.user_id) {
-      await createNotification({
+      createNotification({
         user_id: cancelled.provider_profiles.user_id,
         title: "Booking cancelled",
         body: `${user?.full_name || "A customer"} cancelled their booking${cancelled?.services?.name ? ` for ${cancelled.services.name}` : ""} on ${new Date(cancelled.booking_date).toLocaleDateString()}.`,
@@ -5892,8 +5897,6 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
         booking_id: bookingId,
       });
     }
-    await loadBookings();
-    setCancellingId(null);
   };
 
   const handleConfirmReschedule = async (booking) => {
@@ -5912,7 +5915,7 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
       return;
     }
     if (booking.provider_profiles?.user_id) {
-      await createNotification({
+      createNotification({
         user_id: booking.provider_profiles.user_id,
         title: "Customer confirmed the new time",
         body: `${user?.full_name || "The customer"} confirmed the new time for their ${booking.services?.name || "appointment"}.`,
@@ -5935,7 +5938,7 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
       return;
     }
     if (booking.provider_profiles?.user_id) {
-      await createNotification({
+      createNotification({
         user_id: booking.provider_profiles.user_id,
         title: "Customer kept the original time",
         body: `${user?.full_name || "The customer"} would like to keep the original time for their ${booking.services?.name || "appointment"}.`,
@@ -7295,11 +7298,15 @@ function StaffPortal({ onNav, session, staffProfile, onSignOut }) {
       window.alert(t("staffPortal.markDoneFailed"));
       return;
     }
+    // updateBooking already returns the updated row — patch it in place
+    // instead of re-fetching this staff member's whole booking list.
+    setBookings((prev) => prev.map((b) => (b.id === bookingId ? { ...b, ...updated } : b)));
+    setBusyId(null);
     // Same business event as the owner marking it done, so the customer
     // gets the same "leave a review" prompt — before, bookings finished by
     // a staff member silently never asked for a review.
     if (finished?.customer_id) {
-      await createNotification({
+      createNotification({
         user_id: finished.customer_id,
         title: "Booking complete",
         body: `Your ${finished.services?.name || "appointment"} with ${staffProfile?.provider_profiles?.business_name || "the provider"} is marked done. Leave a review to let others know how it went!`,
@@ -7307,8 +7314,6 @@ function StaffPortal({ onNav, session, staffProfile, onSignOut }) {
         booking_id: bookingId,
       });
     }
-    await loadBookings();
-    setBusyId(null);
   };
 
   if (!session) {
@@ -7653,14 +7658,20 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
     const created = await insertProviderBlock({ provider_id: providerId, block_type: "break", ...window_ });
     setSavingBlock(false);
     if (!created) { setBlockError(t("providerPortal.blockSheet.saveError")); return; }
+    // insertProviderBlock already returns the saved row, so we can update
+    // local state directly instead of re-fetching the whole list. That was
+    // a second full network round trip for no reason — on a slow
+    // connection it's the difference between the dashboard flipping to
+    // "Resume Bookings Now" instantly vs. a couple of seconds of nothing
+    // visibly happening after the sheet closes.
+    setBlocks((prev) => [...prev, created]);
     setShowBlockSheet(false);
-    await loadBlocks();
   };
 
   const removeBlock = async (blockId) => {
     if (!window.confirm(t("providerPortal.confirm.removeBlock"))) return;
-    await deleteProviderBlock(blockId);
-    await loadBlocks();
+    const ok = await deleteProviderBlock(blockId);
+    if (ok) setBlocks((prev) => prev.filter((bl) => bl.id !== blockId));
   };
 
   // "I'm Back" — resuming early is the whole point of this feature, so it's
@@ -7669,8 +7680,8 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
   const resumeBookingsNow = async () => {
     if (!activeBlock || resumingNow) return;
     setResumingNow(true);
-    await deleteProviderBlock(activeBlock.id);
-    await loadBlocks();
+    const ok = await deleteProviderBlock(activeBlock.id);
+    if (ok) setBlocks((prev) => prev.filter((bl) => bl.id !== activeBlock.id));
     setResumingNow(false);
   };
 
@@ -8136,8 +8147,25 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
       return;
     }
 
+    // Update this one row in place instead of re-fetching every booking
+    // this provider has ever had (getProviderBookings has no date limit —
+    // that full list only grows over time). `updated` doesn't carry the
+    // joined users/services/payments fields `bookings` already has, so we
+    // keep those from the existing row and only overwrite the columns that
+    // actually changed (status, updated_at, etc).
+    setBusyId(null);
+    setBookings((prev) => prev.map((b) => (b.id === id ? { ...b, ...updated } : b)));
+
+    // The customer notification and (for cancellations) the email are
+    // side effects that don't need to hold up the provider's UI — they
+    // already handle their own errors internally (console.error + a
+    // boolean/null return), so there's nothing meaningful to await here.
+    // This also means a slow or failing email send (sendBookingEmail goes
+    // through the Resend function, which is known-flaky for non-owner
+    // recipients — see the notifications email diagnosis doc) no longer
+    // leaves the Confirm/Decline/Complete button stuck on "busy".
     if (status === "completed" && target?.customer_id) {
-      await createNotification({
+      createNotification({
         user_id: target.customer_id,
         title: "Booking complete",
         body: `Your ${target.services?.name || "appointment"} with ${providerProfile?.business_name || "the provider"} is marked done. Leave a review to let others know how it went!`,
@@ -8146,7 +8174,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
       });
     }
     if (status === "cancelled" && target?.customer_id) {
-      await createNotification({
+      createNotification({
         user_id: target.customer_id,
         title: "Booking cancelled",
         body: `${providerProfile?.business_name || "The provider"} had to cancel your ${target.services?.name || "appointment"} on ${formatBookingWhen(target)}. Get in touch with them to rebook.`,
@@ -8159,7 +8187,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
         // public booking page so rescheduling is a single tap, not a
         // "go find them again" chore right after bad news.
         const rebookUrl = `${window.location.origin}/#book-${target.provider_id}`;
-        await sendBookingEmail({
+        sendBookingEmail({
           to: target.users.email,
           subject: `Your booking with ${providerProfile?.business_name || "your provider"} was cancelled`,
           html: `<p>Hi ${target.users?.full_name || "there"},</p><p>${providerProfile?.business_name || "Your provider"} had to cancel your <strong>${target.services?.name || "appointment"}</strong> on <strong>${formatBookingWhen(target)}</strong>.</p>` +
@@ -8169,7 +8197,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
       }
     }
     if (status === "no_show" && target?.customer_id) {
-      await createNotification({
+      createNotification({
         user_id: target.customer_id,
         title: "Marked as a no-show",
         body: `${providerProfile?.business_name || "The provider"} marked your ${formatBookingWhen(target)} appointment as a no-show.`,
@@ -8177,11 +8205,10 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
         booking_id: id,
       });
     }
-    await loadBookings();
     // Points are awarded by a database trigger the moment a booking
-    // completes, so the loyalty list on screen is now out of date.
-    if (status === "completed" && providerProfile?.loyalty_enabled) await loadLoyaltyCustomers();
-    setBusyId(null);
+    // completes, so the loyalty list on screen is now out of date — refresh
+    // it in the background rather than making the provider wait on it.
+    if (status === "completed" && providerProfile?.loyalty_enabled) loadLoyaltyCustomers();
   };
 
   // ── RESCHEDULING ──────────────────────────────────────────────
