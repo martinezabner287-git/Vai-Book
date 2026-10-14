@@ -1132,6 +1132,10 @@ const css = `
   .provider-dropdown-header .name { font-size: 14px; font-weight: 700; color: var(--dark-text); }
   .provider-dropdown-header .sub { font-size: 11.5px; color: var(--muted); margin-top: 2px; }
   .provider-dropdown-group-label { font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); padding: 10px 14px 4px; }
+  /* The 3 top-nav links already show which tab is open (.provider-nav-link.active);
+     the other 10 tabs live in this dropdown and had no equivalent, so opening it
+     while on e.g. Billing looked identical to opening it from anywhere else. */
+  .provider-account-dropdown button.nav-dropdown-item.active { color: var(--forest); background: var(--lime); font-weight: 700; }
   .provider-mobile-nav { display: none; }
 
   /* PORTAL CONTENT */
@@ -3352,6 +3356,28 @@ function enterProviderPortal(onNav, session, onSignIn) {
   switchToPortal("provider", onNav, session, onSignIn);
 }
 
+// Browsing/searching never actually needed a session — the "#book-<id>"
+// deep link (every "Book Now" card, QR code, NFC tag) has always jumped
+// straight into CustomerPortal with no sign-in required, because
+// CustomerPortal already handles an anonymous visitor correctly wherever it
+// matters: loadProviders has no user dependency at all, loadBookings/
+// loadFavoriteIds/loadFavoriteProviders/toggleFavorite all guard on
+// `user?.id` and quietly no-op rather than assuming a session, and the
+// actual booking submission takes an explicit customer id from the
+// guest-checkout OTP flow instead of assuming `user` is already set. Only
+// the Search button and the category pills were routed through the
+// stricter enterCustomerPortal/switchToPortal gate instead, which meant
+// the two most obvious things to tap on the entire homepage threw a
+// first-time visitor straight into a full Google sign-in screen before
+// showing a single result — a real, measured conversion killer (2026-10-14
+// UX inspection). This lets them in the same way the deep link already
+// does; a real account is still asked for at the exact point one is
+// actually needed (saving a favorite, viewing My Bookings, submitting the
+// booking) — same as everywhere else in the app, just not up front.
+function browseAsGuest(onNav) {
+  onNav("customer");
+}
+
 function AuthChoice({ onNav, session, onSignIn, onSignOut }) {
   const { t } = useTranslation();
   // GAP FIX: this card used to go straight to Google sign-in, as if
@@ -3606,7 +3632,7 @@ function openInstallAppGuide() {
   window.dispatchEvent(new Event("vaibook-open-install-guide"));
 }
 
-function InstallAppGuide() {
+function InstallAppGuide({ suppressBanner }) {
   const [open, setOpen] = useState(false);
   const [platform, setPlatform] = useState("ios");
   const [showBanner, setShowBanner] = useState(false);
@@ -3618,6 +3644,14 @@ function InstallAppGuide() {
   // actually installed — detected live via standalone mode below, not by
   // remembering a one-time dismiss forever.
   const SNOOZE_MS = 3 * 24 * 60 * 60 * 1000; // 3 days
+
+  // Read inside the setTimeout callback below instead of as a dependency —
+  // this effect's listeners (beforeinstallprompt, the open-guide event) are
+  // app-lifetime, not per-view, so they shouldn't be torn down and re-added
+  // every time the visitor switches tabs; a ref lets the pending timer still
+  // see the current view when it fires.
+  const suppressBannerRef = useRef(suppressBanner);
+  useEffect(() => { suppressBannerRef.current = suppressBanner; }, [suppressBanner]);
 
   useEffect(() => {
     const ua = window.navigator.userAgent || "";
@@ -3650,7 +3684,7 @@ function InstallAppGuide() {
       try { snoozedAt = Number(localStorage.getItem("vaibook_a2hs_snoozed_at")) || null; } catch (e) { /* ignore */ }
       const stillSnoozed = snoozedAt && (Date.now() - snoozedAt < SNOOZE_MS);
       if (!stillSnoozed) {
-        bannerTimer = setTimeout(() => setShowBanner(true), 2500);
+        bannerTimer = setTimeout(() => { if (!suppressBannerRef.current) setShowBanner(true); }, 2500);
       }
     }
 
@@ -4127,7 +4161,7 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
     } catch (e) { /* ignore storage errors */ }
     setShowNavSuggestions(false);
     setMobileSearchOpen(false);
-    enterCustomerPortal(onNav, session, onSignIn);
+    browseAsGuest(onNav);
   };
 
   const selectNavSuggestion = (s) => {
@@ -4624,7 +4658,7 @@ function LandingPage({ onNav, session, user, onSignIn, onSignOut }) {
     try {
       localStorage.setItem("vaibook_pending_search", JSON.stringify({ query: q, district: heroDistrict || "All" }));
     } catch (e) { /* ignore storage errors */ }
-    enterCustomerPortal(onNav, session, onSignIn);
+    browseAsGuest(onNav);
   };
 
   const selectHeroSuggestion = (s) => {
@@ -4712,7 +4746,7 @@ function LandingPage({ onNav, session, user, onSignIn, onSignOut }) {
                 try {
                   localStorage.setItem("vaibook_pending_search", JSON.stringify({ query: s.categoryQuery, district: "All" }));
                 } catch (e) { /* ignore storage errors */ }
-                enterCustomerPortal(onNav, session, onSignIn);
+                browseAsGuest(onNav);
               }}
             >
               <span className="icon">{s.icon}</span> {t(`services.${s.key}.name`)}
@@ -5054,7 +5088,7 @@ function ProviderLandingPage({ onNav, session, onSignIn, onSignOut }) {
 }
 
 // ── CUSTOMER PORTAL ─────────────────────────────────────────────
-function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLinkProviderId, onDeepLinkConsumed }) {
+function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdate, deepLinkProviderId, onDeepLinkConsumed }) {
   const { t } = useTranslation();
   const [tab, setTab] = useState("home");
 
@@ -5192,7 +5226,8 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
         // and this path has to do exactly the same.
         setProviderHours([]);
         setBusyWindows([]);
-        getWorkingHours(p.id).then((hrs) => { if (!cancelled) setProviderHours(hrs || []); });
+        setLoadingHours(true);
+        getWorkingHours(p.id).then((hrs) => { if (!cancelled) { setProviderHours(hrs || []); setLoadingHours(false); } });
         if (p.loyalty_enabled && user?.id) {
           getLoyaltyAccount(p.id, user.id).then((acc) => { if (!cancelled) setMyLoyalty(acc); });
         }
@@ -5215,6 +5250,12 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
   const [sendingBookingOtp, setSendingBookingOtp] = useState(false);
   const { pushEnabled, subscribingPush, pushError, enablePushNotifications } = usePushSubscription(user?.id);
   const [providerHours, setProviderHours] = useState([]);
+  // Separate from loadingSlots (which only tracks the busy-windows fetch for
+  // whatever date is picked) — without its own flag, `!providerHours.length`
+  // was indistinguishable from "fetch hasn't resolved yet" and briefly showed
+  // "this provider hasn't set their working hours" on every single open,
+  // correcting itself a moment later. Reproduced live 2026-10-14.
+  const [loadingHours, setLoadingHours] = useState(false);
   const [busyWindows, setBusyWindows] = useState([]);
   const [myLoyalty, setMyLoyalty] = useState(null);
   const [loadingSlots, setLoadingSlots] = useState(false);
@@ -5278,6 +5319,12 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
 
   const toggleFavorite = async (e, providerId) => {
     e.stopPropagation();
+    // A guest tapping the heart here used to no-op with zero feedback — no
+    // sign-in prompt, no visual change that stuck (the "press" look was just
+    // a CSS :active state) — so it looked broken rather than gated. Same fix
+    // as the Search/category login-gate: let them know a sign-in is what's
+    // actually needed, same as LandingPage's own heart button already does.
+    if (!session) { onSignIn && onSignIn(); return; }
     if (!user?.id || togglingFavoriteId === providerId) return;
     setTogglingFavoriteId(providerId);
     const isFav = favoriteIds.has(providerId);
@@ -5426,7 +5473,8 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
     setBusyWindows([]);
     setMyLoyalty(null);
     if (provider?.id) {
-      getWorkingHours(provider.id).then((hrs) => setProviderHours(hrs || []));
+      setLoadingHours(true);
+      getWorkingHours(provider.id).then((hrs) => { setProviderHours(hrs || []); setLoadingHours(false); });
       if (provider.loyalty_enabled && user?.id) {
         getLoyaltyAccount(provider.id, user.id).then((acc) => setMyLoyalty(acc));
       }
@@ -6929,7 +6977,7 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
                                     </div>
                                     <div className="input-group">
                                       <label>{t("customerPortal.booking.availableTimes")}</label>
-                                      {loadingMultiSlots ? (
+                                      {loadingMultiSlots || loadingHours ? (
                                         <p style={{ fontSize: 12, color: "var(--muted)" }}>{t("customerPortal.booking.checkingLiveAvailability")}</p>
                                       ) : !providerHours.length ? (
                                         <p style={{ fontSize: 12, color: "var(--muted)" }}>{t("customerPortal.booking.hoursNotSetYet")}</p>
@@ -6975,7 +7023,7 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
                               </div>
                               <div className="input-group">
                                 <label>{t("customerPortal.booking.availableTimes")}</label>
-                                {loadingSlots ? (
+                                {loadingSlots || loadingHours ? (
                                   <p style={{ fontSize: 12, color: "var(--muted)" }}>{t("customerPortal.booking.checkingLiveAvailability")}</p>
                                 ) : !providerHours.length ? (
                                   <p style={{ fontSize: 12, color: "var(--muted)" }}>{t("customerPortal.booking.hoursNotSetYet")}</p>
@@ -7211,9 +7259,11 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
                   <aside className="profile-sidebar">
                     <div className="profile-sidebar-card">
                       <h3>{selectedProvider.business_name}</h3>
-                      <div className="stars" style={{ marginBottom: 4, display: "block" }}>
-                        {rating ? <>{"★".repeat(Math.round(rating))}{"☆".repeat(5 - Math.round(rating))} <span style={{ color: "var(--muted)", fontWeight: 400 }}>{rating} ({selectedProvider.reviews.length})</span></> : <span style={{ color: "var(--muted)" }}>{t("customerPortal.browse.noReviewsYet")}</span>}
-                      </div>
+                      {/* Rating already shows right above in profile-meta (which is
+                          always visible, booking in progress or not) — this card
+                          used to repeat it verbatim just a few inches below.
+                          Keeping this card focused on what's unique to it: plan
+                          badges, the Book Now CTA, and the expandable hours. */}
                       {(() => { const badge = planBadge(selectedProvider); return badge && <span className={`chip ${selectedProvider.plan === "business" ? "chip-plan-business" : "chip-plan-pro"}`} style={{ marginRight: selectedProvider.is_featured ? 6 : 0 }}>{badge.label}</span>; })()}
                       {selectedProvider.is_featured && <span className="chip chip-featured">⭐ {t("customerPortal.browse.featuredBadge")}</span>}
                       <button className="btn-sm forest" style={{ width: "100%", padding: "13px 0", marginTop: 4 }} onClick={() => setProfileTab("services")}>{t("customerPortal.profile.bookNow")}</button>
@@ -7233,13 +7283,14 @@ function CustomerPortal({ onNav, user, session, onSignOut, onUserUpdate, deepLin
                         </div>
                       )}
 
+                      {/* The "Get directions" link above this used to repeat the
+                          one already in profile-meta at the top of the page —
+                          this location line (with the friendlier location_label,
+                          not just the district) stays as the one place for it. */}
                       {(selectedProvider.district || selectedProvider.location_label) && (
                         <div className="sidebar-row">
                           <span>📍 {selectedProvider.location_label || `${selectedProvider.district}, Belize`}</span>
                         </div>
-                      )}
-                      {selectedProvider.latitude != null && selectedProvider.longitude != null && (
-                        <a href={directionsUrl(selectedProvider.latitude, selectedProvider.longitude)} target="_blank" rel="noreferrer" style={{ fontSize: 12, color: "var(--forest)", fontWeight: 600 }}>{t("customerPortal.profile.getDirections")}</a>
                       )}
                     </div>
                   </aside>
@@ -8870,7 +8921,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
     .filter((b) => b.status === "confirmed" && hhmmToMinutes(b.booking_time) >= nowMinutes)
     .sort((a, b) => hhmmToMinutes(a.booking_time) - hhmmToMinutes(b.booking_time))[0] || null;
   const nextBookingName = nextBooking ? (nextBooking.users?.full_name || nextBooking.walkin_customer_name || t("providerPortal.common.customerFallback")) : "";
-  const nextBookingPhone = nextBooking ? (nextBooking.users?.phone || nextBooking.walkin_customer_phone || null) : null;
+  const nextBookingPhone = nextBooking ? (nextBooking.users?.whatsapp_number || nextBooking.users?.phone || nextBooking.walkin_customer_phone || null) : null;
   const nextBookingWhatsAppUrl = nextBooking && nextBookingPhone
     ? `https://wa.me/${nextBookingPhone.replace(/[^\d]/g, "")}?text=${encodeURIComponent(`Hey ${nextBookingName}, ready for you at ${formatBookingTime(nextBooking.booking_time)}!`)}`
     : null;
@@ -9115,7 +9166,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                     {group.items.map((item) => (
                       <button
                         key={item.id}
-                        className="nav-dropdown-item"
+                        className={`nav-dropdown-item ${tab === item.id ? "active" : ""}`}
                         onClick={() => { setTab(item.id); setProviderMenuOpen(false); }}
                       >
                         <span className="icn">{item.icon}</span>{item.label}
@@ -9597,6 +9648,32 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                     <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", justifyContent: "flex-end" }}>
                       <span className="booking-amount">BZ${b.total_amount ?? b.services?.price ?? "—"}</span>
                       <span className={`status-pill ${bookingStatusClass(b.status)}`}>{statusLabel(b.status)}</span>
+                      {/* They already run their whole business over WhatsApp —
+                          what they were missing was a fast way to jump from
+                          "this booking" to "a message about it," pre-filled,
+                          one tap, no typing the number by hand. Same wa.me
+                          pattern as "Next in the Chair," just reachable from
+                          every booking instead of only today's next one. */}
+                      {(() => {
+                        const waPhone = b.users?.whatsapp_number || b.users?.phone || b.walkin_customer_phone || null;
+                        if (!waPhone) return null;
+                        const waName = b.users?.full_name || b.walkin_customer_name || t("providerPortal.common.customerFallback");
+                        const waMsg = `Hi ${waName}, this is about your ${b.services?.name || "appointment"} booking on ${formatBookingWhen(b)}.`;
+                        const waUrl = `https://wa.me/${waPhone.replace(/[^\d]/g, "")}?text=${encodeURIComponent(waMsg)}`;
+                        return (
+                          <a
+                            className="btn-sm ghost"
+                            href={waUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            style={{ textDecoration: "none" }}
+                            aria-label={t("providerPortal.dashboard.messageAriaLabel", { name: waName })}
+                            title={t("providerPortal.dashboard.messageOnWhatsapp")}
+                          >
+                            💬 {t("providerPortal.dashboard.messageOnWhatsapp")}
+                          </a>
+                        );
+                      })()}
                       {b.status === "pending" && respondingId !== b.id && (
                         <>
                           <button className="btn-sm lime" disabled={busyId === b.id} onClick={() => openResponse(b.id, "accept")}>{t("providerPortal.bookings.accept")}</button>
@@ -12840,7 +12917,15 @@ export default function App() {
     <>
       <style>{css}</style>
       <MaintenanceBanner />
-      <InstallAppGuide />
+      {/* The homepage already has its own always-visible "Add to Home Screen"
+          pill under the search bar (hero-get-app-btn) — this auto-popup
+          banner used to also slide up a moment later on that same screen,
+          two prompts for the same action stacked within the first few
+          seconds (2026-10-14 UX inspection). Suppressing the auto-timer on
+          "home" leaves the banner doing its job everywhere else (customer/
+          provider portals), where there's no equivalent button already
+          offering it. Tapping the pill still opens the exact same modal. */}
+      <InstallAppGuide suppressBanner={view === "home"} />
       {/* The Provider Portal now has its own top bar (logo, nav links, avatar
           menu) replacing the persistent sidebar, so the global site nav
           would just be a redundant second header above it. Every other
