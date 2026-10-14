@@ -754,7 +754,12 @@ export const getProviderBookings = async (providerId) => {
     // `phone` added for the dashboard's "Next in the Chair" WhatsApp button
     // and Rebooking Radar check-ins — the provider's own view of their
     // bookings is the only place that needs a customer's phone number.
-    .select('*, users(full_name, email, avatar_url, phone), services(name, price, duration_min), booking_refunds(id, amount, receipt_url, note, created_at), payments(id, amount, currency, payment_status, transaction_id, created_at)')
+    // `whatsapp_number` added alongside it: guest checkout saves a
+    // customer's WhatsApp number separately from `phone` (they're not
+    // always the same value, or `phone` may be missing entirely for a
+    // guest who only gave WhatsApp) — without this, every WhatsApp-message
+    // button in the dashboard was blind to that customer.
+    .select('*, users(full_name, email, avatar_url, phone, whatsapp_number), services(name, price, duration_min), booking_refunds(id, amount, receipt_url, note, created_at), payments(id, amount, currency, payment_status, transaction_id, created_at)')
     .eq('provider_id', providerId)
     .order('booking_date', { ascending: true });
   if (error) console.error(error.message);
