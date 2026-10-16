@@ -18,6 +18,8 @@
 //                     `addons` is optional and expected to be undefined/empty today — see note by the
 //                     roster below, there's no real per-shop add-on tracking in the database yet.
 //   mrr            — precomputed monthly recurring revenue (sum of active providers' plan price), a number
+//   customerCount  — total real customer accounts (users who aren't also a provider owner), a number,
+//                     or null while still loading (renders as "—" rather than a misleading "0")
 //   busyId         — id of the application/provider currently mid-action (disables its buttons), or null
 //   onApprove(id)  — approve a pending application and start its trial
 //   onDeny(id)     — reject a pending application
@@ -43,6 +45,7 @@ export default function AdminDashboard({
   pendingApps = [],
   activeProviders = [],
   mrr = 0,
+  customerCount = null,
   busyId = null,
   onApprove,
   onDeny,
@@ -92,6 +95,11 @@ export default function AdminDashboard({
           <div className="acc-metric-label">Active Shops</div>
           <div className="acc-metric-value">{activeProviders.length}</div>
           <div className="acc-metric-sub">live and bookable right now</div>
+        </div>
+        <div className="acc-metric-card">
+          <div className="acc-metric-label">Customers</div>
+          <div className="acc-metric-value">{customerCount == null ? "—" : customerCount.toLocaleString()}</div>
+          <div className="acc-metric-sub">signed-up customer accounts</div>
         </div>
         <div className="acc-metric-card acc-metric-highlight">
           <div className="acc-metric-label">Monthly Recurring Revenue</div>
@@ -196,7 +204,7 @@ const ADMIN_DASHBOARD_CSS = `
   /* Metric row — dark forest + neon lime, matching the provider dashboard's
      "dopamine card" so the network's headline numbers read as premium at a
      glance, distinct from the lighter working lists below them. */
-  .acc-metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 28px; }
+  .acc-metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 28px; }
   .acc-metric-card {
     background: linear-gradient(160deg, var(--forest) 0%, #0A2A20 100%);
     border-radius: 14px;
@@ -264,8 +272,15 @@ const ADMIN_DASHBOARD_CSS = `
     color: var(--lime);
   }
 
-  @media (max-width: 720px) {
+  @media (max-width: 900px) {
+    .acc-metrics { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  @media (max-width: 480px) {
     .acc-metrics { grid-template-columns: 1fr; }
+  }
+
+  @media (max-width: 720px) {
     .acc-row { flex-direction: column; align-items: flex-start; }
     .acc-row-actions { width: 100%; justify-content: flex-start; }
   }
