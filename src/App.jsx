@@ -1890,7 +1890,13 @@ const css = `
     .search-bar-pill .field input, .search-bar-pill .field select { min-height: 44px; }
     .service-pill, .cx-discover-pill { min-height: 44px; }
     .help-form-submit { width: 100%; }
-    .section { padding: 60px 24px; }
+    /* FIXED — was 60px top/bottom, which stacks with the next section's
+       own 60px top padding into a ~120px dead gap between every row on
+       phone widths (flagged against Fresha's much tighter rhythm, where
+       "Recommended" runs straight into "Recently viewed" with barely any
+       breathing room). 28px keeps real separation between sections
+       without the scroll-and-scroll-and-nothing-there feeling. */
+    .section { padding: 28px 24px; }
     /* Matches .section's side padding (was 20px, set in its own separate
        640px breakpoint below) so the hero lines up with every row below it
        all the way down to phone widths, not just above 768px. */
@@ -1908,7 +1914,7 @@ const css = `
     .grid-2 { grid-template-columns: 1fr; }
     .grid-3 { grid-template-columns: 1fr; }
     .metric-grid { grid-template-columns: 1fr 1fr; }
-    .services-section { padding: 60px 24px; }
+    .services-section { padding: 28px 24px; }
     /* Full-bleed edge-to-edge scroll on mobile, same technique as the
        Home Feed's .cx-dropzone-row — the row's own padding restores the
        page's 24px gutter so the first/last pill still lines up with the
@@ -4849,7 +4855,7 @@ function LandingPage({ onNav, session, user, onSignIn, onSignOut }) {
       {!loadingDiscover && (recommendedProviders.length >= 2 || newProviders.length >= 2) && (
         <section className="section" id="discover">
           {recommendedProviders.length >= 2 && (
-            <div style={{ marginBottom: 44 }}>
+            <div style={{ marginBottom: 28 }}>
               <div className="section-eyebrow">{t("landing.lovedByCustomers")}</div>
               <h2 className="section-title" style={{ marginBottom: 20 }}>{t("landing.recommended")}</h2>
               <ProviderCarousel providers={recommendedProviders} onCardClick={goToProvider} favoriteIds={favoriteIds} onToggleFavorite={toggleFavorite} />
