@@ -722,38 +722,11 @@ const css = `
     position: relative; overflow: hidden; padding: 100px 48px 88px; text-align: left;
     background: var(--bg-primary);
   }
-  /* Two large, blurred, independently-drifting color blobs. Using
-     ::before/::after (rather than extra DOM nodes) keeps this change
-     CSS-only. filter:blur() already softens every edge, and the hero's
-     own overflow:hidden clips both to the section, so — unlike the old
-     hard-edged dark gradient — there's no seam to dissolve into the page
-     background underneath; the hero's base color already matches it. */
-  .search-hero::before {
-    content: '';
-    position: absolute; z-index: 0; pointer-events: none;
-    width: 640px; height: 640px; top: -230px; left: -180px;
-    border-radius: 50%; filter: blur(70px);
-    background: radial-gradient(circle, rgba(198,241,53,0.5) 0%, rgba(198,241,53,0) 70%);
-    animation: hero-blob-drift-1 17s ease-in-out infinite;
-  }
-  .search-hero::after {
-    content: '';
-    position: absolute; z-index: 0; pointer-events: none;
-    width: 580px; height: 580px; top: -120px; right: -200px;
-    border-radius: 50%; filter: blur(70px);
-    background: radial-gradient(circle, rgba(30,139,92,0.4) 0%, rgba(30,139,92,0) 70%);
-    animation: hero-blob-drift-2 21s ease-in-out infinite;
-  }
-  @keyframes hero-blob-drift-1 {
-    0%   { transform: translate(0, 0) scale(1); }
-    50%  { transform: translate(170px, 110px) scale(1.12); }
-    100% { transform: translate(0, 0) scale(1); }
-  }
-  @keyframes hero-blob-drift-2 {
-    0%   { transform: translate(0, 0) scale(1); }
-    50%  { transform: translate(-150px, 120px) scale(1.08); }
-    100% { transform: translate(0, 0) scale(1); }
-  }
+  /* Blurred drifting color blobs removed — restrained-palette pass. Lime
+     and the mid-green accent were showing up here too, on top of the nav,
+     the search button and the category tiles, which read as "every element
+     got the brand color" rather than a deliberate accent. The hero is now
+     a flat surface; color is reserved for the Search button below. */
   /* Widened from 780px so the hero's own content box lines up with the
      page's actual edge (the same 48px .section padding every row below it
      uses) on virtually every real laptop/tablet/phone width, instead of
@@ -770,12 +743,13 @@ const css = `
   .search-hero > .search-bar-pill { z-index: 10; }
   .search-hero-eyebrow { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 12px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; color: var(--muted); margin-bottom: 18px; text-align: center; }
   .search-hero h1 { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; font-size: clamp(32px, 5vw, 58px); line-height: 1.08; letter-spacing: -1px; margin: 0 auto 20px; text-align: center; }
-  .search-hero h1 .line1 { display: block; color: var(--forest); }
-  /* var(--lime) reads great on the old dark-green hero but nearly
-     disappears on this light one (low-contrast light-yellow-green on
-     off-white) — this mid-green keeps the same "accent line" role at
-     readable contrast. */
-  .search-hero h1 .line2 { display: block; color: #1E8F5C; }
+  /* line1 plain ink, line2 the one accent color — restrained-palette pass.
+     Both lines used to be shades of green; two accent colors stacked on
+     top of each other reads as "the theme's whole palette," not a
+     deliberate choice. Ink carries the opening line, forest does the one
+     job of calling out the promise. */
+  .search-hero h1 .line1 { display: block; color: var(--dark-text); }
+  .search-hero h1 .line2 { display: block; color: var(--forest); }
   @media (max-width: 480px) {
     .search-hero h1 { font-size: clamp(28px, 8vw, 36px); }
   }
@@ -1663,13 +1637,28 @@ const css = `
     border-color: rgba(255,255,255,0.12);
   }
 
-  /* PROVIDER GRID */
+  /* PROVIDER GRID — was minmax(220px,1fr), which only ever fit one card
+     per row below ~460px (nearly every phone): everything below the
+     search bar was a single column of full-width cards needing a long
+     scroll to see more than two listings. 150px fits two across on any
+     real phone width, matching Fresha's own density — more of the result
+     set visible at once without touching the data or the card content. */
+  .provider-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px,1fr)); gap: 16px; }
   .provider-card { background: var(--near-white); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; cursor: pointer; transition: box-shadow .2s; }
   .provider-card:hover { box-shadow: 0 4px 20px rgba(13,61,46,0.1); }
   .provider-card-img { height: 120px; display: flex; align-items: center; justify-content: center; font-size: 52px; }
   .provider-card-body { padding: 16px; }
   .provider-card-body h4 { font-size: 15px; font-weight: 600; color: var(--dark-text); margin-bottom: 2px; }
   .provider-card-body .trade { font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+  @media (max-width: 480px) {
+    .provider-grid { gap: 10px; }
+    .provider-card-img { height: 92px; font-size: 38px; }
+    .provider-card-body { padding: 10px; }
+    .provider-card-body h4 { font-size: 13px; }
+    .provider-card-body .trade { font-size: 10.5px; margin-bottom: 5px; }
+    .stars { font-size: 11px; }
+    .price-tag { font-size: 12px; }
+  }
   .stars { color: #F59E0B; font-size: 13px; }
   .provider-card-footer { display: flex; align-items: center; justify-content: space-between; margin-top: 10px; }
   .price-tag { font-size: 14px; font-weight: 600; color: var(--forest); }
@@ -2119,33 +2108,35 @@ const css = `
     background: var(--accent-neon) !important; color: var(--accent-neon-text) !important;
     font-weight: 800; font-size: 14px; padding: 13px 22px;
     border-radius: 100px !important; border: none; cursor: pointer; text-decoration: none;
-    box-shadow: 0 0 0 rgba(198,241,53,0.5);
-    transition: box-shadow .2s ease, transform .15s ease;
+    transition: opacity .2s ease, transform .15s ease;
     font-family: 'Plus Jakarta Sans', sans-serif;
   }
-  .btn-neon:hover { box-shadow: 0 0 24px rgba(198,241,53,0.55) !important; transform: translateY(-1px); }
+  .btn-neon:hover { opacity: .88; transform: translateY(-1px); }
 
+  /* Flat instead of frosted glass — restrained-palette pass. Translucency
+     and backdrop-blur are the single most recognizable "AI app" signature;
+     a plain white surface with a hairline border reads as deliberate,
+     the way Fresha's own search pill and chips do. Only used by the hero
+     search bar and the homepage category pills (checked — nothing on a
+     dark surface depends on these two classes), so this is a safe direct
+     swap rather than touching the shared --glass-bg/--glass-border tokens. */
   .badge-pill {
     display: inline-flex; align-items: center; gap: 7px;
-    background: var(--glass-bg) !important;
-    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-    box-shadow: inset 0 1px 0 rgba(255,255,255,0.06);
+    background: #fff !important;
     color: var(--text-secondary) !important; font-weight: 600; font-size: 13px;
-    padding: 10px 18px; border-radius: 100px !important; border: 1px solid var(--glass-border) !important;
-    cursor: pointer; transition: border-color .2s ease, color .2s ease, box-shadow .2s ease, background .2s ease;
+    padding: 10px 18px; border-radius: 100px !important; border: 1px solid var(--border-subtle) !important;
+    cursor: pointer; transition: border-color .2s ease, color .2s ease, background .2s ease;
   }
-  .badge-pill:hover { border-color: var(--lime) !important; color: var(--accent-text) !important; box-shadow: 0 0 16px rgba(198,241,53,0.25); }
+  .badge-pill:hover { border-color: var(--forest) !important; color: var(--accent-text) !important; }
 
   .search-glass {
     position: relative;
-    background: var(--glass-bg) !important;
-    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-    border: 1px solid var(--glass-border) !important;
-    box-shadow: inset 0 1px 0 rgba(255,255,255,0.06) !important;
+    background: #fff !important;
+    border: 1px solid var(--border-subtle) !important;
     border-radius: 100px;
     transition: border-color .2s ease;
   }
-  .search-glass:focus-within { border-color: rgba(198,241,53,0.5) !important; }
+  .search-glass:focus-within { border-color: var(--forest) !important; }
   .search-glass input, .search-glass select { color: var(--text-primary) !important; }
   .search-glass input::placeholder { color: var(--text-tertiary) !important; }
 `;
@@ -4226,7 +4217,11 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
   return (
     <div className={`nav-outer${navOuterLight ? " nav-outer--light" : ""}`} ref={navRef}>
     <nav className="nav">
-      <span className="nav-logo" style={{ cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 8 }} onClick={() => onNav("home")}><VaiBookMark size={24} />vai<span>book</span></span>
+      {/* Mark dropped here only — the bars icon ate space the nav pills
+          needed on a phone screen, and "vaibook" alone still reads fine at
+          this size. VaiBookMark stays everywhere else (auth, portals,
+          admin) where there's room and it's the only branding on screen. */}
+      <span className="nav-logo" style={{ cursor: "pointer", display: "inline-flex", alignItems: "center" }} onClick={() => onNav("home")}>vai<span>book</span></span>
 
       {showNavSearch && (
       <div className={`nav-search-wrap ${navSearchActive ? "visible" : ""}`}>
@@ -6419,7 +6414,7 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
             {!loadingProviders && filteredProviders.length === 0 && (
               <p style={{ fontSize: 13, color: "var(--muted)" }}>{t("customerPortal.browse.noProvidersFound")}</p>
             )}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px,1fr))", gap: 16 }}>
+            <div className="provider-grid">
               {filteredProviders.map((p) => {
                 const rating = providerRating(p);
                 const fromPrice = providerFromPrice(p);
@@ -6467,7 +6462,7 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
             {!loadingFavorites && favoriteProviders.length === 0 && (
               <p style={{ fontSize: 13, color: "var(--muted)" }}>{t("customerPortal.favorites.emptyState")}</p>
             )}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px,1fr))", gap: 16 }}>
+            <div className="provider-grid">
               {favoriteProviders.map((p) => {
                 const rating = providerRating(p);
                 const fromPrice = providerFromPrice(p);
