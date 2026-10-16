@@ -371,7 +371,7 @@ const css = `
   .nav-search-wrap.visible { opacity: 1; pointer-events: auto; transform: translate(-50%, -50%); }
   .nav-search { position: relative; width: 100%; }
   .nav-search-input-wrap { display: flex; align-items: center; gap: 8px; background: var(--sand); border-radius: 100px; padding: 9px 16px; }
-  .nav-search-input-wrap input { border: none; outline: none; background: transparent; font-size: 13px; width: 100%; font-family: 'Plus Jakarta Sans', sans-serif; color: var(--dark-text); }
+  .nav-search-input-wrap input { border: none; outline: none; background: transparent; font-size: 16px; width: 100%; font-family: 'Plus Jakarta Sans', sans-serif; color: var(--dark-text); }
   .nav-search-icon { font-size: 14px; color: var(--muted); flex-shrink: 0; }
   /* margin-left: 12px — now that .nav-cta/the avatar div claim their own
      margin-left: auto (see .nav-cta above) to stay pinned right, there's
@@ -434,11 +434,13 @@ const css = `
      this replaced the old hide-on-mobile .nav-signup-btn usage there. */
   .nav-business-btn { display: flex; align-items: center; gap: 8px; background: transparent; border: 1px solid rgba(255,255,255,0.35); color: var(--near-white); padding: 9px 18px; border-radius: 100px; font-size: 14px; font-weight: 500; cursor: pointer; transition: all .2s; white-space: nowrap; }
   .nav-business-btn:hover { border-color: var(--lime); color: var(--lime); }
-  /* Icon stays hidden above the 400px breakpoint further down — full
-     "For businesses" text is the normal, intended look (matches the
-     user's mockup). Below 400px the label hides and this icon becomes
-     the whole button, same pattern as .nav-menu-btn's text-hiding. */
-  .nav-business-btn-icon { display: none; }
+  /* Mobile-only short label stays hidden above the 540px breakpoint
+     further down — full "For businesses" text is the normal, intended
+     look (matches the user's mockup). Below 540px the full label hides
+     and this shorter "Offer my service" label takes over instead of the
+     old icon-only circle, which read as an unlabeled building/shop icon
+     on real phones. */
+  .nav-business-btn-label-mobile { display: none; }
   .nav-menu-btn .bars { display: flex; flex-direction: column; gap: 3px; }
   .nav-menu-btn .bars span { width: 16px; height: 2px; background: currentColor; border-radius: 2px; }
   /* THEME TOGGLE — the nav bar itself is a fixed dark-green gradient in
@@ -595,7 +597,7 @@ const css = `
     display: flex; align-items: center; gap: 10px; background: var(--bg-elevated);
     border: 1px solid var(--border-subtle); border-radius: 14px; padding: 12px 16px; margin-bottom: 24px;
   }
-  .help-faq-search input { flex: 1; border: none; background: none; outline: none; font-size: 15px; color: var(--text-primary); font-family: inherit; }
+  .help-faq-search input { flex: 1; border: none; background: none; outline: none; font-size: 16px; color: var(--text-primary); font-family: inherit; }
   .help-faq-search-icon { font-size: 15px; opacity: 0.6; }
   .help-faq-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 36px; }
   .help-faq-empty { font-size: 14px; color: var(--text-tertiary); text-align: center; padding: 24px 0; }
@@ -761,7 +763,7 @@ const css = `
     display: flex; align-items: center; padding: 8px; gap: 4px;
   }
   .search-bar-pill .field { flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; padding: 10px 18px; }
-  .search-bar-pill .field input, .search-bar-pill .field select { border: none; outline: none; background: transparent; font-size: 14px; width: 100%; color: #FFFFFF; font-family: 'Plus Jakarta Sans', sans-serif; }
+  .search-bar-pill .field input, .search-bar-pill .field select { border: none; outline: none; background: transparent; font-size: 16px; width: 100%; color: #FFFFFF; font-family: 'Plus Jakarta Sans', sans-serif; }
   .search-bar-pill .field input::placeholder { color: rgba(245,239,224,0.45); }
   .search-bar-pill select option { background: #0D3D2E; color: #FFFFFF; }
   .search-bar-pill .sep { width: 1px; height: 28px; background: rgba(255,255,255,0.18); flex-shrink: 0; }
@@ -1274,7 +1276,7 @@ const css = `
 
   /* SEARCH BAR */
   .search-bar { position: relative; background: white; border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 20px; display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
-  .search-bar input { border: none; outline: none; font-size: 15px; flex: 1; font-family: 'Plus Jakarta Sans', sans-serif; color: var(--dark-text); background: transparent; }
+  .search-bar input { border: none; outline: none; font-size: 16px; flex: 1; font-family: 'Plus Jakarta Sans', sans-serif; color: var(--dark-text); background: transparent; }
   .search-bar .search-icon { color: var(--muted); font-size: 18px; }
 
   /* CUSTOMER DASHBOARD — "addictive premium consumer app" redesign (v2).
@@ -1326,7 +1328,7 @@ const css = `
   .cx-discover { margin-bottom: 8px; }
   .cx-discover-search { position: relative; background: rgba(14,36,27,0.94); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); box-shadow: inset 0 1px 0 rgba(255,255,255,0.06); border-radius: 100px; padding: 15px 22px; display: flex; align-items: center; gap: 12px; margin-bottom: 14px; transition: border-color .2s; }
   .cx-discover-search:focus-within { border-color: rgba(198,241,53,0.5); }
-  .cx-discover-search input { border: none; outline: none; font-size: 14.5px; flex: 1; font-family: 'Plus Jakarta Sans', sans-serif; color: #FFFFFF; background: transparent; }
+  .cx-discover-search input { border: none; outline: none; font-size: 16px; flex: 1; font-family: 'Plus Jakarta Sans', sans-serif; color: #FFFFFF; background: transparent; }
   .cx-discover-search input::placeholder { color: rgba(245,239,224,0.45); }
   .cx-discover-search .search-icon { color: rgba(245,239,224,0.55); font-size: 17px; }
   .cx-discover-pills { display: flex; gap: 10px; flex-wrap: wrap; }
@@ -1787,7 +1789,7 @@ const css = `
 
   .input-group { margin-bottom: 14px; }
   .input-group label { font-size: 12px; font-weight: 600; color: var(--dark-text); display: block; margin-bottom: 6px; letter-spacing: .02em; }
-  .input-group input, .input-group select, .input-group textarea { width: 100%; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px 14px; font-size: 14px; font-family: 'Plus Jakarta Sans', sans-serif; color: var(--dark-text); background: white; outline: none; transition: border-color .2s; }
+  .input-group input, .input-group select, .input-group textarea { width: 100%; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px 14px; font-size: 16px; font-family: 'Plus Jakarta Sans', sans-serif; color: var(--dark-text); background: white; outline: none; transition: border-color .2s; }
   .input-group input:focus, .input-group select:focus, .input-group textarea:focus { border-color: var(--forest); }
   .input-group input:disabled { background: var(--sand); color: var(--muted); cursor: default; }
   .input-group textarea { resize: vertical; height: 80px; }
@@ -2019,8 +2021,13 @@ const css = `
     .lang-toggle { display: none; }
     .nav-menu-btn-label { display: none; }
     .nav-business-btn-label { display: none; }
-    .nav-business-btn-icon { display: inline-flex; font-size: 15px; }
-    .nav-business-btn { padding: 9px; min-width: 40px; justify-content: center; }
+    .nav-business-btn-label-mobile { display: inline-flex; }
+    .nav-business-btn { padding: 7px 10px; font-size: 11px; justify-content: center; }
+  }
+  @media (max-width: 340px) {
+    .nav { padding: 14px 12px; }
+    .nav-cta { gap: 4px; }
+    .nav-business-btn { padding: 6px 8px; font-size: 10.5px; }
   }
 
   .a2hs-banner {
@@ -4342,8 +4349,8 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
             // only), so it's still the only mobile path there even though
             // it's now a redundant second path to the same place on "home".
             <button className="nav-business-btn" onClick={() => onNav("providers")}>
-              <span className="nav-business-btn-icon" aria-hidden="true">🏪</span>
               <span className="nav-business-btn-label">{t("nav.forBusinesses")}</span>
+              <span className="nav-business-btn-label-mobile">{t("nav.offerMyService")}</span>
             </button>
           )}
           {current === "providers" && (
