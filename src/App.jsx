@@ -1,6 +1,6 @@
 
 import { useState, useEffect, useLayoutEffect, useRef, useContext, createContext, lazy, Suspense } from "react";
-import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, updateService, deleteService, getActiveProviders, getProviderDirectory, createBooking, getProviderBusyWindows, createBookingSafe, cancelBooking, getCustomerBookings, uploadReceipt, submitReview, getProviderReviews, updateReview, sendBookingEmail, updateUserProfile, getPaymentMethods, addPaymentMethod, deletePaymentMethod, createNotification, getNotifications, markNotificationRead, markAllNotificationsRead, getCategoryDefaultFeatures, getProviderFeatureOverrides, setProviderFeatureOverride, getVisitNotes, upsertVisitNote, adminListProviders, adminUpdateProvider, adminDeleteProvider, getFavoriteProviderIds, getFavoriteProviders, addFavorite, removeFavorite, getBookingMessages, sendBookingMessage, markBookingMessagesRead, getUnreadBookingMessages, getProviderMonthlyTrend, createProviderProfile, getProviderById, createWalkInBooking, submitProviderPayment, getMyProviderPayments, adminListProviderPayments, adminReviewProviderPayment, submitBookingRefund, adminListBookingRefunds, openPrivateFile, getProviderStaff, addProviderStaff, updateProviderStaff, deleteProviderStaff, getLoyaltyAccount, getProviderLoyaltyCustomers, redeemLoyaltyReward, getMyStaffProfile, claimStaffSeatByEmail, getStaffBookings, getProviderNotifyEmail, getMaintenanceStatus, setMaintenanceMode, getSiteOfflineStatus, setSiteOffline, sendEmailOtp, verifyEmailOtp, savePushSubscription, attachBookingServices, getProviderBlocks, insertProviderBlock, deleteProviderBlock, proposeBookingReschedule, confirmBookingReschedule, declineBookingReschedule, withdrawBookingReschedule, establishSoloSession, getServerSoloSessionToken, getLocalSoloSessionToken, clearLocalSoloSessionToken, subscribeToSoloSessionReplacement } from "./supabase";
+import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, updateService, deleteService, getActiveProviders, getProviderDirectory, createBooking, getProviderBusyWindows, createBookingSafe, cancelBooking, getCustomerBookings, uploadReceipt, submitReview, getProviderReviews, updateReview, sendBookingEmail, updateUserProfile, getPaymentMethods, addPaymentMethod, deletePaymentMethod, createNotification, getNotifications, markNotificationRead, markAllNotificationsRead, getCategoryDefaultFeatures, getProviderFeatureOverrides, setProviderFeatureOverride, getVisitNotes, upsertVisitNote, adminListProviders, adminUpdateProvider, adminDeleteProvider, adminCountCustomers, getFavoriteProviderIds, getFavoriteProviders, addFavorite, removeFavorite, getBookingMessages, sendBookingMessage, markBookingMessagesRead, getUnreadBookingMessages, getProviderMonthlyTrend, createProviderProfile, getProviderById, createWalkInBooking, submitProviderPayment, getMyProviderPayments, adminListProviderPayments, adminReviewProviderPayment, submitBookingRefund, adminListBookingRefunds, openPrivateFile, getProviderStaff, addProviderStaff, updateProviderStaff, deleteProviderStaff, getLoyaltyAccount, getProviderLoyaltyCustomers, redeemLoyaltyReward, getMyStaffProfile, claimStaffSeatByEmail, getStaffBookings, getProviderNotifyEmail, getMaintenanceStatus, setMaintenanceMode, getSiteOfflineStatus, setSiteOffline, sendEmailOtp, verifyEmailOtp, savePushSubscription, attachBookingServices, getProviderBlocks, insertProviderBlock, deleteProviderBlock, proposeBookingReschedule, confirmBookingReschedule, declineBookingReschedule, withdrawBookingReschedule, establishSoloSession, getServerSoloSessionToken, getLocalSoloSessionToken, clearLocalSoloSessionToken, subscribeToSoloSessionReplacement } from "./supabase";
 import AdminDashboard from "./AdminDashboard";
 import ProfilePhotoModal from "./ProfilePhotoModal";
 import LanguageSelector from "./LanguageSelector";
@@ -8968,11 +8968,24 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
   const bookingUrl = `${siteOrigin}/#book-${providerId}`;
   const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=480x480&margin=12&data=${encodeURIComponent(bookingUrl)}`;
 
-  // "Rebooking Radar" — registered (non-walk-in) customers with 2+ real
-  // visits, no upcoming booking on the books, whose last visit was 3+
-  // weeks ago. Walk-ins are excluded: they have no customer_id, so there's
-  // no reliable identity to track repeat visits by.
+  // "Rebooking Radar" — registered (non-walk-in) customers with no
+  // upcoming booking on the books, whose last visit has gone quiet.
+  // Walk-ins are excluded: they have no customer_id, so there's no
+  // reliable identity to track repeat visits by.
+  //
+  // Two touches, both purely time-based (there's no messaging backend
+  // here to track whether a provider actually hit send in WhatsApp, so
+  // "did they already get nudged" can't be known — only "how long have
+  // they been quiet" can):
+  //  - "first" touch at 21+ days quiet — the original Rebook Radar
+  //    window, now open to first-time customers too (a single-visit
+  //    customer going quiet is just as worth a nudge as a repeat one;
+  //    the old `visits >= 2` gate excluded them for no real reason).
+  //  - "second" touch at 28+ days quiet (a week past the first-touch
+  //    window) — a softer follow-up for anyone still quiet a week later,
+  //    with its own, less repetitive wording (see CheckInModal below).
   const REBOOK_QUIET_DAYS = 21;
+  const REBOOK_SECOND_TOUCH_DAYS = REBOOK_QUIET_DAYS + 7;
   const customerHistory = {};
   bookings.forEach((b) => {
     if (!b.customer_id) return;
@@ -8983,14 +8996,22 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
     entry.visits += 1;
     if (b.users?.full_name) entry.name = b.users.full_name;
     if (b.users?.email) entry.email = b.users.email;
-    if (b.users?.phone) entry.phone = b.users.phone;
+    // Prefer a verified WhatsApp number (collected at guest checkout) over
+    // the generic phone field — same preference order as the per-booking
+    // "Message on WhatsApp" button elsewhere in this portal.
+    if (b.users?.whatsapp_number || b.users?.phone) entry.phone = b.users.whatsapp_number || b.users.phone;
     if (!entry.lastDate || d > entry.lastDate) entry.lastDate = d;
     if (d >= bookingDateOnly(localDateStr()) && ["pending", "awaiting_payment", "confirmed"].includes(b.status)) entry.hasUpcoming = true;
     customerHistory[b.customer_id] = entry;
   });
-  const quietSince = new Date(now.getTime() - REBOOK_QUIET_DAYS * 24 * 60 * 60 * 1000);
   const quietRegulars = Object.values(customerHistory)
-    .filter((c) => c.visits >= 2 && !c.hasUpcoming && c.lastDate && c.lastDate < quietSince)
+    .filter((c) => !c.hasUpcoming && c.lastDate)
+    .map((c) => {
+      const daysAgo = Math.round((now.getTime() - c.lastDate.getTime()) / (24 * 60 * 60 * 1000));
+      const stage = daysAgo >= REBOOK_SECOND_TOUCH_DAYS ? "second" : daysAgo >= REBOOK_QUIET_DAYS ? "first" : null;
+      return { ...c, daysAgo, stage };
+    })
+    .filter((c) => c.stage)
     .sort((a, b) => a.lastDate - b.lastDate);
 
   // "Clients" tab — replaces the old manually-starred "VIP clients" list
@@ -9456,7 +9477,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
             {quietRegulars.length > 0 && (
               <div className="rebook-radar">
                 <div className="rebook-radar-text">
-                  🔁 {t("providerPortal.dashboard.rebookRadarText", { count: quietRegulars.length, weeks: REBOOK_QUIET_DAYS / 7 })}
+                  🔁 {t("providerPortal.dashboard.rebookRadarText", { count: quietRegulars.length })}
                 </div>
                 <button className="rebook-radar-btn" onClick={() => setShowCheckInModal(true)}>{t("providerPortal.dashboard.sendCheckIn")}</button>
               </div>
@@ -10945,8 +10966,12 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
       )}
 
       {/* SEND CHECK-IN — no bulk SMS/WhatsApp API behind this (VaiBook has
-          no messaging backend), so each quiet regular gets their own
-          prefilled wa.me link, one tap each, instead of a fake "blast". */}
+          no messaging backend), so each quiet customer gets their own
+          prefilled wa.me link, one tap each, instead of a fake "blast".
+          Two stages (see quietRegulars above): "first" at 21+ days quiet,
+          "second" at 28+ days quiet with softer, non-repetitive wording —
+          both purely a function of elapsed time, since there's no way to
+          know whether a provider actually sent the first one. */}
       {showCheckInModal && (
         <div className="sheet-overlay" onClick={() => setShowCheckInModal(false)}>
           <div className="sheet-panel" onClick={(e) => e.stopPropagation()}>
@@ -10955,15 +10980,34 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
             <p style={{ fontSize: 13, color: "var(--muted)", margin: "0 0 16px" }}>{t("providerPortal.checkInModal.subtitle")}</p>
             <div style={{ maxHeight: "50vh", overflowY: "auto" }}>
               {quietRegulars.map((c, i) => {
-                const daysAgo = Math.round((now.getTime() - c.lastDate.getTime()) / (24 * 60 * 60 * 1000));
-                const msg = `Hi ${c.name}, it's been a while — ready to book your next appointment with ${providerProfile?.business_name || "us"}? You can grab a time right on VaiBook: ${bookingUrl}`;
+                // Second touch gets its own, less repetitive wording rather
+                // than literally resending the first message — and a
+                // first-time customer gets a "your visit" opener instead of
+                // "you've been doing well", since there's no history yet to
+                // ask about.
+                const isSecondTouch = c.stage === "second";
+                const isFirstTimer = c.visits <= 1;
+                const businessName = providerProfile?.business_name || "us";
+                const greeting = isFirstTimer
+                  ? `Hi ${c.name}, hope you enjoyed your visit with ${businessName}!`
+                  : `Hi ${c.name}, hope you've been doing well!`;
+                const msg = isSecondTouch
+                  ? `${greeting} Just checking in again — your spot with ${businessName} is still just a tap away whenever you're ready. Book here on VaiBook: ${bookingUrl}`
+                  : `${greeting} Ready to book your next appointment with ${businessName}? You can grab a time right on VaiBook: ${bookingUrl}`;
                 const waUrl = c.phone ? `https://wa.me/${c.phone.replace(/[^\d]/g, "")}?text=${encodeURIComponent(msg)}` : null;
                 return (
                   <div className="block-row" key={i}>
                     <div className="dot"></div>
                     <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: 13, fontWeight: 700, color: "var(--dark-text)" }}>{c.name}</div>
-                      <div style={{ fontSize: 12, color: "var(--muted)" }}>{t("providerPortal.checkInModal.lastVisit", { days: daysAgo })}</div>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: "var(--dark-text)" }}>
+                        {c.name}
+                        <span style={{ marginLeft: 8, fontSize: 10.5, fontWeight: 700, color: isSecondTouch ? "var(--clay)" : "var(--forest)", background: isSecondTouch ? "var(--sand)" : "var(--lime)", padding: "2px 7px", borderRadius: 5, verticalAlign: "middle" }}>
+                          {isSecondTouch ? t("providerPortal.checkInModal.stageSecond") : t("providerPortal.checkInModal.stageFirst")}
+                        </span>
+                      </div>
+                      <div style={{ fontSize: 12, color: "var(--muted)" }}>
+                        {isFirstTimer ? t("providerPortal.checkInModal.lastVisitFirstTime", { days: c.daysAgo }) : t("providerPortal.checkInModal.lastVisit", { days: c.daysAgo })}
+                      </div>
                     </div>
                     {waUrl ? (
                       <a className="btn-sm forest" style={{ textDecoration: "none" }} href={waUrl} target="_blank" rel="noreferrer">💬 {t("providerPortal.checkInModal.messageButton")}</a>
@@ -11814,6 +11858,12 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
   const [refunds, setRefunds] = useState([]);
   const [loadingRefunds, setLoadingRefunds] = useState(false);
 
+  // Total real customer accounts (users who aren't also a provider owner)
+  // for the Command Center's "Customers" tile — see admin_count_customers()
+  // / adminCountCustomers in supabase.js. null (not 0) while unloaded, so
+  // the tile can show a loading dash instead of a misleading "0".
+  const [customerCount, setCustomerCount] = useState(null);
+
   // Emergency maintenance-mode switch — see supabase_security_hardening.sql.
   // Pauses new bookings and new provider applications app-wide, independent
   // of Vercel/DNS/Supabase dashboards, for the moment something looks
@@ -11948,8 +11998,12 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
     setLoadingRefunds(false);
   };
 
+  const loadCustomerCount = async () => {
+    setCustomerCount(await adminCountCustomers());
+  };
+
   useEffect(() => {
-    if (isAdmin) { loadApps(); loadProviders(); loadPayments(); loadRefunds(); loadMaintenance(); loadSiteOffline(); }
+    if (isAdmin) { loadApps(); loadProviders(); loadPayments(); loadRefunds(); loadMaintenance(); loadSiteOffline(); loadCustomerCount(); }
   }, [isAdmin]);
 
   const toggleMaintenance = async () => {
@@ -12158,6 +12212,7 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
               const planDef = PLANS.find((pl) => pl.id === (p.plan || "starter"));
               return sum + (planDef?.monthly || 0);
             }, 0)}
+            customerCount={customerCount}
             busyId={busyId}
             onApprove={(id) => act(id, "active")}
             onDeny={(id) => act(id, "rejected")}
