@@ -12708,12 +12708,22 @@ export default function App() {
   // when nothing more specific already claimed the view (an explicit
   // #admin/#customer/#provider/#book- link, a pending "sign in to do X"
   // redirect, or this being an admin account).
+  //
+  // FIXED — brand-new visits (a new tab, the PWA "Add to Home Screen"
+  // icon, opening the link again tomorrow) were skipping the marketing
+  // homepage entirely and dropping straight into whichever portal the
+  // account happened to be sitting in the last time it was ever open,
+  // because this read from localStorage — which survives forever, across
+  // every future visit, not just the current one. sessionStorage clears
+  // the moment the tab/app closes, so it still restores your place across
+  // an in-session refresh (the actual bug this was built to fix) without
+  // ever hijacking a fresh visit's landing page again.
   const restoreLastPortalView = (hadPendingView, wasAdmin, canUseProviderPortal) => {
     if (hadPendingView || wasAdmin) return;
     const h = window.location.hash.replace("#", "");
     if (h === "customer" || h === "provider" || h === "admin" || parseBookingHash(h)) return;
     try {
-      const last = localStorage.getItem("vaibook_last_view");
+      const last = sessionStorage.getItem("vaibook_last_view");
       if (last === "provider" && canUseProviderPortal) setView("provider");
       else if (last === "customer") setView("customer");
     } catch (e) { /* ignore */ }
@@ -12894,17 +12904,19 @@ export default function App() {
 
   // Remembers whichever real portal the account is currently sitting in,
   // so restoreLastPortalView (above) can put a refresh back where it
-  // belongs instead of always falling back to the homepage.
+  // belongs instead of always falling back to the homepage. Kept in
+  // sessionStorage (not localStorage) on purpose — see the note above
+  // restoreLastPortalView.
   useEffect(() => {
     if (view !== "provider" && view !== "customer" && view !== "admin") return;
-    try { localStorage.setItem("vaibook_last_view", view); } catch (e) { /* ignore */ }
+    try { sessionStorage.setItem("vaibook_last_view", view); } catch (e) { /* ignore */ }
   }, [view]);
 
   const handleSignOut = async () => {
     clearLocalSoloSessionToken();
     await signOut();
     setView("home");
-    try { localStorage.removeItem("vaibook_last_view"); } catch (e) { /* ignore */ }
+    try { sessionStorage.removeItem("vaibook_last_view"); } catch (e) { /* ignore */ }
   };
 
   if (loading) {
