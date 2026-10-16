@@ -711,8 +711,8 @@
       "calendarBlocked": "calendar blocked",
       "recentBookings": "Recent bookings",
       "noBookingsYet": "No bookings yet. Once customers book you, they'll show up here.",
-      "rebookRadarText_one": "{{count}} regular hasn't booked in {{weeks}}+ weeks.",
-      "rebookRadarText_other": "{{count}} regulars haven't booked in {{weeks}}+ weeks.",
+      "rebookRadarText_one": "{{count}} customer is due for a check-in.",
+      "rebookRadarText_other": "{{count}} customers are due for a check-in.",
       "sendCheckIn": "Send Check-In"
     },
     "clients": {
@@ -1014,6 +1014,9 @@
       "title": "Send a check-in",
       "subtitle": "Tap a customer to open a prefilled WhatsApp message.",
       "lastVisit": "Last visit {{days}} days ago",
+      "lastVisitFirstTime": "First visit {{days}} days ago",
+      "stageFirst": "First check-in",
+      "stageSecond": "Follow-up",
       "messageButton": "Message",
       "noPhone": "No phone on file"
     }
