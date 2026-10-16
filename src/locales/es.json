@@ -711,8 +711,8 @@
       "calendarBlocked": "calendario bloqueado",
       "recentBookings": "Reservas recientes",
       "noBookingsYet": "Aún no hay reservas. En cuanto los clientes reserven contigo, aparecerán aquí.",
-      "rebookRadarText_one": "{{count}} cliente habitual no reserva hace {{weeks}}+ semanas.",
-      "rebookRadarText_other": "{{count}} clientes habituales no reservan hace {{weeks}}+ semanas.",
+      "rebookRadarText_one": "{{count}} cliente está listo para un seguimiento.",
+      "rebookRadarText_other": "{{count}} clientes están listos para un seguimiento.",
       "sendCheckIn": "Enviar mensaje de seguimiento"
     },
     "clients": {
@@ -1014,6 +1014,9 @@
       "title": "Enviar un mensaje de seguimiento",
       "subtitle": "Toca a un cliente para abrir un mensaje de WhatsApp prellenado.",
       "lastVisit": "Última visita hace {{days}} días",
+      "lastVisitFirstTime": "Primera visita hace {{days}} días",
+      "stageFirst": "Primer contacto",
+      "stageSecond": "Seguimiento",
       "messageButton": "Mensaje",
       "noPhone": "Sin teléfono registrado"
     }
