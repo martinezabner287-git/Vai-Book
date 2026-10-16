@@ -1630,6 +1630,20 @@ export const adminListProviders = async () => {
   return data || [];
 };
 
+// How many real customer accounts exist — for the Command Center's
+// "Customers" tile. Counts `users` rows that are NOT also a provider
+// owner (a provider's own sign-in creates a `users` row the same way a
+// customer's does, so without that exclusion this would double up with
+// "Active Shops"). See supabase_admin_customer_count.sql — same
+// SECURITY DEFINER / is_current_user_admin() pattern as every other
+// admin RPC here, so RLS on `users` never has to be opened up just to
+// let an admin read a count.
+export const adminCountCustomers = async () => {
+  const { data, error } = await supabase.rpc('admin_count_customers');
+  if (error) { console.error('Error counting customers:', error.message); return null; }
+  return typeof data === 'number' ? data : Number(data) || 0;
+};
+
 // Pass only the fields you want to change — omitted/undefined fields are
 // left as-is server-side (the RPC coalesces nulls against current values).
 export const adminUpdateProvider = async (providerId, updates) => {
