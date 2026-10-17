@@ -1023,6 +1023,15 @@ const css = `
   .browse-pill { background: white; border: 1px solid var(--border); color: var(--dark-text); padding: 9px 18px; border-radius: 100px; font-size: 13px; font-weight: 500; cursor: pointer; transition: all .2s; }
   .browse-pill:hover { border-color: var(--forest); color: var(--forest); }
 
+  /* PROVIDER LANDING — "why shop owners choose VaiBook" benefit cards,
+     styled to match .pricing-card right below (same white/border/16px-
+     radius language) so the two sections read as one system. */
+  .provider-benefits-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; max-width: 1080px; margin: 0 auto; }
+  .provider-benefit-card { background: #fff; border: 1px solid var(--border); border-radius: 16px; padding: 28px 24px; text-align: left; }
+  .provider-benefit-icon { font-size: 28px; display: block; margin-bottom: 14px; }
+  .provider-benefit-title { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 17px; font-weight: 800; color: var(--forest); margin: 0 0 8px; line-height: 1.3; }
+  .provider-benefit-body { font-size: 13.5px; color: var(--muted); line-height: 1.6; margin: 0; }
+
   /* PRICING (public, for prospective providers) */
   .pricing-section { padding: 80px 48px; }
   .trial-badge { display: inline-flex; align-items: center; gap: 6px; background: var(--lime); color: var(--forest); font-size: 12.5px; font-weight: 700; padding: 7px 18px; border-radius: 100px; margin: 4px 0 18px; }
@@ -1071,6 +1080,7 @@ const css = `
   .for-business-btn { padding: 17px 36px; font-size: 16px; font-weight: 700; border-radius: 14px; }
   @media (max-width: 900px) {
     .pricing-grid { grid-template-columns: 1fr; max-width: 420px; }
+    .provider-benefits-grid { grid-template-columns: 1fr; max-width: 480px; }
   }
   @media (max-width: 768px) {
     .pricing-section { padding: 60px 24px; }
@@ -4996,14 +5006,36 @@ function ProviderLandingPage({ onNav, session, onSignIn, onSignOut }) {
         </picture>
       </section>
 
-      {/* FEATURES INTRO — the copy that used to caption the screenshot
-          above now introduces the page's feature/pricing content on its
-          own, since the screenshot lives in the hero now. */}
+      {/* WHY SHOP OWNERS CHOOSE VAIBOOK — replaces the old one-line "Built
+          for how your business really runs" teaser with the actual pitch,
+          in plain language, three things only: stop fielding calls
+          mid-appointment, see real numbers instead of guessing, and stop
+          losing money to no-shows while staying in touch with clients.
+          Deliberately has no CTA button of its own — this section's whole
+          job is to make the case; the asking happens in the hero above and
+          the pricing/closing sections below, not a third time here too. */}
       <section className="section platform-preview-section" id="features">
-        <div style={{ textAlign: "center" }}>
+        <div style={{ textAlign: "center", marginBottom: 40 }}>
           <div className="section-eyebrow" style={{ justifyContent: "center", display: "flex" }}>{t("providerLanding.seeItInAction")}</div>
           <h2 className="section-title">{t("providerLanding.builtForHow")}</h2>
           <p className="section-sub" style={{ margin: "0 auto" }}>{t("providerLanding.oneDashboard")}</p>
+        </div>
+        <div className="provider-benefits-grid">
+          <div className="provider-benefit-card">
+            <span className="provider-benefit-icon">{t("providerLanding.benefit1Icon")}</span>
+            <h3 className="provider-benefit-title">{t("providerLanding.benefit1Title")}</h3>
+            <p className="provider-benefit-body">{t("providerLanding.benefit1Body")}</p>
+          </div>
+          <div className="provider-benefit-card">
+            <span className="provider-benefit-icon">{t("providerLanding.benefit2Icon")}</span>
+            <h3 className="provider-benefit-title">{t("providerLanding.benefit2Title")}</h3>
+            <p className="provider-benefit-body">{t("providerLanding.benefit2Body")}</p>
+          </div>
+          <div className="provider-benefit-card">
+            <span className="provider-benefit-icon">{t("providerLanding.benefit3Icon")}</span>
+            <h3 className="provider-benefit-title">{t("providerLanding.benefit3Title")}</h3>
+            <p className="provider-benefit-body">{t("providerLanding.benefit3Body")}</p>
+          </div>
         </div>
       </section>
 
