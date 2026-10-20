@@ -5118,6 +5118,39 @@ function ProviderLandingPage({ onNav, session, onSignIn, onSignOut }) {
         </picture>
       </section>
 
+      {/* PROVIDER LANDING — category showcase. Placed first, directly under
+          the hero, ahead of any benefits copy — on a multi-vertical page
+          like this (13 very different kinds of business), a visitor's
+          first unspoken question is "is this even for my kind of
+          business?", and nothing else on the page can land until that's
+          answered. Benefits, differentiation, and pricing only matter once
+          they already see themselves here. Tiles scroll to pricing on
+          click — this section exists to move people toward signing up,
+          not to browse. */}
+      <section className="section">
+        <div style={{ textAlign: "center", marginBottom: 36 }}>
+          <div className="section-eyebrow" style={{ justifyContent: "center", display: "flex" }}>{t("providerLanding.categoriesEyebrow")}</div>
+          <h2 className="section-title">{t("providerLanding.categoriesTitle")}</h2>
+          <p className="section-sub" style={{ margin: "0 auto" }}>{t("providerLanding.categoriesSub")}</p>
+        </div>
+        <div className="provider-categories-grid">
+          {/* Full SERVICES catalog (same list/icons/i18n the customer home
+              "Find your next service" pills use) — every category VaiBook
+              actually supports, not a hand-picked subset, so this section
+              keeps itself correct if that catalog ever changes. */}
+          {SERVICES.map((s) => (
+            <div
+              className="provider-category-tile"
+              key={s.key}
+              onClick={() => document.getElementById("pricing")?.scrollIntoView({ behavior: "smooth" })}
+            >
+              <div className="provider-category-icon-wrap">{s.icon}</div>
+              <div className="provider-category-label">{t(`services.${s.key}.name`)}</div>
+            </div>
+          ))}
+        </div>
+      </section>
+
       {/* WHY SHOP OWNERS CHOOSE VAIBOOK — replaces the old one-line "Built
           for how your business really runs" teaser with the actual pitch,
           in plain language, three things only: stop fielding calls
@@ -5210,35 +5243,6 @@ function ProviderLandingPage({ onNav, session, onSignIn, onSignOut }) {
             <div className="vs-item"><span className="vs-mark">✓</span>{t("providerLanding.with3")}</div>
             <div className="vs-item"><span className="vs-mark">✓</span>{t("providerLanding.with4")}</div>
           </div>
-        </div>
-      </section>
-
-      {/* PROVIDER LANDING — category showcase. Shows the range of
-          businesses VaiBook already fits, which matters most for a visitor
-          who isn't sure a "booking platform" applies to their kind of
-          business. Tiles scroll to pricing on click — this section exists
-          to move people toward signing up, not to browse. */}
-      <section className="section" style={{ paddingTop: 0 }}>
-        <div style={{ textAlign: "center", marginBottom: 36 }}>
-          <div className="section-eyebrow" style={{ justifyContent: "center", display: "flex" }}>{t("providerLanding.categoriesEyebrow")}</div>
-          <h2 className="section-title">{t("providerLanding.categoriesTitle")}</h2>
-          <p className="section-sub" style={{ margin: "0 auto" }}>{t("providerLanding.categoriesSub")}</p>
-        </div>
-        <div className="provider-categories-grid">
-          {/* Full SERVICES catalog (same list/icons/i18n the customer home
-              "Find your next service" pills use) — every category VaiBook
-              actually supports, not a hand-picked subset, so this section
-              keeps itself correct if that catalog ever changes. */}
-          {SERVICES.map((s) => (
-            <div
-              className="provider-category-tile"
-              key={s.key}
-              onClick={() => document.getElementById("pricing")?.scrollIntoView({ behavior: "smooth" })}
-            >
-              <div className="provider-category-icon-wrap">{s.icon}</div>
-              <div className="provider-category-label">{t(`services.${s.key}.name`)}</div>
-            </div>
-          ))}
         </div>
       </section>
 
