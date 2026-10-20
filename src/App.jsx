@@ -2666,9 +2666,18 @@ function VisitNotesButton({ booking }) {
 
 // A collapsible message thread tied to one specific booking. Works the
 // same in both portals — only `currentRole`/`recipientUserId` differ
-// depending on which side is rendering it. Polls every 15s (same pattern
-// as the notification list in Nav()) rather than a realtime subscription,
-// to match how the rest of the app is built.
+// depending on which side is rendering it. Polls every 15s while the
+// thread is actually expanded (same pattern as the notification list in
+// Nav()) rather than a realtime subscription, to match how the rest of
+// the app is built — but does NOT poll while collapsed (see the first
+// useEffect below): one of these is mounted per visible booking row, so
+// an always-on 15s timer per row meant a customer or provider with a
+// full bookings list was running that many simultaneous queries forever,
+// whether or not anyone had a thread open. Collapsed rows still show an
+// up-to-date unread badge via the separate, single, account-wide
+// unreadByBooking poll (see loadUnreadMessages in each portal) — that
+// one poller already covers every booking at once, so this component
+// doesn't need its own background timer just to sit idle.
 function BookingChat({ bookingId, currentUserId, currentRole, recipientUserId }) {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState([]);
@@ -2690,7 +2699,9 @@ function BookingChat({ bookingId, currentUserId, currentRole, recipientUserId })
 
   useEffect(() => {
     load(false);
-    const interval = setInterval(() => load(open), 15000);
+    if (!open) return; // collapsed — one fetch to keep the button's own
+                        // badge current, then stop; no ongoing timer.
+    const interval = setInterval(() => load(true), 15000);
     return () => clearInterval(interval);
   }, [bookingId, open]);
 
@@ -6303,8 +6314,15 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
   // own profile gallery) — round-robin across providers rather than
   // provider-by-provider, so one shop with a big gallery can't crowd out
   // everyone else's work, capped at a sensible feed length.
+  // Gated to is_featured providers only (the existing Business-plan
+  // "Featured" toggle, see toggleFeatured/featuredTitle in the provider
+  // portal) — this is prime customer-homepage real estate, so it's part
+  // of what paying for Featured placement actually buys, same as the
+  // district-search ranking boost. A provider with great portfolio
+  // photos but no Featured plan simply isn't eligible for this section.
   const lookbookPhotos = (() => {
     const byProvider = providers
+      .filter((p) => p.is_featured)
       .map((p) => ({ provider: p, urls: p.portfolio_urls || [] }))
       .filter((x) => x.urls.length > 0);
     const photos = [];
@@ -11606,7 +11624,7 @@ const PLANS = [
     features: [
       "Everything in Solo",
       "Staff seats with their own logins",
-      "Featured placement in district search",
+      "Featured placement in district search & on the customer homepage",
       "A \"Team\" badge customers see on your listing",
     ],
   },
