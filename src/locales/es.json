@@ -233,6 +233,7 @@
     "applyToJoin14": "Aplicar para unirte (14 días gratis)",
     "seePricing": "Ver precios",
     "note": "Sin contratos, sin cuotas de instalación — cancela cuando quieras.",
+    "whatItDoes": "VaiBook es un sitio de reservas hecho para negocios de Belice: los clientes reservan una cita y pagan un depósito en línea, y tú manejas todo el negocio — calendario, pagos, clientes — desde un solo panel.",
     "seeItInAction": "Por qué los dueños eligen VaiBook",
     "builtForHow": "Tres cosas que todo dueño de negocio necesita.",
     "oneDashboard": "Sin plantillas genéricas ni software inflado — solo las herramientas que realmente te facilitan el día.",
@@ -245,6 +246,30 @@
     "benefit3Icon": "🛡️",
     "benefit3Title": "Cobra incluso con ausencias",
     "benefit3Body": "Exige un depósito antes de confirmar una reserva, así una ausencia no te cuesta nada. Y cuando un cliente deja de visitarte, VaiBook te recuerda contactarlo — convirtiendo clientes de una sola vez en clientes habituales, no solo una transacción.",
+    "customerBenefitsEyebrow": "También es bueno para tus clientes",
+    "customerBenefitsTitle": "A tus clientes les va a gustar reservar contigo.",
+    "customerBenefitsSub": "Una página de reservas que hace lucir profesional a tu negocio — y que facilita que la gente realmente llegue a su cita.",
+    "customerBenefit1Icon": "⏱️",
+    "customerBenefit1Title": "Reservan en segundos, a cualquier hora",
+    "customerBenefit1Body": "Sin llamadas, sin esperar una respuesta por WhatsApp. Tus clientes ven tus horarios disponibles reales y reservan ellos mismos — hasta a medianoche.",
+    "customerBenefit2Icon": "🔔",
+    "customerBenefit2Title": "Nunca se les olvida una cita",
+    "customerBenefit2Body": "Les llegan recordatorios automáticos antes de su visita, así hay menos ausencias y menos mensajes de \"perdón, se me olvidó\".",
+    "customerBenefit3Icon": "⭐",
+    "customerBenefit3Title": "Saben exactamente qué están reservando",
+    "customerBenefit3Body": "Fotos reales, precios y reseñas de otros clientes — no una adivinanza por mensaje de texto.",
+    "whyVaiEyebrow": "Lo que cambia cuando te cambias",
+    "whyVaiTitle": "Esta es la diferencia real, no un discurso de ventas.",
+    "withoutTitle": "Manejándolo desde tu teléfono",
+    "without1": "Contestar llamadas y mensajes en medio de una cita solo para agendar a alguien",
+    "without2": "Una ausencia te cuesta la cita completa, cada vez",
+    "without3": "Adivinar cómo te fue en el mes, de memoria",
+    "without4": "Una comisión que te quita una plataforma extranjera en cada reserva",
+    "withTitle": "Manejándolo con VaiBook",
+    "with1": "Los clientes reservan ellos mismos, a cualquier hora — tú solo llegas a una cita confirmada",
+    "with2": "Los depósitos se cobran antes de confirmar, así una ausencia no te cuesta nada",
+    "with3": "Números reales — reservas, ingresos, tus días más ocupados — en un solo panel",
+    "with4": "Un precio fijo. Nunca una comisión — lo que ganas es tuyo",
     "categoriesEyebrow": "Hecho para tu negocio",
     "categoriesTitle": "Sea cual sea tu negocio, VaiBook se adapta.",
     "categoriesSub": "Desde un estilista independiente hasta un equipo completo de bienestar — si tus clientes reservan citas contigo, VaiBook fue hecho para eso.",
@@ -1065,33 +1090,6 @@
       "loginPrefix": "Una vez lo estés, vuelve y haz clic en",
       "loginSuffix": "para abrir tu portal con ese mismo correo.",
       "backToHome": "Volver al inicio"
-    },
-    "hero": {
-      "eyebrow": "Solo por invitación para negocios de primer nivel",
-      "title": "El sistema operativo para negocios de primer nivel.",
-      "subtitle": "Sin barras laterales complicadas. Sin funciones confusas. Solo un motor de reservas ultrarrápido diseñado para llenar tus sillas y gestionar tu dinero.",
-      "cta": "Aplica para unirte",
-      "mockup": {
-        "todaysTake": "Ganancias de hoy",
-        "nextInChair": "Siguiente en la silla",
-        "signatureFade": "Degradado Signature",
-        "tapResult": "+ BZ$45 registrado"
-      }
-    },
-    "features": {
-      "kicker": "Cero fricción",
-      "walkIn": {
-        "title": "La reserva de 2 toques.",
-        "body": "Registra ingresos de clientes sin cita al instante, sin salir de la pantalla principal."
-      },
-      "qrBooking": {
-        "title": "Reservas por QR desde la silla.",
-        "body": "Deja que tus clientes escaneen tu pantalla antes de irse. Nunca pierdas una próxima reserva."
-      }
-    },
-    "social": {
-      "badge": "Socio verificado de Vai",
-      "body": "Únete a la red de élite de barberías y salones independientes en todo Belice."
     },
     "form": {
       "header": "Registra tu negocio en VaiBook",
