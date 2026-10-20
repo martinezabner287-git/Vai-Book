@@ -858,11 +858,7 @@ const css = `
   .provider-hero-title {
     font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; color: var(--near-white);
     font-size: clamp(34px, 5vw, 60px); line-height: 1.08; letter-spacing: -1px;
-    max-width: 780px; margin: 0 auto 18px;
-  }
-  .provider-hero-sub {
-    font-size: 18px; font-weight: 500; color: rgba(250,250,247,0.7);
-    max-width: 560px; margin: 0 auto 26px; line-height: 1.5;
+    max-width: 780px; margin: 0 auto 36px;
   }
   .provider-hero .trial-badge { margin: 0 auto 28px; }
   .provider-hero-ctas { display: flex; align-items: center; justify-content: center; gap: 14px; flex-wrap: wrap; }
@@ -870,7 +866,6 @@ const css = `
     display: inline-block; padding: 20px 44px; font-size: 17px; font-weight: 800;
     border-radius: 100px; box-shadow: 0 18px 44px rgba(198,241,53,0.28);
   }
-  .provider-hero-cta-secondary.btn-ghost { padding: 20px 32px; font-size: 16px; font-weight: 700; }
   .provider-hero-note { margin-top: 18px; font-size: 13px; color: rgba(250,250,247,0.5); }
   /* The dashboard screenshot living inside the dark hero, Fresha-style —
      platform-preview-img already carries its own white rounded corners +
@@ -1956,7 +1951,7 @@ const css = `
     .nav-login-link, .nav-menu-btn, .nav-avatar-btn, .lang-toggle { min-height: 44px; }
     .btn-primary, .btn-outline-white, .btn-ghost, .btn-lime, .btn-forest, .btn-outline-forest,
     .search-submit, .help-form-submit, .for-business-btn,
-    .provider-hero-cta.btn-lime, .provider-hero-cta-secondary.btn-ghost,
+    .provider-hero-cta.btn-lime,
     .auth-option-card, .service-card { min-height: 44px; }
     .input-group input, .input-group select, .input-group textarea,
     .help-form-group input, .help-form-group select, .help-form-group textarea,
@@ -5081,13 +5076,9 @@ function ProviderLandingPage({ onNav, session, onSignIn, onSignOut }) {
           on the same page. */}
       <section className="provider-hero">
         <h1 className="provider-hero-title">{t("providerLanding.title")}</h1>
-        <p className="provider-hero-sub">{t("providerLanding.sub")}</p>
         <div className="provider-hero-ctas">
           <button className="btn-lime provider-hero-cta" onClick={() => onNav("signup")}>
             {t("providerLanding.applyToJoin14")}
-          </button>
-          <button className="btn-ghost provider-hero-cta-secondary" onClick={() => document.getElementById("pricing")?.scrollIntoView({ behavior: "smooth" })}>
-            {t("providerLanding.seePricing")}
           </button>
         </div>
         <p className="provider-hero-note">{t("providerLanding.note")}</p>
