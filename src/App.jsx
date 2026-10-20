@@ -1,6 +1,6 @@
 
 import { useState, useEffect, useLayoutEffect, useRef, useContext, createContext, lazy, Suspense } from "react";
-import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, updateService, deleteService, getActiveProviders, getProviderDirectory, createBooking, getProviderBusyWindows, createBookingSafe, cancelBooking, getCustomerBookings, uploadReceipt, submitReview, getProviderReviews, updateReview, sendBookingEmail, updateUserProfile, getPaymentMethods, addPaymentMethod, deletePaymentMethod, createNotification, getNotifications, markNotificationRead, markAllNotificationsRead, getCategoryDefaultFeatures, getProviderFeatureOverrides, setProviderFeatureOverride, getVisitNotes, upsertVisitNote, adminListProviders, adminUpdateProvider, adminDeleteProvider, adminCountCustomers, getFavoriteProviderIds, getFavoriteProviders, addFavorite, removeFavorite, getBookingMessages, sendBookingMessage, markBookingMessagesRead, getUnreadBookingMessages, getProviderMonthlyTrend, createProviderProfile, getProviderById, createWalkInBooking, submitProviderPayment, getMyProviderPayments, adminListProviderPayments, adminReviewProviderPayment, submitBookingRefund, adminListBookingRefunds, openPrivateFile, getProviderStaff, addProviderStaff, updateProviderStaff, deleteProviderStaff, getLoyaltyAccount, getProviderLoyaltyCustomers, redeemLoyaltyReward, getMyStaffProfile, claimStaffSeatByEmail, getStaffBookings, getProviderNotifyEmail, getMaintenanceStatus, setMaintenanceMode, getSiteOfflineStatus, setSiteOffline, sendEmailOtp, verifyEmailOtp, savePushSubscription, attachBookingServices, getProviderBlocks, insertProviderBlock, deleteProviderBlock, proposeBookingReschedule, confirmBookingReschedule, declineBookingReschedule, withdrawBookingReschedule, establishSoloSession, getServerSoloSessionToken, getLocalSoloSessionToken, clearLocalSoloSessionToken, subscribeToSoloSessionReplacement } from "./supabase";
+import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, updateService, deleteService, getActiveProviders, getProviderDirectory, createBooking, getProviderBusyWindows, createBookingSafe, cancelBooking, markBookingCheckedIn, getCustomerBookings, uploadReceipt, submitReview, getProviderReviews, updateReview, sendBookingEmail, updateUserProfile, getPaymentMethods, addPaymentMethod, deletePaymentMethod, createNotification, getNotifications, markNotificationRead, markAllNotificationsRead, getCategoryDefaultFeatures, getProviderFeatureOverrides, setProviderFeatureOverride, getVisitNotes, upsertVisitNote, adminListProviders, adminUpdateProvider, adminDeleteProvider, adminCountCustomers, getFavoriteProviderIds, getFavoriteProviders, addFavorite, removeFavorite, getBookingMessages, sendBookingMessage, markBookingMessagesRead, getUnreadBookingMessages, getProviderMonthlyTrend, createProviderProfile, getProviderById, createWalkInBooking, submitProviderPayment, getMyProviderPayments, adminListProviderPayments, adminReviewProviderPayment, submitBookingRefund, adminListBookingRefunds, openPrivateFile, getProviderStaff, addProviderStaff, updateProviderStaff, deleteProviderStaff, getLoyaltyAccount, getProviderLoyaltyCustomers, redeemLoyaltyReward, getMyStaffProfile, claimStaffSeatByEmail, getStaffBookings, getProviderNotifyEmail, getMaintenanceStatus, setMaintenanceMode, getSiteOfflineStatus, setSiteOffline, sendEmailOtp, verifyEmailOtp, savePushSubscription, attachBookingServices, getProviderBlocks, insertProviderBlock, deleteProviderBlock, proposeBookingReschedule, confirmBookingReschedule, declineBookingReschedule, withdrawBookingReschedule, establishSoloSession, getServerSoloSessionToken, getLocalSoloSessionToken, clearLocalSoloSessionToken, subscribeToSoloSessionReplacement } from "./supabase";
 import AdminDashboard from "./AdminDashboard";
 import ProfilePhotoModal from "./ProfilePhotoModal";
 import LanguageSelector from "./LanguageSelector";
@@ -1344,13 +1344,22 @@ const css = `
   .cx-rebook-btn { flex-shrink: 0; background: var(--lime); color: var(--forest); font-weight: 800; font-size: 13px; padding: 10px 18px; border-radius: 100px; border: none; cursor: pointer; box-shadow: 0 0 0 rgba(198,241,53,0.5); transition: box-shadow .2s; }
   .cx-rebook-btn:hover { box-shadow: 0 0 18px rgba(198,241,53,0.5); }
 
-  /* SLEEK DISCOVERY — frosted glass at rest, neon on hover/focus. */
+  /* SLEEK DISCOVERY — frosted glass at rest, neon on hover/focus.
+     The search field previously read as a flat, almost-invisible black
+     bar: a faint 45%-opacity placeholder and a bare 55%-opacity icon,
+     both on a near-black (94%) fill, with only a 10%-opacity border —
+     easy to miss as an actual input rather than a decorative shape. A
+     lime-tinted badge around the icon (same accent used elsewhere for
+     "the one thing that matters" on a screen) plus brighter placeholder
+     text and a visible at-rest border give it the usual "type here to
+     search" affordance without abandoning the dark-glass look the rest
+     of this home screen uses. */
   .cx-discover { margin-bottom: 8px; }
-  .cx-discover-search { position: relative; background: rgba(14,36,27,0.94); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); box-shadow: inset 0 1px 0 rgba(255,255,255,0.06); border-radius: 100px; padding: 15px 22px; display: flex; align-items: center; gap: 12px; margin-bottom: 14px; transition: border-color .2s; }
-  .cx-discover-search:focus-within { border-color: rgba(198,241,53,0.5); }
+  .cx-discover-search { position: relative; background: rgba(18,42,32,0.96); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid rgba(198,241,53,0.25); box-shadow: inset 0 1px 0 rgba(255,255,255,0.06); border-radius: 100px; padding: 13px 20px; display: flex; align-items: center; gap: 12px; margin-bottom: 14px; transition: border-color .2s, box-shadow .2s; cursor: text; }
+  .cx-discover-search:focus-within { border-color: var(--lime); box-shadow: inset 0 1px 0 rgba(255,255,255,0.06), 0 0 0 3px rgba(198,241,53,0.15); }
   .cx-discover-search input { border: none; outline: none; font-size: 16px; flex: 1; font-family: 'Plus Jakarta Sans', sans-serif; color: #FFFFFF; background: transparent; }
-  .cx-discover-search input::placeholder { color: rgba(245,239,224,0.45); }
-  .cx-discover-search .search-icon { color: rgba(245,239,224,0.55); font-size: 17px; }
+  .cx-discover-search input::placeholder { color: rgba(245,239,224,0.68); }
+  .cx-discover-search .search-icon { display: flex; align-items: center; justify-content: center; flex-shrink: 0; width: 30px; height: 30px; border-radius: 50%; background: rgba(198,241,53,0.16); color: var(--lime); font-size: 14px; }
   .cx-discover-pills { display: flex; gap: 10px; flex-wrap: wrap; }
   .cx-discover-pill { display: inline-flex; align-items: center; gap: 7px; background: rgba(14,36,27,0.94); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); box-shadow: inset 0 1px 0 rgba(255,255,255,0.06); color: rgba(245,239,224,0.85); font-weight: 600; font-size: 13px; padding: 10px 18px; border-radius: 100px; border: 1px solid rgba(255,255,255,0.1); cursor: pointer; transition: border-color .2s, color .2s, box-shadow .2s; }
   .cx-discover-pill:hover { border-color: var(--lime); color: var(--lime); box-shadow: 0 0 16px rgba(198,241,53,0.25); }
@@ -5410,6 +5419,7 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
   const [myLoyalty, setMyLoyalty] = useState(null);
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [cancellingId, setCancellingId] = useState(null);
+  const [checkingInId, setCheckingInId] = useState(null);
   const [rescheduleRespondingId, setRescheduleRespondingId] = useState(null);
   const [rescheduleRespondError, setRescheduleRespondError] = useState({});
   const [profileTab, setProfileTab] = useState("services");
@@ -6097,6 +6107,32 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
     }
   };
 
+  // "Check In" — writes checked_in_at straight onto the booking instead of
+  // sending a WhatsApp text and hoping the provider notices it. Instant for
+  // the customer (no waiting on a human reply), and the provider's
+  // dashboard picks it up as a real status, not a message buried in a
+  // chat. Still pings the provider via the in-app notification bell
+  // (createNotification, same as every other booking event) so they don't
+  // have to be staring at the dashboard the moment it happens.
+  const handleCheckIn = async (booking) => {
+    if (checkingInId) return;
+    setCheckingInId(booking.id);
+    const updated = await markBookingCheckedIn(booking.id);
+    if (updated) {
+      setBookings((prev) => prev.map((b) => (b.id === booking.id ? { ...b, ...updated } : b)));
+      if (booking.provider_profiles?.user_id) {
+        createNotification({
+          user_id: booking.provider_profiles.user_id,
+          title: "Customer checked in",
+          body: `${user?.full_name || "A customer"} just checked in for their ${booking.services?.name || "appointment"} at ${formatBookingTime(booking.booking_time)}.`,
+          type: "checked_in",
+          booking_id: booking.id,
+        });
+      }
+    }
+    setCheckingInId(null);
+  };
+
   const handleConfirmReschedule = async (booking) => {
     setRescheduleRespondingId(booking.id);
     setRescheduleRespondError((e) => ({ ...e, [booking.id]: "" }));
@@ -6261,12 +6297,11 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
   const nextAppointmentAt = nextAppointment ? bookingDateTime(nextAppointment.booking_date, nextAppointment.booking_time) : null;
   const nextAppointmentProvider = nextAppointment?.provider_profiles;
   const nextAppointmentHasMap = nextAppointmentProvider?.latitude != null && nextAppointmentProvider?.longitude != null;
-  // "Check In" — a real action (opens WhatsApp with a pre-filled arrival
-  // message to the provider), not a cosmetic button that does nothing.
-  // Only appears when the provider actually has a WhatsApp number on file.
-  const nextAppointmentCheckInUrl = nextAppointmentProvider?.whatsapp
-    ? `https://wa.me/${nextAppointmentProvider.whatsapp.replace(/[^\d]/g, "")}?text=${encodeURIComponent(`Hi! I'm checking in for my ${nextAppointment.services?.name || "appointment"} at ${formatBookingTime(nextAppointment.booking_time)}.`)}`
-    : null;
+  // "Check In" used to open WhatsApp with a pre-filled arrival text — a
+  // real action, but one that then just sat as an unread chat message
+  // until the provider happened to notice it. It's now a direct status
+  // write (see handleCheckIn/markBookingCheckedIn) — instant, no waiting
+  // on a human to read and react to anything.
 
   // ── Dashboard redesign: "Quick Rebook" ────────────────────────────────
   // Most recently visited providers, deduped, in booking-history order
@@ -6385,10 +6420,18 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                         📍 {t("customerPortal.home.getDirections")}
                       </a>
                     )}
-                    {nextAppointmentCheckInUrl && (
-                      <a className="cx-btn-ghost" href={nextAppointmentCheckInUrl} target="_blank" rel="noopener noreferrer">
-                        ✅ {t("customerPortal.home.checkIn")}
-                      </a>
+                    {nextAppointment.checked_in_at ? (
+                      <button className="cx-btn-ghost" disabled style={{ opacity: 0.7, cursor: "default" }}>
+                        ✅ {t("customerPortal.home.checkedIn")}
+                      </button>
+                    ) : (
+                      <button
+                        className="cx-btn-ghost"
+                        disabled={checkingInId === nextAppointment.id}
+                        onClick={() => handleCheckIn(nextAppointment)}
+                      >
+                        ✅ {checkingInId === nextAppointment.id ? t("customerPortal.home.checkingIn") : t("customerPortal.home.checkIn")}
+                      </button>
                     )}
                     <button className="cx-btn-ghost" onClick={() => setTab("bookings")}>
                       {upcomingBookings.length > 1 ? t("customerPortal.home.viewAllCount", { count: upcomingBookings.length }) : t("customerPortal.home.viewDetails")}
@@ -9546,7 +9589,14 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                 <div className="next-chair-body">
                   <div>
                     <div className="next-chair-name">{nextBookingName}</div>
-                    <div className="next-chair-meta">{nextBooking.services?.name || "Service"} · {formatBookingTime(nextBooking.booking_time)}</div>
+                    <div className="next-chair-meta">
+                      {nextBooking.services?.name || "Service"} · {formatBookingTime(nextBooking.booking_time)}
+                      {nextBooking.checked_in_at && (
+                        <span style={{ marginLeft: 8, fontSize: 11, fontWeight: 700, color: "var(--forest)", background: "var(--lime)", padding: "2px 7px", borderRadius: 999 }}>
+                          {t("providerPortal.dashboard.arrivedBadge")} · {timeAgo(nextBooking.checked_in_at)}
+                        </span>
+                      )}
+                    </div>
                   </div>
                   {nextBookingWhatsAppUrl && (
                     <a className="next-chair-whatsapp" href={nextBookingWhatsAppUrl} target="_blank" rel="noreferrer" aria-label={t("providerPortal.dashboard.messageAriaLabel", { name: nextBookingName })} title={t("providerPortal.dashboard.messageOnWhatsapp")}>💬</a>
@@ -9603,7 +9653,14 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                     <div className={`booking-dot ${bookingStatusClass(b.status)}`}></div>
                     <div className="booking-info">
                       <div className="title">{b.services?.name || "Service"}</div>
-                      <div className="meta">{b.users?.full_name || b.walkin_customer_name || "Customer"} · {formatBookingTime(b.booking_time)}</div>
+                      <div className="meta">
+                        {b.users?.full_name || b.walkin_customer_name || "Customer"} · {formatBookingTime(b.booking_time)}
+                        {b.checked_in_at && (
+                          <span style={{ marginLeft: 8, fontSize: 11, fontWeight: 700, color: "var(--forest)", background: "var(--lime)", padding: "2px 7px", borderRadius: 999 }}>
+                            {t("providerPortal.dashboard.arrivedBadge")} · {timeAgo(b.checked_in_at)}
+                          </span>
+                        )}
+                      </div>
                     </div>
                     <div>
                       <span className="booking-amount">BZ${b.total_amount ?? b.services?.price ?? "—"}</span>
