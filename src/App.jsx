@@ -862,11 +862,7 @@ const css = `
   }
   .provider-hero-sub {
     font-size: 18px; font-weight: 500; color: rgba(250,250,247,0.7);
-    max-width: 480px; margin: 0 auto 26px; line-height: 1.5;
-  }
-  .provider-hero-explainer {
-    font-size: 14.5px; color: rgba(250,250,247,0.6);
-    max-width: 520px; margin: -10px auto 28px; line-height: 1.55;
+    max-width: 560px; margin: 0 auto 26px; line-height: 1.5;
   }
   .provider-hero .trial-badge { margin: 0 auto 28px; }
   .provider-hero-ctas { display: flex; align-items: center; justify-content: center; gap: 14px; flex-wrap: wrap; }
@@ -5086,7 +5082,6 @@ function ProviderLandingPage({ onNav, session, onSignIn, onSignOut }) {
       <section className="provider-hero">
         <h1 className="provider-hero-title">{t("providerLanding.title")}</h1>
         <p className="provider-hero-sub">{t("providerLanding.sub")}</p>
-        <p className="provider-hero-explainer">{t("providerLanding.whatItDoes")}</p>
         <div className="provider-hero-ctas">
           <button className="btn-lime provider-hero-cta" onClick={() => onNav("signup")}>
             {t("providerLanding.applyToJoin14")}
