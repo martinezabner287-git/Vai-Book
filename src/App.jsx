@@ -144,6 +144,24 @@ function timeAgo(dateStr) {
   return new Date(dateStr).toLocaleDateString();
 }
 
+// Provider social links — stored as a bare handle/page-name (same pattern
+// as `whatsapp`, which stores just a phone number, not a wa.me URL) so a
+// provider typing "@myshop" or pasting the full profile URL both land on
+// a working link. Built at render time, not saved time, so the raw value
+// in the database stays whatever the provider actually typed.
+function instagramProfileUrl(v) {
+  if (!v) return null;
+  const clean = String(v).trim().replace(/^@/, "").replace(/^https?:\/\/(www\.)?instagram\.com\//i, "").replace(/\/+$/, "");
+  return clean ? `https://instagram.com/${clean}` : null;
+}
+function facebookProfileUrl(v) {
+  if (!v) return null;
+  const trimmed = String(v).trim();
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  const clean = trimmed.replace(/^(www\.)?(facebook\.com|fb\.com)\//i, "").replace(/^@/, "").replace(/\/+$/, "");
+  return clean ? `https://facebook.com/${clean}` : null;
+}
+
 // Builds a small, deduplicated list of search suggestions from a list of
 // providers (each with business_name, service_type, and services[].name).
 // Matches happen against three things: the provider's business name, its
@@ -7470,8 +7488,18 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                           </div>
                         </div>
 
-                        {selectedProvider.whatsapp && (
-                          <a href={`https://wa.me/${selectedProvider.whatsapp.replace(/[^\d]/g, "")}`} target="_blank" rel="noreferrer" style={{ display: "inline-block", fontSize: 13, color: "var(--forest)", fontWeight: 600, background: "var(--sand)", borderRadius: 8, padding: "10px 14px" }}>📞 {selectedProvider.whatsapp}</a>
+                        {(selectedProvider.whatsapp || selectedProvider.instagram || selectedProvider.facebook) && (
+                          <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                            {selectedProvider.whatsapp && (
+                              <a href={`https://wa.me/${selectedProvider.whatsapp.replace(/[^\d]/g, "")}`} target="_blank" rel="noreferrer" style={{ display: "inline-block", fontSize: 13, color: "var(--forest)", fontWeight: 600, background: "var(--sand)", borderRadius: 8, padding: "10px 14px", textDecoration: "none" }}>📞 {selectedProvider.whatsapp}</a>
+                            )}
+                            {instagramProfileUrl(selectedProvider.instagram) && (
+                              <a href={instagramProfileUrl(selectedProvider.instagram)} target="_blank" rel="noreferrer" style={{ display: "inline-block", fontSize: 13, color: "var(--forest)", fontWeight: 600, background: "var(--sand)", borderRadius: 8, padding: "10px 14px", textDecoration: "none" }}>📷 {t("customerPortal.profile.instagram")}</a>
+                            )}
+                            {facebookProfileUrl(selectedProvider.facebook) && (
+                              <a href={facebookProfileUrl(selectedProvider.facebook)} target="_blank" rel="noreferrer" style={{ display: "inline-block", fontSize: 13, color: "var(--forest)", fontWeight: 600, background: "var(--sand)", borderRadius: 8, padding: "10px 14px", textDecoration: "none" }}>📘 {t("customerPortal.profile.facebook")}</a>
+                            )}
+                          </div>
                         )}
                       </div>
                     )}
@@ -7749,7 +7777,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
   const [hours, setHours] = useState(DEFAULT_HOURS);
   const [savingHours, setSavingHours] = useState(false);
   const [selectedDay, setSelectedDay] = useState(null);
-  const [profileForm, setProfileForm] = useState({ business_name: "", bio: "", district: "", whatsapp: "", tax_id: "", is_featured: false });
+  const [profileForm, setProfileForm] = useState({ business_name: "", bio: "", district: "", whatsapp: "", instagram: "", facebook: "", tax_id: "", is_featured: false });
   const [savingFeatured, setSavingFeatured] = useState(false);
 
   // Loyalty & rewards program (Business plan) — provider-configurable,
@@ -8374,6 +8402,8 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
         bio: providerProfile.bio || "",
         district: providerProfile.district || "",
         whatsapp: providerProfile.whatsapp || "",
+        instagram: providerProfile.instagram || "",
+        facebook: providerProfile.facebook || "",
         tax_id: providerProfile.tax_id || "",
         is_featured: !!providerProfile.is_featured,
       });
@@ -10887,6 +10917,8 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                 </select>
               </div>
               <div className="input-group"><label>{t("providerPortal.profile.whatsappPhone")}</label><input placeholder="+501 600 0000" value={profileForm.whatsapp} onChange={e => setProfileForm(f => ({ ...f, whatsapp: e.target.value }))} /></div>
+              <div className="input-group"><label>{t("providerPortal.profile.instagramLabel")}</label><input placeholder={t("providerPortal.profile.instagramPlaceholder")} value={profileForm.instagram} onChange={e => setProfileForm(f => ({ ...f, instagram: e.target.value }))} /></div>
+              <div className="input-group"><label>{t("providerPortal.profile.facebookLabel")}</label><input placeholder={t("providerPortal.profile.facebookPlaceholder")} value={profileForm.facebook} onChange={e => setProfileForm(f => ({ ...f, facebook: e.target.value }))} /></div>
               <div className="input-group">
                 <label>{t("providerPortal.profile.taxIdLabel")}</label>
                 <input placeholder={t("providerPortal.profile.taxIdPlaceholder")} value={profileForm.tax_id} onChange={e => setProfileForm(f => ({ ...f, tax_id: e.target.value }))} />
