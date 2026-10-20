@@ -732,6 +732,23 @@ export const cancelBooking = async (bookingId) => {
   return data;
 };
 
+// "Check In" — a real status write, not a chat message. The old version
+// sent a WhatsApp text and then just hoped the provider happened to see
+// it; this writes checked_in_at directly onto the booking (same RLS the
+// customer already relies on for cancelBooking above — they can update
+// their own row) so the provider's dashboard can show an instant
+// "Arrived" badge with no human having to read and react to anything.
+export const markBookingCheckedIn = async (bookingId) => {
+  const { data, error } = await supabase
+    .from('bookings')
+    .update({ checked_in_at: new Date().toISOString() })
+    .eq('id', bookingId)
+    .select()
+    .single();
+  if (error) console.error('Error checking in:', error.message);
+  return data;
+};
+
 export const getCustomerBookings = async (customerId) => {
   const { data, error } = await supabase
     .from('bookings')
