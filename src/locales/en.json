@@ -233,6 +233,7 @@
     "applyToJoin14": "Apply to Join (14 Days Free)",
     "seePricing": "See pricing",
     "note": "No contracts, no setup fees — cancel anytime.",
+    "whatItDoes": "VaiBook is a booking website built for Belizean shops: customers book an appointment and pay a deposit online, and you run the whole business — calendar, payments, clients — from one dashboard.",
     "seeItInAction": "Why shop owners choose VaiBook",
     "builtForHow": "Three things every shop owner needs.",
     "oneDashboard": "No generic templates, no bloated software — just the parts that actually make your day easier.",
@@ -245,6 +246,30 @@
     "benefit3Icon": "🛡️",
     "benefit3Title": "Get paid, even on no-shows",
     "benefit3Body": "Require a deposit before you confirm a booking, so a no-show costs you nothing. And when a client goes quiet, VaiBook reminds you to check in — turning one-time customers into regulars, not just a transaction.",
+    "customerBenefitsEyebrow": "Good for your clients too",
+    "customerBenefitsTitle": "Your customers will actually enjoy booking with you.",
+    "customerBenefitsSub": "A booking page that makes your shop look professional — and makes it easy for people to actually show up.",
+    "customerBenefit1Icon": "⏱️",
+    "customerBenefit1Title": "Book in seconds, any time",
+    "customerBenefit1Body": "No calling, no waiting on a WhatsApp reply. Your clients see your real open slots and book themselves — even at midnight.",
+    "customerBenefit2Icon": "🔔",
+    "customerBenefit2Title": "Never miss an appointment",
+    "customerBenefit2Body": "Automatic reminders land before their visit, so there are fewer no-shows and fewer \"sorry, I forgot\" messages.",
+    "customerBenefit3Icon": "⭐",
+    "customerBenefit3Title": "Know exactly what they're booking",
+    "customerBenefit3Body": "Real photos, prices, and reviews from other customers — not a guess over text.",
+    "whyVaiEyebrow": "What changes when you switch",
+    "whyVaiTitle": "This is the real difference, not a sales pitch.",
+    "withoutTitle": "Running it off your phone",
+    "without1": "Answering calls and texts mid-appointment just to book someone in",
+    "without2": "A no-show costs you the whole appointment, every time",
+    "without3": "Guessing how the month went, from memory",
+    "without4": "A cut taken out of every booking by a foreign platform",
+    "withTitle": "Running it on VaiBook",
+    "with1": "Clients book themselves, any time — you just show up to a confirmed slot",
+    "with2": "Deposits are collected before you confirm, so a no-show costs you nothing",
+    "with3": "Real numbers — bookings, revenue, your busiest days — on one dashboard",
+    "with4": "One flat price. No commission, ever — what you earn is yours",
     "categoriesEyebrow": "Built for your business",
     "categoriesTitle": "Whatever you do, VaiBook fits.",
     "categoriesSub": "From a solo stylist to a full wellness team — if people book appointments with you, VaiBook was built for it.",
@@ -1065,33 +1090,6 @@
       "loginPrefix": "Once you are, come back and click",
       "loginSuffix": "to open your portal with that same email.",
       "backToHome": "Back to home"
-    },
-    "hero": {
-      "eyebrow": "Invite-only for top-tier shops",
-      "title": "The operating system for top-tier shops.",
-      "subtitle": "No clunky sidebars. No confusing features. Just a lightning-fast booking engine built to pack your chairs and manage your money.",
-      "cta": "Apply to Join",
-      "mockup": {
-        "todaysTake": "Today's Take",
-        "nextInChair": "Next in the Chair",
-        "signatureFade": "Signature Fade",
-        "tapResult": "+ BZ$45 logged"
-      }
-    },
-    "features": {
-      "kicker": "Zero friction",
-      "walkIn": {
-        "title": "The 2-Tap Walk-In.",
-        "body": "Log walk-in revenue instantly without leaving the home screen."
-      },
-      "qrBooking": {
-        "title": "Chair-Side QR Booking.",
-        "body": "Let clients scan your screen before they leave the chair. Never lose a rebooking."
-      }
-    },
-    "social": {
-      "badge": "Verified Vai Partner",
-      "body": "Join the elite network of independent barbers and salons across Belize."
     },
     "form": {
       "header": "List your business on VaiBook",
