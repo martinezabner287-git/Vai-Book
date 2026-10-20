@@ -5354,7 +5354,16 @@ function ProviderLandingPage({ onNav, session, onSignIn, onSignOut }) {
 // ── CUSTOMER PORTAL ─────────────────────────────────────────────
 function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdate, deepLinkProviderId, onDeepLinkConsumed }) {
   const { t } = useTranslation();
-  const [tab, setTab] = useState("home");
+  // Remembers which tab this account was on, so a refresh lands back on
+  // "My bookings" (or wherever) instead of always resetting to "Home" —
+  // same sessionStorage pattern as App's own vaibook_last_view, just
+  // scoped one level deeper. Cleared on sign-out (see handleSignOut).
+  const [tab, setTab] = useState(() => {
+    try { return sessionStorage.getItem("vaibook_customer_tab") || "home"; } catch (e) { return "home"; }
+  });
+  useEffect(() => {
+    try { sessionStorage.setItem("vaibook_customer_tab", tab); } catch (e) { /* ignore */ }
+  }, [tab]);
 
   // Lets the top nav's account dropdown (with the same tools list as the
   // sidebar) switch tabs while already inside the customer portal,
@@ -7799,7 +7808,16 @@ function StaffPortal({ onNav, session, staffProfile, onSignOut }) {
 // ── PROVIDER PORTAL ─────────────────────────────────────────────
 function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSignOut, onProviderProfileUpdate }) {
   const { t } = useTranslation();
-  const [tab, setTab] = useState("dashboard");
+  // Remembers which tab this account was on, so a refresh lands back on
+  // "My bookings" (or wherever) instead of always resetting to "Dashboard"
+  // — same sessionStorage pattern as App's own vaibook_last_view, just
+  // scoped one level deeper. Cleared on sign-out (see handleSignOut).
+  const [tab, setTab] = useState(() => {
+    try { return sessionStorage.getItem("vaibook_provider_tab") || "dashboard"; } catch (e) { return "dashboard"; }
+  });
+  useEffect(() => {
+    try { sessionStorage.setItem("vaibook_provider_tab", tab); } catch (e) { /* ignore */ }
+  }, [tab]);
 
   // Lets the top nav's account dropdown (with the same tools list as the
   // sidebar) switch tabs while already inside the provider portal,
@@ -11951,7 +11969,16 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
   const [isAdmin, setIsAdmin] = useState(false);
   const [apps, setApps] = useState([]);
   const [loadingApps, setLoadingApps] = useState(false);
-  const [tab, setTab] = useState("overview");
+  // Remembers which tab this admin was on, so a refresh lands back on
+  // "Payments" (or wherever) instead of always resetting to "Overview" —
+  // same sessionStorage pattern as App's own vaibook_last_view, just
+  // scoped one level deeper. Cleared on sign-out (see handleSignOut).
+  const [tab, setTab] = useState(() => {
+    try { return sessionStorage.getItem("vaibook_admin_tab") || "overview"; } catch (e) { return "overview"; }
+  });
+  useEffect(() => {
+    try { sessionStorage.setItem("vaibook_admin_tab", tab); } catch (e) { /* ignore */ }
+  }, [tab]);
 
   const [providers, setProviders] = useState([]);
   const [loadingProviders, setLoadingProviders] = useState(false);
@@ -12696,7 +12723,21 @@ export default function App() {
   const [view, setView] = useState(() => {
     const h = window.location.hash.replace("#", "");
     if (parseBookingHash(h)) return "customer";
-    return h === "admin" || h === "customer" || h === "provider" || h === "providers" ? h : "home";
+    if (h === "admin" || h === "customer" || h === "provider" || h === "providers") return h;
+    // No explicit hash — this is the common case, since in-app navigation
+    // (Nav, "For business" links, etc.) only ever calls setView, never
+    // touches the hash. For "providers" (the public marketing page) and
+    // "signup" (the application form), there's no signed-in profile to
+    // wait on, so they can be restored right here, synchronously, instead
+    // of flashing the homepage first. "customer"/"provider"/"admin" still
+    // need to wait on session/profile data before it's safe to restore
+    // them — see restoreLastPortalView below, which handles those once
+    // that's loaded.
+    try {
+      const last = sessionStorage.getItem("vaibook_last_view");
+      if (last === "providers" || last === "signup") return last;
+    } catch (e) { /* ignore */ }
+    return "home";
   });
 
   // Which provider a QR-code / booking-link deep link pointed at, if any —
@@ -13067,13 +13108,15 @@ export default function App() {
     return () => { cancelled = true; };
   }, [siteOffline.on, session?.user?.email]);
 
-  // Remembers whichever real portal the account is currently sitting in,
-  // so restoreLastPortalView (above) can put a refresh back where it
-  // belongs instead of always falling back to the homepage. Kept in
-  // sessionStorage (not localStorage) on purpose — see the note above
-  // restoreLastPortalView.
+  // Remembers whichever page/portal this tab is currently sitting in, so a
+  // refresh can go back there instead of always falling back to the
+  // homepage — "provider"/"customer"/"admin" are restored by
+  // restoreLastPortalView (above, once session/profile data is loaded);
+  // "providers"/"signup" are public and restored straight out of the
+  // useState initializer above, synchronously. Kept in sessionStorage (not
+  // localStorage) on purpose — see the note above restoreLastPortalView.
   useEffect(() => {
-    if (view !== "provider" && view !== "customer" && view !== "admin") return;
+    if (!["provider", "customer", "admin", "providers", "signup"].includes(view)) return;
     try { sessionStorage.setItem("vaibook_last_view", view); } catch (e) { /* ignore */ }
   }, [view]);
 
@@ -13081,7 +13124,17 @@ export default function App() {
     clearLocalSoloSessionToken();
     await signOut();
     setView("home");
-    try { sessionStorage.removeItem("vaibook_last_view"); } catch (e) { /* ignore */ }
+    try {
+      sessionStorage.removeItem("vaibook_last_view");
+      // Also drop any remembered tab inside each portal (see the matching
+      // per-portal effects in CustomerPortal/ProviderPortal/AdminPortal) —
+      // otherwise the next account to sign in on this same browser tab
+      // could land on, say, this account's old "Billing" tab instead of
+      // that portal's actual default.
+      sessionStorage.removeItem("vaibook_customer_tab");
+      sessionStorage.removeItem("vaibook_provider_tab");
+      sessionStorage.removeItem("vaibook_admin_tab");
+    } catch (e) { /* ignore */ }
   };
 
   if (loading) {
