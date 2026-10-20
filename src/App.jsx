@@ -1052,9 +1052,13 @@ const css = `
 
   /* PROVIDER LANDING — category showcase grid. Icon tiles (not photos) on
      purpose: no stock-photo licensing to manage, and it matches the
-     flat/clean visual language the rest of this page already uses. */
-  .provider-categories-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; max-width: 920px; margin: 0 auto; }
-  .provider-category-tile { background: #fff; border: 1px solid var(--border); border-radius: 14px; padding: 22px 12px; text-align: center; cursor: pointer; transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease; }
+     flat/clean visual language the rest of this page already uses. Flex,
+     not grid — the full SERVICES catalog (13 categories) doesn't divide
+     evenly into any fixed column count, and flex-wrap + justify-content:
+     center means a leftover last row centers itself instead of a grid's
+     partial row sitting stuck against the left edge. */
+  .provider-categories-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 14px; max-width: 980px; margin: 0 auto; }
+  .provider-category-tile { flex: 1 1 200px; max-width: 215px; background: #fff; border: 1px solid var(--border); border-radius: 14px; padding: 22px 12px; text-align: center; cursor: pointer; transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease; }
   .provider-category-tile:hover { transform: translateY(-3px); box-shadow: 0 10px 24px rgba(13,61,46,0.1); border-color: var(--forest-light); }
   .provider-category-icon-wrap { width: 46px; height: 46px; border-radius: 50%; background: var(--sand); display: flex; align-items: center; justify-content: center; margin: 0 auto 10px; font-size: 21px; }
   .provider-category-label { font-size: 12.5px; font-weight: 700; color: var(--forest); line-height: 1.3; }
@@ -1108,7 +1112,8 @@ const css = `
   @media (max-width: 900px) {
     .pricing-grid { grid-template-columns: 1fr; max-width: 420px; }
     .provider-benefits-grid { grid-template-columns: 1fr; max-width: 480px; }
-    .provider-categories-grid { grid-template-columns: repeat(2, 1fr); max-width: 420px; }
+    .provider-categories-grid { max-width: 420px; }
+    .provider-category-tile { flex-basis: calc(50% - 7px); max-width: calc(50% - 7px); }
   }
   @media (max-width: 768px) {
     .pricing-section { padding: 60px 24px; }
@@ -5132,14 +5137,18 @@ function ProviderLandingPage({ onNav, session, onSignIn, onSignOut }) {
           <p className="section-sub" style={{ margin: "0 auto" }}>{t("providerLanding.categoriesSub")}</p>
         </div>
         <div className="provider-categories-grid">
-          {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
+          {/* Full SERVICES catalog (same list/icons/i18n the customer home
+              "Find your next service" pills use) — every category VaiBook
+              actually supports, not a hand-picked subset, so this section
+              keeps itself correct if that catalog ever changes. */}
+          {SERVICES.map((s) => (
             <div
               className="provider-category-tile"
-              key={n}
+              key={s.key}
               onClick={() => document.getElementById("pricing")?.scrollIntoView({ behavior: "smooth" })}
             >
-              <div className="provider-category-icon-wrap">{t(`providerLanding.category${n}Icon`)}</div>
-              <div className="provider-category-label">{t(`providerLanding.category${n}Label`)}</div>
+              <div className="provider-category-icon-wrap">{s.icon}</div>
+              <div className="provider-category-label">{t(`services.${s.key}.name`)}</div>
             </div>
           ))}
         </div>
