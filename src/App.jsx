@@ -5110,9 +5110,14 @@ function ProviderLandingPage({ onNav, session, onSignIn, onSignOut }) {
           first unspoken question is "is this even for my kind of
           business?", and nothing else on the page can land until that's
           answered. Benefits, differentiation, and pricing only matter once
-          they already see themselves here. Tiles scroll to pricing on
-          click — this section exists to move people toward signing up,
-          not to browse. */}
+          they already see themselves here. Tiles go straight into the
+          application form (Fresha-style — pick your category, start
+          setting up), stashing which one was clicked so the form arrives
+          with "Service type" already filled in. Pricing isn't lost by
+          skipping this page's own pricing section: the form's plan
+          selector is the very first thing on it, price and full feature
+          list both, before any field the person has to fill in — see
+          ProviderSignup below. */}
       <section className="section">
         <div style={{ textAlign: "center", marginBottom: 36 }}>
           <div className="section-eyebrow" style={{ justifyContent: "center", display: "flex" }}>{t("providerLanding.categoriesEyebrow")}</div>
@@ -5128,7 +5133,10 @@ function ProviderLandingPage({ onNav, session, onSignIn, onSignOut }) {
             <div
               className="provider-category-tile"
               key={s.key}
-              onClick={() => document.getElementById("pricing")?.scrollIntoView({ behavior: "smooth" })}
+              onClick={() => {
+                try { localStorage.setItem("vaibook_signup_service_type", s.key); } catch (e) { /* ignore */ }
+                onNav("signup");
+              }}
             >
               <div className="provider-category-icon-wrap">{s.icon}</div>
               <div className="provider-category-label">{t(`services.${s.key}.name`)}</div>
@@ -11431,27 +11439,37 @@ const SIGNUP_CSS = `
   }
   .plan-selector {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(2, 1fr);
     gap: 12px;
     margin-bottom: 28px;
   }
   .plan-option {
     border: 2px solid var(--border);
     border-radius: var(--radius);
-    padding: 16px;
+    padding: 18px 16px;
     cursor: pointer;
     background: white;
     transition: all .2s;
-    text-align: center;
+    text-align: left;
   }
   .plan-option:hover { border-color: var(--forest); }
   .plan-option.selected { border-color: var(--forest); background: var(--forest); }
   .plan-option.selected .plan-name { color: var(--lime); }
   .plan-option.selected .plan-price { color: white; }
   .plan-option.selected .plan-desc { color: rgba(255,255,255,0.6); }
+  .plan-option.selected .plan-option-features li { color: rgba(255,255,255,0.68); }
+  .plan-option.selected .plan-option-features li .check { color: var(--lime); }
   .plan-name { font-size: 13px; font-weight: 700; color: var(--forest); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 4px; }
   .plan-price { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 22px; font-weight: 800; color: var(--forest); margin-bottom: 4px; }
   .plan-desc { font-size: 11px; color: var(--muted); line-height: 1.4; }
+  /* Full feature list on each plan card, same data (PLANS[].features) the
+     landing page's own pricing section uses — someone who skipped that
+     section (e.g. a category tile straight into this form) still sees
+     exactly what they're paying for before they fill in a single field. */
+  .plan-option-features { list-style: none; margin: 12px 0 0; padding: 10px 0 0; border-top: 1px solid var(--border); }
+  .plan-option.selected .plan-option-features { border-top-color: rgba(255,255,255,0.18); }
+  .plan-option-features li { display: flex; align-items: flex-start; gap: 6px; font-size: 11.5px; color: var(--muted); line-height: 1.5; padding: 2px 0; }
+  .plan-option-features li .check { color: var(--forest); font-weight: 700; flex-shrink: 0; }
   .signup-form-card {
     background: white;
     border: 1px solid var(--border);
@@ -11689,6 +11707,29 @@ function nearestDistrict(lat, lng) {
 }
 const SERVICE_TYPES = ["Barber", "Hair Salon", "Nail Tech", "Spa", "Med Spa / Clinic", "Massage", "Skincare Studio", "Hair Removal Studio", "Tattoo & Piercing Studio", "Wellness Center", "Pet Grooming", "Fitness & Recovery", "Physical Therapy", "Photography", "Other"];
 
+// Maps a SERVICES tile's key (the provider-landing category grid) to the
+// matching SERVICE_TYPES dropdown value here — lets a category tile stash
+// which one was clicked (see ProviderLandingPage) so this form arrives
+// with "Service type" already picked, same idea as the plan pre-select
+// below. Written explicitly rather than zipped by array index, so it
+// can't silently go stale if either list is reordered later. "Photography"
+// and "Other" have no SERVICES tile, so they're never pre-filled this way.
+const SERVICES_TO_SERVICE_TYPE = {
+  barbers: "Barber",
+  hairSalons: "Hair Salon",
+  nailTechs: "Nail Tech",
+  spas: "Spa",
+  medSpas: "Med Spa / Clinic",
+  massage: "Massage",
+  skincareFacials: "Skincare Studio",
+  hairRemoval: "Hair Removal Studio",
+  tattooPiercing: "Tattoo & Piercing Studio",
+  wellnessCenters: "Wellness Center",
+  petGrooming: "Pet Grooming",
+  fitnessRecovery: "Fitness & Recovery",
+  physicalTherapy: "Physical Therapy",
+};
+
 function ProviderSignup({ onNav }) {
   const { t } = useTranslation();
   const [plan, setPlan] = useState(() => {
@@ -11702,9 +11743,23 @@ function ProviderSignup({ onNav }) {
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [submitError, setSubmitError] = useState("");
-  const [form, setForm] = useState({
-    businessName: "", ownerName: "", email: "", phone: "",
-    serviceType: "", district: "", description: "",
+  const [form, setForm] = useState(() => {
+    // Same stash-and-consume-once pattern as `plan` above — a category
+    // tile on the landing page stashes its SERVICES key just before
+    // navigating here (see ProviderLandingPage), so "Service type" shows
+    // up already picked instead of making someone pick it twice.
+    let serviceType = "";
+    try {
+      const stashedCategory = localStorage.getItem("vaibook_signup_service_type");
+      localStorage.removeItem("vaibook_signup_service_type");
+      if (stashedCategory && SERVICES_TO_SERVICE_TYPE[stashedCategory]) {
+        serviceType = SERVICES_TO_SERVICE_TYPE[stashedCategory];
+      }
+    } catch (e) { /* ignore */ }
+    return {
+      businessName: "", ownerName: "", email: "", phone: "",
+      serviceType, district: "", description: "",
+    };
   });
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
@@ -11839,6 +11894,11 @@ function ProviderSignup({ onNav }) {
               <div className="plan-name">{p.name}</div>
               <div className="plan-price">{p.price}</div>
               <div className="plan-desc">{p.desc}</div>
+              <ul className="plan-option-features">
+                {p.features.map((f, i) => (
+                  <li key={i}><span className="check">✓</span>{f}</li>
+                ))}
+              </ul>
             </div>
           ))}
         </div>
