@@ -227,11 +227,9 @@
   },
   "providerLanding": {
     "eyebrow": "For shop & studio owners",
-    "title": "A booking website built for Belizean shops.",
-    "sub": "Customers book an appointment and pay a deposit online. You run the whole business — calendar, payments, clients — from one dashboard.",
+    "title": "A self-care booking website.",
     "trialBadge": "✨ 14 days free once you're approved",
-    "applyToJoin14": "Apply to Join (14 Days Free)",
-    "seePricing": "See pricing",
+    "applyToJoin14": "Start Getting Booked",
     "note": "No contracts, no setup fees — cancel anytime.",
     "seeItInAction": "Why shop owners choose VaiBook",
     "builtForHow": "Three things every shop owner needs.",
