@@ -2974,6 +2974,49 @@ function isSameLocalDay(dateStr, d) {
   return bd.getFullYear() === d.getFullYear() && bd.getMonth() === d.getMonth() && bd.getDate() === d.getDate();
 }
 
+// ── ADD TO CALENDAR ─────────────────────────────────────────────
+// One-click "save this appointment" for both customers and providers —
+// no Google sign-in, no backend, just a pre-filled Google Calendar link
+// plus a downloadable .ics file so Apple Calendar/Outlook users aren't
+// left out. `start` must be a real Date (use bookingDateTime(...), never
+// raw booking_date/booking_time strings — see the note above it).
+function toCalendarUTCStamp(d) {
+  return d.toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
+}
+function escapeICSText(s) {
+  return String(s || "").replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,").replace(/\n/g, "\\n");
+}
+function buildAddToCalendarLinks({ uid, title, start, durationMin, description, location }) {
+  if (!start || isNaN(start.getTime())) return null;
+  const mins = Math.max(Number(durationMin) || 60, 15);
+  const end = new Date(start.getTime() + mins * 60000);
+  const startUTC = toCalendarUTCStamp(start);
+  const endUTC = toCalendarUTCStamp(end);
+  const safeTitle = title || "VaiBook Appointment";
+
+  const googleUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(safeTitle)}&dates=${startUTC}/${endUTC}&details=${encodeURIComponent(description || "")}&location=${encodeURIComponent(location || "")}`;
+
+  const icsLines = [
+    "BEGIN:VCALENDAR",
+    "VERSION:2.0",
+    "PRODID:-//VaiBook//Booking//EN",
+    "CALSCALE:GREGORIAN",
+    "BEGIN:VEVENT",
+    `UID:${uid || Date.now()}@vaibook.bz`,
+    `DTSTAMP:${toCalendarUTCStamp(new Date())}`,
+    `DTSTART:${startUTC}`,
+    `DTEND:${endUTC}`,
+    `SUMMARY:${escapeICSText(safeTitle)}`,
+    description ? `DESCRIPTION:${escapeICSText(description)}` : null,
+    location ? `LOCATION:${escapeICSText(location)}` : null,
+    "END:VEVENT",
+    "END:VCALENDAR",
+  ].filter(Boolean).join("\r\n");
+  const icsHref = `data:text/calendar;charset=utf-8,${encodeURIComponent(icsLines)}`;
+
+  return { googleUrl, icsHref, icsFilename: "vaibook-appointment.ics" };
+}
+
 // ── HOME FEED — "Last-Minute Drops" ─────────────────────────────
 // Standalone (not reused from the booking modal's own slot picker on
 // purpose — that logic is load-bearing for real checkout and this is a
@@ -6672,6 +6715,28 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                       </div>
                     )}
 
+                    {["pending", "awaiting_payment", "confirmed"].includes(b.status) && (() => {
+                      const calLinks = buildAddToCalendarLinks({
+                        uid: b.id,
+                        title: `${b.services?.name || t("customerPortal.common.serviceFallback")} — ${b.provider_profiles?.business_name || "VaiBook"}`,
+                        start: bookingDateTime(b.booking_date, b.booking_time),
+                        durationMin: b.services?.duration_min,
+                        description: `Booked via VaiBook${b.provider_profiles?.business_name ? ` with ${b.provider_profiles.business_name}` : ""}.`,
+                        location: b.provider_profiles?.location_label || b.provider_profiles?.district || "",
+                      });
+                      if (!calLinks) return null;
+                      return (
+                        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 8 }}>
+                          <a className="btn-sm ghost" href={calLinks.googleUrl} target="_blank" rel="noreferrer" style={{ textDecoration: "none" }}>
+                            📅 {t("customerPortal.bookings.addToCalendar")}
+                          </a>
+                          <a className="btn-sm ghost" href={calLinks.icsHref} download={calLinks.icsFilename} style={{ textDecoration: "none" }}>
+                            {t("customerPortal.bookings.downloadIcs")}
+                          </a>
+                        </div>
+                      );
+                    })()}
+
                     {["pending", "awaiting_payment", "confirmed"].includes(b.status) && (
                       <button
                         className="btn-sm ghost"
@@ -9789,6 +9854,29 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                           >
                             💬 {t("providerPortal.dashboard.messageOnWhatsapp")}
                           </a>
+                        );
+                      })()}
+                      {["pending", "awaiting_payment", "confirmed"].includes(b.status) && (() => {
+                        const customerName = b.users?.full_name || b.walkin_customer_name || t("providerPortal.common.customerFallback");
+                        const customerPhone = b.users?.whatsapp_number || b.users?.phone || b.walkin_customer_phone || "";
+                        const calLinks = buildAddToCalendarLinks({
+                          uid: b.id,
+                          title: `${b.services?.name || "Appointment"} — ${customerName}`,
+                          start: bookingDateTime(b.booking_date, b.booking_time),
+                          durationMin: b.services?.duration_min,
+                          description: `VaiBook booking with ${customerName}${customerPhone ? ` · ${customerPhone}` : ""}.`,
+                          location: "",
+                        });
+                        if (!calLinks) return null;
+                        return (
+                          <>
+                            <a className="btn-sm ghost" href={calLinks.googleUrl} target="_blank" rel="noreferrer" style={{ textDecoration: "none" }} title={t("providerPortal.dashboard.addToCalendar")}>
+                              📅 {t("providerPortal.dashboard.addToCalendar")}
+                            </a>
+                            <a className="btn-sm ghost" href={calLinks.icsHref} download={calLinks.icsFilename} style={{ textDecoration: "none" }} title={t("providerPortal.dashboard.downloadIcs")}>
+                              {t("providerPortal.dashboard.downloadIcs")}
+                            </a>
+                          </>
                         );
                       })()}
                       {b.status === "pending" && respondingId !== b.id && (
