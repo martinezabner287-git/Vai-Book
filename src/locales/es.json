@@ -309,6 +309,7 @@
   },
   "customerPortal": {
     "booking": {
+      "anyProfessional": "Cualquier profesional",
       "at": "en",
       "availableTimes": "Horarios disponibles",
       "backToServices": "Volver a los servicios",
@@ -359,6 +360,7 @@
       "starterLimitReached": "{{providerName}} alcanzó su límite de reservas de este mes. Vuelve a intentarlo el próximo mes, o escríbeles directamente para coordinar tu cita.",
       "thisProvider": "Este proveedor",
       "whatsappNumber": "Número de WhatsApp",
+      "whoWouldYouLike": "¿A quién le gustaría ver?",
       "yourDetails": "Tus datos"
     },
     "bookings": {
@@ -489,6 +491,7 @@
       "instagram": "Instagram",
       "linkCopied": "Enlace copiado",
       "loadingReviews": "Cargando reseñas...",
+      "loadingTeam": "Cargando el equipo...",
       "location": "Ubicación",
       "loyaltyEarnedIntro": "Ganaste",
       "loyaltyEarnedOutro": "! Menciónalo en tu próxima visita.",
@@ -504,6 +507,7 @@
       "noDescriptionYet": "Este proveedor todavía no ha añadido una descripción.",
       "noPortfolioPhotosYet": "Todavía no hay fotos en el portafolio.",
       "noServicesListed": "Este proveedor todavía no ha publicado servicios.",
+      "noTeamYet": "Todavía no hay miembros del equipo agregados.",
       "openingTimes": "Horario de atención",
       "providerWorkAlt": "Trabajo del proveedor",
       "reviewCount_one": "{{count}} reseña",
@@ -519,6 +523,7 @@
       "tabPortfolio": "Portafolio",
       "tabReviews": "Reseñas",
       "tabServices": "Servicios",
+      "tabTeam": "Equipo",
       "tapServiceToAdd": "Toca un servicio para añadirlo — ¿vas a reservar más de uno? Añádelos todos y elige un horario para cada uno."
     },
     "reviews": {
@@ -708,7 +713,11 @@
       "editEmail": "Editar",
       "addEmail": "Agregar correo",
       "setInactive": "Marcar inactivo",
-      "setActive": "Marcar activo"
+      "setActive": "Marcar activo",
+      "allowSelectionTitle": "Permitir que los clientes elijan a su profesional",
+      "allowSelectionHint": "Al activarlo, los clientes que reserven contigo verán las fotos de tu equipo y podrán elegir con quién atenderse — o \"Cualquier profesional\". También agrega una pestaña \"Equipo\" con la calificación y reseñas propias de cada persona.",
+      "photoSaveError": "No se pudo guardar esa foto. Intenta de nuevo.",
+      "removePhoto": "Quitar foto"
     },
     "reschedule": {
       "pickDateTime": "Elige una nueva fecha y hora.",
