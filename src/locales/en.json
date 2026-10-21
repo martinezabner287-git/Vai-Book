@@ -1079,14 +1079,15 @@
     },
     "pending": {
       "eyebrow": "Application received",
-      "title": "Application Received.",
-      "body": "VaiBook is an exclusive network for top-tier shops. Our team is reviewing your profile. Once approved, your 14-day free trial will automatically begin.",
+      "title": "Welcome to VaiBook!",
+      "body": "You'll be notified once your account is active — no action needed until then.",
       "submittedFor": "Submitted for",
       "emailLead": "— we'll email",
       "approvedSuffix": "as soon as you're approved.",
       "loginPrefix": "Once you are, come back and click",
       "loginSuffix": "to open your portal with that same email.",
-      "backToHome": "Back to home"
+      "keepSearching": "Keep searching for services",
+      "backToHome": "Home"
     },
     "form": {
       "header": "List your business on VaiBook",
