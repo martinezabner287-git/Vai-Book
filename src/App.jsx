@@ -4113,6 +4113,59 @@ function EmailAuthModal({ email, onClose, onResend, onVerified }) {
   );
 }
 
+// Blocks a signed-in customer from submitting a booking until they have a
+// phone number on file — a provider accepting a request with no way to
+// reach the customer (no WhatsApp/call-back number) was a real gap, since
+// the phone field is otherwise only ever asked for in account settings,
+// which nothing forces anyone to visit. Reuses EmailAuthModal's overlay/
+// card/title/sub/btn CSS (.email-auth-*) rather than adding a parallel set
+// of near-identical modal styles.
+function PhoneRequiredModal({ onClose, onSaved }) {
+  const { t } = useTranslation();
+  const [phone, setPhone] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleSave = async () => {
+    const trimmed = phone.trim();
+    if (!/^[+\d][\d\s()-]{6,19}$/.test(trimmed)) {
+      setError(t("customerPortal.booking.phoneRequiredInvalid"));
+      return;
+    }
+    setError("");
+    setSaving(true);
+    const ok = await onSaved(trimmed);
+    setSaving(false);
+    if (!ok) setError(t("customerPortal.booking.phoneRequiredSaveFailed"));
+  };
+
+  return (
+    <div className="email-auth-overlay" onClick={onClose}>
+      <div className="email-auth-card" onClick={(e) => e.stopPropagation()}>
+        <button className="email-auth-close" onClick={onClose} aria-label="Close">×</button>
+        <p className="email-auth-brand">vai <span>book</span></p>
+        <h2 className="email-auth-title">{t("customerPortal.booking.phoneRequiredTitle")}</h2>
+        <p className="email-auth-sub">{t("customerPortal.booking.phoneRequiredBody")}</p>
+        <div className="input-group">
+          <label>{t("customerPortal.booking.whatsappNumber")}</label>
+          <input
+            type="tel"
+            autoFocus
+            placeholder="+501 622 1234"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter") handleSave(); }}
+          />
+        </div>
+        {error && <p className="email-auth-error">{error}</p>}
+        <button className="email-auth-btn" disabled={saving} onClick={handleSave}>
+          {saving ? t("customerPortal.booking.phoneRequiredSaving") : t("customerPortal.booking.phoneRequiredSave")}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // NotificationBell (the standalone bell icon that used to sit at the far
 // right of the nav) was retired in favor of folding alerts into the avatar
 // dropdown — see the notifications state/handlers inside Nav() below, and
@@ -5518,6 +5571,9 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
   const [bookingError, setBookingError] = useState("");
   const [guestCheckoutForm, setGuestCheckoutForm] = useState({ name: "", email: "", whatsapp: "" });
   const [showEmailAuthModal, setShowEmailAuthModal] = useState(false);
+  // Gate on a signed-in customer having a phone number on file before a
+  // booking can be submitted — see PhoneRequiredModal above.
+  const [showPhoneRequiredModal, setShowPhoneRequiredModal] = useState(false);
   const [sendingBookingOtp, setSendingBookingOtp] = useState(false);
   const { pushEnabled, subscribingPush, pushError, enablePushNotifications } = usePushSubscription(user?.id);
   const [providerHours, setProviderHours] = useState([]);
@@ -7423,7 +7479,11 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                             style={{ width: "100%", padding: "15px 0", fontSize: 15, borderRadius: 12, marginTop: 4 }}
                             disabled={submittingBooking || sendingBookingOtp}
                             onClick={async () => {
-                              if (user?.id) { bookingService.isMulti ? submitMultiServiceBooking() : submitBooking(); return; }
+                              if (user?.id) {
+                                if (!(user.phone || user.whatsapp_number)) { setShowPhoneRequiredModal(true); return; }
+                                bookingService.isMulti ? submitMultiServiceBooking() : submitBooking();
+                                return;
+                              }
                               const guestName = guestCheckoutForm.name.trim();
                               const guestEmail = guestCheckoutForm.email.trim().toLowerCase();
                               if (!guestName) { setBookingError(t("customerPortal.booking.enterFullName")); return; }
@@ -7455,6 +7515,20 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                                   updateUserProfile(uid, { whatsapp_number: whatsapp }).catch(() => {});
                                 }
                                 bookingService.isMulti ? submitMultiServiceBooking(uid) : submitBooking(uid);
+                              }}
+                            />
+                          )}
+
+                          {showPhoneRequiredModal && (
+                            <PhoneRequiredModal
+                              onClose={() => setShowPhoneRequiredModal(false)}
+                              onSaved={async (phone) => {
+                                const updated = await updateUserProfile(user.id, { phone });
+                                if (!updated) return false;
+                                onUserUpdate && onUserUpdate(updated);
+                                setShowPhoneRequiredModal(false);
+                                bookingService.isMulti ? submitMultiServiceBooking() : submitBooking();
+                                return true;
                               }}
                             />
                           )}
