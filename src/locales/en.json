@@ -1082,7 +1082,7 @@
       "title": "Application Received.",
       "body": "VaiBook is an exclusive network for top-tier shops. Our team is reviewing your profile. Once approved, your 14-day free trial will automatically begin.",
       "submittedFor": "Submitted for",
-      "planEmailLead": "({{planName}} plan) — we'll email",
+      "emailLead": "— we'll email",
       "approvedSuffix": "as soon as you're approved.",
       "loginPrefix": "Once you are, come back and click",
       "loginSuffix": "to open your portal with that same email.",
@@ -1091,7 +1091,6 @@
     "form": {
       "header": "List your business on VaiBook",
       "subheader": "Join local providers already getting booked across Belize. Takes less than 3 minutes.",
-      "choosePlan": "Choose your plan",
       "businessDetails": "Business details",
       "businessName": "Business name *",
       "businessNamePlaceholder": "e.g. Karim's Cuts",
@@ -1106,7 +1105,7 @@
       "description": "Tell customers about your business (optional)",
       "descriptionPlaceholder": "Years of experience, specialties, location details...",
       "submitting": "Submitting...",
-      "applyForPlan": "Apply for {{planName}} plan →",
+      "submit": "Submit Application →",
       "footerNote": "We review every application within 24 hours. No credit card required to apply."
     }
   }
