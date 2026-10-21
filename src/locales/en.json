@@ -309,6 +309,7 @@
   },
   "customerPortal": {
     "booking": {
+      "anyProfessional": "Any professional",
       "at": "at",
       "availableTimes": "Available times",
       "backToServices": "Back to services",
@@ -359,6 +360,7 @@
       "starterLimitReached": "{{providerName}} has reached their booking limit for this month. Please check back next month, or message them directly to arrange your appointment.",
       "thisProvider": "This provider",
       "whatsappNumber": "WhatsApp number",
+      "whoWouldYouLike": "Who would you like to see?",
       "yourDetails": "Your details"
     },
     "bookings": {
@@ -489,6 +491,7 @@
       "instagram": "Instagram",
       "linkCopied": "Link copied",
       "loadingReviews": "Loading reviews...",
+      "loadingTeam": "Loading the team...",
       "location": "Location",
       "loyaltyEarnedIntro": "You've earned",
       "loyaltyEarnedOutro": "! Mention it at your next visit.",
@@ -504,6 +507,7 @@
       "noDescriptionYet": "This provider hasn't added a description yet.",
       "noPortfolioPhotosYet": "No portfolio photos yet.",
       "noServicesListed": "This provider hasn't listed any services yet.",
+      "noTeamYet": "No team members added yet.",
       "openingTimes": "Opening times",
       "providerWorkAlt": "Provider work",
       "reviewCount_one": "{{count}} review",
@@ -519,6 +523,7 @@
       "tabPortfolio": "Portfolio",
       "tabReviews": "Reviews",
       "tabServices": "Services",
+      "tabTeam": "Team",
       "tapServiceToAdd": "Tap a service to add it — booking more than one? Add them all, then pick a time for each."
     },
     "reviews": {
@@ -708,7 +713,11 @@
       "editEmail": "Edit",
       "addEmail": "Add email",
       "setInactive": "Set inactive",
-      "setActive": "Set active"
+      "setActive": "Set active",
+      "allowSelectionTitle": "Let customers choose their professional",
+      "allowSelectionHint": "When this is on, customers booking with you see your team's photos and can pick who they'd like to see — or \"Any professional.\" Also adds a \"Meet the team\" tab with each person's own rating and reviews.",
+      "photoSaveError": "Couldn't save that photo. Please try again.",
+      "removePhoto": "Remove photo"
     },
     "reschedule": {
       "pickDateTime": "Pick a new date and time.",
