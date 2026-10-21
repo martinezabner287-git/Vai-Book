@@ -5328,8 +5328,8 @@ function ProviderLandingPage({ onNav, session, onSignIn, onSignOut }) {
               </div>
               {p.monthly > 0 && <div className="pricing-price-note">{t("providerLanding.billedPerMonth", { amount: p.monthly.toFixed(2) })}</div>}
               {p.priceNote && <div className="pricing-price-note">{p.priceNote}</div>}
-              {p.monthly > 0 && (
-                <div className="pricing-daily-note">{t("providerLanding.paysForItself")}</div>
+              {p.monthly > 0 && p.valueNote && (
+                <div className="pricing-daily-note">{p.valueNote}</div>
               )}
               <div className="pricing-tagline">{p.tagline}</div>
               <ul className="pricing-features">
@@ -10636,7 +10636,9 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                       <span style={{ display: "inline-block", background: "var(--forest)", color: "var(--lime)", fontSize: 12, fontWeight: 800, padding: "4px 10px", borderRadius: 100 }}>
                         {t("providerPortal.billing.justPerDay", { amount: (Math.round((currentPlan.monthly / 30) * 100) / 100).toFixed(2) })}
                       </span>
-                      <div style={{ fontSize: 11, color: "var(--muted)", fontStyle: "italic", marginTop: 4 }}>{t("providerPortal.billing.paysForItself")}</div>
+                      {currentPlan.valueNote && (
+                        <div style={{ fontSize: 11, color: "var(--muted)", fontStyle: "italic", marginTop: 4 }}>{currentPlan.valueNote}</div>
+                      )}
                     </div>
                   )
                 )}
@@ -11694,6 +11696,12 @@ const PLANS = [
     // it's computed, not just in this label.
     id: "pro", name: "Solo", price: "BZ$1.99/day", desc: "For solo practitioners", monthly: 59.7,
     tagline: "For solo practitioners who want frictionless booking, automated reminders, and deposits handled for them.",
+    // Shown as the small italic line under the daily-price pill (public
+    // pricing cards + the provider's own "Current plan" billing card) —
+    // one plan-specific line instead of the single generic string every
+    // paid plan used to share, which read oddly on Team (see `business`
+    // below).
+    valueNote: "(Pays for itself with a single haircut.)",
     recommended: true,
     features: [
       "24/7 guest booking — no app download for your clients",
@@ -11711,6 +11719,7 @@ const PLANS = [
     id: "business", name: "Team", price: "BZ$4.99/day for 1 month", desc: `Base fee + BZ$${TEAM_PER_SEAT_PRICE}/seat after your first ${TEAM_FREE_SEATS}`, monthly: 149.7,
     priceNote: `Base fee includes your first ${TEAM_FREE_SEATS} staff seats — BZ$${TEAM_PER_SEAT_PRICE}/month for each seat after that`,
     tagline: "For teams — a base plan covering your shop, plus staff seats you add as you grow.",
+    valueNote: "(Built for owners leading a team, not just themselves.)",
     features: [
       "Everything in Solo",
       "Staff seats with their own logins",
