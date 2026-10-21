@@ -4239,6 +4239,11 @@ const PORTAL_TOOLS_BY_VIEW = {
     { id: "modules", icon: "🧩", label: "Modules" },
     { id: "settings", icon: "⚙️", label: "Settings" },
   ],
+  // A staff login (StaffPortal, not ProviderPortal — see isStaffAccount in
+  // Nav() below) is one flat "My bookings" page, nothing else to jump to.
+  // Deliberately empty rather than listing "My bookings" again: it's
+  // already the only thing on screen.
+  staff: [],
   admin: [
     { id: "overview", icon: "🎛️", label: "Command Center" },
     { id: "pending", icon: "⏳", label: "Pending" },
@@ -4255,10 +4260,18 @@ function setPortalTab(tabId) {
   window.dispatchEvent(new CustomEvent("vaibook-set-portal-tab", { detail: { tab: tabId } }));
 }
 
-function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignOut }) {
+function Nav({ onNav, current, session, user, providerProfile, staffProfile, onSignIn, onSignOut }) {
   const { t } = useTranslation();
   const [menuOpen, setMenuOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
+  // A staff login routes to StaffPortal, not ProviderPortal (see the
+  // comment above <Nav> in App()) — StaffPortal is a single flat "My
+  // bookings" page with no sub-sections to switch between, so the full
+  // owner tool list (My staff, billing, modules, settings, ...) was just
+  // a wall of dead buttons here, none of them wired to anything a staff
+  // account can reach.
+  const isStaffAccount = current === "provider" && !providerProfile && !!staffProfile;
+  const portalTools = isStaffAccount ? PORTAL_TOOLS_BY_VIEW.staff : PORTAL_TOOLS_BY_VIEW[current];
   const closeMenu = () => setMenuOpen(false);
   const closeAccount = () => { setAccountOpen(false); setNotifListOpen(false); };
   // FIXED (dropdown glitch) — see useClickOutside above. Declared once here
@@ -4640,7 +4653,7 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
           </div>
           )}
         </div>
-      ) : session && PORTAL_TOOLS_BY_VIEW[current] ? (
+      ) : session && portalTools ? (
         // .nav-cta (reused here, not just on the branch above) — on a
         // portal page this is the only other real flex child besides
         // .nav-logo (search is hidden here, see showNavSearch above), and
@@ -4664,7 +4677,7 @@ function Nav({ onNav, current, session, user, providerProfile, onSignIn, onSignO
             <div className={`nav-account-dropdown${current === "customer" ? " cx-account-dropdown" : ""}`}>
               <div className="nav-account-name">{user?.full_name || t("nav.myAccount")}</div>
               {notifRow}
-              {PORTAL_TOOLS_BY_VIEW[current].map((item) => (
+              {portalTools.map((item) => (
                 <button key={item.id} className="nav-dropdown-item" onClick={() => goAccount(() => setPortalTab(item.id))}>
                   <span className="icn">{item.icon}</span> {item.label}
                 </button>
@@ -13528,7 +13541,7 @@ export default function App() {
           would just be a redundant second header above it. Every other
           view — including the Staff Portal, which still uses the old
           sidebar layout — keeps the global nav as before. */}
-      {view !== "auth" && !(view === "provider" && providerProfile) && <Nav onNav={setView} current={view} {...authProps} />}
+      {view !== "auth" && !(view === "provider" && providerProfile) && <Nav onNav={setView} current={view} staffProfile={staffProfile} {...authProps} />}
       {view === "home" && <LandingPage onNav={setView} {...authProps} />}
       {view === "providers" && <ProviderLandingPage onNav={setView} {...authProps} />}
       {view === "customer" && (
