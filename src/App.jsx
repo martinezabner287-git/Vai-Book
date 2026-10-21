@@ -11540,10 +11540,20 @@ const PROVIDER_LANDING_CSS = `
   .pl-pending .pl-pending-meta { font-size: 13px; color: rgba(245,239,224,0.5); margin-top: 24px; }
   .pl-pending .pl-pending-meta strong { color: rgba(245,239,224,0.8); }
   .pl-pending-back {
-    display: inline-block; margin-top: 28px; font-family: 'Plus Jakarta Sans', sans-serif;
+    display: inline-block; font-family: 'Plus Jakarta Sans', sans-serif;
     font-size: 14px; font-weight: 700; color: var(--lime); background: transparent;
     border: 1px solid rgba(198,241,53,0.4); padding: 12px 28px; border-radius: 100px; cursor: pointer;
   }
+  .pl-pending-actions {
+    display: flex; align-items: center; justify-content: center; gap: 12px;
+    flex-wrap: wrap; margin-top: 28px;
+  }
+  .pl-pending-keep-browsing {
+    display: inline-block; font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 14px; font-weight: 700; padding: 12px 28px; border-radius: 100px; border: none;
+    cursor: pointer; transition: opacity .2s;
+  }
+  .pl-pending-keep-browsing:hover { opacity: 0.88; }
 `;
 
 // `desc` stays a short one-liner for the compact pickers already using it
@@ -11832,7 +11842,10 @@ function ProviderSignup({ onNav }) {
             {t("providerSignup.pending.submittedFor")} <strong>{form.businessName}</strong> {t("providerSignup.pending.emailLead")} <strong>{form.email}</strong> {t("providerSignup.pending.approvedSuffix")}
             {" "}{t("providerSignup.pending.loginPrefix")} <strong>{t("nav.providerLogin")}</strong> {t("providerSignup.pending.loginSuffix")}
           </p>
-          <button className="pl-pending-back" onClick={() => onNav("home")}>{t("providerSignup.pending.backToHome")}</button>
+          <div className="pl-pending-actions">
+            <button className="pl-pending-keep-browsing btn-lime" onClick={() => scrollToSection("services", onNav, "signup")}>{t("providerSignup.pending.keepSearching")}</button>
+            <button className="pl-pending-back" onClick={() => onNav("home")}>{t("providerSignup.pending.backToHome")}</button>
+          </div>
         </div>
       </div>
     );
