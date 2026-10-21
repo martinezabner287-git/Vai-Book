@@ -1079,14 +1079,15 @@
     },
     "pending": {
       "eyebrow": "Solicitud recibida",
-      "title": "Solicitud recibida.",
-      "body": "VaiBook es una red exclusiva para negocios de primer nivel. Nuestro equipo está revisando tu perfil. Una vez aprobado, tu prueba gratuita de 14 días comenzará automáticamente.",
+      "title": "¡Bienvenido a VaiBook!",
+      "body": "Te notificaremos en cuanto tu cuenta esté activa — no necesitas hacer nada mientras tanto.",
       "submittedFor": "Enviada para",
       "emailLead": "— te escribiremos a",
       "approvedSuffix": "tan pronto como seas aprobado.",
       "loginPrefix": "Una vez lo estés, vuelve y haz clic en",
       "loginSuffix": "para abrir tu portal con ese mismo correo.",
-      "backToHome": "Volver al inicio"
+      "keepSearching": "Seguir buscando servicios",
+      "backToHome": "Inicio"
     },
     "form": {
       "header": "Registra tu negocio en VaiBook",
