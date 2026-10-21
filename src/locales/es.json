@@ -1082,7 +1082,7 @@
       "title": "Solicitud recibida.",
       "body": "VaiBook es una red exclusiva para negocios de primer nivel. Nuestro equipo está revisando tu perfil. Una vez aprobado, tu prueba gratuita de 14 días comenzará automáticamente.",
       "submittedFor": "Enviada para",
-      "planEmailLead": "(plan {{planName}}) — te escribiremos a",
+      "emailLead": "— te escribiremos a",
       "approvedSuffix": "tan pronto como seas aprobado.",
       "loginPrefix": "Una vez lo estés, vuelve y haz clic en",
       "loginSuffix": "para abrir tu portal con ese mismo correo.",
@@ -1091,7 +1091,6 @@
     "form": {
       "header": "Registra tu negocio en VaiBook",
       "subheader": "Únete a los proveedores locales que ya están recibiendo reservas en todo Belice. Toma menos de 3 minutos.",
-      "choosePlan": "Elige tu plan",
       "businessDetails": "Detalles del negocio",
       "businessName": "Nombre del negocio *",
       "businessNamePlaceholder": "ej. Karim's Cuts",
@@ -1106,7 +1105,7 @@
       "description": "Cuéntales a los clientes sobre tu negocio (opcional)",
       "descriptionPlaceholder": "Años de experiencia, especialidades, detalles de ubicación...",
       "submitting": "Enviando...",
-      "applyForPlan": "Solicitar el plan {{planName}} →",
+      "submit": "Enviar solicitud →",
       "footerNote": "Revisamos cada solicitud en un plazo de 24 horas. No se requiere tarjeta de crédito para aplicar."
     }
   }
