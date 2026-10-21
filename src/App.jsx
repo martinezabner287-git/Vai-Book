@@ -1,6 +1,6 @@
 
 import { useState, useEffect, useLayoutEffect, useRef, useContext, createContext, lazy, Suspense } from "react";
-import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, updateService, deleteService, getActiveProviders, getProviderDirectory, createBooking, getProviderBusyWindows, createBookingSafe, cancelBooking, markBookingCheckedIn, getCustomerBookings, uploadReceipt, submitReview, getProviderReviews, updateReview, sendBookingEmail, updateUserProfile, getPaymentMethods, addPaymentMethod, deletePaymentMethod, createNotification, getNotifications, markNotificationRead, markAllNotificationsRead, getCategoryDefaultFeatures, getProviderFeatureOverrides, setProviderFeatureOverride, getVisitNotes, upsertVisitNote, adminListProviders, adminUpdateProvider, adminDeleteProvider, adminCountCustomers, getFavoriteProviderIds, getFavoriteProviders, addFavorite, removeFavorite, getBookingMessages, sendBookingMessage, markBookingMessagesRead, getUnreadBookingMessages, getProviderMonthlyTrend, createProviderProfile, getProviderById, createWalkInBooking, submitProviderPayment, getMyProviderPayments, adminListProviderPayments, adminReviewProviderPayment, submitBookingRefund, adminListBookingRefunds, openPrivateFile, getProviderStaff, addProviderStaff, updateProviderStaff, deleteProviderStaff, getLoyaltyAccount, getProviderLoyaltyCustomers, redeemLoyaltyReward, getMyStaffProfile, claimStaffSeatByEmail, getStaffBookings, getProviderNotifyEmail, getMaintenanceStatus, setMaintenanceMode, getSiteOfflineStatus, setSiteOffline, sendEmailOtp, verifyEmailOtp, savePushSubscription, attachBookingServices, getProviderBlocks, insertProviderBlock, deleteProviderBlock, proposeBookingReschedule, confirmBookingReschedule, declineBookingReschedule, withdrawBookingReschedule, establishSoloSession, getServerSoloSessionToken, getLocalSoloSessionToken, clearLocalSoloSessionToken, subscribeToSoloSessionReplacement } from "./supabase";
+import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, updateService, deleteService, getActiveProviders, getProviderDirectory, createBooking, getProviderBusyWindows, createBookingSafe, cancelBooking, markBookingCheckedIn, getCustomerBookings, uploadReceipt, submitReview, getProviderReviews, updateReview, sendBookingEmail, updateUserProfile, getPaymentMethods, addPaymentMethod, deletePaymentMethod, createNotification, getNotifications, markNotificationRead, markAllNotificationsRead, getCategoryDefaultFeatures, getProviderFeatureOverrides, setProviderFeatureOverride, getVisitNotes, upsertVisitNote, adminListProviders, adminUpdateProvider, adminDeleteProvider, adminCountCustomers, getFavoriteProviderIds, getFavoriteProviders, addFavorite, removeFavorite, getBookingMessages, sendBookingMessage, markBookingMessagesRead, getUnreadBookingMessages, getProviderMonthlyTrend, createProviderProfile, getProviderById, createWalkInBooking, submitProviderPayment, getMyProviderPayments, adminListProviderPayments, adminReviewProviderPayment, submitBookingRefund, adminListBookingRefunds, openPrivateFile, getProviderStaff, addProviderStaff, updateProviderStaff, deleteProviderStaff, getProviderStaffPublic, getLoyaltyAccount, getProviderLoyaltyCustomers, redeemLoyaltyReward, getMyStaffProfile, claimStaffSeatByEmail, getStaffBookings, getProviderNotifyEmail, getMaintenanceStatus, setMaintenanceMode, getSiteOfflineStatus, setSiteOffline, sendEmailOtp, verifyEmailOtp, savePushSubscription, attachBookingServices, getProviderBlocks, insertProviderBlock, deleteProviderBlock, proposeBookingReschedule, confirmBookingReschedule, declineBookingReschedule, withdrawBookingReschedule, establishSoloSession, getServerSoloSessionToken, getLocalSoloSessionToken, clearLocalSoloSessionToken, subscribeToSoloSessionReplacement } from "./supabase";
 import AdminDashboard from "./AdminDashboard";
 import ProfilePhotoModal from "./ProfilePhotoModal";
 import LanguageSelector from "./LanguageSelector";
@@ -1848,6 +1848,32 @@ const css = `
   .portfolio-thumb:hover { opacity: .85; }
   .review-card { padding: 14px 0; border-bottom: 1px solid var(--border); }
   .review-card:last-child { border-bottom: none; }
+
+  /* "Meet the team" (CustomerPortal) — each staff member's photo, their
+     own rating, and up to a few of their own reviews. Only rendered when
+     the owner has turned on allow_staff_selection. */
+  .team-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 18px; }
+  .team-card { border: 1px solid var(--border); border-radius: 12px; padding: 16px; text-align: center; }
+  .team-avatar { width: 72px; height: 72px; border-radius: 50%; margin: 0 auto 10px; background: var(--sand) center/cover no-repeat; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 800; color: var(--forest); }
+  .team-name { font-size: 14px; font-weight: 700; color: var(--dark-text); }
+  .team-rating { font-size: 12px; color: var(--muted); margin-top: 4px; display: flex; align-items: center; justify-content: center; gap: 4px; flex-wrap: wrap; }
+  .team-rating-none { font-size: 12px; color: var(--muted); margin-top: 4px; }
+  .team-reviews { text-align: left; margin-top: 10px; }
+
+  /* Booking-step "who would you like to see?" picker — chips, not a
+     select, so a photo can sit next to each name the way Fresha does it. */
+  .staff-picker-row { display: flex; flex-wrap: wrap; gap: 10px; padding-top: 4px; }
+  .staff-pick-chip { display: flex; align-items: center; gap: 8px; padding: 8px 14px 8px 8px; border-radius: 999px; border: 1.5px solid var(--border); background: #fff; cursor: pointer; font-size: 13px; font-weight: 600; color: var(--dark-text); transition: all .15s; }
+  .staff-pick-chip.active { border-color: var(--forest); background: var(--forest); color: #fff; }
+  .staff-pick-avatar { width: 28px; height: 28px; border-radius: 50%; background: var(--sand) center/cover no-repeat; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; color: var(--forest); flex-shrink: 0; }
+  .staff-pick-avatar.any { background: var(--sand); font-size: 14px; }
+  .staff-pick-chip.active .staff-pick-avatar:not(.any) { box-shadow: 0 0 0 1.5px #fff; }
+
+  /* Owner-side staff avatar (Staff tab) — small circle that doubles as the
+     file-picker trigger (wraps a hidden <input type="file">). */
+  .staff-row-avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--sand) center/cover no-repeat; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 800; color: var(--forest); flex-shrink: 0; cursor: pointer; position: relative; }
+  .staff-row-avatar-busy { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.7); border-radius: 50%; font-size: 12px; }
+
   .lightbox-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: flex; align-items: center; justify-content: center; z-index: 300; padding: 24px; cursor: zoom-out; }
   .lightbox-overlay img { max-width: 92vw; max-height: 92vh; border-radius: 10px; object-fit: contain; }
 
@@ -5592,6 +5618,13 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
   // Gate on a signed-in customer having a phone number on file before a
   // booking can be submitted — see PhoneRequiredModal above.
   const [showPhoneRequiredModal, setShowPhoneRequiredModal] = useState(false);
+  // Fresha-style "who would you like to see?" — only populated (and only
+  // shown anywhere) when the provider has turned on allow_staff_selection.
+  // null selectedStaffId means "any professional", same as not stamping a
+  // staff_id on the booking at all.
+  const [teamStaff, setTeamStaff] = useState([]);
+  const [loadingTeam, setLoadingTeam] = useState(false);
+  const [selectedStaffId, setSelectedStaffId] = useState(null);
   const [sendingBookingOtp, setSendingBookingOtp] = useState(false);
   const { pushEnabled, subscribingPush, pushError, enablePushNotifications } = usePushSubscription(user?.id);
   const [providerHours, setProviderHours] = useState([]);
@@ -5818,11 +5851,19 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
     setProviderHours([]);
     setBusyWindows([]);
     setMyLoyalty(null);
+    setTeamStaff([]);
+    setSelectedStaffId(null);
     if (provider?.id) {
       setLoadingHours(true);
       getWorkingHours(provider.id).then((hrs) => { setProviderHours(hrs || []); setLoadingHours(false); });
       if (provider.loyalty_enabled && user?.id) {
         getLoyaltyAccount(provider.id, user.id).then((acc) => setMyLoyalty(acc));
+      }
+      // Fetched eagerly (not just when the Team tab or booking step is
+      // reached) so both are ready without a visible pop-in later.
+      if (provider.allow_staff_selection) {
+        setLoadingTeam(true);
+        getProviderStaffPublic(provider.id).then((data) => { setTeamStaff(data || []); setLoadingTeam(false); });
       }
     }
   };
@@ -6067,13 +6108,29 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
     }
   };
 
+  // "Meet the team" tab — teamStaff itself is already fetched by openBooking
+  // whenever the provider has opted in; this only needs to additionally
+  // pull in providerReviews (also lazy, shared with the Reviews tab above)
+  // so each member's own rating/reviews can be worked out client-side by
+  // filtering on review.staff_id.
+  const openTeamTab = () => {
+    setProfileTab("team");
+    if (selectedProvider && providerReviews.length === 0 && !loadingReviews) {
+      setLoadingReviews(true);
+      getProviderReviews(selectedProvider.id).then((data) => {
+        setProviderReviews(data || []);
+        setLoadingReviews(false);
+      });
+    }
+  };
+
   // Creates one booking (service_id/date/time/total/downpayment) via the
   // hardened create_booking_safe RPC, then fires the provider notification +
   // email. Shared by the single-service flow below and, called once per
   // service in sequence, by submitMultiServiceBooking — the per-booking
   // logic (deposit math, notification copy, email) is identical either way,
   // only which service/date/time/notes feed it differs.
-  const createOneBooking = async ({ bookingCustomerId, service, dateStr, timeStr, notes }) => {
+  const createOneBooking = async ({ bookingCustomerId, service, dateStr, timeStr, notes, staffId }) => {
     const total = Number(service.price) || 0;
     const dpPct = selectedProvider.downpayment_required ? (selectedProvider.downpayment_pct || 50) : 0;
     const downpayment = dpPct ? Math.round(total * dpPct) / 100 : null;
@@ -6089,6 +6146,20 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
       downpayment_amount: downpayment,
       notes: notes ? notes.trim() : null,
     });
+    if (created && staffId) {
+      // create_booking_safe's own SQL isn't something this file can see or
+      // safely extend blind (its overlap/rate-limit/maintenance-mode
+      // checks are only described in comments, not present as a local
+      // migration), so rather than guess at adding a p_staff_id parameter
+      // to it, the pick is stamped on afterward with the same plain
+      // updateBooking() the provider's own "assign to staff" dropdown
+      // already uses elsewhere in this file. The cost: availability stays
+      // provider-wide, not truly per-staff — a customer could in theory
+      // land a slot another one of this staff member's own bookings
+      // already has, same as any walk-in squeezed onto the calendar today.
+      created.staff_id = staffId;
+      await updateBooking(created.id, { staff_id: staffId });
+    }
     if (created) {
       // FIXED — these used to be awaited one after another (in-app
       // notification, then a lookup for the provider's email, then the
@@ -6157,7 +6228,7 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
 
     let created = null;
     try {
-      created = await createOneBooking({ bookingCustomerId, service, dateStr: bookingForm.date, timeStr: bookingForm.time, notes: bookingForm.notes });
+      created = await createOneBooking({ bookingCustomerId, service, dateStr: bookingForm.date, timeStr: bookingForm.time, notes: bookingForm.notes, staffId: selectedStaffId });
     } catch (err) {
       setSubmittingBooking(false);
       if (err?.code === "SLOT_TAKEN") {
@@ -6229,7 +6300,7 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
       const { date: dateStr, time: timeStr } = multiBookingTimes[service.id];
       let created = null;
       try {
-        created = await createOneBooking({ bookingCustomerId, service, dateStr, timeStr, notes: bookingForm.notes });
+        created = await createOneBooking({ bookingCustomerId, service, dateStr, timeStr, notes: bookingForm.notes, staffId: selectedStaffId });
       } catch (err) {
         // Undo everything already created in this same cart — the customer
         // only ever clicked "Request booking" once, so a failure on service
@@ -6429,6 +6500,11 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
             booking_id: booking.id,
             customer_id: user.id,
             provider_id: booking.provider_id,
+            // Whichever staff member the booking itself ended up with
+            // (either picked at booking time, or assigned after the fact
+            // by the provider) — not asked again here, so a review is
+            // automatically "about" the same person the booking was.
+            staff_id: booking.staff_id || null,
             rating: reviewForm.rating,
             comment: reviewForm.comment ? reviewForm.comment.trim() : null,
           });
@@ -7339,11 +7415,12 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                       <div className="tab-row">
                         {[
                           { id: "services", label: t("customerPortal.profile.tabServices") },
+                          ...(selectedProvider.allow_staff_selection ? [{ id: "team", label: t("customerPortal.profile.tabTeam") }] : []),
                           { id: "portfolio", label: t("customerPortal.profile.tabPortfolio") },
                           { id: "reviews", label: t("customerPortal.profile.tabReviews") },
                           { id: "about", label: t("customerPortal.profile.tabAbout") },
                         ].map((opt) => (
-                          <div key={opt.id} className={`tab ${profileTab === opt.id ? "active" : ""}`} onClick={() => (opt.id === "reviews" ? openReviewsTab() : setProfileTab(opt.id))}>
+                          <div key={opt.id} className={`tab ${profileTab === opt.id ? "active" : ""}`} onClick={() => (opt.id === "reviews" ? openReviewsTab() : opt.id === "team" ? openTeamTab() : setProfileTab(opt.id))}>
                             {opt.label}
                           </div>
                         ))}
@@ -7463,6 +7540,26 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                                 )}
                               </div>
                             </>
+                          )}
+
+                          {selectedProvider.allow_staff_selection && teamStaff.length > 0 && (
+                            <div className="input-group">
+                              <label>{t("customerPortal.booking.whoWouldYouLike")}</label>
+                              <div className="staff-picker-row">
+                                <button type="button" className={`staff-pick-chip ${selectedStaffId === null ? "active" : ""}`} onClick={() => setSelectedStaffId(null)}>
+                                  <span className="staff-pick-avatar any">👥</span>
+                                  {t("customerPortal.booking.anyProfessional")}
+                                </button>
+                                {teamStaff.map((member) => (
+                                  <button type="button" key={member.id} className={`staff-pick-chip ${selectedStaffId === member.id ? "active" : ""}`} onClick={() => setSelectedStaffId(member.id)}>
+                                    <span className="staff-pick-avatar" style={member.avatar_url ? { backgroundImage: `url(${member.avatar_url})` } : undefined}>
+                                      {!member.avatar_url && (member.name?.[0]?.toUpperCase() || "?")}
+                                    </span>
+                                    {member.name}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
                           )}
 
                           <div className="input-group"><label>{t("customerPortal.booking.notesOptional")}</label><textarea placeholder={t("customerPortal.booking.notesPlaceholder")} value={bookingForm.notes} onChange={e => setBookingForm(f => ({ ...f, notes: e.target.value }))} style={{ minHeight: 60 }} /></div>
@@ -7594,6 +7691,49 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                             )}
                           </div>
                         )
+                      )
+                    )}
+
+                    {profileTab === "team" && (
+                      loadingTeam ? (
+                        <p style={{ fontSize: 13, color: "var(--muted)" }}>{t("customerPortal.profile.loadingTeam")}</p>
+                      ) : teamStaff.length === 0 ? (
+                        <p style={{ fontSize: 13, color: "var(--muted)" }}>{t("customerPortal.profile.noTeamYet")}</p>
+                      ) : (
+                        <div className="team-grid">
+                          {teamStaff.map((member) => {
+                            const memberReviews = providerReviews.filter((r) => r.staff_id === member.id);
+                            const memberRating = memberReviews.length
+                              ? memberReviews.reduce((sum, r) => sum + (Number(r.rating) || 0), 0) / memberReviews.length
+                              : null;
+                            return (
+                              <div key={member.id} className="team-card">
+                                <div className="team-avatar" style={member.avatar_url ? { backgroundImage: `url(${member.avatar_url})` } : undefined}>
+                                  {!member.avatar_url && (member.name?.[0]?.toUpperCase() || "?")}
+                                </div>
+                                <div className="team-name">{member.name}</div>
+                                {memberRating ? (
+                                  <div className="team-rating"><StarRating value={memberRating.toFixed(1)} size={13} /> {memberRating.toFixed(1)} · {t("customerPortal.profile.reviewCount", { count: memberReviews.length })}</div>
+                                ) : (
+                                  <div className="team-rating-none">{t("customerPortal.browse.noReviewsYet")}</div>
+                                )}
+                                {memberReviews.length > 0 && (
+                                  <div className="team-reviews">
+                                    {memberReviews.slice(0, 3).map((r) => (
+                                      <div key={r.id} className="review-card">
+                                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                                          <strong style={{ fontSize: 12 }}>{r.users?.full_name || t("customerPortal.profile.customerFallback")}</strong>
+                                          <span className="stars">{"★".repeat(r.rating || 0)}{"☆".repeat(5 - (r.rating || 0))}</span>
+                                        </div>
+                                        {r.comment && <p style={{ fontSize: 12, color: "var(--dark-text)", marginTop: 4 }}>{r.comment}</p>}
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
                       )
                     )}
 
@@ -8484,6 +8624,12 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
   const [staffFilter, setStaffFilter] = useState("all");
   const [editingStaffEmailId, setEditingStaffEmailId] = useState(null);
   const [editStaffEmailValue, setEditStaffEmailValue] = useState("");
+  // "Meet the team" + the booking-step staff picker only show on the
+  // customer side once the owner opts in here — off by default, same
+  // reasoning as any other plan feature that changes what a customer sees.
+  const [allowStaffSelection, setAllowStaffSelection] = useState(false);
+  const [savingStaffSelectionPref, setSavingStaffSelectionPref] = useState(false);
+  const [uploadingStaffPhotoId, setUploadingStaffPhotoId] = useState(null);
   // Scopes the dashboard's "Chairs Filled" metric to one staff member's
   // own bookings — only meaningful (and only shown) for a Business-plan
   // shop with staff added; a solo provider has nothing to scope by.
@@ -8627,6 +8773,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
       });
       setEmailOnNewBooking(providerProfile.notify_email_new_booking !== false);
       setAcceptsWalkins(providerProfile.accepts_walkins !== false);
+      setAllowStaffSelection(!!providerProfile.allow_staff_selection);
     }
   }, [providerProfile]);
 
@@ -8806,6 +8953,58 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
       setAcceptsWalkins(!next);
       window.alert(t("providerPortal.errors.saveSettingFailed"));
     }
+  };
+
+  const toggleAllowStaffSelection = async () => {
+    if (!providerId || savingStaffSelectionPref) return;
+    const next = !allowStaffSelection;
+    setSavingStaffSelectionPref(true);
+    setAllowStaffSelection(next);
+    const saved = await upsertProviderProfile({ id: providerProfile.id, user_id: providerProfile.user_id, allow_staff_selection: next });
+    setSavingStaffSelectionPref(false);
+    if (saved) {
+      onProviderProfileUpdate && onProviderProfileUpdate(saved);
+    } else {
+      setAllowStaffSelection(!next);
+      window.alert(t("providerPortal.errors.saveSettingFailed"));
+    }
+  };
+
+  // Reuses the exact same bucket/upload path as the owner's own portfolio
+  // and profile photos (uploadProviderPhoto/deleteProviderPhoto, keyed by
+  // the OWNER's user_id) rather than a separate staff-photos bucket — a
+  // staff seat has no login/storage identity of its own to own a bucket
+  // path, and the owner is already the one managing this from the Staff
+  // tab (per the "owner uploads it" decision), so there's nothing a
+  // dedicated bucket would add.
+  const handleStaffPhotoUpload = async (member, file) => {
+    if (!file || !providerProfile?.user_id) return;
+    setUploadingStaffPhotoId(member.id);
+    const optimized = await compressImageFile(file);
+    const url = await uploadProviderPhoto(providerProfile.user_id, optimized);
+    if (url) {
+      const previousUrl = member.avatar_url;
+      const updated = await updateProviderStaff(member.id, { avatar_url: url });
+      if (updated) {
+        if (previousUrl) await deleteProviderPhoto(providerProfile.user_id, previousUrl);
+        await loadStaff();
+      } else {
+        await deleteProviderPhoto(providerProfile.user_id, url);
+        setStaffError(t("providerPortal.staff.photoSaveError"));
+      }
+    } else {
+      setStaffError(t("providerPortal.staff.photoSaveError"));
+    }
+    setUploadingStaffPhotoId(null);
+  };
+
+  const handleRemoveStaffPhoto = async (member) => {
+    if (!member.avatar_url || !providerProfile?.user_id) return;
+    setUploadingStaffPhotoId(member.id);
+    await updateProviderStaff(member.id, { avatar_url: null });
+    await deleteProviderPhoto(providerProfile.user_id, member.avatar_url);
+    await loadStaff();
+    setUploadingStaffPhotoId(null);
   };
 
   const openResponse = (bookingId, type) => {
@@ -10859,6 +11058,20 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
             ) : (
               <>
                 <div className="card" style={{ maxWidth: 560 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16 }}>
+                    <div>
+                      <div style={{ fontSize: 14, fontWeight: 600 }}>{t("providerPortal.staff.allowSelectionTitle")}</div>
+                      <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 2 }}>{t("providerPortal.staff.allowSelectionHint")}</div>
+                    </div>
+                    <div
+                      className={`toggle ${allowStaffSelection ? "on" : ""}`}
+                      style={{ opacity: savingStaffSelectionPref ? 0.5 : 1, flexShrink: 0 }}
+                      onClick={toggleAllowStaffSelection}
+                    ></div>
+                  </div>
+                </div>
+
+                <div className="card" style={{ maxWidth: 560, marginTop: 20 }}>
                   <div className="card-title">{t("providerPortal.staff.addStaffMember")}</div>
                   <div className="form-row">
                     <div className="input-group">
@@ -10891,32 +11104,48 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                   )}
                   {staff.map((member) => (
                     <div key={member.id} style={{ padding: "12px 0", borderBottom: "1px solid var(--border)" }}>
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                        <div>
-                          <div style={{ fontSize: 14, fontWeight: 600 }}>
-                            {member.name}{!member.is_active && <span style={{ fontWeight: 500, color: "var(--muted)" }}> — {t("providerPortal.staff.inactiveSuffix")}</span>}
-                            {" "}
-                            <span style={{ fontSize: 11, fontWeight: 600, padding: "2px 7px", borderRadius: 5, background: member.user_id ? "#E7F5EC" : "var(--sand)", color: member.user_id ? "var(--forest)" : "var(--muted)" }}>
-                              {member.user_id ? t("providerPortal.staff.signedIn") : t("providerPortal.staff.invitedNotSignedIn")}
-                            </span>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12 }}>
+                        <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
+                          <label className="staff-row-avatar" style={member.avatar_url ? { backgroundImage: `url(${member.avatar_url})` } : undefined}>
+                            {!member.avatar_url && (member.name?.[0]?.toUpperCase() || "?")}
+                            {uploadingStaffPhotoId === member.id && <span className="staff-row-avatar-busy">…</span>}
+                            <input
+                              type="file"
+                              accept="image/*"
+                              style={{ display: "none" }}
+                              disabled={uploadingStaffPhotoId === member.id}
+                              onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ""; if (f) handleStaffPhotoUpload(member, f); }}
+                            />
+                          </label>
+                          <div>
+                            <div style={{ fontSize: 14, fontWeight: 600 }}>
+                              {member.name}{!member.is_active && <span style={{ fontWeight: 500, color: "var(--muted)" }}> — {t("providerPortal.staff.inactiveSuffix")}</span>}
+                              {" "}
+                              <span style={{ fontSize: 11, fontWeight: 600, padding: "2px 7px", borderRadius: 5, background: member.user_id ? "#E7F5EC" : "var(--sand)", color: member.user_id ? "var(--forest)" : "var(--muted)" }}>
+                                {member.user_id ? t("providerPortal.staff.signedIn") : t("providerPortal.staff.invitedNotSignedIn")}
+                              </span>
+                            </div>
+                            {member.phone && <div style={{ fontSize: 12, color: "var(--muted)" }}>{member.phone}</div>}
+                            {editingStaffEmailId === member.id ? (
+                              <div style={{ display: "flex", gap: 6, marginTop: 4 }}>
+                                <input type="email" style={{ fontSize: 12, padding: "3px 6px" }} value={editStaffEmailValue} onChange={e => setEditStaffEmailValue(e.target.value)} />
+                                <button className="btn-sm forest" style={{ padding: "2px 8px" }} onClick={() => saveStaffEmail(member)}>{t("providerPortal.common.save")}</button>
+                                <button className="btn-sm ghost" style={{ padding: "2px 8px" }} onClick={() => setEditingStaffEmailId(null)}>{t("providerPortal.common.cancel")}</button>
+                              </div>
+                            ) : (
+                              <div style={{ fontSize: 12, color: "var(--muted)" }}>
+                                {member.email || t("providerPortal.staff.noEmailSet")}
+                                {!member.user_id && (
+                                  <a href="#" style={{ marginLeft: 8 }} onClick={(e) => { e.preventDefault(); startEditStaffEmail(member); }}>{member.email ? t("providerPortal.staff.editEmail") : t("providerPortal.staff.addEmail")}</a>
+                                )}
+                              </div>
+                            )}
+                            {member.avatar_url && (
+                              <a href="#" style={{ fontSize: 11, color: "#B91C1C" }} onClick={(e) => { e.preventDefault(); handleRemoveStaffPhoto(member); }}>{t("providerPortal.staff.removePhoto")}</a>
+                            )}
                           </div>
-                          {member.phone && <div style={{ fontSize: 12, color: "var(--muted)" }}>{member.phone}</div>}
-                          {editingStaffEmailId === member.id ? (
-                            <div style={{ display: "flex", gap: 6, marginTop: 4 }}>
-                              <input type="email" style={{ fontSize: 12, padding: "3px 6px" }} value={editStaffEmailValue} onChange={e => setEditStaffEmailValue(e.target.value)} />
-                              <button className="btn-sm forest" style={{ padding: "2px 8px" }} onClick={() => saveStaffEmail(member)}>{t("providerPortal.common.save")}</button>
-                              <button className="btn-sm ghost" style={{ padding: "2px 8px" }} onClick={() => setEditingStaffEmailId(null)}>{t("providerPortal.common.cancel")}</button>
-                            </div>
-                          ) : (
-                            <div style={{ fontSize: 12, color: "var(--muted)" }}>
-                              {member.email || t("providerPortal.staff.noEmailSet")}
-                              {!member.user_id && (
-                                <a href="#" style={{ marginLeft: 8 }} onClick={(e) => { e.preventDefault(); startEditStaffEmail(member); }}>{member.email ? t("providerPortal.staff.editEmail") : t("providerPortal.staff.addEmail")}</a>
-                              )}
-                            </div>
-                          )}
                         </div>
-                        <div style={{ display: "flex", gap: 8 }}>
+                        <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
                           <button className="btn-sm ghost" onClick={() => toggleStaffActive(member)}>{member.is_active ? t("providerPortal.staff.setInactive") : t("providerPortal.staff.setActive")}</button>
                           <button className="btn-sm ghost" style={{ color: "#B91C1C" }} onClick={() => removeStaff(member)}>{t("providerPortal.common.remove")}</button>
                         </div>
