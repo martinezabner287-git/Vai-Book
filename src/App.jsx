@@ -11437,39 +11437,6 @@ const SIGNUP_CSS = `
     color: var(--muted);
     line-height: 1.6;
   }
-  .plan-selector {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
-    margin-bottom: 28px;
-  }
-  .plan-option {
-    border: 2px solid var(--border);
-    border-radius: var(--radius);
-    padding: 18px 16px;
-    cursor: pointer;
-    background: white;
-    transition: all .2s;
-    text-align: left;
-  }
-  .plan-option:hover { border-color: var(--forest); }
-  .plan-option.selected { border-color: var(--forest); background: var(--forest); }
-  .plan-option.selected .plan-name { color: var(--lime); }
-  .plan-option.selected .plan-price { color: white; }
-  .plan-option.selected .plan-desc { color: rgba(255,255,255,0.6); }
-  .plan-option.selected .plan-option-features li { color: rgba(255,255,255,0.68); }
-  .plan-option.selected .plan-option-features li .check { color: var(--lime); }
-  .plan-name { font-size: 13px; font-weight: 700; color: var(--forest); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 4px; }
-  .plan-price { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 22px; font-weight: 800; color: var(--forest); margin-bottom: 4px; }
-  .plan-desc { font-size: 11px; color: var(--muted); line-height: 1.4; }
-  /* Full feature list on each plan card, same data (PLANS[].features) the
-     landing page's own pricing section uses — someone who skipped that
-     section (e.g. a category tile straight into this form) still sees
-     exactly what they're paying for before they fill in a single field. */
-  .plan-option-features { list-style: none; margin: 12px 0 0; padding: 10px 0 0; border-top: 1px solid var(--border); }
-  .plan-option.selected .plan-option-features { border-top-color: rgba(255,255,255,0.18); }
-  .plan-option-features li { display: flex; align-items: flex-start; gap: 6px; font-size: 11.5px; color: var(--muted); line-height: 1.5; padding: 2px 0; }
-  .plan-option-features li .check { color: var(--forest); font-weight: 700; flex-shrink: 0; }
   .signup-form-card {
     background: white;
     border: 1px solid var(--border);
@@ -11525,7 +11492,6 @@ const SIGNUP_CSS = `
   .payment-info p { font-size: 13px; color: var(--muted); line-height: 1.65; }
   .payment-info strong { color: var(--dark-text); }
   @media (max-width: 600px) {
-    .plan-selector { grid-template-columns: 1fr; }
     .form-row { grid-template-columns: 1fr; }
     .signup-form-card { padding: 20px; }
   }
@@ -11732,7 +11698,11 @@ const SERVICES_TO_SERVICE_TYPE = {
 
 function ProviderSignup({ onNav }) {
   const { t } = useTranslation();
-  const [plan, setPlan] = useState(() => {
+  // No plan picker on this page anymore (see below) — this just carries
+  // over whichever plan button someone clicked on the landing page's
+  // pricing section, or defaults to Solo, so the application record and
+  // admin notification still reflect what they expressed interest in.
+  const [plan] = useState(() => {
     try {
       const stashed = localStorage.getItem("vaibook_signup_plan");
       localStorage.removeItem("vaibook_signup_plan");
@@ -11859,7 +11829,7 @@ function ProviderSignup({ onNav }) {
           <h2>{t("providerSignup.pending.title")}</h2>
           <p>{t("providerSignup.pending.body")}</p>
           <p className="pl-pending-meta">
-            {t("providerSignup.pending.submittedFor")} <strong>{form.businessName}</strong> {t("providerSignup.pending.planEmailLead", { planName: selectedPlan.name })} <strong>{form.email}</strong> {t("providerSignup.pending.approvedSuffix")}
+            {t("providerSignup.pending.submittedFor")} <strong>{form.businessName}</strong> {t("providerSignup.pending.emailLead")} <strong>{form.email}</strong> {t("providerSignup.pending.approvedSuffix")}
             {" "}{t("providerSignup.pending.loginPrefix")} <strong>{t("nav.providerLogin")}</strong> {t("providerSignup.pending.loginSuffix")}
           </p>
           <button className="pl-pending-back" onClick={() => onNav("home")}>{t("providerSignup.pending.backToHome")}</button>
@@ -11882,25 +11852,6 @@ function ProviderSignup({ onNav }) {
         <div className="signup-header">
           <h1>{t("providerSignup.form.header")}</h1>
           <p>{t("providerSignup.form.subheader")}</p>
-        </div>
-
-        {/* Plan selector */}
-        <div style={{ marginBottom: 8 }}>
-          <div className="form-section-title" style={{ borderBottom: "none", paddingBottom: 0, marginBottom: 12 }}>{t("providerSignup.form.choosePlan")}</div>
-        </div>
-        <div className="plan-selector">
-          {PUBLIC_PLANS.map(p => (
-            <div key={p.id} className={`plan-option ${plan === p.id ? "selected" : ""}`} onClick={() => setPlan(p.id)}>
-              <div className="plan-name">{p.name}</div>
-              <div className="plan-price">{p.price}</div>
-              <div className="plan-desc">{p.desc}</div>
-              <ul className="plan-option-features">
-                {p.features.map((f, i) => (
-                  <li key={i}><span className="check">✓</span>{f}</li>
-                ))}
-              </ul>
-            </div>
-          ))}
         </div>
 
         {/* Form */}
@@ -11949,7 +11900,7 @@ function ProviderSignup({ onNav }) {
         </div>
 
         <button className="signup-submit" onClick={handleSubmit} disabled={loading}>
-          {loading ? t("providerSignup.form.submitting") : t("providerSignup.form.applyForPlan", { planName: selectedPlan.name })}
+          {loading ? t("providerSignup.form.submitting") : t("providerSignup.form.submit")}
         </button>
         {submitError && (
           <p style={{ textAlign: "center", fontSize: 13, color: "#B91C1C", marginTop: 12, fontWeight: 600 }}>
