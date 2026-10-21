@@ -413,6 +413,23 @@ export const deleteProviderStaff = async (staffId) => {
   return true;
 };
 
+// Customer-facing team list — just enough to show a photo + name on the
+// booking-step staff picker and the "Meet the team" tab, never phone/email.
+// Only returns anything when the owner has turned on "allow_staff_selection"
+// (see supabase_provider_staff_public.sql) — RLS enforces that server-side
+// too, this isn't just hidden in the UI for a provider that hasn't opted in.
+export const getProviderStaffPublic = async (providerId) => {
+  if (!providerId) return [];
+  const { data, error } = await supabase
+    .from('provider_staff')
+    .select('id, name, avatar_url')
+    .eq('provider_id', providerId)
+    .eq('is_active', true)
+    .order('created_at', { ascending: true });
+  if (error) { console.error('Error fetching team:', error.message); return []; }
+  return data || [];
+};
+
 // ── STAFF LOGINS ─────────────────────────────────────────────────
 // Each staff member gets their own account rather than sharing the
 // owner's login — see supabase_staff_accounts.sql. A seat is "claimed"
