@@ -557,6 +557,11 @@
       "title": "Settings",
       "turnOn": "Turn on",
       "turningOn": "Turning on..."
+    },
+    "signIn": {
+      "backToSite": "← Back to site",
+      "button": "Sign in with Google",
+      "subtitle": "Sign in with Google to browse providers and book an appointment."
     }
   },
   "staffPortal": {
