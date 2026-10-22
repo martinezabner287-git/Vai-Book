@@ -993,7 +993,19 @@ const css = `
   .tny-card-meta-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 12px; }
   .tny-card-rating { font-size: 12.5px; font-weight: 700; color: var(--accent-text); }
   .tny-card-rating-new { color: var(--text-tertiary); font-weight: 600; }
-  .tny-book-btn { width: 100%; background: var(--accent-neon); color: var(--accent-neon-text); font-weight: 800; font-size: 13px; padding: 10px 0; border-radius: 100px; border: none; cursor: pointer; }
+  /* Fresha-style footer: no CTA button, just price + deposit status, same
+     as .provider-card-footer in the Customer Portal's browse grid — the
+     whole card is already the tap target. */
+  .tny-card-footer { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 2px; }
+  /* Own themed class rather than reusing .price-tag — that one hardcodes
+     var(--forest), which never flips for dark mode outside the
+     .provider-shell/.portal-content scopes it has overrides for (see the
+     :root[data-theme="dark"] .price-tag rule above). .tny-card already
+     lives in the theme-switchable .lp-theme tree (same as .tny-card-rating
+     using var(--accent-text) below), so this needs the same treatment to
+     stay readable in dark mode instead of going dark-purple-on-dark. */
+  .tny-price-tag { font-size: 13px; font-weight: 700; color: var(--text-primary); }
+  .tny-deposit-badge { font-size: 11px; font-weight: 600; color: var(--text-tertiary); white-space: nowrap; }
 
   /* STATS BAR */
   .marketing-strip { background: var(--sand); padding: 40px 48px; display: flex; justify-content: space-around; gap: 32px; flex-wrap: wrap; }
@@ -5030,6 +5042,7 @@ function LandingPage({ onNav, session, user, onSignIn, onSignOut }) {
             {trendingNearYou.map((p) => {
               const rating = providerRating(p);
               const openNow = providerOpenNow(p);
+              const fromPrice = providerFromPrice(p);
               return (
                 <div className="tny-card card-premium" key={p.id} onClick={() => goToProvider(p)}>
                   <div className="tny-card-img">
@@ -5060,9 +5073,19 @@ function LandingPage({ onNav, session, user, onSignIn, onSignOut }) {
                         </span>
                       )}
                     </div>
-                    <button className="tny-book-btn btn-neon" onClick={(e) => { e.stopPropagation(); goToProvider(p); }}>
-                      {t("landing.bookNow")}
-                    </button>
+                    {/* No standalone CTA button — same Fresha-style pattern as
+                        the provider-grid cards elsewhere: the whole card is
+                        already the tap target (onClick on .tny-card above),
+                        and this footer row just states price + whether a
+                        deposit is required, same as .provider-card-footer. */}
+                    <div className="tny-card-footer">
+                      <span className="tny-price-tag">{fromPrice != null ? t("customerPortal.browse.fromPrice", { price: fromPrice }) : t("customerPortal.browse.contactForPricing")}</span>
+                      {p.downpayment_required ? (
+                        <span className="tny-deposit-badge">{t("customerPortal.browse.depositPct", { pct: p.downpayment_pct || 50 })}</span>
+                      ) : (
+                        <span className="avail-badge">{t("customerPortal.browse.noDeposit")}</span>
+                      )}
+                    </div>
                   </div>
                 </div>
               );
