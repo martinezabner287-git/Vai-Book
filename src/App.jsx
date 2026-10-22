@@ -1155,16 +1155,20 @@ const css = `
   .btn-outline-forest { background: transparent; color: var(--forest); border: 1px solid var(--forest); width: 100%; padding: 13px; border-radius: var(--radius-sm); font-size: 14px; font-weight: 600; cursor: pointer; transition: all .2s; }
   .btn-outline-forest:hover { background: var(--forest); color: var(--near-white); }
 
-  /* FOOTER */
-  .footer { background: var(--dark-text); padding: 48px 48px 32px; color: rgba(255,255,255,0.5); }
-  .footer-top { display: flex; justify-content: space-between; gap: 32px; flex-wrap: wrap; margin-bottom: 40px; }
+  /* FOOTER — compact, Fresha-style: brand + a "Get the app" pill on the
+     left, a few short link columns, one slim bottom bar. Tightened padding
+     and the row gap below (was 48/40px) now that there's no 13-item
+     SERVICES column pushing everything else down with it. */
+  .footer { background: var(--dark-text); padding: 40px 48px 24px; color: rgba(255,255,255,0.5); }
+  .footer-top { display: flex; justify-content: space-between; gap: 32px; flex-wrap: wrap; margin-bottom: 28px; }
   .footer-brand .nav-logo { font-size: 20px; display: block; margin-bottom: 12px; }
   .footer-brand p { font-size: 13px; max-width: 240px; line-height: 1.6; }
+  .footer-get-app-btn { margin: 16px 0 0; }
   .footer-links h5 { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: rgba(255,255,255,0.8); margin-bottom: 14px; }
   .footer-links ul { list-style: none; display: flex; flex-direction: column; gap: 8px; }
   .footer-links li { font-size: 13px; cursor: pointer; transition: color .2s; }
   .footer-links li:hover { color: var(--near-white); }
-  .footer-bottom { border-top: 1px solid rgba(255,255,255,0.08); padding-top: 24px; font-size: 12px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+  .footer-bottom { border-top: 1px solid rgba(255,255,255,0.08); padding-top: 18px; font-size: 12px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
 
   /* PORTAL LAYOUTS — the persistent left sidebar (Customer + Admin portals;
      the Provider Portal was already converted to its own top bar earlier)
@@ -4467,7 +4471,15 @@ function Nav({ onNav, current, session, user, providerProfile, staffProfile, onS
   // visually inside the search input. Not rendering the search UI at all
   // on portal pages removes the collision outright, rather than trying to
   // out-position an absolutely-centered overlay with flex ordering.
-  const showNavSearch = current === "home" || (current === "customer" && !session);
+  //
+  // The "customer" exception that used to live here (showing this search
+  // UI to a logged-out visitor on the Customer Portal) was removed along
+  // with guest browsing of that portal — see CustomerPortal's own sign-in
+  // gate. An unauthenticated "customer" view now falls through to the same
+  // bare Menu-button fallback nav as "provider"/"admin" without a session,
+  // below, instead of looking like a browsable page with nothing to
+  // actually browse.
+  const showNavSearch = current === "home";
 
   // Every page below nav is a near-white surface except the provider
   // landing page's own dark hero (view "providers" — see the --light
@@ -4515,7 +4527,7 @@ function Nav({ onNav, current, session, user, providerProfile, staffProfile, onS
       <button className={`nav-search-toggle ${navSearchActive ? "visible" : ""}`} onClick={() => setMobileSearchOpen(v => !v)} aria-label={t("nav.searchAriaLabel")}>🔍</button>
       )}
 
-      {(current === "home" || current === "providers" || (current === "customer" && !session)) ? (
+      {(current === "home" || current === "providers") ? (
         <div className="nav-cta">
           {/* LANGUAGE SELECTOR — moved here, as the first child of the
               right-side cluster, so it sits immediately to the left of the
@@ -5137,6 +5149,12 @@ function LandingPage({ onNav, session, user, onSignIn, onSignOut }) {
 // ── SITE FOOTER — shared by the consumer home page and the B2B provider
 // landing page. Pulled out once both pages needed it, rather than each
 // page carrying its own copy of the same static markup. ─────────────
+// Compact, Fresha-style footer — brand + a "Get the app" pill on the left,
+// a few short link columns (max 4 items each), one slim bottom bar. The old
+// version's full 13-item SERVICES list (reading every category name out one
+// by one) was most of what made it "so big"; every one of those categories
+// is already one tap away from the Home tab's own category pills, so
+// repeating the whole catalog down here was never pulling its weight.
 function SiteFooter() {
   const { t } = useTranslation();
   return (
@@ -5145,12 +5163,9 @@ function SiteFooter() {
         <div className="footer-brand">
           <span className="nav-logo" style={{ display: "inline-flex", alignItems: "center", gap: 8 }}><VaiBookMark size={20} />vai<span>book</span></span>
           <p>{t("footer.tagline")}</p>
-        </div>
-        <div className="footer-links">
-          <h5>{t("footer.services")}</h5>
-          <ul>
-            {SERVICES.map((s) => <li key={s.name}>{t(`services.${s.key}.name`)}</li>)}
-          </ul>
+          <button className="hero-get-app-btn footer-get-app-btn" onClick={openInstallAppGuide}>
+            {t("nav.addToHomeScreen")} <span aria-hidden="true">⊞</span>
+          </button>
         </div>
         <div className="footer-links">
           <h5>{t("footer.company")}</h5>
@@ -5486,7 +5501,7 @@ function ProviderLandingPage({ onNav, session, onSignIn, onSignOut }) {
 }
 
 // ── CUSTOMER PORTAL ─────────────────────────────────────────────
-function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdate, deepLinkProviderId, onDeepLinkConsumed }) {
+function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdate, deepLinkProviderId, onDeepLinkConsumed, cameViaBookingLink }) {
   const { t } = useTranslation();
   // Remembers which tab this account was on, so a refresh lands back on
   // "My bookings" (or wherever) instead of always resetting to "Home" —
@@ -6677,6 +6692,34 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
     }
     return photos;
   })();
+
+  // Not signed in, and didn't arrive via a "#book-<id>" QR/NFC/link scan —
+  // same gate ProviderPortal and AdminPortal already use (see their own
+  // "Not signed in at all" checks), now applied here too. Browsing this
+  // portal without an account used to be allowed on purpose (see the old
+  // note above switchToPortal about "#book-<id>" never needing a session) —
+  // but that meant anyone landing on a stale/typed "#customer" hash saw the
+  // full, personalized-looking Home tab ("Ready when you are, there.",
+  // claimable drops, etc.) while the nav still said "Log in", which reads
+  // as broken rather than intentional. The one deep-link exception stays:
+  // a real QR/NFC scan still jumps straight to that one provider's booking
+  // modal with no sign-in required, same as always.
+  if (!session && !cameViaBookingLink) {
+    return (
+      <div style={{ minHeight: "100vh", background: "var(--forest)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
+        <div style={{ textAlign: "center", maxWidth: 360 }}>
+          <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 28, fontWeight: 800, color: "var(--near-white)", marginBottom: 8, display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}>
+            <VaiBookMark size={30} />vai<span style={{ color: "var(--lime)" }}>book</span>
+          </div>
+          <p style={{ color: "rgba(255,255,255,0.6)", fontSize: 14, marginBottom: 24 }}>{t("customerPortal.signIn.subtitle")}</p>
+          <button className="btn-lime" style={{ width: "100%", padding: "12px 0" }} onClick={onSignIn}>{t("customerPortal.signIn.button")}</button>
+          <div style={{ marginTop: 20 }}>
+            <a style={{ color: "rgba(255,255,255,0.4)", fontSize: 13, cursor: "pointer" }} onClick={() => onNav("home")}>{t("customerPortal.signIn.backToSite")}</a>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="portal-layout">
@@ -13131,6 +13174,19 @@ export default function App() {
     return parseBookingHash(h);
   });
 
+  // Whether this visit started from a "#book-<id>" QR/NFC/link scan — the
+  // one legitimate way to reach CustomerPortal without ever signing in
+  // (jump straight to that one provider's booking modal). Captured once,
+  // at mount, from the raw hash rather than from deepLinkProviderId above:
+  // that state gets cleared back to null the moment the deep link is
+  // consumed (see onDeepLinkConsumed below), but CustomerPortal's own
+  // sign-in gate needs to keep remembering "yes, this guest arrived via a
+  // real deep link" for the rest of the visit, not just the first instant.
+  const [cameViaBookingLink] = useState(() => {
+    const h = window.location.hash.replace("#", "");
+    return !!parseBookingHash(h);
+  });
+
   // Keep view in sync if the URL hash changes without a full page reload
   // (e.g. typing/pasting a #admin or #customer link into an already-open tab).
   useEffect(() => {
@@ -13575,6 +13631,7 @@ export default function App() {
           onNav={setView}
           {...authProps}
           deepLinkProviderId={deepLinkProviderId}
+          cameViaBookingLink={cameViaBookingLink}
           onDeepLinkConsumed={() => {
             setDeepLinkProviderId(null);
             // Clearing the React state above was never enough on its own —
