@@ -254,15 +254,18 @@ const css = `
        rollout can continue page by page later without risk to what's
        already shipped. Default (no [data-theme] override) is dark — this
        site's existing premium look — for a first-time visitor.
-       --accent-neon/--accent-neon-text are the literal brand lime, kept
-       IDENTICAL in both themes per the brief ("maintain the exact same
-       neon lime for primary buttons and hover states"). --accent-text is
-       a separate token for lime used as plain TEXT directly on the page
-       background (an eyebrow label, a rating line): lime-on-near-white
-       fails contrast, so in light mode that specific usage swaps to the
-       deep forest accent instead — brand color stays reserved for
-       surfaces (buttons, borders, glowing badges) where it's actually
-       legible in both themes. */
+       --accent-neon/--accent-neon-text are the CTA button pair (search
+       submit, "Book Now", "Claim", "Find a provider"), kept IDENTICAL in
+       both themes — main brand color (--forest) as the surface, white
+       text on top, swapped 2026-10-22 from the earlier gold-surface/
+       forest-text pairing per direct feedback on how the "Claim"/"Book
+       Now" card buttons read. --accent-text is a separate token for lime
+       used as plain TEXT directly on the page background (an eyebrow
+       label, a rating line): lime-on-near-white fails contrast, so in
+       light mode that specific usage swaps to the deep forest accent
+       instead — brand color stays reserved for surfaces (buttons,
+       borders, glowing badges) where it's actually legible in both
+       themes. */
     --bg-primary: #170F38;
     --bg-elevated: rgba(255,255,255,0.04);
     --bg-elevated-hover: rgba(255,255,255,0.07);
@@ -272,8 +275,8 @@ const css = `
     --border-subtle: rgba(255,255,255,0.14);
     --card-border: transparent;
     --card-shadow: 0 14px 34px rgba(0,0,0,0.35);
-    --accent-neon: var(--lime);
-    --accent-neon-text: var(--forest);
+    --accent-neon: var(--forest);
+    --accent-neon-text: #FFFFFF;
     --accent-text: var(--lime);
     /* Near-black glass, verbatim from .cx-discover-search/.cx-discover-pill
        (Customer Portal Home) — see the GLOBAL PREMIUM UI COMPONENTS note
@@ -1361,8 +1364,8 @@ const css = `
   .cx-hero-divider::before { left: -14px; }
   .cx-hero-divider::after { right: -14px; }
   .cx-hero-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 22px; }
-  .cx-btn-neon { display: inline-flex; align-items: center; gap: 6px; background: var(--lime); color: var(--forest); font-weight: 800; font-size: 14px; padding: 13px 22px; border-radius: 100px; border: none; cursor: pointer; text-decoration: none; box-shadow: 0 0 0 rgba(242,183,5,0.5); transition: box-shadow .2s, transform .15s; }
-  .cx-btn-neon:hover { box-shadow: 0 0 24px rgba(242,183,5,0.55); transform: translateY(-1px); }
+  .cx-btn-neon { display: inline-flex; align-items: center; gap: 6px; background: var(--accent-neon); color: var(--accent-neon-text); font-weight: 800; font-size: 14px; padding: 13px 22px; border-radius: 100px; border: none; cursor: pointer; text-decoration: none; box-shadow: 0 0 0 rgba(76,61,196,0.5); transition: box-shadow .2s, transform .15s; }
+  .cx-btn-neon:hover { box-shadow: 0 0 24px rgba(76,61,196,0.55); transform: translateY(-1px); }
   .cx-btn-ghost { display: inline-flex; align-items: center; gap: 6px; background: transparent; color: #FFFFFF; font-weight: 700; font-size: 13.5px; padding: 12px 18px; border-radius: 100px; border: 1.5px solid rgba(255,255,255,0.28); cursor: pointer; text-decoration: none; transition: border-color .2s, background .2s; }
   .cx-btn-ghost:hover { border-color: rgba(255,255,255,0.55); background: rgba(255,255,255,0.06); }
   /* Purely decorative ticket-stub texture — not a scannable/real barcode,
@@ -1415,8 +1418,8 @@ const css = `
   .cx-drop-avatar { width: 48px; height: 48px; border-radius: 50%; background: linear-gradient(160deg, #8C7AF0 0%, #1C1438 100%); display: flex; align-items: center; justify-content: center; font-size: 20px; margin-bottom: 10px; flex-shrink: 0; }
   .cx-drop-shop { font-size: 12.5px; font-weight: 700; color: #FFFFFF; line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
   .cx-drop-time { font-size: 11px; font-weight: 700; color: var(--lime); margin-top: 4px; margin-bottom: 10px; }
-  .cx-drop-claim { width: 100%; background: var(--lime); color: var(--forest); font-weight: 800; font-size: 12.5px; padding: 9px 0; border-radius: 100px; border: none; cursor: pointer; box-shadow: 0 0 0 rgba(242,183,5,0.5); transition: box-shadow .2s; }
-  .cx-drop-claim:hover { box-shadow: 0 0 16px rgba(242,183,5,0.5); }
+  .cx-drop-claim { width: 100%; background: var(--accent-neon); color: var(--accent-neon-text); font-weight: 800; font-size: 12.5px; padding: 9px 0; border-radius: 100px; border: none; cursor: pointer; box-shadow: 0 0 0 rgba(76,61,196,0.5); transition: box-shadow .2s; }
+  .cx-drop-claim:hover { box-shadow: 0 0 16px rgba(76,61,196,0.5); }
 
   /* THE LOOKBOOK — CSS-columns masonry (no JS layout math needed): each
      photo keeps its natural aspect ratio so the feed reads as a curated
