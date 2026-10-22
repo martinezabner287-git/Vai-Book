@@ -557,6 +557,11 @@
       "title": "Configuración",
       "turnOn": "Activar",
       "turningOn": "Activando..."
+    },
+    "signIn": {
+      "backToSite": "← Volver al sitio",
+      "button": "Iniciar sesión con Google",
+      "subtitle": "Inicia sesión con Google para explorar proveedores y reservar una cita."
     }
   },
   "staffPortal": {
