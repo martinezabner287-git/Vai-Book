@@ -70,21 +70,21 @@ function bookingConfirmedEmailHtml({ customerName, providerProfile, serviceName,
 
   return `
   <div style="font-family: -apple-system, Helvetica, Arial, sans-serif; max-width: 520px; margin: 0 auto; color: #1a2e22;">
-    <div style="background: #0D3D2E; padding: 22px 28px; border-radius: 10px 10px 0 0;">
+    <div style="background: #4C3DC4; padding: 22px 28px; border-radius: 10px 10px 0 0;">
       <span style="font-size: 20px; font-weight: 700; color: #FAFAF7;">vai<span style="color: #C6F135;">book</span></span>
     </div>
     <div style="background: #ffffff; border: 1px solid #E5E0D3; border-top: none; border-radius: 0 0 10px 10px; padding: 28px;">
-      <h2 style="margin: 0 0 6px; font-size: 20px; color: #0D3D2E;">Thank you for booking with VaiBook${customerName ? `, ${customerName}` : ""}!</h2>
+      <h2 style="margin: 0 0 6px; font-size: 20px; color: #4C3DC4;">Thank you for booking with VaiBook${customerName ? `, ${customerName}` : ""}!</h2>
       <p style="margin: 0 0 20px; font-size: 14px; color: #5b6b62; line-height: 1.5;">Your appointment with <strong>${providerName}</strong> is confirmed. Here's everything you need for your visit.</p>
 
-      <div style="background: #F5EFE0; border-radius: 8px; padding: 16px 18px; margin-bottom: 16px;">
+      <div style="background: #F3F1FC; border-radius: 8px; padding: 16px 18px; margin-bottom: 16px;">
         <div style="font-size: 12px; color: #5b6b62; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.4px;">Appointment</div>
         <div style="font-size: 15px; font-weight: 600;">${serviceName}</div>
         <div style="font-size: 13px; color: #5b6b62; margin-top: 2px;">${dateStr}${timeStr ? ` at ${timeStr}` : ""}</div>
       </div>
 
       <div style="border: 1px solid #E5E0D3; border-radius: 8px; padding: 16px 18px; margin-bottom: 16px;">
-        <div style="font-size: 12px; font-weight: 600; color: #0D3D2E; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.4px;">Invoice</div>
+        <div style="font-size: 12px; font-weight: 600; color: #4C3DC4; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.4px;">Invoice</div>
         <table style="width: 100%; font-size: 14px; border-collapse: collapse;">
           <tr><td style="padding: 4px 0; color: #5b6b62;">Total</td><td style="padding: 4px 0; text-align: right;">BZ$${Number(total || 0).toFixed(2)}</td></tr>
           ${deposit != null ? `<tr><td style="padding: 4px 0; color: #5b6b62;">Deposit paid</td><td style="padding: 4px 0; text-align: right;">BZ$${Number(deposit).toFixed(2)}</td></tr>
@@ -94,9 +94,9 @@ function bookingConfirmedEmailHtml({ customerName, providerProfile, serviceName,
 
       ${addressLine || mapsUrl ? `
       <div style="border: 1px solid #E5E0D3; border-radius: 8px; padding: 16px 18px; margin-bottom: 16px;">
-        <div style="font-size: 12px; font-weight: 600; color: #0D3D2E; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.4px;">Location</div>
+        <div style="font-size: 12px; font-weight: 600; color: #4C3DC4; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.4px;">Location</div>
         ${addressLine ? `<div style="font-size: 14px; margin-bottom: 10px;">${addressLine}</div>` : ""}
-        ${mapsUrl ? `<a href="${mapsUrl}" style="display: inline-block; background: #0D3D2E; color: #FAFAF7; text-decoration: none; font-size: 13px; font-weight: 600; padding: 9px 18px; border-radius: 100px;">Get directions</a>` : ""}
+        ${mapsUrl ? `<a href="${mapsUrl}" style="display: inline-block; background: #4C3DC4; color: #FAFAF7; text-decoration: none; font-size: 13px; font-weight: 600; padding: 9px 18px; border-radius: 100px;">Get directions</a>` : ""}
       </div>` : ""}
 
       <p style="font-size: 13px; color: #5b6b62; line-height: 1.5; margin-top: 24px;">We look forward to seeing you. If anything comes up, you can reach ${providerName} directly.</p>
@@ -114,13 +114,13 @@ function bookingConfirmedEmailHtml({ customerName, providerProfile, serviceName,
 function providerApprovedEmailHtml({ businessName, ownerName }) {
   return `
   <div style="font-family: -apple-system, Helvetica, Arial, sans-serif; max-width: 520px; margin: 0 auto; color: #1a2e22;">
-    <div style="background: #0D3D2E; padding: 22px 28px; border-radius: 10px 10px 0 0;">
+    <div style="background: #4C3DC4; padding: 22px 28px; border-radius: 10px 10px 0 0;">
       <span style="font-size: 20px; font-weight: 700; color: #FAFAF7;">vai<span style="color: #C6F135;">book</span></span>
     </div>
     <div style="background: #ffffff; border: 1px solid #E5E0D3; border-top: none; border-radius: 0 0 10px 10px; padding: 28px;">
-      <h2 style="margin: 0 0 6px; font-size: 20px; color: #0D3D2E;">You're approved${ownerName ? `, ${ownerName}` : ""}! 🎉</h2>
+      <h2 style="margin: 0 0 6px; font-size: 20px; color: #4C3DC4;">You're approved${ownerName ? `, ${ownerName}` : ""}! 🎉</h2>
       <p style="margin: 0 0 20px; font-size: 14px; color: #5b6b62; line-height: 1.5;"><strong>${businessName}</strong> has been approved on VaiBook. One last step to go live:</p>
-      <div style="background: #F5EFE0; border-radius: 8px; padding: 16px 18px; margin-bottom: 16px;">
+      <div style="background: #F3F1FC; border-radius: 8px; padding: 16px 18px; margin-bottom: 16px;">
         <div style="font-size: 14px; line-height: 1.6;">
           Sign in at <strong>vai-book.vercel.app/#provider</strong> with Google, using this same email address. The moment you do, your business goes live and customers can start finding and booking you.
         </div>
@@ -217,7 +217,7 @@ function buildSuggestions(list, query) {
 }
 
 // ── DESIGN TOKENS ──────────────────────────────────────────────
-// Palette: deep forest green (#0D3D2E) + warm sand (#F5EFE0) + 
+// Palette: deep forest green (#4C3DC4) + warm sand (#F3F1FC) + 
 // electric lime accent (#C6F135) + soft clay (#D4795A) + near-white (#FAFAF7)
 // Type: "Plus Jakarta Sans" throughout (display + body) — matches Vai Buy & Sell
 // Signature: the lime accent used sparingly — only on the ONE thing that matters per screen
@@ -228,16 +228,16 @@ const css = `
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
   :root {
-    --forest: #0D3D2E;
-    --forest-mid: #164D3A;
-    --forest-light: #1E6B50;
-    --sand: #F5EFE0;
-    --lime: #C6F135;
+    --forest: #4C3DC4;
+    --forest-mid: #6C5CE7;
+    --forest-light: #8C7AF0;
+    --sand: #F3F1FC;
+    --lime: #F2B705;
     --clay: #D4795A;
-    --near-white: #FAFAF7;
-    --dark-text: #0D1F18;
-    --muted: #6B7F76;
-    --border: #D9E4DF;
+    --near-white: #FAF9FE;
+    --dark-text: #17141F;
+    --muted: #6B6578;
+    --border: #E7E2F5;
     --radius: 12px;
     --radius-sm: 8px;
 
@@ -263,7 +263,7 @@ const css = `
        deep forest accent instead — brand color stays reserved for
        surfaces (buttons, borders, glowing badges) where it's actually
        legible in both themes. */
-    --bg-primary: #081F17;
+    --bg-primary: #170F38;
     --bg-elevated: rgba(255,255,255,0.04);
     --bg-elevated-hover: rgba(255,255,255,0.07);
     --text-primary: #FFFFFF;
@@ -307,7 +307,7 @@ const css = `
      height, ending on the exact color the hero starts from, so nav and
      hero read as one continuous fade rather than nav sitting as a flat
      dark cap on top of a graded hero. Earlier version only moved from
-     near-black to dark forest here (#030B08→#0D3D2E) — too small a jump
+     near-black to dark forest here (#030B08→#4C3DC4) — too small a jump
      over ~108px to look like it was fading at all next to the hero's much
      bigger swing. Widening nav's own jump (near-black to a clearly lighter
      mid-green) makes the brightening visible within the nav bar itself.
@@ -321,7 +321,7 @@ const css = `
      --light: every page below nav EXCEPT the dark provider-landing hero
      (.provider-hero) is a near-white surface (.search-hero, the customer
      marketplace, admin — all sit on var(--bg-primary)/var(--near-white)).
-     Against those, ending the gradient on a flat #17593F produced a hard
+     Against those, ending the gradient on a flat #4C3DC4 produced a hard
      colored line right at the nav's bottom edge — it reads as a literal
      border even though no border/box-shadow is set, simply because a
      saturated green block butts straight up against near-white with zero
@@ -331,10 +331,10 @@ const css = `
      color — no visible line, same dark-to-green bar everywhere above it.
      Kept as a separate modifier (applied per-view in Nav()) rather than
      changed in place, because provider-hero's own background starts dark
-     (#081F17) — fading to near-white there would put a pale sliver between
+     (#170F38) — fading to near-white there would put a pale sliver between
      two dark greens, the same problem in reverse. */
-  .nav-outer { position: sticky; top: 0; z-index: 100; background: linear-gradient(180deg, #02100A 0%, #17593F 100%); }
-  .nav-outer.nav-outer--light { background: linear-gradient(180deg, #02100A 0%, #17593F calc(100% - 12px), var(--near-white) 100%); }
+  .nav-outer { position: sticky; top: 0; z-index: 100; background: linear-gradient(180deg, #0F0A26 0%, #4C3DC4 100%); }
+  .nav-outer.nav-outer--light { background: linear-gradient(180deg, #0F0A26 0%, #4C3DC4 calc(100% - 12px), var(--near-white) 100%); }
   .nav {
     display: flex; align-items: center; justify-content: space-between;
     padding: 16px 48px; background: transparent; position: relative;
@@ -441,8 +441,8 @@ const css = `
   .btn-lime:hover { opacity: 0.85; }
   .nav-menu-btn { display: flex; align-items: center; gap: 8px; background: transparent; border: 1px solid rgba(255,255,255,0.35); color: var(--near-white); padding: 9px 18px 9px 22px; border-radius: 100px; font-size: 14px; font-weight: 500; cursor: pointer; transition: all .2s; }
   .nav-menu-btn:hover { border-color: var(--lime); color: var(--lime); }
-  .nav-signup-btn { background: var(--lime); border: none; color: var(--forest); padding: 9px 20px; border-radius: 100px; font-size: 14px; font-weight: 700; cursor: pointer; transition: all .2s; box-shadow: 0 0 0 rgba(198,241,53,0); }
-  .nav-signup-btn:hover { box-shadow: 0 0 14px rgba(198,241,53,0.6); transform: translateY(-1px); }
+  .nav-signup-btn { background: var(--lime); border: none; color: var(--forest); padding: 9px 20px; border-radius: 100px; font-size: 14px; font-weight: 700; cursor: pointer; transition: all .2s; box-shadow: 0 0 0 rgba(242,183,5,0); }
+  .nav-signup-btn:hover { box-shadow: 0 0 14px rgba(242,183,5,0.6); transform: translateY(-1px); }
   /* NAV "FOR BUSINESSES" PILL — same outline-pill treatment as
      .nav-menu-btn (transparent fill, faint white border) rather than
      .nav-signup-btn's solid lime, and deliberately NOT hidden at any
@@ -471,7 +471,7 @@ const css = `
     width: 34px; height: 34px; background: transparent; border: 1px solid rgba(255,255,255,0.25);
     border-radius: 50%; color: var(--near-white); cursor: pointer; transition: all .2s; flex-shrink: 0;
   }
-  .theme-toggle:hover { border-color: var(--lime); color: var(--lime); background: rgba(198,241,53,0.08); }
+  .theme-toggle:hover { border-color: var(--lime); color: var(--lime); background: rgba(242,183,5,0.08); }
   /* LANGUAGE SELECTOR — same always-dark nav chrome treatment as the theme
      toggle right above (see its comment): a pill instead of a circle since
      this shows two letters (EN/ES), not a single icon glyph. */
@@ -482,7 +482,7 @@ const css = `
     color: var(--near-white); cursor: pointer; transition: all .2s; flex-shrink: 0;
     font-size: 12px; font-weight: 800; letter-spacing: .04em; font-family: 'Plus Jakarta Sans', sans-serif;
   }
-  .lang-toggle:hover { border-color: var(--lime); color: var(--lime); background: rgba(198,241,53,0.08); }
+  .lang-toggle:hover { border-color: var(--lime); color: var(--lime); background: rgba(242,183,5,0.08); }
   /* FOOTER LANGUAGE SELECTOR — the "🌐 English" control that sits in the
      footer's bottom bar (same spot/pattern as Fresha's "🌐 English (US)").
      Lives on a dark footer background like the nav, so it reuses that
@@ -534,7 +534,7 @@ const css = `
     content: '';
     position: absolute; inset: -20%;
     background:
-      radial-gradient(circle at 25% 30%, rgba(198,241,53,0.35), transparent 50%),
+      radial-gradient(circle at 25% 30%, rgba(242,183,5,0.35), transparent 50%),
       radial-gradient(circle at 80% 70%, rgba(212,121,90,0.30), transparent 55%);
     filter: blur(60px);
   }
@@ -652,7 +652,7 @@ const css = `
      has the caret) so the unread badge sits pinned to the circle's own
      top-right corner regardless of button padding/caret width. */
   .nav-avatar-wrap { position: relative; display: inline-flex; flex-shrink: 0; }
-  .nav-avatar-badge { position: absolute; top: -3px; right: -3px; background: var(--lime); color: var(--forest); font-size: 10px; font-weight: 800; min-width: 16px; height: 16px; border-radius: 8px; display: flex; align-items: center; justify-content: center; padding: 0 3px; border: 1.5px solid var(--forest); box-shadow: 0 0 6px rgba(198,241,53,0.6); line-height: 1; }
+  .nav-avatar-badge { position: absolute; top: -3px; right: -3px; background: var(--lime); color: var(--forest); font-size: 10px; font-weight: 800; min-width: 16px; height: 16px; border-radius: 8px; display: flex; align-items: center; justify-content: center; padding: 0 3px; border: 1.5px solid var(--forest); box-shadow: 0 0 6px rgba(242,183,5,0.6); line-height: 1; }
   .nav-account-dropdown { position: absolute; top: calc(100% + 12px); right: 0; background: white; border-radius: var(--radius-sm); box-shadow: 0 16px 40px rgba(13,61,46,0.18); border: 1px solid var(--border); min-width: 250px; padding: 10px; z-index: 200; }
   .nav-account-name { padding: 10px 14px 14px; font-weight: 700; font-size: 16px; color: var(--dark-text); }
   .nav-account-dropdown button.nav-dropdown-item { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; background: none; border: none; padding: 11px 14px; border-radius: 8px; font-size: 14px; font-weight: 500; color: var(--dark-text); cursor: pointer; }
@@ -670,7 +670,7 @@ const css = `
      the accountOpen dropdown in Nav()). No default browser <ul>/<li>
      styling to begin with (it's already div/button-based), so this is
      purely the color treatment matching the rest of the dark pages. */
-  .cx-account-dropdown { background: #0E241B; border: none; box-shadow: 0 20px 50px rgba(0,0,0,0.4); }
+  .cx-account-dropdown { background: #1C1438; border: none; box-shadow: 0 20px 50px rgba(0,0,0,0.4); }
   .cx-account-dropdown .nav-account-name { color: rgba(245,239,224,0.5); }
   .cx-account-dropdown button.nav-dropdown-item,
   .cx-account-dropdown a { color: #FFFFFF; }
@@ -685,7 +685,7 @@ const css = `
   .cx-account-dropdown .notif-item { border-color: rgba(255,255,255,0.1); }
   .cx-account-dropdown .notif-dropdown-header a { color: var(--lime); }
   .cx-account-dropdown .notif-item:hover { background: rgba(255,255,255,0.08); }
-  .cx-account-dropdown .notif-item.unread { background: rgba(198,241,53,0.08); }
+  .cx-account-dropdown .notif-item.unread { background: rgba(242,183,5,0.08); }
   .cx-account-dropdown .notif-title { color: #FFFFFF; }
   .cx-account-dropdown .notif-body,
   .cx-account-dropdown .notif-time,
@@ -716,12 +716,12 @@ const css = `
     display: flex; align-items: center; gap: 16px; cursor: pointer;
     transition: background .2s, border-color .2s;
   }
-  .service-card:hover { background: rgba(198,241,53,0.08); border-color: rgba(198,241,53,0.3); }
+  .service-card:hover { background: rgba(242,183,5,0.08); border-color: rgba(242,183,5,0.3); }
   .service-icon { width: 48px; height: 48px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; }
   .service-info h4 { font-size: 15px; font-weight: 600; color: var(--near-white); margin-bottom: 2px; }
   .service-info p { font-size: 13px; color: rgba(255,255,255,0.5); }
   .service-badge { margin-left: auto; background: var(--lime); color: var(--forest); font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 6px; }
-  .service-badge.open { background: rgba(198,241,53,0.15); color: var(--lime); }
+  .service-badge.open { background: rgba(242,183,5,0.15); color: var(--lime); }
 
   /* SEARCH HERO — light marketplace-style hero: small eyebrow label, bold
      two-line statement headline (2nd line in a mid-green accent), then the
@@ -783,7 +783,7 @@ const css = `
   .search-bar-pill .field { flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; padding: 10px 18px; }
   .search-bar-pill .field input, .search-bar-pill .field select { border: none; outline: none; background: transparent; font-size: 16px; width: 100%; color: #FFFFFF; font-family: 'Plus Jakarta Sans', sans-serif; }
   .search-bar-pill .field input::placeholder { color: rgba(245,239,224,0.45); }
-  .search-bar-pill select option { background: #0D3D2E; color: #FFFFFF; }
+  .search-bar-pill select option { background: #4C3DC4; color: #FFFFFF; }
   .search-bar-pill .sep { width: 1px; height: 28px; background: rgba(255,255,255,0.18); flex-shrink: 0; }
   .search-submit { background: var(--lime); color: var(--forest); border: none; border-radius: 100px; padding: 14px 30px; font-weight: 700; font-size: 15px; cursor: pointer; white-space: nowrap; transition: opacity .2s; font-family: 'Plus Jakarta Sans', sans-serif; }
   .search-submit:hover { opacity: .87; }
@@ -801,7 +801,7 @@ const css = `
     box-shadow: 0 10px 26px rgba(13,61,46,0.1); transition: transform .15s;
   }
   .hero-get-app-btn:hover { transform: translateY(-1px); }
-  .hero-trial-btn { display: block; margin: 0 auto 44px; padding: 17px 38px; font-size: 16px; border-radius: 100px; box-shadow: 0 16px 40px rgba(198,241,53,0.22); }
+  .hero-trial-btn { display: block; margin: 0 auto 44px; padding: 17px 38px; font-size: 16px; border-radius: 100px; box-shadow: 0 16px 40px rgba(242,183,5,0.22); }
   .hero-search-label { font-size: 12px; font-weight: 600; letter-spacing: .03em; color: rgba(250,250,247,0.5); text-align: center; margin-bottom: 14px; }
 
   /* SEARCH SUGGESTIONS (autocomplete dropdown, shared by hero + browse search bars) */
@@ -840,19 +840,19 @@ const css = `
      rather than the same page with different copy. */
   .provider-hero {
     position: relative; overflow: hidden; padding: 128px 24px 104px; text-align: center;
-    background: linear-gradient(165deg, #081F17 0%, #0D3D2E 55%, #14503A 100%);
+    background: linear-gradient(165deg, #170F38 0%, #4C3DC4 55%, #5A49D6 100%);
   }
   .provider-hero::before {
     content: '';
     position: absolute; inset: -25%;
-    background: radial-gradient(circle at 50% 0%, rgba(198,241,53,0.16), transparent 62%);
+    background: radial-gradient(circle at 50% 0%, rgba(242,183,5,0.16), transparent 62%);
     z-index: 0;
   }
   .provider-hero > * { position: relative; z-index: 1; }
   .provider-hero-eyebrow {
     display: inline-block; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 12px; font-weight: 700;
     letter-spacing: .16em; text-transform: uppercase; color: var(--lime);
-    background: rgba(198,241,53,0.1); border: 1px solid rgba(198,241,53,0.28);
+    background: rgba(242,183,5,0.1); border: 1px solid rgba(242,183,5,0.28);
     padding: 8px 20px; border-radius: 100px; margin-bottom: 24px;
   }
   .provider-hero-title {
@@ -864,7 +864,7 @@ const css = `
   .provider-hero-ctas { display: flex; align-items: center; justify-content: center; gap: 14px; flex-wrap: wrap; }
   .provider-hero-cta.btn-lime {
     display: inline-block; padding: 20px 44px; font-size: 17px; font-weight: 800;
-    border-radius: 100px; box-shadow: 0 18px 44px rgba(198,241,53,0.28);
+    border-radius: 100px; box-shadow: 0 18px 44px rgba(242,183,5,0.28);
   }
   .provider-hero-note { margin-top: 18px; font-size: 13px; color: rgba(250,250,247,0.5); }
   /* The dashboard screenshot living inside the dark hero, Fresha-style —
@@ -917,7 +917,7 @@ const css = `
     .lp-theme .services-pills .service-pill { flex: 0 0 auto; scroll-snap-align: start; }
   }
   .lp-theme .service-pill { background: var(--bg-elevated); border-color: var(--border-subtle); color: var(--text-primary); }
-  .lp-theme .service-pill:hover { border-color: var(--accent-neon); color: var(--accent-text); background: rgba(198,241,53,0.08); box-shadow: none; }
+  .lp-theme .service-pill:hover { border-color: var(--accent-neon); color: var(--accent-text); background: rgba(242,183,5,0.08); box-shadow: none; }
 
   /* TRENDING / DISCOVER CAROUSEL CARDS — themed, borderless-in-dark /
      subtly-bordered-in-light variant of the shared .carousel-card (also
@@ -974,15 +974,15 @@ const css = `
     transition: transform .15s ease, background .2s ease, box-shadow .2s ease;
   }
   .tny-card:hover { transform: translateY(-4px); background: var(--bg-elevated-hover); box-shadow: var(--card-shadow); }
-  .tny-card-img { position: relative; height: 160px; background: linear-gradient(160deg, #1E6B50 0%, #0E241B 100%); overflow: hidden; }
+  .tny-card-img { position: relative; height: 160px; background: linear-gradient(160deg, #8C7AF0 0%, #1C1438 100%); overflow: hidden; }
   .tny-card-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
   .tny-card-img-fallback { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 40px; }
   .tny-card-img-overlay { position: absolute; left: 0; right: 0; bottom: 0; height: 65%; background: linear-gradient(180deg, rgba(8,31,23,0) 0%, rgba(8,31,23,0.9) 100%); pointer-events: none; }
   .tny-scarcity {
     position: absolute; top: 10px; left: 10px; z-index: 2;
-    background: rgba(198,241,53,0.18); color: var(--lime); border: 1px solid rgba(198,241,53,0.4);
+    background: rgba(242,183,5,0.18); color: var(--lime); border: 1px solid rgba(242,183,5,0.4);
     font-size: 10px; font-weight: 800; letter-spacing: .03em; text-transform: uppercase;
-    padding: 4px 9px; border-radius: 100px; box-shadow: 0 0 14px rgba(198,241,53,0.4);
+    padding: 4px 9px; border-radius: 100px; box-shadow: 0 0 14px rgba(242,183,5,0.4);
   }
   .tny-card-body { padding: 14px 16px 16px; }
   .tny-card-body h4 { font-size: 15px; font-weight: 800; color: var(--text-primary); margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -1083,20 +1083,20 @@ const css = `
   .pricing-features li .check { color: var(--forest); font-weight: 700; flex-shrink: 0; }
   .pricing-cta { width: 100%; text-align: center; }
   .pricing-foot-note { text-align: center; font-size: 13px; color: var(--muted); margin-top: 32px; max-width: 620px; margin-left: auto; margin-right: auto; }
-  .vai-media-banner { position: relative; overflow: hidden; max-width: 780px; margin: 56px auto 0; text-align: center; background: linear-gradient(160deg, var(--forest) 0%, #0A2A20 100%); border: 1px solid rgba(198,241,53,0.25); border-radius: 24px; padding: 52px 40px; box-shadow: 0 24px 60px rgba(13,61,46,0.28); }
-  .vai-media-banner::before { content: ""; position: absolute; top: -60px; right: -60px; width: 220px; height: 220px; background: radial-gradient(circle, rgba(198,241,53,0.18) 0%, rgba(198,241,53,0) 70%); pointer-events: none; }
-  .vai-media-eyebrow { display: inline-flex; align-items: center; gap: 6px; background: rgba(198,241,53,0.12); color: var(--lime); font-size: 11px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; padding: 7px 16px; border-radius: 100px; margin-bottom: 18px; border: 1px solid rgba(198,241,53,0.3); }
+  .vai-media-banner { position: relative; overflow: hidden; max-width: 780px; margin: 56px auto 0; text-align: center; background: linear-gradient(160deg, var(--forest) 0%, #1E1450 100%); border: 1px solid rgba(242,183,5,0.25); border-radius: 24px; padding: 52px 40px; box-shadow: 0 24px 60px rgba(13,61,46,0.28); }
+  .vai-media-banner::before { content: ""; position: absolute; top: -60px; right: -60px; width: 220px; height: 220px; background: radial-gradient(circle, rgba(242,183,5,0.18) 0%, rgba(242,183,5,0) 70%); pointer-events: none; }
+  .vai-media-eyebrow { display: inline-flex; align-items: center; gap: 6px; background: rgba(242,183,5,0.12); color: var(--lime); font-size: 11px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; padding: 7px 16px; border-radius: 100px; margin-bottom: 18px; border: 1px solid rgba(242,183,5,0.3); }
   .vai-media-title { color: #FFFFFF; font-size: 27px; font-weight: 800; margin: 0 0 14px; letter-spacing: -0.01em; position: relative; }
   .vai-media-copy { color: rgba(245,239,224,0.78); font-size: 15.5px; line-height: 1.6; max-width: 520px; margin: 0 auto 30px; position: relative; }
   .vai-media-tiers { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; max-width: 600px; margin: 0 auto 32px; position: relative; }
-  .vai-media-tier { background: rgba(255,255,255,0.05); border: 1px solid rgba(198,241,53,0.18); border-radius: 14px; padding: 18px 18px 16px; text-align: left; }
+  .vai-media-tier { background: rgba(255,255,255,0.05); border: 1px solid rgba(242,183,5,0.18); border-radius: 14px; padding: 18px 18px 16px; text-align: left; }
   .vai-media-tier-name { color: #FFFFFF; font-size: 14px; font-weight: 800; margin-bottom: 6px; }
   .vai-media-tier-desc { color: rgba(245,239,224,0.65); font-size: 12.5px; line-height: 1.5; margin-bottom: 12px; min-height: 38px; }
   .vai-media-tier-price { color: var(--lime); font-size: 15px; font-weight: 800; }
   @media (max-width: 560px) {
     .vai-media-tiers { grid-template-columns: 1fr; }
   }
-  .vai-media-btn { display: inline-block; background: var(--lime); color: var(--forest); font-weight: 800; font-size: 15px; padding: 15px 34px; border-radius: 14px; text-decoration: none; box-shadow: 0 10px 26px rgba(198,241,53,0.25); position: relative; }
+  .vai-media-btn { display: inline-block; background: var(--lime); color: var(--forest); font-weight: 800; font-size: 15px; padding: 15px 34px; border-radius: 14px; text-decoration: none; box-shadow: 0 10px 26px rgba(242,183,5,0.25); position: relative; }
   .vai-media-alt { margin: 14px 0 0; font-size: 12.5px; position: relative; }
   .vai-media-alt a { color: rgba(245,239,224,0.65); text-decoration: underline; }
   /* VS SECTION — "what changes once you switch," an honest before/after
@@ -1167,7 +1167,7 @@ const css = `
   .provider-shell { min-height: 100vh; background: #F0F4F2; }
   .provider-topbar { position: sticky; top: 0; z-index: 150; height: 64px; background: var(--forest); display: flex; align-items: center; gap: 24px; padding: 0 24px; }
   .provider-topbar-left { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
-  .provider-status-pill { font-size: 10px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--lime); background: rgba(198,241,53,0.12); padding: 4px 9px; border-radius: 100px; white-space: nowrap; }
+  .provider-status-pill { font-size: 10px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--lime); background: rgba(242,183,5,0.12); padding: 4px 9px; border-radius: 100px; white-space: nowrap; }
   .provider-status-pill.pending { color: rgba(255,255,255,0.6); background: rgba(255,255,255,0.08); }
   .provider-topnav-links { display: flex; align-items: center; gap: 4px; flex: 1; }
   .provider-nav-link { background: none; border: none; color: rgba(255,255,255,0.65); font-family: 'Plus Jakarta Sans', sans-serif; font-size: 14px; font-weight: 600; padding: 21px 14px; cursor: pointer; border-bottom: 2px solid transparent; transition: color .2s, border-color .2s; }
@@ -1250,13 +1250,13 @@ const css = `
   /* VAI MEDIA — dashboard promo card (Availability tab). Small and
      dark against the light dashboard cards around it so it reads as a
      premium aside, not another form to fill in. */
-  .vai-media-promo { margin-top: 24px; background: linear-gradient(160deg, var(--forest) 0%, #0A2A20 100%); border: 1px solid rgba(198,241,53,0.22); border-radius: 16px; padding: 22px 26px; display: flex; align-items: center; justify-content: space-between; gap: 18px; flex-wrap: wrap; }
+  .vai-media-promo { margin-top: 24px; background: linear-gradient(160deg, var(--forest) 0%, #1E1450 100%); border: 1px solid rgba(242,183,5,0.22); border-radius: 16px; padding: 22px 26px; display: flex; align-items: center; justify-content: space-between; gap: 18px; flex-wrap: wrap; }
   .vai-media-promo-text strong { display: block; font-size: 14.5px; font-weight: 800; color: #FFFFFF; margin-bottom: 4px; }
   .vai-media-promo-text span { font-size: 12.5px; color: rgba(245,239,224,0.7); line-height: 1.5; }
   .vai-media-promo-btn { flex-shrink: 0; background: var(--lime); color: var(--forest); font-weight: 800; font-size: 13px; padding: 11px 20px; border-radius: 10px; text-decoration: none; white-space: nowrap; }
 
   /* DOPAMINE CARD — dashboard financial snapshot */
-  .dopamine-card { display: flex; align-items: center; background: linear-gradient(160deg, var(--forest) 0%, #0A2A20 100%); border-radius: 20px; padding: 26px 24px; margin-bottom: 20px; box-shadow: 0 16px 40px rgba(13,61,46,0.22); }
+  .dopamine-card { display: flex; align-items: center; background: linear-gradient(160deg, var(--forest) 0%, #1E1450 100%); border-radius: 20px; padding: 26px 24px; margin-bottom: 20px; box-shadow: 0 16px 40px rgba(13,61,46,0.22); }
   .dopamine-metric { flex: 1; min-width: 0; }
   .dopamine-label { font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: rgba(245,239,224,0.6); margin-bottom: 6px; }
   .dopamine-value { font-size: 32px; font-weight: 800; color: var(--lime); font-family: 'Plus Jakarta Sans', sans-serif; letter-spacing: -0.02em; white-space: nowrap; }
@@ -1280,7 +1280,7 @@ const css = `
   .next-chair-whatsapp { flex-shrink: 0; width: 46px; height: 46px; border-radius: 50%; background: #25D366; display: flex; align-items: center; justify-content: center; font-size: 21px; text-decoration: none; box-shadow: 0 6px 16px rgba(37,211,102,0.35); }
 
   /* YOUR SHOPFRONT — chairside link/QR card */
-  .shopfront-card { background: linear-gradient(160deg, var(--forest) 0%, #0A2A20 100%); border: 1px solid rgba(198,241,53,0.2); border-radius: 16px; padding: 20px 22px; margin-bottom: 20px; }
+  .shopfront-card { background: linear-gradient(160deg, var(--forest) 0%, #1E1450 100%); border: 1px solid rgba(242,183,5,0.2); border-radius: 16px; padding: 20px 22px; margin-bottom: 20px; }
   .shopfront-label { font-size: 11px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--lime); margin-bottom: 8px; }
   .shopfront-url { font-size: 12.5px; color: rgba(245,239,224,0.75); word-break: break-all; margin-bottom: 16px; }
   .shopfront-actions { display: flex; gap: 10px; flex-wrap: wrap; }
@@ -1314,7 +1314,7 @@ const css = `
   .ppm-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
 
   /* ELITE WELCOME — "you're live" banner + launch graphic modal */
-  .launch-banner { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; background: linear-gradient(160deg, var(--forest) 0%, #0A2A20 100%); border: 1px solid rgba(198,241,53,0.3); border-radius: 16px; padding: 18px 22px; margin-bottom: 20px; }
+  .launch-banner { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; background: linear-gradient(160deg, var(--forest) 0%, #1E1450 100%); border: 1px solid rgba(242,183,5,0.3); border-radius: 16px; padding: 18px 22px; margin-bottom: 20px; }
   .launch-banner-title { font-size: 15px; font-weight: 800; color: #FFFFFF; }
   .launch-banner-sub { font-size: 12.5px; color: rgba(245,239,224,0.7); margin-top: 3px; }
   /* FIX: this banner is a fixed dark-green gradient in every theme (it
@@ -1344,12 +1344,12 @@ const css = `
      pastel tiles. */
 
   /* VIP PASS — the next appointment as a digital ticket/boarding pass. */
-  .cx-hero { position: relative; overflow: hidden; background: linear-gradient(160deg, var(--forest) 0%, #081F17 100%); border-radius: 22px; padding: 30px 28px; margin-bottom: 24px; box-shadow: 0 20px 50px rgba(8,31,23,0.3); }
-  .cx-hero::after { content: ''; position: absolute; top: -60px; right: -60px; width: 220px; height: 220px; background: radial-gradient(circle, rgba(198,241,53,0.16) 0%, rgba(198,241,53,0) 70%); pointer-events: none; }
+  .cx-hero { position: relative; overflow: hidden; background: linear-gradient(160deg, var(--forest) 0%, #170F38 100%); border-radius: 22px; padding: 30px 28px; margin-bottom: 24px; box-shadow: 0 20px 50px rgba(8,31,23,0.3); }
+  .cx-hero::after { content: ''; position: absolute; top: -60px; right: -60px; width: 220px; height: 220px; background: radial-gradient(circle, rgba(242,183,5,0.16) 0%, rgba(242,183,5,0) 70%); pointer-events: none; }
   .cx-hero-eyebrow { font-size: 11.5px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--lime); margin-bottom: 10px; }
   .cx-hero-service { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 26px; font-weight: 800; color: #FFFFFF; line-height: 1.15; }
   .cx-hero-provider { font-size: 14.5px; color: rgba(245,239,224,0.75); margin-top: 4px; }
-  .cx-hero-countdown { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 48px; font-weight: 800; color: var(--lime); letter-spacing: -0.02em; margin-top: 16px; text-shadow: 0 0 30px rgba(198,241,53,0.45); }
+  .cx-hero-countdown { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 48px; font-weight: 800; color: var(--lime); letter-spacing: -0.02em; margin-top: 16px; text-shadow: 0 0 30px rgba(242,183,5,0.45); }
   .cx-hero-when { font-size: 12.5px; color: rgba(245,239,224,0.6); margin-top: 4px; }
   /* The perforated tear line — a dashed rule stretched to the card's true
      edge (negative-margined out to cancel the card's own padding), with
@@ -1361,8 +1361,8 @@ const css = `
   .cx-hero-divider::before { left: -14px; }
   .cx-hero-divider::after { right: -14px; }
   .cx-hero-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 22px; }
-  .cx-btn-neon { display: inline-flex; align-items: center; gap: 6px; background: var(--lime); color: var(--forest); font-weight: 800; font-size: 14px; padding: 13px 22px; border-radius: 100px; border: none; cursor: pointer; text-decoration: none; box-shadow: 0 0 0 rgba(198,241,53,0.5); transition: box-shadow .2s, transform .15s; }
-  .cx-btn-neon:hover { box-shadow: 0 0 24px rgba(198,241,53,0.55); transform: translateY(-1px); }
+  .cx-btn-neon { display: inline-flex; align-items: center; gap: 6px; background: var(--lime); color: var(--forest); font-weight: 800; font-size: 14px; padding: 13px 22px; border-radius: 100px; border: none; cursor: pointer; text-decoration: none; box-shadow: 0 0 0 rgba(242,183,5,0.5); transition: box-shadow .2s, transform .15s; }
+  .cx-btn-neon:hover { box-shadow: 0 0 24px rgba(242,183,5,0.55); transform: translateY(-1px); }
   .cx-btn-ghost { display: inline-flex; align-items: center; gap: 6px; background: transparent; color: #FFFFFF; font-weight: 700; font-size: 13.5px; padding: 12px 18px; border-radius: 100px; border: 1.5px solid rgba(255,255,255,0.28); cursor: pointer; text-decoration: none; transition: border-color .2s, background .2s; }
   .cx-btn-ghost:hover { border-color: rgba(255,255,255,0.55); background: rgba(255,255,255,0.06); }
   /* Purely decorative ticket-stub texture — not a scannable/real barcode,
@@ -1374,14 +1374,14 @@ const css = `
   .cx-section-heading { font-size: 13px; font-weight: 800; letter-spacing: .04em; color: var(--forest); margin-bottom: 14px; }
   .cx-rebook { margin-bottom: 28px; }
   .cx-rebook-list { display: flex; flex-direction: column; gap: 10px; }
-  .cx-rebook-row { display: flex; align-items: center; gap: 14px; background: #0E241B; border-radius: 16px; padding: 10px 12px 10px 10px; cursor: pointer; transition: transform .12s, box-shadow .2s; }
+  .cx-rebook-row { display: flex; align-items: center; gap: 14px; background: #1C1438; border-radius: 16px; padding: 10px 12px 10px 10px; cursor: pointer; transition: transform .12s, box-shadow .2s; }
   .cx-rebook-row:hover { transform: translateY(-2px); box-shadow: 0 12px 26px rgba(13,61,46,0.22); }
-  .cx-rebook-thumb { flex-shrink: 0; width: 54px; height: 54px; border-radius: 12px; background: linear-gradient(160deg, #1E6B50 0%, #0E241B 100%); display: flex; align-items: center; justify-content: center; font-size: 24px; }
+  .cx-rebook-thumb { flex-shrink: 0; width: 54px; height: 54px; border-radius: 12px; background: linear-gradient(160deg, #8C7AF0 0%, #1C1438 100%); display: flex; align-items: center; justify-content: center; font-size: 24px; }
   .cx-rebook-info { flex: 1; min-width: 0; }
   .cx-rebook-name { font-size: 14.5px; font-weight: 700; color: #FFFFFF; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .cx-rebook-type { font-size: 12px; color: rgba(245,239,224,0.55); margin-top: 2px; }
-  .cx-rebook-btn { flex-shrink: 0; background: var(--lime); color: var(--forest); font-weight: 800; font-size: 13px; padding: 10px 18px; border-radius: 100px; border: none; cursor: pointer; box-shadow: 0 0 0 rgba(198,241,53,0.5); transition: box-shadow .2s; }
-  .cx-rebook-btn:hover { box-shadow: 0 0 18px rgba(198,241,53,0.5); }
+  .cx-rebook-btn { flex-shrink: 0; background: var(--lime); color: var(--forest); font-weight: 800; font-size: 13px; padding: 10px 18px; border-radius: 100px; border: none; cursor: pointer; box-shadow: 0 0 0 rgba(242,183,5,0.5); transition: box-shadow .2s; }
+  .cx-rebook-btn:hover { box-shadow: 0 0 18px rgba(242,183,5,0.5); }
 
   /* SLEEK DISCOVERY — frosted glass at rest, neon on hover/focus.
      The search field previously read as a flat, almost-invisible black
@@ -1394,14 +1394,14 @@ const css = `
      search" affordance without abandoning the dark-glass look the rest
      of this home screen uses. */
   .cx-discover { margin-bottom: 8px; }
-  .cx-discover-search { position: relative; background: rgba(18,42,32,0.96); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid rgba(198,241,53,0.25); box-shadow: inset 0 1px 0 rgba(255,255,255,0.06); border-radius: 100px; padding: 13px 20px; display: flex; align-items: center; gap: 12px; margin-bottom: 14px; transition: border-color .2s, box-shadow .2s; cursor: text; }
-  .cx-discover-search:focus-within { border-color: var(--lime); box-shadow: inset 0 1px 0 rgba(255,255,255,0.06), 0 0 0 3px rgba(198,241,53,0.15); }
+  .cx-discover-search { position: relative; background: rgba(18,42,32,0.96); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid rgba(242,183,5,0.25); box-shadow: inset 0 1px 0 rgba(255,255,255,0.06); border-radius: 100px; padding: 13px 20px; display: flex; align-items: center; gap: 12px; margin-bottom: 14px; transition: border-color .2s, box-shadow .2s; cursor: text; }
+  .cx-discover-search:focus-within { border-color: var(--lime); box-shadow: inset 0 1px 0 rgba(255,255,255,0.06), 0 0 0 3px rgba(242,183,5,0.15); }
   .cx-discover-search input { border: none; outline: none; font-size: 16px; flex: 1; font-family: 'Plus Jakarta Sans', sans-serif; color: #FFFFFF; background: transparent; }
   .cx-discover-search input::placeholder { color: rgba(245,239,224,0.68); }
-  .cx-discover-search .search-icon { display: flex; align-items: center; justify-content: center; flex-shrink: 0; width: 30px; height: 30px; border-radius: 50%; background: rgba(198,241,53,0.16); color: var(--lime); font-size: 14px; }
+  .cx-discover-search .search-icon { display: flex; align-items: center; justify-content: center; flex-shrink: 0; width: 30px; height: 30px; border-radius: 50%; background: rgba(242,183,5,0.16); color: var(--lime); font-size: 14px; }
   .cx-discover-pills { display: flex; gap: 10px; flex-wrap: wrap; }
   .cx-discover-pill { display: inline-flex; align-items: center; gap: 7px; background: rgba(14,36,27,0.94); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); box-shadow: inset 0 1px 0 rgba(255,255,255,0.06); color: rgba(245,239,224,0.85); font-weight: 600; font-size: 13px; padding: 10px 18px; border-radius: 100px; border: 1px solid rgba(255,255,255,0.1); cursor: pointer; transition: border-color .2s, color .2s, box-shadow .2s; }
-  .cx-discover-pill:hover { border-color: var(--lime); color: var(--lime); box-shadow: 0 0 16px rgba(198,241,53,0.25); }
+  .cx-discover-pill:hover { border-color: var(--lime); color: var(--lime); box-shadow: 0 0 16px rgba(242,183,5,0.25); }
 
   /* LAST-MINUTE DROPS — horizontal scroll, hidden scrollbar, compact
      "snag it" cards. Only ever populated with real same-day openings
@@ -1410,13 +1410,13 @@ const css = `
   .cx-dropzone-loading { font-size: 12.5px; color: rgba(13,61,46,0.55); }
   .cx-dropzone-row { display: flex; gap: 12px; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; padding-bottom: 2px; }
   .cx-dropzone-row::-webkit-scrollbar { display: none; }
-  .cx-drop-card { flex: 0 0 132px; scroll-snap-align: start; background: #0E241B; border-radius: 16px; padding: 14px 12px; display: flex; flex-direction: column; align-items: center; text-align: center; transition: transform .15s, box-shadow .2s; }
+  .cx-drop-card { flex: 0 0 132px; scroll-snap-align: start; background: #1C1438; border-radius: 16px; padding: 14px 12px; display: flex; flex-direction: column; align-items: center; text-align: center; transition: transform .15s, box-shadow .2s; }
   .cx-drop-card:hover { transform: translateY(-3px); box-shadow: 0 14px 30px rgba(13,61,46,0.25); }
-  .cx-drop-avatar { width: 48px; height: 48px; border-radius: 50%; background: linear-gradient(160deg, #1E6B50 0%, #0E241B 100%); display: flex; align-items: center; justify-content: center; font-size: 20px; margin-bottom: 10px; flex-shrink: 0; }
+  .cx-drop-avatar { width: 48px; height: 48px; border-radius: 50%; background: linear-gradient(160deg, #8C7AF0 0%, #1C1438 100%); display: flex; align-items: center; justify-content: center; font-size: 20px; margin-bottom: 10px; flex-shrink: 0; }
   .cx-drop-shop { font-size: 12.5px; font-weight: 700; color: #FFFFFF; line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
   .cx-drop-time { font-size: 11px; font-weight: 700; color: var(--lime); margin-top: 4px; margin-bottom: 10px; }
-  .cx-drop-claim { width: 100%; background: var(--lime); color: var(--forest); font-weight: 800; font-size: 12.5px; padding: 9px 0; border-radius: 100px; border: none; cursor: pointer; box-shadow: 0 0 0 rgba(198,241,53,0.5); transition: box-shadow .2s; }
-  .cx-drop-claim:hover { box-shadow: 0 0 16px rgba(198,241,53,0.5); }
+  .cx-drop-claim { width: 100%; background: var(--lime); color: var(--forest); font-weight: 800; font-size: 12.5px; padding: 9px 0; border-radius: 100px; border: none; cursor: pointer; box-shadow: 0 0 0 rgba(242,183,5,0.5); transition: box-shadow .2s; }
+  .cx-drop-claim:hover { box-shadow: 0 0 16px rgba(242,183,5,0.5); }
 
   /* THE LOOKBOOK — CSS-columns masonry (no JS layout math needed): each
      photo keeps its natural aspect ratio so the feed reads as a curated
@@ -1425,7 +1425,7 @@ const css = `
      visible by default everywhere else (touch has no hover). */
   .cx-lookbook { margin-top: 8px; }
   .cx-lookbook-grid { column-count: 2; column-gap: 12px; }
-  .cx-lookbook-item { position: relative; break-inside: avoid; margin-bottom: 12px; border-radius: 16px; overflow: hidden; cursor: pointer; background: #0E241B; }
+  .cx-lookbook-item { position: relative; break-inside: avoid; margin-bottom: 12px; border-radius: 16px; overflow: hidden; cursor: pointer; background: #1C1438; }
   .cx-lookbook-item img { display: block; width: 100%; height: auto; }
   .cx-lookbook-overlay { position: absolute; left: 0; right: 0; bottom: 0; padding: 28px 12px 12px; background: linear-gradient(180deg, rgba(8,31,23,0) 0%, rgba(8,31,23,0.88) 100%); display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
   .cx-lookbook-name { font-size: 12.5px; font-weight: 700; color: #FFFFFF; text-shadow: 0 1px 4px rgba(0,0,0,0.4); }
@@ -1475,7 +1475,7 @@ const css = `
     --cxp-text-dim: rgba(245,239,224,0.55);
     --cxp-text-dim-2: rgba(245,239,224,0.75);
     --cxp-text-dim-3: rgba(245,239,224,0.35);
-    --cxp-card-bg: #0E241B;
+    --cxp-card-bg: #1C1438;
     --cxp-card-shadow: 0 10px 26px rgba(0,0,0,0.22);
     --cxp-hairline: rgba(255,255,255,0.08);
     --cxp-tint-1: rgba(255,255,255,0.05);
@@ -1488,10 +1488,10 @@ const css = `
     --cxp-disabled-text: rgba(245,239,224,0.4);
     --cxp-star-off: rgba(255,255,255,0.18);
     --sand: #14301F;
-    --dark-text: #F5EFE0;
+    --dark-text: #F3F1FC;
     --muted: rgba(245,239,224,0.55);
     --border: rgba(255,255,255,0.12);
-    background: #081F17;
+    background: #170F38;
   }
 
   /* Light Mode: reverts this whole section back to the ordinary light
@@ -1502,7 +1502,7 @@ const css = `
      only the same single-purpose tokens, plus this section's own --cxp-*
      literals, get a light equivalent. */
   :root[data-theme="light"] .cx-account-page {
-    --sand: #F5EFE0;
+    --sand: #F3F1FC;
     --dark-text: #0D1F18;
     --muted: #6B7F76;
     --border: #D9E4DF;
@@ -1544,8 +1544,8 @@ const css = `
   .cx-account-page .booking-info .title,
   .cx-account-page .provider-card-body h4 { color: var(--cxp-heading); }
   .cx-account-page .booking-item { border-bottom-color: var(--cxp-hairline); }
-  .cx-account-page .avail-badge { background: rgba(198,241,53,0.15); color: var(--accent-text); }
-  .cx-account-page .cx-plan-badge { background: rgba(198,241,53,0.15); color: var(--accent-text); font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 5px; vertical-align: middle; margin-left: 6px; }
+  .cx-account-page .avail-badge { background: rgba(242,183,5,0.15); color: var(--accent-text); }
+  .cx-account-page .cx-plan-badge { background: rgba(242,183,5,0.15); color: var(--accent-text); font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 5px; vertical-align: middle; margin-left: 6px; }
 
   /* Status pills — semi-transparent tints read fine on both a near-black
      and a near-white card, so these stay constant across themes (same
@@ -1563,7 +1563,7 @@ const css = `
 
   /* Filter tabs (Upcoming / Completed / Cancelled, provider profile tabs) */
   .cx-account-page .tab-row { background: var(--cxp-tint-1); border-color: var(--cxp-tint-3); }
-  .cx-account-page .tab.active { background: var(--lime); color: #0E241B; }
+  .cx-account-page .tab.active { background: var(--lime); color: #1C1438; }
 
   /* Inputs, selects, textareas — integrated card look, neon focus ring */
   .cx-account-page .input-group label { color: var(--cxp-text-dim-2); }
@@ -1580,7 +1580,7 @@ const css = `
   .cx-account-page .input-group select:focus,
   .cx-account-page .input-group textarea:focus {
     border-color: var(--lime);
-    box-shadow: 0 0 0 3px rgba(198,241,53,0.15);
+    box-shadow: 0 0 0 3px rgba(242,183,5,0.15);
   }
   .cx-account-page .input-group input:disabled { background: var(--cxp-disabled-bg); color: var(--cxp-disabled-text); }
   .cx-account-page select option { background: var(--cxp-card-bg); color: var(--cxp-heading); }
@@ -1634,12 +1634,12 @@ const css = `
   :root[data-theme="dark"] .provider-shell,
   :root[data-theme="dark"] .portal-content {
     --sand: #14301F;
-    --dark-text: #F5EFE0;
+    --dark-text: #F3F1FC;
     --muted: rgba(245,239,224,0.6);
     --border: rgba(255,255,255,0.12);
   }
-  :root[data-theme="dark"] .provider-shell { background: #0A211A; }
-  :root[data-theme="dark"] .portal-content { background: #0A211A; }
+  :root[data-theme="dark"] .provider-shell { background: #180F35; }
+  :root[data-theme="dark"] .portal-content { background: #180F35; }
   :root[data-theme="dark"] .provider-shell .card,
   :root[data-theme="dark"] .provider-shell .card-sm,
   :root[data-theme="dark"] .provider-shell .metric,
@@ -1703,7 +1703,7 @@ const css = `
   :root[data-theme="dark"] .portal-content .input-group input,
   :root[data-theme="dark"] .portal-content .input-group select,
   :root[data-theme="dark"] .portal-content .input-group textarea {
-    background: #0E241B;
+    background: #1C1438;
     border-color: rgba(255,255,255,0.12);
   }
 
@@ -2004,7 +2004,7 @@ const css = `
     .provider-hamburger { display: flex; align-items: center; justify-content: center; }
     .provider-mobile-nav { display: flex; flex-direction: column; position: absolute; top: 64px; left: 0; right: 0; background: var(--forest); border-top: 1px solid rgba(255,255,255,0.1); box-shadow: 0 16px 30px rgba(0,0,0,0.25); z-index: 149; padding: 8px; }
     .provider-mobile-nav-item { background: none; border: none; color: rgba(255,255,255,0.75); font-family: 'Plus Jakarta Sans', sans-serif; font-size: 15px; font-weight: 600; text-align: left; padding: 13px 12px; border-radius: 8px; cursor: pointer; }
-    .provider-mobile-nav-item.active { color: var(--lime); background: rgba(198,241,53,0.1); }
+    .provider-mobile-nav-item.active { color: var(--lime); background: rgba(242,183,5,0.1); }
     .grid-2 { grid-template-columns: 1fr; }
     .grid-3 { grid-template-columns: 1fr; }
     .metric-grid { grid-template-columns: 1fr 1fr; }
@@ -3205,8 +3205,8 @@ function buildInvoiceHtml({
 <title>Invoice ${esc(orderNumber)}</title>
 <style>
   body { font-family: Arial, sans-serif; color: #0D1F18; max-width: 640px; margin: 40px auto; padding: 0 20px; }
-  .head { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid #0D3D2E; padding-bottom: 16px; margin-bottom: 24px; }
-  .logo { font-size: 22px; font-weight: 800; color: #0D3D2E; }
+  .head { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid #4C3DC4; padding-bottom: 16px; margin-bottom: 24px; }
+  .logo { font-size: 22px; font-weight: 800; color: #4C3DC4; }
   .logo span { color: #7A9E1F; }
   .meta { text-align: right; font-size: 13px; color: #555; }
   h1 { font-size: 18px; margin: 0 0 4px; }
@@ -3308,8 +3308,8 @@ function buildLedgerHtml({ providerName, providerTaxId, periodLabel, rows, taxRa
 <title>Sales &amp; tax ledger — ${esc(periodLabel)}</title>
 <style>
   body { font-family: Arial, sans-serif; color: #0D1F18; max-width: 760px; margin: 40px auto; padding: 0 20px; }
-  .head { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid #0D3D2E; padding-bottom: 16px; margin-bottom: 24px; }
-  .logo { font-size: 22px; font-weight: 800; color: #0D3D2E; }
+  .head { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid #4C3DC4; padding-bottom: 16px; margin-bottom: 24px; }
+  .logo { font-size: 22px; font-weight: 800; color: #4C3DC4; }
   .logo span { color: #7A9E1F; }
   .meta { text-align: right; font-size: 13px; color: #555; }
   h1 { font-size: 18px; margin: 0 0 4px; }
@@ -6890,10 +6890,10 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                     {coverImageUrl(p) ? (
                       <div className="provider-card-img" style={{ background: `center/cover no-repeat url(${coverImageUrl(p)})` }} />
                     ) : (
-                      <div className="provider-card-img" style={{ background: "linear-gradient(160deg, #1E6B50 0%, #0E241B 100%)" }}>{iconForServiceType(p.service_type)}</div>
+                      <div className="provider-card-img" style={{ background: "linear-gradient(160deg, #8C7AF0 0%, #1C1438 100%)" }}>{iconForServiceType(p.service_type)}</div>
                     )}
                     <div className="provider-card-body">
-                      <h4>{p.business_name}{(() => { const badge = planBadge(p); return badge && <span className="cx-plan-badge">{badge.label}</span>; })()}{p.is_featured && <span style={{ marginLeft: 6, fontSize: 11, fontWeight: 700, color: "var(--lime)", background: "rgba(198,241,53,0.15)", padding: "2px 7px", borderRadius: 5, verticalAlign: "middle" }}>⭐ {t("customerPortal.browse.featuredBadge")}</span>}</h4>
+                      <h4>{p.business_name}{(() => { const badge = planBadge(p); return badge && <span className="cx-plan-badge">{badge.label}</span>; })()}{p.is_featured && <span style={{ marginLeft: 6, fontSize: 11, fontWeight: 700, color: "var(--lime)", background: "rgba(242,183,5,0.15)", padding: "2px 7px", borderRadius: 5, verticalAlign: "middle" }}>⭐ {t("customerPortal.browse.featuredBadge")}</span>}</h4>
                       <div className="trade">{p.service_type} · {p.district}</div>
                       <div className="stars">{rating ? <StarRating value={rating} /> : t("customerPortal.browse.noReviewsYet")}<span style={{ color: "var(--muted)", fontSize: 12 }}>{rating ? ` ${rating} (${p.reviews.length})` : ""}</span></div>
                       {openNow !== null && (
@@ -6938,10 +6938,10 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                     {coverImageUrl(p) ? (
                       <div className="provider-card-img" style={{ background: `center/cover no-repeat url(${coverImageUrl(p)})` }} />
                     ) : (
-                      <div className="provider-card-img" style={{ background: "linear-gradient(160deg, #1E6B50 0%, #0E241B 100%)" }}>{iconForServiceType(p.service_type)}</div>
+                      <div className="provider-card-img" style={{ background: "linear-gradient(160deg, #8C7AF0 0%, #1C1438 100%)" }}>{iconForServiceType(p.service_type)}</div>
                     )}
                     <div className="provider-card-body">
-                      <h4>{p.business_name}{(() => { const badge = planBadge(p); return badge && <span className="cx-plan-badge">{badge.label}</span>; })()}{p.is_featured && <span style={{ marginLeft: 6, fontSize: 11, fontWeight: 700, color: "var(--lime)", background: "rgba(198,241,53,0.15)", padding: "2px 7px", borderRadius: 5, verticalAlign: "middle" }}>⭐ {t("customerPortal.browse.featuredBadge")}</span>}</h4>
+                      <h4>{p.business_name}{(() => { const badge = planBadge(p); return badge && <span className="cx-plan-badge">{badge.label}</span>; })()}{p.is_featured && <span style={{ marginLeft: 6, fontSize: 11, fontWeight: 700, color: "var(--lime)", background: "rgba(242,183,5,0.15)", padding: "2px 7px", borderRadius: 5, verticalAlign: "middle" }}>⭐ {t("customerPortal.browse.featuredBadge")}</span>}</h4>
                       <div className="trade">{p.service_type} · {p.district}</div>
                       <div className="stars">{rating ? <StarRating value={rating} /> : t("customerPortal.browse.noReviewsYet")}<span style={{ color: "var(--muted)", fontSize: 12 }}>{rating ? ` ${rating} (${p.reviews.length})` : ""}</span></div>
                       {openNow !== null && (
@@ -8849,7 +8849,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
           to: target.users.email,
           subject: `Your booking with ${providerProfile?.business_name || "your provider"} was cancelled`,
           html: `<p>Hi ${target.users?.full_name || "there"},</p><p>${providerProfile?.business_name || "Your provider"} had to cancel your <strong>${target.services?.name || "appointment"}</strong> on <strong>${formatBookingWhen(target)}</strong>.</p>` +
-            `<p style="text-align:center;margin:24px 0;"><a href="${rebookUrl}" style="background:#0D3D2E;color:#F5EFE0;padding:12px 28px;border-radius:100px;text-decoration:none;font-weight:700;display:inline-block;">Reschedule now</a></p>` +
+            `<p style="text-align:center;margin:24px 0;"><a href="${rebookUrl}" style="background:#4C3DC4;color:#F3F1FC;padding:12px 28px;border-radius:100px;text-decoration:none;font-weight:700;display:inline-block;">Reschedule now</a></p>` +
             `<p style="font-size:13px;color:#5b6b62;">Or copy this link: ${rebookUrl}</p>`,
         });
       }
@@ -11850,22 +11850,22 @@ const PROVIDER_LANDING_CSS = `
     align-items: center;
     justify-content: center;
     padding: 40px 20px;
-    background: radial-gradient(circle at 50% 0%, #123F2E 0%, #081F17 62%);
+    background: radial-gradient(circle at 50% 0%, #123F2E 0%, #170F38 62%);
     text-align: center;
   }
   .pl-pending-card { max-width: 440px; }
   .pl-pending-icon-wrap { position: relative; width: 88px; height: 88px; margin: 0 auto 28px; }
-  .pl-pending-icon-glow { position: absolute; inset: -18px; background: radial-gradient(circle, rgba(198,241,53,0.35) 0%, rgba(198,241,53,0) 70%); filter: blur(4px); }
+  .pl-pending-icon-glow { position: absolute; inset: -18px; background: radial-gradient(circle, rgba(242,183,5,0.35) 0%, rgba(242,183,5,0) 70%); filter: blur(4px); }
   .pl-pending-icon {
     position: relative; width: 88px; height: 88px; border-radius: 50%;
-    background: rgba(198,241,53,0.1); border: 1.5px solid var(--lime);
+    background: rgba(242,183,5,0.1); border: 1.5px solid var(--lime);
     display: flex; align-items: center; justify-content: center;
     font-size: 34px; color: var(--lime);
   }
   .pl-pending-eyebrow {
     display: inline-flex; align-items: center; gap: 7px; font-size: 11px; font-weight: 700;
     letter-spacing: .12em; text-transform: uppercase; color: var(--lime);
-    background: rgba(198,241,53,0.1); border: 1px solid rgba(198,241,53,0.35);
+    background: rgba(242,183,5,0.1); border: 1px solid rgba(242,183,5,0.35);
     padding: 7px 14px; border-radius: 100px; margin-bottom: 20px;
   }
   .pl-pending h2 {
@@ -11878,7 +11878,7 @@ const PROVIDER_LANDING_CSS = `
   .pl-pending-back {
     display: inline-block; font-family: 'Plus Jakarta Sans', sans-serif;
     font-size: 14px; font-weight: 700; color: var(--lime); background: transparent;
-    border: 1px solid rgba(198,241,53,0.4); padding: 12px 28px; border-radius: 100px; cursor: pointer;
+    border: 1px solid rgba(242,183,5,0.4); padding: 12px 28px; border-radius: 100px; cursor: pointer;
   }
   .pl-pending-actions {
     display: flex; align-items: center; justify-content: center; gap: 12px;
