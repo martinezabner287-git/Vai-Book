@@ -1362,32 +1362,40 @@ const css = `
      Rebook rows, glass/neon discovery pills. No metric cards, no boxed
      pastel tiles. */
 
-  /* VIP PASS — the next appointment as a digital ticket/boarding pass. */
-  .cx-hero { position: relative; overflow: hidden; background: linear-gradient(160deg, var(--forest) 0%, #170F38 100%); border-radius: 22px; padding: 30px 28px; margin-bottom: 24px; box-shadow: 0 20px 50px rgba(23,15,56,0.3); }
-  .cx-hero::after { content: ''; position: absolute; top: -60px; right: -60px; width: 220px; height: 220px; background: radial-gradient(circle, rgba(242,183,5,0.16) 0%, rgba(242,183,5,0) 70%); pointer-events: none; }
-  .cx-hero-eyebrow { font-size: 11.5px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--lime); margin-bottom: 10px; }
-  .cx-hero-service { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 26px; font-weight: 800; color: #FFFFFF; line-height: 1.15; }
-  .cx-hero-provider { font-size: 14.5px; color: rgba(245,239,224,0.75); margin-top: 4px; }
-  .cx-hero-countdown { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 48px; font-weight: 800; color: var(--lime); letter-spacing: -0.02em; margin-top: 16px; text-shadow: 0 0 30px rgba(242,183,5,0.45); }
-  .cx-hero-when { font-size: 12.5px; color: rgba(245,239,224,0.6); margin-top: 4px; }
+  /* VIP PASS — the next appointment as a digital ticket/boarding pass.
+     Was a dark forest→near-black gradient with a glowing gold countdown —
+     bold, but read as "nightclub flyer" rather than a professional
+     booking confirmation. Lightened to a clean white card (same family
+     as every other card on this page) with the forest/gold palette kept
+     only as accents — same ticket-stub shape and layout, calmer finish. */
+  .cx-hero { position: relative; overflow: hidden; background: #FFFFFF; border: 1px solid var(--border); border-radius: 22px; padding: 30px 28px; margin-bottom: 24px; box-shadow: 0 10px 30px rgba(23,20,31,0.06); }
+  .cx-hero::after { content: ''; position: absolute; top: -60px; right: -60px; width: 220px; height: 220px; background: radial-gradient(circle, rgba(76,61,196,0.07) 0%, rgba(76,61,196,0) 70%); pointer-events: none; }
+  .cx-hero-eyebrow { display: inline-flex; align-items: center; font-size: 11.5px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--forest); background: rgba(76,61,196,0.08); padding: 5px 11px; border-radius: 100px; margin-bottom: 12px; }
+  .cx-hero-service { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 26px; font-weight: 800; color: var(--dark-text); line-height: 1.15; }
+  .cx-hero-provider { font-size: 14.5px; color: var(--muted); margin-top: 4px; }
+  .cx-hero-countdown { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 48px; font-weight: 800; color: var(--forest); letter-spacing: -0.02em; margin-top: 16px; }
+  .cx-hero-when { font-size: 12.5px; color: var(--muted); margin-top: 4px; }
   /* The perforated tear line — a dashed rule stretched to the card's true
      edge (negative-margined out to cancel the card's own padding), with
      two circles punched at each end. Because .cx-hero clips overflow,
      each circle gets sliced to a clean semicircle exactly at the card's
-     rounded edge — the classic ticket-stub notch, done in pure CSS. */
-  .cx-hero-divider { position: relative; border-top: 2px dashed rgba(255,255,255,0.18); margin: 20px -28px 0; }
+     rounded edge — the classic ticket-stub notch, done in pure CSS. The
+     notch circles stay matched to the page background behind the card
+     (#F1EEFB), not the card's own background, so they "punch through"
+     correctly regardless of which color the card itself is. */
+  .cx-hero-divider { position: relative; border-top: 2px dashed var(--border); margin: 20px -28px 0; }
   .cx-hero-divider::before, .cx-hero-divider::after { content: ''; position: absolute; top: -14px; width: 28px; height: 28px; border-radius: 50%; background: #F1EEFB; }
   .cx-hero-divider::before { left: -14px; }
   .cx-hero-divider::after { right: -14px; }
   .cx-hero-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 22px; }
   .cx-btn-neon { display: inline-flex; align-items: center; gap: 6px; background: var(--accent-neon); color: var(--accent-neon-text); font-weight: 800; font-size: 14px; padding: 13px 22px; border-radius: 100px; border: none; cursor: pointer; text-decoration: none; box-shadow: 0 0 0 rgba(76,61,196,0.5); transition: box-shadow .2s, transform .15s; }
   .cx-btn-neon:hover { box-shadow: 0 0 24px rgba(76,61,196,0.55); transform: translateY(-1px); }
-  .cx-btn-ghost { display: inline-flex; align-items: center; gap: 6px; background: transparent; color: #FFFFFF; font-weight: 700; font-size: 13.5px; padding: 12px 18px; border-radius: 100px; border: 1.5px solid rgba(255,255,255,0.28); cursor: pointer; text-decoration: none; transition: border-color .2s, background .2s; }
-  .cx-btn-ghost:hover { border-color: rgba(255,255,255,0.55); background: rgba(255,255,255,0.06); }
+  .cx-btn-ghost { display: inline-flex; align-items: center; gap: 6px; background: transparent; color: var(--forest); font-weight: 700; font-size: 13.5px; padding: 12px 18px; border-radius: 100px; border: 1.5px solid var(--border); cursor: pointer; text-decoration: none; transition: border-color .2s, background .2s; }
+  .cx-btn-ghost:hover { border-color: var(--forest); background: rgba(76,61,196,0.06); }
   /* Purely decorative ticket-stub texture — not a scannable/real barcode,
      just the visual cue that sells "this is a pass," like an airline's
      boarding-pass footer. */
-  .cx-hero-barcode { height: 20px; margin-top: 18px; border-radius: 2px; opacity: .3; background: repeating-linear-gradient(90deg, rgba(255,255,255,0.9) 0 2px, transparent 2px 6px); }
+  .cx-hero-barcode { height: 20px; margin-top: 18px; border-radius: 2px; opacity: .5; background: repeating-linear-gradient(90deg, rgba(23,20,31,0.14) 0 2px, transparent 2px 6px); }
 
   /* BOOK AGAIN — sleek horizontal rows, one tap to rebook. */
   .cx-section-heading { font-size: 13px; font-weight: 800; letter-spacing: .04em; color: var(--forest); margin-bottom: 14px; }
