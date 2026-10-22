@@ -1410,25 +1410,21 @@ const css = `
   .cx-rebook-btn { flex-shrink: 0; background: var(--lime); color: var(--forest); font-weight: 800; font-size: 13px; padding: 10px 18px; border-radius: 100px; border: none; cursor: pointer; box-shadow: 0 0 0 rgba(242,183,5,0.5); transition: box-shadow .2s; }
   .cx-rebook-btn:hover { box-shadow: 0 0 18px rgba(242,183,5,0.5); }
 
-  /* SLEEK DISCOVERY — frosted glass at rest, neon on hover/focus.
-     The search field previously read as a flat, almost-invisible black
-     bar: a faint 45%-opacity placeholder and a bare 55%-opacity icon,
-     both on a near-black (94%) fill, with only a 10%-opacity border —
-     easy to miss as an actual input rather than a decorative shape. A
-     lime-tinted badge around the icon (same accent used elsewhere for
-     "the one thing that matters" on a screen) plus brighter placeholder
-     text and a visible at-rest border give it the usual "type here to
-     search" affordance without abandoning the dark-glass look the rest
-     of this home screen uses. */
+  /* SLEEK DISCOVERY — was dark glass-on-dark (a near-black fill behind a
+     near-black page), matching the old VIP Pass card's nightclub-flyer
+     look. Lightened to match that card's own white/forest restyle: a
+     white search field + white pills with a visible border, same family
+     as .search-bar/.service-pill elsewhere in the app, with forest (not
+     gold) as the hover/focus accent. */
   .cx-discover { margin-bottom: 8px; }
-  .cx-discover-search { position: relative; background: rgba(30,20,80,0.96); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid rgba(242,183,5,0.25); box-shadow: inset 0 1px 0 rgba(255,255,255,0.06); border-radius: 100px; padding: 13px 20px; display: flex; align-items: center; gap: 12px; margin-bottom: 14px; transition: border-color .2s, box-shadow .2s; cursor: text; }
-  .cx-discover-search:focus-within { border-color: var(--lime); box-shadow: inset 0 1px 0 rgba(255,255,255,0.06), 0 0 0 3px rgba(242,183,5,0.15); }
-  .cx-discover-search input { border: none; outline: none; font-size: 16px; flex: 1; font-family: 'Plus Jakarta Sans', sans-serif; color: #FFFFFF; background: transparent; }
-  .cx-discover-search input::placeholder { color: rgba(245,239,224,0.68); }
-  .cx-discover-search .search-icon { display: flex; align-items: center; justify-content: center; flex-shrink: 0; width: 30px; height: 30px; border-radius: 50%; background: rgba(242,183,5,0.16); color: var(--lime); font-size: 14px; }
+  .cx-discover-search { position: relative; background: #FFFFFF; border: 1px solid var(--border); box-shadow: 0 6px 18px rgba(23,20,31,0.05); border-radius: 100px; padding: 13px 20px; display: flex; align-items: center; gap: 12px; margin-bottom: 14px; transition: border-color .2s, box-shadow .2s; cursor: text; }
+  .cx-discover-search:focus-within { border-color: var(--forest); box-shadow: 0 6px 18px rgba(23,20,31,0.05), 0 0 0 3px rgba(76,61,196,0.12); }
+  .cx-discover-search input { border: none; outline: none; font-size: 16px; flex: 1; font-family: 'Plus Jakarta Sans', sans-serif; color: var(--dark-text); background: transparent; }
+  .cx-discover-search input::placeholder { color: var(--muted); }
+  .cx-discover-search .search-icon { display: flex; align-items: center; justify-content: center; flex-shrink: 0; width: 30px; height: 30px; border-radius: 50%; background: rgba(76,61,196,0.08); color: var(--forest); font-size: 14px; }
   .cx-discover-pills { display: flex; gap: 10px; flex-wrap: wrap; }
-  .cx-discover-pill { display: inline-flex; align-items: center; gap: 7px; background: rgba(23,15,56,0.94); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); box-shadow: inset 0 1px 0 rgba(255,255,255,0.06); color: rgba(245,239,224,0.85); font-weight: 600; font-size: 13px; padding: 10px 18px; border-radius: 100px; border: 1px solid rgba(255,255,255,0.1); cursor: pointer; transition: border-color .2s, color .2s, box-shadow .2s; }
-  .cx-discover-pill:hover { border-color: var(--lime); color: var(--lime); box-shadow: 0 0 16px rgba(242,183,5,0.25); }
+  .cx-discover-pill { display: inline-flex; align-items: center; gap: 7px; background: #FFFFFF; color: var(--dark-text); font-weight: 600; font-size: 13px; padding: 10px 18px; border-radius: 100px; border: 1px solid var(--border); cursor: pointer; transition: border-color .2s, color .2s, box-shadow .2s; }
+  .cx-discover-pill:hover { border-color: var(--forest); color: var(--forest); box-shadow: 0 0 0 3px rgba(76,61,196,0.08); }
 
   /* LAST-MINUTE DROPS — horizontal scroll, hidden scrollbar, compact
      "snag it" cards. Only ever populated with real same-day openings
