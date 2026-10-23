@@ -5872,7 +5872,21 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
     loadBookings();
   }, [user?.id]);
 
+  // FIXED — a guest tapping a service/category pill (browseAsGuest) stashes
+  // this and lands here with no session yet, which hits the sign-in gate
+  // below (`!session && !cameViaBookingLink`) and shows "Sign in with
+  // Google" instead of results. React's rules of hooks mean every hook in
+  // this component — including this one — still runs on that gated mount
+  // even though it returns early further down, so without this guard the
+  // stash was being read and deleted (`localStorage.removeItem`) right
+  // then, before the person had actually signed in. By the time sign-in
+  // finished and this component mounted again for real, there was nothing
+  // left to restore and they landed on the generic Home tab instead of
+  // back on the service they tapped. Waiting for a real session (or a
+  // direct booking-link visit, which never hits the gate at all) leaves the
+  // stash untouched until the mount where it can actually be used.
   useEffect(() => {
+    if (!session && !cameViaBookingLink) return;
     try {
       const raw = localStorage.getItem("vaibook_pending_search");
       if (raw) {
@@ -5883,9 +5897,11 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
         localStorage.removeItem("vaibook_pending_search");
       }
     } catch (e) { /* ignore malformed/missing storage */ }
-  }, []);
+  }, [session, cameViaBookingLink]);
 
+  // Same race, same fix, for the settings/account-tab deep link (openTab).
   useEffect(() => {
+    if (!session && !cameViaBookingLink) return;
     try {
       const pendingTab = localStorage.getItem("vaibook_pending_tab");
       if (pendingTab) {
@@ -5893,7 +5909,7 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
         localStorage.removeItem("vaibook_pending_tab");
       }
     } catch (e) { /* ignore malformed/missing storage */ }
-  }, []);
+  }, [session, cameViaBookingLink]);
 
   const openBooking = (provider) => {
     setBookingError("");
