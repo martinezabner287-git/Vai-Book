@@ -5505,7 +5505,7 @@ function ProviderLandingPage({ onNav, session, onSignIn, onSignOut }) {
 }
 
 // ── CUSTOMER PORTAL ─────────────────────────────────────────────
-function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdate, deepLinkProviderId, onDeepLinkConsumed, cameViaBookingLink }) {
+function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdate, deepLinkProviderId, onDeepLinkConsumed, cameViaBookingLink, providerProfile }) {
   const { t } = useTranslation();
   // Remembers which tab this account was on, so a refresh lands back on
   // "My bookings" (or wherever) instead of always resetting to "Home" —
@@ -6265,6 +6265,13 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
   };
 
   const submitBooking = async (overrideCustomerId) => {
+    // A signed-in business account has a real customer-facing user row too
+    // (getOrCreateUser auto-creates one for every authenticated account,
+    // provider or not), which used to be enough to let them book through
+    // here like any other customer. They need an actual, separate customer
+    // account to do that now — see the same check in
+    // submitMultiServiceBooking and the banner above the booking form.
+    if (providerProfile) { setBookingError(t("customerPortal.booking.providerCannotBook")); return; }
     const bookingCustomerId = overrideCustomerId || user?.id;
     if (!bookingCustomerId) { setBookingError(t("customerPortal.booking.signInAgain")); return; }
     if (!bookingForm.service_id || !bookingForm.date || !bookingForm.time) {
@@ -6333,6 +6340,10 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
   // customer sees one clear error naming the service that couldn't be
   // booked, not a silent partial success.
   const submitMultiServiceBooking = async (overrideCustomerId) => {
+    // Same business-account guard as submitBooking above — kept here too
+    // since this is a separate entry point (multi-service checkout), not a
+    // wrapper around submitBooking.
+    if (providerProfile) { setBookingError(t("customerPortal.booking.providerCannotBook")); return; }
     const bookingCustomerId = overrideCustomerId || user?.id;
     if (!bookingCustomerId) { setBookingError(t("customerPortal.booking.signInAgain")); return; }
     const missingTime = selectedServicesList.find((s) => !multiBookingTimes[s.id]?.date || !multiBookingTimes[s.id]?.time);
@@ -7654,6 +7665,17 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                             <p style={{ fontSize: 12, color: "var(--clay)", marginBottom: 12 }}>{t("customerPortal.booking.depositRequired", { pct: selectedProvider.downpayment_pct || 50 })}</p>
                           )}
 
+                          {/* Shown up front rather than only after a failed
+                              submit — same rule enforced again in
+                              submitBooking/submitMultiServiceBooking as the
+                              real guard, this is just the honest heads-up
+                              before they fill out the whole form. */}
+                          {providerProfile && (
+                            <p style={{ fontSize: 13, color: "#B91C1C", background: "#FEF2F2", border: "1px solid #FECACA", borderRadius: 10, padding: "10px 14px", marginBottom: 16 }}>
+                              {t("customerPortal.booking.providerCannotBook")}
+                            </p>
+                          )}
+
                           {!user?.id && (
                             <div className="guest-checkout-fields">
                               <p className="guest-checkout-label">{t("customerPortal.booking.yourDetails")}</p>
@@ -7678,8 +7700,9 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                           <button
                             className="btn-sm forest"
                             style={{ width: "100%", padding: "15px 0", fontSize: 15, borderRadius: 12, marginTop: 4 }}
-                            disabled={submittingBooking || sendingBookingOtp}
+                            disabled={submittingBooking || sendingBookingOtp || !!providerProfile}
                             onClick={async () => {
+                              if (providerProfile) { setBookingError(t("customerPortal.booking.providerCannotBook")); return; }
                               if (user?.id) {
                                 if (!(user.phone || user.whatsapp_number)) { setShowPhoneRequiredModal(true); return; }
                                 bookingService.isMulti ? submitMultiServiceBooking() : submitBooking();
@@ -13634,6 +13657,7 @@ export default function App() {
         <CustomerPortal
           onNav={setView}
           {...authProps}
+          providerProfile={providerProfile}
           deepLinkProviderId={deepLinkProviderId}
           cameViaBookingLink={cameViaBookingLink}
           onDeepLinkConsumed={() => {
