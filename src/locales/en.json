@@ -348,6 +348,7 @@
       "phoneRequiredTitle": "Add a phone number",
       "pickDateAndTime": "Pick a date & time",
       "pickTimesForEach": "Pick a time for each service",
+      "providerCannotBook": "Business accounts can't book appointments as a customer. Please sign in with a separate customer account to book.",
       "rateLimited": "You've sent a few booking requests in a short time. Please wait a bit before trying again.",
       "receiptUploadFailed": "That receipt didn't upload. Please check your connection and try again.",
       "requestBooking": "Request booking",
