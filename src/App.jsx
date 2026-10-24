@@ -13219,13 +13219,33 @@ export default function App() {
 
   // Whether this visit started from a "#book-<id>" QR/NFC/link scan — the
   // one legitimate way to reach CustomerPortal without ever signing in
-  // (jump straight to that one provider's booking modal). Captured once,
-  // at mount, from the raw hash rather than from deepLinkProviderId above:
-  // that state gets cleared back to null the moment the deep link is
-  // consumed (see onDeepLinkConsumed below), but CustomerPortal's own
-  // sign-in gate needs to keep remembering "yes, this guest arrived via a
-  // real deep link" for the rest of the visit, not just the first instant.
-  const [cameViaBookingLink] = useState(() => {
+  // (jump straight to that one provider's booking modal). Seeded from the
+  // raw hash at mount rather than from deepLinkProviderId above: that state
+  // gets cleared back to null the moment the deep link is consumed (see
+  // onDeepLinkConsumed below), but CustomerPortal's own sign-in gate needs
+  // to keep remembering "yes, this guest arrived via a real deep link" for
+  // the rest of the visit, not just the first instant.
+  //
+  // FIXED (P0 — every "trending near you"/"book now" card showed the full
+  // Google sign-in wall instead of the provider, same as a bare category
+  // pill tap): this used to be captured ONCE at mount with no setter at
+  // all, on the theory that a "#book-<id>" deep link only ever arrives as
+  // a fresh page load (a QR scan, a shared link opened cold) — so reading
+  // the hash once at mount was "the" moment that mattered. That's true for
+  // an actual cold load, but every card/button on the homepage
+  // (goToProvider in LandingPage) reaches the exact same provider view by
+  // setting window.location.hash on an ALREADY-RUNNING page, which only
+  // ever fires the hashchange listener below — it can't rerun a useState
+  // initializer. So any in-app tap on a provider card left this frozen at
+  // whatever it was at the original page load (false, for anyone who
+  // didn't land directly on a #book- URL), and CustomerPortal's
+  // `!session && !cameViaBookingLink` gate fired for guests exactly the
+  // way it was supposed to never do for a deep link. Setting it to true
+  // from the hashchange handler too — the same place deepLinkProviderId
+  // already gets updated for this exact case — covers both paths with the
+  // one flag the gate actually checks. Never reset back to false anywhere,
+  // same as before: once true for this visit, it stays true.
+  const [cameViaBookingLink, setCameViaBookingLink] = useState(() => {
     const h = window.location.hash.replace("#", "");
     return !!parseBookingHash(h);
   });
@@ -13238,6 +13258,7 @@ export default function App() {
       const bookingId = parseBookingHash(h);
       if (bookingId) {
         setDeepLinkProviderId(bookingId);
+        setCameViaBookingLink(true);
         setView("customer");
       } else if (h === "admin" || h === "customer" || h === "provider" || h === "providers") {
         setView(h);
