@@ -374,7 +374,7 @@
       "thisProvider": "This provider",
       "whatsappNumber": "WhatsApp number",
       "whoWouldYouLike": "Who would you like to see?",
-      "wrongPassword": "That password didn't match this email. Try again, or double-check the email address above.",
+      "wrongPassword": "This email already has an account. If you usually sign in with Google, use \"Sign in with Google\" instead of the guest form. Otherwise, double-check your password and try again.",
       "yourDetails": "Your details"
     },
     "bookings": {
