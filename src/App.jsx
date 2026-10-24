@@ -5673,7 +5673,24 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
   const [selectedServiceIds, setSelectedServiceIds] = useState([]);
   const [submittingBooking, setSubmittingBooking] = useState(false);
   const [bookingError, setBookingError] = useState("");
-  const [guestCheckoutForm, setGuestCheckoutForm] = useState({ name: "", email: "", whatsapp: "" });
+  // ADDED — a guest who's already typed their name/email/WhatsApp once on
+  // this device shouldn't have to retype them on every booking: prefill
+  // from whatever was saved locally last time (see the "Continue" button
+  // below, which is what writes it), and leave it blank only for someone
+  // genuinely booking here for the first time. This is separate from (and
+  // doesn't change) the real identity check — the email OTP still runs
+  // every time, since that's what actually proves it's them, not just a
+  // remembered name. A signed-in customer (user?.id truthy) never sees
+  // this form at all, so this only ever affects the guest path.
+  const [guestCheckoutForm, setGuestCheckoutForm] = useState(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem("vaibook_guest_info") || "null");
+      if (saved && typeof saved === "object") {
+        return { name: saved.name || "", email: saved.email || "", whatsapp: saved.whatsapp || "" };
+      }
+    } catch (e) { /* ignore malformed/missing storage */ }
+    return { name: "", email: "", whatsapp: "" };
+  });
   const [showEmailAuthModal, setShowEmailAuthModal] = useState(false);
   // Gate on a signed-in customer having a phone number on file before a
   // booking can be submitted — see PhoneRequiredModal above.
@@ -5704,16 +5721,32 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
   const [profileTab, setProfileTab] = useState("services");
   const [hoursExpanded, setHoursExpanded] = useState(false);
   const [bookingService, setBookingService] = useState(null);
-  // Multi-service checkout — independent time per service. Keyed by
-  // service id: { [serviceId]: { date, time } }. Each selected service gets
-  // its own date/time picker instead of being collapsed into one combined
-  // back-to-back block, so a customer can e.g. put a lash lift at 9:30am and
-  // a bridal makeup trial at 2pm on a different day. multiBusyWindowsByDate
-  // caches get_busy_windows results per date string so multiple services
-  // sharing the same date don't each trigger their own fetch.
+  // Multi-service checkout — independent time per service by default. Keyed
+  // by service id: { [serviceId]: { date, time } }. Each selected service
+  // gets its own date/time picker instead of being collapsed into one
+  // combined back-to-back block, so a customer can e.g. put a lash lift at
+  // 9:30am and a bridal makeup trial at 2pm on a different day.
+  // multiBusyWindowsByDate caches get_busy_windows results per date string
+  // so multiple services sharing the same date don't each trigger their own
+  // fetch.
+  //
+  // ADDED — "Book together": an explicit opt-in (bookTogetherMode) for the
+  // common case of wanting everything back-to-back in one sitting, which
+  // the independent-per-service picker above made needlessly tedious —
+  // pick ONE date + ONE start time for the whole cart, then every selected
+  // service is scheduled sequentially from there (service 2 starts the
+  // instant service 1 ends, etc.), so nothing can overlap. Defaults to on
+  // whenever more than one service is selected — the common case — but the
+  // per-service picker (above) stays one tap away for anyone who actually
+  // wants different days/times per service, same as before. Writes land in
+  // the exact same multiBookingTimes map, so submitMultiServiceBooking
+  // needs no changes at all.
   const [multiBookingTimes, setMultiBookingTimes] = useState({});
   const [multiBusyWindowsByDate, setMultiBusyWindowsByDate] = useState({});
   const [loadingMultiSlots, setLoadingMultiSlots] = useState(false);
+  const [bookTogetherMode, setBookTogetherMode] = useState(true);
+  const [bookTogetherDate, setBookTogetherDate] = useState(() => localDateStr());
+  const [bookTogetherTime, setBookTogetherTime] = useState("");
   const [providerReviews, setProviderReviews] = useState([]);
   const [loadingReviews, setLoadingReviews] = useState(false);
   const [lightboxUrl, setLightboxUrl] = useState(null);
@@ -5993,13 +6026,26 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
     const today = localDateStr();
     setMultiBookingTimes(Object.fromEntries(selectedServicesList.map((s) => [s.id, { date: today, time: "" }])));
     setBookingError("");
+    // "Book together" defaults to on for an actual multi-service cart (the
+    // common case this was added for) and is simply irrelevant for a cart
+    // of one, where the two modes render identically anyway.
+    setBookTogetherMode(selectedServicesList.length > 1);
+    setBookTogetherDate(today);
+    setBookTogetherTime("");
     setBookingService({ isMulti: true });
   };
 
   // Every distinct date currently chosen across the multi-service pickers —
   // used below to fetch (and cache) get_busy_windows once per date instead
-  // of once per service, since two services can share the same day.
-  const multiBookingDates = Array.from(new Set(Object.values(multiBookingTimes).map((v) => v.date).filter(Boolean)));
+  // of once per service, since two services can share the same day. Also
+  // includes the Book Together date even before any per-service time has
+  // been picked from it, so its own slot grid (getBookTogetherSlots below)
+  // isn't stuck showing stale/empty availability for a date nothing else
+  // has fetched yet.
+  const multiBookingDates = Array.from(new Set([
+    ...Object.values(multiBookingTimes).map((v) => v.date).filter(Boolean),
+    ...(bookTogetherMode && bookTogetherDate ? [bookTogetherDate] : []),
+  ]));
 
   useEffect(() => {
     if (!selectedProvider?.id || multiBookingDates.length === 0) return;
@@ -6064,6 +6110,38 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
       if (!busy) slots.push(minutesToTime(m));
     }
     return slots;
+  };
+
+  // "Book together" slots: one shared start time for the WHOLE cart, using
+  // the combined duration of every selected service — reuses the same
+  // computeDaySlots() the single-service picker and the home feed's
+  // "Last-Minute Drops" both already rely on, rather than re-deriving this
+  // logic a third time. A picked slot here is only ever a real opening
+  // against the provider's actual hours/busy windows/lunch break for that
+  // whole combined block, so nothing downstream needs its own overlap check.
+  const getBookTogetherSlots = (date) => computeDaySlots({
+    hours: providerHours,
+    busy: multiBusyWindowsByDate[date] || [],
+    dateStr: date,
+    durationMin: multiTotalDuration,
+    lunchBreakStart: selectedProvider?.lunch_break_start,
+    lunchBreakMinutes: selectedProvider?.lunch_break_minutes,
+  });
+
+  // Turns one picked "book together" start time into each service's own
+  // entry in multiBookingTimes — service 2 starts the instant service 1
+  // ends, and so on in cart order — so submitMultiServiceBooking (which
+  // only ever reads multiBookingTimes) needs no changes at all to support
+  // this mode.
+  const applyBookTogetherSlot = (date, time) => {
+    let cursor = timeToMinutes(time);
+    const next = {};
+    selectedServicesList.forEach((s) => {
+      next[s.id] = { date, time: minutesToTime(cursor) };
+      cursor += Number(s.duration_min) || 30;
+    });
+    setMultiBookingTimes(next);
+    setBookTogetherTime(time);
   };
 
   // Reload the provider's busy windows whenever the chosen date changes so the
@@ -7548,7 +7626,11 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                           <div onClick={backToServices} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: "var(--forest)", fontWeight: 700, cursor: "pointer", marginBottom: 20 }}>
                             <span style={{ fontSize: 16 }}>←</span> {t("customerPortal.booking.backToServices")}
                           </div>
-                          <h3 style={{ fontSize: 20, fontWeight: 800, color: "var(--dark-text)", margin: "0 0 4px" }}>{bookingService.isMulti ? t("customerPortal.booking.pickTimesForEach") : t("customerPortal.booking.pickDateAndTime")}</h3>
+                          <h3 style={{ fontSize: 20, fontWeight: 800, color: "var(--dark-text)", margin: "0 0 4px" }}>
+                            {bookingService.isMulti
+                              ? (selectedServicesList.length > 1 && bookTogetherMode ? t("customerPortal.booking.pickTimeTogether") : t("customerPortal.booking.pickTimesForEach"))
+                              : t("customerPortal.booking.pickDateAndTime")}
+                          </h3>
                           <p style={{ fontSize: 13, color: "var(--muted)", margin: "0 0 18px" }}>{t("customerPortal.booking.at")} {selectedProvider.business_name}</p>
 
                           {bookingService.isMulti ? (
@@ -7556,22 +7638,49 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                               <div style={{ background: "var(--sand)", borderRadius: 10, padding: "14px 16px", marginBottom: 8, fontSize: 13 }}>
                                 <strong>BZ${multiTotalPrice.toFixed(2)} · {t("customerPortal.booking.durationMin", { count: multiTotalDuration })}</strong> · {t("customerPortal.profile.servicesSelected", { count: selectedServicesList.length })}
                               </div>
-                              <p style={{ fontSize: 12, color: "var(--muted)", margin: "0 0 18px" }}>{t("customerPortal.booking.eachServiceOwnTime")}</p>
-                              {selectedServicesList.map((service) => {
-                                const picked = multiBookingTimes[service.id] || { date: localDateStr(), time: "" };
-                                const slots = getMultiServiceSlots(service);
-                                return (
-                                  <div key={service.id} style={{ border: "1px solid var(--border)", borderRadius: 12, padding: "14px 16px", marginBottom: 14 }}>
-                                    <div style={{ fontSize: 13, marginBottom: 12 }}>
-                                      <strong>{service.name}</strong> — BZ${service.price} · {t("customerPortal.booking.durationMin", { count: service.duration_min })}
-                                    </div>
+
+                              {selectedServicesList.length > 1 && (
+                                <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
+                                  <button
+                                    type="button"
+                                    onClick={() => setBookTogetherMode(true)}
+                                    className="btn-sm"
+                                    style={{
+                                      flex: 1, padding: "10px 6px", fontSize: 13, fontWeight: 700, borderRadius: 10, cursor: "pointer",
+                                      border: bookTogetherMode ? "1.5px solid var(--forest)" : "1px solid var(--border, #ddd)",
+                                      background: bookTogetherMode ? "var(--forest)" : "#fff",
+                                      color: bookTogetherMode ? "#fff" : "var(--dark-text)",
+                                    }}
+                                  >
+                                    {t("customerPortal.booking.bookTogether")}
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => setBookTogetherMode(false)}
+                                    className="btn-sm"
+                                    style={{
+                                      flex: 1, padding: "10px 6px", fontSize: 13, fontWeight: 700, borderRadius: 10, cursor: "pointer",
+                                      border: !bookTogetherMode ? "1.5px solid var(--forest)" : "1px solid var(--border, #ddd)",
+                                      background: !bookTogetherMode ? "var(--forest)" : "#fff",
+                                      color: !bookTogetherMode ? "#fff" : "var(--dark-text)",
+                                    }}
+                                  >
+                                    {t("customerPortal.booking.bookSeparately")}
+                                  </button>
+                                </div>
+                              )}
+
+                              {selectedServicesList.length > 1 && bookTogetherMode ? (
+                                <>
+                                  <p style={{ fontSize: 12, color: "var(--muted)", margin: "0 0 18px" }}>{t("customerPortal.booking.backToBackHint")}</p>
+                                  <div style={{ border: "1px solid var(--border)", borderRadius: 12, padding: "14px 16px", marginBottom: 14 }}>
                                     <div className="input-group">
                                       <label>{t("customerPortal.booking.date")}</label>
                                       <input
                                         type="date"
                                         min={localDateStr()}
-                                        value={picked.date}
-                                        onChange={e => setMultiBookingTimes(prev => ({ ...prev, [service.id]: { date: e.target.value, time: "" } }))}
+                                        value={bookTogetherDate}
+                                        onChange={e => { setBookTogetherDate(e.target.value); setBookTogetherTime(""); }}
                                         style={{ padding: "13px 14px", fontSize: 15 }}
                                       />
                                     </div>
@@ -7581,36 +7690,111 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                                         <p style={{ fontSize: 12, color: "var(--muted)" }}>{t("customerPortal.booking.checkingLiveAvailability")}</p>
                                       ) : !providerHours.length ? (
                                         <p style={{ fontSize: 12, color: "var(--muted)" }}>{t("customerPortal.booking.hoursNotSetYet")}</p>
-                                      ) : slots.length === 0 ? (
+                                      ) : getBookTogetherSlots(bookTogetherDate).length === 0 ? (
                                         <p style={{ fontSize: 12, color: "var(--clay)" }}>{t("customerPortal.booking.noOpenSlots")}</p>
                                       ) : (
                                         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(92px, 1fr))", gap: 9, maxHeight: 220, overflowY: "auto", paddingTop: 4 }}>
-                                          {slots.map((t) => (
+                                          {getBookTogetherSlots(bookTogetherDate).map((slotTime) => (
                                             <button
                                               type="button"
-                                              key={t}
-                                              onClick={() => setMultiBookingTimes(prev => ({ ...prev, [service.id]: { ...prev[service.id], time: t } }))}
+                                              key={slotTime}
+                                              onClick={() => applyBookTogetherSlot(bookTogetherDate, slotTime)}
                                               className="btn-sm"
                                               style={{
                                                 padding: "11px 4px",
                                                 fontSize: 13,
                                                 fontWeight: 700,
-                                                border: picked.time === t ? "1.5px solid var(--forest)" : "1px solid var(--border, #ddd)",
-                                                background: picked.time === t ? "var(--forest)" : "#fff",
-                                                color: picked.time === t ? "#fff" : "var(--dark-text)",
+                                                border: bookTogetherTime === slotTime ? "1.5px solid var(--forest)" : "1px solid var(--border, #ddd)",
+                                                background: bookTogetherTime === slotTime ? "var(--forest)" : "#fff",
+                                                color: bookTogetherTime === slotTime ? "#fff" : "var(--dark-text)",
                                                 borderRadius: 10,
                                                 cursor: "pointer",
                                               }}
                                             >
-                                              {formatTimeLabel(t)}
+                                              {formatTimeLabel(slotTime)}
                                             </button>
                                           ))}
                                         </div>
                                       )}
                                     </div>
+                                    {bookTogetherTime && (
+                                      <p style={{ fontSize: 12, color: "var(--muted)", margin: "10px 0 0" }}>
+                                        {t("customerPortal.booking.runsFromTo", {
+                                          start: formatTimeLabel(bookTogetherTime),
+                                          end: formatTimeLabel(minutesToTime(timeToMinutes(bookTogetherTime) + multiTotalDuration)),
+                                        })}
+                                      </p>
+                                    )}
                                   </div>
-                                );
-                              })}
+                                  {selectedServicesList.map((service) => {
+                                    const picked = multiBookingTimes[service.id];
+                                    return (
+                                      <div key={service.id} style={{ display: "flex", justifyContent: "space-between", fontSize: 12.5, color: "var(--muted)", padding: "4px 2px" }}>
+                                        <span>{service.name}</span>
+                                        <span>{picked?.time ? formatTimeLabel(picked.time) : "—"}</span>
+                                      </div>
+                                    );
+                                  })}
+                                </>
+                              ) : (
+                                <>
+                                  <p style={{ fontSize: 12, color: "var(--muted)", margin: "0 0 18px" }}>{t("customerPortal.booking.eachServiceOwnTime")}</p>
+                                  {selectedServicesList.map((service) => {
+                                    const picked = multiBookingTimes[service.id] || { date: localDateStr(), time: "" };
+                                    const slots = getMultiServiceSlots(service);
+                                    return (
+                                      <div key={service.id} style={{ border: "1px solid var(--border)", borderRadius: 12, padding: "14px 16px", marginBottom: 14 }}>
+                                        <div style={{ fontSize: 13, marginBottom: 12 }}>
+                                          <strong>{service.name}</strong> — BZ${service.price} · {t("customerPortal.booking.durationMin", { count: service.duration_min })}
+                                        </div>
+                                        <div className="input-group">
+                                          <label>{t("customerPortal.booking.date")}</label>
+                                          <input
+                                            type="date"
+                                            min={localDateStr()}
+                                            value={picked.date}
+                                            onChange={e => setMultiBookingTimes(prev => ({ ...prev, [service.id]: { date: e.target.value, time: "" } }))}
+                                            style={{ padding: "13px 14px", fontSize: 15 }}
+                                          />
+                                        </div>
+                                        <div className="input-group">
+                                          <label>{t("customerPortal.booking.availableTimes")}</label>
+                                          {loadingMultiSlots || loadingHours ? (
+                                            <p style={{ fontSize: 12, color: "var(--muted)" }}>{t("customerPortal.booking.checkingLiveAvailability")}</p>
+                                          ) : !providerHours.length ? (
+                                            <p style={{ fontSize: 12, color: "var(--muted)" }}>{t("customerPortal.booking.hoursNotSetYet")}</p>
+                                          ) : slots.length === 0 ? (
+                                            <p style={{ fontSize: 12, color: "var(--clay)" }}>{t("customerPortal.booking.noOpenSlots")}</p>
+                                          ) : (
+                                            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(92px, 1fr))", gap: 9, maxHeight: 220, overflowY: "auto", paddingTop: 4 }}>
+                                              {slots.map((t) => (
+                                                <button
+                                                  type="button"
+                                                  key={t}
+                                                  onClick={() => setMultiBookingTimes(prev => ({ ...prev, [service.id]: { ...prev[service.id], time: t } }))}
+                                                  className="btn-sm"
+                                                  style={{
+                                                    padding: "11px 4px",
+                                                    fontSize: 13,
+                                                    fontWeight: 700,
+                                                    border: picked.time === t ? "1.5px solid var(--forest)" : "1px solid var(--border, #ddd)",
+                                                    background: picked.time === t ? "var(--forest)" : "#fff",
+                                                    color: picked.time === t ? "#fff" : "var(--dark-text)",
+                                                    borderRadius: 10,
+                                                    cursor: "pointer",
+                                                  }}
+                                                >
+                                                  {formatTimeLabel(t)}
+                                                </button>
+                                              ))}
+                                            </div>
+                                          )}
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+                                </>
+                              )}
                             </>
                           ) : (
                             <>
@@ -7728,9 +7912,13 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                               }
                               const guestName = guestCheckoutForm.name.trim();
                               const guestEmail = guestCheckoutForm.email.trim().toLowerCase();
+                              const guestWhatsapp = guestCheckoutForm.whatsapp.trim();
                               if (!guestName) { setBookingError(t("customerPortal.booking.enterFullName")); return; }
                               if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(guestEmail)) { setBookingError(t("customerPortal.booking.enterValidEmail")); return; }
                               setBookingError("");
+                              // Remember these for next time on this device — see the
+                              // guestCheckoutForm initializer above.
+                              try { localStorage.setItem("vaibook_guest_info", JSON.stringify({ name: guestName, email: guestEmail, whatsapp: guestWhatsapp })); } catch (e) { /* ignore */ }
                               setSendingBookingOtp(true);
                               const { error } = await sendEmailOtp(guestEmail, { full_name: guestName });
                               setSendingBookingOtp(false);
