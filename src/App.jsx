@@ -7872,6 +7872,17 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                           {!user?.id && (
                             <div className="guest-checkout-fields">
                               <p className="guest-checkout-label">{t("customerPortal.booking.yourDetails")}</p>
+                              {/* Shown up front rather than only after a failed guest
+                                  attempt — anyone who already has a VaiBook account
+                                  from signing in with Google before (no password on
+                                  those, ever — see guestAuthWithPassword in
+                                  supabase.js) can route around the mismatch entirely
+                                  instead of discovering it from an error message.
+                                  Feedback 2026-10-24. */}
+                              <p className="guest-checkout-note">
+                                {t("customerPortal.booking.alreadyHaveAccount")}{" "}
+                                <span style={{ color: "var(--lime)", fontWeight: 600, cursor: "pointer" }} onClick={onSignIn}>{t("customerPortal.signIn.button")}</span>
+                              </p>
                               <div className="input-group">
                                 <label>{t("customerPortal.booking.fullName")}</label>
                                 <input type="text" placeholder={t("customerPortal.booking.fullNamePlaceholder")} value={guestCheckoutForm.name} onChange={e => setGuestCheckoutForm(f => ({ ...f, name: e.target.value }))} />
