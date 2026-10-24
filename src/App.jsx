@@ -7628,7 +7628,7 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                   </div>
                 )}
 
-                <div className="profile-body" style={bookingService ? { gridTemplateColumns: "1fr" } : undefined}>
+                <div id="profile-tabs" className="profile-body" style={bookingService ? { gridTemplateColumns: "1fr" } : undefined}>
                   <div className="profile-main">
                     {!bookingService && (
                       <div className="tab-row">
@@ -8183,7 +8183,35 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                           badges, the Book Now CTA, and the expandable hours. */}
                       {(() => { const badge = planBadge(selectedProvider); return badge && <span className={`chip ${selectedProvider.plan === "business" ? "chip-plan-business" : "chip-plan-pro"}`} style={{ marginRight: selectedProvider.is_featured ? 6 : 0 }}>{badge.label}</span>; })()}
                       {selectedProvider.is_featured && <span className="chip chip-featured">⭐ {t("customerPortal.browse.featuredBadge")}</span>}
-                      <button className="btn-sm forest" style={{ width: "100%", padding: "13px 0", marginTop: 4 }} onClick={() => setProfileTab("services")}>{t("customerPortal.profile.bookNow")}</button>
+                      <button
+                        className="btn-sm forest"
+                        style={{ width: "100%", padding: "13px 0", marginTop: 4 }}
+                        onClick={() => {
+                          // Only switching the tab state was a no-op
+                          // whenever "Services" was already the active tab —
+                          // which is the common case, since most people tap
+                          // this after they've already browsed services and
+                          // picked one or two. Live-tested 2026-10-24: with
+                          // nothing selected yet it correctly switched tabs,
+                          // but with service(s) already selected the button
+                          // did visibly nothing, which is exactly what read
+                          // as "doesn't work." Now it jumps straight into
+                          // the time picker when something's already picked
+                          // (same as tapping "Next: Pick Time"), and only
+                          // falls back to just showing the service list when
+                          // nothing's selected yet — either way something on
+                          // screen visibly changes, and the services section
+                          // is always scrolled into view too.
+                          if (selectedServiceIds.length > 0) {
+                            proceedToMultiServiceTime();
+                          } else {
+                            setProfileTab("services");
+                          }
+                          document.getElementById("profile-tabs")?.scrollIntoView({ behavior: "smooth", block: "start" });
+                        }}
+                      >
+                        {t("customerPortal.profile.bookNow")}
+                      </button>
 
                       <div className="sidebar-row clickable" onClick={() => setHoursExpanded(v => !v)}>
                         <span>🕐 <span className={openStatus.open ? "open-txt" : "closed-txt"}>{openStatus.label}</span></span>
