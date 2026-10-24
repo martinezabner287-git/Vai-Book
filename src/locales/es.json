@@ -374,7 +374,7 @@
       "thisProvider": "Este proveedor",
       "whatsappNumber": "Número de WhatsApp",
       "whoWouldYouLike": "¿A quién le gustaría ver?",
-      "wrongPassword": "Esa contraseña no coincide con este correo. Inténtalo de nuevo, o verifica el correo electrónico de arriba.",
+      "wrongPassword": "Este correo ya tiene una cuenta. Si normalmente inicias sesión con Google, usa \"Iniciar sesión con Google\" en lugar del formulario de invitado. De lo contrario, verifica tu contraseña e inténtalo de nuevo.",
       "yourDetails": "Tus datos"
     },
     "bookings": {
