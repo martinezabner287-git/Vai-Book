@@ -331,6 +331,7 @@
       "emailCodeNote": "Te enviaremos un código de 6 dígitos por correo para confirmar que eres tú — sin contraseña, sin registro aparte.",
       "enterFullName": "Por favor ingresa tu nombre completo.",
       "enterValidEmail": "Por favor ingresa un correo electrónico válido.",
+      "enterValidWhatsapp": "Por favor ingresa un número de WhatsApp válido para que el proveedor pueda contactarte.",
       "fileTooLarge": "Ese archivo pesa más de 10MB. Por favor sube una foto o PDF más pequeño.",
       "fullName": "Nombre completo",
       "fullNamePlaceholder": "Tu nombre completo",
