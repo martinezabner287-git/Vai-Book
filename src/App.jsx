@@ -1,6 +1,6 @@
 
 import { useState, useEffect, useLayoutEffect, useRef, useContext, createContext, lazy, Suspense } from "react";
-import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, updateService, deleteService, getActiveProviders, getProviderDirectory, createBooking, getProviderBusyWindows, createBookingSafe, cancelBooking, markBookingCheckedIn, getCustomerBookings, uploadReceipt, submitReview, getProviderReviews, updateReview, sendBookingEmail, updateUserProfile, getPaymentMethods, addPaymentMethod, deletePaymentMethod, createNotification, getNotifications, markNotificationRead, markAllNotificationsRead, getCategoryDefaultFeatures, getProviderFeatureOverrides, setProviderFeatureOverride, getVisitNotes, upsertVisitNote, adminListProviders, adminUpdateProvider, adminDeleteProvider, adminCountCustomers, getFavoriteProviderIds, getFavoriteProviders, addFavorite, removeFavorite, getBookingMessages, sendBookingMessage, markBookingMessagesRead, getUnreadBookingMessages, getProviderMonthlyTrend, createProviderProfile, getProviderById, createWalkInBooking, submitProviderPayment, getMyProviderPayments, adminListProviderPayments, adminReviewProviderPayment, submitBookingRefund, adminListBookingRefunds, openPrivateFile, getProviderStaff, addProviderStaff, updateProviderStaff, deleteProviderStaff, getProviderStaffPublic, getLoyaltyAccount, getProviderLoyaltyCustomers, redeemLoyaltyReward, getMyStaffProfile, claimStaffSeatByEmail, getStaffBookings, getProviderNotifyEmail, getMaintenanceStatus, setMaintenanceMode, getSiteOfflineStatus, setSiteOffline, guestAuthWithPassword, savePushSubscription, attachBookingServices, getProviderBlocks, insertProviderBlock, deleteProviderBlock, proposeBookingReschedule, confirmBookingReschedule, declineBookingReschedule, withdrawBookingReschedule, establishSoloSession, getServerSoloSessionToken, getLocalSoloSessionToken, clearLocalSoloSessionToken, subscribeToSoloSessionReplacement } from "./supabase";
+import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, updateService, deleteService, getActiveProviders, getProviderDirectory, createBooking, getProviderBusyWindows, createBookingSafe, cancelBooking, markBookingCheckedIn, getCustomerBookings, uploadReceipt, submitReview, getProviderReviews, updateReview, sendBookingEmail, updateUserProfile, getPaymentMethods, addPaymentMethod, deletePaymentMethod, createNotification, getNotifications, markNotificationRead, markAllNotificationsRead, getCategoryDefaultFeatures, getProviderFeatureOverrides, setProviderFeatureOverride, getVisitNotes, upsertVisitNote, adminListProviders, adminUpdateProvider, adminDeleteProvider, adminCountCustomers, getFavoriteProviderIds, getFavoriteProviders, addFavorite, removeFavorite, getBookingMessages, sendBookingMessage, markBookingMessagesRead, getUnreadBookingMessages, getProviderMonthlyTrend, createProviderProfile, getProviderById, createWalkInBooking, submitProviderPayment, getMyProviderPayments, adminListProviderPayments, adminReviewProviderPayment, submitBookingRefund, adminListBookingRefunds, openPrivateFile, getProviderStaff, addProviderStaff, updateProviderStaff, deleteProviderStaff, getProviderStaffPublic, getLoyaltyAccount, getProviderLoyaltyCustomers, redeemLoyaltyReward, getMyStaffProfile, claimStaffSeatByEmail, getStaffBookings, getProviderNotifyEmail, getMaintenanceStatus, setMaintenanceMode, getSiteOfflineStatus, setSiteOffline, guestAuthWithPassword, updateGuestPassword, savePushSubscription, attachBookingServices, getProviderBlocks, insertProviderBlock, deleteProviderBlock, proposeBookingReschedule, confirmBookingReschedule, declineBookingReschedule, withdrawBookingReschedule, establishSoloSession, getServerSoloSessionToken, getLocalSoloSessionToken, clearLocalSoloSessionToken, subscribeToSoloSessionReplacement } from "./supabase";
 import AdminDashboard from "./AdminDashboard";
 import ProfilePhotoModal from "./ProfilePhotoModal";
 import LanguageSelector from "./LanguageSelector";
@@ -5440,6 +5440,17 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
   const [editingProfile, setEditingProfile] = useState(false);
   const [profileForm, setProfileForm] = useState({ firstName: "", lastName: "", phone: "" });
   const [savingProfile, setSavingProfile] = useState(false);
+  // Password change (guest-password accounts only — see isPasswordAccount
+  // below; a Google account has no password to change). Doesn't help
+  // someone who's already forgotten theirs and is locked out — only lets
+  // someone currently signed in change it on purpose. See
+  // updateGuestPassword in supabase.js for why that limit exists.
+  const [changingPassword, setChangingPassword] = useState(false);
+  const [passwordForm, setPasswordForm] = useState({ password: "", confirm: "" });
+  const [savingPassword, setSavingPassword] = useState(false);
+  const [passwordError, setPasswordError] = useState("");
+  const [passwordSuccess, setPasswordSuccess] = useState(false);
+  const isPasswordAccount = session?.user?.app_metadata?.provider === "email";
 
   useEffect(() => {
     if (!user) return;
@@ -7386,7 +7397,52 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                     />
                   </div>
                   <div className="input-group"><label>{t("customerPortal.settings.email")}</label><input defaultValue={user?.email || session?.user?.email || ""} disabled /></div>
-                  <p style={{ fontSize: 12, color: "var(--muted)" }}>{t("customerPortal.settings.emailManagedByGoogle")}</p>
+                  {!isPasswordAccount && (
+                    <p style={{ fontSize: 12, color: "var(--muted)" }}>{t("customerPortal.settings.emailManagedByGoogle")}</p>
+                  )}
+                  {isPasswordAccount && (
+                    <div style={{ marginTop: 16, paddingTop: 16, borderTop: "1px solid var(--border)" }}>
+                      {!changingPassword ? (
+                        <span style={{ color: "var(--lime)", fontWeight: 600, fontSize: 13, cursor: "pointer" }} onClick={() => { setChangingPassword(true); setPasswordError(""); setPasswordSuccess(false); setPasswordForm({ password: "", confirm: "" }); }}>
+                          {t("customerPortal.settings.changePassword")}
+                        </span>
+                      ) : (
+                        <>
+                          <div className="input-group">
+                            <label>{t("customerPortal.settings.newPassword")}</label>
+                            <input type="password" autoComplete="new-password" value={passwordForm.password} onChange={e => setPasswordForm(f => ({ ...f, password: e.target.value }))} />
+                          </div>
+                          <div className="input-group">
+                            <label>{t("customerPortal.settings.confirmNewPassword")}</label>
+                            <input type="password" autoComplete="new-password" value={passwordForm.confirm} onChange={e => setPasswordForm(f => ({ ...f, confirm: e.target.value }))} />
+                          </div>
+                          <p style={{ fontSize: 12, color: "var(--muted)" }}>{t("customerPortal.settings.passwordNote")}</p>
+                          {passwordError && <p style={{ fontSize: 12, color: "#B91C1C" }}>{passwordError}</p>}
+                          {passwordSuccess && <p style={{ fontSize: 12, color: "var(--forest)" }}>{t("customerPortal.settings.passwordUpdated")}</p>}
+                          <div style={{ display: "flex", gap: 10, marginTop: 10 }}>
+                            <button
+                              className="btn-primary"
+                              disabled={savingPassword}
+                              onClick={async () => {
+                                if (passwordForm.password.length < 6) { setPasswordError(t("customerPortal.settings.passwordTooShort")); return; }
+                                if (passwordForm.password !== passwordForm.confirm) { setPasswordError(t("customerPortal.settings.passwordMismatch")); return; }
+                                setPasswordError("");
+                                setSavingPassword(true);
+                                const { error } = await updateGuestPassword(passwordForm.password);
+                                setSavingPassword(false);
+                                if (error) { setPasswordError(t("customerPortal.settings.passwordUpdateFailed")); return; }
+                                setPasswordSuccess(true);
+                                setPasswordForm({ password: "", confirm: "" });
+                              }}
+                            >
+                              {savingPassword ? t("customerPortal.settings.saving") : t("customerPortal.common.save")}
+                            </button>
+                            <button className="btn-ghost" disabled={savingPassword} onClick={() => { setChangingPassword(false); setPasswordError(""); setPasswordSuccess(false); }}>{t("customerPortal.common.cancel")}</button>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  )}
                   {editingProfile && (
                     <div style={{ display: "flex", gap: 10, marginTop: 14 }}>
                       <button className="btn-primary" onClick={saveProfile} disabled={savingProfile}>
