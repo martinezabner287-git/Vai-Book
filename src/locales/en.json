@@ -309,6 +309,7 @@
   },
   "customerPortal": {
     "booking": {
+      "alreadyHaveAccount": "Already have a VaiBook account?",
       "anyProfessional": "Any professional",
       "at": "at",
       "availableTimes": "Available times",
