@@ -1814,6 +1814,8 @@ const css = `
   .guest-checkout-note { font-size: 11px; color: var(--muted); margin: -4px 0 4px; }
   .optional-tag { font-weight: 400; color: var(--muted); }
   .checkout-liability-note { font-size: 10.5px; color: var(--muted); text-align: center; line-height: 1.5; margin: 10px 0 0; }
+  .booking-for-toggle { display: flex; align-items: center; gap: 8px; font-size: 13.5px; font-weight: 600; color: var(--dark-text); cursor: pointer; }
+  .booking-for-toggle input { width: 17px; height: 17px; accent-color: var(--forest); cursor: pointer; }
 
   .email-auth-overlay { position: fixed; inset: 0; background: rgba(13, 31, 24, 0.6); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
   .email-auth-card { background: #FFFFFF; border-radius: 20px; width: 100%; max-width: 360px; padding: 32px; box-shadow: 0 24px 60px rgba(76,61,196,0.25); position: relative; }
@@ -5721,6 +5723,16 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
   // Gate on a signed-in customer having a phone number on file before a
   // booking can be submitted — see PhoneRequiredModal above.
   const [showPhoneRequiredModal, setShowPhoneRequiredModal] = useState(false);
+  // "Booking for someone else" — a signed-in customer's own saved name/
+  // phone are used silently by default (same as before; PhoneRequiredModal
+  // above still catches a signed-in account with no phone on file yet).
+  // Only when this is switched on do we show fields to collect who it's
+  // actually for, instead of always showing a details form regardless of
+  // whether the account already has everything needed. Guests (not signed
+  // in at all) are unaffected — they still always see the full guest form,
+  // since they have no saved profile to fall back to. Feedback 2026-10-24.
+  const [bookingForSomeoneElse, setBookingForSomeoneElse] = useState(false);
+  const [recipientForm, setRecipientForm] = useState({ name: "", whatsapp: "" });
   // Fresha-style "who would you like to see?" — only populated (and only
   // shown anywhere) when the provider has turned on allow_staff_selection.
   // null selectedStaffId means "any professional", same as not stamping a
@@ -6028,6 +6040,8 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
       notes: "",
     });
     setBookingError("");
+    setBookingForSomeoneElse(false);
+    setRecipientForm({ name: "", whatsapp: "" });
     setBookingService(service);
   };
 
@@ -6052,6 +6066,8 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
     const today = localDateStr();
     setMultiBookingTimes(Object.fromEntries(selectedServicesList.map((s) => [s.id, { date: today, time: "" }])));
     setBookingError("");
+    setBookingForSomeoneElse(false);
+    setRecipientForm({ name: "", whatsapp: "" });
     // "Book together" defaults to on for an actual multi-service cart (the
     // common case this was added for) and is simply irrelevant for a cart
     // of one, where the two modes render identically anyway.
@@ -6386,7 +6402,7 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
     return created;
   };
 
-  const submitBooking = async (overrideCustomerId) => {
+  const submitBooking = async (overrideCustomerId, extraNotePrefix) => {
     // A signed-in business account has a real customer-facing user row too
     // (getOrCreateUser auto-creates one for every authenticated account,
     // provider or not), which used to be enough to let them book through
@@ -6413,9 +6429,15 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
     setSubmittingBooking(true);
     setBookingError("");
 
+    // extraNotePrefix carries the "booking for someone else" name/WhatsApp
+    // (see the Continue button below) onto the front of the provider-facing
+    // notes — applied after validation above, which only ever checks the
+    // customer's own typed notes, not this prefix.
+    const notesToSend = extraNotePrefix ? `${extraNotePrefix}${bookingForm.notes ? `\n${bookingForm.notes}` : ""}` : bookingForm.notes;
+
     let created = null;
     try {
-      created = await createOneBooking({ bookingCustomerId, service, dateStr: bookingForm.date, timeStr: bookingForm.time, notes: bookingForm.notes, staffId: selectedStaffId });
+      created = await createOneBooking({ bookingCustomerId, service, dateStr: bookingForm.date, timeStr: bookingForm.time, notes: notesToSend, staffId: selectedStaffId });
     } catch (err) {
       setSubmittingBooking(false);
       if (err?.code === "SLOT_TAKEN") {
@@ -6461,7 +6483,7 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
   // already created rather than leaving a partial cart confirmed — the
   // customer sees one clear error naming the service that couldn't be
   // booked, not a silent partial success.
-  const submitMultiServiceBooking = async (overrideCustomerId) => {
+  const submitMultiServiceBooking = async (overrideCustomerId, extraNotePrefix) => {
     // Same business-account guard as submitBooking above — kept here too
     // since this is a separate entry point (multi-service checkout), not a
     // wrapper around submitBooking.
@@ -6486,12 +6508,17 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
     setSubmittingBooking(true);
     setBookingError("");
 
+    // See the matching comment in submitBooking above — same "booking for
+    // someone else" prefix, applied once here and reused for every service
+    // in the cart rather than per-service.
+    const notesToSend = extraNotePrefix ? `${extraNotePrefix}${bookingForm.notes ? `\n${bookingForm.notes}` : ""}` : bookingForm.notes;
+
     const createdSoFar = [];
     for (const service of selectedServicesList) {
       const { date: dateStr, time: timeStr } = multiBookingTimes[service.id];
       let created = null;
       try {
-        created = await createOneBooking({ bookingCustomerId, service, dateStr, timeStr, notes: bookingForm.notes, staffId: selectedStaffId });
+        created = await createOneBooking({ bookingCustomerId, service, dateStr, timeStr, notes: notesToSend, staffId: selectedStaffId });
       } catch (err) {
         // Undo everything already created in this same cart — the customer
         // only ever clicked "Request booking" once, so a failure on service
@@ -7923,6 +7950,32 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                             </div>
                           )}
 
+                          {user?.id && (
+                            <div className="guest-checkout-fields">
+                              <label className="booking-for-toggle">
+                                <input
+                                  type="checkbox"
+                                  checked={bookingForSomeoneElse}
+                                  onChange={(e) => setBookingForSomeoneElse(e.target.checked)}
+                                />
+                                {t("customerPortal.booking.bookingForSomeoneElse")}
+                              </label>
+                              {bookingForSomeoneElse && (
+                                <>
+                                  <p className="guest-checkout-label" style={{ marginTop: 12 }}>{t("customerPortal.booking.theirDetails")}</p>
+                                  <div className="input-group">
+                                    <label>{t("customerPortal.booking.fullName")}</label>
+                                    <input type="text" placeholder={t("customerPortal.booking.fullNamePlaceholder")} value={recipientForm.name} onChange={e => setRecipientForm(f => ({ ...f, name: e.target.value }))} />
+                                  </div>
+                                  <div className="input-group">
+                                    <label>{t("customerPortal.booking.whatsappNumber")}</label>
+                                    <input type="tel" placeholder="+501 622 1234" value={recipientForm.whatsapp} onChange={e => setRecipientForm(f => ({ ...f, whatsapp: e.target.value }))} />
+                                  </div>
+                                </>
+                              )}
+                            </div>
+                          )}
+
                           {bookingError && <p style={{ fontSize: 12, color: "#B91C1C", marginBottom: 12 }}>{bookingError}</p>}
 
                           <button
@@ -7932,6 +7985,18 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                             onClick={async () => {
                               if (providerProfile) { setBookingError(t("customerPortal.booking.providerCannotBook")); return; }
                               if (user?.id) {
+                                if (bookingForSomeoneElse) {
+                                  const recName = recipientForm.name.trim();
+                                  const recWhatsapp = recipientForm.whatsapp.trim();
+                                  if (!recName) { setBookingError(t("customerPortal.booking.enterFullName")); return; }
+                                  if ((recWhatsapp.match(/\d/g) || []).length < 7) { setBookingError(t("customerPortal.booking.enterValidWhatsapp")); return; }
+                                  setBookingError("");
+                                  const prefix = t("customerPortal.booking.bookingForSomeoneNote", { name: recName, whatsapp: recWhatsapp });
+                                  bookingService.isMulti ? submitMultiServiceBooking(undefined, prefix) : submitBooking(undefined, prefix);
+                                  return;
+                                }
+                                // Not booking for someone else: same as before — just needs
+                                // a phone/WhatsApp on file so the provider can reach THEM.
                                 if (!(user.phone || user.whatsapp_number)) { setShowPhoneRequiredModal(true); return; }
                                 bookingService.isMulti ? submitMultiServiceBooking() : submitBooking();
                                 return;
