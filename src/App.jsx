@@ -5655,9 +5655,17 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
         setProviderHours([]);
         setBusyWindows([]);
         setLoadingHours(true);
-        getWorkingHours(p.id).then((hrs) => { if (!cancelled) { setProviderHours(hrs || []); setLoadingHours(false); } });
+        // NOT gated on `cancelled` below (deliberately): onDeepLinkConsumed,
+        // called a few lines down, flips deepLinkProviderId back to null to
+        // mark this same link as consumed — that re-runs this effect's
+        // cleanup and sets `cancelled = true` for THIS in-flight fetch
+        // before getWorkingHours has resolved. Gating on it left loadingHours
+        // stuck true forever (so "Checking live availability..." never
+        // cleared) for every single deep-link-based provider open, not just
+        // QR/NFC scans. Reproduced live 2026-10-24 — see Aluxe Aesthetics.
+        getWorkingHours(p.id).then((hrs) => { setProviderHours(hrs || []); setLoadingHours(false); });
         if (p.loyalty_enabled && user?.id) {
-          getLoyaltyAccount(p.id, user.id).then((acc) => { if (!cancelled) setMyLoyalty(acc); });
+          getLoyaltyAccount(p.id, user.id).then((acc) => setMyLoyalty(acc));
         }
       }
       if (!cancelled) onDeepLinkConsumed && onDeepLinkConsumed();
