@@ -1295,6 +1295,57 @@ export const verifyEmailOtp = async (email, token) => {
   return { data, error };
 };
 
+// ── GUEST CHECKOUT: EMAIL + PASSWORD ─────────────────────────────
+// Replaces the OTP flow above for guest checkout (2026-10-24) — OTP
+// depended on Supabase actually delivering a working code/magic-link
+// email, which the project's shared sender can't do reliably (see the
+// notifications-email diagnosis). A password means guest checkout no
+// longer depends on any outbound email at all: first-time guests are
+// signed up on the spot and get a usable session immediately, and
+// returning guests (same email) sign back in with the same password —
+// no code to wait for, no inbox to check.
+//
+// NOTE: for signUp to return a usable session immediately (instead of
+// requiring a confirmation-email click), "Confirm email" must be
+// turned OFF in Supabase → Authentication → Sign In / Providers →
+// Email. That's a plain on/off setting, not the auth *template*
+// editor the free tier locks — unaffected by that restriction.
+//
+// Supabase deliberately doesn't expose "does this email already have
+// an account" as its own lookup (anti-enumeration), so returning-guest
+// detection works off signUp's own response instead: signing up with
+// an email that already has an account returns 200 with no error, but
+// `identities` comes back empty rather than creating a second account
+// — when we see that, we fall back to signInWithPassword with the
+// same credentials. A handful of Supabase configs instead return an
+// explicit "already registered" error from signUp, so that's checked
+// too. Either way, a wrong password on a returning guest's email
+// surfaces as a normal verifyError the caller can show.
+export const guestAuthWithPassword = async (email, password, metadata) => {
+  const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+    email,
+    password,
+    options: { data: metadata },
+  });
+
+  const alreadyRegistered =
+    (!signUpError && signUpData?.user && (signUpData.user.identities || []).length === 0) ||
+    (signUpError && /already registered|already exists/i.test(signUpError.message || ""));
+
+  if (alreadyRegistered) {
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) console.error('Error signing guest back in:', error.message);
+    return { data, error, returning: true };
+  }
+
+  if (signUpError) {
+    console.error('Error creating guest account:', signUpError.message);
+    return { data: signUpData, error: signUpError, returning: false };
+  }
+
+  return { data: signUpData, error: null, returning: false };
+};
+
 // ── PAYMENT METHOD HELPERS ───────────────────────────────────────
 
 export const getPaymentMethods = async (providerId) => {
