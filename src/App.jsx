@@ -1,6 +1,6 @@
 
 import { useState, useEffect, useLayoutEffect, useRef, useContext, createContext, lazy, Suspense } from "react";
-import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, updateService, deleteService, getActiveProviders, getProviderDirectory, createBooking, getProviderBusyWindows, createBookingSafe, cancelBooking, markBookingCheckedIn, getCustomerBookings, uploadReceipt, submitReview, getProviderReviews, updateReview, sendBookingEmail, updateUserProfile, getPaymentMethods, addPaymentMethod, deletePaymentMethod, createNotification, getNotifications, markNotificationRead, markAllNotificationsRead, getCategoryDefaultFeatures, getProviderFeatureOverrides, setProviderFeatureOverride, getVisitNotes, upsertVisitNote, adminListProviders, adminUpdateProvider, adminDeleteProvider, adminCountCustomers, getFavoriteProviderIds, getFavoriteProviders, addFavorite, removeFavorite, getBookingMessages, sendBookingMessage, markBookingMessagesRead, getUnreadBookingMessages, getProviderMonthlyTrend, createProviderProfile, getProviderById, createWalkInBooking, submitProviderPayment, getMyProviderPayments, adminListProviderPayments, adminReviewProviderPayment, submitBookingRefund, adminListBookingRefunds, openPrivateFile, getProviderStaff, addProviderStaff, updateProviderStaff, deleteProviderStaff, getProviderStaffPublic, getLoyaltyAccount, getProviderLoyaltyCustomers, redeemLoyaltyReward, getMyStaffProfile, claimStaffSeatByEmail, getStaffBookings, getProviderNotifyEmail, getMaintenanceStatus, setMaintenanceMode, getSiteOfflineStatus, setSiteOffline, sendEmailOtp, verifyEmailOtp, savePushSubscription, attachBookingServices, getProviderBlocks, insertProviderBlock, deleteProviderBlock, proposeBookingReschedule, confirmBookingReschedule, declineBookingReschedule, withdrawBookingReschedule, establishSoloSession, getServerSoloSessionToken, getLocalSoloSessionToken, clearLocalSoloSessionToken, subscribeToSoloSessionReplacement } from "./supabase";
+import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, updateService, deleteService, getActiveProviders, getProviderDirectory, createBooking, getProviderBusyWindows, createBookingSafe, cancelBooking, markBookingCheckedIn, getCustomerBookings, uploadReceipt, submitReview, getProviderReviews, updateReview, sendBookingEmail, updateUserProfile, getPaymentMethods, addPaymentMethod, deletePaymentMethod, createNotification, getNotifications, markNotificationRead, markAllNotificationsRead, getCategoryDefaultFeatures, getProviderFeatureOverrides, setProviderFeatureOverride, getVisitNotes, upsertVisitNote, adminListProviders, adminUpdateProvider, adminDeleteProvider, adminCountCustomers, getFavoriteProviderIds, getFavoriteProviders, addFavorite, removeFavorite, getBookingMessages, sendBookingMessage, markBookingMessagesRead, getUnreadBookingMessages, getProviderMonthlyTrend, createProviderProfile, getProviderById, createWalkInBooking, submitProviderPayment, getMyProviderPayments, adminListProviderPayments, adminReviewProviderPayment, submitBookingRefund, adminListBookingRefunds, openPrivateFile, getProviderStaff, addProviderStaff, updateProviderStaff, deleteProviderStaff, getProviderStaffPublic, getLoyaltyAccount, getProviderLoyaltyCustomers, redeemLoyaltyReward, getMyStaffProfile, claimStaffSeatByEmail, getStaffBookings, getProviderNotifyEmail, getMaintenanceStatus, setMaintenanceMode, getSiteOfflineStatus, setSiteOffline, guestAuthWithPassword, savePushSubscription, attachBookingServices, getProviderBlocks, insertProviderBlock, deleteProviderBlock, proposeBookingReschedule, confirmBookingReschedule, declineBookingReschedule, withdrawBookingReschedule, establishSoloSession, getServerSoloSessionToken, getLocalSoloSessionToken, clearLocalSoloSessionToken, subscribeToSoloSessionReplacement } from "./supabase";
 import AdminDashboard from "./AdminDashboard";
 import ProfilePhotoModal from "./ProfilePhotoModal";
 import LanguageSelector from "./LanguageSelector";
@@ -4083,132 +4083,15 @@ function SiteOffline({ message, onSignIn }) {
   );
 }
 
-function EmailAuthModal({ email, onClose, onResend, onVerified }) {
-  // Step-2-only modal: by the time this opens, the caller (guest checkout,
-  // or a "Sign in" entry point elsewhere) has already collected the email
-  // and triggered sendEmailOtp once. This just handles entering + verifying
-  // the 6-digit code, and re-sending it. No password ever exists to check.
-  const [code, setCode] = useState(["", "", "", "", "", ""]);
-  const [verifying, setVerifying] = useState(false);
-  const [resending, setResending] = useState(false);
-  const [error, setError] = useState("");
-  const [resendCooldown, setResendCooldown] = useState(30);
-  const inputRefs = useRef([]);
-
-  useEffect(() => {
-    if (resendCooldown <= 0) return;
-    const t = setTimeout(() => setResendCooldown((s) => s - 1), 1000);
-    return () => clearTimeout(t);
-  }, [resendCooldown]);
-
-  useEffect(() => {
-    setTimeout(() => inputRefs.current[0]?.focus(), 50);
-  }, []);
-
-  const handleCodeChange = (index, value) => {
-    const digit = value.replace(/\D/g, "").slice(-1);
-    const next = [...code];
-    next[index] = digit;
-    setCode(next);
-    if (digit && index < 5) inputRefs.current[index + 1]?.focus();
-  };
-
-  const handleCodeKeyDown = (index, e) => {
-    if (e.key === "Backspace" && !code[index] && index > 0) inputRefs.current[index - 1]?.focus();
-  };
-
-  const handleCodePaste = (e) => {
-    const pasted = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
-    if (!pasted) return;
-    e.preventDefault();
-    const next = ["", "", "", "", "", ""];
-    for (let i = 0; i < pasted.length; i++) next[i] = pasted[i];
-    setCode(next);
-    inputRefs.current[Math.min(pasted.length, 5)]?.focus();
-  };
-
-  const handleVerify = async () => {
-    const joined = code.join("");
-    if (joined.length !== 6) { setError("Enter the 6-digit code."); return; }
-    setError("");
-    setVerifying(true);
-    const { data, error: verifyError } = await verifyEmailOtp(email, joined);
-    setVerifying(false);
-    if (verifyError || !data?.session) {
-      setError("That code didn't work. Check it and try again.");
-      return;
-    }
-    onVerified(data);
-  };
-
-  const handleResend = async () => {
-    if (resendCooldown > 0) return;
-    setResending(true);
-    setError("");
-    // FIXED — this used to ignore whatever onResend() resolved to, so a
-    // failed resend (Supabase's own per-address rate limit, a network
-    // blip, the project's email-sending quota) looked IDENTICAL to a
-    // successful one: the cooldown still reset to "Resend code in 30s"
-    // with zero indication anything went wrong. Someone whose first code
-    // never arrived, who then taps Resend hoping for better luck, would
-    // see the button behave as if it worked every single time even if
-    // every attempt was silently failing — which is exactly the kind of
-    // "I never got the code" report with no error on screen to go on.
-    const result = await onResend?.();
-    setResending(false);
-    if (result?.error) {
-      setError("Couldn't send the code. Check your connection and try again — and double-check the email address above is correct.");
-      return; // Cooldown deliberately NOT reset on failure — no sense
-               // making someone wait another 30s before they can retry
-               // a send that never went out in the first place.
-    }
-    setResendCooldown(30);
-  };
-
-  return (
-    <div className="email-auth-overlay" onClick={onClose}>
-      <div className="email-auth-card" onClick={(e) => e.stopPropagation()}>
-        <button className="email-auth-close" onClick={onClose} aria-label="Close">×</button>
-        <p className="email-auth-brand">vai <span>book</span></p>
-        <h2 className="email-auth-title">Enter the code</h2>
-        <p className="email-auth-sub">We sent a 6-digit code to <strong>{email}</strong>. Not seeing it after a minute or two? Check your spam/junk folder — it can land there on the first email from a new sender.</p>
-
-        <div className="email-auth-code-row" onPaste={handleCodePaste}>
-          {code.map((digit, i) => (
-            <input
-              key={i}
-              ref={(el) => (inputRefs.current[i] = el)}
-              type="text"
-              inputMode="numeric"
-              maxLength={1}
-              value={digit}
-              onChange={(e) => handleCodeChange(i, e.target.value)}
-              onKeyDown={(e) => handleCodeKeyDown(i, e)}
-              className="email-auth-code-input"
-            />
-          ))}
-        </div>
-
-        {error && <p className="email-auth-error">{error}</p>}
-
-        <button className="email-auth-btn" disabled={verifying} onClick={handleVerify}>
-          {verifying ? "Verifying..." : "Verify & continue"}
-        </button>
-        <button className="email-auth-resend" disabled={resendCooldown > 0 || resending} onClick={handleResend}>
-          {resending ? "Resending..." : resendCooldown > 0 ? `Resend code in ${resendCooldown}s` : "Resend code"}
-        </button>
-      </div>
-    </div>
-  );
-}
-
 // Blocks a signed-in customer from submitting a booking until they have a
 // phone number on file — a provider accepting a request with no way to
 // reach the customer (no WhatsApp/call-back number) was a real gap, since
 // the phone field is otherwise only ever asked for in account settings,
-// which nothing forces anyone to visit. Reuses EmailAuthModal's overlay/
-// card/title/sub/btn CSS (.email-auth-*) rather than adding a parallel set
-// of near-identical modal styles.
+// which nothing forces anyone to visit. Reuses the guest-checkout modal's
+// overlay/card/title/sub/btn CSS (.email-auth-*, named for its original
+// email-OTP use — the class names stayed when guest checkout moved to a
+// password, below) rather than adding a parallel set of near-identical
+// modal styles.
 function PhoneRequiredModal({ onClose, onSaved }) {
   const { t } = useTranslation();
   const [phone, setPhone] = useState("");
@@ -5705,21 +5588,20 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
   // this device shouldn't have to retype them on every booking: prefill
   // from whatever was saved locally last time (see the "Continue" button
   // below, which is what writes it), and leave it blank only for someone
-  // genuinely booking here for the first time. This is separate from (and
-  // doesn't change) the real identity check — the email OTP still runs
-  // every time, since that's what actually proves it's them, not just a
-  // remembered name. A signed-in customer (user?.id truthy) never sees
-  // this form at all, so this only ever affects the guest path.
+  // genuinely booking here for the first time. Password is deliberately
+  // NOT saved here (or anywhere client-side) — it's the one thing that
+  // actually proves it's them, so it's typed fresh every time, same as
+  // any other site's login. A signed-in customer (user?.id truthy) never
+  // sees this form at all, so this only ever affects the guest path.
   const [guestCheckoutForm, setGuestCheckoutForm] = useState(() => {
     try {
       const saved = JSON.parse(localStorage.getItem("vaibook_guest_info") || "null");
       if (saved && typeof saved === "object") {
-        return { name: saved.name || "", email: saved.email || "", whatsapp: saved.whatsapp || "" };
+        return { name: saved.name || "", email: saved.email || "", whatsapp: saved.whatsapp || "", password: "" };
       }
     } catch (e) { /* ignore malformed/missing storage */ }
-    return { name: "", email: "", whatsapp: "" };
+    return { name: "", email: "", whatsapp: "", password: "" };
   });
-  const [showEmailAuthModal, setShowEmailAuthModal] = useState(false);
   // Gate on a signed-in customer having a phone number on file before a
   // booking can be submitted — see PhoneRequiredModal above.
   const [showPhoneRequiredModal, setShowPhoneRequiredModal] = useState(false);
@@ -5740,7 +5622,7 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
   const [teamStaff, setTeamStaff] = useState([]);
   const [loadingTeam, setLoadingTeam] = useState(false);
   const [selectedStaffId, setSelectedStaffId] = useState(null);
-  const [sendingBookingOtp, setSendingBookingOtp] = useState(false);
+  const [submittingGuestAuth, setSubmittingGuestAuth] = useState(false);
   const { pushEnabled, subscribingPush, pushError, enablePushNotifications } = usePushSubscription(user?.id);
   const [providerHours, setProviderHours] = useState([]);
   // Separate from loadingSlots (which only tracks the busy-windows fetch for
@@ -7946,6 +7828,10 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                                 <label>{t("customerPortal.booking.whatsappNumber")}</label>
                                 <input type="tel" placeholder="+501 622 1234" value={guestCheckoutForm.whatsapp} onChange={e => setGuestCheckoutForm(f => ({ ...f, whatsapp: e.target.value }))} />
                               </div>
+                              <div className="input-group">
+                                <label>{t("customerPortal.booking.password")}</label>
+                                <input type="password" autoComplete="new-password" placeholder={t("customerPortal.booking.passwordPlaceholder")} value={guestCheckoutForm.password} onChange={e => setGuestCheckoutForm(f => ({ ...f, password: e.target.value }))} onKeyDown={e => { if (e.key === "Enter") e.preventDefault(); }} />
+                              </div>
                               <p className="guest-checkout-note">{t("customerPortal.booking.emailCodeNote")}</p>
                             </div>
                           )}
@@ -7981,7 +7867,7 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                           <button
                             className="btn-sm forest"
                             style={{ width: "100%", padding: "15px 0", fontSize: 15, borderRadius: 12, marginTop: 4 }}
-                            disabled={submittingBooking || sendingBookingOtp || !!providerProfile}
+                            disabled={submittingBooking || submittingGuestAuth || !!providerProfile}
                             onClick={async () => {
                               if (providerProfile) { setBookingError(t("customerPortal.booking.providerCannotBook")); return; }
                               if (user?.id) {
@@ -8004,48 +7890,57 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                               const guestName = guestCheckoutForm.name.trim();
                               const guestEmail = guestCheckoutForm.email.trim().toLowerCase();
                               const guestWhatsapp = guestCheckoutForm.whatsapp.trim();
+                              const guestPassword = guestCheckoutForm.password;
                               if (!guestName) { setBookingError(t("customerPortal.booking.enterFullName")); return; }
                               if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(guestEmail)) { setBookingError(t("customerPortal.booking.enterValidEmail")); return; }
                               // WhatsApp used to be optional — the provider has no way to
-                              // reach a guest who skipped it (email OTP only proves identity,
-                              // it isn't a contact channel they're watching), so require it
-                              // here the same way name/email are required. A loose digit
-                              // count (not a strict format) so both local "622 1234" and
-                              // full "+501 622 1234" entries pass. Feedback 2026-10-24.
+                              // reach a guest who skipped it (the password only proves
+                              // identity, it isn't a contact channel they're watching), so
+                              // require it here the same way name/email are required. A
+                              // loose digit count (not a strict format) so both local
+                              // "622 1234" and full "+501 622 1234" entries pass. Feedback
+                              // 2026-10-24.
                               if ((guestWhatsapp.match(/\d/g) || []).length < 7) { setBookingError(t("customerPortal.booking.enterValidWhatsapp")); return; }
+                              // 6 chars matches Supabase Auth's own default minimum — a
+                              // shorter password here would just bounce back as a signUp
+                              // error anyway, so check it up front instead of round-
+                              // tripping to find out.
+                              if (guestPassword.length < 6) { setBookingError(t("customerPortal.booking.enterValidPassword")); return; }
                               setBookingError("");
-                              // Remember these for next time on this device — see the
-                              // guestCheckoutForm initializer above.
+                              // Remember name/email/WhatsApp for next time on this device
+                              // (see the guestCheckoutForm initializer above) — never the
+                              // password, which is typed fresh every booking.
                               try { localStorage.setItem("vaibook_guest_info", JSON.stringify({ name: guestName, email: guestEmail, whatsapp: guestWhatsapp })); } catch (e) { /* ignore */ }
-                              setSendingBookingOtp(true);
-                              const { error } = await sendEmailOtp(guestEmail, { full_name: guestName });
-                              setSendingBookingOtp(false);
-                              if (error) { setBookingError(t("customerPortal.booking.codeSendFailed")); return; }
-                              setShowEmailAuthModal(true);
+                              setSubmittingGuestAuth(true);
+                              const { data, error, returning } = await guestAuthWithPassword(guestEmail, guestPassword, { full_name: guestName });
+                              setSubmittingGuestAuth(false);
+                              if (error) {
+                                setBookingError(returning ? t("customerPortal.booking.wrongPassword") : t("customerPortal.booking.guestAuthFailed"));
+                                return;
+                              }
+                              // No session even though there's no error means Supabase is
+                              // still configured to require a confirmation-email click
+                              // before the account is usable (see the "Confirm email"
+                              // setting called out in guestAuthWithPassword's comment) — a
+                              // booking submitted with no real session would just fail
+                              // further down against RLS, so this surfaces as the same
+                              // plain error instead of a confusing silent failure.
+                              if (!data?.session) {
+                                setBookingError(t("customerPortal.booking.guestAuthFailed"));
+                                return;
+                              }
+                              const uid = data?.user?.id;
+                              if (guestWhatsapp && uid) {
+                                updateUserProfile(uid, { whatsapp_number: guestWhatsapp }).catch(() => {});
+                              }
+                              bookingService.isMulti ? submitMultiServiceBooking(uid) : submitBooking(uid);
                             }}
                           >
-                            {submittingBooking ? t("customerPortal.booking.sendingRequest") : sendingBookingOtp ? t("customerPortal.booking.sendingCode") : user?.id ? t("customerPortal.booking.requestBooking") : t("customerPortal.common.continue")}
+                            {submittingBooking ? t("customerPortal.booking.sendingRequest") : submittingGuestAuth ? t("customerPortal.booking.settingUpAccount") : user?.id ? t("customerPortal.booking.requestBooking") : t("customerPortal.common.continue")}
                           </button>
                           <p className="checkout-liability-note">
                             {t("customerPortal.booking.liabilityNote")}
                           </p>
-
-                          {showEmailAuthModal && (
-                            <EmailAuthModal
-                              email={guestCheckoutForm.email.trim().toLowerCase()}
-                              onClose={() => setShowEmailAuthModal(false)}
-                              onResend={() => sendEmailOtp(guestCheckoutForm.email.trim().toLowerCase(), { full_name: guestCheckoutForm.name.trim() })}
-                              onVerified={async (data) => {
-                                setShowEmailAuthModal(false);
-                                const uid = data?.user?.id;
-                                const whatsapp = guestCheckoutForm.whatsapp.trim();
-                                if (whatsapp && uid) {
-                                  updateUserProfile(uid, { whatsapp_number: whatsapp }).catch(() => {});
-                                }
-                                bookingService.isMulti ? submitMultiServiceBooking(uid) : submitBooking(uid);
-                              }}
-                            />
-                          )}
 
                           {showPhoneRequiredModal && (
                             <PhoneRequiredModal
