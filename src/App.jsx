@@ -1919,12 +1919,22 @@ const css = `
   /* MULTI-SERVICE CHECKOUT (tappable service cards + sticky total bar) */
   .service-card { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 16px; border-radius: 12px; cursor: pointer; transition: background .15s, border-color .15s, box-shadow .15s; border: 1.5px solid transparent; margin-bottom: 8px; }
   .service-card:not(.active):hover { background: var(--sand); }
-  /* Outline only when selected (not a solid fill) — keeps the service's
-     own name/price/description readable in their normal dark-text colors
-     instead of needing a separate "selected" text-color override. */
-  .service-card.active { background: var(--sand); border-color: var(--forest); box-shadow: 0 0 0 1px var(--forest) inset; }
+  /* Outline only when selected — no fill at all (not even a light tint).
+     A tint plus the border plus a solid "Book" button per row plus the
+     solid sticky total bar below was too much indigo on one screen at
+     once; the thin outline + checkmark is enough to show selection, so
+     only the sticky bar (the one actual next step) stays a solid fill.
+     Feedback 2026-10-24. Keeps the service's own name/price/description
+     readable in their normal dark-text colors either way. */
+  .service-card.active { background: transparent; border-color: var(--forest); box-shadow: 0 0 0 1px var(--forest) inset; }
   .service-card-check { width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--border); flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 13px; color: transparent; font-weight: 800; }
   .service-card.active .service-card-check { background: var(--forest); border-color: var(--forest); color: var(--near-white); }
+  /* Per-row "Book" button, scoped to inside a service card only (doesn't
+     touch .btn-sm.forest elsewhere in the app) — outline instead of a
+     solid fill, so a list of 5+ services doesn't read as a stack of solid
+     purple buttons next to solid purple "Share" outlines. */
+  .service-card .btn-sm.forest { background: transparent; border: 1.5px solid var(--forest); color: var(--forest); }
+  .service-card .btn-sm.forest:hover { background: var(--forest); color: var(--near-white); opacity: 1; }
   .multi-fab { position: sticky; bottom: 8px; background: var(--forest); color: var(--near-white); border-radius: 16px; padding: 14px 18px; display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 14px; box-shadow: 0 8px 24px rgba(76,61,196,0.35); z-index: 5; }
   .multi-fab .totals { font-size: 12px; line-height: 1.4; color: rgba(255,255,255,0.8); }
   .multi-fab .totals strong { color: var(--lime); font-size: 17px; display: block; }
