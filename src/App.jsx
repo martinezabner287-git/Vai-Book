@@ -7916,7 +7916,7 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                                 <input type="email" placeholder="you@example.com" value={guestCheckoutForm.email} onChange={e => setGuestCheckoutForm(f => ({ ...f, email: e.target.value }))} />
                               </div>
                               <div className="input-group">
-                                <label>{t("customerPortal.booking.whatsappNumber")} <span className="optional-tag">({t("customerPortal.common.optional")})</span></label>
+                                <label>{t("customerPortal.booking.whatsappNumber")}</label>
                                 <input type="tel" placeholder="+501 622 1234" value={guestCheckoutForm.whatsapp} onChange={e => setGuestCheckoutForm(f => ({ ...f, whatsapp: e.target.value }))} />
                               </div>
                               <p className="guest-checkout-note">{t("customerPortal.booking.emailCodeNote")}</p>
@@ -7941,6 +7941,13 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                               const guestWhatsapp = guestCheckoutForm.whatsapp.trim();
                               if (!guestName) { setBookingError(t("customerPortal.booking.enterFullName")); return; }
                               if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(guestEmail)) { setBookingError(t("customerPortal.booking.enterValidEmail")); return; }
+                              // WhatsApp used to be optional — the provider has no way to
+                              // reach a guest who skipped it (email OTP only proves identity,
+                              // it isn't a contact channel they're watching), so require it
+                              // here the same way name/email are required. A loose digit
+                              // count (not a strict format) so both local "622 1234" and
+                              // full "+501 622 1234" entries pass. Feedback 2026-10-24.
+                              if ((guestWhatsapp.match(/\d/g) || []).length < 7) { setBookingError(t("customerPortal.booking.enterValidWhatsapp")); return; }
                               setBookingError("");
                               // Remember these for next time on this device — see the
                               // guestCheckoutForm initializer above.
