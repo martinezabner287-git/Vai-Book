@@ -1346,6 +1346,23 @@ export const guestAuthWithPassword = async (email, password, metadata) => {
   return { data: signUpData, error: null, returning: false };
 };
 
+// Lets a signed-in guest-password account change its own password from
+// Settings (2026-10-24) — the one real gap the password switch above
+// opened up: unlike the old OTP flow, there was no way to recover a
+// forgotten password without an email round-trip, and silently letting
+// anyone "reset" a password without proving they already know it would
+// let someone hijack any email's account. This doesn't solve a
+// *forgotten* password (that still needs the email work, deferred),
+// but it lets someone already signed in change it on purpose — e.g.
+// right after signing up, to something they're sure they'll remember.
+// Google-based accounts never see this (no password exists on them to
+// change) — see isPasswordAccount in App.jsx's Settings tab.
+export const updateGuestPassword = async (newPassword) => {
+  const { data, error } = await supabase.auth.updateUser({ password: newPassword });
+  if (error) console.error('Error updating password:', error.message);
+  return { data, error };
+};
+
 // ── PAYMENT METHOD HELPERS ───────────────────────────────────────
 
 export const getPaymentMethods = async (providerId) => {
