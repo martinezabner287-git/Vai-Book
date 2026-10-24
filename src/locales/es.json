@@ -309,6 +309,7 @@
   },
   "customerPortal": {
     "booking": {
+      "alreadyHaveAccount": "¿Ya tienes una cuenta de VaiBook?",
       "anyProfessional": "Cualquier profesional",
       "at": "en",
       "availableTimes": "Horarios disponibles",
