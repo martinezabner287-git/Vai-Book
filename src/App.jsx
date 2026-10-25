@@ -807,6 +807,45 @@ const css = `
   .hero-trial-btn { display: block; margin: 0 auto 44px; padding: 17px 38px; font-size: 16px; border-radius: 100px; box-shadow: 0 16px 40px rgba(242,183,5,0.22); }
   .hero-search-label { font-size: 12px; font-weight: 600; letter-spacing: .03em; color: rgba(250,250,247,0.5); text-align: center; margin-bottom: 14px; }
 
+  /* HERO TRUST ROW — VaiBuy-brand-kinship pass (vaibuyandsell.bz/vendors
+     has a 3-badge "Verified & Trusted / Local & Independent / Great
+     Service" row under its hero copy) ported into VaiBook's OWN indigo/gold
+     palette rather than VaiBuy's navy/teal, per explicit direction to keep
+     --forest here. Replaces the old single-sentence .hero-stat-line (now
+     unused, left in place like other inert rules in this file) — that
+     provider count moved into .stat-band below as a real number instead of
+     a sentence. Sits under the search bar, not above it: search stays the
+     first real action on this page (see the "full swing back to
+     customer-facing" note on .search-hero's JSX), trust signals reinforce
+     it rather than race it for attention. */
+  .hero-trust-row { display: flex; justify-content: center; gap: 36px; margin-top: 34px; flex-wrap: wrap; }
+  .hero-trust-item { display: flex; align-items: flex-start; gap: 10px; max-width: 230px; text-align: left; }
+  .hero-trust-icon { width: 34px; height: 34px; border-radius: 50%; background: rgba(76,61,196,0.1); display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+  .hero-trust-item strong { display: block; font-size: 14px; color: var(--dark-text); margin-bottom: 2px; }
+  .hero-trust-item p { font-size: 12.5px; color: var(--muted); line-height: 1.4; margin: 0; }
+  @media (max-width: 768px) {
+    .hero-trust-row { gap: 22px; margin-top: 26px; }
+    .hero-trust-item { max-width: 100%; }
+  }
+
+  /* STAT BAND — VaiBuy's numeric summary row (icon + number + label),
+     same brand-kinship pass as the trust row above: its own light band
+     directly under the hero, same layout VaiBuy uses, VaiBook colors.
+     Every number is real, pulled from the same active-providers fetch the
+     old .hero-stat-line sentence used (discoverProviders/services/
+     service_type/district on each live record) — never fabricated, same
+     standard as the rest of this page's "trending"/"new" sections. */
+  .stat-band { background: var(--sand); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: 28px 48px; }
+  .stat-band-inner { max-width: 1320px; margin: 0 auto; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 20px; }
+  .stat-item { display: flex; align-items: center; gap: 12px; }
+  .stat-icon { font-size: 20px; }
+  .stat-item strong { display: block; font-size: 22px; font-weight: 800; color: var(--dark-text); line-height: 1.1; }
+  .stat-item span { font-size: 12.5px; color: var(--muted); font-weight: 600; }
+  @media (max-width: 768px) {
+    .stat-band { padding: 22px 24px; }
+    .stat-band-inner { justify-content: center; gap: 24px; }
+  }
+
   /* SEARCH SUGGESTIONS (autocomplete dropdown, shared by hero + browse search bars) */
   .suggestions-dropdown { position: absolute; top: calc(100% + 8px); left: 0; right: 0; background: white; border: 1px solid var(--border); border-radius: 16px; box-shadow: 0 16px 36px rgba(76,61,196,0.16); z-index: 60; overflow: hidden; text-align: left; }
   .suggestion-item { display: flex; align-items: center; gap: 10px; padding: 11px 18px; cursor: pointer; font-size: 13px; }
@@ -2356,6 +2395,15 @@ const SERVICES = [
   { key: "petGrooming", icon: "🐾", name: "Pet Grooming", desc: "All breeds", bg: "#1C4A38", categoryQuery: "Pet Grooming" },
   { key: "fitnessRecovery", icon: "🏋️", name: "Fitness & Recovery", desc: "Training & recovery", bg: "#2A4A3E", categoryQuery: "Fitness & Recovery" },
   { key: "physicalTherapy", icon: "🦵", name: "Physical Therapy", desc: "Rehab & mobility", bg: "#1E4035", categoryQuery: "Physical Therapy" },
+];
+
+// Hero trust-badge row (VaiBuy-brand-kinship pass) — 3 fixed items, titles/
+// descriptions come from locale (hero.trust.<key>.*), icons stay here since
+// they're not translated.
+const HERO_TRUST_BADGES = [
+  { key: "verified", icon: "✅" },
+  { key: "local", icon: "📍" },
+  { key: "booking", icon: "⚡" },
 ];
 
 // ── BUSINESS CATEGORIES & FEATURE FLAGS ──────────────────────────
@@ -4856,6 +4904,16 @@ function LandingPage({ onNav, session, user, onSignIn, onSignOut }) {
     submitHeroSearch(s.label);
   };
 
+  // STAT BAND numbers (VaiBuy-brand-kinship pass) — all real counts off the
+  // same discoverProviders fetch the old hero-stat-line sentence used, same
+  // "never fabricated" standard as the carousels above. categoriesCovered/
+  // districtsCovered are distinct-value counts against the full SERVICES/
+  // DISTRICTS lists, shown as "x/total" the same way VaiBuy's own stat row
+  // does ("0/6 Districts Covered").
+  const totalServicesListed = discoverProviders.reduce((sum, p) => sum + (p.services || []).length, 0);
+  const categoriesCovered = new Set(discoverProviders.map((p) => p.service_type).filter(Boolean)).size;
+  const districtsCovered = new Set(discoverProviders.map((p) => p.district).filter(Boolean)).size;
+
   return (
     <div className="lp-theme">
       {/* HERO — full swing back to customer-facing (per explicit request):
@@ -4902,15 +4960,55 @@ function LandingPage({ onNav, session, user, onSignIn, onSignOut }) {
             </div>
           )}
         </div>
-        {!loadingDiscover && discoverProviders.length > 0 && (
-          <p className="hero-stat-line">
-            {t("hero.trustedProfessionals", { count: discoverProviders.length })}
-          </p>
-        )}
+        {/* TRUST ROW — VaiBuy-brand-kinship pass (vaibuyandsell.bz/vendors'
+            "Verified & Trusted / Local & Independent / Great Service" row),
+            VaiBook's own indigo/gold instead of VaiBuy's navy/teal. Replaces
+            the old single-sentence provider count here — that number now
+            lives in .stat-band just below, as a real figure alongside three
+            others instead of a standalone sentence. */}
+        <div className="hero-trust-row">
+          {HERO_TRUST_BADGES.map((b) => (
+            <div className="hero-trust-item" key={b.key}>
+              <span className="hero-trust-icon" aria-hidden="true">{b.icon}</span>
+              <div>
+                <strong>{t(`hero.trust.${b.key}.title`)}</strong>
+                <p>{t(`hero.trust.${b.key}.desc`)}</p>
+              </div>
+            </div>
+          ))}
+        </div>
         <button className="hero-get-app-btn" onClick={openInstallAppGuide}>
           {t("nav.addToHomeScreen")} <span aria-hidden="true">⊞</span>
         </button>
       </section>
+
+      {/* STAT BAND — VaiBuy-brand-kinship pass (vaibuyandsell.bz/vendors'
+          "Active Vendors / Products Listed / Categories Covered / Districts
+          Covered" bar). Only rendered once providers have actually loaded,
+          same guard the old hero-stat-line sentence used, so it never shows
+          a flash of zeros. */}
+      {!loadingDiscover && discoverProviders.length > 0 && (
+        <section className="stat-band">
+          <div className="stat-band-inner">
+            <div className="stat-item">
+              <span className="stat-icon" aria-hidden="true">👥</span>
+              <div><strong>{discoverProviders.length}</strong><span>{t("hero.stats.activeProviders")}</span></div>
+            </div>
+            <div className="stat-item">
+              <span className="stat-icon" aria-hidden="true">🧾</span>
+              <div><strong>{totalServicesListed}</strong><span>{t("hero.stats.servicesListed")}</span></div>
+            </div>
+            <div className="stat-item">
+              <span className="stat-icon" aria-hidden="true">🗂️</span>
+              <div><strong>{categoriesCovered}/{SERVICES.length}</strong><span>{t("hero.stats.categoriesCovered")}</span></div>
+            </div>
+            <div className="stat-item">
+              <span className="stat-icon" aria-hidden="true">📍</span>
+              <div><strong>{districtsCovered}/{DISTRICTS.length}</strong><span>{t("hero.stats.districtsCovered")}</span></div>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* SERVICES */}
       <section className="services-section" id="services">
