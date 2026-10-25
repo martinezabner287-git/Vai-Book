@@ -7,7 +7,27 @@
     "anyDistrict": "Any district",
     "searchButton": "Search",
     "trustedProfessionals_one": "{{count}} trusted professional ready to book across Belize",
-    "trustedProfessionals_other": "{{count}} trusted professionals ready to book across Belize"
+    "trustedProfessionals_other": "{{count}} trusted professionals ready to book across Belize",
+    "trust": {
+      "verified": {
+        "title": "Verified Providers",
+        "desc": "Every provider is reviewed before they go live."
+      },
+      "local": {
+        "title": "Local & Independent",
+        "desc": "Supporting Belize's own self-care professionals."
+      },
+      "booking": {
+        "title": "Book in Minutes",
+        "desc": "Real-time availability, no back-and-forth."
+      }
+    },
+    "stats": {
+      "activeProviders": "Active Providers",
+      "servicesListed": "Services Listed",
+      "categoriesCovered": "Categories Covered",
+      "districtsCovered": "Districts Covered"
+    }
   },
   "nav": {
     "searchPlaceholder": "Search barbers, haircuts, nail techs...",
