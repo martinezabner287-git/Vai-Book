@@ -7,7 +7,27 @@
     "anyDistrict": "Cualquier distrito",
     "searchButton": "Buscar",
     "trustedProfessionals_one": "{{count}} profesional de confianza listo para reservar en Belice",
-    "trustedProfessionals_other": "{{count}} profesionales de confianza listos para reservar en Belice"
+    "trustedProfessionals_other": "{{count}} profesionales de confianza listos para reservar en Belice",
+    "trust": {
+      "verified": {
+        "title": "Proveedores Verificados",
+        "desc": "Cada proveedor es revisado antes de publicarse."
+      },
+      "local": {
+        "title": "Local e Independiente",
+        "desc": "Apoyando a los profesionales de cuidado personal de Belice."
+      },
+      "booking": {
+        "title": "Reserva en Minutos",
+        "desc": "Disponibilidad en tiempo real, sin ida y vuelta."
+      }
+    },
+    "stats": {
+      "activeProviders": "Proveedores Activos",
+      "servicesListed": "Servicios Listados",
+      "categoriesCovered": "Categorías Cubiertas",
+      "districtsCovered": "Distritos Cubiertos"
+    }
   },
   "nav": {
     "searchPlaceholder": "Busca barberos, cortes, manicuristas...",
