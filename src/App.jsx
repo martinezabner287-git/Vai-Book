@@ -364,6 +364,8 @@ const css = `
     overflow-x: auto; scrollbar-width: none;
   }
   .nav-strip::-webkit-scrollbar { display: none; }
+  /* Keep nav content framed like VaiBuy when zoomed out */
+  .nav, .nav-strip { max-width: 1416px; margin-left: auto; margin-right: auto; box-sizing: border-box; }
   .nav-strip-link { background: none; border: none; color: rgba(250,250,247,0.82); font-family: 'Plus Jakarta Sans', sans-serif; font-size: 13px; font-weight: 500; cursor: pointer; padding: 2px 0; white-space: nowrap; transition: color .2s; }
   .nav-strip-link:hover { color: var(--lime); }
   .nav-strip-cta { color: var(--lime); font-weight: 600; margin-left: auto; }
