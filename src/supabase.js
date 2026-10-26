@@ -3,7 +3,22 @@ import { createClient } from '@supabase/supabase-js';
 const SUPABASE_URL = 'https://nvfpdkpzrtpmvmgzvdca.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_zpAA2Gdcm_BJhu1D56tsTw_sBpZXiNA';
 
-export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// Safety net: no request to Supabase is allowed to hang forever. If the
+// network stalls, the request is cut off (photo uploads get longer) and
+// the button that started it gets its error instead of spinning endlessly.
+const fetchWithTimeout = (input, init = {}) => {
+  const url = typeof input === 'string' ? input : (input && input.url) || '';
+  const ms = url.includes('/storage/v1/') ? 90000 : 30000;
+  const controller = new AbortController();
+  if (init.signal) {
+    if (init.signal.aborted) controller.abort();
+    else init.signal.addEventListener('abort', () => controller.abort(), { once: true });
+  }
+  const timer = setTimeout(() => controller.abort(), ms);
+  return fetch(input, { ...init, signal: controller.signal }).finally(() => clearTimeout(timer));
+};
+
+export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { global: { fetch: fetchWithTimeout } });
 
 // ── ACTION ERROR REPORTING ───────────────────────────────────────────────
 // Many helpers below log a failed save to the console and return null/false,
@@ -394,7 +409,7 @@ export const upsertWorkingHours = async (providerId, days) => {
     .from('working_hours')
     .upsert(rows, { onConflict: 'provider_id,day_of_week' })
     .select();
-  if (error) reportActionError('upsertWorkingHours', error); console.error('Error saving working hours:', error.message);
+  if (error) { reportActionError('upsertWorkingHours', error); console.error('Error saving working hours:', error.message); }
   return (data || []).map((d) => ({ ...d, start_time: d.open_time, end_time: d.close_time }));
 };
 
@@ -804,7 +819,7 @@ export const cancelBooking = async (bookingId) => {
     .eq('id', bookingId)
     .select()
     .single();
-  if (error) reportActionError('cancelBooking', error); console.error('Error cancelling booking:', error.message);
+  if (error) { reportActionError('cancelBooking', error); console.error('Error cancelling booking:', error.message); }
   return data;
 };
 
@@ -821,7 +836,7 @@ export const markBookingCheckedIn = async (bookingId) => {
     .eq('id', bookingId)
     .select()
     .single();
-  if (error) reportActionError('markBookingCheckedIn', error); console.error('Error checking in:', error.message);
+  if (error) { reportActionError('markBookingCheckedIn', error); console.error('Error checking in:', error.message); }
   return data;
 };
 
@@ -866,7 +881,7 @@ export const updateBookingStatus = async (bookingId, status) => {
     .eq('id', bookingId)
     .select()
     .single();
-  if (error) reportActionError('updateBookingStatus', error); console.error(error.message);
+  if (error) { reportActionError('updateBookingStatus', error); console.error(error.message); }
   return data;
 };
 
@@ -879,7 +894,7 @@ export const updateBooking = async (bookingId, updates) => {
     .eq('id', bookingId)
     .select()
     .single();
-  if (error) reportActionError('updateBooking', error); console.error('Error updating booking:', error.message);
+  if (error) { reportActionError('updateBooking', error); console.error('Error updating booking:', error.message); }
   return data;
 };
 
@@ -1301,7 +1316,7 @@ export const sendBookingEmail = async ({ to, subject, html }) => {
 
 export const updateUserProfile = async (userId, updates) => {
   const { data, error } = await supabase.from('users').update(updates).eq('id', userId).select().single();
-  if (error) reportActionError('updateUserProfile', error); console.error('Error updating profile:', error.message);
+  if (error) { reportActionError('updateUserProfile', error); console.error('Error updating profile:', error.message); }
   return data;
 };
 
