@@ -1287,6 +1287,25 @@ const css = `
   .setup-link { background: none; border: none; color: #4C3DC4; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; }
 
 
+
+  /* BOOKING PAGE EXTRAS */
+  .policies-text { font-size: 13px; color: var(--dark-text); line-height: 1.6; white-space: pre-wrap; margin: 0; }
+  .booking-policies-box { background: var(--sand); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin: 4px 0 14px; }
+  .booking-policies-title { font-size: 13px; font-weight: 700; color: var(--dark-text); margin-bottom: 6px; }
+  .booking-policies-box .policies-text { max-height: 140px; overflow-y: auto; }
+  .arrival-box { margin-top: 8px; background: rgba(76,61,196,0.07); border: 1px solid rgba(76,61,196,0.18); border-radius: 10px; padding: 10px 12px; }
+  .arrival-title { font-size: 12.5px; font-weight: 700; color: var(--dark-text); margin-bottom: 3px; }
+  .arrival-box p { font-size: 12.5px; color: var(--dark-text); line-height: 1.55; white-space: pre-wrap; margin: 0; }
+  .testimonial-list { display: grid; gap: 10px; }
+  .testimonial { margin: 0; background: var(--sand); border-radius: 12px; padding: 14px 16px; }
+  .testimonial .stars { color: #F2B705; font-size: 13px; letter-spacing: 1px; }
+  .testimonial blockquote { margin: 6px 0 6px; font-size: 14px; line-height: 1.55; color: var(--dark-text); }
+  .testimonial figcaption { font-size: 12px; color: var(--muted); font-weight: 600; }
+  .review-card-featured { border-color: rgba(242,183,5,0.6) !important; }
+  .review-featured-tag { font-size: 11px; font-weight: 700; color: #92400E; margin-bottom: 4px; }
+  .pin-review-btn { margin-top: 8px; background: transparent; border: 1px solid var(--border); border-radius: 100px; padding: 6px 12px; font-size: 12px; font-weight: 600; cursor: pointer; color: var(--dark-text); font-family: inherit; }
+  .pin-review-btn.pinned { background: #FEF3C7; border-color: #F2B705; color: #92400E; }
+
   /* AGREEMENTS */
   .agree-chip { display: inline-block; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 100px; margin-left: 6px; vertical-align: middle; border: none; font-family: inherit; }
   .agree-chip.signed { background: #DCFCE7; color: #166534; }
@@ -2726,6 +2745,90 @@ function ProviderCarousel({ providers, badgeFor, onCardClick, ctaLabel, favorite
     </div>
   );
 }
+
+// ── BOOKING PAGE EXTRAS TEXT (EN / ES) ───────────────────────────────────
+// Arrival instructions, booking policies, website/TikTok links, pinned
+// reviews. Needs supabase_booking_page.sql run once in Supabase.
+const BP_TEXT = {
+  en: {
+    cardTitle: "Booking page",
+    cardHint: "What clients see before and after they book with you.",
+    arrivalLabel: "Arrival instructions",
+    arrivalPlaceholder: "Park behind the building, ring the bell at the side door. Please arrive 10 minutes early.",
+    arrivalHint: "Shown to clients on their upcoming bookings.",
+    policiesLabel: "Booking policies",
+    policiesPlaceholder: "Cancel at least 24 hours ahead. Arriving more than 15 minutes late may shorten your session. Deposits are non-refundable.",
+    policiesHint: "Clients must tick \"I agree\" before they can book. Leave empty to skip.",
+    websiteLabel: "Website (optional)",
+    tiktokLabel: "TikTok (optional)",
+    save: "Save booking page",
+    saving: "Saving...",
+    saved: "Saved ✓",
+    saveFailed: "Couldn't save: {msg}",
+    needSetup: "Run supabase_booking_page.sql in Supabase (SQL Editor) once, then try again.",
+    hubRow: "Arrival, policies & links",
+    hubRowDesc: "Directions, rules clients agree to, website and TikTok",
+    pin: "📌 Feature on my page",
+    unpin: "📌 Featured · tap to remove",
+    pinLimit: "You can feature up to 3 reviews. Remove one first.",
+    pinHint: "Feature your best reviews (up to 3). They show first on your page.",
+    whatClientsSay: "What clients say",
+    featured: "📌 Featured",
+    policiesTitle: "Booking policies",
+    agreePolicies: "I've read and agree to {business}'s booking policies.",
+    mustAgree: "Please agree to the booking policies first.",
+    arrivalTitle: "📍 Before you arrive",
+    website: "🌐 Website",
+    tiktok: "🎵 TikTok",
+  },
+  es: {
+    cardTitle: "Página de reservas",
+    cardHint: "Lo que ven los clientes antes y después de reservar contigo.",
+    arrivalLabel: "Instrucciones de llegada",
+    arrivalPlaceholder: "Estaciona detrás del edificio y toca el timbre de la puerta lateral. Llega 10 minutos antes.",
+    arrivalHint: "Se muestra a los clientes en sus próximas reservas.",
+    policiesLabel: "Políticas de reserva",
+    policiesPlaceholder: "Cancela con al menos 24 horas. Llegar más de 15 minutos tarde puede acortar tu sesión. Los depósitos no son reembolsables.",
+    policiesHint: "Los clientes deben marcar \"Acepto\" antes de reservar. Déjalo vacío para omitirlo.",
+    websiteLabel: "Sitio web (opcional)",
+    tiktokLabel: "TikTok (opcional)",
+    save: "Guardar página de reservas",
+    saving: "Guardando...",
+    saved: "Guardado ✓",
+    saveFailed: "No se pudo guardar: {msg}",
+    needSetup: "Ejecuta supabase_booking_page.sql en Supabase (SQL Editor) una vez y vuelve a intentarlo.",
+    hubRow: "Llegada, políticas y enlaces",
+    hubRowDesc: "Indicaciones, reglas que aceptan los clientes, sitio web y TikTok",
+    pin: "📌 Destacar en mi página",
+    unpin: "📌 Destacada · toca para quitar",
+    pinLimit: "Puedes destacar hasta 3 reseñas. Quita una primero.",
+    pinHint: "Destaca tus mejores reseñas (hasta 3). Aparecen primero en tu página.",
+    whatClientsSay: "Lo que dicen los clientes",
+    featured: "📌 Destacada",
+    policiesTitle: "Políticas de reserva",
+    agreePolicies: "He leído y acepto las políticas de reserva de {business}.",
+    mustAgree: "Primero acepta las políticas de reserva.",
+    arrivalTitle: "📍 Antes de llegar",
+    website: "🌐 Sitio web",
+    tiktok: "🎵 TikTok",
+  },
+};
+const bpText = (lang, key, vars) => {
+  const dict = BP_TEXT[(lang || "en").slice(0, 2)] || BP_TEXT.en;
+  let str = dict[key] || BP_TEXT.en[key] || key;
+  if (vars) Object.keys(vars).forEach((k) => { str = str.split(`{${k}}`).join(vars[k]); });
+  return str;
+};
+const websiteUrl = (v) => {
+  const clean = String(v || "").trim();
+  if (!clean) return null;
+  const url = /^https?:\/\//i.test(clean) ? clean : `https://${clean}`;
+  try { const u = new URL(url); return u.protocol === "https:" || u.protocol === "http:" ? u.href : null; } catch (e) { return null; }
+};
+const tiktokUrl = (v) => {
+  const clean = String(v || "").trim().replace(/^https?:\/\/(www\.)?tiktok\.com\//i, "").replace(/^@/, "").replace(/\/+$/, "");
+  return clean && /^[A-Za-z0-9._]+$/.test(clean) ? `https://www.tiktok.com/@${clean}` : null;
+};
 
 // ── AGREEMENTS / E-SIGNATURES ────────────────────────────────────────────
 // Provider writes an agreement once (AgreementsPanel), sends a private link
@@ -6558,7 +6661,8 @@ function ProviderLandingPage({ onNav, session, onSignIn, onSignOut }) {
 
 // ── CUSTOMER PORTAL ─────────────────────────────────────────────
 function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdate, deepLinkProviderId, onDeepLinkConsumed, cameViaBookingLink, providerProfile }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const bt = (key, vars) => bpText(i18n.language, key, vars);
   // Remembers which tab this account was on, so a refresh lands back on
   // "My bookings" (or wherever) instead of always resetting to "Home" —
   // same sessionStorage pattern as App's own vaibook_last_view, just
@@ -6797,6 +6901,9 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
   const [rescheduleRespondingId, setRescheduleRespondingId] = useState(null);
   const [rescheduleRespondError, setRescheduleRespondError] = useState({});
   const [profileTab, setProfileTab] = useState("services");
+  // Booking policies: the client must tick "I agree" before booking (reset
+  // whenever a different provider is opened).
+  const [policiesAccepted, setPoliciesAccepted] = useState(false);
   const [hoursExpanded, setHoursExpanded] = useState(false);
   const [bookingService, setBookingService] = useState(null);
   // Multi-service checkout — independent time per service by default. Keyed
@@ -6985,6 +7092,24 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
     loadBookings();
   }, [user?.id]);
 
+  const [arrivalByProvider, setArrivalByProvider] = useState({});
+  useEffect(() => {
+    const ids = Array.from(new Set((bookings || [])
+      .filter((b) => ["pending", "awaiting_payment", "confirmed"].includes(b.status))
+      .map((b) => b.provider_profiles?.id)
+      .filter(Boolean)));
+    if (ids.length === 0) return;
+    let cancelled = false;
+    (async () => {
+      const { data, error } = await supabase.from("provider_profiles").select("id, arrival_instructions").in("id", ids);
+      if (cancelled || error || !data) return;
+      const map = {};
+      data.forEach((row) => { if (row.arrival_instructions && row.arrival_instructions.trim()) map[row.id] = row.arrival_instructions.trim(); });
+      setArrivalByProvider(map);
+    })();
+    return () => { cancelled = true; };
+  }, [bookings]);
+
   // FIXED — a guest tapping a service/category pill (browseAsGuest) stashes
   // this and lands here with no session yet, which hits the sign-in gate
   // below (`!session && !cameViaBookingLink`) and shows "Sign in with
@@ -7025,6 +7150,7 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
   }, [session, cameViaBookingLink]);
 
   const openBooking = (provider) => {
+    setPoliciesAccepted(false);
     setBookingError("");
     setProfileTab("services");
     setHoursExpanded(false);
@@ -7332,6 +7458,17 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
     setMultiBusyWindowsByDate({});
     setBookingError("");
   };
+
+  useEffect(() => {
+    if (profileTab === "about" && selectedProvider && (selectedProvider.pinned_review_ids || []).length > 0 && providerReviews.length === 0 && !loadingReviews) {
+      setLoadingReviews(true);
+      getProviderReviews(selectedProvider.id).then((data) => {
+        setProviderReviews(data || []);
+        setLoadingReviews(false);
+      });
+    }
+    // eslint-disable-next-line
+  }, [profileTab, selectedProvider?.id]);
 
   const openReviewsTab = () => {
     setProfileTab("reviews");
@@ -8298,6 +8435,13 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                       <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 6 }}>{t("customerPortal.bookings.providersNote")} {b.provider_message}</p>
                     )}
 
+                    {["pending", "awaiting_payment", "confirmed"].includes(b.status) && arrivalByProvider[b.provider_profiles?.id] && (
+                      <div className="arrival-box">
+                        <div className="arrival-title">{bt("arrivalTitle")}</div>
+                        <p>{arrivalByProvider[b.provider_profiles?.id]}</p>
+                      </div>
+                    )}
+
                     {["cancelled", "rejected"].includes(b.status) && b.booking_refunds && b.booking_refunds.length > 0 && (
                       <div style={{ marginTop: 8, background: "rgba(34,197,94,0.12)", borderRadius: 8, padding: 12 }}>
                         <div style={{ fontSize: 13, fontWeight: 600, color: "#4ADE80" }}>💸 {t("customerPortal.bookings.refundedAmount", { amount: b.booking_refunds[0].amount })}</div>
@@ -9076,6 +9220,17 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                             </div>
                           )}
 
+                          {selectedProvider.booking_policies && selectedProvider.booking_policies.trim() && (
+                            <div className="booking-policies-box">
+                              <div className="booking-policies-title">{bt("policiesTitle")}</div>
+                              <p className="policies-text">{selectedProvider.booking_policies}</p>
+                              <label className="booking-for-toggle" style={{ marginTop: 10 }}>
+                                <input type="checkbox" checked={policiesAccepted} onChange={(e) => { setPoliciesAccepted(e.target.checked); if (e.target.checked) setBookingError(""); }} />
+                                {bt("agreePolicies", { business: selectedProvider.business_name || "" })}
+                              </label>
+                            </div>
+                          )}
+
                           {bookingError && <p style={{ fontSize: 12, color: "#B91C1C", marginBottom: 12 }}>{bookingError}</p>}
 
                           <button
@@ -9084,6 +9239,7 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                             disabled={submittingBooking || submittingGuestAuth || !!providerProfile}
                             onClick={async () => {
                               if (providerProfile) { setBookingError(t("customerPortal.booking.providerCannotBook")); return; }
+                              if (selectedProvider.booking_policies && selectedProvider.booking_policies.trim() && !policiesAccepted) { setBookingError(bt("mustAgree")); return; }
                               if (user?.id) {
                                 if (bookingForSomeoneElse) {
                                   const recName = recipientForm.name.trim();
@@ -9286,8 +9442,12 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                             </div>
                           </div>
                           <div className="reviews-grid">
-                            {providerReviews.map((r) => (
-                              <div key={r.id} className="review-card">
+                            {[...providerReviews].sort((a, b) => {
+                              const pins = selectedProvider.pinned_review_ids || [];
+                              return (pins.includes(b.id) ? 1 : 0) - (pins.includes(a.id) ? 1 : 0);
+                            }).map((r) => (
+                              <div key={r.id} className={`review-card ${(selectedProvider.pinned_review_ids || []).includes(r.id) ? "review-card-featured" : ""}`}>
+                                {(selectedProvider.pinned_review_ids || []).includes(r.id) && <div className="review-featured-tag">{bt("featured")}</div>}
                                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                                   <strong style={{ fontSize: 13 }}>{r.users?.full_name || t("customerPortal.profile.customerFallback")}</strong>
                                   <span className="stars">{"★".repeat(r.rating || 0)}{"☆".repeat(5 - (r.rating || 0))}</span>
@@ -9307,6 +9467,33 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                           <p style={{ fontSize: 13, color: "var(--dark-text)", marginBottom: 20, lineHeight: 1.6 }}>{selectedProvider.bio}</p>
                         ) : (
                           <p style={{ fontSize: 13, color: "var(--muted)", marginBottom: 20 }}>{t("customerPortal.profile.noDescriptionYet")}</p>
+                        )}
+
+                        {(() => {
+                          const pins = selectedProvider.pinned_review_ids || [];
+                          const featured = providerReviews.filter((r) => pins.includes(r.id) && r.comment);
+                          if (featured.length === 0) return null;
+                          return (
+                            <div style={{ marginBottom: 22 }}>
+                              <div style={{ fontSize: 13, fontWeight: 700, color: "var(--forest)", marginBottom: 10 }}>{bt("whatClientsSay")}</div>
+                              <div className="testimonial-list">
+                                {featured.map((r) => (
+                                  <figure key={r.id} className="testimonial">
+                                    <div className="stars">{"★".repeat(r.rating || 0)}</div>
+                                    <blockquote>“{r.comment}”</blockquote>
+                                    <figcaption>— {r.users?.full_name || t("customerPortal.profile.customerFallback")}</figcaption>
+                                  </figure>
+                                ))}
+                              </div>
+                            </div>
+                          );
+                        })()}
+
+                        {selectedProvider.booking_policies && selectedProvider.booking_policies.trim() && (
+                          <div style={{ marginBottom: 22 }}>
+                            <div style={{ fontSize: 13, fontWeight: 700, color: "var(--forest)", marginBottom: 10 }}>{bt("policiesTitle")}</div>
+                            <p className="policies-text">{selectedProvider.booking_policies}</p>
+                          </div>
                         )}
 
                         {selectedProvider.latitude != null && selectedProvider.longitude != null && (
@@ -9336,7 +9523,7 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                           </div>
                         </div>
 
-                        {(selectedProvider.whatsapp || selectedProvider.instagram || selectedProvider.facebook) && (
+                        {(selectedProvider.whatsapp || selectedProvider.instagram || selectedProvider.facebook || websiteUrl(selectedProvider.website) || tiktokUrl(selectedProvider.tiktok)) && (
                           <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
                             {selectedProvider.whatsapp && (
                               <a href={`https://wa.me/${selectedProvider.whatsapp.replace(/[^\d]/g, "")}`} target="_blank" rel="noreferrer" style={{ display: "inline-block", fontSize: 13, color: "var(--forest)", fontWeight: 600, background: "var(--sand)", borderRadius: 8, padding: "10px 14px", textDecoration: "none" }}>📞 {selectedProvider.whatsapp}</a>
@@ -9346,6 +9533,12 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                             )}
                             {facebookProfileUrl(selectedProvider.facebook) && (
                               <a href={facebookProfileUrl(selectedProvider.facebook)} target="_blank" rel="noreferrer" style={{ display: "inline-block", fontSize: 13, color: "var(--forest)", fontWeight: 600, background: "var(--sand)", borderRadius: 8, padding: "10px 14px", textDecoration: "none" }}>📘 {t("customerPortal.profile.facebook")}</a>
+                            )}
+                            {tiktokUrl(selectedProvider.tiktok) && (
+                              <a href={tiktokUrl(selectedProvider.tiktok)} target="_blank" rel="noreferrer" style={{ display: "inline-block", fontSize: 13, color: "var(--forest)", fontWeight: 600, background: "var(--sand)", borderRadius: 8, padding: "10px 14px", textDecoration: "none" }}>{bt("tiktok")}</a>
+                            )}
+                            {websiteUrl(selectedProvider.website) && (
+                              <a href={websiteUrl(selectedProvider.website)} target="_blank" rel="noreferrer" style={{ display: "inline-block", fontSize: 13, color: "var(--forest)", fontWeight: 600, background: "var(--sand)", borderRadius: 8, padding: "10px 14px", textDecoration: "none" }}>{bt("website")}</a>
                             )}
                           </div>
                         )}
@@ -9590,6 +9783,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
   const { t, i18n } = useTranslation();
   const st = (key, vars) => setupText(i18n.language, key, vars);
   const at = (key, vars) => agreeText(i18n.language, key, vars);
+  const bt = (key, vars) => bpText(i18n.language, key, vars);
   // Remembers which tab this account was on, so a refresh lands back on
   // "My bookings" (or wherever) instead of always resetting to "Dashboard"
   // — same sessionStorage pattern as App's own vaibook_last_view, just
@@ -9777,6 +9971,57 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
     setSetupGoalsEditing(false);
     try { if (providerId) localStorage.setItem(`vaibook_setup_goals_${providerId}`, JSON.stringify(setupGoals)); } catch (e) { /* storage unavailable */ }
   };
+  // BOOKING PAGE EXTRAS — arrival instructions, policies, website, TikTok.
+  // Saved on their own (not with the main profile form) so a database that
+  // hasn't had supabase_booking_page.sql run yet can never break profile saves.
+  const [bpForm, setBpForm] = useState({ arrival_instructions: "", booking_policies: "", website: "", tiktok: "" });
+  const [bpSaving, setBpSaving] = useState(false);
+  const [bpMsg, setBpMsg] = useState(null); // null | "ok" | error text
+  const bpLoadedFor = useRef(null);
+  useEffect(() => {
+    if (!providerProfile?.id || bpLoadedFor.current === providerProfile.id) return;
+    bpLoadedFor.current = providerProfile.id;
+    setBpForm({
+      arrival_instructions: providerProfile.arrival_instructions || "",
+      booking_policies: providerProfile.booking_policies || "",
+      website: providerProfile.website || "",
+      tiktok: providerProfile.tiktok || "",
+    });
+  }, [providerProfile]);
+  const saveBookingPage = async () => {
+    if (!providerProfile?.id) return;
+    setBpSaving(true); setBpMsg(null);
+    const fields = {
+      arrival_instructions: bpForm.arrival_instructions.trim() || null,
+      booking_policies: bpForm.booking_policies.trim() || null,
+      website: bpForm.website.trim() || null,
+      tiktok: bpForm.tiktok.trim() || null,
+    };
+    const { data, error } = await supabase.from("provider_profiles").update(fields).eq("id", providerProfile.id).select().single();
+    setBpSaving(false);
+    if (error) {
+      setBpMsg(error.code === "PGRST204" ? bt("needSetup") : bt("saveFailed", { msg: error.message }));
+      return;
+    }
+    onProviderProfileUpdate && onProviderProfileUpdate(data);
+    setBpMsg("ok");
+  };
+  // Featured ("pinned") reviews — up to 3, shown first on the public page.
+  const [pinSaving, setPinSaving] = useState(null);
+  const [pinMsg, setPinMsg] = useState("");
+  const togglePinnedReview = async (reviewId) => {
+    if (!providerProfile?.id) return;
+    const current = providerProfile.pinned_review_ids || [];
+    const isPinned = current.includes(reviewId);
+    if (!isPinned && current.length >= 3) { setPinMsg(bt("pinLimit")); return; }
+    const next = isPinned ? current.filter((x) => x !== reviewId) : [...current, reviewId];
+    setPinSaving(reviewId); setPinMsg("");
+    const { data, error } = await supabase.from("provider_profiles").update({ pinned_review_ids: next }).eq("id", providerProfile.id).select().single();
+    setPinSaving(null);
+    if (error) { setPinMsg(error.code === "PGRST204" ? bt("needSetup") : bt("saveFailed", { msg: error.message })); return; }
+    onProviderProfileUpdate && onProviderProfileUpdate(data);
+  };
+
   // AGREEMENTS — sent/signed copies, loaded here (not inside the panel) so
   // the Clients tab can show each client's agreement status too.
   const [agreementRequests, setAgreementRequests] = useState([]);
@@ -12941,8 +13186,11 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                 </p>
               )}
 
+              {myReviews.length > 0 && <p style={{ fontSize: 12, color: "var(--muted)", margin: "0 0 4px" }}>{bt("pinHint")}</p>}
+              {pinMsg && <p style={{ fontSize: 12, color: "#B91C1C", margin: "4px 0" }}>{pinMsg}</p>}
               {myReviews.map((r) => {
                 const isHeld = r.hold_until && new Date(r.hold_until) > new Date();
+                const isPinned = (providerProfile?.pinned_review_ids || []).includes(r.id);
                 return (
                   <div key={r.id} className="booking-item" style={{ alignItems: "flex-start" }}>
                     <div className="booking-info" style={{ flex: 1 }}>
@@ -12959,6 +13207,11 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                       <div className="meta" style={{ marginTop: 6 }}>
                         {r.created_at ? new Date(r.created_at).toLocaleDateString() : ""}
                       </div>
+                      {r.comment && !isHeld && (
+                        <button className={`pin-review-btn ${isPinned ? "pinned" : ""}`} disabled={pinSaving === r.id} onClick={() => togglePinnedReview(r.id)}>
+                          {isPinned ? bt("unpin") : bt("pin")}
+                        </button>
+                      )}
                       {isHeld && (
                         <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 6, lineHeight: 1.6 }}>
                           {t("providerPortal.reviews.privateHint")}
@@ -13248,6 +13501,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                 { group: st("groupBookingPage"), rows: [
                   { title: st("rowDeposits"), desc: st("rowDepositsDesc"), go: () => goToSettingsCard("settings-deposits") },
                   { title: st("rowWalkins"), desc: st("rowWalkinsDesc"), go: () => goToSettingsCard("settings-walkins") },
+                  { title: bt("hubRow"), desc: bt("hubRowDesc"), go: () => goToSettingsCard("settings-bookingpage") },
                   { title: at("navAgreements"), desc: at("emptyHint"), go: () => setTab("agreements") },
                   { title: st("rowPortfolio"), desc: st("rowPortfolioDesc"), go: () => setTab("profile") },
                   { title: st("rowReviews"), desc: st("rowReviewsDesc"), go: () => setTab("reviews") },
@@ -13277,6 +13531,34 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                   </div>
                 </div>
               ))}
+            </div>
+
+            <div className="card" id="settings-bookingpage" style={{ maxWidth: 560, marginBottom: 20, scrollMarginTop: 120 }}>
+              <div className="card-title">{bt("cardTitle")}</div>
+              <p style={{ fontSize: 13, color: "var(--muted)", marginTop: -8, marginBottom: 16 }}>{bt("cardHint")}</p>
+              <div className="input-group">
+                <label>{bt("arrivalLabel")}</label>
+                <textarea style={{ height: 90 }} maxLength={2000} placeholder={bt("arrivalPlaceholder")} value={bpForm.arrival_instructions} onChange={(e) => { setBpForm((f) => ({ ...f, arrival_instructions: e.target.value })); setBpMsg(null); }} />
+                <div className="agree-hint">{bt("arrivalHint")}</div>
+              </div>
+              <div className="input-group">
+                <label>{bt("policiesLabel")}</label>
+                <textarea style={{ height: 110 }} maxLength={4000} placeholder={bt("policiesPlaceholder")} value={bpForm.booking_policies} onChange={(e) => { setBpForm((f) => ({ ...f, booking_policies: e.target.value })); setBpMsg(null); }} />
+                <div className="agree-hint">{bt("policiesHint")}</div>
+              </div>
+              <div className="input-group">
+                <label>{bt("websiteLabel")}</label>
+                <input maxLength={300} placeholder="www.yourshop.bz" value={bpForm.website} onChange={(e) => { setBpForm((f) => ({ ...f, website: e.target.value })); setBpMsg(null); }} />
+              </div>
+              <div className="input-group">
+                <label>{bt("tiktokLabel")}</label>
+                <input maxLength={120} placeholder="@yourshop" value={bpForm.tiktok} onChange={(e) => { setBpForm((f) => ({ ...f, tiktok: e.target.value })); setBpMsg(null); }} />
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+                <button className="btn-sm forest" onClick={saveBookingPage} disabled={bpSaving}>{bpSaving ? bt("saving") : bt("save")}</button>
+                {bpMsg === "ok" && <span style={{ fontSize: 13, fontWeight: 600, color: "#15803D" }}>{bt("saved")}</span>}
+                {bpMsg && bpMsg !== "ok" && <span style={{ fontSize: 13, fontWeight: 600, color: "#B91C1C" }}>{bpMsg}</span>}
+              </div>
             </div>
 
             <div className="card" id="settings-walkins" style={{ maxWidth: 480, scrollMarginTop: 120 }}>
