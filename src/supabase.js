@@ -5,6 +5,19 @@ const SUPABASE_ANON_KEY = 'sb_publishable_zpAA2Gdcm_BJhu1D56tsTw_sBpZXiNA';
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+// ── ACTION ERROR REPORTING ───────────────────────────────────────────────
+// Many helpers below log a failed save to the console and return null/false,
+// which left buttons looking like they "did nothing" (e.g. Add a service).
+// They now also announce the failure; App.jsx shows it as a small message
+// at the bottom of the screen (ActionErrorToast).
+export const reportActionError = (action, error) => {
+  try {
+    window.dispatchEvent(new CustomEvent('vaibook-action-error', {
+      detail: { action, message: (error && (error.message || error.error_description)) || String(error), code: error && error.code },
+    }));
+  } catch (e) { /* non-browser context */ }
+};
+
 // ── PRIVATE FILES (receipts / refund proof) ─────────────────────
 // The `vaibook` bucket holds payment-related screenshots (deposit
 // receipts, provider plan-payment receipts, refund proof) and is
@@ -259,7 +272,7 @@ export const upsertProviderProfile = async (profile) => {
     .upsert(profile, { onConflict: 'user_id' })
     .select()
     .single();
-  if (error) console.error('Error saving provider profile:', error.message);
+  if (error) reportActionError('upsertProviderProfile', error); console.error('Error saving provider profile:', error.message);
   return data;
 };
 
@@ -274,7 +287,7 @@ export const upsertProviderProfile = async (profile) => {
 // afterward instead of relying on the insert to hand the row back.
 export const createProviderProfile = async (profile) => {
   const { error } = await supabase.from('provider_profiles').insert(profile);
-  if (error) { console.error('Error creating provider profile:', error.message); return false; }
+  if (error) { reportActionError('createProviderProfile', error); console.error('Error creating provider profile:', error.message); return false; }
   return true;
 };
 
@@ -288,7 +301,7 @@ export const uploadProviderPhoto = async (userId, file) => {
     upsert: false,
   });
   if (error) {
-    console.error('Error uploading photo:', error.message);
+    reportActionError('uploadProviderPhoto', error); console.error('Error uploading photo:', error.message);
     return null;
   }
   const { data } = supabase.storage.from('provider-photos').getPublicUrl(path);
@@ -304,7 +317,7 @@ export const deleteProviderPhoto = async (userId, url) => {
   const path = url.slice(idx + marker.length);
   const { error } = await supabase.storage.from('provider-photos').remove([path]);
   if (error) {
-    console.error('Error deleting photo:', error.message);
+    reportActionError('deleteProviderPhoto', error); console.error('Error deleting photo:', error.message);
     return false;
   }
   return true;
@@ -336,7 +349,7 @@ export const upsertWorkingHours = async (providerId, days) => {
     .from('working_hours')
     .upsert(rows, { onConflict: 'provider_id,day_of_week' })
     .select();
-  if (error) console.error('Error saving working hours:', error.message);
+  if (error) reportActionError('upsertWorkingHours', error); console.error('Error saving working hours:', error.message);
   return (data || []).map((d) => ({ ...d, start_time: d.open_time, end_time: d.close_time }));
 };
 
@@ -348,7 +361,7 @@ export const createService = async (service) => {
     .insert(service)
     .select()
     .single();
-  if (error) { console.error('Error creating service:', error.message); return null; }
+  if (error) { reportActionError('createService', error); console.error('Error creating service:', error.message); return null; }
   return data;
 };
 
@@ -359,13 +372,13 @@ export const updateService = async (serviceId, updates) => {
     .eq('id', serviceId)
     .select()
     .single();
-  if (error) { console.error('Error updating service:', error.message); return null; }
+  if (error) { reportActionError('updateService', error); console.error('Error updating service:', error.message); return null; }
   return data;
 };
 
 export const deleteService = async (serviceId) => {
   const { error } = await supabase.from('services').delete().eq('id', serviceId);
-  if (error) { console.error('Error deleting service:', error.message); return false; }
+  if (error) { reportActionError('deleteService', error); console.error('Error deleting service:', error.message); return false; }
   return true;
 };
 
@@ -392,7 +405,7 @@ export const addProviderStaff = async (providerId, { name, phone, email }) => {
     .insert({ provider_id: providerId, name, phone: phone || null, email: email || null })
     .select()
     .single();
-  if (error) { console.error('Error adding staff:', error.message); return null; }
+  if (error) { reportActionError('addProviderStaff', error); console.error('Error adding staff:', error.message); return null; }
   return data;
 };
 
@@ -403,13 +416,13 @@ export const updateProviderStaff = async (staffId, updates) => {
     .eq('id', staffId)
     .select()
     .single();
-  if (error) { console.error('Error updating staff:', error.message); return null; }
+  if (error) { reportActionError('updateProviderStaff', error); console.error('Error updating staff:', error.message); return null; }
   return data;
 };
 
 export const deleteProviderStaff = async (staffId) => {
   const { error } = await supabase.from('provider_staff').delete().eq('id', staffId);
-  if (error) { console.error('Error deleting staff:', error.message); return false; }
+  if (error) { reportActionError('deleteProviderStaff', error); console.error('Error deleting staff:', error.message); return false; }
   return true;
 };
 
@@ -507,7 +520,7 @@ export const getProviderLoyaltyCustomers = async (providerId) => {
 // row, or null if the balance had already dropped below the threshold.
 export const redeemLoyaltyReward = async (accountId) => {
   const { data, error } = await supabase.rpc('redeem_loyalty_reward', { p_account_id: accountId });
-  if (error) { console.error('Error redeeming reward:', error.message); return null; }
+  if (error) { reportActionError('redeemLoyaltyReward', error); console.error('Error redeeming reward:', error.message); return null; }
   return Array.isArray(data) ? data[0] : data;
 };
 
@@ -620,13 +633,13 @@ export const getProviderBlocks = async (providerId, fromDateStr) => {
 
 export const insertProviderBlock = async (block) => {
   const { data, error } = await supabase.from('provider_blocks').insert(block).select().single();
-  if (error) { console.error('Error creating provider block:', error.message); return null; }
+  if (error) { reportActionError('insertProviderBlock', error); console.error('Error creating provider block:', error.message); return null; }
   return data;
 };
 
 export const deleteProviderBlock = async (blockId) => {
   const { error } = await supabase.from('provider_blocks').delete().eq('id', blockId);
-  if (error) { console.error('Error removing provider block:', error.message); return false; }
+  if (error) { reportActionError('deleteProviderBlock', error); console.error('Error removing provider block:', error.message); return false; }
   return true;
 };
 
@@ -732,6 +745,7 @@ export const createWalkInBooking = async (booking) => {
   });
   if (error) {
     throwKnownGuardErrors(error);
+    reportActionError('createWalkInBooking', error);
     console.error('Error adding walk-in booking:', error.message);
     return null;
   }
@@ -745,7 +759,7 @@ export const cancelBooking = async (bookingId) => {
     .eq('id', bookingId)
     .select()
     .single();
-  if (error) console.error('Error cancelling booking:', error.message);
+  if (error) reportActionError('cancelBooking', error); console.error('Error cancelling booking:', error.message);
   return data;
 };
 
@@ -762,7 +776,7 @@ export const markBookingCheckedIn = async (bookingId) => {
     .eq('id', bookingId)
     .select()
     .single();
-  if (error) console.error('Error checking in:', error.message);
+  if (error) reportActionError('markBookingCheckedIn', error); console.error('Error checking in:', error.message);
   return data;
 };
 
@@ -807,7 +821,7 @@ export const updateBookingStatus = async (bookingId, status) => {
     .eq('id', bookingId)
     .select()
     .single();
-  if (error) console.error(error.message);
+  if (error) reportActionError('updateBookingStatus', error); console.error(error.message);
   return data;
 };
 
@@ -820,7 +834,7 @@ export const updateBooking = async (bookingId, updates) => {
     .eq('id', bookingId)
     .select()
     .single();
-  if (error) console.error('Error updating booking:', error.message);
+  if (error) reportActionError('updateBooking', error); console.error('Error updating booking:', error.message);
   return data;
 };
 
@@ -834,7 +848,7 @@ export const uploadReceipt = async (bookingId, file) => {
   const { error: uploadError } = await supabase.storage
     .from('vaibook')
     .upload(path, file);
-  if (uploadError) { console.error(uploadError.message); return null; }
+  if (uploadError) { reportActionError('uploadReceipt', uploadError); console.error(uploadError.message); return null; }
 
   // vaibook is a private bucket — store the storage path, not a public URL;
   // viewers open it via openPrivateFile(), which signs a short-lived link.
@@ -842,7 +856,7 @@ export const uploadReceipt = async (bookingId, file) => {
     .from('bookings')
     .update({ receipt_url: path, payment_status: 'receipt_uploaded' })
     .eq('id', bookingId);
-  if (updateError) { console.error(updateError.message); return null; }
+  if (updateError) { reportActionError('uploadReceipt', updateError); console.error(updateError.message); return null; }
 
   return path;
 };
@@ -914,6 +928,7 @@ export const proposeBookingReschedule = async (bookingId, dateStr, timeStr) => {
       err.code = 'SLOT_TAKEN';
       throw err;
     }
+    reportActionError('proposeBookingReschedule', error);
     console.error('Error proposing reschedule:', error.message);
     throw error;
   }
@@ -929,6 +944,7 @@ export const confirmBookingReschedule = async (bookingId) => {
       err.code = 'SLOT_TAKEN';
       throw err;
     }
+    reportActionError('confirmBookingReschedule', error);
     console.error('Error confirming reschedule:', error.message);
     throw error;
   }
@@ -938,7 +954,7 @@ export const confirmBookingReschedule = async (bookingId) => {
 export const declineBookingReschedule = async (bookingId) => {
   const { error } = await supabase.rpc('decline_booking_reschedule', { p_booking_id: bookingId });
   if (error) {
-    console.error('Error declining reschedule:', error.message);
+    reportActionError('declineBookingReschedule', error); console.error('Error declining reschedule:', error.message);
     throw error;
   }
 };
@@ -947,7 +963,7 @@ export const declineBookingReschedule = async (bookingId) => {
 export const withdrawBookingReschedule = async (bookingId) => {
   const { error } = await supabase.rpc('withdraw_booking_reschedule', { p_booking_id: bookingId });
   if (error) {
-    console.error('Error withdrawing reschedule proposal:', error.message);
+    reportActionError('withdrawBookingReschedule', error); console.error('Error withdrawing reschedule proposal:', error.message);
     throw error;
   }
 };
@@ -961,7 +977,7 @@ export const withdrawBookingReschedule = async (bookingId) => {
 export const submitProviderPayment = async (providerId, file, { plan, amount, periodLabel }) => {
   const path = `provider-payments/${providerId}/${Date.now()}-${file.name}`;
   const { error: uploadError } = await supabase.storage.from('vaibook').upload(path, file);
-  if (uploadError) { console.error('Error uploading payment receipt:', uploadError.message); return false; }
+  if (uploadError) { reportActionError('submitProviderPayment', uploadError); console.error('Error uploading payment receipt:', uploadError.message); return false; }
 
   // vaibook is a private bucket — store the storage path, not a public URL;
   // viewers open it via openPrivateFile(), which signs a short-lived link.
@@ -972,7 +988,7 @@ export const submitProviderPayment = async (providerId, file, { plan, amount, pe
     period_label: periodLabel,
     receipt_url: path,
   });
-  if (error) { console.error('Error submitting payment:', error.message); return false; }
+  if (error) { reportActionError('submitProviderPayment', error); console.error('Error submitting payment:', error.message); return false; }
   return true;
 };
 
@@ -999,7 +1015,7 @@ export const adminReviewProviderPayment = async (paymentId, status, note) => {
     p_status: status,
     p_note: note || null,
   });
-  if (error) { console.error('Error reviewing payment:', error.message); return false; }
+  if (error) { reportActionError('adminReviewProviderPayment', error); console.error('Error reviewing payment:', error.message); return false; }
   return true;
 };
 
@@ -1010,7 +1026,7 @@ export const adminReviewProviderPayment = async (paymentId, status, note) => {
 export const submitBookingRefund = async (bookingId, providerId, file, { amount, note }) => {
   const path = `refunds/${bookingId}/${Date.now()}-${file.name}`;
   const { error: uploadError } = await supabase.storage.from('vaibook').upload(path, file);
-  if (uploadError) { console.error('Error uploading refund receipt:', uploadError.message); return false; }
+  if (uploadError) { reportActionError('submitBookingRefund', uploadError); console.error('Error uploading refund receipt:', uploadError.message); return false; }
 
   // vaibook is a private bucket — store the storage path, not a public URL;
   // viewers open it via openPrivateFile(), which signs a short-lived link.
@@ -1021,7 +1037,7 @@ export const submitBookingRefund = async (bookingId, providerId, file, { amount,
     receipt_url: path,
     note: note || null,
   });
-  if (error) { console.error('Error recording refund:', error.message); return false; }
+  if (error) { reportActionError('submitBookingRefund', error); console.error('Error recording refund:', error.message); return false; }
   return true;
 };
 
@@ -1049,6 +1065,7 @@ export const sendBookingMessage = async ({ booking_id, sender_id, sender_role, b
     .insert({ booking_id, sender_id, sender_role, body });
   if (error) {
     throwKnownGuardErrors(error);
+    reportActionError('sendBookingMessage', error);
     console.error('Error sending message:', error.message);
     return false;
   }
@@ -1100,6 +1117,7 @@ export const submitReview = async (review) => {
     .single();
   if (error) {
     throwKnownGuardErrors(error);
+    reportActionError('submitReview', error);
     console.error(error.message);
     return null;
   }
@@ -1136,6 +1154,7 @@ export const updateReview = async (reviewId, { rating, comment }) => {
     .single();
   if (error) {
     throwKnownGuardErrors(error);
+    reportActionError('updateReview', error);
     console.error(error.message);
     return null;
   }
@@ -1173,7 +1192,7 @@ export const getFavoriteProviders = async (customerId) => {
 
 export const addFavorite = async (customerId, providerId) => {
   const { error } = await supabase.from('favorites').insert({ customer_id: customerId, provider_id: providerId });
-  if (error) { console.error('Error adding favorite:', error.message); return false; }
+  if (error) { reportActionError('addFavorite', error); console.error('Error adding favorite:', error.message); return false; }
   return true;
 };
 
@@ -1183,7 +1202,7 @@ export const removeFavorite = async (customerId, providerId) => {
     .delete()
     .eq('customer_id', customerId)
     .eq('provider_id', providerId);
-  if (error) { console.error('Error removing favorite:', error.message); return false; }
+  if (error) { reportActionError('removeFavorite', error); console.error('Error removing favorite:', error.message); return false; }
   return true;
 };
 
@@ -1237,7 +1256,7 @@ export const sendBookingEmail = async ({ to, subject, html }) => {
 
 export const updateUserProfile = async (userId, updates) => {
   const { data, error } = await supabase.from('users').update(updates).eq('id', userId).select().single();
-  if (error) console.error('Error updating profile:', error.message);
+  if (error) reportActionError('updateUserProfile', error); console.error('Error updating profile:', error.message);
   return data;
 };
 
@@ -1381,13 +1400,13 @@ export const addPaymentMethod = async (method) => {
     .insert(method)
     .select()
     .single();
-  if (error) { console.error('Error adding payment method:', error.message); return null; }
+  if (error) { reportActionError('addPaymentMethod', error); console.error('Error adding payment method:', error.message); return null; }
   return data;
 };
 
 export const deletePaymentMethod = async (id) => {
   const { error } = await supabase.from('payment_methods').delete().eq('id', id);
-  if (error) { console.error('Error deleting payment method:', error.message); return false; }
+  if (error) { reportActionError('deletePaymentMethod', error); console.error('Error deleting payment method:', error.message); return false; }
   return true;
 };
 
@@ -1431,7 +1450,7 @@ export const getMaintenanceStatus = async () => {
 // what the client believes.
 export const setMaintenanceMode = async (on, message) => {
   const { error } = await supabase.rpc('set_maintenance_mode', { p_on: on, p_message: message || null });
-  if (error) { console.error('Error setting maintenance mode:', error.message); return false; }
+  if (error) { reportActionError('setMaintenanceMode', error); console.error('Error setting maintenance mode:', error.message); return false; }
   return true;
 };
 
@@ -1452,7 +1471,7 @@ export const getSiteOfflineStatus = async () => {
 
 export const setSiteOffline = async (on, message) => {
   const { error } = await supabase.rpc('set_site_offline', { p_on: on, p_message: message || null });
-  if (error) { console.error('Error setting site offline mode:', error.message); return false; }
+  if (error) { reportActionError('setSiteOffline', error); console.error('Error setting site offline mode:', error.message); return false; }
   return true;
 };
 
@@ -1509,7 +1528,7 @@ export const updateApplicationStatus = async (id, status) => {
     .eq('id', id)
     .select()
     .single();
-  if (error) { console.error('Error updating application:', error.message); return null; }
+  if (error) { reportActionError('updateApplicationStatus', error); console.error('Error updating application:', error.message); return null; }
   return data;
 };
 
@@ -1695,7 +1714,7 @@ export const setProviderFeatureOverride = async (providerId, featureKey, enabled
   const { error } = await supabase
     .from('provider_feature_overrides')
     .upsert({ provider_id: providerId, feature_key: featureKey, enabled }, { onConflict: 'provider_id,feature_key' });
-  if (error) { console.error(error.message); return false; }
+  if (error) { reportActionError('setProviderFeatureOverride', error); console.error(error.message); return false; }
   return true;
 };
 
@@ -1717,7 +1736,7 @@ export const upsertVisitNote = async (note) => {
   const { error } = await supabase
     .from('visit_notes')
     .upsert(note, { onConflict: 'booking_id' });
-  if (error) { console.error(error.message); return false; }
+  if (error) { reportActionError('upsertVisitNote', error); console.error(error.message); return false; }
   return true;
 };
 
@@ -1760,7 +1779,7 @@ export const adminUpdateProvider = async (providerId, updates) => {
     p_plan: updates.plan ?? null,
     p_is_active: updates.is_active ?? null,
   });
-  if (error) { console.error('Error updating provider:', error.message); return null; }
+  if (error) { reportActionError('adminUpdateProvider', error); console.error('Error updating provider:', error.message); return null; }
   return data;
 };
 
@@ -1770,6 +1789,6 @@ export const adminUpdateProvider = async (providerId, updates) => {
 // before calling this.
 export const adminDeleteProvider = async (providerId) => {
   const { error } = await supabase.rpc('admin_delete_provider', { p_provider_id: providerId });
-  if (error) { console.error('Error deleting provider:', error.message); return false; }
+  if (error) { reportActionError('adminDeleteProvider', error); console.error('Error deleting provider:', error.message); return false; }
   return true;
 };
