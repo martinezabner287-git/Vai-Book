@@ -2733,6 +2733,37 @@ const css = `
   /* Small chips that used gold: soft indigo tint. */
   .service-badge.open, .provider-status-pill { background: var(--accent-soft); }
 
+  /* ===== CUSTOMER HOME — Fresha-style ===== */
+  .cxh-top { margin-bottom: 22px; }
+  .cxh-location { position: relative; display: inline-flex; align-items: center; gap: 8px; font-size: 17px; font-weight: 600; color: var(--text, #16181D); margin: 4px 0 16px; cursor: pointer; }
+  .cxh-location select { position: absolute; inset: 0; opacity: 0; cursor: pointer; font-size: 16px; }
+  .cxh-search { position: relative; display: flex; align-items: center; gap: 10px; background: #fff; border: 1px solid var(--border); border-radius: 999px; padding: 7px 7px 7px 20px; box-shadow: 0 8px 24px rgba(23,20,31,0.07); color: var(--text, #16181D); }
+  .cxh-search input { flex: 1; min-width: 0; border: none; outline: none; background: transparent; font-size: 16px; color: var(--text, #16181D); font-family: inherit; }
+  .cxh-search-btn { flex: none; background: #0B0B0F; color: #fff; border: none; border-radius: 999px; padding: 12px 22px; font-size: 15px; font-weight: 600; cursor: pointer; font-family: inherit; }
+  .cxh-search .suggestions-dropdown { top: calc(100% + 6px); left: 0; right: 0; }
+  .cxh-rec { margin: 8px 0 28px; }
+  .cxh-rec-title { font-size: 26px; font-weight: 800; letter-spacing: -0.02em; margin: 0 0 14px; color: var(--text, #16181D); }
+  .cxh-rec-row { display: flex; gap: 16px; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 6px; scrollbar-width: none; }
+  .cxh-rec-row::-webkit-scrollbar { display: none; }
+  .cxh-rec-card { flex: 0 0 300px; scroll-snap-align: start; cursor: pointer; }
+  .cxh-rec-img { position: relative; height: 200px; border-radius: 18px; background: var(--accent-soft); display: flex; align-items: center; justify-content: center; overflow: hidden; }
+  .cxh-rec-icon { font-size: 52px; }
+  .cxh-rec-badge { position: absolute; top: 12px; left: 12px; background: rgba(255,250,240,0.92); color: #16181D; font-size: 13px; font-weight: 600; padding: 6px 12px; border-radius: 999px; }
+  .cxh-rec-heart { position: absolute; top: 10px; right: 10px; width: 38px; height: 38px; border: none; border-radius: 50%; background: rgba(0,0,0,0.18); display: flex; align-items: center; justify-content: center; cursor: pointer; }
+  .cxh-rec-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-top: 12px; }
+  .cxh-rec-name { font-size: 17px; font-weight: 700; color: var(--text, #16181D); line-height: 1.25; }
+  .cxh-rec-rating { flex: none; font-size: 15px; font-weight: 600; color: var(--text, #16181D); display: flex; align-items: center; gap: 4px; }
+  .cxh-rec-rating span { color: #F5B400; font-size: 17px; }
+  .cxh-rec-meta { font-size: 14px; color: var(--muted); margin-top: 3px; }
+  .cxh-tabbar { display: none; }
+  @media (max-width: 760px) {
+    .cxh-rec-card { flex-basis: 78%; }
+    .cxh-tabbar { display: flex; position: fixed; left: 12px; right: 12px; bottom: calc(10px + env(safe-area-inset-bottom)); z-index: 60; background: rgba(255,255,255,0.97); border: 1px solid var(--border); border-radius: 999px; padding: 6px; box-shadow: 0 10px 30px rgba(23,20,31,0.14); backdrop-filter: blur(10px); }
+    .cxh-tab { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; border: none; background: transparent; color: #16181D; font-size: 12px; font-weight: 600; padding: 7px 0; border-radius: 999px; cursor: pointer; font-family: inherit; }
+    .cxh-tab.active { background: #F0EFF4; color: var(--lime); }
+    .portal-content:has(.cxh-tabbar) { padding-bottom: 110px; }
+  }
+
 `;
 
 // ── BRAND MARK ─────────────────────────────────────────────────
@@ -8851,6 +8882,7 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
   });
 
   const filteredProviders = providers.filter((p) => {
+    if (districtFilter !== "All" && p.district !== districtFilter) return false;
     if (!providerSearch.trim()) return true;
     const q = providerSearch.trim().toLowerCase();
     const nameMatch = (p.business_name || "").toLowerCase().includes(q);
@@ -8876,6 +8908,17 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
     if (!prices.length) return null;
     return Math.min(...prices);
   };
+
+  // HOME — "Recommended" row (Fresha style): Featured businesses first,
+  // then best rated, then most reviewed. Follows the location picker.
+  const homeEs = (i18n.language || "").toLowerCase().startsWith("es");
+  const hx = (en, es) => (homeEs ? es : en);
+  const recommendedProviders = providers
+    .filter((p) => districtFilter === "All" || p.district === districtFilter)
+    .map((p) => ({ p, r: Number(providerRating(p)) || 0, n: (p.reviews || []).length }))
+    .sort((a, b) => (b.p.is_featured ? 1 : 0) - (a.p.is_featured ? 1 : 0) || b.r - a.r || b.n - a.n)
+    .slice(0, 10)
+    .map((x) => x.p);
 
   // HOME FEED — "The Lookbook": every photo already on file comes straight
   // from provider.portfolio_urls (the same photos shown on each provider's
@@ -8978,6 +9021,42 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
         )}
         {tab === "home" && (
           <>
+            {/* LOCATION + SEARCH (Fresha style) */}
+            <div className="cxh-top">
+              <label className="cxh-location">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="var(--lime)" aria-hidden="true"><path d="M12 2a7 7 0 0 0-7 7c0 5.2 7 13 7 13s7-7.8 7-13a7 7 0 0 0-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"/></svg>
+                <span>{districtFilter === "All" ? hx("All of Belize", "Todo Belice") : districtFilter}</span>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+                <select value={districtFilter} onChange={(e) => setDistrictFilter(e.target.value)} aria-label={hx("Choose your district", "Elige tu distrito")}>
+                  <option value="All">{hx("All of Belize", "Todo Belice")}</option>
+                  {DISTRICTS.map((d) => <option key={d} value={d}>{d}</option>)}
+                </select>
+              </label>
+              <div className="cxh-search">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+                <input
+                  placeholder={hx("Search businesses, services", "Buscar negocios, servicios")}
+                  value={providerSearch}
+                  onChange={e => { setProviderSearch(e.target.value); setShowBrowseSuggestions(true); }}
+                  onFocus={() => setShowBrowseSuggestions(true)}
+                  onBlur={() => setTimeout(() => setShowBrowseSuggestions(false), 150)}
+                  onKeyDown={e => { if (e.key === "Enter") { setShowBrowseSuggestions(false); setTab("browse"); } }}
+                />
+                <button className="cxh-search-btn" onClick={() => { setShowBrowseSuggestions(false); setTab("browse"); }}>{hx("Search", "Buscar")}</button>
+                {showBrowseSuggestions && browseSuggestions.length > 0 && (
+                  <div className="suggestions-dropdown">
+                    {browseSuggestions.map((s) => (
+                      <div key={s.key} className="suggestion-item" onMouseDown={() => { selectBrowseSuggestion(s); setTab("browse"); }}>
+                        <span className="suggestion-icon">{s.icon}</span>
+                        <span className="suggestion-label">{s.label}</span>
+                        <span className="suggestion-sub">{s.sublabel}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
             {/* VIP PASS — replaces the generic greeting + 4 metric cards.
                 Styled like a digital ticket/boarding pass: header info,
                 a perforated tear line, then actions below it. This is the
@@ -9032,6 +9111,46 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                 </>
               )}
             </div>
+
+            {/* RECOMMENDED — big photo cards, side-scrolling (Fresha style). */}
+            {recommendedProviders.length > 0 && (
+              <div className="cxh-rec">
+                <h2 className="cxh-rec-title">{hx("Recommended", "Recomendados")}</h2>
+                <div className="cxh-rec-row">
+                  {recommendedProviders.map((p) => {
+                    const rating = providerRating(p);
+                    const reviewCount = (p.reviews || []).length;
+                    const cover = coverImageUrl(p);
+                    const fav = favoriteIds.has(p.id);
+                    return (
+                      <div className="cxh-rec-card" key={p.id} onClick={() => openBooking(p)}>
+                        <div className="cxh-rec-img" style={cover ? { background: `center/cover no-repeat url(${cover})` } : undefined}>
+                          {!cover && <span className="cxh-rec-icon">{iconForServiceType(p.service_type)}</span>}
+                          {p.is_featured && <span className="cxh-rec-badge">{hx("Featured", "Destacado")}</span>}
+                          <button
+                            className="cxh-rec-heart"
+                            onClick={(e) => toggleFavorite(e, p.id)}
+                            aria-label={fav ? t("customerPortal.browse.removeFromFavorites") : t("customerPortal.browse.addToFavorites")}
+                          >
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill={fav ? "#fff" : "none"} stroke="#fff" strokeWidth="2" strokeLinejoin="round"><path d="M12 20.5s-7.5-4.6-9.3-9.2C1.5 8 3.6 4.5 7.2 4.5c2 0 3.6 1.1 4.8 2.8 1.2-1.7 2.8-2.8 4.8-2.8 3.6 0 5.7 3.5 4.5 6.8-1.8 4.6-9.3 9.2-9.3 9.2z"/></svg>
+                          </button>
+                        </div>
+                        <div className="cxh-rec-head">
+                          <div className="cxh-rec-name">{p.business_name}</div>
+                          {rating && <div className="cxh-rec-rating"><span>★</span>{rating}</div>}
+                        </div>
+                        <div className="cxh-rec-meta">{p.district}</div>
+                        <div className="cxh-rec-meta">
+                          <span style={{ textTransform: "capitalize" }}>{p.service_type}</span>
+                          {" · "}
+                          {reviewCount > 0 ? hx(`${reviewCount} review${reviewCount === 1 ? "" : "s"}`, `${reviewCount} reseña${reviewCount === 1 ? "" : "s"}`) : hx("New on VaiBook", "Nuevo en VaiBook")}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
             {/* LAST-MINUTE DROPS — real same-day openings only (see the
                 lastMinuteDrops effect above): a provider only shows up
@@ -9089,42 +9208,6 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
               </div>
             )}
 
-            {/* SEARCH / DISCOVER — same search + category shortcuts as
-                before, restyled as dark premium pills instead of a boxed,
-                shadowed form card. */}
-            <div className="cx-discover">
-              <div className="cx-section-heading">{t("customerPortal.home.findYourNextService")}</div>
-              <div className="cx-discover-search">
-                <span className="search-icon">🔍</span>
-                <input
-                  placeholder={t("customerPortal.home.searchPlaceholder")}
-                  value={providerSearch}
-                  onChange={e => { setProviderSearch(e.target.value); setShowBrowseSuggestions(true); }}
-                  onFocus={() => setShowBrowseSuggestions(true)}
-                  onBlur={() => setTimeout(() => setShowBrowseSuggestions(false), 150)}
-                  onKeyDown={e => { if (e.key === "Enter") { setShowBrowseSuggestions(false); setTab("browse"); } }}
-                />
-                {showBrowseSuggestions && browseSuggestions.length > 0 && (
-                  <div className="suggestions-dropdown">
-                    {browseSuggestions.map((s) => (
-                      <div key={s.key} className="suggestion-item" onMouseDown={() => { selectBrowseSuggestion(s); setTab("browse"); }}>
-                        <span className="suggestion-icon">{s.icon}</span>
-                        <span className="suggestion-label">{s.label}</span>
-                        <span className="suggestion-sub">{s.sublabel}</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-              <div className="cx-discover-pills">
-                {SERVICES.slice(0, 6).map((s, i) => (
-                  <button key={i} className="cx-discover-pill" onClick={() => { setProviderSearch(s.name); setShowBrowseSuggestions(false); setTab("browse"); }}>
-                    <span>{s.icon}</span>{t(`services.${s.key}.name`)}
-                  </button>
-                ))}
-              </div>
-            </div>
-
             {/* THE LOOKBOOK — real portfolio photos (provider.portfolio_urls),
                 interleaved across providers, masonry-style via CSS columns
                 so it never looks like a rigid directory grid. Tap/hover
@@ -9147,6 +9230,21 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
             )}
           </>
         )}
+
+        {/* PHONE TAB BAR (Fresha style) */}
+        <nav className="cxh-tabbar" aria-label={hx("Main", "Principal")}>
+          {[
+            ["home", hx("Home", "Inicio"), <path key="i" d="M3 10.5L12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z" />],
+            ["browse", hx("Search", "Buscar"), <g key="i"><circle cx="11" cy="11" r="7" /><path d="M20 20l-3.5-3.5" /></g>],
+            ["bookings", hx("Bookings", "Citas"), <g key="i"><rect x="3.5" y="5" width="17" height="16" rx="2" /><path d="M3.5 10h17M8 3v4M16 3v4" /></g>],
+            ["settings", hx("Profile", "Perfil"), <g key="i"><circle cx="12" cy="8" r="4" /><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6" /></g>],
+          ].map(([id, label, icon]) => (
+            <button key={id} className={`cxh-tab ${tab === id ? "active" : ""}`} onClick={() => { setTab(id); window.scrollTo({ top: 0 }); }}>
+              <svg width="26" height="26" viewBox="0 0 24 24" fill={tab === id && id === "home" ? "currentColor" : "none"} stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">{icon}</svg>
+              <span>{label}</span>
+            </button>
+          ))}
+        </nav>
 
         {tab === "browse" && (
           <>
