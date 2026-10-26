@@ -2600,6 +2600,88 @@ const css = `
   .action-toast-title { font-size: 13px; font-weight: 700; }
   .action-toast-msg { font-size: 12.5px; color: rgba(255,255,255,0.8); word-break: break-word; }
   .action-toast-close { position: absolute; top: 8px; right: 10px; background: none; border: none; color: rgba(255,255,255,0.7); font-size: 18px; cursor: pointer; }
+
+  /* FOR BUSINESSES PAGE (Vai Buy "Sell" layout) */
+  .vbl { background: var(--page); color: var(--dark-text); }
+  .vbl-wrap { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
+  .vbl-narrow { max-width: 760px; }
+  .vbl-hero { background: #F2EADA; padding: 64px 0 72px; }
+  .vbl-eyebrow { font-size: 12px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: var(--forest); margin-bottom: 14px; }
+  .vbl-title { font-family: 'Plus Jakarta Sans', sans-serif; font-size: clamp(36px, 6vw, 60px); font-weight: 800; line-height: 1.04; letter-spacing: -0.03em; color: var(--dark-text); margin: 0 0 18px; }
+  .vbl-title span { color: var(--forest); }
+  .vbl-sub { font-size: 17px; line-height: 1.6; color: #4B5160; max-width: 620px; margin: 0 0 28px; }
+  .vbl-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; background: var(--forest); color: #FFFFFF; border: none; border-radius: 100px; padding: 15px 30px; font-size: 16px; font-weight: 700; cursor: pointer; font-family: inherit; }
+  .vbl-btn:hover { opacity: .92; }
+  .vbl-btn-outline { display: inline-flex; align-items: center; justify-content: center; background: #FFFFFF; color: var(--dark-text); border: 1.5px solid var(--border); border-radius: 100px; padding: 13px 26px; font-size: 15px; font-weight: 700; cursor: pointer; font-family: inherit; }
+  .vbl-btn-outline:hover { border-color: var(--forest); color: var(--forest); }
+  .vbl-btn-full { width: 100%; margin-top: auto; }
+  .vbl-note { font-size: 13px; color: var(--muted); margin-top: 14px; }
+  .vbl-section { padding: 72px 0; }
+  .vbl-tint { background: #F3F2EE; }
+  .vbl-h2 { font-family: 'Plus Jakarta Sans', sans-serif; font-size: clamp(26px, 3.4vw, 34px); font-weight: 800; letter-spacing: -0.02em; text-align: center; color: inherit; margin: 0 0 36px; }
+  .vbl-left { text-align: left; margin-bottom: 16px; }
+  .vbl-center-sub { text-align: center; color: var(--muted); font-size: 15px; margin: -22px auto 36px; max-width: 560px; line-height: 1.6; }
+  .vbl-grid4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+  .vbl-card { background: #FFFFFF; border: 1px solid var(--border); border-radius: 16px; padding: 22px 20px; }
+  .vbl-card h3, .vbl-step h3 { font-size: 16px; font-weight: 700; margin: 14px 0 6px; color: inherit; }
+  .vbl-card p { font-size: 14px; line-height: 1.55; color: #5B6170; margin: 0; }
+  .vbl-icon { width: 40px; height: 40px; border-radius: 10px; background: var(--accent-soft); color: var(--forest); display: flex; align-items: center; justify-content: center; }
+  .vbl-icon-grey { background: #EEF0F3; color: #3A4150; }
+  .vbl-dark { background: var(--ink); color: #FFFFFF; padding: 72px 0; }
+  .vbl-step-num { width: 44px; height: 44px; border-radius: 50%; background: var(--forest); color: #FFFFFF; font-weight: 800; font-size: 17px; display: flex; align-items: center; justify-content: center; }
+  .vbl-step p { font-size: 14px; line-height: 1.55; color: rgba(255,255,255,0.72); margin: 0; }
+  .vbl-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; }
+  .vbl-body { font-size: 15px; line-height: 1.7; color: #4B5160; margin: 0 0 18px; }
+  .vbl-notebox { display: flex; align-items: center; gap: 12px; background: #FFFFFF; border: 1px solid var(--border); border-radius: 14px; padding: 16px 18px; font-size: 15px; color: var(--dark-text); }
+  .vbl-inline-icon { color: var(--forest); display: inline-flex; flex-shrink: 0; margin-top: 1px; }
+  .vbl-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 14px; }
+  .vbl-list li { display: flex; gap: 10px; font-size: 15px; line-height: 1.55; color: #3A4150; }
+  .vbl-plans { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; align-items: stretch; }
+  .vbl-plan { position: relative; background: #FFFFFF; border: 1px solid var(--border); border-radius: 18px; padding: 26px 22px; display: flex; flex-direction: column; gap: 10px; }
+  .vbl-plan.featured { border: 2px solid var(--forest); }
+  .vbl-plan-badge { position: absolute; top: -12px; left: 22px; background: var(--forest); color: #FFFFFF; font-size: 11px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; padding: 4px 10px; border-radius: 100px; }
+  .vbl-plan-name { font-size: 15px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
+  .vbl-plan-price { font-size: 30px; font-weight: 800; letter-spacing: -0.02em; }
+  .vbl-plan-price span { font-size: 14px; font-weight: 600; color: var(--muted); }
+  .vbl-plan-tagline { font-size: 14px; color: #5B6170; line-height: 1.5; }
+  .vbl-plan ul { list-style: none; padding: 0; margin: 4px 0 16px; display: grid; gap: 9px; }
+  .vbl-plan li { display: flex; gap: 8px; font-size: 14px; line-height: 1.45; color: #3A4150; }
+  .vbl-faq { display: grid; gap: 22px; }
+  .vbl-faq-item { display: flex; gap: 12px; }
+  .vbl-faq-q { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+  .vbl-faq-a { font-size: 15px; line-height: 1.6; color: #4B5160; margin: 0; }
+  .vbl .vai-media-banner { margin-top: 0; }
+  @media (max-width: 900px) {
+    .vbl-grid4 { grid-template-columns: 1fr 1fr; }
+    .vbl-plans { grid-template-columns: 1fr; }
+    .vbl-cols { grid-template-columns: 1fr; gap: 36px; }
+  }
+  @media (max-width: 560px) {
+    .vbl-grid4 { grid-template-columns: 1fr; }
+    .vbl-hero { padding: 44px 0 52px; }
+    .vbl-section, .vbl-dark { padding: 52px 0; }
+    .vbl-btn { width: 100%; }
+  }
+  /* Business login */
+  .biz-login-card { background: #FFFFFF; border: 1px solid var(--border); border-radius: 16px; padding: 18px; margin-bottom: 14px; text-align: left; }
+  .biz-login-title { font-size: 16px; font-weight: 800; color: var(--dark-text); margin-bottom: 12px; }
+  .biz-login .input-group input { background: #FFFFFF; }
+  .biz-login-btn { width: 100%; background: var(--forest); color: #FFFFFF; border: none; border-radius: 12px; padding: 13px 0; font-size: 15px; font-weight: 700; cursor: pointer; font-family: inherit; }
+  .biz-login-btn:disabled { opacity: .55; cursor: default; }
+  .biz-login-error { color: #B91C1C; font-size: 13px; margin: 0 0 10px; }
+  .biz-login-link { display: block; width: 100%; background: none; border: none; color: var(--forest); font-size: 13px; font-weight: 600; cursor: pointer; padding: 10px 0 0; text-align: center; font-family: inherit; }
+  .biz-login-hint { font-size: 12px; color: var(--muted); text-align: center; line-height: 1.45; }
+  /* Application received screen: light, like the rest of the site. */
+  .pl-pending { background: var(--page) !important; }
+  .pl-pending-card { background: #FFFFFF; border: 1px solid var(--border); border-radius: 20px; padding: 36px 26px; }
+  .pl-pending-icon-glow { display: none; }
+  .pl-pending-icon { background: var(--accent-soft) !important; color: var(--forest) !important; border-color: transparent !important; box-shadow: none !important; }
+  .pl-pending-eyebrow { background: var(--accent-soft) !important; color: var(--forest) !important; border-color: transparent !important; }
+  .pl-pending h2 { color: var(--dark-text) !important; }
+  .pl-pending p { color: #4B5160 !important; }
+  .pl-pending .pl-pending-meta { color: var(--muted) !important; }
+  .pl-pending .pl-pending-meta strong { color: var(--dark-text) !important; }
+  .pl-pending-back { color: var(--dark-text) !important; border-color: var(--border) !important; background: #FFFFFF !important; }
   /* Small chips that used gold: soft indigo tint. */
   .service-badge.open, .provider-status-pill { background: var(--accent-soft); }
 
@@ -5281,7 +5363,8 @@ function browseAsGuest(onNav) {
 }
 
 function AuthChoice({ onNav, session, onSignIn, onSignOut }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const [showBizLogin, setShowBizLogin] = useState(false);
   // GAP FIX: this card used to go straight to Google sign-in, as if
   // "For professionals" on a page titled "Sign up / log in" could only
   // mean "I already have an approved business." A brand-new provider has
@@ -5333,10 +5416,16 @@ function AuthChoice({ onNav, session, onSignIn, onSignOut }) {
           ) : (
             <div className="auth-provider-fork">
               <div className="auth-provider-fork-heading">{t("auth.forProfessionals")}</div>
-              <div className="auth-option-card auth-option-card-sm" onClick={() => enterProviderPortal(onNav, session, onSignIn)}>
+              {showBizLogin && !session && (
+                <div className="biz-login-card">
+                  <div className="biz-login-title">{blText(i18n.language, "title")}</div>
+                  <BusinessLoginForm onNav={onNav} onSignIn={onSignIn} />
+                </div>
+              )}
+              <div className="auth-option-card auth-option-card-sm" onClick={() => (session ? enterProviderPortal(onNav, session, onSignIn) : setShowBizLogin(true))}>
                 <div>
                   <h3>{t("auth.alreadyListed")}</h3>
-                  <p>{t("auth.alreadyListedDesc")}</p>
+                  <p>{blText(i18n.language, "cardListedDesc")}</p>
                 </div>
                 <span className="auth-option-arrow">→</span>
               </div>
@@ -5351,17 +5440,17 @@ function AuthChoice({ onNav, session, onSignIn, onSignOut }) {
                   in App()), and routes to StaffPortal vs ProviderPortal
                   automatically — this card only needed to stop making staff
                   guess which of the other two was "them." */}
-              <div className="auth-option-card auth-option-card-sm" onClick={() => enterProviderPortal(onNav, session, onSignIn)}>
+              <div className="auth-option-card auth-option-card-sm" onClick={() => (session ? enterProviderPortal(onNav, session, onSignIn) : setShowBizLogin(true))}>
                 <div>
                   <h3>{t("auth.staffMember")}</h3>
-                  <p>{t("auth.staffMemberDesc")}</p>
+                  <p>{blText(i18n.language, "cardStaffDesc")}</p>
                 </div>
                 <span className="auth-option-arrow">→</span>
               </div>
               <div className="auth-option-card auth-option-card-sm" onClick={() => onNav("signup")}>
                 <div>
                   <h3>{t("auth.newBusiness")}</h3>
-                  <p>{t("auth.newBusinessDesc")}</p>
+                  <p>{blText(i18n.language, "cardNewDesc")}</p>
                 </div>
                 <span className="auth-option-arrow">→</span>
               </div>
@@ -6871,286 +6960,389 @@ function SiteFooter() {
 // prospective provider now always sees what the business is first, then
 // applies for real, rather than hitting a convincing-looking form that
 // quietly did nothing.
-function ProviderLandingPage({ onNav, session, onSignIn, onSignOut }) {
-  const { t } = useTranslation();
+// ── BUSINESS LOGIN (email + password) ────────────────────────────────────
+// 2026-10-25: every business signs in with email + password. Google stays
+// only as a small fallback for owners who registered with Google before;
+// they can set a password under Settings → Login and use email from then on.
+const BL_TEXT = {
+  en: {
+    title: "Business login",
+    email: "Email",
+    password: "Password",
+    signIn: "Log in",
+    signingIn: "Logging in...",
+    wrong: "Wrong email or password. Try again.",
+    needBoth: "Enter your email and password.",
+    notConfirmed: "This email hasn't been confirmed yet. Contact VaiBook support.",
+    google: "Registered with Google before? Continue with Google",
+    googleHint: "Then set a password in Settings → Login to use email next time.",
+    forgot: "Forgot your password? Contact support",
+    pwTitle: "Login",
+    pwHint: "Log in to your business with this email and a password.",
+    pwNew: "New password",
+    pwConfirm: "Confirm password",
+    pwSave: "Save password",
+    pwSaving: "Saving...",
+    pwSaved: "Password saved ✓ You can now log in with your email and password.",
+    pwShort: "Use at least 8 characters.",
+    pwMismatch: "The two passwords don't match.",
+    pwFailed: "Couldn't save the password: {msg}",
+    signupPassword: "Create a password",
+    signupPasswordConfirm: "Confirm password",
+    signupPasswordHint: "You'll use your email and this password to log in to your business.",
+    signupPhoneInvalid: "Enter a valid WhatsApp / phone number (at least 7 digits).",
+    signupEmailInvalid: "Enter a valid email address.",
+    signupEmailTaken: "This email already has a VaiBook account. Use that account's password, or contact support.",
+    signupAccountFailed: "Couldn't create your login: {msg}",
+    phoneRequired: "A WhatsApp / phone number is required so clients can reach you.",
+    approvedLogin: "Once you're approved, log in with your email and password.",
+    cardListedDesc: "Log in with your email and password",
+    cardStaffDesc: "Log in with the email your employer added",
+    cardNewDesc: "Apply to list it — you'll create your login",
+  },
+  es: {
+    title: "Acceso para negocios",
+    email: "Correo electrónico",
+    password: "Contraseña",
+    signIn: "Entrar",
+    signingIn: "Entrando...",
+    wrong: "Correo o contraseña incorrectos. Inténtalo de nuevo.",
+    needBoth: "Escribe tu correo y contraseña.",
+    notConfirmed: "Este correo aún no está confirmado. Contacta a soporte de VaiBook.",
+    google: "¿Te registraste antes con Google? Continuar con Google",
+    googleHint: "Luego crea una contraseña en Configuración → Acceso para usar tu correo la próxima vez.",
+    forgot: "¿Olvidaste tu contraseña? Contacta a soporte",
+    pwTitle: "Acceso",
+    pwHint: "Entra a tu negocio con este correo y una contraseña.",
+    pwNew: "Nueva contraseña",
+    pwConfirm: "Confirmar contraseña",
+    pwSave: "Guardar contraseña",
+    pwSaving: "Guardando...",
+    pwSaved: "Contraseña guardada ✓ Ya puedes entrar con tu correo y contraseña.",
+    pwShort: "Usa al menos 8 caracteres.",
+    pwMismatch: "Las dos contraseñas no coinciden.",
+    pwFailed: "No se pudo guardar la contraseña: {msg}",
+    signupPassword: "Crea una contraseña",
+    signupPasswordConfirm: "Confirmar contraseña",
+    signupPasswordHint: "Usarás tu correo y esta contraseña para entrar a tu negocio.",
+    signupPhoneInvalid: "Escribe un número de WhatsApp / teléfono válido (al menos 7 dígitos).",
+    signupEmailInvalid: "Escribe un correo válido.",
+    signupEmailTaken: "Este correo ya tiene una cuenta de VaiBook. Usa la contraseña de esa cuenta o contacta a soporte.",
+    signupAccountFailed: "No se pudo crear tu acceso: {msg}",
+    phoneRequired: "Se requiere un número de WhatsApp / teléfono para que los clientes te contacten.",
+    approvedLogin: "Cuando te aprueben, entra con tu correo y contraseña.",
+    cardListedDesc: "Entra con tu correo y contraseña",
+    cardStaffDesc: "Entra con el correo que agregó tu empleador",
+    cardNewDesc: "Aplica para publicarlo — crearás tu acceso",
+  },
+};
+const blText = (lang, key, vars) => {
+  const dict = BL_TEXT[(lang || "en").slice(0, 2)] || BL_TEXT.en;
+  let str = dict[key] || BL_TEXT.en[key] || key;
+  if (vars) Object.keys(vars).forEach((k) => { str = str.split(`{${k}}`).join(vars[k]); });
+  return str;
+};
+const phoneDigits = (v) => (String(v || "").match(/\d/g) || []).length;
+
+function BusinessLoginForm({ onNav, onSignIn, dark }) {
+  const { i18n } = useTranslation();
+  const bl = (k, v) => blText(i18n.language, k, v);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const submit = async (e) => {
+    if (e) e.preventDefault();
+    const em = email.trim().toLowerCase();
+    if (!em || !password) { setError(bl("needBoth")); return; }
+    setBusy(true); setError("");
+    setPendingView("provider");
+    const { error: err } = await supabase.auth.signInWithPassword({ email: em, password });
+    setBusy(false);
+    if (err) {
+      try { localStorage.removeItem(PENDING_VIEW_KEY); } catch (x) { /* ignore */ }
+      if (/invalid login|invalid credentials/i.test(err.message || "")) setError(bl("wrong"));
+      else if (/not confirmed/i.test(err.message || "")) setError(bl("notConfirmed"));
+      else setError(err.message || bl("wrong"));
+      return;
+    }
+    try { sessionStorage.setItem("vaibook_last_view", "provider"); } catch (x) { /* ignore */ }
+    onNav && onNav("provider");
+  };
   return (
-    <>
-      {/* HERO — deliberately dark/high-status rather than reusing the
-          consumer search-hero, so the two routes read as visually
-          distinct the instant either one loads, not just different copy
-          on the same page. */}
-      <section className="provider-hero">
-        <h1 className="provider-hero-title">{t("providerLanding.title")}</h1>
-        <div className="provider-hero-ctas">
-          <button className="btn-lime provider-hero-cta" onClick={() => onNav("signup")}>
-            {t("providerLanding.applyToJoin14")}
-          </button>
-        </div>
-        <p className="provider-hero-note">{t("providerLanding.note")}</p>
+    <form className={`biz-login ${dark ? "biz-login-dark" : ""}`} onSubmit={submit}>
+      <div className="input-group">
+        <label>{bl("email")}</label>
+        <input type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@business.com" />
+      </div>
+      <div className="input-group">
+        <label>{bl("password")}</label>
+        <input type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} />
+      </div>
+      {error && <p className="biz-login-error">{error}</p>}
+      <button type="submit" className="biz-login-btn" disabled={busy}>{busy ? bl("signingIn") : bl("signIn")}</button>
+      <button type="button" className="biz-login-link" onClick={() => { setPendingView("provider"); onSignIn && onSignIn(); }}>{bl("google")}</button>
+      <div className="biz-login-hint">{bl("googleHint")}</div>
+      <button type="button" className="biz-login-link" onClick={() => onNav && onNav("help-contact")}>{bl("forgot")}</button>
+    </form>
+  );
+}
 
-        {/* PLATFORM PREVIEW — moved inside the hero itself (Fresha's own
-            business-page hero puts its scheduling-calendar screenshot right
-            under the CTAs, in the same panel, rather than a separate plain
-            section below). A marketing collage showing the scheduling
-            dashboard + a customer-facing booking screen side by side — an
-            illustrative mockup (fictional salon/business names and review
-            counts), not a live screenshot or a real usage claim. */}
-        <picture>
-          <source srcSet="/platform-preview.webp" type="image/webp" />
-          <img
-            className="platform-preview-img provider-hero-screenshot"
-            src="/platform-preview.jpg"
-            alt="VaiBook scheduling dashboard and customer booking screen preview"
-            width={1600}
-            height={1100}
-            loading="lazy"
-            decoding="async"
-          />
-        </picture>
-      </section>
+// ── FOR BUSINESSES PAGE (Vai Buy "Sell on Vaibuy" layout) ─────────────────
+// Rebuilt 2026-10-25 to mirror vaibuyandsell.bz/sell: simple hero, four
+// "why" cards, dark numbered steps, pricing/who-can-join columns, tools,
+// pricing cards, FAQ, one closing button. Every claim matches what the app
+// actually does (plans come from PLANS; no commission; deposits go to the
+// provider's bank; agreements/announcements/rebook reminders exist).
+const LP_TEXT = {
+  en: {
+    eyebrow: "For businesses",
+    title1: "Grow your business",
+    title2: "with VaiBook.",
+    sub: "Let clients across Belize book you online, any time of day. No commission on your bookings, no setup fees.",
+    cta: "Start Getting Booked",
+    heroNote: "Free to start · 14-day free trial on Solo and Team once you're approved",
+    whyTitle: "Why businesses use VaiBook",
+    why1t: "Clients book themselves", why1b: "Your real open times, bookable 24/7. No more answering calls and texts in the middle of an appointment.",
+    why2t: "Fewer no-shows", why2b: "Ask for a deposit before you confirm, and clients get reminders before every visit.",
+    why3t: "Know your numbers", why3b: "Bookings, earnings and your busiest days, all on one simple dashboard.",
+    why4t: "Keep what you earn", why4b: "One flat monthly price. VaiBook never takes a cut of your bookings.",
+    howTitle: "How it works",
+    how1t: "Apply", how1b: "Tell us about your business. It only takes a few minutes.",
+    how2t: "Set up your page", how2b: "Once you're approved, add your services, prices, photos and opening hours.",
+    how3t: "Share your link", how3b: "Post your booking link or QR code on Instagram, WhatsApp, or at your front desk.",
+    how4t: "Get booked", how4b: "Clients pick a time and book. You're notified right away and confirm with one tap.",
+    payTitle: "Pricing & payments",
+    payBody: "Start free with up to 30 bookings a month. When you're ready for more, Solo is BZ${solo} a month and Team is BZ${team} a month, with a 14-day free trial once you're approved. Your clients pay you directly, in cash or by bank transfer, and deposits go straight to your bank account. VaiBook never takes a commission.",
+    payNote: "No setup fees. No contracts. Cancel anytime.",
+    whoTitle: "Who can join",
+    who1: "Barbers, hair salons, nail techs, spas, massage therapists, med spas, tattoo artists, trainers and more.",
+    who2: "Solo professionals and registered businesses alike.",
+    who3: "Anyone in Belize who takes appointments, in any district.",
+    toolsTitle: "Tools built for your business",
+    tool1t: "Calendar & availability", tool1b: "Set your hours, block time off, and add walk-ins in seconds.",
+    tool2t: "Clients & rebooking", tool2b: "Every client in one list, with reminders that bring regulars back.",
+    tool3t: "Agreements", tool3b: "Consent forms and waivers your clients sign on their phone.",
+    tool4t: "Announcements", tool4b: "Tell all your clients about promos, new hours or open spots at once.",
+    pricingTitle: "Simple pricing",
+    pricingSub: "Start free. Upgrade when you're ready — your 14-day free trial starts once you're approved.",
+    faqTitle: "Frequently asked questions",
+    q1: "What does it cost?", a1: "You can start free with up to 30 bookings a month. Paid plans are Solo (BZ${solo}/month) and Team (BZ${team}/month, includes your first {seats} staff seats). No setup fees and no contracts.",
+    q2: "Does VaiBook take a cut of my bookings?", a2: "No. You pay one flat monthly price and keep everything your clients pay you.",
+    q3: "How do my clients pay?", a3: "Directly to you. You can ask for a deposit to your bank account before you confirm a booking, and collect the rest at the appointment.",
+    q4: "Do my clients need to download an app?", a4: "No. They book from your link in any phone browser, and can add VaiBook to their home screen if they like.",
+    q5: "Can my staff have their own logins?", a5: "Yes. On the Team plan each staff member gets their own login and sees their own bookings.",
+    q6: "Can I join as an individual?", a6: "Yes. Solo professionals and registered businesses can both apply.",
+  },
+  es: {
+    eyebrow: "Para negocios",
+    title1: "Haz crecer tu negocio",
+    title2: "con VaiBook.",
+    sub: "Deja que clientes de todo Belice reserven contigo en línea, a cualquier hora. Sin comisión por tus reservas y sin costos de inicio.",
+    cta: "Empieza a recibir reservas",
+    heroNote: "Gratis para empezar · 14 días gratis en Solo y Team una vez aprobado",
+    whyTitle: "Por qué los negocios usan VaiBook",
+    why1t: "Los clientes reservan solos", why1b: "Tus horarios reales, disponibles 24/7. Se acabó contestar llamadas y mensajes en medio de una cita.",
+    why2t: "Menos ausencias", why2b: "Pide un depósito antes de confirmar, y tus clientes reciben recordatorios antes de cada visita.",
+    why3t: "Conoce tus números", why3b: "Reservas, ganancias y tus días más ocupados, todo en un panel sencillo.",
+    why4t: "Quédate con lo que ganas", why4b: "Un precio mensual fijo. VaiBook nunca toma una parte de tus reservas.",
+    howTitle: "Cómo funciona",
+    how1t: "Aplica", how1b: "Cuéntanos sobre tu negocio. Solo toma unos minutos.",
+    how2t: "Arma tu página", how2b: "Una vez aprobado, agrega tus servicios, precios, fotos y horario.",
+    how3t: "Comparte tu enlace", how3b: "Publica tu enlace o código QR en Instagram, WhatsApp o en tu recepción.",
+    how4t: "Recibe reservas", how4b: "Los clientes eligen una hora y reservan. Te avisamos al instante y confirmas con un toque.",
+    payTitle: "Precios y pagos",
+    payBody: "Empieza gratis con hasta 30 reservas al mes. Cuando quieras más, Solo cuesta BZ${solo} al mes y Team BZ${team} al mes, con 14 días gratis una vez aprobado. Tus clientes te pagan directamente, en efectivo o por transferencia, y los depósitos van directo a tu cuenta bancaria. VaiBook nunca cobra comisión.",
+    payNote: "Sin costos de inicio. Sin contratos. Cancela cuando quieras.",
+    whoTitle: "Quién puede unirse",
+    who1: "Barberos, salones, técnicas de uñas, spas, masajistas, med spas, tatuadores, entrenadores y más.",
+    who2: "Profesionales independientes y negocios registrados por igual.",
+    who3: "Cualquier persona en Belice que trabaje con citas, en cualquier distrito.",
+    toolsTitle: "Herramientas hechas para tu negocio",
+    tool1t: "Calendario y disponibilidad", tool1b: "Define tu horario, bloquea tiempo libre y agrega clientes sin cita en segundos.",
+    tool2t: "Clientes y regreso", tool2b: "Todos tus clientes en una lista, con recordatorios que traen de vuelta a los habituales.",
+    tool3t: "Acuerdos", tool3b: "Formularios de consentimiento y exenciones que tus clientes firman en su teléfono.",
+    tool4t: "Anuncios", tool4b: "Avisa a todos tus clientes sobre promociones, horarios o espacios libres a la vez.",
+    pricingTitle: "Precios simples",
+    pricingSub: "Empieza gratis. Mejora tu plan cuando quieras: tus 14 días gratis empiezan una vez aprobado.",
+    faqTitle: "Preguntas frecuentes",
+    q1: "¿Cuánto cuesta?", a1: "Puedes empezar gratis con hasta 30 reservas al mes. Los planes pagados son Solo (BZ${solo}/mes) y Team (BZ${team}/mes, incluye tus primeros {seats} puestos de personal). Sin costos de inicio y sin contratos.",
+    q2: "¿VaiBook se queda con una parte de mis reservas?", a2: "No. Pagas un precio mensual fijo y te quedas con todo lo que te pagan tus clientes.",
+    q3: "¿Cómo me pagan mis clientes?", a3: "Directamente a ti. Puedes pedir un depósito a tu cuenta bancaria antes de confirmar una reserva y cobrar el resto en la cita.",
+    q4: "¿Mis clientes necesitan descargar una app?", a4: "No. Reservan desde tu enlace en cualquier navegador del teléfono, y pueden agregar VaiBook a su pantalla de inicio si quieren.",
+    q5: "¿Mi personal puede tener su propio acceso?", a5: "Sí. En el plan Team cada miembro del personal tiene su propio acceso y ve sus propias reservas.",
+    q6: "¿Puedo unirme como persona individual?", a6: "Sí. Pueden aplicar tanto profesionales independientes como negocios registrados.",
+  },
+};
+const lpText = (lang, key, vars) => {
+  const dict = LP_TEXT[(lang || "en").slice(0, 2)] || LP_TEXT.en;
+  let str = dict[key] || LP_TEXT.en[key] || key;
+  if (vars) Object.keys(vars).forEach((k) => { str = str.split(`{${k}}`).join(vars[k]); });
+  return str;
+};
+// Small outline icons in Vai Buy's line style (stroke uses currentColor).
+const LpIcon = ({ name }) => {
+  const paths = {
+    calendar: "M7 3v3M17 3v3M4 9h16M5 5h14a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z",
+    shield: "M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3zM9 12l2 2 4-4",
+    chart: "M4 20h16M7 16v-5M12 16V8M17 16v-8",
+    tag: "M3 12V4h8l9 9-8 8-9-9zM7.5 7.5h.01",
+    users: "M16 19v-1a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v1M9.5 10a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM21 19v-1a4 4 0 0 0-3-3.9M15 4.1a3 3 0 0 1 0 5.8",
+    pen: "M4 20h4L19 9l-4-4L4 16v4zM14 6l4 4",
+    megaphone: "M3 11v2a1 1 0 0 0 1 1h2l5 4V6L6 10H4a1 1 0 0 0-1 1zM15 9a3 3 0 0 1 0 6M18 7a6 6 0 0 1 0 10",
+    check: "M5 12l4 4 10-10",
+    card: "M3 7h18v10H3zM3 10h18",
+    help: "M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.7M12 17h.01M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z",
+  };
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d={paths[name] || paths.check} />
+    </svg>
+  );
+};
 
-      {/* PROVIDER LANDING — category showcase. Placed first, directly under
-          the hero, ahead of any benefits copy — on a multi-vertical page
-          like this (13 very different kinds of business), a visitor's
-          first unspoken question is "is this even for my kind of
-          business?", and nothing else on the page can land until that's
-          answered. Benefits, differentiation, and pricing only matter once
-          they already see themselves here. Tiles go straight into the
-          application form (Fresha-style — pick your category, start
-          setting up), stashing which one was clicked so the form arrives
-          with "Service type" already filled in. Pricing isn't lost by
-          skipping this page's own pricing section: the form's plan
-          selector is the very first thing on it, price and full feature
-          list both, before any field the person has to fill in — see
-          ProviderSignup below. */}
-      <section className="section">
-        <div style={{ textAlign: "center", marginBottom: 36 }}>
-          <div className="section-eyebrow" style={{ justifyContent: "center", display: "flex" }}>{t("providerLanding.categoriesEyebrow")}</div>
-          <h2 className="section-title">{t("providerLanding.categoriesTitle")}</h2>
-          <p className="section-sub" style={{ margin: "0 auto" }}>{t("providerLanding.categoriesSub")}</p>
-        </div>
-        <div className="provider-categories-grid">
-          {/* Full SERVICES catalog (same list/icons/i18n the customer home
-              "Find your next service" pills use) — every category VaiBook
-              actually supports, not a hand-picked subset, so this section
-              keeps itself correct if that catalog ever changes. */}
-          {SERVICES.map((s) => (
-            <div
-              className="provider-category-tile"
-              key={s.key}
-              onClick={() => {
-                try { localStorage.setItem("vaibook_signup_service_type", s.key); } catch (e) { /* ignore */ }
-                onNav("signup");
-              }}
-            >
-              <div className="provider-category-icon-wrap">{s.icon}</div>
-              <div className="provider-category-label">{t(`services.${s.key}.name`)}</div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* WHY SHOP OWNERS CHOOSE VAIBOOK — replaces the old one-line "Built
-          for how your business really runs" teaser with the actual pitch,
-          in plain language, three things only: stop fielding calls
-          mid-appointment, see real numbers instead of guessing, and stop
-          losing money to no-shows while staying in touch with clients.
-          Deliberately has no CTA button of its own — this section's whole
-          job is to make the case; the asking happens in the hero above and
-          the pricing/closing sections below, not a third time here too. */}
-      <section className="section platform-preview-section" id="features">
-        <div style={{ textAlign: "center", marginBottom: 40 }}>
-          <div className="section-eyebrow" style={{ justifyContent: "center", display: "flex" }}>{t("providerLanding.seeItInAction")}</div>
-          <h2 className="section-title">{t("providerLanding.builtForHow")}</h2>
-          <p className="section-sub" style={{ margin: "0 auto" }}>{t("providerLanding.oneDashboard")}</p>
-        </div>
-        <div className="provider-benefits-grid">
-          <div className="provider-benefit-card">
-            <span className="provider-benefit-icon">{t("providerLanding.benefit1Icon")}</span>
-            <h3 className="provider-benefit-title">{t("providerLanding.benefit1Title")}</h3>
-            <p className="provider-benefit-body">{t("providerLanding.benefit1Body")}</p>
-          </div>
-          <div className="provider-benefit-card">
-            <span className="provider-benefit-icon">{t("providerLanding.benefit2Icon")}</span>
-            <h3 className="provider-benefit-title">{t("providerLanding.benefit2Title")}</h3>
-            <p className="provider-benefit-body">{t("providerLanding.benefit2Body")}</p>
-          </div>
-          <div className="provider-benefit-card">
-            <span className="provider-benefit-icon">{t("providerLanding.benefit3Icon")}</span>
-            <h3 className="provider-benefit-title">{t("providerLanding.benefit3Title")}</h3>
-            <p className="provider-benefit-body">{t("providerLanding.benefit3Body")}</p>
-          </div>
-        </div>
-      </section>
-
-      {/* BENEFITS FOR THEIR CUSTOMERS — the previous version of this page
-          only ever made the case to the shop owner; it never answered the
-          question right behind it in their head, "but will my customers
-          actually use this?" Same card styling as the section above on
-          purpose, so the two read as a matched pair: what you get, and
-          what the people booking with you get. */}
-      <section className="section" style={{ paddingTop: 0 }}>
-        <div style={{ textAlign: "center", marginBottom: 40 }}>
-          <div className="section-eyebrow" style={{ justifyContent: "center", display: "flex" }}>{t("providerLanding.customerBenefitsEyebrow")}</div>
-          <h2 className="section-title">{t("providerLanding.customerBenefitsTitle")}</h2>
-          <p className="section-sub" style={{ margin: "0 auto" }}>{t("providerLanding.customerBenefitsSub")}</p>
-        </div>
-        <div className="provider-benefits-grid">
-          <div className="provider-benefit-card">
-            <span className="provider-benefit-icon">{t("providerLanding.customerBenefit1Icon")}</span>
-            <h3 className="provider-benefit-title">{t("providerLanding.customerBenefit1Title")}</h3>
-            <p className="provider-benefit-body">{t("providerLanding.customerBenefit1Body")}</p>
-          </div>
-          <div className="provider-benefit-card">
-            <span className="provider-benefit-icon">{t("providerLanding.customerBenefit2Icon")}</span>
-            <h3 className="provider-benefit-title">{t("providerLanding.customerBenefit2Title")}</h3>
-            <p className="provider-benefit-body">{t("providerLanding.customerBenefit2Body")}</p>
-          </div>
-          <div className="provider-benefit-card">
-            <span className="provider-benefit-icon">{t("providerLanding.customerBenefit3Icon")}</span>
-            <h3 className="provider-benefit-title">{t("providerLanding.customerBenefit3Title")}</h3>
-            <p className="provider-benefit-body">{t("providerLanding.customerBenefit3Body")}</p>
-          </div>
-        </div>
-      </section>
-
-      {/* WHY VAIBOOK — the "results" section: what actually changes once a
-          shop switches. Deliberately compared against how these businesses
-          really run today (phone calls, WhatsApp, a notebook) rather than
-          a named competitor platform, since that's the honest comparison —
-          VaiBook has no usage data yet to back a claim against any specific
-          rival. Every line on the right is a feature that's actually built
-          (deposits, reminders, the dashboard, flat pricing with no
-          commission — see PLANS above), nothing aspirational. */}
-      <section className="vs-section">
-        <div style={{ textAlign: "center", marginBottom: 40 }}>
-          <div className="section-eyebrow" style={{ justifyContent: "center", display: "flex" }}>{t("providerLanding.whyVaiEyebrow")}</div>
-          <h2 className="section-title">{t("providerLanding.whyVaiTitle")}</h2>
-        </div>
-        <div className="vs-grid">
-          <div className="vs-col vs-col-without">
-            <div className="vs-col-title">{t("providerLanding.withoutTitle")}</div>
-            <div className="vs-item"><span className="vs-mark">✕</span>{t("providerLanding.without1")}</div>
-            <div className="vs-item"><span className="vs-mark">✕</span>{t("providerLanding.without2")}</div>
-            <div className="vs-item"><span className="vs-mark">✕</span>{t("providerLanding.without3")}</div>
-            <div className="vs-item"><span className="vs-mark">✕</span>{t("providerLanding.without4")}</div>
-          </div>
-          <div className="vs-col vs-col-with">
-            <div className="vs-col-title">{t("providerLanding.withTitle")}</div>
-            <div className="vs-item"><span className="vs-mark">✓</span>{t("providerLanding.with1")}</div>
-            <div className="vs-item"><span className="vs-mark">✓</span>{t("providerLanding.with2")}</div>
-            <div className="vs-item"><span className="vs-mark">✓</span>{t("providerLanding.with3")}</div>
-            <div className="vs-item"><span className="vs-mark">✓</span>{t("providerLanding.with4")}</div>
-          </div>
+function ProviderLandingPage({ onNav }) {
+  const { t, i18n } = useTranslation();
+  const lt = (k, v) => lpText(i18n.language, k, v);
+  const solo = PLANS.find((p) => p.id === "pro");
+  const team = PLANS.find((p) => p.id === "business");
+  const money = { solo: (solo?.monthly || 0).toFixed(2), team: (team?.monthly || 0).toFixed(2), seats: TEAM_FREE_SEATS };
+  const startSignup = (planId) => {
+    if (planId) { try { localStorage.setItem("vaibook_signup_plan", planId); } catch (e) { /* ignore */ } }
+    onNav("signup");
+  };
+  const why = [["calendar", "why1"], ["shield", "why2"], ["chart", "why3"], ["tag", "why4"]];
+  const tools = [["calendar", "tool1"], ["users", "tool2"], ["pen", "tool3"], ["megaphone", "tool4"]];
+  return (
+    <div className="vbl">
+      <section className="vbl-hero">
+        <div className="vbl-wrap">
+          <div className="vbl-eyebrow">{lt("eyebrow")}</div>
+          <h1 className="vbl-title">{lt("title1")}<br /><span>{lt("title2")}</span></h1>
+          <p className="vbl-sub">{lt("sub")}</p>
+          <button className="vbl-btn" onClick={() => startSignup()}>{lt("cta")} <span aria-hidden="true">→</span></button>
+          <div className="vbl-note">{lt("heroNote")}</div>
         </div>
       </section>
 
-      {/* PRICING — for prospective providers. "Recommended" on Pro is
-          VaiBook's own editorial call, not a "Most popular" claim — there's
-          no real usage data yet to honestly back that. Every feature line
-          comes straight from PLANS above, which only lists things that are
-          actually built (and, for Starter's booking cap, actually
-          enforced) — nothing here is aspirational.
-          NOTE: the "14-Day Free Trial" badge below is marketing copy the
-          user explicitly asked for — there is no trial mechanism in the
-          backend (no trial_ends_at, no auto-expiry/downgrade). Every
-          signup, trial-badged or not, still goes through the same manual
-          bank-transfer + admin-confirms flow as before. If a real
-          system-enforced trial is wanted, that's separate schema/logic
-          work, not just this copy change. */}
-      <section className="section pricing-section" id="pricing">
-        <div style={{ textAlign: "center", marginBottom: 40 }}>
-          <div className="section-eyebrow" style={{ justifyContent: "center", display: "flex" }}>{t("providerLanding.forBusinessOwners")}</div>
-          <h2 className="section-title">{t("providerLanding.simplePricing")}</h2>
-          <p className="section-sub" style={{ margin: "0 auto" }}>{t("providerLanding.noContractsApply")}</p>
-        </div>
-        <div className="pricing-grid">
-          {PUBLIC_PLANS.map((p) => (
-            <div className={`pricing-card ${p.recommended ? "recommended" : ""}`} key={p.id}>
-              {p.recommended && <div className="pricing-badge">{t("providerLanding.recommended")}</div>}
-              {/* Plan name/tagline/features/priceNote come straight from the
-                  PLANS data array (shared with billing/admin logic across the
-                  whole app) — translating those would mean restructuring that
-                  core array, not just this page's copy, so they stay English
-                  for now; everything else on this page is translated. */}
-              <div className="pricing-name">{p.name}</div>
-              <div className="pricing-trial-badge">{t("providerLanding.trialBadgeShort")}</div>
-              <div className="pricing-price">
-                {p.monthly > 0 ? p.price : <>BZ$0<span> /month</span></>}
+      <section className="vbl-section">
+        <div className="vbl-wrap">
+          <h2 className="vbl-h2">{lt("whyTitle")}</h2>
+          <div className="vbl-grid4">
+            {why.map(([icon, k]) => (
+              <div className="vbl-card" key={k}>
+                <div className="vbl-icon"><LpIcon name={icon} /></div>
+                <h3>{lt(`${k}t`)}</h3>
+                <p>{lt(`${k}b`)}</p>
               </div>
-              {p.monthly > 0 && <div className="pricing-price-note">{t("providerLanding.billedPerMonth", { amount: p.monthly.toFixed(2) })}</div>}
-              {p.priceNote && <div className="pricing-price-note">{p.priceNote}</div>}
-              {p.monthly > 0 && p.valueNote && (
-                <div className="pricing-daily-note">{p.valueNote}</div>
-              )}
-              <div className="pricing-tagline">{p.tagline}</div>
-              <ul className="pricing-features">
-                {p.features.map((f, i) => (
-                  <li key={i}><span className="check">✓</span>{f}</li>
-                ))}
-              </ul>
-              <button
-                className={p.recommended ? "btn-lime pricing-cta" : "btn-sm forest pricing-cta"}
-                onClick={() => {
-                  // Same stash-and-consume-once pattern the public pricing
-                  // section already uses (ProviderSignup reads this on
-                  // mount) — so picking a plan here carries it straight
-                  // through to the real application form instead of
-                  // landing on a blank picker.
-                  try { localStorage.setItem("vaibook_signup_plan", p.id); } catch (e) { /* ignore */ }
-                  onNav("signup");
-                }}
-              >
-                {t("providerLanding.applyToJoin")}
-              </button>
-            </div>
-          ))}
-        </div>
-        <p className="pricing-foot-note">{t("providerLanding.pricingFootNote")}</p>
-
-        {/* VAI MEDIA — a premium agency add-on, deliberately separated
-            from the Solo/Team self-serve pricing above: no price shown (the
-            two tiers below are priced case-by-case), no "Buy" button, just
-            an inquiry CTA, so it never adds checkout friction to the core
-            SaaS signup. */}
-        <div className="vai-media-banner">
-          <div className="vai-media-eyebrow">{t("providerLanding.vaiMediaEyebrow")}</div>
-          <h3 className="vai-media-title">{t("providerLanding.vaiMediaTitle")}</h3>
-          <p className="vai-media-copy">{t("providerLanding.vaiMediaCopy")}</p>
-          <div className="vai-media-tiers">
-            <div className="vai-media-tier">
-              <div className="vai-media-tier-name">{t("providerLanding.tier1Name")}</div>
-              <div className="vai-media-tier-desc">{t("providerLanding.tier1Desc")}</div>
-              <div className="vai-media-tier-price">BZ$XXX</div>
-            </div>
-            <div className="vai-media-tier">
-              <div className="vai-media-tier-name">{t("providerLanding.tier2Name")}</div>
-              <div className="vai-media-tier-desc">{t("providerLanding.tier2Desc")}</div>
-              <div className="vai-media-tier-price">BZ$XXX/mo</div>
-            </div>
+            ))}
           </div>
-          <a className="vai-media-btn" href={vaiMediaWhatsAppUrl("pricing page")} target="_blank" rel="noreferrer">{t("providerLanding.applyForVaiMedia")}</a>
-          <p className="vai-media-alt"><a href={vaiMediaMailtoUrl()}>{t("providerLanding.orEmailUs")}</a></p>
         </div>
       </section>
 
-      {/* FOR BUSINESS — conversion block, right above the footer. Deliberately
-          plain: no icons, no images, just a high-contrast dark-green break
-          to sell the trial CTA one more time before the page ends. */}
-      <section className="for-business-cta">
-        <div className="for-business-inner">
-          <h2 className="for-business-headline">{t("providerLanding.stopLosing")}</h2>
-          <p className="for-business-sub">
-            {t("providerLanding.forBusinessSub")}
-          </p>
-          <button className="btn-lime for-business-btn" onClick={() => onNav("signup")}>
-            {t("providerLanding.applyToJoin")}
-          </button>
+      <section className="vbl-dark">
+        <div className="vbl-wrap">
+          <h2 className="vbl-h2">{lt("howTitle")}</h2>
+          <div className="vbl-grid4">
+            {[1, 2, 3, 4].map((n) => (
+              <div className="vbl-step" key={n}>
+                <div className="vbl-step-num">{n}</div>
+                <h3>{lt(`how${n}t`)}</h3>
+                <p>{lt(`how${n}b`)}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="vbl-section">
+        <div className="vbl-wrap vbl-cols">
+          <div>
+            <h2 className="vbl-h2 vbl-left">{lt("payTitle")}</h2>
+            <p className="vbl-body">{lt("payBody", money)}</p>
+            <div className="vbl-notebox"><span className="vbl-inline-icon"><LpIcon name="card" /></span>{lt("payNote")}</div>
+          </div>
+          <div>
+            <h2 className="vbl-h2 vbl-left">{lt("whoTitle")}</h2>
+            <ul className="vbl-list">
+              {["who1", "who2", "who3"].map((k) => (
+                <li key={k}><span className="vbl-inline-icon"><LpIcon name="check" /></span>{lt(k)}</li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section className="vbl-section vbl-tint">
+        <div className="vbl-wrap">
+          <h2 className="vbl-h2">{lt("toolsTitle")}</h2>
+          <div className="vbl-grid4">
+            {tools.map(([icon, k]) => (
+              <div className="vbl-card" key={k}>
+                <div className="vbl-icon vbl-icon-grey"><LpIcon name={icon} /></div>
+                <h3>{lt(`${k}t`)}</h3>
+                <p>{lt(`${k}b`)}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="vbl-section" id="pricing">
+        <div className="vbl-wrap">
+          <h2 className="vbl-h2">{lt("pricingTitle")}</h2>
+          <p className="vbl-center-sub">{lt("pricingSub")}</p>
+          <div className="vbl-plans">
+            {PLANS.map((p) => (
+              <div className={`vbl-plan ${p.recommended ? "featured" : ""}`} key={p.id}>
+                {p.recommended && <div className="vbl-plan-badge">{t("providerLanding.recommended")}</div>}
+                <div className="vbl-plan-name">{p.name}</div>
+                <div className="vbl-plan-price">{p.monthly > 0 ? <>BZ${p.monthly.toFixed(2)}<span> /month</span></> : <>BZ$0<span> /month</span></>}</div>
+                <div className="vbl-plan-tagline">{p.tagline}</div>
+                <ul>
+                  {p.features.map((f, i) => (<li key={i}><span className="vbl-inline-icon"><LpIcon name="check" /></span>{f}</li>))}
+                </ul>
+                <button className={p.recommended ? "vbl-btn vbl-btn-full" : "vbl-btn-outline vbl-btn-full"} onClick={() => startSignup(p.id)}>{t("providerLanding.applyToJoin")}</button>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="vbl-section">
+        <div className="vbl-wrap vbl-narrow">
+          <h2 className="vbl-h2">{lt("faqTitle")}</h2>
+          <div className="vbl-faq">
+            {[1, 2, 3, 4, 5, 6].map((n) => (
+              <div className="vbl-faq-item" key={n}>
+                <span className="vbl-inline-icon"><LpIcon name="help" /></span>
+                <div>
+                  <div className="vbl-faq-q">{lt(`q${n}`)}</div>
+                  <p className="vbl-faq-a">{lt(`a${n}`, money)}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div style={{ textAlign: "center", marginTop: 36 }}>
+            <button className="vbl-btn" onClick={() => startSignup()}>{lt("cta")} <span aria-hidden="true">→</span></button>
+          </div>
+        </div>
+      </section>
+
+      <section className="vbl-section" style={{ paddingTop: 0 }}>
+        <div className="vbl-wrap">
+          <div className="vai-media-banner">
+            <div className="vai-media-eyebrow">{t("providerLanding.vaiMediaEyebrow")}</div>
+            <h3 className="vai-media-title">{t("providerLanding.vaiMediaTitle")}</h3>
+            <p className="vai-media-copy">{t("providerLanding.vaiMediaCopy")}</p>
+            <a className="vai-media-btn" href={vaiMediaWhatsAppUrl("pricing page")} target="_blank" rel="noreferrer">{t("providerLanding.applyForVaiMedia")}</a>
+            <p className="vai-media-alt"><a href={vaiMediaMailtoUrl()}>{t("providerLanding.orEmailUs")}</a></p>
+          </div>
         </div>
       </section>
 
       <SiteFooter />
-    </>
+    </div>
   );
 }
 
@@ -10278,6 +10470,22 @@ function StaffPortal({ onNav, session, staffProfile, onSignOut }) {
 function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSignOut, onProviderProfileUpdate }) {
   const { t, i18n } = useTranslation();
   const st = (key, vars) => setupText(i18n.language, key, vars);
+  const blt = (key, vars) => blText(i18n.language, key, vars);
+  const [clientSearch, setClientSearch] = useState("");
+  const [pwForm, setPwForm] = useState({ a: "", b: "" });
+  const [pwSaving, setPwSaving] = useState(false);
+  const [pwMsg, setPwMsg] = useState(null);
+  const savePassword = async () => {
+    setPwMsg(null);
+    if (pwForm.a.length < 8) { setPwMsg({ error: blt("pwShort") }); return; }
+    if (pwForm.a !== pwForm.b) { setPwMsg({ error: blt("pwMismatch") }); return; }
+    setPwSaving(true);
+    const { error } = await updateGuestPassword(pwForm.a);
+    setPwSaving(false);
+    if (error) { setPwMsg({ error: blt("pwFailed", { msg: error.message || "" }) }); return; }
+    setPwForm({ a: "", b: "" });
+    setPwMsg({ ok: blt("pwSaved") });
+  };
   const at = (key, vars) => agreeText(i18n.language, key, vars);
   const bt = (key, vars) => bpText(i18n.language, key, vars);
   const mt = (key, vars) => mkText(i18n.language, key, vars);
@@ -11557,6 +11765,11 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
 
   const saveProfile = async () => {
     if (!providerId) return;
+    if (phoneDigits(profileForm.whatsapp) < 7) {
+      setProfileSaveMsg("error");
+      setProfileSaveError(blt("phoneRequired"));
+      return;
+    }
     setSavingProfile(true);
     setProfileSaveMsg(null);
     setProfileSaveError("");
@@ -11905,8 +12118,10 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
           <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 28, fontWeight: 800, color: "var(--near-white)", marginBottom: 8, display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}>
             <VaiBookMark size={30} />vai<span style={{ color: "var(--lime)" }}>book</span> <span style={{ color: "rgba(255,255,255,0.5)", fontWeight: 600, fontSize: 16 }}>providers</span>
           </div>
-          <p style={{ color: "rgba(255,255,255,0.6)", fontSize: 14, marginBottom: 24 }}>{t("providerPortal.signIn.subtitle")}</p>
-          <button className="btn-lime" style={{ width: "100%", padding: "12px 0" }} onClick={() => { setPendingView("provider"); onSignIn(); }}>{t("providerPortal.signIn.button")}</button>
+          <div className="biz-login-card" style={{ textAlign: "left", marginTop: 16 }}>
+            <div className="biz-login-title">{blText(i18n.language, "title")}</div>
+            <BusinessLoginForm onNav={onNav} onSignIn={onSignIn} />
+          </div>
           <div style={{ marginTop: 20 }}>
             <a style={{ color: "rgba(255,255,255,0.4)", fontSize: 13, cursor: "pointer" }} onClick={() => onNav("home")}>{t("providerPortal.signIn.backToSite")}</a>
           </div>
@@ -12119,7 +12334,9 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
   // booked with this provider (walk-ins have no account/customer_id, so
   // they can't appear here), most recent visit first.
   const allClients = Object.values(customerHistory).sort((a, b) => (b.lastDate?.getTime() || 0) - (a.lastDate?.getTime() || 0));
-  const [clientSearch, setClientSearch] = useState("");
+  // (clientSearch state moved to the top of ProviderPortal — it used to be
+  // declared here, after the early returns above, which crashed the whole
+  // portal to a white screen whenever sign-in state changed.)
   const filteredClients = clientSearch.trim()
     ? allClients.filter((c) => c.name.toLowerCase().includes(clientSearch.trim().toLowerCase()))
     : allClients;
@@ -14064,6 +14281,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                   { title: st("rowServices"), desc: st("rowServicesDesc"), go: () => setTab("services") },
                   { title: st("rowAvailability"), desc: st("rowAvailabilityDesc"), go: () => setTab("calendar") },
                   { title: st("rowStaff"), desc: st("rowStaffDesc"), go: () => setTab("staff") },
+                  { title: blt("pwTitle"), desc: blt("pwHint"), go: () => goToSettingsCard("settings-login") },
                 ] },
                 { group: st("groupBookingPage"), rows: [
                   { title: st("rowDeposits"), desc: st("rowDepositsDesc"), go: () => goToSettingsCard("settings-deposits") },
@@ -14100,6 +14318,28 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                   </div>
                 </div>
               ))}
+            </div>
+
+            <div className="card" id="settings-login" style={{ maxWidth: 560, marginBottom: 20, scrollMarginTop: 120 }}>
+              <div className="card-title">{blt("pwTitle")}</div>
+              <p style={{ fontSize: 13, color: "var(--muted)", marginTop: -8, marginBottom: 14 }}>{blt("pwHint")}</p>
+              <div className="input-group">
+                <label>{blt("email")}</label>
+                <input value={session?.user?.email || ""} disabled />
+              </div>
+              <div className="form-row" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                <div className="input-group">
+                  <label>{blt("pwNew")}</label>
+                  <input type="password" autoComplete="new-password" value={pwForm.a} onChange={(e) => { setPwForm((f) => ({ ...f, a: e.target.value })); setPwMsg(null); }} />
+                </div>
+                <div className="input-group">
+                  <label>{blt("pwConfirm")}</label>
+                  <input type="password" autoComplete="new-password" value={pwForm.b} onChange={(e) => { setPwForm((f) => ({ ...f, b: e.target.value })); setPwMsg(null); }} />
+                </div>
+              </div>
+              <button className="btn-sm forest" onClick={savePassword} disabled={pwSaving || !pwForm.a}>{pwSaving ? blt("pwSaving") : blt("pwSave")}</button>
+              {pwMsg?.ok && <p className="mk-success">{pwMsg.ok}</p>}
+              {pwMsg?.error && <p className="agree-error">{pwMsg.error}</p>}
             </div>
 
             <div className="card" id="settings-bookingpage" style={{ maxWidth: 560, marginBottom: 20, scrollMarginTop: 120 }}>
@@ -14723,7 +14963,8 @@ const SERVICES_TO_SERVICE_TYPE = {
 };
 
 function ProviderSignup({ onNav }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const bl = (k, v) => blText(i18n.language, k, v);
   // No plan picker on this page anymore (see below) — this just carries
   // over whichever plan button someone clicked on the landing page's
   // pricing section, or defaults to Solo, so the application record and
@@ -14754,7 +14995,7 @@ function ProviderSignup({ onNav }) {
     } catch (e) { /* ignore */ }
     return {
       businessName: "", ownerName: "", email: "", phone: "",
-      serviceType, district: "", description: "",
+      serviceType, district: "", description: "", password: "", password2: "",
     };
   });
 
@@ -14766,8 +15007,25 @@ function ProviderSignup({ onNav }) {
       alert(t("providerSignup.validation.requiredFields"));
       return;
     }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) { setSubmitError(bl("signupEmailInvalid")); return; }
+    if (phoneDigits(form.phone) < 7) { setSubmitError(bl("signupPhoneInvalid")); return; }
+    if ((form.password || "").length < 8) { setSubmitError(bl("pwShort")); return; }
+    if (form.password !== form.password2) { setSubmitError(bl("pwMismatch")); return; }
     setLoading(true);
     setSubmitError("");
+
+    // Create (or confirm) the email + password login first, so the
+    // application is only saved once the business actually has a way in.
+    // Signed out again right after: they log in once they're approved.
+    {
+      const { error: authErr, returning } = await guestAuthWithPassword(form.email.trim().toLowerCase(), form.password, { full_name: form.ownerName.trim(), phone: form.phone.trim() });
+      if (authErr) {
+        setLoading(false);
+        setSubmitError(returning ? bl("signupEmailTaken") : bl("signupAccountFailed", { msg: authErr.message || "" }));
+        return;
+      }
+      try { await supabase.auth.signOut(); } catch (e) { /* ignore */ }
+    }
 
     const selectedPlan = PLANS.find(p => p.id === plan);
 
@@ -14856,7 +15114,7 @@ function ProviderSignup({ onNav }) {
           <p>{t("providerSignup.pending.body")}</p>
           <p className="pl-pending-meta">
             {t("providerSignup.pending.submittedFor")} <strong>{form.businessName}</strong> {t("providerSignup.pending.emailLead")} <strong>{form.email}</strong> {t("providerSignup.pending.approvedSuffix")}
-            {" "}{t("providerSignup.pending.loginPrefix")} <strong>{t("nav.providerLogin")}</strong> {t("providerSignup.pending.loginSuffix")}
+            {" "}{bl("approvedLogin")}
           </p>
           <div className="pl-pending-actions">
             <button className="pl-pending-keep-browsing btn-lime" onClick={() => scrollToSection("services", onNav, "signup")}>{t("providerSignup.pending.keepSearching")}</button>
@@ -14903,9 +15161,20 @@ function ProviderSignup({ onNav }) {
             </div>
             <div className="input-group">
               <label>{t("providerSignup.form.whatsappPhone")}</label>
-              <input placeholder="+501 600 0000" value={form.phone} onChange={e => set("phone", e.target.value)} />
+              <input type="tel" inputMode="tel" placeholder="+501 600 0000" value={form.phone} onChange={e => set("phone", e.target.value)} />
             </div>
           </div>
+          <div className="form-row">
+            <div className="input-group">
+              <label>{bl("signupPassword")}</label>
+              <input type="password" autoComplete="new-password" value={form.password} onChange={e => set("password", e.target.value)} />
+            </div>
+            <div className="input-group">
+              <label>{bl("signupPasswordConfirm")}</label>
+              <input type="password" autoComplete="new-password" value={form.password2} onChange={e => set("password2", e.target.value)} />
+            </div>
+          </div>
+          <p className="biz-login-hint" style={{ marginTop: -6, marginBottom: 14 }}>{bl("signupPasswordHint")}</p>
           <div className="form-row">
             <div className="input-group">
               <label>{t("providerSignup.form.serviceType")}</label>
