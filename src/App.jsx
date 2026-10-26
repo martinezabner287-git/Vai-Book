@@ -228,16 +228,25 @@ const css = `
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
   :root {
+    /* 2026-10-25 refresh: Vai Buy's calm neutrals (warm off-white page,
+       white cards, soft warm borders, navy + near-black text) with indigo
+       as the single accent where Vai Buy uses teal. --lime used to be a
+       gold highlight; it is now the same indigo accent, and anything that
+       used it as a background uses the soft indigo tint instead. */
     --forest: #4C3DC4;
     --forest-mid: #6C5CE7;
     --forest-light: #8C7AF0;
-    --sand: #F3F1FC;
-    --lime: #F2B705;
-    --clay: #D4795A;
-    --near-white: #FAF9FE;
-    --dark-text: #17141F;
-    --muted: #6B6578;
-    --border: #E7E2F5;
+    --sand: #F4F2EE;
+    --lime: #4C3DC4;
+    --clay: #C2410C;
+    --near-white: #FFFFFF;
+    --dark-text: #16181D;
+    --muted: #6C7281;
+    --border: #E7E4DE;
+    --accent-soft: #EEECFC;
+    --navy: #152E59;
+    --ink: #0B1825;
+    --page: #FAF8F5;
     --radius: 12px;
     --radius-sm: 8px;
 
@@ -266,7 +275,7 @@ const css = `
        instead — brand color stays reserved for surfaces (buttons,
        borders, glowing badges) where it's actually legible in both
        themes. */
-    --bg-primary: #170F38;
+    --bg-primary: #0B1825;
     --bg-elevated: rgba(255,255,255,0.04);
     --bg-elevated-hover: rgba(255,255,255,0.07);
     --text-primary: #FFFFFF;
@@ -282,7 +291,7 @@ const css = `
        (Customer Portal Home) — see the GLOBAL PREMIUM UI COMPONENTS note
        below for why .card-premium/.btn-neon/.badge-pill/.search-glass
        exist as their own shared classes. */
-    --glass-bg: rgba(23,15,56,0.94);
+    --glass-bg: rgba(11,24,37,0.94);
     --glass-border: rgba(255,255,255,0.1);
   }
 
@@ -334,10 +343,10 @@ const css = `
      color — no visible line, same dark-to-green bar everywhere above it.
      Kept as a separate modifier (applied per-view in Nav()) rather than
      changed in place, because provider-hero's own background starts dark
-     (#170F38) — fading to near-white there would put a pale sliver between
+     (#0B1825) — fading to near-white there would put a pale sliver between
      two dark greens, the same problem in reverse. */
-  .nav-outer { position: sticky; top: 0; z-index: 100; background: linear-gradient(180deg, #0F0A26 0%, #4C3DC4 100%); }
-  .nav-outer.nav-outer--light { background: linear-gradient(180deg, #0F0A26 0%, #4C3DC4 calc(100% - 12px), var(--near-white) 100%); }
+  .nav-outer { position: sticky; top: 0; z-index: 100; background: #FFFFFF; }
+  .nav-outer.nav-outer--light { background: #FFFFFF; }
   .nav {
     display: flex; align-items: center; justify-content: space-between;
     padding: 16px 48px; background: transparent; position: relative;
@@ -442,12 +451,12 @@ const css = `
   @media (max-width: 860px) { .nav-link-inline { display: none; } }
   .btn-ghost { background: transparent; border: 1px solid rgba(255,255,255,0.35); color: var(--near-white); padding: 9px 20px; border-radius: 100px; font-size: 14px; font-weight: 500; cursor: pointer; transition: all .2s; }
   .btn-ghost:hover { border-color: var(--lime); color: var(--lime); }
-  .btn-lime { background: var(--lime); border: none; color: var(--forest); padding: 8px 20px; border-radius: var(--radius-sm); font-size: 14px; font-weight: 600; cursor: pointer; transition: opacity .2s; }
+  .btn-lime { background: var(--accent-soft); border: none; color: var(--forest); padding: 8px 20px; border-radius: var(--radius-sm); font-size: 14px; font-weight: 600; cursor: pointer; transition: opacity .2s; }
   .btn-lime:hover { opacity: 0.85; }
   .nav-menu-btn { display: flex; align-items: center; gap: 8px; background: transparent; border: 1px solid rgba(255,255,255,0.35); color: var(--near-white); padding: 9px 18px 9px 22px; border-radius: 100px; font-size: 14px; font-weight: 500; cursor: pointer; transition: all .2s; }
   .nav-menu-btn:hover { border-color: var(--lime); color: var(--lime); }
-  .nav-signup-btn { background: var(--lime); border: none; color: var(--forest); padding: 9px 20px; border-radius: 100px; font-size: 14px; font-weight: 700; cursor: pointer; transition: all .2s; box-shadow: 0 0 0 rgba(242,183,5,0); }
-  .nav-signup-btn:hover { box-shadow: 0 0 14px rgba(242,183,5,0.6); transform: translateY(-1px); }
+  .nav-signup-btn { background: var(--accent-soft); border: none; color: var(--forest); padding: 9px 20px; border-radius: 100px; font-size: 14px; font-weight: 700; cursor: pointer; transition: all .2s; box-shadow: 0 0 0 rgba(76,61,196,0); }
+  .nav-signup-btn:hover { box-shadow: 0 0 14px rgba(76,61,196,0.6); transform: translateY(-1px); }
   /* NAV "FOR BUSINESSES" PILL — same outline-pill treatment as
      .nav-menu-btn (transparent fill, faint white border) rather than
      .nav-signup-btn's solid lime, and deliberately NOT hidden at any
@@ -476,7 +485,7 @@ const css = `
     width: 34px; height: 34px; background: transparent; border: 1px solid rgba(255,255,255,0.25);
     border-radius: 50%; color: var(--near-white); cursor: pointer; transition: all .2s; flex-shrink: 0;
   }
-  .theme-toggle:hover { border-color: var(--lime); color: var(--lime); background: rgba(242,183,5,0.08); }
+  .theme-toggle:hover { border-color: var(--lime); color: var(--lime); background: rgba(76,61,196,0.08); }
   /* LANGUAGE SELECTOR — same always-dark nav chrome treatment as the theme
      toggle right above (see its comment): a pill instead of a circle since
      this shows two letters (EN/ES), not a single icon glyph. */
@@ -487,7 +496,7 @@ const css = `
     color: var(--near-white); cursor: pointer; transition: all .2s; flex-shrink: 0;
     font-size: 12px; font-weight: 800; letter-spacing: .04em; font-family: 'Plus Jakarta Sans', sans-serif;
   }
-  .lang-toggle:hover { border-color: var(--lime); color: var(--lime); background: rgba(242,183,5,0.08); }
+  .lang-toggle:hover { border-color: var(--lime); color: var(--lime); background: rgba(76,61,196,0.08); }
   /* FOOTER LANGUAGE SELECTOR — the "🌐 English" control that sits in the
      footer's bottom bar (same spot/pattern as Fresha's "🌐 English (US)").
      Lives on a dark footer background like the nav, so it reuses that
@@ -539,7 +548,7 @@ const css = `
     content: '';
     position: absolute; inset: -20%;
     background:
-      radial-gradient(circle at 25% 30%, rgba(242,183,5,0.35), transparent 50%),
+      radial-gradient(circle at 25% 30%, rgba(76,61,196,0.35), transparent 50%),
       radial-gradient(circle at 80% 70%, rgba(212,121,90,0.30), transparent 55%);
     filter: blur(60px);
   }
@@ -567,7 +576,7 @@ const css = `
     font: inherit; cursor: pointer; appearance: none; -webkit-appearance: none;
   }
   .help-card:hover { transform: translateY(-3px); box-shadow: 0 16px 40px rgba(76,61,196,0.16); }
-  .help-card-icon { width: 52px; height: 52px; border-radius: 14px; background: var(--forest); color: var(--lime); display: flex; align-items: center; justify-content: center; font-size: 24px; margin-bottom: 18px; }
+  .help-card-icon { width: 52px; height: 52px; border-radius: 14px; background: var(--forest); color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 24px; margin-bottom: 18px; }
   .help-card h3 { font-size: 20px; font-weight: 800; margin: 0 0 8px; color: var(--text-primary); }
   .help-card p { font-size: 14px; color: var(--text-tertiary); margin: 0 0 22px; line-height: 1.5; flex: 1; }
   .help-card-arrow { width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--border-subtle); display: flex; align-items: center; justify-content: center; font-size: 17px; align-self: flex-end; color: var(--text-primary); }
@@ -611,7 +620,7 @@ const css = `
   .help-form-charcount { align-self: flex-end; }
   .help-form-error { font-size: 13px; font-weight: 700; color: #DC5A4A; margin: -8px 0 0; }
   .help-form-submit {
-    background: var(--forest); color: var(--lime); border: none; border-radius: 100px;
+    background: var(--forest); color: #FFFFFF; border: none; border-radius: 100px;
     padding: 14px 24px; font-size: 15px; font-weight: 800; cursor: pointer; transition: opacity .15s;
   }
   .help-form-submit:hover { opacity: 0.9; }
@@ -639,7 +648,7 @@ const css = `
   }
   .help-faq-cta p { margin: 0 0 14px; font-size: 14px; color: var(--text-secondary); font-weight: 600; }
   .help-faq-cta-btn {
-    background: var(--forest); color: var(--lime); border: none; border-radius: 100px;
+    background: var(--forest); color: #FFFFFF; border: none; border-radius: 100px;
     padding: 11px 22px; font-size: 14px; font-weight: 800; cursor: pointer; transition: opacity .15s;
   }
   .help-faq-cta-btn:hover { opacity: 0.9; }
@@ -650,18 +659,18 @@ const css = `
   /* ACCOUNT DROPDOWN */
   .nav-avatar-btn { display: flex; align-items: center; gap: 8px; background: transparent; border: 1px solid rgba(255,255,255,0.35); border-radius: 100px; padding: 4px 12px 4px 4px; cursor: pointer; transition: border-color .2s; }
   .nav-avatar-btn:hover { border-color: var(--lime); }
-  .nav-avatar-circle { width: 30px; height: 30px; border-radius: 50%; background: var(--lime); color: var(--forest); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; flex-shrink: 0; }
-  .profile-avatar-circle { width: 84px; height: 84px; border-radius: 50%; background: var(--lime); color: var(--forest); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 30px; }
+  .nav-avatar-circle { width: 30px; height: 30px; border-radius: 50%; background: var(--accent-soft); color: var(--forest); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; flex-shrink: 0; }
+  .profile-avatar-circle { width: 84px; height: 84px; border-radius: 50%; background: var(--accent-soft); color: var(--forest); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 30px; }
   .nav-avatar-caret { font-size: 10px; color: rgba(250,250,247,0.7); }
   /* Wraps just the avatar circle (not the whole nav-avatar-btn, which also
      has the caret) so the unread badge sits pinned to the circle's own
      top-right corner regardless of button padding/caret width. */
   .nav-avatar-wrap { position: relative; display: inline-flex; flex-shrink: 0; }
-  .nav-avatar-badge { position: absolute; top: -3px; right: -3px; background: var(--lime); color: var(--forest); font-size: 10px; font-weight: 800; min-width: 16px; height: 16px; border-radius: 8px; display: flex; align-items: center; justify-content: center; padding: 0 3px; border: 1.5px solid var(--forest); box-shadow: 0 0 6px rgba(242,183,5,0.6); line-height: 1; }
+  .nav-avatar-badge { position: absolute; top: -3px; right: -3px; background: var(--accent-soft); color: var(--forest); font-size: 10px; font-weight: 800; min-width: 16px; height: 16px; border-radius: 8px; display: flex; align-items: center; justify-content: center; padding: 0 3px; border: 1.5px solid var(--forest); box-shadow: 0 0 6px rgba(76,61,196,0.6); line-height: 1; }
   .nav-account-dropdown { position: absolute; top: calc(100% + 12px); right: 0; background: white; border-radius: var(--radius-sm); box-shadow: 0 16px 40px rgba(76,61,196,0.18); border: 1px solid var(--border); min-width: 250px; padding: 10px; z-index: 200; }
   .nav-account-name { padding: 10px 14px 14px; font-weight: 700; font-size: 16px; color: var(--dark-text); }
   .nav-account-dropdown button.nav-dropdown-item { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; background: none; border: none; padding: 11px 14px; border-radius: 8px; font-size: 14px; font-weight: 500; color: var(--dark-text); cursor: pointer; }
-  .nav-dropdown-badge { margin-left: auto; background: var(--lime); color: var(--forest); font-size: 11px; font-weight: 800; min-width: 18px; height: 18px; border-radius: 9px; display: flex; align-items: center; justify-content: center; padding: 0 5px; flex-shrink: 0; }
+  .nav-dropdown-badge { margin-left: auto; background: var(--accent-soft); color: var(--forest); font-size: 11px; font-weight: 800; min-width: 18px; height: 18px; border-radius: 9px; display: flex; align-items: center; justify-content: center; padding: 0 5px; flex-shrink: 0; }
   .nav-account-dropdown button.nav-dropdown-item:hover { background: var(--sand); }
   .nav-account-dropdown button.nav-dropdown-item .icn { width: 18px; text-align: center; }
   .nav-account-dropdown button.nav-dropdown-item.for-biz { justify-content: space-between; font-weight: 600; }
@@ -675,7 +684,7 @@ const css = `
      the accountOpen dropdown in Nav()). No default browser <ul>/<li>
      styling to begin with (it's already div/button-based), so this is
      purely the color treatment matching the rest of the dark pages. */
-  .cx-account-dropdown { background: #1C1438; border: none; box-shadow: 0 20px 50px rgba(0,0,0,0.4); }
+  .cx-account-dropdown { background: #152E59; border: none; box-shadow: 0 20px 50px rgba(0,0,0,0.4); }
   .cx-account-dropdown .nav-account-name { color: rgba(245,239,224,0.5); }
   .cx-account-dropdown button.nav-dropdown-item,
   .cx-account-dropdown a { color: #FFFFFF; }
@@ -690,7 +699,7 @@ const css = `
   .cx-account-dropdown .notif-item { border-color: rgba(255,255,255,0.1); }
   .cx-account-dropdown .notif-dropdown-header a { color: var(--lime); }
   .cx-account-dropdown .notif-item:hover { background: rgba(255,255,255,0.08); }
-  .cx-account-dropdown .notif-item.unread { background: rgba(242,183,5,0.08); }
+  .cx-account-dropdown .notif-item.unread { background: rgba(76,61,196,0.08); }
   .cx-account-dropdown .notif-title { color: #FFFFFF; }
   .cx-account-dropdown .notif-body,
   .cx-account-dropdown .notif-time,
@@ -708,7 +717,7 @@ const css = `
   .hero-title em { font-style: normal; color: var(--lime); }
   .hero-body { font-size: 17px; line-height: 1.7; color: rgba(255,255,255,0.65); max-width: 440px; margin-bottom: 40px; }
   .hero-actions { display: flex; gap: 12px; flex-wrap: wrap; }
-  .btn-primary { background: var(--lime); color: var(--forest); border: none; padding: 14px 28px; border-radius: var(--radius-sm); font-size: 15px; font-weight: 600; cursor: pointer; transition: opacity .2s; }
+  .btn-primary { background: var(--accent-soft); color: var(--forest); border: none; padding: 14px 28px; border-radius: var(--radius-sm); font-size: 15px; font-weight: 600; cursor: pointer; transition: opacity .2s; }
   .btn-primary:hover { opacity: .85; }
   .btn-outline-white { background: transparent; color: var(--near-white); border: 1px solid rgba(255,255,255,0.35); padding: 14px 28px; border-radius: var(--radius-sm); font-size: 15px; font-weight: 500; cursor: pointer; transition: all .2s; }
   .btn-outline-white:hover { border-color: var(--lime); color: var(--lime); }
@@ -721,12 +730,12 @@ const css = `
     display: flex; align-items: center; gap: 16px; cursor: pointer;
     transition: background .2s, border-color .2s;
   }
-  .service-card:hover { background: rgba(242,183,5,0.08); border-color: rgba(242,183,5,0.3); }
+  .service-card:hover { background: rgba(76,61,196,0.08); border-color: rgba(76,61,196,0.3); }
   .service-icon { width: 48px; height: 48px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; }
   .service-info h4 { font-size: 15px; font-weight: 600; color: var(--near-white); margin-bottom: 2px; }
   .service-info p { font-size: 13px; color: rgba(255,255,255,0.5); }
-  .service-badge { margin-left: auto; background: var(--lime); color: var(--forest); font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 6px; }
-  .service-badge.open { background: rgba(242,183,5,0.15); color: var(--lime); }
+  .service-badge { margin-left: auto; background: var(--accent-soft); color: var(--forest); font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 6px; }
+  .service-badge.open { background: rgba(76,61,196,0.15); color: var(--lime); }
 
   /* SEARCH HERO — light marketplace-style hero: small eyebrow label, bold
      two-line statement headline (2nd line in a mid-green accent), then the
@@ -790,7 +799,7 @@ const css = `
   .search-bar-pill .field input::placeholder { color: rgba(245,239,224,0.45); }
   .search-bar-pill select option { background: #4C3DC4; color: #FFFFFF; }
   .search-bar-pill .sep { width: 1px; height: 28px; background: rgba(255,255,255,0.18); flex-shrink: 0; }
-  .search-submit { background: var(--lime); color: var(--forest); border: none; border-radius: 100px; padding: 14px 30px; font-weight: 700; font-size: 15px; cursor: pointer; white-space: nowrap; transition: opacity .2s; font-family: 'Plus Jakarta Sans', sans-serif; }
+  .search-submit { background: var(--accent-soft); color: var(--forest); border: none; border-radius: 100px; padding: 14px 30px; font-weight: 700; font-size: 15px; cursor: pointer; white-space: nowrap; transition: opacity .2s; font-family: 'Plus Jakarta Sans', sans-serif; }
   .search-submit:hover { opacity: .87; }
   .search-hero-tagline { margin-top: 26px; font-size: 13px; color: var(--muted); text-align: center; }
   .search-hero-tagline a { color: #6C5CE7; font-weight: 600; cursor: pointer; text-decoration: underline; }
@@ -806,7 +815,7 @@ const css = `
     box-shadow: 0 10px 26px rgba(76,61,196,0.1); transition: transform .15s;
   }
   .hero-get-app-btn:hover { transform: translateY(-1px); }
-  .hero-trial-btn { display: block; margin: 0 auto 44px; padding: 17px 38px; font-size: 16px; border-radius: 100px; box-shadow: 0 16px 40px rgba(242,183,5,0.22); }
+  .hero-trial-btn { display: block; margin: 0 auto 44px; padding: 17px 38px; font-size: 16px; border-radius: 100px; box-shadow: 0 16px 40px rgba(76,61,196,0.22); }
   .hero-search-label { font-size: 12px; font-weight: 600; letter-spacing: .03em; color: rgba(250,250,247,0.5); text-align: center; margin-bottom: 14px; }
 
   /* HERO TRUST ROW — VaiBuy-brand-kinship pass (vaibuyandsell.bz/vendors
@@ -884,19 +893,19 @@ const css = `
      rather than the same page with different copy. */
   .provider-hero {
     position: relative; overflow: hidden; padding: 128px 24px 104px; text-align: center;
-    background: linear-gradient(165deg, #170F38 0%, #4C3DC4 55%, #5A49D6 100%);
+    background: var(--navy);
   }
   .provider-hero::before {
     content: '';
     position: absolute; inset: -25%;
-    background: radial-gradient(circle at 50% 0%, rgba(242,183,5,0.16), transparent 62%);
+    background: radial-gradient(circle at 50% 0%, rgba(76,61,196,0.16), transparent 62%);
     z-index: 0;
   }
   .provider-hero > * { position: relative; z-index: 1; }
   .provider-hero-eyebrow {
     display: inline-block; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 12px; font-weight: 700;
     letter-spacing: .16em; text-transform: uppercase; color: var(--lime);
-    background: rgba(242,183,5,0.1); border: 1px solid rgba(242,183,5,0.28);
+    background: rgba(76,61,196,0.1); border: 1px solid rgba(76,61,196,0.28);
     padding: 8px 20px; border-radius: 100px; margin-bottom: 24px;
   }
   .provider-hero-title {
@@ -908,7 +917,7 @@ const css = `
   .provider-hero-ctas { display: flex; align-items: center; justify-content: center; gap: 14px; flex-wrap: wrap; }
   .provider-hero-cta.btn-lime {
     display: inline-block; padding: 20px 44px; font-size: 17px; font-weight: 800;
-    border-radius: 100px; box-shadow: 0 18px 44px rgba(242,183,5,0.28);
+    border-radius: 100px; box-shadow: 0 18px 44px rgba(76,61,196,0.28);
   }
   .provider-hero-note { margin-top: 18px; font-size: 13px; color: rgba(250,250,247,0.5); }
   /* The dashboard screenshot living inside the dark hero, Fresha-style —
@@ -961,7 +970,7 @@ const css = `
     .lp-theme .services-pills .service-pill { flex: 0 0 auto; scroll-snap-align: start; }
   }
   .lp-theme .service-pill { background: var(--bg-elevated); border-color: var(--border-subtle); color: var(--text-primary); }
-  .lp-theme .service-pill:hover { border-color: var(--accent-neon); color: var(--accent-text); background: rgba(242,183,5,0.08); box-shadow: none; }
+  .lp-theme .service-pill:hover { border-color: var(--accent-neon); color: var(--accent-text); background: rgba(76,61,196,0.08); box-shadow: none; }
 
   /* TRENDING / DISCOVER CAROUSEL CARDS — themed, borderless-in-dark /
      subtly-bordered-in-light variant of the shared .carousel-card (also
@@ -1018,15 +1027,15 @@ const css = `
     transition: transform .15s ease, background .2s ease, box-shadow .2s ease;
   }
   .tny-card:hover { transform: translateY(-4px); background: var(--bg-elevated-hover); box-shadow: var(--card-shadow); }
-  .tny-card-img { position: relative; height: 160px; background: linear-gradient(160deg, #8C7AF0 0%, #1C1438 100%); overflow: hidden; }
+  .tny-card-img { position: relative; height: 160px; background: var(--accent-soft); overflow: hidden; }
   .tny-card-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
   .tny-card-img-fallback { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 40px; }
-  .tny-card-img-overlay { position: absolute; left: 0; right: 0; bottom: 0; height: 65%; background: linear-gradient(180deg, rgba(23,15,56,0) 0%, rgba(23,15,56,0.9) 100%); pointer-events: none; }
+  .tny-card-img-overlay { position: absolute; left: 0; right: 0; bottom: 0; height: 65%; background: linear-gradient(180deg, rgba(11,24,37,0) 0%, rgba(11,24,37,0.9) 100%); pointer-events: none; }
   .tny-scarcity {
     position: absolute; top: 10px; left: 10px; z-index: 2;
-    background: rgba(242,183,5,0.18); color: var(--lime); border: 1px solid rgba(242,183,5,0.4);
+    background: rgba(76,61,196,0.18); color: var(--lime); border: 1px solid rgba(76,61,196,0.4);
     font-size: 10px; font-weight: 800; letter-spacing: .03em; text-transform: uppercase;
-    padding: 4px 9px; border-radius: 100px; box-shadow: 0 0 14px rgba(242,183,5,0.4);
+    padding: 4px 9px; border-radius: 100px; box-shadow: 0 0 14px rgba(76,61,196,0.4);
   }
   .tny-card-body { padding: 14px 16px 16px; }
   .tny-card-body h4 { font-size: 15px; font-weight: 800; color: var(--text-primary); margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -1116,22 +1125,22 @@ const css = `
 
   /* PRICING (public, for prospective providers) */
   .pricing-section { padding: 80px 48px; }
-  .trial-badge { display: inline-flex; align-items: center; gap: 6px; background: var(--lime); color: var(--forest); font-size: 12.5px; font-weight: 700; padding: 7px 18px; border-radius: 100px; margin: 4px 0 18px; }
+  .trial-badge { display: inline-flex; align-items: center; gap: 6px; background: var(--accent-soft); color: var(--forest); font-size: 12.5px; font-weight: 700; padding: 7px 18px; border-radius: 100px; margin: 4px 0 18px; }
   .pricing-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; max-width: 720px; margin: 0 auto; align-items: stretch; }
   .pricing-card { background: #fff; border: 1px solid var(--border); border-radius: 16px; padding: 32px 28px; display: flex; flex-direction: column; position: relative; }
   .pricing-card.recommended { border: 2px solid var(--forest); box-shadow: 0 16px 36px rgba(76,61,196,0.12); }
-  .pricing-badge { position: absolute; top: -13px; left: 50%; transform: translateX(-50%); background: var(--forest); color: var(--lime); font-size: 11px; font-weight: 800; letter-spacing: .4px; text-transform: uppercase; padding: 5px 14px; border-radius: 100px; white-space: nowrap; }
+  .pricing-badge { position: absolute; top: -13px; left: 50%; transform: translateX(-50%); background: var(--forest); color: #FFFFFF; font-size: 11px; font-weight: 800; letter-spacing: .4px; text-transform: uppercase; padding: 5px 14px; border-radius: 100px; white-space: nowrap; }
   /* Per-card trial badge (Task: "add a prominent 14-Day Free Trial badge to
      both active plans") — separate from the top-of-card .pricing-badge
      ribbon (which only shows on the recommended plan) so the two never
      collide; sits inline under the plan name instead of absolutely
      positioned, since every card gets one, not just one card. */
-  .pricing-trial-badge { display: inline-flex; align-items: center; gap: 5px; background: var(--lime); color: var(--forest); font-size: 11px; font-weight: 800; letter-spacing: .2px; padding: 5px 12px; border-radius: 100px; margin: 8px 0 2px; white-space: nowrap; }
+  .pricing-trial-badge { display: inline-flex; align-items: center; gap: 5px; background: var(--accent-soft); color: var(--forest); font-size: 11px; font-weight: 800; letter-spacing: .2px; padding: 5px 12px; border-radius: 100px; margin: 8px 0 2px; white-space: nowrap; }
   .pricing-name { font-size: 13px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
   .pricing-price { font-size: 34px; font-weight: 800; color: var(--dark-text); margin: 10px 0 6px; font-family: 'Plus Jakarta Sans', sans-serif; }
   .pricing-price span { font-size: 14px; font-weight: 500; color: var(--muted); }
   .pricing-price-note { font-size: 12px; color: var(--muted); margin: -4px 0 14px; }
-  .pricing-daily-rate { display: inline-block; background: var(--forest); color: var(--lime); font-size: 13px; font-weight: 800; padding: 5px 12px; border-radius: 100px; margin: 0 0 6px; }
+  .pricing-daily-rate { display: inline-block; background: var(--forest); color: #FFFFFF; font-size: 13px; font-weight: 800; padding: 5px 12px; border-radius: 100px; margin: 0 0 6px; }
   .pricing-daily-note { font-size: 11.5px; color: var(--muted); font-style: italic; margin: 0 0 14px; }
   .pricing-tagline { font-size: 13px; color: var(--muted); margin-bottom: 22px; min-height: 34px; }
   .pricing-features { list-style: none; padding: 0; margin: 0 0 28px; flex: 1; }
@@ -1139,20 +1148,20 @@ const css = `
   .pricing-features li .check { color: var(--forest); font-weight: 700; flex-shrink: 0; }
   .pricing-cta { width: 100%; text-align: center; }
   .pricing-foot-note { text-align: center; font-size: 13px; color: var(--muted); margin-top: 32px; max-width: 620px; margin-left: auto; margin-right: auto; }
-  .vai-media-banner { position: relative; overflow: hidden; max-width: 780px; margin: 56px auto 0; text-align: center; background: linear-gradient(160deg, var(--forest) 0%, #1E1450 100%); border: 1px solid rgba(242,183,5,0.25); border-radius: 24px; padding: 52px 40px; box-shadow: 0 24px 60px rgba(76,61,196,0.28); }
-  .vai-media-banner::before { content: ""; position: absolute; top: -60px; right: -60px; width: 220px; height: 220px; background: radial-gradient(circle, rgba(242,183,5,0.18) 0%, rgba(242,183,5,0) 70%); pointer-events: none; }
-  .vai-media-eyebrow { display: inline-flex; align-items: center; gap: 6px; background: rgba(242,183,5,0.12); color: var(--lime); font-size: 11px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; padding: 7px 16px; border-radius: 100px; margin-bottom: 18px; border: 1px solid rgba(242,183,5,0.3); }
+  .vai-media-banner { position: relative; overflow: hidden; max-width: 780px; margin: 56px auto 0; text-align: center; background: var(--navy); border: 1px solid rgba(76,61,196,0.25); border-radius: 24px; padding: 52px 40px; box-shadow: 0 24px 60px rgba(76,61,196,0.28); }
+  .vai-media-banner::before { content: ""; position: absolute; top: -60px; right: -60px; width: 220px; height: 220px; background: radial-gradient(circle, rgba(76,61,196,0.18) 0%, rgba(76,61,196,0) 70%); pointer-events: none; }
+  .vai-media-eyebrow { display: inline-flex; align-items: center; gap: 6px; background: rgba(76,61,196,0.12); color: var(--lime); font-size: 11px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; padding: 7px 16px; border-radius: 100px; margin-bottom: 18px; border: 1px solid rgba(76,61,196,0.3); }
   .vai-media-title { color: #FFFFFF; font-size: 27px; font-weight: 800; margin: 0 0 14px; letter-spacing: -0.01em; position: relative; }
   .vai-media-copy { color: rgba(245,239,224,0.78); font-size: 15.5px; line-height: 1.6; max-width: 520px; margin: 0 auto 30px; position: relative; }
   .vai-media-tiers { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; max-width: 600px; margin: 0 auto 32px; position: relative; }
-  .vai-media-tier { background: rgba(255,255,255,0.05); border: 1px solid rgba(242,183,5,0.18); border-radius: 14px; padding: 18px 18px 16px; text-align: left; }
+  .vai-media-tier { background: rgba(255,255,255,0.05); border: 1px solid rgba(76,61,196,0.18); border-radius: 14px; padding: 18px 18px 16px; text-align: left; }
   .vai-media-tier-name { color: #FFFFFF; font-size: 14px; font-weight: 800; margin-bottom: 6px; }
   .vai-media-tier-desc { color: rgba(245,239,224,0.65); font-size: 12.5px; line-height: 1.5; margin-bottom: 12px; min-height: 38px; }
   .vai-media-tier-price { color: var(--lime); font-size: 15px; font-weight: 800; }
   @media (max-width: 560px) {
     .vai-media-tiers { grid-template-columns: 1fr; }
   }
-  .vai-media-btn { display: inline-block; background: var(--lime); color: var(--forest); font-weight: 800; font-size: 15px; padding: 15px 34px; border-radius: 14px; text-decoration: none; box-shadow: 0 10px 26px rgba(242,183,5,0.25); position: relative; }
+  .vai-media-btn { display: inline-block; background: var(--accent-soft); color: var(--forest); font-weight: 800; font-size: 15px; padding: 15px 34px; border-radius: 14px; text-decoration: none; box-shadow: 0 10px 26px rgba(76,61,196,0.25); position: relative; }
   .vai-media-alt { margin: 14px 0 0; font-size: 12.5px; position: relative; }
   .vai-media-alt a { color: rgba(245,239,224,0.65); text-decoration: underline; }
   /* VS SECTION — "what changes once you switch," an honest before/after
@@ -1218,7 +1227,7 @@ const css = `
      held lives in the top header's avatar dropdown instead (Nav component,
      PORTAL_TOOLS_BY_VIEW). */
   .portal-layout { display: block; min-height: calc(100vh - 64px); width: 100%; }
-  .avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--lime); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; color: var(--forest); flex-shrink: 0; }
+  .avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--accent-soft); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; color: var(--forest); flex-shrink: 0; }
 
   /* PROVIDER PORTAL — TOP NAV (replaces the persistent left sidebar with a
      single top bar: logo, daily-use links, and an avatar dropdown holding
@@ -1227,7 +1236,7 @@ const css = `
   .provider-shell { min-height: 100vh; background: #F1EEFB; }
   .provider-topbar { position: sticky; top: 0; z-index: 150; height: 64px; background: var(--forest); display: flex; align-items: center; gap: 24px; padding: 0 24px; }
   .provider-topbar-left { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
-  .provider-status-pill { font-size: 10px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--lime); background: rgba(242,183,5,0.12); padding: 4px 9px; border-radius: 100px; white-space: nowrap; }
+  .provider-status-pill { font-size: 10px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--lime); background: rgba(76,61,196,0.12); padding: 4px 9px; border-radius: 100px; white-space: nowrap; }
   .provider-status-pill.pending { color: rgba(255,255,255,0.6); background: rgba(255,255,255,0.08); }
   .provider-topnav-links { display: flex; align-items: center; gap: 4px; flex: 1; }
   .provider-nav-link { background: none; border: none; color: rgba(255,255,255,0.65); font-family: 'Plus Jakarta Sans', sans-serif; font-size: 14px; font-weight: 600; padding: 21px 14px; cursor: pointer; border-bottom: 2px solid transparent; transition: color .2s, border-color .2s; }
@@ -1246,7 +1255,7 @@ const css = `
   /* The 3 top-nav links already show which tab is open (.provider-nav-link.active);
      the other 10 tabs live in this dropdown and had no equivalent, so opening it
      while on e.g. Billing looked identical to opening it from anywhere else. */
-  .provider-account-dropdown button.nav-dropdown-item.active { color: var(--forest); background: var(--lime); font-weight: 700; }
+  .provider-account-dropdown button.nav-dropdown-item.active { color: var(--forest); background: var(--accent-soft); font-weight: 700; }
   .provider-mobile-nav { display: none; }
 
   /* PORTAL CONTENT */
@@ -1312,7 +1321,7 @@ const css = `
   .testimonial .stars { color: #F2B705; font-size: 13px; letter-spacing: 1px; }
   .testimonial blockquote { margin: 6px 0 6px; font-size: 14px; line-height: 1.55; color: var(--dark-text); }
   .testimonial figcaption { font-size: 12px; color: var(--muted); font-weight: 600; }
-  .review-card-featured { border-color: rgba(242,183,5,0.6) !important; }
+  .review-card-featured { border-color: rgba(76,61,196,0.6) !important; }
   .review-featured-tag { font-size: 11px; font-weight: 700; color: #92400E; margin-bottom: 4px; }
   .pin-review-btn { margin-top: 8px; background: transparent; border: 1px solid var(--border); border-radius: 100px; padding: 6px 12px; font-size: 12px; font-weight: 600; cursor: pointer; color: var(--dark-text); font-family: inherit; }
   .pin-review-btn.pinned { background: #FEF3C7; border-color: #F2B705; color: #92400E; }
@@ -1359,8 +1368,8 @@ const css = `
   .agree-view-sig img { display: block; max-width: 100%; width: 300px; height: auto; margin: 6px 0; background: white; border-radius: 6px; }
   .agree-sign-page { min-height: 100vh; background: #F4F2EE; padding: 0 16px 40px; font-family: 'Plus Jakarta Sans', -apple-system, sans-serif; }
   .agree-sign-top { max-width: 640px; margin: 0 auto; padding: 22px 4px 16px; }
-  .agree-sign-logo { font-size: 22px; font-weight: 800; color: #4C3DC4; letter-spacing: -0.5px; }
-  .agree-sign-logo span { color: #F2B705; }
+  .agree-sign-logo { font-size: 22px; font-weight: 800; color: #16181D; letter-spacing: -0.5px; }
+  .agree-sign-logo span { color: #4C3DC4; }
   .agree-sign-card { max-width: 640px; margin: 0 auto; background: white; border-radius: 20px; padding: 26px 22px; box-shadow: 0 10px 30px rgba(23,20,31,0.06); }
   .agree-sign-from { font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #6B6578; }
   .agree-sign-title { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 24px; font-weight: 800; color: #17141F; margin: 6px 0 16px; line-height: 1.2; }
@@ -1443,13 +1452,13 @@ const css = `
   /* VAI MEDIA — dashboard promo card (Availability tab). Small and
      dark against the light dashboard cards around it so it reads as a
      premium aside, not another form to fill in. */
-  .vai-media-promo { margin-top: 24px; background: linear-gradient(160deg, var(--forest) 0%, #1E1450 100%); border: 1px solid rgba(242,183,5,0.22); border-radius: 16px; padding: 22px 26px; display: flex; align-items: center; justify-content: space-between; gap: 18px; flex-wrap: wrap; }
+  .vai-media-promo { margin-top: 24px; background: var(--navy); border: 1px solid rgba(76,61,196,0.22); border-radius: 16px; padding: 22px 26px; display: flex; align-items: center; justify-content: space-between; gap: 18px; flex-wrap: wrap; }
   .vai-media-promo-text strong { display: block; font-size: 14.5px; font-weight: 800; color: #FFFFFF; margin-bottom: 4px; }
   .vai-media-promo-text span { font-size: 12.5px; color: rgba(245,239,224,0.7); line-height: 1.5; }
-  .vai-media-promo-btn { flex-shrink: 0; background: var(--lime); color: var(--forest); font-weight: 800; font-size: 13px; padding: 11px 20px; border-radius: 10px; text-decoration: none; white-space: nowrap; }
+  .vai-media-promo-btn { flex-shrink: 0; background: var(--accent-soft); color: var(--forest); font-weight: 800; font-size: 13px; padding: 11px 20px; border-radius: 10px; text-decoration: none; white-space: nowrap; }
 
   /* DOPAMINE CARD — dashboard financial snapshot */
-  .dopamine-card { display: flex; align-items: center; background: linear-gradient(160deg, var(--forest) 0%, #1E1450 100%); border-radius: 20px; padding: 26px 24px; margin-bottom: 20px; box-shadow: 0 16px 40px rgba(76,61,196,0.22); }
+  .dopamine-card { display: flex; align-items: center; background: var(--navy); border-radius: 20px; padding: 26px 24px; margin-bottom: 20px; box-shadow: 0 16px 40px rgba(76,61,196,0.22); }
   .dopamine-metric { flex: 1; min-width: 0; }
   .dopamine-label { font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: rgba(245,239,224,0.6); margin-bottom: 6px; }
   .dopamine-value { font-size: 32px; font-weight: 800; color: var(--lime); font-family: 'Plus Jakarta Sans', sans-serif; letter-spacing: -0.02em; white-space: nowrap; }
@@ -1473,13 +1482,13 @@ const css = `
   .next-chair-whatsapp { flex-shrink: 0; width: 46px; height: 46px; border-radius: 50%; background: #25D366; display: flex; align-items: center; justify-content: center; font-size: 21px; text-decoration: none; box-shadow: 0 6px 16px rgba(37,211,102,0.35); }
 
   /* YOUR SHOPFRONT — chairside link/QR card */
-  .shopfront-card { background: linear-gradient(160deg, var(--forest) 0%, #1E1450 100%); border: 1px solid rgba(242,183,5,0.2); border-radius: 16px; padding: 20px 22px; margin-bottom: 20px; }
+  .shopfront-card { background: var(--navy); border: 1px solid rgba(76,61,196,0.2); border-radius: 16px; padding: 20px 22px; margin-bottom: 20px; }
   .shopfront-label { font-size: 11px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--lime); margin-bottom: 8px; }
   .shopfront-url { font-size: 12.5px; color: rgba(245,239,224,0.75); word-break: break-all; margin-bottom: 16px; }
   .shopfront-actions { display: flex; gap: 10px; flex-wrap: wrap; }
   .shopfront-btn { flex: 1; min-width: 130px; padding: 12px 0; border-radius: 10px; font-weight: 800; font-size: 13.5px; cursor: pointer; border: none; text-align: center; }
   .shopfront-btn-outline { background: transparent; color: #FFFFFF; border: 1.5px solid rgba(255,255,255,0.3); }
-  .shopfront-btn-lime { background: var(--lime); color: var(--forest); }
+  .shopfront-btn-lime { background: var(--accent-soft); color: var(--forest); }
 
   /* REBOOKING RADAR — bottom-of-dashboard retention strip */
   .rebook-radar { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; background: var(--sand); border-radius: 14px; padding: 16px 20px; margin-top: 20px; }
@@ -1487,7 +1496,7 @@ const css = `
   .rebook-radar-btn { flex-shrink: 0; background: var(--forest); color: #FFFFFF; font-weight: 700; font-size: 13px; padding: 10px 18px; border-radius: 10px; border: none; cursor: pointer; }
 
   /* FULL-SCREEN QR MODAL */
-  .qr-modal-overlay { position: fixed; inset: 0; background: rgba(23,15,56,0.94); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 24px; }
+  .qr-modal-overlay { position: fixed; inset: 0; background: rgba(11,24,37,0.94); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 24px; }
   .qr-modal-close { position: absolute; top: 20px; right: 20px; background: rgba(255,255,255,0.1); color: #fff; border: none; width: 40px; height: 40px; border-radius: 50%; font-size: 18px; cursor: pointer; }
   .qr-modal-panel { background: #fff; border-radius: 20px; padding: 28px; text-align: center; max-width: 360px; width: 100%; }
   .qr-modal-img { width: 100%; max-width: 300px; height: auto; border-radius: 12px; }
@@ -1507,7 +1516,7 @@ const css = `
   .ppm-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
 
   /* ELITE WELCOME — "you're live" banner + launch graphic modal */
-  .launch-banner { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; background: linear-gradient(160deg, var(--forest) 0%, #1E1450 100%); border: 1px solid rgba(242,183,5,0.3); border-radius: 16px; padding: 18px 22px; margin-bottom: 20px; }
+  .launch-banner { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; background: var(--navy); border: 1px solid rgba(76,61,196,0.3); border-radius: 16px; padding: 18px 22px; margin-bottom: 20px; }
   .launch-banner-title { font-size: 15px; font-weight: 800; color: #FFFFFF; }
   .launch-banner-sub { font-size: 12.5px; color: rgba(245,239,224,0.7); margin-top: 3px; }
   /* FIX: this banner is a fixed dark-green gradient in every theme (it
@@ -1575,14 +1584,14 @@ const css = `
   .cx-section-heading { font-size: 13px; font-weight: 800; letter-spacing: .04em; color: var(--forest); margin-bottom: 14px; }
   .cx-rebook { margin-bottom: 28px; }
   .cx-rebook-list { display: flex; flex-direction: column; gap: 10px; }
-  .cx-rebook-row { display: flex; align-items: center; gap: 14px; background: #1C1438; border-radius: 16px; padding: 10px 12px 10px 10px; cursor: pointer; transition: transform .12s, box-shadow .2s; }
+  .cx-rebook-row { display: flex; align-items: center; gap: 14px; background: #152E59; border-radius: 16px; padding: 10px 12px 10px 10px; cursor: pointer; transition: transform .12s, box-shadow .2s; }
   .cx-rebook-row:hover { transform: translateY(-2px); box-shadow: 0 12px 26px rgba(76,61,196,0.22); }
-  .cx-rebook-thumb { flex-shrink: 0; width: 54px; height: 54px; border-radius: 12px; background: linear-gradient(160deg, #8C7AF0 0%, #1C1438 100%); display: flex; align-items: center; justify-content: center; font-size: 24px; }
+  .cx-rebook-thumb { flex-shrink: 0; width: 54px; height: 54px; border-radius: 12px; background: var(--accent-soft); display: flex; align-items: center; justify-content: center; font-size: 24px; }
   .cx-rebook-info { flex: 1; min-width: 0; }
   .cx-rebook-name { font-size: 14.5px; font-weight: 700; color: #FFFFFF; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .cx-rebook-type { font-size: 12px; color: rgba(245,239,224,0.55); margin-top: 2px; }
-  .cx-rebook-btn { flex-shrink: 0; background: var(--lime); color: var(--forest); font-weight: 800; font-size: 13px; padding: 10px 18px; border-radius: 100px; border: none; cursor: pointer; box-shadow: 0 0 0 rgba(242,183,5,0.5); transition: box-shadow .2s; }
-  .cx-rebook-btn:hover { box-shadow: 0 0 18px rgba(242,183,5,0.5); }
+  .cx-rebook-btn { flex-shrink: 0; background: var(--accent-soft); color: var(--forest); font-weight: 800; font-size: 13px; padding: 10px 18px; border-radius: 100px; border: none; cursor: pointer; box-shadow: 0 0 0 rgba(76,61,196,0.5); transition: box-shadow .2s; }
+  .cx-rebook-btn:hover { box-shadow: 0 0 18px rgba(76,61,196,0.5); }
 
   /* SLEEK DISCOVERY — was dark glass-on-dark (a near-black fill behind a
      near-black page), matching the old VIP Pass card's nightclub-flyer
@@ -1607,9 +1616,9 @@ const css = `
   .cx-dropzone-loading { font-size: 12.5px; color: rgba(76,61,196,0.55); }
   .cx-dropzone-row { display: flex; gap: 12px; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; padding-bottom: 2px; }
   .cx-dropzone-row::-webkit-scrollbar { display: none; }
-  .cx-drop-card { flex: 0 0 132px; scroll-snap-align: start; background: #1C1438; border-radius: 16px; padding: 14px 12px; display: flex; flex-direction: column; align-items: center; text-align: center; transition: transform .15s, box-shadow .2s; }
+  .cx-drop-card { flex: 0 0 132px; scroll-snap-align: start; background: #152E59; border-radius: 16px; padding: 14px 12px; display: flex; flex-direction: column; align-items: center; text-align: center; transition: transform .15s, box-shadow .2s; }
   .cx-drop-card:hover { transform: translateY(-3px); box-shadow: 0 14px 30px rgba(76,61,196,0.25); }
-  .cx-drop-avatar { width: 48px; height: 48px; border-radius: 50%; background: linear-gradient(160deg, #8C7AF0 0%, #1C1438 100%); display: flex; align-items: center; justify-content: center; font-size: 20px; margin-bottom: 10px; flex-shrink: 0; }
+  .cx-drop-avatar { width: 48px; height: 48px; border-radius: 50%; background: var(--accent-soft); display: flex; align-items: center; justify-content: center; font-size: 20px; margin-bottom: 10px; flex-shrink: 0; }
   .cx-drop-shop { font-size: 12.5px; font-weight: 700; color: #FFFFFF; line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
   .cx-drop-time { font-size: 11px; font-weight: 700; color: var(--lime); margin-top: 4px; margin-bottom: 10px; }
   .cx-drop-claim { width: 100%; background: var(--accent-neon); color: var(--accent-neon-text); font-weight: 800; font-size: 12.5px; padding: 9px 0; border-radius: 100px; border: none; cursor: pointer; box-shadow: 0 0 0 rgba(76,61,196,0.5); transition: box-shadow .2s; }
@@ -1622,11 +1631,11 @@ const css = `
      visible by default everywhere else (touch has no hover). */
   .cx-lookbook { margin-top: 8px; }
   .cx-lookbook-grid { column-count: 2; column-gap: 12px; }
-  .cx-lookbook-item { position: relative; break-inside: avoid; margin-bottom: 12px; border-radius: 16px; overflow: hidden; cursor: pointer; background: #1C1438; }
+  .cx-lookbook-item { position: relative; break-inside: avoid; margin-bottom: 12px; border-radius: 16px; overflow: hidden; cursor: pointer; background: #152E59; }
   .cx-lookbook-item img { display: block; width: 100%; height: auto; }
-  .cx-lookbook-overlay { position: absolute; left: 0; right: 0; bottom: 0; padding: 28px 12px 12px; background: linear-gradient(180deg, rgba(23,15,56,0) 0%, rgba(23,15,56,0.88) 100%); display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
+  .cx-lookbook-overlay { position: absolute; left: 0; right: 0; bottom: 0; padding: 28px 12px 12px; background: linear-gradient(180deg, rgba(11,24,37,0) 0%, rgba(11,24,37,0.88) 100%); display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
   .cx-lookbook-name { font-size: 12.5px; font-weight: 700; color: #FFFFFF; text-shadow: 0 1px 4px rgba(0,0,0,0.4); }
-  .cx-lookbook-book { background: var(--lime); color: var(--forest); font-weight: 800; font-size: 11.5px; padding: 7px 14px; border-radius: 100px; border: none; cursor: pointer; }
+  .cx-lookbook-book { background: var(--accent-soft); color: var(--forest); font-weight: 800; font-size: 11.5px; padding: 7px 14px; border-radius: 100px; border: none; cursor: pointer; }
   @media (hover: hover) {
     .cx-lookbook-book { opacity: 0; transform: translateY(4px); transition: opacity .18s, transform .18s; }
     .cx-lookbook-item:hover .cx-lookbook-book { opacity: 1; transform: translateY(0); }
@@ -1672,7 +1681,7 @@ const css = `
     --cxp-text-dim: rgba(245,239,224,0.55);
     --cxp-text-dim-2: rgba(245,239,224,0.75);
     --cxp-text-dim-3: rgba(245,239,224,0.35);
-    --cxp-card-bg: #1C1438;
+    --cxp-card-bg: #152E59;
     --cxp-card-shadow: 0 10px 26px rgba(0,0,0,0.22);
     --cxp-hairline: rgba(255,255,255,0.08);
     --cxp-tint-1: rgba(255,255,255,0.05);
@@ -1684,11 +1693,11 @@ const css = `
     --cxp-disabled-bg: rgba(255,255,255,0.03);
     --cxp-disabled-text: rgba(245,239,224,0.4);
     --cxp-star-off: rgba(255,255,255,0.18);
-    --sand: #1C1438;
+    --sand: #152E59;
     --dark-text: #F3F1FC;
     --muted: rgba(245,239,224,0.55);
     --border: rgba(255,255,255,0.12);
-    background: #170F38;
+    background: #0B1825;
   }
 
   /* Light Mode: reverts this whole section back to the ordinary light
@@ -1741,8 +1750,8 @@ const css = `
   .cx-account-page .booking-info .title,
   .cx-account-page .provider-card-body h4 { color: var(--cxp-heading); }
   .cx-account-page .booking-item { border-bottom-color: var(--cxp-hairline); }
-  .cx-account-page .avail-badge { background: rgba(242,183,5,0.15); color: var(--accent-text); }
-  .cx-account-page .cx-plan-badge { background: rgba(242,183,5,0.15); color: var(--accent-text); font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 5px; vertical-align: middle; margin-left: 6px; }
+  .cx-account-page .avail-badge { background: rgba(76,61,196,0.15); color: var(--accent-text); }
+  .cx-account-page .cx-plan-badge { background: rgba(76,61,196,0.15); color: var(--accent-text); font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 5px; vertical-align: middle; margin-left: 6px; }
 
   /* Status pills — semi-transparent tints read fine on both a near-black
      and a near-white card, so these stay constant across themes (same
@@ -1760,7 +1769,7 @@ const css = `
 
   /* Filter tabs (Upcoming / Completed / Cancelled, provider profile tabs) */
   .cx-account-page .tab-row { background: var(--cxp-tint-1); border-color: var(--cxp-tint-3); }
-  .cx-account-page .tab.active { background: var(--lime); color: #1C1438; }
+  .cx-account-page .tab.active { background: var(--accent-soft); color: #152E59; }
 
   /* Inputs, selects, textareas — integrated card look, neon focus ring */
   .cx-account-page .input-group label { color: var(--cxp-text-dim-2); }
@@ -1777,7 +1786,7 @@ const css = `
   .cx-account-page .input-group select:focus,
   .cx-account-page .input-group textarea:focus {
     border-color: var(--lime);
-    box-shadow: 0 0 0 3px rgba(242,183,5,0.15);
+    box-shadow: 0 0 0 3px rgba(76,61,196,0.15);
   }
   .cx-account-page .input-group input:disabled { background: var(--cxp-disabled-bg); color: var(--cxp-disabled-text); }
   .cx-account-page select option { background: var(--cxp-card-bg); color: var(--cxp-heading); }
@@ -1830,13 +1839,13 @@ const css = `
      scope than this pass. */
   :root[data-theme="dark"] .provider-shell,
   :root[data-theme="dark"] .portal-content {
-    --sand: #1C1438;
+    --sand: #152E59;
     --dark-text: #F3F1FC;
     --muted: rgba(245,239,224,0.6);
     --border: rgba(255,255,255,0.12);
   }
-  :root[data-theme="dark"] .provider-shell { background: #180F35; }
-  :root[data-theme="dark"] .portal-content { background: #180F35; }
+  :root[data-theme="dark"] .provider-shell { background: #0B1825; }
+  :root[data-theme="dark"] .portal-content { background: #0B1825; }
   :root[data-theme="dark"] .provider-shell .card,
   :root[data-theme="dark"] .provider-shell .card-sm,
   :root[data-theme="dark"] .provider-shell .metric,
@@ -1847,7 +1856,7 @@ const css = `
   :root[data-theme="dark"] .portal-content .metric,
   :root[data-theme="dark"] .portal-content .provider-card,
   :root[data-theme="dark"] .portal-content .carousel-card {
-    background: #1C1438;
+    background: #152E59;
     border: none;
     box-shadow: 0 10px 26px rgba(0,0,0,0.22);
   }
@@ -1890,7 +1899,7 @@ const css = `
   :root[data-theme="dark"] .provider-shell .sheet-panel,
   :root[data-theme="dark"] .portal-content .sheet-panel,
   :root[data-theme="dark"] .provider-shell .qr-modal-panel {
-    background: #1C1438;
+    background: #152E59;
     border-color: rgba(255,255,255,0.12);
     box-shadow: 0 16px 40px rgba(0,0,0,0.35);
   }
@@ -1900,7 +1909,7 @@ const css = `
   :root[data-theme="dark"] .portal-content .input-group input,
   :root[data-theme="dark"] .portal-content .input-group select,
   :root[data-theme="dark"] .portal-content .input-group textarea {
-    background: #1C1438;
+    background: #152E59;
     border-color: rgba(255,255,255,0.12);
   }
 
@@ -1964,7 +1973,7 @@ const css = `
      just the Trending Local row) — a plain lime pill, so it already reads
      correctly on both the light carousel cards elsewhere and the dark
      ones on the home page without needing its own scoped variant. */
-  .carousel-cta { margin-top: 10px; width: 100%; background: var(--lime); color: var(--forest); font-weight: 800; font-size: 12.5px; padding: 9px 0; border-radius: 100px; border: none; cursor: pointer; }
+  .carousel-cta { margin-top: 10px; width: 100%; background: var(--accent-soft); color: var(--forest); font-weight: 800; font-size: 12.5px; padding: 9px 0; border-radius: 100px; border: none; cursor: pointer; }
   .carousel-arrow { position: absolute; top: 50%; right: -14px; transform: translateY(-50%); width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--border); background: var(--near-white); box-shadow: 0 2px 10px rgba(0,0,0,0.12); cursor: pointer; font-size: 15px; color: var(--forest); display: flex; align-items: center; justify-content: center; }
 
   /* PROVIDER PROFILE MODAL (Services / Portfolio / Reviews / About) — a
@@ -2003,7 +2012,7 @@ const css = `
   .email-auth-code-input { width: 42px; height: 52px; text-align: center; font-size: 20px; font-weight: 700; border-radius: 10px; border: 1px solid var(--border, #ddd); }
   .email-auth-code-input:focus { outline: none; border-color: var(--forest); box-shadow: 0 0 0 2px rgba(76,61,196,0.15); }
   .email-auth-error { font-size: 12px; color: #B91C1C; text-align: center; margin: 8px 0 0; }
-  .email-auth-btn { width: 100%; margin-top: 20px; padding: 14px 0; font-size: 14px; border-radius: 12px; background: var(--forest); color: var(--lime); font-weight: 700; border: none; cursor: pointer; }
+  .email-auth-btn { width: 100%; margin-top: 20px; padding: 14px 0; font-size: 14px; border-radius: 12px; background: var(--forest); color: #FFFFFF; font-weight: 700; border: none; cursor: pointer; }
   .email-auth-btn:disabled { opacity: 0.6; cursor: not-allowed; }
   .email-auth-resend { width: 100%; margin-top: 10px; padding: 8px 0; font-size: 12px; font-weight: 600; color: var(--forest); background: none; border: none; cursor: pointer; }
   .email-auth-resend:disabled { color: var(--muted); cursor: not-allowed; }
@@ -2089,7 +2098,7 @@ const css = `
   .btn-sm { padding: 8px 16px; font-size: 13px; font-weight: 600; border-radius: var(--radius-sm); cursor: pointer; border: none; transition: opacity .2s; }
   .btn-sm:hover { opacity: .85; }
   .btn-sm.forest { background: var(--forest); color: var(--near-white); }
-  .btn-sm.lime { background: var(--lime); color: var(--forest); }
+  .btn-sm.lime { background: var(--accent-soft); color: var(--forest); }
   .btn-sm.ghost { background: transparent; border: 1px solid var(--border); color: var(--dark-text); }
 
   /* MULTI-SERVICE CHECKOUT (tappable service cards + sticky total bar) */
@@ -2122,7 +2131,7 @@ const css = `
   .multi-fab { position: sticky; bottom: 8px; background: var(--near-white); color: var(--dark-text); border: 1.5px solid var(--border); border-radius: 16px; padding: 14px 18px; display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 14px; box-shadow: 0 8px 24px rgba(23,20,31,0.14); z-index: 5; }
   .multi-fab .totals { font-size: 12px; line-height: 1.4; color: var(--muted); }
   .multi-fab .totals strong { color: var(--dark-text); font-size: 17px; display: block; }
-  .multi-fab button { background: var(--lime); color: var(--forest); border: none; padding: 13px 18px; border-radius: 10px; font-weight: 800; font-size: 14px; cursor: pointer; white-space: nowrap; }
+  .multi-fab button { background: var(--accent-soft); color: var(--forest); border: none; padding: 13px 18px; border-radius: 10px; font-weight: 800; font-size: 14px; cursor: pointer; white-space: nowrap; }
 
   /* BOTTOM SHEET (mobile-first — replaces a modal for quick provider actions) */
   .sheet-overlay { position: fixed; inset: 0; background: rgba(76,61,196,0.55); display: flex; align-items: flex-end; justify-content: center; z-index: 300; }
@@ -2134,7 +2143,7 @@ const css = `
   .preset-btn.active { border-color: var(--lime); background: var(--forest); color: var(--near-white); }
 
   /* PANIC BUTTON */
-  .panic-btn { width: 100%; background: var(--lime); color: var(--forest); border: none; border-radius: 16px; padding: 22px 16px; font-size: 19px; font-weight: 800; cursor: pointer; box-shadow: 0 6px 0 var(--forest-light); letter-spacing: -0.01em; transition: transform .08s, box-shadow .08s; }
+  .panic-btn { width: 100%; background: var(--accent-soft); color: var(--forest); border: none; border-radius: 16px; padding: 22px 16px; font-size: 19px; font-weight: 800; cursor: pointer; box-shadow: 0 6px 0 var(--forest-light); letter-spacing: -0.01em; transition: transform .08s, box-shadow .08s; }
   .panic-btn:active { transform: translateY(4px); box-shadow: 0 2px 0 var(--forest-light); }
   .panic-btn:disabled { opacity: .55; cursor: not-allowed; box-shadow: none; }
   /* Secondary quick action — same touch target size as .panic-btn so it
@@ -2152,8 +2161,8 @@ const css = `
   .cal-day { text-align: center; padding: 8px 4px; border-radius: 6px; font-size: 13px; cursor: pointer; position: relative; }
   .cal-day:hover { background: var(--sand); }
   .cal-day.today { background: var(--forest); color: white; font-weight: 600; }
-  .cal-day.has-booking::after { content: ''; position: absolute; bottom: 3px; left: 50%; transform: translateX(-50%); width: 4px; height: 4px; background: var(--lime); border-radius: 50%; }
-  .cal-day.today.has-booking::after { background: var(--lime); }
+  .cal-day.has-booking::after { content: ''; position: absolute; bottom: 3px; left: 50%; transform: translateX(-50%); width: 4px; height: 4px; background: var(--accent-soft); border-radius: 50%; }
+  .cal-day.today.has-booking::after { background: var(--accent-soft); }
   .cal-day.empty { cursor: default; }
 
   @media (max-width: 768px) {
@@ -2223,7 +2232,7 @@ const css = `
     .provider-hamburger { display: flex; align-items: center; justify-content: center; }
     .provider-mobile-nav { display: flex; flex-direction: column; position: absolute; top: 64px; left: 0; right: 0; background: var(--forest); border-top: 1px solid rgba(255,255,255,0.1); box-shadow: 0 16px 30px rgba(0,0,0,0.25); z-index: 149; padding: 8px; }
     .provider-mobile-nav-item { background: none; border: none; color: rgba(255,255,255,0.75); font-family: 'Plus Jakarta Sans', sans-serif; font-size: 15px; font-weight: 600; text-align: left; padding: 13px 12px; border-radius: 8px; cursor: pointer; }
-    .provider-mobile-nav-item.active { color: var(--lime); background: rgba(242,183,5,0.1); }
+    .provider-mobile-nav-item.active { color: var(--lime); background: rgba(76,61,196,0.1); }
     .grid-2 { grid-template-columns: 1fr; }
     .grid-3 { grid-template-columns: 1fr; }
     .metric-grid { grid-template-columns: 1fr 1fr; }
@@ -2375,7 +2384,7 @@ const css = `
   .a2hs-banner-text { flex: 1; min-width: 0; }
   .a2hs-banner-title { font-size: 13px; font-weight: 700; line-height: 1.3; }
   .a2hs-banner-sub { font-size: 12px; color: rgba(255,255,255,0.65); margin-top: 2px; }
-  .a2hs-banner-cta { background: var(--lime); color: var(--forest); border: none; border-radius: 100px; padding: 8px 14px; font-size: 13px; font-weight: 700; cursor: pointer; flex-shrink: 0; white-space: nowrap; }
+  .a2hs-banner-cta { background: var(--accent-soft); color: var(--forest); border: none; border-radius: 100px; padding: 8px 14px; font-size: 13px; font-weight: 700; cursor: pointer; flex-shrink: 0; white-space: nowrap; }
   .a2hs-banner-close { background: none; border: none; color: rgba(255,255,255,0.5); font-size: 14px; cursor: pointer; padding: 4px; flex-shrink: 0; }
   .a2hs-banner-close:hover { color: white; }
 
@@ -2465,6 +2474,125 @@ const css = `
   .search-glass:focus-within { border-color: var(--forest) !important; }
   .search-glass input, .search-glass select { color: var(--text-primary) !important; }
   .search-glass input::placeholder { color: var(--text-tertiary) !important; }
+
+  /* ═══════════════════════════════════════════════════════════════════
+     VAI BUY-STYLE REFRESH (2026-10-25)
+     Same layout and features — calmer surfaces. Page #FAF8F5, white
+     cards with soft borders, near-black headings and numbers, navy for
+     the few dark bands, indigo only for actions, links and active states.
+     Kept as one block at the end so it is easy to tune or remove.
+     ═══════════════════════════════════════════════════════════════════ */
+  body, .provider-shell, .portal-content { background: var(--page); }
+
+  /* Top nav: white bar like Vai Buy's header, navy strip underneath. */
+  .nav-outer, .nav-outer.nav-outer--light { background: #FFFFFF; border-bottom: 1px solid var(--border); box-shadow: none; }
+  .nav-outer .nav-logo, .nav-logo { color: var(--dark-text) !important; }
+  .nav-logo span { color: var(--forest) !important; }
+  .nav-login-link, .nav-link-inline { color: var(--dark-text); }
+  .nav-login-link:hover, .nav-link-inline:hover { color: var(--forest); }
+  .nav-menu-btn, .nav-business-btn, .btn-ghost { border-color: var(--border); color: var(--dark-text); background: #FFFFFF; }
+  .nav-menu-btn:hover, .nav-business-btn:hover, .btn-ghost:hover { border-color: var(--forest); color: var(--forest); }
+  .theme-toggle, .lang-toggle { border-color: var(--border); color: var(--dark-text); }
+  .theme-toggle:hover, .lang-toggle:hover { border-color: var(--forest); color: var(--forest); background: var(--accent-soft); }
+  .nav-avatar-btn { border-color: var(--border); }
+  .nav-search-toggle { border-color: var(--border); color: var(--dark-text); }
+  .nav-strip { background: var(--navy); border-top: none; }
+  .nav-strip-link { color: rgba(255,255,255,0.86); }
+  .nav-strip-link:hover, .nav-strip-cta { color: #FFFFFF; }
+  .nav-strip-district { color: rgba(255,255,255,0.7); }
+
+  /* Provider portal top bar: white, tab underline in indigo. */
+  .provider-topbar { background: #FFFFFF; border-bottom: 1px solid var(--border); }
+  .provider-topbar .nav-logo { color: var(--dark-text) !important; }
+  .provider-status-pill { background: var(--accent-soft); color: var(--forest); }
+  .provider-status-pill.pending { background: var(--sand); color: var(--muted); }
+  .provider-nav-link { color: var(--muted); }
+  .provider-nav-link:hover { color: var(--dark-text); }
+  .provider-nav-link.active { color: var(--forest); border-bottom-color: var(--forest); }
+  .provider-hamburger { border-color: var(--border); color: var(--dark-text); }
+  .provider-account-dropdown button.nav-dropdown-item.active { color: var(--forest); background: var(--accent-soft); }
+  @media (max-width: 900px) {
+    .provider-mobile-nav { background: #FFFFFF !important; border-top: 1px solid var(--border) !important; box-shadow: 0 16px 30px rgba(11,24,37,0.10) !important; }
+    .provider-mobile-nav-item { color: var(--dark-text) !important; }
+    .provider-mobile-nav-item.active { color: var(--forest) !important; background: var(--accent-soft) !important; }
+  }
+
+  /* Headings, numbers and cards: near-black on white, like Vai Buy. */
+  .portal-header h2, .card-title, .section-title, .cx-section-heading, .cx-account-page .portal-header h2 { color: var(--dark-text); }
+  .section-eyebrow { color: var(--forest); }
+  .metric-value, .cx-account-page .metric-value { color: var(--dark-text); }
+  .card, .metric, .provider-card, .setup-card, .settings-hub-list, .card-sm { background: #FFFFFF; border-color: var(--border); box-shadow: none; }
+
+  /* Dashboard money card + shopfront: white cards, no gradients. */
+  .dopamine-card { background: #FFFFFF; border: 1px solid var(--border); box-shadow: none; }
+  .dopamine-label { color: var(--muted); }
+  .dopamine-value { color: var(--dark-text); }
+  .dopamine-value-sm, .dopamine-value-xs { color: var(--dark-text); }
+  .dopamine-pct { color: var(--muted); }
+  .dopamine-divider { background: var(--border); }
+  .dopamine-staff-select { background: #FFFFFF; border-color: var(--border); color: var(--dark-text); }
+  .shopfront-card { background: #FFFFFF; border: 1px solid var(--border); }
+  .shopfront-label { color: var(--forest); }
+  .shopfront-url { color: var(--muted); }
+  .shopfront-btn-outline { color: var(--dark-text); border-color: var(--border); background: #FFFFFF; }
+  .shopfront-btn-lime { background: var(--forest); color: #FFFFFF; }
+  .launch-banner { background: #FFFFFF; border: 1px solid var(--border); }
+  .launch-banner-title { color: var(--dark-text); }
+  .launch-banner-sub { color: var(--muted); }
+  .launch-banner .btn-sm.ghost { color: var(--dark-text); border-color: var(--border); }
+  .launch-banner .btn-sm.ghost:hover { color: var(--forest); border-color: var(--forest); }
+  .rebook-radar { background: #FFFFFF; border: 1px solid var(--border); }
+
+  /* Primary actions: solid indigo, flat (no gold, no 3D shadow). */
+  .btn-primary, .btn-sm.lime, .cx-rebook-btn, .panic-btn { background: var(--forest); color: #FFFFFF; }
+  .panic-btn { box-shadow: none; }
+  .panic-btn:active { box-shadow: none; }
+  .panic-btn-secondary { border-width: 1.5px; border-color: var(--border); color: var(--dark-text); }
+  .panic-btn-secondary:hover { border-color: var(--forest); color: var(--forest); }
+  .agree-sign-btn, .agree-pill.active { background: var(--forest); border-color: var(--forest); }
+  .sheet-overlay { background: rgba(11,24,37,0.45); }
+
+  /* Customer home: light rows instead of dark purple cards. */
+  .cx-rebook-row { background: #FFFFFF; border: 1px solid var(--border); }
+  .cx-rebook-name { color: var(--dark-text); }
+  .cx-rebook-type { color: var(--muted); }
+  .cx-rebook-thumb, .cx-drop-avatar, .tny-card-img { background: var(--accent-soft); }
+  .cx-account-dropdown { background: #FFFFFF; border: 1px solid var(--border); box-shadow: 0 20px 50px rgba(11,24,37,0.12); }
+  .cx-account-dropdown .nav-account-name { color: var(--muted); }
+  .cx-account-dropdown button.nav-dropdown-item, .cx-account-dropdown a, .cx-account-dropdown .notif-title { color: var(--dark-text); }
+  .cx-account-dropdown button.nav-dropdown-item:hover, .cx-account-dropdown a:hover, .cx-account-dropdown .notif-item:hover { background: var(--sand); }
+  .cx-account-dropdown hr, .cx-account-dropdown .notif-inline-list, .cx-account-dropdown .notif-dropdown-header, .cx-account-dropdown .notif-item { border-color: var(--border); }
+  .cx-account-dropdown .notif-body, .cx-account-dropdown .notif-time, .cx-account-dropdown .notif-empty { color: var(--muted); }
+  .cx-account-dropdown .notif-item.unread { background: var(--accent-soft); }
+
+  /* Dark bands that stay dark (footer, marketing heroes, login panel)
+     use Vai Buy's navy/ink instead of purple. Indigo text placed on them
+     is lifted to a light tint so it stays readable. */
+  .footer { background: var(--ink); }
+  .auth-choice-panel, .for-business-cta, .hero { background: var(--navy); }
+  .footer [style*="var(--lime)"], .footer [style*="var(--forest)"],
+  .auth-choice-panel [style*="var(--lime)"], .auth-choice-panel-logo span,
+  .for-business-cta [style*="var(--lime)"], .hero-eyebrow, .hero-title em,
+  .cx-drop-time, [style*="background: var(--forest)"] [style*="color: var(--lime)"] { color: #B9B2FF !important; }
+
+  /* Footer logo sits on the dark band. */
+  .footer .nav-logo { color: #FFFFFF !important; }
+  .footer .nav-logo span { color: #B9B2FF !important; }
+  /* Calls to action that used the gold "lime" button: solid indigo. */
+  .btn-lime, .nav-signup-btn, .provider-hero-cta { background: var(--forest) !important; color: #FFFFFF !important; box-shadow: none; }
+  /* Photo fades: navy, not purple. */
+  .tny-card-img-overlay { background: linear-gradient(180deg, rgba(11,24,37,0) 0%, rgba(11,24,37,0.55) 100%); }
+  .cx-lookbook-overlay { background: linear-gradient(180deg, rgba(11,24,37,0) 0%, rgba(11,24,37,0.75) 100%); }
+  /* Big numbers in black, like Vai Buy. */
+  .metric .metric-value { color: var(--dark-text) !important; }
+  /* Pop-up backdrops: soft navy instead of indigo. */
+  .modal-overlay, .sheet-overlay { background: rgba(11,24,37,0.45); }
+  /* Headings in near-black (Vai Buy style); indigo stays for actions. */
+  .auth-choice-body h1, .step-card h3, .profile-name-row h2, .profile-sidebar-card h3, .provider-card h4 { color: var(--dark-text); }
+  [style*="color: var(--forest)"][style*="font-weight: 700"]:not([style*="background"]):not(a):not(button) { color: var(--dark-text) !important; }
+  /* Small chips that used gold: soft indigo tint. */
+  .service-badge.open, .provider-status-pill { background: var(--accent-soft); }
+
 `;
 
 // ── BRAND MARK ─────────────────────────────────────────────────
@@ -5581,7 +5709,7 @@ function SiteOffline({ message, onSignIn }) {
       <div style={{ minHeight: "100vh", background: "var(--sand)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
         <div style={{ maxWidth: 440, width: "100%", background: "white", borderRadius: "var(--radius)", overflow: "hidden", boxShadow: "0 20px 60px rgba(76,61,196,0.16)" }}>
           <div style={{ background: "var(--forest)", padding: "20px 28px", display: "flex", alignItems: "center", gap: 10 }}>
-            <span style={{ width: 9, height: 9, borderRadius: "50%", background: "var(--lime)", flexShrink: 0 }} />
+            <span style={{ width: 9, height: 9, borderRadius: "50%", background: "var(--accent-soft)", flexShrink: 0 }} />
             <span style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 19, fontWeight: 800, color: "var(--near-white)", display: "flex", alignItems: "center", gap: 8 }}>
               <VaiBookMark size={19} />vai<span style={{ color: "var(--lime)" }}>book</span>
             </span>
@@ -8597,7 +8725,7 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
             </div>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 20 }}>
               {["All", ...DISTRICTS].map((f, i) => (
-                <button key={i} className="btn-sm" style={{ background: f === districtFilter ? "var(--lime)" : "rgba(255,255,255,0.06)", color: f === districtFilter ? "var(--forest)" : "var(--muted)", border: "1px solid var(--border)" }} onClick={() => setDistrictFilter(f)}>{f === "All" ? t("customerPortal.browse.allDistricts") : f}</button>
+                <button key={i} className="btn-sm" style={{ background: f === districtFilter ? "var(--accent-soft)" : "rgba(255,255,255,0.06)", color: f === districtFilter ? "var(--forest)" : "var(--muted)", border: "1px solid var(--border)" }} onClick={() => setDistrictFilter(f)}>{f === "All" ? t("customerPortal.browse.allDistricts") : f}</button>
               ))}
             </div>
             {loadingProviders && <p style={{ fontSize: 13, color: "var(--muted)" }}>{t("customerPortal.browse.loadingProviders")}</p>}
@@ -8621,7 +8749,7 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                     {coverImageUrl(p) ? (
                       <div className="provider-card-img" style={{ background: `center/cover no-repeat url(${coverImageUrl(p)})` }} />
                     ) : (
-                      <div className="provider-card-img" style={{ background: "linear-gradient(160deg, #8C7AF0 0%, #1C1438 100%)" }}>{iconForServiceType(p.service_type)}</div>
+                      <div className="provider-card-img" style={{ background: "var(--accent-soft)" }}>{iconForServiceType(p.service_type)}</div>
                     )}
                     <div className="provider-card-body">
                       <h4>{p.business_name}{(() => { const badge = planBadge(p); return badge && <span className="cx-plan-badge">{badge.label}</span>; })()}{p.is_featured && <span style={{ marginLeft: 6, fontSize: 11, fontWeight: 700, color: "var(--lime)", background: "rgba(242,183,5,0.15)", padding: "2px 7px", borderRadius: 5, verticalAlign: "middle" }}>⭐ {t("customerPortal.browse.featuredBadge")}</span>}</h4>
@@ -8669,7 +8797,7 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                     {coverImageUrl(p) ? (
                       <div className="provider-card-img" style={{ background: `center/cover no-repeat url(${coverImageUrl(p)})` }} />
                     ) : (
-                      <div className="provider-card-img" style={{ background: "linear-gradient(160deg, #8C7AF0 0%, #1C1438 100%)" }}>{iconForServiceType(p.service_type)}</div>
+                      <div className="provider-card-img" style={{ background: "var(--accent-soft)" }}>{iconForServiceType(p.service_type)}</div>
                     )}
                     <div className="provider-card-body">
                       <h4>{p.business_name}{(() => { const badge = planBadge(p); return badge && <span className="cx-plan-badge">{badge.label}</span>; })()}{p.is_featured && <span style={{ marginLeft: 6, fontSize: 11, fontWeight: 700, color: "var(--lime)", background: "rgba(242,183,5,0.15)", padding: "2px 7px", borderRadius: 5, verticalAlign: "middle" }}>⭐ {t("customerPortal.browse.featuredBadge")}</span>}</h4>
@@ -8737,7 +8865,7 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                         <div className="meta">
                           {b.provider_profiles?.business_name || t("customerPortal.home.providerFallback")} · {formatBookingWhen(b)}
                           {unreadByBooking[b.id] > 0 && (
-                            <span style={{ marginLeft: 8, fontSize: 11, fontWeight: 700, color: "var(--forest)", background: "var(--lime)", padding: "2px 7px", borderRadius: 999 }}>
+                            <span style={{ marginLeft: 8, fontSize: 11, fontWeight: 700, color: "var(--forest)", background: "var(--accent-soft)", padding: "2px 7px", borderRadius: 999 }}>
                               💬 {t("customerPortal.bookings.newMessages", { count: unreadByBooking[b.id] })}
                             </span>
                           )}
@@ -12358,7 +12486,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                     <div className="next-chair-meta">
                       {nextBooking.services?.name || "Service"} · {formatBookingTime(nextBooking.booking_time)}
                       {nextBooking.checked_in_at && (
-                        <span style={{ marginLeft: 8, fontSize: 11, fontWeight: 700, color: "var(--forest)", background: "var(--lime)", padding: "2px 7px", borderRadius: 999 }}>
+                        <span style={{ marginLeft: 8, fontSize: 11, fontWeight: 700, color: "var(--forest)", background: "var(--accent-soft)", padding: "2px 7px", borderRadius: 999 }}>
                           {t("providerPortal.dashboard.arrivedBadge")} · {timeAgo(nextBooking.checked_in_at)}
                         </span>
                       )}
@@ -12422,7 +12550,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                       <div className="meta">
                         {b.users?.full_name || b.walkin_customer_name || "Customer"} · {formatBookingTime(b.booking_time)}
                         {b.checked_in_at && (
-                          <span style={{ marginLeft: 8, fontSize: 11, fontWeight: 700, color: "var(--forest)", background: "var(--lime)", padding: "2px 7px", borderRadius: 999 }}>
+                          <span style={{ marginLeft: 8, fontSize: 11, fontWeight: 700, color: "var(--forest)", background: "var(--accent-soft)", padding: "2px 7px", borderRadius: 999 }}>
                             {t("providerPortal.dashboard.arrivedBadge")} · {timeAgo(b.checked_in_at)}
                           </span>
                         )}
@@ -12500,7 +12628,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                     <div className="title">
                       {c.name}
                       {c.hasUpcoming && (
-                        <span style={{ marginLeft: 8, fontSize: 11, fontWeight: 700, color: "var(--forest)", background: "var(--lime)", padding: "2px 7px", borderRadius: 5, verticalAlign: "middle" }}>{t("providerPortal.common.upcoming")}</span>
+                        <span style={{ marginLeft: 8, fontSize: 11, fontWeight: 700, color: "var(--forest)", background: "var(--accent-soft)", padding: "2px 7px", borderRadius: 5, verticalAlign: "middle" }}>{t("providerPortal.common.upcoming")}</span>
                       )}
                     </div>
                     <div className="meta">
@@ -12668,7 +12796,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                         {b.walkin_customer_phone && ` · ${b.walkin_customer_phone}`}
                         {" · "}{formatBookingWhen(b)}
                         {unreadByBooking[b.id] > 0 && (
-                          <span style={{ marginLeft: 8, fontSize: 11, fontWeight: 700, color: "var(--forest)", background: "var(--lime)", padding: "2px 7px", borderRadius: 999 }}>
+                          <span style={{ marginLeft: 8, fontSize: 11, fontWeight: 700, color: "var(--forest)", background: "var(--accent-soft)", padding: "2px 7px", borderRadius: 999 }}>
                             💬 {t("providerPortal.bookings.newMessages", { count: unreadByBooking[b.id] })}
                           </span>
                         )}
@@ -13210,7 +13338,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                     </div>
                   ) : (
                     <div style={{ marginTop: 6 }}>
-                      <span style={{ display: "inline-block", background: "var(--forest)", color: "var(--lime)", fontSize: 12, fontWeight: 800, padding: "4px 10px", borderRadius: 100 }}>
+                      <span style={{ display: "inline-block", background: "var(--forest)", color: "#FFFFFF", fontSize: 12, fontWeight: 800, padding: "4px 10px", borderRadius: 100 }}>
                         {t("providerPortal.billing.justPerDay", { amount: (Math.round((currentPlan.monthly / 30) * 100) / 100).toFixed(2) })}
                       </span>
                       {currentPlan.valueNote && (
