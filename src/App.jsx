@@ -2590,6 +2590,10 @@ const css = `
   /* Headings in near-black (Vai Buy style); indigo stays for actions. */
   .auth-choice-body h1, .step-card h3, .profile-name-row h2, .profile-sidebar-card h3, .provider-card h4 { color: var(--dark-text); }
   [style*="color: var(--forest)"][style*="font-weight: 700"]:not([style*="background"]):not(a):not(button) { color: var(--dark-text) !important; }
+  /* "No business found" screen: big, obvious way back for customers. */
+  .no-business-customer-box { background: #FFFFFF; border-radius: 16px; padding: 18px; margin-bottom: 28px; }
+  .no-business-customer-title { font-size: 15px; font-weight: 700; color: var(--dark-text); margin-bottom: 12px; }
+  .no-business-customer-btn { width: 100%; background: var(--forest); color: #FFFFFF; border: none; border-radius: 12px; padding: 14px 0; font-size: 15px; font-weight: 700; cursor: pointer; font-family: inherit; }
   /* Small chips that used gold: soft indigo tint. */
   .service-badge.open, .provider-status-pill { background: var(--accent-soft); }
 
@@ -4082,6 +4086,8 @@ function AgreementsPanel({ providerId, businessName, clients, requests, requests
 // Move into en.json / es.json later if you want, same keys.
 const SETUP_TEXT = {
   en: {
+    customerEscapeTitle: "Here to book an appointment?",
+    customerEscapeButton: "Go to my bookings →",
     profileSaved: "Saved ✓",
     profileSaveFailed: "Couldn't save your profile. Send this message to support:",
     profileUnsaved: "You have unsaved changes",
@@ -4146,6 +4152,8 @@ const SETUP_TEXT = {
     rowBillingDesc: "View and manage your VaiBook plan",
   },
   es: {
+    customerEscapeTitle: "¿Viniste a reservar una cita?",
+    customerEscapeButton: "Ir a mis reservas →",
     profileSaved: "Guardado ✓",
     profileSaveFailed: "No se pudo guardar tu perfil. Envía este mensaje a soporte:",
     profileUnsaved: "Tienes cambios sin guardar",
@@ -5195,9 +5203,35 @@ function usePushSubscription(userId) {
 // account. A genuinely profile-less account still correctly sees
 // ProviderPortal's own "No provider profile yet" screen (or StaffPortal,
 // if it's a staff seat) — that's real, not a bug.
+// FIXED (customer dumped into the business portal): "where to go after
+// signing in" used to be saved in localStorage with no expiry. Tapping a
+// business sign-in (AuthChoice "for professionals", the provider portal's
+// sign-in button) and backing out of Google left "provider" saved forever,
+// so the NEXT sign-in on that phone — e.g. a customer creating their
+// account while booking — landed on "No business found on this account".
+// Now it's saved with a timestamp, only honored for 15 minutes, and old
+// plain-text values from before this fix are ignored.
+const PENDING_VIEW_KEY = "vaibook_pending_view";
+const PENDING_VIEW_TTL_MS = 15 * 60 * 1000;
+function setPendingView(view) {
+  try { localStorage.setItem(PENDING_VIEW_KEY, JSON.stringify({ view, at: Date.now() })); } catch (e) { /* ignore */ }
+}
+function takePendingView() {
+  try {
+    const raw = localStorage.getItem(PENDING_VIEW_KEY);
+    if (!raw) return null;
+    localStorage.removeItem(PENDING_VIEW_KEY);
+    let parsed = null;
+    try { parsed = JSON.parse(raw); } catch (e) { return null; }
+    if (!parsed || typeof parsed !== "object" || !parsed.view || !parsed.at) return null;
+    if (Date.now() - Number(parsed.at) > PENDING_VIEW_TTL_MS) return null;
+    return parsed.view;
+  } catch (e) { return null; }
+}
+
 function switchToPortal(targetPortal, onNav, session, onSignIn) {
   if (!session) {
-    try { localStorage.setItem("vaibook_pending_view", targetPortal); } catch (e) { /* ignore */ }
+    setPendingView(targetPortal);
     onSignIn();
     return;
   }
@@ -9731,6 +9765,7 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                               // password, which is typed fresh every booking.
                               try { localStorage.setItem("vaibook_guest_info", JSON.stringify({ name: guestName, email: guestEmail, whatsapp: guestWhatsapp })); } catch (e) { /* ignore */ }
                               setSubmittingGuestAuth(true);
+                              setPendingView("customer");
                               const { data, error, returning } = await guestAuthWithPassword(guestEmail, guestPassword, { full_name: guestName });
                               setSubmittingGuestAuth(false);
                               if (error) {
@@ -11826,7 +11861,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
             <VaiBookMark size={30} />vai<span style={{ color: "var(--lime)" }}>book</span> <span style={{ color: "rgba(255,255,255,0.5)", fontWeight: 600, fontSize: 16 }}>providers</span>
           </div>
           <p style={{ color: "rgba(255,255,255,0.6)", fontSize: 14, marginBottom: 24 }}>{t("providerPortal.signIn.subtitle")}</p>
-          <button className="btn-lime" style={{ width: "100%", padding: "12px 0" }} onClick={onSignIn}>{t("providerPortal.signIn.button")}</button>
+          <button className="btn-lime" style={{ width: "100%", padding: "12px 0" }} onClick={() => { setPendingView("provider"); onSignIn(); }}>{t("providerPortal.signIn.button")}</button>
           <div style={{ marginTop: 20 }}>
             <a style={{ color: "rgba(255,255,255,0.4)", fontSize: 13, cursor: "pointer" }} onClick={() => onNav("home")}>{t("providerPortal.signIn.backToSite")}</a>
           </div>
@@ -11856,15 +11891,21 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
       // the right account, the same way switching portals while
       // signed-out stages a destination (see switchToPortal) — otherwise
       // they'd land on the generic homepage after re-authenticating.
-      try { localStorage.setItem("vaibook_pending_view", "provider"); } catch (e) { /* ignore */ }
+      setPendingView("provider");
       await onSignOut();
       onSignIn();
     };
     return (
-      <div style={{ minHeight: "100vh", background: "var(--forest)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
+      <div style={{ minHeight: "100vh", background: "var(--navy)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
         <div style={{ textAlign: "center", maxWidth: 400 }}>
+          <div className="no-business-customer-box">
+            <div className="no-business-customer-title">{st("customerEscapeTitle")}</div>
+            <button className="no-business-customer-btn" onClick={() => { try { sessionStorage.setItem("vaibook_last_view", "customer"); } catch (e) { /* ignore */ } onNav("customer"); }}>
+              {st("customerEscapeButton")}
+            </button>
+          </div>
           <div style={{ fontSize: 40, marginBottom: 12 }}>✂️</div>
-          <h2 style={{ color: "var(--near-white)", fontFamily: "'Plus Jakarta Sans', sans-serif", marginBottom: 8 }}>{t("providerPortal.noProfile.title")}</h2>
+          <h2 style={{ color: "#FFFFFF", fontFamily: "'Plus Jakarta Sans', sans-serif", marginBottom: 8 }}>{t("providerPortal.noProfile.title")}</h2>
           <p style={{ color: "rgba(255,255,255,0.65)", fontSize: 14, marginBottom: 4 }}>
             {t("providerPortal.noProfile.signedInAs")}
           </p>
@@ -15866,14 +15907,14 @@ export default function App() {
   };
 
   const applyPendingView = () => {
-    try {
-      const pending = localStorage.getItem("vaibook_pending_view");
-      if (pending === "admin" || pending === "customer" || pending === "provider") {
-        setView(pending);
-        localStorage.removeItem("vaibook_pending_view");
-        return true;
-      }
-    } catch (e) { /* ignore */ }
+    const pending = takePendingView();
+    if (pending === "admin" || pending === "customer" || pending === "provider") {
+      // Someone in the middle of booking from a #book- link is a customer,
+      // whatever was staged earlier on this phone.
+      if (pending !== "customer" && parseBookingHash(window.location.hash.replace("#", ""))) return false;
+      setView(pending);
+      return true;
+    }
     return false;
   };
 
