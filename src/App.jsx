@@ -3194,6 +3194,62 @@ const mkText = (lang, key, vars) => {
 const REBOOK_DAY_OPTIONS = [14, 21, 30, 45, 60, 90];
 const mkMissingSetup = (err) => !!err && (err.code === "PGRST202" || err.code === "PGRST205" || err.code === "PGRST204" || err.code === "42883" || err.code === "42P01");
 
+// GOOGLE CALENDAR SYNC — a private calendar link the business adds to
+// Google Calendar once ("From URL"); every booking then shows up there on
+// its own. Served by /api/calendar (Vercel) from get_calendar_feed().
+function CalendarSyncCard() {
+  const { i18n } = useTranslation();
+  const es = (i18n.language || "").toLowerCase().startsWith("es");
+  const x = (en, sp) => (es ? sp : en);
+  const [token, setToken] = useState(null);
+  const [state, setState] = useState("idle"); // idle | loading | error
+  const [copied, setCopied] = useState(false);
+  const load = async (reset = false) => {
+    setState("loading");
+    const { data, error } = await supabase.rpc("get_my_calendar_token", { p_reset: reset });
+    if (error || !data) { setState("error"); return; }
+    setToken(data); setState("idle");
+  };
+  useEffect(() => { load(false); }, []);
+  const feedUrl = token ? `https://vai-book.vercel.app/api/calendar?t=${token}` : "";
+  const webcalUrl = feedUrl.replace(/^https:/, "webcal:");
+  const googleUrl = token ? `https://calendar.google.com/calendar/render?cid=${encodeURIComponent(webcalUrl)}` : "";
+  const copy = async () => {
+    try { await navigator.clipboard.writeText(feedUrl); setCopied(true); setTimeout(() => setCopied(false), 2000); } catch (e) { /* link is shown on screen */ }
+  };
+  return (
+    <div id="settings-calendar" style={{ padding: "14px 0", borderBottom: "1px solid var(--border)", marginTop: 8, scrollMarginTop: 120 }}>
+      <div style={{ fontSize: 14, fontWeight: 600 }}>{x("Sync bookings to Google Calendar", "Sincronizar citas con Google Calendar")}</div>
+      <div style={{ fontSize: 12, color: "var(--muted)", lineHeight: 1.6, marginTop: 2 }}>
+        {x("Connect once and every new booking appears in your Google Calendar automatically. Google checks for new bookings every few hours. Use the bell or push notifications for instant alerts.",
+           "Conéctalo una vez y cada cita nueva aparece sola en tu Google Calendar. Google revisa cada pocas horas. Para avisos al instante usa la campanita o las notificaciones push.")}
+      </div>
+      {state === "error" && (
+        <p style={{ fontSize: 12, color: "#B91C1C", marginTop: 8 }}>
+          {x("Calendar sync isn't set up on the server yet (run supabase_calendar_sync.sql).", "La sincronización aún no está activada en el servidor (ejecuta supabase_calendar_sync.sql).")}
+        </p>
+      )}
+      {token && (
+        <>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 10 }}>
+            <a className="btn-sm forest" href={googleUrl} target="_blank" rel="noopener noreferrer" style={{ textDecoration: "none" }}>{x("Add to Google Calendar", "Agregar a Google Calendar")}</a>
+            <a className="btn-sm ghost" href={webcalUrl} style={{ textDecoration: "none" }}>{x("iPhone / Apple Calendar", "iPhone / Calendario de Apple")}</a>
+            <button className="btn-sm ghost" onClick={copy}>{copied ? x("Copied ✓", "Copiado ✓") : x("Copy link", "Copiar enlace")}</button>
+          </div>
+          <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 8, wordBreak: "break-all" }}>{feedUrl}</div>
+          <div style={{ fontSize: 12, color: "var(--muted)", lineHeight: 1.6, marginTop: 8 }}>
+            {x("On a phone: open calendar.google.com in a browser (not the app), tap Other calendars → + → From URL, paste the link, then tap Add calendar. Keep this link private, it shows your clients' names.",
+               "En el teléfono: abre calendar.google.com en el navegador (no en la app), toca Otros calendarios → + → Desde URL, pega el enlace y toca Agregar calendario. Mantén este enlace privado, muestra los nombres de tus clientes.")}
+          </div>
+          <button className="btn-sm ghost" style={{ marginTop: 8, fontSize: 12 }} disabled={state === "loading"} onClick={() => { if (window.confirm(x("Make a new link? The old one will stop working and you'll need to add the new one to your calendar.", "¿Crear un enlace nuevo? El anterior dejará de funcionar."))) load(true); }}>
+            {x("Reset link", "Restablecer enlace")}
+          </button>
+        </>
+      )}
+    </div>
+  );
+}
+
 function AnnouncementsPanel({ providerId, businessName, clients, bookingUrl }) {
   const { i18n } = useTranslation();
   const lang = i18n.language;
@@ -7847,6 +7903,10 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
   const [myLoyalty, setMyLoyalty] = useState(null);
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [cancellingId, setCancellingId] = useState(null);
+  // Set right after a booking goes through — offers a one-tap WhatsApp
+  // heads-up to the business, so they hear about it even when they're
+  // not in the app.
+  const [justBooked, setJustBooked] = useState(null);
   const [checkingInId, setCheckingInId] = useState(null);
   const [rescheduleRespondingId, setRescheduleRespondingId] = useState(null);
   const [rescheduleRespondError, setRescheduleRespondError] = useState({});
@@ -8505,6 +8565,10 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
       // in this file.
       const finalTotal = Number(created.total_amount) || total;
       const whenLabel = `${formatBookingDate(dateStr)} at ${formatBookingTime(timeStr)}`;
+      setJustBooked((prev) => ({
+        provider: selectedProvider,
+        items: [...(prev && prev.provider?.id === selectedProvider.id ? prev.items : []), `${service.name} — ${whenLabel}`],
+      }));
       (async () => {
         try {
           if (selectedProvider.user_id) {
@@ -9535,6 +9599,33 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
         {tab === "bookings" && (
           <>
             <div className="portal-header"><h2>{t("customerPortal.bookings.title")}</h2><p>{t("customerPortal.bookings.subtitle")}</p></div>
+            {justBooked && justBooked.provider && (() => {
+              const es = (i18n.language || "").toLowerCase().startsWith("es");
+              const digits = String(justBooked.provider.whatsapp || "").replace(/\D/g, "");
+              const phone = digits.length === 7 ? `501${digits}` : digits;
+              const name = user?.full_name || guestCheckoutForm.name || "";
+              const msg = es
+                ? `Hola ${justBooked.provider.business_name}, acabo de reservar en VaiBook:\n${justBooked.items.join("\n")}${name ? `\n— ${name}` : ""}`
+                : `Hi ${justBooked.provider.business_name}, I just booked on VaiBook:\n${justBooked.items.join("\n")}${name ? `\n— ${name}` : ""}`;
+              return (
+                <div className="card" style={{ marginBottom: 16, borderColor: "var(--lime)", background: "var(--accent-soft)" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "flex-start" }}>
+                    <div>
+                      <div style={{ fontWeight: 700, fontSize: 15 }}>{es ? "¡Reserva enviada! ✅" : "Booking sent! ✅"}</div>
+                      <div style={{ fontSize: 13, color: "var(--muted)", marginTop: 4, lineHeight: 1.5 }}>
+                        {es ? `Avísale a ${justBooked.provider.business_name} por WhatsApp para que te confirme más rápido.` : `Give ${justBooked.provider.business_name} a heads-up on WhatsApp so they confirm faster.`}
+                      </div>
+                    </div>
+                    <button aria-label="Close" onClick={() => setJustBooked(null)} style={{ border: "none", background: "none", fontSize: 18, cursor: "pointer", color: "var(--muted)" }}>×</button>
+                  </div>
+                  {phone.length >= 7 && (
+                    <a className="btn-sm forest" style={{ display: "inline-block", marginTop: 10, textDecoration: "none" }} href={`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`} target="_blank" rel="noopener noreferrer" onClick={() => setTimeout(() => setJustBooked(null), 500)}>
+                      💬 {es ? "Avisar por WhatsApp" : "Message on WhatsApp"}
+                    </a>
+                  )}
+                </div>
+              );
+            })()}
             <div className="tab-row">
               {[
                 { key: "upcoming", label: t("customerPortal.bookings.tabUpcoming") },
@@ -14899,6 +14990,8 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                 )}
               </div>
               {pushError && <p style={{ fontSize: 12, color: "#B91C1C", marginTop: 8 }}>{pushError}</p>}
+
+              <CalendarSyncCard />
 
               <div className="card-title" style={{ marginTop: 24 }}>{t("providerPortal.settings.whatVaibookCharges")}</div>
               <p style={{ fontSize: 13, color: "var(--muted)", lineHeight: 1.6 }}>
