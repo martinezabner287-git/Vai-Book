@@ -1257,6 +1257,48 @@ const css = `
 
   /* CARDS / WIDGETS */
   .card { background: var(--near-white); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; }
+  /* FINISH YOUR PROFILE card (provider dashboard) */
+  .setup-card { background: var(--near-white); border: 1px solid var(--border); border-radius: 18px; padding: 20px 22px; margin-bottom: 20px; }
+  .setup-card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+  .setup-card-title { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 17px; font-weight: 800; color: var(--dark-text); }
+  .setup-card-sub { font-size: 13px; color: var(--muted); margin-top: 3px; }
+  .setup-card-close { background: none; border: 1px solid var(--border); width: 30px; height: 30px; border-radius: 50%; font-size: 18px; line-height: 1; color: var(--muted); cursor: pointer; flex-shrink: 0; }
+  .setup-progress { height: 6px; background: var(--border); border-radius: 3px; margin: 14px 0 6px; overflow: hidden; }
+  .setup-progress-fill { height: 100%; background: #4C3DC4; border-radius: 3px; transition: width .3s ease; }
+  .setup-steps { display: flex; flex-direction: column; margin-top: 6px; }
+  .setup-step { display: flex; align-items: center; gap: 12px; width: 100%; background: none; border: none; border-bottom: 1px solid var(--border); padding: 12px 2px; text-align: left; cursor: pointer; font-family: inherit; color: var(--dark-text); }
+  .setup-step:last-child { border-bottom: none; }
+  .setup-step:disabled { cursor: default; }
+  .setup-step-check { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; flex-shrink: 0; }
+  .setup-step.done .setup-step-check { background: #4C3DC4; border-color: #4C3DC4; color: #fff; }
+  .setup-step.done .setup-step-label { color: var(--muted); text-decoration: line-through; }
+  .setup-step-text { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+  .setup-step-label { font-size: 14px; font-weight: 600; }
+  .setup-step-hint { font-size: 12px; color: var(--muted); margin-top: 1px; }
+  .setup-step-arrow { font-size: 20px; color: var(--muted); }
+  .setup-goals { border-top: 1px solid var(--border); margin-top: 10px; padding-top: 16px; }
+  .setup-goals-row { display: flex; justify-content: space-between; align-items: center; }
+  .setup-goals-title { font-size: 14px; font-weight: 700; color: var(--dark-text); }
+  .setup-goals-hint { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .setup-goal-pills { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+  .setup-goal-pill { background: transparent; border: 1px solid var(--border); border-radius: 100px; padding: 9px 14px; font-size: 13px; font-family: inherit; color: var(--dark-text); cursor: pointer; text-align: left; }
+  .setup-goal-pill.active { background: #4C3DC4; border-color: #4C3DC4; color: #fff; }
+  .setup-tip { background: rgba(76,61,196,0.08); border: 1px solid rgba(76,61,196,0.25); border-radius: 100px; padding: 9px 14px; font-size: 13px; font-weight: 600; font-family: inherit; color: #4C3DC4; cursor: pointer; }
+  .setup-link { background: none; border: none; color: #4C3DC4; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; }
+
+  /* SETTINGS HUB (provider Settings tab) */
+  .settings-hub { max-width: 560px; margin-bottom: 32px; }
+  .settings-hub-group { margin-bottom: 22px; }
+  .settings-hub-label { font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin: 0 0 8px 4px; }
+  .settings-hub-list { background: var(--near-white); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; }
+  .settings-hub-row { display: flex; align-items: center; gap: 12px; width: 100%; background: none; border: none; border-bottom: 1px solid var(--border); padding: 14px 18px; text-align: left; cursor: pointer; font-family: inherit; }
+  .settings-hub-row:last-child { border-bottom: none; }
+  .settings-hub-row:hover { background: rgba(76,61,196,0.05); }
+  .settings-hub-text { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+  .settings-hub-title { font-size: 14.5px; font-weight: 600; color: var(--dark-text); }
+  .settings-hub-desc { font-size: 12.5px; color: var(--muted); margin-top: 2px; }
+  .settings-hub-arrow { font-size: 20px; color: var(--muted); flex-shrink: 0; }
+
   .card-sm { background: var(--near-white); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; }
   .metric-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 24px; }
   .metric { background: var(--near-white); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; }
@@ -2623,6 +2665,140 @@ function ProviderCarousel({ providers, badgeFor, onCardClick, ctaLabel, favorite
     </div>
   );
 }
+
+// ── PROVIDER SETUP CARD + SETTINGS HUB TEXT (EN / ES) ─────────────────
+// Kept here instead of locales/*.json so this feature ships in App.jsx alone.
+// Move into en.json / es.json later if you want, same keys.
+const SETUP_TEXT = {
+  en: {
+    finishTitle: "Finish your profile",
+    finishSub: "Complete profiles get booked more. {done} of {total} done.",
+    stepPhoto: "Add a profile photo",
+    stepPhotoHint: "Clients trust a face or logo",
+    stepBio: "Write a short bio",
+    stepBioHint: "Who you are and what you're known for",
+    stepServices: "Add your services",
+    stepServicesHint: "Names, prices and how long they take",
+    stepPortfolio: "Upload 3 portfolio photos",
+    stepPortfolioHint: "Show your best work",
+    stepContact: "Add WhatsApp or Instagram",
+    stepContactHint: "So clients can reach you",
+    goalsTitle: "What matters most to you right now?",
+    goalsHint: "Pick any. We'll put the right tools in front of you.",
+    goalBooked: "Getting booked without the back-and-forth",
+    goalClients: "Keeping track of my clients",
+    goalNumbers: "Knowing my numbers",
+    goalRepeat: "Getting more repeat clients",
+    goalWalkins: "Filling empty time with walk-ins",
+    save: "Save",
+    edit: "Edit",
+    yourFocus: "Your focus",
+    dismiss: "Hide",
+    tipBooked: "Turn on auto-confirm",
+    tipClients: "Open your client list",
+    tipNumbers: "See your earnings",
+    tipRepeat: "Set up loyalty rewards",
+    tipWalkins: "Turn on walk-ins",
+    settingsSub: "Everything about your business, in one place.",
+    groupBusiness: "Business",
+    groupBookingPage: "Booking page",
+    groupAutomations: "Notifications & add-ons",
+    groupAccount: "Money & account",
+    rowProfile: "Public profile",
+    rowProfileDesc: "Name, photo, bio, location, socials",
+    rowServices: "Service menu",
+    rowServicesDesc: "Services, durations, prices",
+    rowAvailability: "Availability",
+    rowAvailabilityDesc: "Working hours and blocked time",
+    rowStaff: "Team",
+    rowStaffDesc: "Staff members and who does what",
+    rowDeposits: "Deposits & booking requests",
+    rowDepositsDesc: "Require a deposit, or auto-confirm bookings",
+    rowWalkins: "Walk-ins",
+    rowWalkinsDesc: "Accept clients who show up without booking",
+    rowPortfolio: "Portfolio",
+    rowPortfolioDesc: "Showcase your best work",
+    rowReviews: "Reviews",
+    rowReviewsDesc: "What clients say about you",
+    rowNotifications: "Notifications",
+    rowNotificationsDesc: "Which alerts reach you, and how",
+    rowModules: "Modules",
+    rowModulesDesc: "Consent forms, waivers, loyalty and more",
+    rowEarnings: "Earnings",
+    rowEarningsDesc: "Revenue, completed bookings, payouts",
+    rowInsights: "Monthly insights",
+    rowInsightsDesc: "How this month compares to last",
+    rowBilling: "Plan & billing",
+    rowBillingDesc: "View and manage your VaiBook plan",
+  },
+  es: {
+    finishTitle: "Completa tu perfil",
+    finishSub: "Los perfiles completos reciben más reservas. {done} de {total} listos.",
+    stepPhoto: "Agrega una foto de perfil",
+    stepPhotoHint: "Los clientes confían en una cara o un logo",
+    stepBio: "Escribe una biografía corta",
+    stepBioHint: "Quién eres y por qué te conocen",
+    stepServices: "Agrega tus servicios",
+    stepServicesHint: "Nombres, precios y duración",
+    stepPortfolio: "Sube 3 fotos a tu portafolio",
+    stepPortfolioHint: "Muestra tu mejor trabajo",
+    stepContact: "Agrega WhatsApp o Instagram",
+    stepContactHint: "Para que los clientes te contacten",
+    goalsTitle: "¿Qué es lo más importante para ti ahora?",
+    goalsHint: "Elige las que quieras. Te mostraremos las herramientas correctas.",
+    goalBooked: "Recibir reservas sin tanto ir y venir",
+    goalClients: "Llevar el control de mis clientes",
+    goalNumbers: "Conocer mis números",
+    goalRepeat: "Lograr más clientes que regresen",
+    goalWalkins: "Llenar tiempo libre con clientes sin cita",
+    save: "Guardar",
+    edit: "Editar",
+    yourFocus: "Tu enfoque",
+    dismiss: "Ocultar",
+    tipBooked: "Activa la confirmación automática",
+    tipClients: "Abre tu lista de clientes",
+    tipNumbers: "Mira tus ganancias",
+    tipRepeat: "Configura recompensas de lealtad",
+    tipWalkins: "Activa clientes sin cita",
+    settingsSub: "Todo sobre tu negocio, en un solo lugar.",
+    groupBusiness: "Negocio",
+    groupBookingPage: "Página de reservas",
+    groupAutomations: "Notificaciones y módulos",
+    groupAccount: "Dinero y cuenta",
+    rowProfile: "Perfil público",
+    rowProfileDesc: "Nombre, foto, biografía, ubicación, redes",
+    rowServices: "Menú de servicios",
+    rowServicesDesc: "Servicios, duración, precios",
+    rowAvailability: "Disponibilidad",
+    rowAvailabilityDesc: "Horario de trabajo y tiempo bloqueado",
+    rowStaff: "Equipo",
+    rowStaffDesc: "Personal y quién hace qué",
+    rowDeposits: "Depósitos y solicitudes",
+    rowDepositsDesc: "Pide depósito o confirma reservas automáticamente",
+    rowWalkins: "Clientes sin cita",
+    rowWalkinsDesc: "Acepta clientes que llegan sin reservar",
+    rowPortfolio: "Portafolio",
+    rowPortfolioDesc: "Muestra tu mejor trabajo",
+    rowReviews: "Reseñas",
+    rowReviewsDesc: "Lo que dicen tus clientes",
+    rowNotifications: "Notificaciones",
+    rowNotificationsDesc: "Qué alertas te llegan y cómo",
+    rowModules: "Módulos",
+    rowModulesDesc: "Formularios de consentimiento, exenciones, lealtad y más",
+    rowEarnings: "Ganancias",
+    rowEarningsDesc: "Ingresos, reservas completadas, pagos",
+    rowInsights: "Resumen mensual",
+    rowInsightsDesc: "Cómo va este mes comparado con el anterior",
+    rowBilling: "Plan y facturación",
+    rowBillingDesc: "Ve y administra tu plan de VaiBook",
+  },
+};
+const setupText = (lang, key, vars) => {
+  const dict = SETUP_TEXT[(lang || "en").slice(0, 2)] || SETUP_TEXT.en;
+  let str = dict[key] || SETUP_TEXT.en[key] || key;
+  if (vars) Object.keys(vars).forEach((k) => { str = str.replace(`{${k}}`, vars[k]); });
+  return str;
+};
 
 // Industry-specific adaptive modules. `label`/`icon`/`desc` drive the
 // Settings → Modules UI; which ones default on per category lives in the
@@ -8540,7 +8716,8 @@ function StaffPortal({ onNav, session, staffProfile, onSignOut }) {
 
 // ── PROVIDER PORTAL ─────────────────────────────────────────────
 function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSignOut, onProviderProfileUpdate }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const st = (key, vars) => setupText(i18n.language, key, vars);
   // Remembers which tab this account was on, so a refresh lands back on
   // "My bookings" (or wherever) instead of always resetting to "Dashboard"
   // — same sessionStorage pattern as App's own vaibook_last_view, just
@@ -8695,6 +8872,41 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
       setLaunchBannerDismissed(false);
     }
   }, [providerId]);
+  // FINISH YOUR PROFILE card — goals + dismissal saved per provider in
+  // localStorage (a nudge, not worth a schema change, same as the launch
+  // banner above). Checklist itself is computed live from real data.
+  const [setupHidden, setSetupHidden] = useState(true);
+  const [setupGoals, setSetupGoals] = useState([]);
+  const [setupGoalsSaved, setSetupGoalsSaved] = useState(false);
+  const [setupGoalsEditing, setSetupGoalsEditing] = useState(false);
+  useEffect(() => {
+    if (!providerId) return;
+    try {
+      setSetupHidden(localStorage.getItem(`vaibook_setup_hidden_${providerId}`) === "1");
+      const saved = JSON.parse(localStorage.getItem(`vaibook_setup_goals_${providerId}`) || "null");
+      if (Array.isArray(saved)) { setSetupGoals(saved); setSetupGoalsSaved(true); }
+    } catch (e) {
+      setSetupHidden(false);
+    }
+  }, [providerId]);
+  const hideSetupCard = () => {
+    setSetupHidden(true);
+    try { if (providerId) localStorage.setItem(`vaibook_setup_hidden_${providerId}`, "1"); } catch (e) { /* storage unavailable */ }
+  };
+  const toggleSetupGoal = (id) => setSetupGoals((g) => (g.includes(id) ? g.filter((x) => x !== id) : [...g, id]));
+  const saveSetupGoals = () => {
+    setSetupGoalsSaved(true);
+    setSetupGoalsEditing(false);
+    try { if (providerId) localStorage.setItem(`vaibook_setup_goals_${providerId}`, JSON.stringify(setupGoals)); } catch (e) { /* storage unavailable */ }
+  };
+  // Jump to Settings and scroll to one of its cards.
+  const goToSettingsCard = (cardId) => {
+    setTab("settings");
+    setTimeout(() => {
+      const el = document.getElementById(cardId);
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 80);
+  };
   const dismissLaunchBanner = () => {
     setLaunchBannerDismissed(true);
     try { if (providerId) localStorage.setItem(`vaibook_launch_graphic_seen_${providerId}`, "1"); } catch (e) { /* localStorage unavailable — banner just won't persist as dismissed */ }
@@ -10398,6 +10610,85 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
               <p>{now.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}</p>
             </div>
 
+            {/* FINISH YOUR PROFILE — checklist from real profile data + a
+                "what matters most" goal picker that turns into shortcuts. */}
+            {(() => {
+              if (setupHidden) return null;
+              const pp = providerProfile || {};
+              const steps = [
+                { id: "photo", done: !!pp.profile_photo_url, label: st("stepPhoto"), hint: st("stepPhotoHint"), go: () => setTab("profile") },
+                { id: "bio", done: !!(pp.bio && pp.bio.trim().length >= 20), label: st("stepBio"), hint: st("stepBioHint"), go: () => setTab("profile") },
+                { id: "services", done: activeServices.length > 0, label: st("stepServices"), hint: st("stepServicesHint"), go: () => setTab("services") },
+                { id: "portfolio", done: (pp.portfolio_urls || []).length >= 3, label: st("stepPortfolio"), hint: st("stepPortfolioHint"), go: () => setTab("profile") },
+                { id: "contact", done: !!(pp.whatsapp || pp.instagram), label: st("stepContact"), hint: st("stepContactHint"), go: () => setTab("profile") },
+              ];
+              const doneCount = steps.filter((s) => s.done).length;
+              const allDone = doneCount === steps.length;
+              const goals = [
+                { id: "booked", label: st("goalBooked"), tip: st("tipBooked"), go: () => goToSettingsCard("settings-deposits") },
+                { id: "clients", label: st("goalClients"), tip: st("tipClients"), go: () => setTab("clients") },
+                { id: "numbers", label: st("goalNumbers"), tip: st("tipNumbers"), go: () => setTab("earnings") },
+                { id: "repeat", label: st("goalRepeat"), tip: st("tipRepeat"), go: () => setTab("modules") },
+                { id: "walkins", label: st("goalWalkins"), tip: st("tipWalkins"), go: () => goToSettingsCard("settings-walkins") },
+              ];
+              const showPicker = !setupGoalsSaved || setupGoalsEditing;
+              const chosen = goals.filter((g) => setupGoals.includes(g.id));
+              return (
+                <div className="setup-card">
+                  <div className="setup-card-head">
+                    <div>
+                      <div className="setup-card-title">{st("finishTitle")}</div>
+                      <div className="setup-card-sub">{st("finishSub", { done: doneCount, total: steps.length })}</div>
+                    </div>
+                    <button className="setup-card-close" onClick={hideSetupCard} aria-label={st("dismiss")}>×</button>
+                  </div>
+                  <div className="setup-progress"><div className="setup-progress-fill" style={{ width: `${(doneCount / steps.length) * 100}%` }}></div></div>
+
+                  {!allDone && (
+                    <div className="setup-steps">
+                      {steps.map((s) => (
+                        <button key={s.id} className={`setup-step ${s.done ? "done" : ""}`} onClick={s.go} disabled={s.done}>
+                          <span className="setup-step-check">{s.done ? "✓" : ""}</span>
+                          <span className="setup-step-text">
+                            <span className="setup-step-label">{s.label}</span>
+                            {!s.done && <span className="setup-step-hint">{s.hint}</span>}
+                          </span>
+                          {!s.done && <span className="setup-step-arrow">›</span>}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="setup-goals">
+                    {showPicker ? (
+                      <>
+                        <div className="setup-goals-title">{st("goalsTitle")}</div>
+                        <div className="setup-goals-hint">{st("goalsHint")}</div>
+                        <div className="setup-goal-pills">
+                          {goals.map((g) => (
+                            <button key={g.id} className={`setup-goal-pill ${setupGoals.includes(g.id) ? "active" : ""}`} onClick={() => toggleSetupGoal(g.id)}>{g.label}</button>
+                          ))}
+                        </div>
+                        <button className="btn-sm forest" style={{ marginTop: 14 }} onClick={saveSetupGoals} disabled={setupGoals.length === 0}>{st("save")}</button>
+                      </>
+                    ) : (
+                      <>
+                        <div className="setup-goals-row">
+                          <div className="setup-goals-title">{st("yourFocus")}</div>
+                          <button className="setup-link" onClick={() => setSetupGoalsEditing(true)}>{st("edit")}</button>
+                        </div>
+                        <div className="setup-goal-pills">
+                          {chosen.map((g) => (
+                            <button key={g.id} className="setup-tip" onClick={g.go}>{g.tip} ›</button>
+                          ))}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
+              );
+            })()}
+
             {/* THE DOPAMINE CARD — instant financial payoff the moment the
                 dashboard opens. Today's Take is completed revenue only
                 (same definition as "This month earnings" below, just for
@@ -11955,8 +12246,53 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
 
         {tab === "settings" && (
           <>
-            <div className="portal-header"><h2>{t("providerPortal.nav.settings")}</h2></div>
-            <div className="card" style={{ maxWidth: 480 }}>
+            <div className="portal-header"><h2>{t("providerPortal.nav.settings")}</h2><p>{st("settingsSub")}</p></div>
+
+            {/* SETTINGS HUB — every setting grouped like a menu, each row with
+                a one-line description. Rows open the existing tab, or scroll
+                to the matching card further down this page. */}
+            <div className="settings-hub">
+              {[
+                { group: st("groupBusiness"), rows: [
+                  { title: st("rowProfile"), desc: st("rowProfileDesc"), go: () => setTab("profile") },
+                  { title: st("rowServices"), desc: st("rowServicesDesc"), go: () => setTab("services") },
+                  { title: st("rowAvailability"), desc: st("rowAvailabilityDesc"), go: () => setTab("calendar") },
+                  { title: st("rowStaff"), desc: st("rowStaffDesc"), go: () => setTab("staff") },
+                ] },
+                { group: st("groupBookingPage"), rows: [
+                  { title: st("rowDeposits"), desc: st("rowDepositsDesc"), go: () => goToSettingsCard("settings-deposits") },
+                  { title: st("rowWalkins"), desc: st("rowWalkinsDesc"), go: () => goToSettingsCard("settings-walkins") },
+                  { title: st("rowPortfolio"), desc: st("rowPortfolioDesc"), go: () => setTab("profile") },
+                  { title: st("rowReviews"), desc: st("rowReviewsDesc"), go: () => setTab("reviews") },
+                ] },
+                { group: st("groupAutomations"), rows: [
+                  { title: st("rowNotifications"), desc: st("rowNotificationsDesc"), go: () => goToSettingsCard("settings-notifications") },
+                  { title: st("rowModules"), desc: st("rowModulesDesc"), go: () => setTab("modules") },
+                ] },
+                { group: st("groupAccount"), rows: [
+                  { title: st("rowEarnings"), desc: st("rowEarningsDesc"), go: () => setTab("earnings") },
+                  { title: st("rowInsights"), desc: st("rowInsightsDesc"), go: () => setTab("review") },
+                  { title: st("rowBilling"), desc: st("rowBillingDesc"), go: () => setTab("billing") },
+                ] },
+              ].map((g) => (
+                <div key={g.group} className="settings-hub-group">
+                  <div className="settings-hub-label">{g.group}</div>
+                  <div className="settings-hub-list">
+                    {g.rows.map((r) => (
+                      <button key={r.title} className="settings-hub-row" onClick={r.go}>
+                        <span className="settings-hub-text">
+                          <span className="settings-hub-title">{r.title}</span>
+                          <span className="settings-hub-desc">{r.desc}</span>
+                        </span>
+                        <span className="settings-hub-arrow">›</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="card" id="settings-walkins" style={{ maxWidth: 480, scrollMarginTop: 120 }}>
               <div className="card-title">{t("providerPortal.settings.walkInsTitle")}</div>
               <p style={{ fontSize: 13, color: "var(--muted)", marginTop: -8, marginBottom: 16 }}>{t("providerPortal.settings.walkInsHint")}</p>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", gap: 16 }}>
@@ -11972,7 +12308,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
               </div>
             </div>
 
-            <div className="card" style={{ maxWidth: 480, marginTop: 20 }}>
+            <div className="card" id="settings-deposits" style={{ maxWidth: 480, marginTop: 20, scrollMarginTop: 120 }}>
               <div className="card-title">{t("providerPortal.settings.depositTitle")}</div>
               <p style={{ fontSize: 13, color: "var(--muted)", marginTop: -8, marginBottom: 16 }}>{t("providerPortal.settings.depositHint")}</p>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", borderBottom: "1px solid var(--border)" }}>
@@ -12001,7 +12337,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
               )}
               <button className="btn-sm forest" style={{ marginTop: 12 }} onClick={saveDepositSettings} disabled={savingDeposit}>{savingDeposit ? t("providerPortal.common.saving") : t("providerPortal.settings.saveDepositSettings")}</button>
 
-              <div className="card-title" style={{ marginTop: 28 }}>{t("providerPortal.settings.notificationsTitle")}</div>
+              <div className="card-title" id="settings-notifications" style={{ marginTop: 28, scrollMarginTop: 120 }}>{t("providerPortal.settings.notificationsTitle")}</div>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", borderBottom: "1px solid var(--border)", gap: 16 }}>
                 <div>
                   <div style={{ fontSize: 14, fontWeight: 600 }}>{t("providerPortal.settings.emailNewBookings")}</div>
