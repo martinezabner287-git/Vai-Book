@@ -2594,6 +2594,12 @@ const css = `
   .no-business-customer-box { background: #FFFFFF; border-radius: 16px; padding: 18px; margin-bottom: 28px; }
   .no-business-customer-title { font-size: 15px; font-weight: 700; color: var(--dark-text); margin-bottom: 12px; }
   .no-business-customer-btn { width: 100%; background: var(--forest); color: #FFFFFF; border: none; border-radius: 12px; padding: 14px 0; font-size: 15px; font-weight: 700; cursor: pointer; font-family: inherit; }
+  .btn-sm:disabled, .btn-lime:disabled { opacity: .45 !important; cursor: not-allowed; }
+  .action-toast-wrap { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); z-index: 1000; display: flex; flex-direction: column; gap: 8px; width: min(520px, calc(100vw - 32px)); }
+  .action-toast { position: relative; background: var(--ink); color: #FFFFFF; border-radius: 12px; padding: 12px 40px 12px 14px; box-shadow: 0 12px 30px rgba(11,24,37,0.3); display: flex; flex-direction: column; gap: 2px; }
+  .action-toast-title { font-size: 13px; font-weight: 700; }
+  .action-toast-msg { font-size: 12.5px; color: rgba(255,255,255,0.8); word-break: break-word; }
+  .action-toast-close { position: absolute; top: 8px; right: 10px; background: none; border: none; color: rgba(255,255,255,0.7); font-size: 18px; cursor: pointer; }
   /* Small chips that used gold: soft indigo tint. */
   .service-badge.open, .provider-status-pill { background: var(--accent-soft); }
 
@@ -4086,6 +4092,9 @@ function AgreementsPanel({ providerId, businessName, clients, requests, requests
 // Move into en.json / es.json later if you want, same keys.
 const SETUP_TEXT = {
   en: {
+    serviceNeedName: "Type a service name to add it.",
+    serviceSaveFailed: "Couldn't save the service: {msg}",
+    serviceDescriptionSkipped: "Saved ✓ (the description wasn't saved yet — run the small SQL fix to turn descriptions on).",
     customerEscapeTitle: "Here to book an appointment?",
     customerEscapeButton: "Go to my bookings →",
     profileSaved: "Saved ✓",
@@ -4152,6 +4161,9 @@ const SETUP_TEXT = {
     rowBillingDesc: "View and manage your VaiBook plan",
   },
   es: {
+    serviceNeedName: "Escribe el nombre del servicio para agregarlo.",
+    serviceSaveFailed: "No se pudo guardar el servicio: {msg}",
+    serviceDescriptionSkipped: "Guardado ✓ (la descripción aún no se guardó — ejecuta el pequeño arreglo SQL para activar descripciones).",
     customerEscapeTitle: "¿Viniste a reservar una cita?",
     customerEscapeButton: "Ir a mis reservas →",
     profileSaved: "Guardado ✓",
@@ -10381,6 +10393,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
   const [services, setServices] = useState([]);
   const [serviceForm, setServiceForm] = useState({ name: "", price: "", duration_min: 15, description: "" });
   const [savingService, setSavingService] = useState(false);
+  const [serviceError, setServiceError] = useState("");
   const [editingServiceId, setEditingServiceId] = useState(null);
   const [editServiceForm, setEditServiceForm] = useState({ name: "", price: "", duration_min: 15, description: "" });
   const [savingServiceEdit, setSavingServiceEdit] = useState(false);
@@ -11755,10 +11768,35 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
     setSavingLocation(false);
   };
 
+  // FIXED (couldn't add a service): failures were only logged to the
+  // console, so the button looked like it did nothing. Now the real error
+  // shows under the button, and if the live database is missing the
+  // optional `description` column (PGRST204 — same class of problem as the
+  // missing `facebook` column), the service is saved without it instead.
+  const saveServiceRow = async (fields, serviceId) => {
+    const run = (row) => (serviceId
+      ? supabase.from("services").update(row).eq("id", serviceId).select().single()
+      : supabase.from("services").insert(row).select().single());
+    let res = await run(fields);
+    let droppedDescription = false;
+    if (res.error && res.error.code === "PGRST204" && /description/i.test(res.error.message || "")) {
+      const { description: _dropped, ...rest } = fields;
+      droppedDescription = !!fields.description;
+      res = await run(rest);
+    }
+    if (res.error) console.error("Error saving service:", res.error);
+    return { data: res.error ? null : res.data, error: res.error, droppedDescription };
+  };
+  const serviceErrorText = (error) => {
+    const msg = [error.message, error.details, error.hint].filter(Boolean).join(" · ");
+    return st("serviceSaveFailed", { msg });
+  };
+
   const handleAddService = async () => {
     if (!providerId || !serviceForm.name.trim()) return;
     setSavingService(true);
-    const created = await createService({
+    setServiceError("");
+    const { data: created, error, droppedDescription } = await saveServiceRow({
       provider_id: providerId,
       name: serviceForm.name.trim(),
       price: Number(serviceForm.price) || 0,
@@ -11769,6 +11807,9 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
     if (created) {
       setServices((prev) => [...prev, created]);
       setServiceForm({ name: "", price: "", duration_min: 15, description: "" });
+      if (droppedDescription) setServiceError(st("serviceDescriptionSkipped"));
+    } else if (error) {
+      setServiceError(serviceErrorText(error));
     }
     setSavingService(false);
   };
@@ -11795,15 +11836,19 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
   const handleSaveEditService = async (serviceId) => {
     if (!editServiceForm.name.trim()) return;
     setSavingServiceEdit(true);
-    const updated = await updateService(serviceId, {
+    setServiceError("");
+    const { data: updated, error, droppedDescription } = await saveServiceRow({
       name: editServiceForm.name.trim(),
       price: Number(editServiceForm.price) || 0,
       duration_min: Number(editServiceForm.duration_min) || 15,
       description: editServiceForm.description.trim() || null,
-    });
+    }, serviceId);
     if (updated) {
       setServices((prev) => prev.map((s) => (s.id === serviceId ? updated : s)));
       setEditingServiceId(null);
+      if (droppedDescription) setServiceError(st("serviceDescriptionSkipped"));
+    } else if (error) {
+      setServiceError(serviceErrorText(error));
     }
     setSavingServiceEdit(false);
   };
@@ -13260,6 +13305,8 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                   <textarea rows={2} placeholder={t("providerPortal.services.descriptionPlaceholder")} value={serviceForm.description} onChange={e => setServiceForm(f => ({ ...f, description: e.target.value }))} />
                 </div>
                 <button className="btn-sm lime" onClick={handleAddService} disabled={savingService || !serviceForm.name.trim()}>{savingService ? t("providerPortal.services.adding") : t("providerPortal.services.addService")}</button>
+                {!serviceForm.name.trim() && !serviceError && <p className="agree-hint">{st("serviceNeedName")}</p>}
+                {serviceError && <p className={serviceError === st("serviceDescriptionSkipped") ? "mk-success" : "agree-error"} style={{ wordBreak: "break-word" }}>{serviceError}</p>}
               </div>
             </div>
           </>
@@ -15716,6 +15763,42 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
 // hashchange listener below parse it identically.
 const parseBookingHash = (h) => (h.startsWith("book-") ? h.slice(5) : null);
 
+// Shows the real reason when a save/delete fails anywhere in the app (see
+// reportActionError in supabase.js) instead of the button silently doing
+// nothing.
+function ActionErrorToast() {
+  const { i18n } = useTranslation();
+  const es = (i18n.language || "en").startsWith("es");
+  const [items, setItems] = useState([]);
+  useEffect(() => {
+    const onErr = (e) => {
+      const d = e.detail || {};
+      let msg = d.message || "Unknown error";
+      const col = /Could not find the '([^']+)' column/.exec(msg);
+      if (col) msg = es ? `Falta la columna "${col[1]}" en la base de datos. Envía este mensaje a soporte.` : `The database is missing the "${col[1]}" column. Send this message to support.`;
+      else if (/row-level security|permission denied/i.test(msg)) msg = es ? "No tienes permiso para hacer esto con esta cuenta." : "This account isn't allowed to do that.";
+      else if (/Failed to fetch|NetworkError|network/i.test(msg)) msg = es ? "Sin conexión. Revisa tu internet e inténtalo de nuevo." : "No connection. Check your internet and try again.";
+      const id = Date.now() + Math.random();
+      setItems((list) => (list.some((x) => x.msg === msg) ? list : [...list.slice(-2), { id, msg }]));
+      setTimeout(() => setItems((list) => list.filter((x) => x.id !== id)), 8000);
+    };
+    window.addEventListener("vaibook-action-error", onErr);
+    return () => window.removeEventListener("vaibook-action-error", onErr);
+  }, [es]);
+  if (items.length === 0) return null;
+  return (
+    <div className="action-toast-wrap" role="alert">
+      {items.map((x) => (
+        <div key={x.id} className="action-toast">
+          <span className="action-toast-title">{es ? "No se pudo guardar" : "That didn't save"}</span>
+          <span className="action-toast-msg">{x.msg}</span>
+          <button className="action-toast-close" onClick={() => setItems((list) => list.filter((y) => y.id !== x.id))} aria-label="Close">×</button>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function App() {
   const [view, setView] = useState(() => {
     const h = window.location.hash.replace("#", "");
@@ -16213,6 +16296,7 @@ export default function App() {
     <>
       <style>{css}</style>
       <MaintenanceBanner />
+      <ActionErrorToast />
       {/* The homepage already has its own always-visible "Add to Home Screen"
           pill under the search bar (hero-get-app-btn) — this auto-popup
           banner used to also slide up a moment later on that same screen,
