@@ -267,12 +267,29 @@ export const getProviderProfile = async (userId) => {
 };
 
 export const upsertProviderProfile = async (profile) => {
+  // FIXED (photos/settings not saving): an upsert is an INSERT ... ON
+  // CONFLICT, so it must also pass the table's INSERT security policy even
+  // when the business row already exists — and that policy refuses it for
+  // providers. Every in-portal save passes the existing row's `id`, so in
+  // that case this is now a plain UPDATE of that row (which providers are
+  // allowed to do). Upsert is only used when there's no id yet.
+  if (profile && profile.id) {
+    const { id, user_id: _userId, ...fields } = profile;
+    const { data, error } = await supabase
+      .from('provider_profiles')
+      .update(fields)
+      .eq('id', id)
+      .select()
+      .single();
+    if (error) { reportActionError('upsertProviderProfile', error); console.error('Error saving provider profile:', error.message); }
+    return data;
+  }
   const { data, error } = await supabase
     .from('provider_profiles')
     .upsert(profile, { onConflict: 'user_id' })
     .select()
     .single();
-  if (error) reportActionError('upsertProviderProfile', error); console.error('Error saving provider profile:', error.message);
+  if (error) { reportActionError('upsertProviderProfile', error); console.error('Error saving provider profile:', error.message); }
   return data;
 };
 
@@ -293,18 +310,46 @@ export const createProviderProfile = async (profile) => {
 
 // ── PROVIDER PHOTO HELPERS ─────────────────────────────────────────
 
+// Re-encodes an image as JPEG (used if storage refuses WebP).
+const toJpegFile = async (file) => {
+  try {
+    const bitmap = await createImageBitmap(file);
+    const canvas = document.createElement('canvas');
+    canvas.width = bitmap.width; canvas.height = bitmap.height;
+    canvas.getContext('2d').drawImage(bitmap, 0, 0);
+    const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.85));
+    if (!blob) return null;
+    return new File([blob], (file.name || 'photo').replace(/\.[^.]+$/, '') + '.jpg', { type: 'image/jpeg' });
+  } catch (e) { return null; }
+};
+const UPLOAD_TIMEOUT_MS = 60000;
+const withTimeout = (promise, ms) => Promise.race([
+  promise,
+  new Promise((resolve) => setTimeout(() => resolve({ error: { message: 'The upload is taking too long. Check your internet connection and try again, or use a smaller photo.', code: 'UPLOAD_TIMEOUT' } }), ms)),
+]);
+
 export const uploadProviderPhoto = async (userId, file) => {
-  const ext = file.name.split('.').pop();
-  const path = `${userId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
-  const { error } = await supabase.storage.from('provider-photos').upload(path, file, {
-    cacheControl: '3600',
-    upsert: false,
-  });
-  if (error) {
-    reportActionError('uploadProviderPhoto', error); console.error('Error uploading photo:', error.message);
+  // FIXED (uploads "take forever and never load"): the upload now gives up
+  // after 60s with a clear message instead of spinning forever, retries as
+  // JPEG if storage refuses the WebP format, and reports any failure.
+  const put = (f) => {
+    const ext = (f.name || '').split('.').pop() || 'jpg';
+    const path = `${userId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+    return withTimeout(
+      supabase.storage.from('provider-photos').upload(path, f, { cacheControl: '3600', upsert: false, contentType: f.type || undefined }),
+      UPLOAD_TIMEOUT_MS
+    ).then((res) => ({ ...res, path }));
+  };
+  let res = await put(file);
+  if (res.error && res.error.code !== 'UPLOAD_TIMEOUT' && /mime|type|format|not allowed|invalid/i.test(res.error.message || '') && file.type !== 'image/jpeg') {
+    const jpeg = await toJpegFile(file);
+    if (jpeg) res = await put(jpeg);
+  }
+  if (res.error) {
+    reportActionError('uploadProviderPhoto', res.error); console.error('Error uploading photo:', res.error.message);
     return null;
   }
-  const { data } = supabase.storage.from('provider-photos').getPublicUrl(path);
+  const { data } = supabase.storage.from('provider-photos').getPublicUrl(res.path);
   return data?.publicUrl || null;
 };
 
