@@ -1288,6 +1288,17 @@ const css = `
 
 
 
+
+  /* ANNOUNCEMENTS + REBOOK */
+  .mk-success { color: #15803D; font-size: 13px; font-weight: 600; margin: 10px 0 0; }
+  .mk-reminded { font-size: 11.5px; color: #92400E; font-weight: 600; margin-top: 2px; }
+  .mk-client-actions { display: flex; gap: 8px; flex-wrap: wrap; margin: -14px 0 18px; }
+  .rebook-controls { background: var(--sand); border-radius: 14px; padding: 14px; margin-bottom: 16px; }
+  .rebook-label { font-size: 13px; font-weight: 700; color: var(--dark-text); margin-bottom: 8px; }
+  .rebook-auto-row { display: flex; align-items: center; gap: 14px; }
+  .rebook-setup-note { font-size: 13px; color: var(--muted); background: var(--sand); border-radius: 12px; padding: 12px; margin-bottom: 14px; line-height: 1.5; }
+  .agree-pill:disabled { opacity: .5; cursor: default; }
+
   /* BOOKING PAGE EXTRAS */
   .policies-text { font-size: 13px; color: var(--dark-text); line-height: 1.6; white-space: pre-wrap; margin: 0; }
   .booking-policies-box { background: var(--sand); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin: 4px 0 14px; }
@@ -2742,6 +2753,311 @@ function ProviderCarousel({ providers, badgeFor, onCardClick, ctaLabel, favorite
       {providers.length > 3 && (
         <button className="carousel-arrow" onClick={scrollNext} aria-label="Scroll for more">→</button>
       )}
+    </div>
+  );
+}
+
+// ── ANNOUNCEMENTS + REBOOK REMINDERS ─────────────────────────────────────
+// Needs supabase_announcements_rebook.sql run once in Supabase. In-app
+// messages go to clients' VaiBook notifications (bell); WhatsApp is one tap
+// per client (wa.me) since VaiBook has no bulk-WhatsApp backend.
+const MK_TEXT = {
+  en: {
+    navAnnouncements: "Announcements",
+    title: "Announcements",
+    subtitle: "Tell your clients about new hours, promos, holidays or open spots.",
+    titleLabel: "Title",
+    titlePlaceholder: "Open this Sunday!",
+    bodyLabel: "Message",
+    bodyPlaceholder: "We're open this Sunday 10am–4pm. Book your spot on VaiBook before it fills up.",
+    audienceLabel: "Send to",
+    audAll: "All clients",
+    audRecent: "Last 90 days",
+    audUpcoming: "Upcoming bookings",
+    sendApp: "Send in-app to {n}",
+    sending: "Sending...",
+    sentApp: "Sent ✓ Delivered to VaiBook notifications: {n}",
+    noRecipients: "No clients in this group yet.",
+    appHint: "Clients with a VaiBook account see it in their notifications (🔔). Up to 3 announcements a week.",
+    whatsappTitle: "Also send on WhatsApp",
+    whatsappHint: "One tap per client — WhatsApp opens with your message ready.",
+    copyMessage: "Copy message (for WhatsApp Status or a broadcast list)",
+    copied: "Copied ✓",
+    sendWa: "Send",
+    sentWa: "Sent ✓",
+    noPhone: "No number",
+    historyTitle: "Sent before",
+    historyEmpty: "No announcements yet.",
+    historyLine: "{date} · {aud} · {n} clients",
+    bookLine: "Book here: {url}",
+    needSetup: "Announcements and automatic reminders aren't switched on yet. Run supabase_announcements_rebook.sql in Supabase (SQL Editor) once, then refresh.",
+    error: "Couldn't send: {msg}",
+    // Rebook
+    hubAnnouncements: "Announcements",
+    hubAnnouncementsDesc: "Message your client list at once",
+    hubRebook: "Rebook reminders",
+    hubRebookDesc: "Bring clients back when they're due",
+    rebookTitle: "Rebook reminders",
+    rebookSub: "Clients who haven't been back in a while and have nothing booked.",
+    remindAfter: "Remind clients after",
+    days: "{n} days",
+    autoTitle: "Automatic reminders",
+    autoHint: "Every morning at 9am, due clients get a \"time for your next visit?\" reminder in their VaiBook notifications.",
+    autoUnavailable: "Automatic daily reminders need the pg_cron extension in Supabase (Database → Extensions). You can still use \"Remind all\" below.",
+    remindAll: "Send in-app reminder to {n}",
+    remindAllNone: "Everyone due has been reminded recently",
+    remindedAll: "Reminders sent: {n} ✓",
+    reminded: "Reminded {n}d ago",
+    remindedToday: "Reminded today",
+    dueCount: "{n} due",
+    clientsAnnounce: "📣 Announce",
+    clientsRebook: "🔁 Rebook reminders",
+  },
+  es: {
+    navAnnouncements: "Anuncios",
+    title: "Anuncios",
+    subtitle: "Avisa a tus clientes sobre nuevos horarios, promociones, feriados o espacios libres.",
+    titleLabel: "Título",
+    titlePlaceholder: "¡Abrimos este domingo!",
+    bodyLabel: "Mensaje",
+    bodyPlaceholder: "Abrimos este domingo de 10am a 4pm. Reserva tu espacio en VaiBook antes de que se llene.",
+    audienceLabel: "Enviar a",
+    audAll: "Todos los clientes",
+    audRecent: "Últimos 90 días",
+    audUpcoming: "Con reservas próximas",
+    sendApp: "Enviar en la app a {n}",
+    sending: "Enviando...",
+    sentApp: "Enviado ✓ Entregado en notificaciones de VaiBook: {n}",
+    noRecipients: "Aún no hay clientes en este grupo.",
+    appHint: "Los clientes con cuenta de VaiBook lo ven en sus notificaciones (🔔). Hasta 3 anuncios por semana.",
+    whatsappTitle: "También enviar por WhatsApp",
+    whatsappHint: "Un toque por cliente: WhatsApp se abre con tu mensaje listo.",
+    copyMessage: "Copiar mensaje (para Estado de WhatsApp o lista de difusión)",
+    copied: "Copiado ✓",
+    sendWa: "Enviar",
+    sentWa: "Enviado ✓",
+    noPhone: "Sin número",
+    historyTitle: "Enviados antes",
+    historyEmpty: "Aún no hay anuncios.",
+    historyLine: "{date} · {aud} · {n} clientes",
+    bookLine: "Reserva aquí: {url}",
+    needSetup: "Los anuncios y recordatorios automáticos aún no están activados. Ejecuta supabase_announcements_rebook.sql en Supabase (SQL Editor) una vez y recarga.",
+    error: "No se pudo enviar: {msg}",
+    hubAnnouncements: "Anuncios",
+    hubAnnouncementsDesc: "Escribe a toda tu lista de clientes a la vez",
+    hubRebook: "Recordatorios para volver",
+    hubRebookDesc: "Trae de vuelta a los clientes cuando les toca",
+    rebookTitle: "Recordatorios para volver",
+    rebookSub: "Clientes que no han vuelto en un tiempo y no tienen nada reservado.",
+    remindAfter: "Recordar a los clientes después de",
+    days: "{n} días",
+    autoTitle: "Recordatorios automáticos",
+    autoHint: "Cada mañana a las 9am, los clientes que ya les toca reciben un recordatorio en sus notificaciones de VaiBook.",
+    autoUnavailable: "Los recordatorios diarios automáticos necesitan la extensión pg_cron en Supabase (Database → Extensions). Aún puedes usar \"Recordar a todos\".",
+    remindAll: "Enviar recordatorio en la app a {n}",
+    remindAllNone: "A todos los pendientes ya se les recordó hace poco",
+    remindedAll: "Recordatorios enviados: {n} ✓",
+    reminded: "Recordado hace {n}d",
+    remindedToday: "Recordado hoy",
+    dueCount: "{n} pendientes",
+    clientsAnnounce: "📣 Anunciar",
+    clientsRebook: "🔁 Recordatorios",
+  },
+};
+const mkText = (lang, key, vars) => {
+  const dict = MK_TEXT[(lang || "en").slice(0, 2)] || MK_TEXT.en;
+  let str = dict[key] || MK_TEXT.en[key] || key;
+  if (vars) Object.keys(vars).forEach((k) => { str = str.split(`{${k}}`).join(vars[k]); });
+  return str;
+};
+const REBOOK_DAY_OPTIONS = [14, 21, 30, 45, 60, 90];
+const mkMissingSetup = (err) => !!err && (err.code === "PGRST202" || err.code === "PGRST205" || err.code === "PGRST204" || err.code === "42883" || err.code === "42P01");
+
+function AnnouncementsPanel({ providerId, businessName, clients, bookingUrl }) {
+  const { i18n } = useTranslation();
+  const lang = i18n.language;
+  const mt = (k, v) => mkText(lang, k, v);
+  const [form, setForm] = useState({ title: "", body: "", audience: "all" });
+  const [sending, setSending] = useState(false);
+  const [result, setResult] = useState(null); // {ok, n} | {error}
+  const [history, setHistory] = useState([]);
+  const [setupMissing, setSetupMissing] = useState(false);
+  const [waSent, setWaSent] = useState({});
+  const [copied, setCopied] = useState(false);
+
+  const loadHistory = async () => {
+    if (!providerId) return;
+    const { data, error } = await supabase.from("announcements").select("id, title, body, audience, recipients, created_at").eq("provider_id", providerId).order("created_at", { ascending: false }).limit(10);
+    if (error) { if (mkMissingSetup(error)) setSetupMissing(true); return; }
+    setHistory(data || []);
+  };
+  useEffect(() => { loadHistory(); /* eslint-disable-next-line */ }, [providerId]);
+
+  const ninetyDaysAgo = new Date(); ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
+  const inAudience = (c, aud) => aud === "all" || (aud === "recent" && c.lastDate && c.lastDate >= ninetyDaysAgo) || (aud === "upcoming" && c.hasUpcoming);
+  const audienceClients = clients.filter((c) => inAudience(c, form.audience));
+  const audLabel = (a) => mt(a === "all" ? "audAll" : a === "recent" ? "audRecent" : "audUpcoming");
+  const title = form.title.trim();
+  const body = form.body.trim();
+  const fullMessage = `${title}\n\n${body}\n\n${mt("bookLine", { url: bookingUrl })}`;
+
+  const sendApp = async () => {
+    if (!title || !body) return;
+    setSending(true); setResult(null);
+    const { data, error } = await supabase.rpc("send_announcement", { p_title: title, p_body: body, p_audience: form.audience });
+    setSending(false);
+    if (error) {
+      if (mkMissingSetup(error)) { setSetupMissing(true); return; }
+      setResult({ error: mt("error", { msg: error.message }) });
+      return;
+    }
+    setResult({ ok: true, n: Number(data) || 0 });
+    loadHistory();
+  };
+
+  if (setupMissing) {
+    return (
+      <>
+        <div className="portal-header"><h2>{mt("title")}</h2></div>
+        <div className="card" style={{ maxWidth: 560 }}><p style={{ fontSize: 14, lineHeight: 1.6 }}>{mt("needSetup")}</p></div>
+      </>
+    );
+  }
+
+  return (
+    <>
+      <div className="portal-header"><h2>{mt("title")}</h2><p>{mt("subtitle")}</p></div>
+      <div className="card" style={{ maxWidth: 620 }}>
+        <div className="input-group">
+          <label>{mt("titleLabel")}</label>
+          <input maxLength={80} placeholder={mt("titlePlaceholder")} value={form.title} onChange={(e) => { setForm((f) => ({ ...f, title: e.target.value })); setResult(null); }} />
+        </div>
+        <div className="input-group">
+          <label>{mt("bodyLabel")}</label>
+          <textarea style={{ height: 110 }} maxLength={600} placeholder={mt("bodyPlaceholder")} value={form.body} onChange={(e) => { setForm((f) => ({ ...f, body: e.target.value })); setResult(null); }} />
+          <div className="agree-hint" style={{ textAlign: "right" }}>{form.body.length}/600</div>
+        </div>
+        <div className="input-group">
+          <label>{mt("audienceLabel")}</label>
+          <div className="agree-pills">
+            {["all", "recent", "upcoming"].map((a) => (
+              <button key={a} type="button" className={`agree-pill ${form.audience === a ? "active" : ""}`} onClick={() => { setForm((f) => ({ ...f, audience: a })); setResult(null); setWaSent({}); }}>
+                {audLabel(a)} · {clients.filter((c) => inAudience(c, a)).length}
+              </button>
+            ))}
+          </div>
+        </div>
+        <button className="agree-sign-btn" disabled={sending || !title || !body || audienceClients.length === 0} onClick={sendApp}>
+          {sending ? mt("sending") : mt("sendApp", { n: audienceClients.length })}
+        </button>
+        <div className="agree-hint">{audienceClients.length === 0 ? mt("noRecipients") : mt("appHint")}</div>
+        {result?.ok && <p className="mk-success">{mt("sentApp", { n: result.n })}</p>}
+        {result?.error && <p className="agree-error">{result.error}</p>}
+      </div>
+
+      {title && body && audienceClients.length > 0 && (
+        <div className="card" style={{ maxWidth: 620, marginTop: 20 }}>
+          <div className="card-title">{mt("whatsappTitle")}</div>
+          <p style={{ fontSize: 13, color: "var(--muted)", marginTop: -8, marginBottom: 12 }}>{mt("whatsappHint")}</p>
+          <button className="btn-sm ghost" style={{ width: "100%", padding: "11px 0", marginBottom: 10 }} onClick={async () => { const ok = await copyText(fullMessage); setCopied(ok); setTimeout(() => setCopied(false), 2000); }}>
+            {copied ? mt("copied") : mt("copyMessage")}
+          </button>
+          {audienceClients.map((c) => {
+            const first = (c.name || "").split(" ")[0];
+            const msg = `Hi ${first}! ${fullMessage}`;
+            return (
+              <div key={c.id} className="booking-item" style={{ alignItems: "center", gap: 10 }}>
+                <div className="booking-info" style={{ flex: 1, minWidth: 0 }}>
+                  <div className="title">{c.name}</div>
+                  <div className="meta">{c.phone || mt("noPhone")}</div>
+                </div>
+                {c.phone ? (
+                  <a className={`btn-sm ${waSent[c.id] ? "ghost" : "forest"}`} style={{ textDecoration: "none" }} href={agreementWhatsAppUrl(c.phone, msg)} target="_blank" rel="noreferrer" onClick={() => setWaSent((s) => ({ ...s, [c.id]: true }))}>
+                    {waSent[c.id] ? mt("sentWa") : `💬 ${mt("sendWa")}`}
+                  </a>
+                ) : null}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      <div className="card" style={{ maxWidth: 620, marginTop: 20 }}>
+        <div className="card-title">{mt("historyTitle")}</div>
+        {history.length === 0 && <p style={{ fontSize: 13, color: "var(--muted)" }}>{mt("historyEmpty")}</p>}
+        {history.map((h) => (
+          <div key={h.id} className="booking-item" style={{ alignItems: "flex-start" }}>
+            <div className="booking-info" style={{ flex: 1, minWidth: 0 }}>
+              <div className="title">{h.title}</div>
+              <div className="meta" style={{ whiteSpace: "pre-wrap" }}>{h.body}</div>
+              <div className="meta" style={{ marginTop: 4 }}>{mt("historyLine", { date: agreementDate(h.created_at, lang), aud: audLabel(h.audience), n: h.recipients })}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </>
+  );
+}
+
+// Rebook reminder settings + actions, shown at the top of the existing
+// "Send check-in" sheet.
+function RebookControls({ providerProfile, dueCount, onProfileUpdate, onReminded }) {
+  const { i18n } = useTranslation();
+  const mt = (k, v) => mkText(i18n.language, k, v);
+  const [saving, setSaving] = useState(false);
+  const [autoAvailable, setAutoAvailable] = useState(null);
+  const [msg, setMsg] = useState(null);
+  const [setupMissing, setSetupMissing] = useState(false);
+  const [sendingAll, setSendingAll] = useState(false);
+  const days = providerProfile?.rebook_days || 21;
+  useEffect(() => {
+    (async () => {
+      const { data, error } = await supabase.rpc("rebook_auto_available");
+      if (error) { if (mkMissingSetup(error)) setSetupMissing(true); setAutoAvailable(false); return; }
+      setAutoAvailable(!!data);
+    })();
+  }, []);
+  const save = async (fields) => {
+    if (!providerProfile?.id) return;
+    setSaving(true); setMsg(null);
+    const { data, error } = await supabase.from("provider_profiles").update(fields).eq("id", providerProfile.id).select().single();
+    setSaving(false);
+    if (error) { if (mkMissingSetup(error)) setSetupMissing(true); else setMsg({ error: error.message }); return; }
+    onProfileUpdate && onProfileUpdate(data);
+  };
+  const remindAll = async () => {
+    setSendingAll(true); setMsg(null);
+    const { data, error } = await supabase.rpc("send_rebook_reminders");
+    setSendingAll(false);
+    if (error) { if (mkMissingSetup(error)) setSetupMissing(true); else setMsg({ error: error.message }); return; }
+    setMsg({ ok: mt("remindedAll", { n: Number(data) || 0 }) });
+    onReminded && onReminded();
+  };
+  if (setupMissing) return <p className="rebook-setup-note">{mt("needSetup")}</p>;
+  return (
+    <div className="rebook-controls">
+      <div className="rebook-label">{mt("remindAfter")}</div>
+      <div className="agree-pills" style={{ marginBottom: 14 }}>
+        {REBOOK_DAY_OPTIONS.map((d) => (
+          <button key={d} type="button" disabled={saving} className={`agree-pill ${days === d ? "active" : ""}`} onClick={() => save({ rebook_days: d })}>{mt("days", { n: d })}</button>
+        ))}
+      </div>
+      <div className="rebook-auto-row">
+        <div style={{ flex: 1 }}>
+          <div className="rebook-label" style={{ marginBottom: 2 }}>{mt("autoTitle")}</div>
+          <div className="agree-hint" style={{ marginTop: 0 }}>{autoAvailable === false ? mt("autoUnavailable") : mt("autoHint")}</div>
+        </div>
+        <div
+          className={`toggle ${providerProfile?.rebook_auto ? "on" : ""}`}
+          style={{ flexShrink: 0, opacity: saving || autoAvailable === false ? 0.45 : 1, pointerEvents: autoAvailable === false ? "none" : "auto" }}
+          onClick={() => save({ rebook_auto: !providerProfile?.rebook_auto })}
+        ></div>
+      </div>
+      <button className="agree-sign-btn" style={{ marginTop: 12 }} disabled={sendingAll || dueCount === 0} onClick={remindAll}>
+        {dueCount === 0 ? mt("remindAllNone") : sendingAll ? mt("sending") : mt("remindAll", { n: dueCount })}
+      </button>
+      {msg?.ok && <p className="mk-success">{msg.ok}</p>}
+      {msg?.error && <p className="agree-error">{msg.error}</p>}
     </div>
   );
 }
@@ -5218,6 +5534,10 @@ const NOTIF_DESTINATIONS = {
   review_reply: { view: "customer", tab: "bookings" },
   payment_due_reminder: { view: "provider", tab: "billing" },
   payment_overdue_suspended: { view: "provider", tab: "billing" },
+  // Announcements and rebook reminders from a business → the customer home,
+  // where "Book again" puts that business one tap away.
+  announcement: { view: "customer", tab: "home" },
+  rebook: { view: "customer", tab: "home" },
 };
 
 // Site-wide banner for the admin-only emergency maintenance switch (see
@@ -5363,6 +5683,7 @@ const PORTAL_TOOLS_BY_VIEW = {
     { id: "reviews", icon: "⭐", label: "My reviews" },
     { id: "review", icon: "📈", label: "Monthly review" },
     { id: "profile", icon: "👤", label: "Public profile" },
+    { id: "announcements", icon: "📣", label: "Announcements" },
     { id: "agreements", icon: "✍️", label: "Agreements" },
     { id: "modules", icon: "🧩", label: "Modules" },
     { id: "settings", icon: "⚙️", label: "Settings" },
@@ -9784,6 +10105,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
   const st = (key, vars) => setupText(i18n.language, key, vars);
   const at = (key, vars) => agreeText(i18n.language, key, vars);
   const bt = (key, vars) => bpText(i18n.language, key, vars);
+  const mt = (key, vars) => mkText(i18n.language, key, vars);
   // Remembers which tab this account was on, so a refresh lands back on
   // "My bookings" (or wherever) instead of always resetting to "Dashboard"
   // — same sessionStorage pattern as App's own vaibook_last_view, just
@@ -10022,6 +10344,24 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
     onProviderProfileUpdate && onProviderProfileUpdate(data);
   };
 
+  // REBOOK REMINDERS — latest reminder per client (WhatsApp tap or in-app),
+  // so the radar can skip people who were just reminded.
+  const [rebookNudges, setRebookNudges] = useState({});
+  const loadRebookNudges = async () => {
+    if (!providerId) return;
+    const since = new Date(); since.setDate(since.getDate() - 200);
+    const { data, error } = await supabase.from("rebook_nudges").select("customer_id, sent_at").eq("provider_id", providerId).gte("sent_at", since.toISOString()).order("sent_at", { ascending: false }).limit(1000);
+    if (error || !data) return;
+    const map = {};
+    data.forEach((n) => { if (!map[n.customer_id]) map[n.customer_id] = n.sent_at; });
+    setRebookNudges(map);
+  };
+  const logWhatsAppNudge = async (customerId) => {
+    if (!providerId || !customerId) return;
+    setRebookNudges((m) => ({ ...m, [customerId]: new Date().toISOString() }));
+    await supabase.from("rebook_nudges").insert({ provider_id: providerId, customer_id: customerId, channel: "whatsapp" });
+  };
+
   // AGREEMENTS — sent/signed copies, loaded here (not inside the panel) so
   // the Clients tab can show each client's agreement status too.
   const [agreementRequests, setAgreementRequests] = useState([]);
@@ -10039,6 +10379,10 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
     setAgreementRequestsError(null);
     setAgreementRequests(data || []);
   };
+  useEffect(() => {
+    if (providerId && (tab === "dashboard" || tab === "clients")) loadRebookNudges();
+    // eslint-disable-next-line
+  }, [providerId, tab]);
   useEffect(() => {
     if (providerId && (tab === "clients" || tab === "agreements")) loadAgreementRequests();
     // eslint-disable-next-line
@@ -11329,6 +11673,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
       label: t("providerPortal.nav.groupGrowth"),
       items: [
         { id: "reviews", icon: "⭐", label: t("providerPortal.nav.reviews") },
+        { id: "announcements", icon: "📣", label: mt("navAnnouncements") },
         { id: "agreements", icon: "✍️", label: at("navAgreements") },
         { id: "modules", icon: "🧩", label: t("providerPortal.nav.addons") },
       ],
@@ -11519,7 +11864,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
   //  - "second" touch at 28+ days quiet (a week past the first-touch
   //    window) — a softer follow-up for anyone still quiet a week later,
   //    with its own, less repetitive wording (see CheckInModal below).
-  const REBOOK_QUIET_DAYS = 21;
+  const REBOOK_QUIET_DAYS = providerProfile?.rebook_days || 21;
   const REBOOK_SECOND_TOUCH_DAYS = REBOOK_QUIET_DAYS + 7;
   const customerHistory = {};
   bookings.forEach((b) => {
@@ -11547,7 +11892,13 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
       return { ...c, daysAgo, stage };
     })
     .filter((c) => c.stage)
-    .sort((a, b) => a.lastDate - b.lastDate);
+    .map((c) => {
+      const sent = rebookNudges[c.id];
+      const remindedDaysAgo = sent ? Math.max(0, Math.floor((now.getTime() - new Date(sent).getTime()) / (24 * 60 * 60 * 1000))) : null;
+      return { ...c, remindedDaysAgo, recentlyReminded: remindedDaysAgo != null && remindedDaysAgo < REBOOK_QUIET_DAYS };
+    })
+    .sort((a, b) => (a.recentlyReminded ? 1 : 0) - (b.recentlyReminded ? 1 : 0) || a.lastDate - b.lastDate);
+  const rebookDueCount = quietRegulars.filter((c) => !c.recentlyReminded).length;
 
   // "Clients" tab — replaces the old manually-starred "VIP clients" list
   // with a real directory: every registered customer who has ever actually
@@ -12102,10 +12453,10 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
             {/* REBOOKING RADAR — a quiet retention nudge, not another
                 inbox to manage: only surfaces when there's actually
                 someone worth reaching out to. */}
-            {quietRegulars.length > 0 && (
+            {rebookDueCount > 0 && (
               <div className="rebook-radar">
                 <div className="rebook-radar-text">
-                  🔁 {t("providerPortal.dashboard.rebookRadarText", { count: quietRegulars.length })}
+                  🔁 {t("providerPortal.dashboard.rebookRadarText", { count: rebookDueCount })}
                 </div>
                 <button className="rebook-radar-btn" onClick={() => setShowCheckInModal(true)}>{t("providerPortal.dashboard.sendCheckIn")}</button>
               </div>
@@ -12116,6 +12467,12 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
         {tab === "clients" && (
           <>
             <div className="portal-header"><h2>{t("providerPortal.nav.clients")}</h2><p>{t("providerPortal.clients.subtitle")}</p></div>
+            <div className="mk-client-actions">
+              <button className="btn-sm forest" onClick={() => setTab("announcements")}>{mt("clientsAnnounce")}</button>
+              <button className="btn-sm ghost" onClick={() => setShowCheckInModal(true)}>
+                {mt("clientsRebook")}{rebookDueCount > 0 ? ` · ${mt("dueCount", { n: rebookDueCount })}` : ""}
+              </button>
+            </div>
             <div className="card">
               <div className="card-title" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <span>{t("providerPortal.clients.allClients", { count: allClients.length })}</span>
@@ -13470,6 +13827,14 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
         )}
 
         {tab === "modules" && <ModulesPanel />}
+        {tab === "announcements" && (
+          <AnnouncementsPanel
+            providerId={providerId}
+            businessName={providerProfile?.business_name || ""}
+            clients={allClients}
+            bookingUrl={bookingUrl}
+          />
+        )}
         {tab === "agreements" && (
           <AgreementsPanel
             providerId={providerId}
@@ -13508,6 +13873,8 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                 ] },
                 { group: st("groupAutomations"), rows: [
                   { title: st("rowNotifications"), desc: st("rowNotificationsDesc"), go: () => goToSettingsCard("settings-notifications") },
+                  { title: mt("hubAnnouncements"), desc: mt("hubAnnouncementsDesc"), go: () => setTab("announcements") },
+                  { title: mt("hubRebook"), desc: mt("hubRebookDesc"), go: () => { setTab("dashboard"); setShowCheckInModal(true); } },
                   { title: st("rowModules"), desc: st("rowModulesDesc"), go: () => setTab("modules") },
                 ] },
                 { group: st("groupAccount"), rows: [
@@ -13780,6 +14147,12 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
             <div className="sheet-handle"></div>
             <h3 style={{ fontSize: 17, fontWeight: 800, margin: "0 0 4px", color: "var(--dark-text)" }}>{t("providerPortal.checkInModal.title")}</h3>
             <p style={{ fontSize: 13, color: "var(--muted)", margin: "0 0 16px" }}>{t("providerPortal.checkInModal.subtitle")}</p>
+            <RebookControls
+              providerProfile={providerProfile}
+              dueCount={rebookDueCount}
+              onProfileUpdate={(u) => onProviderProfileUpdate && onProviderProfileUpdate(u)}
+              onReminded={loadRebookNudges}
+            />
             <div style={{ maxHeight: "50vh", overflowY: "auto" }}>
               {quietRegulars.map((c, i) => {
                 // Second touch gets its own, less repetitive wording rather
@@ -13810,9 +14183,12 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                       <div style={{ fontSize: 12, color: "var(--muted)" }}>
                         {isFirstTimer ? t("providerPortal.checkInModal.lastVisitFirstTime", { days: c.daysAgo }) : t("providerPortal.checkInModal.lastVisit", { days: c.daysAgo })}
                       </div>
+                      {c.remindedDaysAgo != null && (
+                        <div className="mk-reminded">{c.remindedDaysAgo === 0 ? mt("remindedToday") : mt("reminded", { n: c.remindedDaysAgo })}</div>
+                      )}
                     </div>
                     {waUrl ? (
-                      <a className="btn-sm forest" style={{ textDecoration: "none" }} href={waUrl} target="_blank" rel="noreferrer">💬 {t("providerPortal.checkInModal.messageButton")}</a>
+                      <a className={`btn-sm ${c.recentlyReminded ? "ghost" : "forest"}`} style={{ textDecoration: "none" }} href={waUrl} target="_blank" rel="noreferrer" onClick={() => logWhatsAppNudge(c.id)}>💬 {t("providerPortal.checkInModal.messageButton")}</a>
                     ) : (
                       <span style={{ fontSize: 11, color: "var(--muted)" }}>{t("providerPortal.checkInModal.noPhone")}</span>
                     )}
