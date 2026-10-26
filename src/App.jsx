@@ -2671,6 +2671,9 @@ function ProviderCarousel({ providers, badgeFor, onCardClick, ctaLabel, favorite
 // Move into en.json / es.json later if you want, same keys.
 const SETUP_TEXT = {
   en: {
+    profileSaved: "Saved ✓",
+    profileSaveFailed: "Couldn't save. Check your connection and try again.",
+    profileUnsaved: "You have unsaved changes",
     finishTitle: "Finish your profile",
     finishSub: "Complete profiles get booked more. {done} of {total} done.",
     stepPhoto: "Add a profile photo",
@@ -2732,6 +2735,9 @@ const SETUP_TEXT = {
     rowBillingDesc: "View and manage your VaiBook plan",
   },
   es: {
+    profileSaved: "Guardado ✓",
+    profileSaveFailed: "No se pudo guardar. Revisa tu conexión e inténtalo de nuevo.",
+    profileUnsaved: "Tienes cambios sin guardar",
     finishTitle: "Completa tu perfil",
     finishSub: "Los perfiles completos reciben más reservas. {done} de {total} listos.",
     stepPhoto: "Agrega una foto de perfil",
@@ -8805,6 +8811,11 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
 
   const [redeemingId, setRedeemingId] = useState(null);
   const [savingProfile, setSavingProfile] = useState(false);
+  // What the profile form looked like when it was last loaded from the
+  // database. Lets a background profile reload (login refresh, tab refocus)
+  // keep anything the provider typed but hasn't saved yet.
+  const loadedProfileFormRef = useRef(null);
+  const [profileSaveMsg, setProfileSaveMsg] = useState(null);
   const [photos, setPhotos] = useState([]);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
@@ -9453,7 +9464,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
 
   useEffect(() => {
     if (providerProfile) {
-      setProfileForm({
+      const fromDb = {
         business_name: providerProfile.business_name || "",
         bio: providerProfile.bio || "",
         district: providerProfile.district || "",
@@ -9462,6 +9473,21 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
         facebook: providerProfile.facebook || "",
         tax_id: providerProfile.tax_id || "",
         is_featured: !!providerProfile.is_featured,
+      };
+      // FIXED (bio/Instagram vanishing): this effect re-runs on every
+      // background profile reload. It used to overwrite the form outright,
+      // wiping anything typed but not yet saved. Now a field the provider
+      // has edited since the last load keeps their value.
+      setProfileForm((prev) => {
+        const base = loadedProfileFormRef.current;
+        const next = { ...fromDb };
+        if (base && prev) {
+          Object.keys(next).forEach((k) => {
+            if (k !== "is_featured" && prev[k] !== base[k]) next[k] = prev[k];
+          });
+        }
+        loadedProfileFormRef.current = fromDb;
+        return next;
       });
       setLoyaltyForm({
         enabled: !!providerProfile.loyalty_enabled,
@@ -9879,10 +9905,34 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
   const saveProfile = async () => {
     if (!providerId) return;
     setSavingProfile(true);
+    setProfileSaveMsg(null);
     const updated = await upsertProviderProfile({ id: providerProfile.id, user_id: providerProfile.user_id, ...profileForm });
-    if (updated) onProviderProfileUpdate && onProviderProfileUpdate(updated);
+    if (updated) {
+      // Treat what we just saved as the new baseline before the profile
+      // reload lands, so it doesn't look like unsaved edits.
+      loadedProfileFormRef.current = { ...profileForm, is_featured: !!updated.is_featured };
+      onProviderProfileUpdate && onProviderProfileUpdate(updated);
+      setProfileSaveMsg("ok");
+    } else {
+      setProfileSaveMsg("error");
+    }
     setSavingProfile(false);
   };
+  const profileHasUnsavedChanges = (() => {
+    const base = loadedProfileFormRef.current;
+    if (!base) return false;
+    return ["business_name", "bio", "district", "whatsapp", "instagram", "facebook", "tax_id"].some((k) => (profileForm[k] || "") !== (base[k] || ""));
+  })();
+  // Auto-save when leaving the profile page with unsaved edits, so going
+  // back to the dashboard never throws away a bio or Instagram link.
+  const prevTabRef = useRef(tab);
+  useEffect(() => {
+    if (prevTabRef.current === "profile" && tab !== "profile" && profileHasUnsavedChanges && !savingProfile) {
+      saveProfile();
+    }
+    if (tab !== "profile") setProfileSaveMsg(null);
+    prevTabRef.current = tab;
+  }, [tab]);
 
   // "Featured in district search" — Business plan only, saves immediately
   // on toggle rather than waiting for the main "Save profile" button.
@@ -12143,7 +12193,12 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                 <label>{t("providerPortal.profile.taxIdLabel")}</label>
                 <input placeholder={t("providerPortal.profile.taxIdPlaceholder")} value={profileForm.tax_id} onChange={e => setProfileForm(f => ({ ...f, tax_id: e.target.value }))} />
               </div>
-              <button className="btn-sm forest" onClick={saveProfile} disabled={savingProfile}>{savingProfile ? t("providerPortal.common.saving") : t("providerPortal.profile.saveProfile")}</button>
+              <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+                <button className="btn-sm forest" onClick={saveProfile} disabled={savingProfile}>{savingProfile ? t("providerPortal.common.saving") : t("providerPortal.profile.saveProfile")}</button>
+                {profileSaveMsg === "ok" && !profileHasUnsavedChanges && <span style={{ fontSize: 13, fontWeight: 600, color: "#15803D" }}>{st("profileSaved")}</span>}
+                {profileSaveMsg === "error" && <span style={{ fontSize: 13, fontWeight: 600, color: "#B91C1C" }}>{st("profileSaveFailed")}</span>}
+                {profileSaveMsg !== "error" && profileHasUnsavedChanges && !savingProfile && <span style={{ fontSize: 13, color: "var(--muted)" }}>{st("profileUnsaved")}</span>}
+              </div>
             </div>
 
             <div className="card" style={{ maxWidth: 560, marginTop: 20 }}>
@@ -14380,7 +14435,7 @@ export default function App() {
   const authProps = {
     session, user, providerProfile,
     onSignIn: signInWithGoogle, onSignOut: handleSignOut,
-    onUserUpdate: setUser, onProviderProfileUpdate: setProviderProfile,
+    onUserUpdate: setUser, onProviderProfileUpdate: (u) => setProviderProfile((prev) => (prev && u ? { ...prev, ...u } : u)),
   };
 
   return (
