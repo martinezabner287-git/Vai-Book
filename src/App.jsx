@@ -16345,6 +16345,10 @@ export default function App() {
   const [providerProfile, setProviderProfile] = useState(null);
   const [staffProfile, setStaffProfile] = useState(null);
   const [loading, setLoading] = useState(true);
+  // Which signed-in account has finished loading its business/staff
+  // profile — the "home → portal" redirect below waits for this so a
+  // business owner is never sent to the customer side by mistake.
+  const [rolesReadyFor, setRolesReadyFor] = useState(null);
 
   // getOrCreateUser can now throw on a real query failure (see
   // supabase.js) rather than silently treating it as "no users row yet"
@@ -16510,6 +16514,7 @@ export default function App() {
           sp = p ? null : await loadStaffProfile();
           setStaffProfile(sp);
         }
+        setRolesReadyFor(session.user.id);
         const hadPending = applyPendingView();
         const wasAdmin = await maybeGoToAdmin(session.user.email, hadPending);
         restoreLastPortalView(hadPending, wasAdmin, !!p || !!sp);
@@ -16537,6 +16542,7 @@ export default function App() {
           setProviderProfile(p);
           setStaffProfile(p ? null : await loadStaffProfile());
         }
+        setRolesReadyFor(session.user.id);
         const hadPending = applyPendingView();
         if (event === "SIGNED_IN") {
           const wasAdmin = await maybeGoToAdmin(session.user.email, hadPending);
@@ -16571,6 +16577,7 @@ export default function App() {
         setUser(null);
         setProviderProfile(null);
         setStaffProfile(null);
+        setRolesReadyFor(null);
       }
     });
 
@@ -16677,6 +16684,31 @@ export default function App() {
     try { sessionStorage.setItem("vaibook_last_view", view); } catch (e) { /* ignore */ }
   }, [view]);
 
+  // SIGNED-IN USERS NEVER SEE THE MARKETING HOMEPAGE. Any time the view
+  // lands on "home" while someone is logged in (opening the app, tapping
+  // the logo, a "Back to site" link), send them to their own portal's
+  // home instead: admins → admin portal, business owners and staff →
+  // business portal, everyone else → customer home.
+  const homeIsSignedIn = view === "home" && !!session;
+  const hasBusinessSide = !!providerProfile || !!staffProfile;
+  const signedInUserId = session?.user?.id || null;
+  useEffect(() => {
+    if (!homeIsSignedIn || loading || !signedInUserId || rolesReadyFor !== signedInUserId) return;
+    let cancelled = false;
+    (async () => {
+      let isAdmin = false;
+      try { isAdmin = await checkIsAdmin(session.user.email); } catch (e) { /* treat as not admin */ }
+      if (cancelled) return;
+      if (isAdmin) setView("admin");
+      else if (hasBusinessSide) setView("provider");
+      else {
+        try { sessionStorage.setItem("vaibook_customer_tab", "home"); } catch (e) { /* ignore */ }
+        setView("customer");
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [homeIsSignedIn, loading, rolesReadyFor, signedInUserId, hasBusinessSide]);
+
   const handleSignOut = async () => {
     clearLocalSoloSessionToken();
     await signOut();
@@ -16755,7 +16787,10 @@ export default function App() {
           view — including the Staff Portal, which still uses the old
           sidebar layout — keeps the global nav as before. */}
       {view !== "auth" && !(view === "provider" && providerProfile) && <Nav onNav={setView} current={view} staffProfile={staffProfile} {...authProps} />}
-      {view === "home" && <LandingPage onNav={setView} {...authProps} />}
+      {view === "home" && !session && <LandingPage onNav={setView} {...authProps} />}
+      {view === "home" && session && (
+        <div style={{ minHeight: "60vh", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--muted, #6C7281)", fontSize: 14 }}>Loading your account…</div>
+      )}
       {view === "providers" && <ProviderLandingPage onNav={setView} {...authProps} />}
       {view === "customer" && (
         <CustomerPortal
