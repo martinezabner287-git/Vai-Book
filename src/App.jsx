@@ -5470,39 +5470,43 @@ function AuthChoice({ onNav, session, onSignIn, onSignOut }) {
                   <BusinessLoginForm onNav={onNav} onSignIn={onSignIn} />
                 </div>
               )}
-              <div className="auth-option-card auth-option-card-sm" onClick={() => (session ? enterProviderPortal(onNav, session, onSignIn) : setShowBizLogin(true))}>
-                <div>
-                  <h3>{t("auth.alreadyListed")}</h3>
-                  <p>{blText(i18n.language, "cardListedDesc")}</p>
+              {!(showBizLogin && !session) && (
+                <>
+                <div className="auth-option-card auth-option-card-sm" onClick={() => (session ? enterProviderPortal(onNav, session, onSignIn) : setShowBizLogin(true))}>
+                  <div>
+                    <h3>{t("auth.alreadyListed")}</h3>
+                    <p>{blText(i18n.language, "cardListedDesc")}</p>
+                  </div>
+                  <span className="auth-option-arrow">→</span>
                 </div>
-                <span className="auth-option-arrow">→</span>
-              </div>
-              {/* A staff member someone else added (Staff tab, Team plan) has
-                  no business of their own and isn't signing one up either —
-                  neither of the other two cards describes them, which is
-                  exactly why this was confusing. This goes through the same
-                  enterProviderPortal() sign-in as "Already have a business
-                  listed": the backend tells the two apart by whether the
-                  signed-in email owns a provider_profiles row or only a
-                  claimed/claimable provider_staff seat (see loadStaffProfile
-                  in App()), and routes to StaffPortal vs ProviderPortal
-                  automatically — this card only needed to stop making staff
-                  guess which of the other two was "them." */}
-              <div className="auth-option-card auth-option-card-sm" onClick={() => (session ? enterProviderPortal(onNav, session, onSignIn) : setShowBizLogin(true))}>
-                <div>
-                  <h3>{t("auth.staffMember")}</h3>
-                  <p>{blText(i18n.language, "cardStaffDesc")}</p>
+                {/* A staff member someone else added (Staff tab, Team plan) has
+                    no business of their own and isn't signing one up either —
+                    neither of the other two cards describes them, which is
+                    exactly why this was confusing. This goes through the same
+                    enterProviderPortal() sign-in as "Already have a business
+                    listed": the backend tells the two apart by whether the
+                    signed-in email owns a provider_profiles row or only a
+                    claimed/claimable provider_staff seat (see loadStaffProfile
+                    in App()), and routes to StaffPortal vs ProviderPortal
+                    automatically — this card only needed to stop making staff
+                    guess which of the other two was "them." */}
+                <div className="auth-option-card auth-option-card-sm" onClick={() => (session ? enterProviderPortal(onNav, session, onSignIn) : setShowBizLogin(true))}>
+                  <div>
+                    <h3>{t("auth.staffMember")}</h3>
+                    <p>{blText(i18n.language, "cardStaffDesc")}</p>
+                  </div>
+                  <span className="auth-option-arrow">→</span>
                 </div>
-                <span className="auth-option-arrow">→</span>
-              </div>
-              <div className="auth-option-card auth-option-card-sm" onClick={() => onNav("signup")}>
-                <div>
-                  <h3>{t("auth.newBusiness")}</h3>
-                  <p>{blText(i18n.language, "cardNewDesc")}</p>
+                <div className="auth-option-card auth-option-card-sm" onClick={() => onNav("signup")}>
+                  <div>
+                    <h3>{t("auth.newBusiness")}</h3>
+                    <p>{blText(i18n.language, "cardNewDesc")}</p>
+                  </div>
+                  <span className="auth-option-arrow">→</span>
                 </div>
-                <span className="auth-option-arrow">→</span>
-              </div>
-              <a className="auth-provider-fork-back" onClick={() => setShowProviderFork(false)}>{t("auth.back")}</a>
+                </>
+              )}
+              <a className="auth-provider-fork-back" onClick={() => (showBizLogin ? setShowBizLogin(false) : setShowProviderFork(false))}>{t("auth.back")}</a>
             </div>
           )}
         </div>
