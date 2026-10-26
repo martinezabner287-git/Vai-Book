@@ -1708,10 +1708,10 @@ const css = `
      only the same single-purpose tokens, plus this section's own --cxp-*
      literals, get a light equivalent. */
   :root[data-theme="light"] .cx-account-page {
-    --sand: #F3F1FC;
-    --dark-text: #17141F;
-    --muted: #6B6578;
-    --border: #E7E2F5;
+    --sand: #F4F2EE;
+    --dark-text: #16181D;
+    --muted: #6C7281;
+    --border: #E7E4DE;
     --cxp-heading: #17141F;
     --cxp-text-dim: #6B6578;
     --cxp-text-dim-2: #4A4356;
@@ -1725,7 +1725,7 @@ const css = `
     --cxp-tint-4: #E7E2F5;
     --cxp-tint-5: #E7E2F5;
     --cxp-tint-6: #D5CFE8;
-    --cxp-disabled-bg: #F5F3FB;
+    --cxp-disabled-bg: #F4F2EE;
     --cxp-disabled-text: #9890A8;
     --cxp-star-off: #D9D9D9;
     background: #F1EEFB;
@@ -2682,6 +2682,54 @@ const css = `
   .pl-pending .pl-pending-meta { color: var(--muted) !important; }
   .pl-pending .pl-pending-meta strong { color: var(--dark-text) !important; }
   .pl-pending-back { color: var(--dark-text) !important; border-color: var(--border) !important; background: #FFFFFF !important; }
+  /* Account area (Vai Buy style) */
+  .acct-side { background: #FFFFFF; border: 1px solid var(--border); border-radius: 18px; padding: 18px 14px; }
+  .acct-side-user { display: flex; align-items: center; gap: 12px; padding: 4px 6px 16px; border-bottom: 1px solid var(--border); margin-bottom: 12px; }
+  .acct-side-avatar { width: 46px; height: 46px; border-radius: 50%; background: var(--accent-soft); color: var(--forest); font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .acct-side-name { font-weight: 700; font-size: 15px; color: var(--dark-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .acct-side-role { font-size: 13px; color: var(--muted); }
+  .acct-side-nav { display: flex; flex-direction: column; gap: 4px; }
+  .acct-side-item { display: flex; align-items: center; gap: 12px; width: 100%; background: none; border: none; border-radius: 10px; padding: 11px 12px; font-size: 15px; font-weight: 500; color: #3A4150; cursor: pointer; text-align: left; font-family: inherit; }
+  .acct-side-item:hover { background: var(--sand); }
+  .acct-side-item.active { background: var(--accent-soft); color: var(--forest); font-weight: 600; }
+  .acct-side-logout { color: #DC2626; margin-top: 10px; }
+  .acct-side-logout:hover { background: #FEF2F2; }
+  @media (min-width: 900px) {
+    .portal-content.acct-with-side { position: relative; padding-left: 330px; min-height: 640px; }
+    .acct-with-side .acct-side { position: absolute; left: 32px; top: 32px; width: 270px; }
+  }
+  @media (max-width: 899px) {
+    .acct-side { padding: 10px; margin-bottom: 18px; }
+    .acct-side-user { display: none; }
+    .acct-side-nav { flex-direction: row; overflow-x: auto; scrollbar-width: none; }
+    .acct-side-nav::-webkit-scrollbar { display: none; }
+    .acct-side-item { width: auto; white-space: nowrap; padding: 9px 12px; font-size: 14px; }
+    .acct-side-logout { margin-top: 0; }
+  }
+  .acct-cards { display: grid; gap: 20px; margin-top: 20px; max-width: 760px; }
+  .acct-card { padding: 26px 26px 24px; }
+  .acct-card-title { font-size: 20px; font-weight: 800; color: var(--dark-text); letter-spacing: -0.01em; }
+  .acct-card-sub { font-size: 14px; color: var(--muted); margin: 4px 0 18px; line-height: 1.5; }
+  .acct-pw-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 560px) { .acct-pw-grid { grid-template-columns: 1fr; } }
+  .pw-rules { list-style: none; padding: 0; margin: -4px 0 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 6px 18px; }
+  .pw-rules li { font-size: 13px; color: var(--muted); display: flex; gap: 7px; align-items: center; }
+  .pw-rules li span { width: 14px; text-align: center; }
+  .pw-rules li.ok { color: #15803D; }
+  @media (max-width: 560px) { .pw-rules { grid-template-columns: 1fr; } }
+  .acct-btn { background: var(--forest); color: #FFFFFF; border: none; border-radius: 12px; padding: 13px 22px; font-size: 15px; font-weight: 700; cursor: pointer; font-family: inherit; }
+  .acct-btn:disabled { opacity: .45; cursor: default; }
+  .acct-btn-outline { display: inline-flex; align-items: center; gap: 10px; background: #FFFFFF; color: var(--dark-text); border: 1px solid var(--border); border-radius: 12px; padding: 12px 20px; font-size: 15px; font-weight: 600; cursor: pointer; font-family: inherit; }
+  .acct-btn-outline:hover { border-color: var(--forest); color: var(--forest); }
+  .acct-danger { border-color: #FECACA !important; }
+  .acct-danger .acct-card-title { color: #DC2626; }
+  .acct-btn-danger { display: inline-flex; align-items: center; gap: 10px; background: #FFFFFF; color: #DC2626; border: 1px solid #FECACA; border-radius: 12px; padding: 12px 20px; font-size: 15px; font-weight: 600; cursor: pointer; font-family: inherit; }
+  .acct-btn-danger:hover { background: #FEF2F2; }
+  /* Account pages: same warm page background and white inputs as the rest. */
+  :root[data-theme="light"] .cx-account-page, .cx-account-page { background: var(--page) !important; }
+  .cx-account-page .input-group input, .cx-account-page .input-group select, .cx-account-page .input-group textarea { background: #FFFFFF !important; border-color: var(--border) !important; }
+  .cx-account-page .input-group input:disabled { background: var(--sand) !important; color: var(--muted) !important; }
+  .acct-with-side .card { max-width: 760px !important; }
   /* Small chips that used gold: soft indigo tint. */
   .service-badge.open, .provider-status-pill { background: var(--accent-soft); }
 
@@ -6960,6 +7008,141 @@ function SiteFooter() {
 // prospective provider now always sees what the business is first, then
 // applies for real, rather than hitting a convincing-looking form that
 // quietly did nothing.
+// ── ACCOUNT AREA (Vai Buy style) + PASSWORD RULES ────────────────────────
+// Shared by the customer account Settings, the business Settings → Login
+// card and the business application form: same five live rules as Vai Buy.
+const CA_TEXT = {
+  en: {
+    customer: "Customer",
+    navHome: "Overview", navBookings: "My bookings", navFavorites: "Favorites", navPayments: "Payments", navReviews: "My reviews", navSettings: "Settings", navLogout: "Log out",
+    securityTitle: "Account Security",
+    securitySubPw: "Change your password.",
+    securitySubGoogle: "You signed up with Google. Add a password to also log in with your email.",
+    newPw: "New password", confirmPw: "Confirm new password",
+    rLen: "At least 8 characters", rLower: "One lowercase letter (a-z)", rUpper: "One uppercase letter (A-Z)", rNum: "One number (0-9)", rSym: "One symbol (!@#$%&* etc.)",
+    updatePw: "Update Password", updatingPw: "Updating...",
+    pwUpdated: "Password updated ✓",
+    pwRules: "Your password doesn't meet all the rules yet.",
+    pwMismatch: "The two passwords don't match.",
+    pwFailed: "Couldn't update the password: {msg}",
+    sessionTitle: "Login & Session",
+    sessionSub: "Sign out of your VaiBook account on this device.",
+    signOut: "Sign Out",
+    dangerTitle: "Danger Zone",
+    dangerSub: "Deleting your account is permanent. We'll send your request to our support team to verify and process it securely.",
+    dangerBtn: "Request Account Deletion",
+    dangerConfirm: "Send a request to permanently delete your VaiBook account? Our team will contact you to confirm.",
+    dangerSent: "Request sent ✓ Our team will contact you to confirm before anything is deleted.",
+    dangerFailed: "Couldn't send the request. Please use Contact us in the footer.",
+  },
+  es: {
+    customer: "Cliente",
+    navHome: "Resumen", navBookings: "Mis reservas", navFavorites: "Favoritos", navPayments: "Pagos", navReviews: "Mis reseñas", navSettings: "Configuración", navLogout: "Cerrar sesión",
+    securityTitle: "Seguridad de la cuenta",
+    securitySubPw: "Cambia tu contraseña.",
+    securitySubGoogle: "Te registraste con Google. Agrega una contraseña para entrar también con tu correo.",
+    newPw: "Nueva contraseña", confirmPw: "Confirmar nueva contraseña",
+    rLen: "Al menos 8 caracteres", rLower: "Una minúscula (a-z)", rUpper: "Una mayúscula (A-Z)", rNum: "Un número (0-9)", rSym: "Un símbolo (!@#$%&* etc.)",
+    updatePw: "Actualizar contraseña", updatingPw: "Actualizando...",
+    pwUpdated: "Contraseña actualizada ✓",
+    pwRules: "Tu contraseña aún no cumple todas las reglas.",
+    pwMismatch: "Las dos contraseñas no coinciden.",
+    pwFailed: "No se pudo actualizar la contraseña: {msg}",
+    sessionTitle: "Acceso y sesión",
+    sessionSub: "Cierra la sesión de tu cuenta de VaiBook en este dispositivo.",
+    signOut: "Cerrar sesión",
+    dangerTitle: "Zona de peligro",
+    dangerSub: "Eliminar tu cuenta es permanente. Enviaremos tu solicitud a nuestro equipo de soporte para verificarla y procesarla de forma segura.",
+    dangerBtn: "Solicitar eliminación de cuenta",
+    dangerConfirm: "¿Enviar una solicitud para eliminar tu cuenta de VaiBook de forma permanente? Nuestro equipo te contactará para confirmar.",
+    dangerSent: "Solicitud enviada ✓ Nuestro equipo te contactará para confirmar antes de eliminar nada.",
+    dangerFailed: "No se pudo enviar la solicitud. Usa Contáctanos en el pie de página.",
+  },
+};
+const caText = (lang, key, vars) => {
+  const dict = CA_TEXT[(lang || "en").slice(0, 2)] || CA_TEXT.en;
+  let str = dict[key] || CA_TEXT.en[key] || key;
+  if (vars) Object.keys(vars).forEach((k) => { str = str.split(`{${k}}`).join(vars[k]); });
+  return str;
+};
+const PASSWORD_RULES = [
+  ["rLen", (v) => v.length >= 8],
+  ["rLower", (v) => /[a-z]/.test(v)],
+  ["rUpper", (v) => /[A-Z]/.test(v)],
+  ["rNum", (v) => /\d/.test(v)],
+  ["rSym", (v) => /[^A-Za-z0-9]/.test(v)],
+];
+const passwordMeetsRules = (v) => PASSWORD_RULES.every(([, test]) => test(v || ""));
+function PasswordRules({ value }) {
+  const { i18n } = useTranslation();
+  return (
+    <ul className="pw-rules">
+      {PASSWORD_RULES.map(([key, test]) => {
+        const ok = test(value || "");
+        return (
+          <li key={key} className={ok ? "ok" : ""}>
+            <span aria-hidden="true">{ok ? "✓" : "✕"}</span>{caText(i18n.language, key)}
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+// "Change password" card used in both portals.
+function ChangePasswordCard({ hasPassword, title, subtitle }) {
+  const { i18n } = useTranslation();
+  const ct = (k, v) => caText(i18n.language, k, v);
+  const [a, setA] = useState("");
+  const [b, setB] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState(null);
+  const save = async () => {
+    setMsg(null);
+    if (!passwordMeetsRules(a)) { setMsg({ error: ct("pwRules") }); return; }
+    if (a !== b) { setMsg({ error: ct("pwMismatch") }); return; }
+    setBusy(true);
+    const { error } = await updateGuestPassword(a);
+    setBusy(false);
+    if (error) { setMsg({ error: ct("pwFailed", { msg: error.message || "" }) }); return; }
+    setA(""); setB("");
+    setMsg({ ok: ct("pwUpdated") });
+  };
+  return (
+    <div className="card acct-card">
+      <div className="acct-card-title">{title || ct("securityTitle")}</div>
+      <p className="acct-card-sub">{subtitle || (hasPassword ? ct("securitySubPw") : ct("securitySubGoogle"))}</p>
+      <div className="acct-pw-grid">
+        <div className="input-group">
+          <label>{ct("newPw")}</label>
+          <input type="password" autoComplete="new-password" value={a} onChange={(e) => { setA(e.target.value); setMsg(null); }} />
+        </div>
+        <div className="input-group">
+          <label>{ct("confirmPw")}</label>
+          <input type="password" autoComplete="new-password" value={b} onChange={(e) => { setB(e.target.value); setMsg(null); }} />
+        </div>
+      </div>
+      <PasswordRules value={a} />
+      <button className="acct-btn" onClick={save} disabled={busy || !a}>{busy ? ct("updatingPw") : ct("updatePw")}</button>
+      {msg?.ok && <p className="mk-success">{msg.ok}</p>}
+      {msg?.error && <p className="agree-error">{msg.error}</p>}
+    </div>
+  );
+}
+const AcctIcon = ({ name }) => {
+  const d = {
+    home: "M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z",
+    bookings: "M7 3v3M17 3v3M4 9h16M5 5h14a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z",
+    favorites: "M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z",
+    payments: "M3 6h18v12H3zM3 10h18",
+    reviews: "M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z",
+    settings: "M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-1.8-.3 1.6 1.6 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.6 1.6 0 0 0-1-1.5 1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0 .3-1.8 1.6 1.6 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.6 1.6 0 0 0 1.5-1 1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H9a1.6 1.6 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V9a1.6 1.6 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1z",
+    logout: "M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3",
+    trash: "M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v6M14 11v6",
+  }[name];
+  return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={d} /></svg>;
+};
+const getInitialsSafe = (name) => (String(name || "").trim().split(/\s+/).map((w) => w[0]).filter(Boolean).slice(0, 2).join("") || "?").toUpperCase();
+
 // ── BUSINESS LOGIN (email + password) ────────────────────────────────────
 // 2026-10-25: every business signs in with email + password. Google stays
 // only as a small fallback for owners who registered with Google before;
@@ -7349,6 +7532,8 @@ function ProviderLandingPage({ onNav }) {
 // ── CUSTOMER PORTAL ─────────────────────────────────────────────
 function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdate, deepLinkProviderId, onDeepLinkConsumed, cameViaBookingLink, providerProfile }) {
   const { t, i18n } = useTranslation();
+  const ct = (key, vars) => caText(i18n.language, key, vars);
+  const [deletionState, setDeletionState] = useState(null); // null | "sending" | "sent" | "error"
   const bt = (key, vars) => bpText(i18n.language, key, vars);
   // Remembers which tab this account was on, so a refresh lands back on
   // "My bookings" (or wherever) instead of always resetting to "Home" —
@@ -8764,7 +8949,29 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
           read as the same app instead of drifting back to the old light
           theme one page at a time. Home keeps its own light-canvas +
           dark-card look exactly as shipped — untouched. */}
-      <main className={`portal-content${tab === "home" ? "" : " cx-account-page"}`}>
+      <main className={`portal-content${tab === "home" ? "" : " cx-account-page"}${["bookings", "favorites", "payments", "reviews", "settings"].includes(tab) ? " acct-with-side" : ""}`}>
+        {/* ACCOUNT SIDEBAR (Vai Buy style) — desktop: a left column; phone:
+            a scrollable row of the same links. Only on the account pages,
+            not on Home/Find services. */}
+        {["bookings", "favorites", "payments", "reviews", "settings"].includes(tab) && (
+          <aside className="acct-side">
+            <div className="acct-side-user">
+              <div className="acct-side-avatar">{getInitialsSafe(user?.full_name || session?.user?.email)}</div>
+              <div style={{ minWidth: 0 }}>
+                <div className="acct-side-name">{user?.full_name || session?.user?.email || ""}</div>
+                <div className="acct-side-role">{ct("customer")}</div>
+              </div>
+            </div>
+            <nav className="acct-side-nav">
+              {[["home", "home", "navHome"], ["bookings", "bookings", "navBookings"], ["favorites", "favorites", "navFavorites"], ["payments", "payments", "navPayments"], ["reviews", "reviews", "navReviews"], ["settings", "settings", "navSettings"]].map(([id, icon, key]) => (
+                <button key={id} className={`acct-side-item ${tab === id ? "active" : ""}`} onClick={() => setTab(id)}>
+                  <AcctIcon name={icon} /><span>{ct(key)}</span>
+                </button>
+              ))}
+              <button className="acct-side-item acct-side-logout" onClick={onSignOut}><AcctIcon name="logout" /><span>{ct("navLogout")}</span></button>
+            </nav>
+          </aside>
+        )}
         {tab === "home" && (
           <>
             {/* VIP PASS — replaces the generic greeting + 4 metric cards.
@@ -9378,49 +9585,6 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                   {!isPasswordAccount && (
                     <p style={{ fontSize: 12, color: "var(--muted)" }}>{t("customerPortal.settings.emailManagedByGoogle")}</p>
                   )}
-                  {isPasswordAccount && (
-                    <div style={{ marginTop: 16, paddingTop: 16, borderTop: "1px solid var(--border)" }}>
-                      {!changingPassword ? (
-                        <span style={{ color: "var(--lime)", fontWeight: 600, fontSize: 13, cursor: "pointer" }} onClick={() => { setChangingPassword(true); setPasswordError(""); setPasswordSuccess(false); setPasswordForm({ password: "", confirm: "" }); }}>
-                          {t("customerPortal.settings.changePassword")}
-                        </span>
-                      ) : (
-                        <>
-                          <div className="input-group">
-                            <label>{t("customerPortal.settings.newPassword")}</label>
-                            <input type="password" autoComplete="new-password" value={passwordForm.password} onChange={e => setPasswordForm(f => ({ ...f, password: e.target.value }))} />
-                          </div>
-                          <div className="input-group">
-                            <label>{t("customerPortal.settings.confirmNewPassword")}</label>
-                            <input type="password" autoComplete="new-password" value={passwordForm.confirm} onChange={e => setPasswordForm(f => ({ ...f, confirm: e.target.value }))} />
-                          </div>
-                          <p style={{ fontSize: 12, color: "var(--muted)" }}>{t("customerPortal.settings.passwordNote")}</p>
-                          {passwordError && <p style={{ fontSize: 12, color: "#B91C1C" }}>{passwordError}</p>}
-                          {passwordSuccess && <p style={{ fontSize: 12, color: "var(--forest)" }}>{t("customerPortal.settings.passwordUpdated")}</p>}
-                          <div style={{ display: "flex", gap: 10, marginTop: 10 }}>
-                            <button
-                              className="btn-primary"
-                              disabled={savingPassword}
-                              onClick={async () => {
-                                if (passwordForm.password.length < 6) { setPasswordError(t("customerPortal.settings.passwordTooShort")); return; }
-                                if (passwordForm.password !== passwordForm.confirm) { setPasswordError(t("customerPortal.settings.passwordMismatch")); return; }
-                                setPasswordError("");
-                                setSavingPassword(true);
-                                const { error } = await updateGuestPassword(passwordForm.password);
-                                setSavingPassword(false);
-                                if (error) { setPasswordError(t("customerPortal.settings.passwordUpdateFailed")); return; }
-                                setPasswordSuccess(true);
-                                setPasswordForm({ password: "", confirm: "" });
-                              }}
-                            >
-                              {savingPassword ? t("customerPortal.settings.saving") : t("customerPortal.common.save")}
-                            </button>
-                            <button className="btn-ghost" disabled={savingPassword} onClick={() => { setChangingPassword(false); setPasswordError(""); setPasswordSuccess(false); }}>{t("customerPortal.common.cancel")}</button>
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  )}
                   {editingProfile && (
                     <div style={{ display: "flex", gap: 10, marginTop: 14 }}>
                       <button className="btn-primary" onClick={saveProfile} disabled={savingProfile}>
@@ -9464,6 +9628,43 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                   )}
                 </div>
                 {pushError && <p style={{ fontSize: 12, color: "#B91C1C", marginTop: 4 }}>{pushError}</p>}
+              </div>
+            )}
+
+            {tab === "settings" && (
+              <div className="acct-cards">
+                <ChangePasswordCard hasPassword={isPasswordAccount} />
+                <div className="card acct-card">
+                  <div className="acct-card-title">{ct("sessionTitle")}</div>
+                  <p className="acct-card-sub">{ct("sessionSub")}</p>
+                  <button className="acct-btn-outline" onClick={onSignOut}><AcctIcon name="logout" /> {ct("signOut")}</button>
+                </div>
+                <div className="card acct-card acct-danger">
+                  <div className="acct-card-title">{ct("dangerTitle")}</div>
+                  <p className="acct-card-sub">{ct("dangerSub")}</p>
+                  {deletionState === "sent" ? (
+                    <p className="mk-success">{ct("dangerSent")}</p>
+                  ) : (
+                    <button
+                      className="acct-btn-danger"
+                      disabled={deletionState === "sending"}
+                      onClick={async () => {
+                        if (!window.confirm(ct("dangerConfirm"))) return;
+                        setDeletionState("sending");
+                        const email = user?.email || session?.user?.email || "";
+                        const ok = await sendBookingEmail({
+                          to: "martinezabner287@gmail.com",
+                          subject: `VaiBook account deletion request — ${email}`,
+                          html: `<p>A customer asked to delete their VaiBook account.</p><p><strong>Name:</strong> ${(user?.full_name || "").replace(/</g, "&lt;")}<br/><strong>Email:</strong> ${email.replace(/</g, "&lt;")}<br/><strong>User ID:</strong> ${session?.user?.id || ""}</p><p>Verify with the customer before deleting.</p>`,
+                        });
+                        setDeletionState(ok === false ? "error" : "sent");
+                      }}
+                    >
+                      <AcctIcon name="trash" /> {ct("dangerBtn")}
+                    </button>
+                  )}
+                  {deletionState === "error" && <p className="agree-error">{ct("dangerFailed")}</p>}
+                </div>
               </div>
             )}
 
@@ -14320,26 +14521,8 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
               ))}
             </div>
 
-            <div className="card" id="settings-login" style={{ maxWidth: 560, marginBottom: 20, scrollMarginTop: 120 }}>
-              <div className="card-title">{blt("pwTitle")}</div>
-              <p style={{ fontSize: 13, color: "var(--muted)", marginTop: -8, marginBottom: 14 }}>{blt("pwHint")}</p>
-              <div className="input-group">
-                <label>{blt("email")}</label>
-                <input value={session?.user?.email || ""} disabled />
-              </div>
-              <div className="form-row" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-                <div className="input-group">
-                  <label>{blt("pwNew")}</label>
-                  <input type="password" autoComplete="new-password" value={pwForm.a} onChange={(e) => { setPwForm((f) => ({ ...f, a: e.target.value })); setPwMsg(null); }} />
-                </div>
-                <div className="input-group">
-                  <label>{blt("pwConfirm")}</label>
-                  <input type="password" autoComplete="new-password" value={pwForm.b} onChange={(e) => { setPwForm((f) => ({ ...f, b: e.target.value })); setPwMsg(null); }} />
-                </div>
-              </div>
-              <button className="btn-sm forest" onClick={savePassword} disabled={pwSaving || !pwForm.a}>{pwSaving ? blt("pwSaving") : blt("pwSave")}</button>
-              {pwMsg?.ok && <p className="mk-success">{pwMsg.ok}</p>}
-              {pwMsg?.error && <p className="agree-error">{pwMsg.error}</p>}
+            <div id="settings-login" style={{ maxWidth: 560, marginBottom: 20, scrollMarginTop: 120 }}>
+              <ChangePasswordCard hasPassword={session?.user?.app_metadata?.provider === "email"} title={blt("pwTitle")} subtitle={`${blt("pwHint")} (${session?.user?.email || ""})`} />
             </div>
 
             <div className="card" id="settings-bookingpage" style={{ maxWidth: 560, marginBottom: 20, scrollMarginTop: 120 }}>
@@ -15009,7 +15192,7 @@ function ProviderSignup({ onNav }) {
     }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) { setSubmitError(bl("signupEmailInvalid")); return; }
     if (phoneDigits(form.phone) < 7) { setSubmitError(bl("signupPhoneInvalid")); return; }
-    if ((form.password || "").length < 8) { setSubmitError(bl("pwShort")); return; }
+    if (!passwordMeetsRules(form.password || "")) { setSubmitError(caText(i18n.language, "pwRules")); return; }
     if (form.password !== form.password2) { setSubmitError(bl("pwMismatch")); return; }
     setLoading(true);
     setSubmitError("");
@@ -15174,7 +15357,8 @@ function ProviderSignup({ onNav }) {
               <input type="password" autoComplete="new-password" value={form.password2} onChange={e => set("password2", e.target.value)} />
             </div>
           </div>
-          <p className="biz-login-hint" style={{ marginTop: -6, marginBottom: 14 }}>{bl("signupPasswordHint")}</p>
+          <PasswordRules value={form.password} />
+          <p className="biz-login-hint" style={{ marginTop: 4, marginBottom: 14, textAlign: "left" }}>{bl("signupPasswordHint")}</p>
           <div className="form-row">
             <div className="input-group">
               <label>{t("providerSignup.form.serviceType")}</label>
