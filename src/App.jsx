@@ -2672,7 +2672,7 @@ function ProviderCarousel({ providers, badgeFor, onCardClick, ctaLabel, favorite
 const SETUP_TEXT = {
   en: {
     profileSaved: "Saved ✓",
-    profileSaveFailed: "Couldn't save. Check your connection and try again.",
+    profileSaveFailed: "Couldn't save your profile. Send this message to support:",
     profileUnsaved: "You have unsaved changes",
     finishTitle: "Finish your profile",
     finishSub: "Complete profiles get booked more. {done} of {total} done.",
@@ -2736,7 +2736,7 @@ const SETUP_TEXT = {
   },
   es: {
     profileSaved: "Guardado ✓",
-    profileSaveFailed: "No se pudo guardar. Revisa tu conexión e inténtalo de nuevo.",
+    profileSaveFailed: "No se pudo guardar tu perfil. Envía este mensaje a soporte:",
     profileUnsaved: "Tienes cambios sin guardar",
     finishTitle: "Completa tu perfil",
     finishSub: "Los perfiles completos reciben más reservas. {done} de {total} listos.",
@@ -8816,6 +8816,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
   // keep anything the provider typed but hasn't saved yet.
   const loadedProfileFormRef = useRef(null);
   const [profileSaveMsg, setProfileSaveMsg] = useState(null);
+  const [profileSaveError, setProfileSaveError] = useState("");
   const [photos, setPhotos] = useState([]);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
@@ -9906,8 +9907,20 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
     if (!providerId) return;
     setSavingProfile(true);
     setProfileSaveMsg(null);
-    const updated = await upsertProviderProfile({ id: providerProfile.id, user_id: providerProfile.user_id, ...profileForm });
-    if (updated) {
+    setProfileSaveError("");
+    // Plain UPDATE of this provider's own row (not upsert). An upsert is an
+    // INSERT ... ON CONFLICT, so it must also pass the table's INSERT
+    // security policy even when the row already exists — which is what was
+    // rejecting profile saves. is_featured has its own toggle and is left out.
+    const { is_featured: _skipFeatured, ...fields } = profileForm;
+    const { data: updated, error: saveError } = await supabase
+      .from("provider_profiles")
+      .update(fields)
+      .eq("id", providerProfile.id)
+      .select()
+      .single();
+    if (saveError) console.error("Error saving provider profile:", saveError);
+    if (updated && !saveError) {
       // Treat what we just saved as the new baseline before the profile
       // reload lands, so it doesn't look like unsaved edits.
       loadedProfileFormRef.current = { ...profileForm, is_featured: !!updated.is_featured };
@@ -9915,6 +9928,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
       setProfileSaveMsg("ok");
     } else {
       setProfileSaveMsg("error");
+      setProfileSaveError(saveError ? [saveError.message, saveError.details, saveError.hint, saveError.code].filter(Boolean).join(" · ") : "No row was updated.");
     }
     setSavingProfile(false);
   };
@@ -12196,7 +12210,12 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
               <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
                 <button className="btn-sm forest" onClick={saveProfile} disabled={savingProfile}>{savingProfile ? t("providerPortal.common.saving") : t("providerPortal.profile.saveProfile")}</button>
                 {profileSaveMsg === "ok" && !profileHasUnsavedChanges && <span style={{ fontSize: 13, fontWeight: 600, color: "#15803D" }}>{st("profileSaved")}</span>}
-                {profileSaveMsg === "error" && <span style={{ fontSize: 13, fontWeight: 600, color: "#B91C1C" }}>{st("profileSaveFailed")}</span>}
+                {profileSaveMsg === "error" && (
+                  <span style={{ fontSize: 13, fontWeight: 600, color: "#B91C1C" }}>
+                    {st("profileSaveFailed")}
+                    {profileSaveError && <span style={{ display: "block", fontWeight: 400, fontSize: 12, marginTop: 4, wordBreak: "break-word" }}>{profileSaveError}</span>}
+                  </span>
+                )}
                 {profileSaveMsg !== "error" && profileHasUnsavedChanges && !savingProfile && <span style={{ fontSize: 13, color: "var(--muted)" }}>{st("profileUnsaved")}</span>}
               </div>
             </div>
