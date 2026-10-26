@@ -2745,8 +2745,8 @@ const css = `
   .cxh-rec-title { font-size: 26px; font-weight: 800; letter-spacing: -0.02em; margin: 0 0 14px; color: var(--text, #16181D); }
   .cxh-rec-row { display: flex; gap: 16px; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 6px; scrollbar-width: none; }
   .cxh-rec-row::-webkit-scrollbar { display: none; }
-  .cxh-rec-card { flex: 0 0 300px; scroll-snap-align: start; cursor: pointer; }
-  .cxh-rec-img { position: relative; height: 200px; border-radius: 18px; background: var(--accent-soft); display: flex; align-items: center; justify-content: center; overflow: hidden; }
+  .cxh-rec-card { flex: 0 0 250px; scroll-snap-align: start; cursor: pointer; min-width: 0; }
+  .cxh-rec-img { position: relative; aspect-ratio: 3 / 2; border-radius: 18px; background: var(--accent-soft); display: flex; align-items: center; justify-content: center; overflow: hidden; }
   .cxh-rec-icon { font-size: 52px; }
   .cxh-rec-badge { position: absolute; top: 12px; left: 12px; background: rgba(255,250,240,0.92); color: #16181D; font-size: 13px; font-weight: 600; padding: 6px 12px; border-radius: 999px; }
   .cxh-rec-heart { position: absolute; top: 10px; right: 10px; width: 38px; height: 38px; border: none; border-radius: 50%; background: rgba(0,0,0,0.18); display: flex; align-items: center; justify-content: center; cursor: pointer; }
@@ -2755,9 +2755,31 @@ const css = `
   .cxh-rec-rating { flex: none; font-size: 15px; font-weight: 600; color: var(--text, #16181D); display: flex; align-items: center; gap: 4px; }
   .cxh-rec-rating span { color: #F5B400; font-size: 17px; }
   .cxh-rec-meta { font-size: 14px; color: var(--muted); margin-top: 3px; }
+  .cxh-rec-name { overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+  .cxh-rec-img .cxh-rec-heart { width: 34px; height: 34px; }
+  .cxh-list-head { display: flex; align-items: baseline; justify-content: space-between; }
+  .cxh-seeall { border: none; background: none; font-size: 15px; font-weight: 600; color: var(--text, #16181D); cursor: pointer; font-family: inherit; }
+  .cxh-list { display: flex; flex-direction: column; gap: 12px; }
+  .cxh-list-row { position: relative; display: flex; align-items: center; gap: 14px; background: #fff; border: 1px solid var(--border); border-radius: 16px; overflow: hidden; cursor: pointer; min-height: 104px; }
+  .cxh-list-img { flex: none; width: 104px; align-self: stretch; background: var(--accent-soft); display: flex; align-items: center; justify-content: center; font-size: 30px; }
+  .cxh-list-body { flex: 1; min-width: 0; padding: 12px 40px 12px 0; }
+  .cxh-list-name { font-size: 16px; font-weight: 700; color: var(--text, #16181D); margin-bottom: 2px; }
+  .cxh-ellipsis { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .cxh-list-rating { font-size: 14px; margin-top: 4px; color: var(--text, #16181D); display: flex; align-items: center; gap: 4px; }
+  .cxh-list-rating span { color: #F5B400; }
+  .cxh-list-rating em { font-style: normal; color: var(--muted); margin-left: 4px; }
+  .cxh-list-heart { position: absolute; top: 8px; right: 8px; border: none; background: none; padding: 4px; cursor: pointer; }
+  .cxh-pro-row { padding-left: 14px; }
+  .cxh-pro-avatar { flex: none; width: 72px; height: 72px; border-radius: 50%; background: var(--accent-soft); display: flex; align-items: center; justify-content: center; font-size: 26px; font-weight: 700; color: var(--lime); }
+  .cxh-home-hero.cx-hero { padding: 22px 24px 18px; }
+  .cxh-home-hero .cx-hero-countdown { font-size: 38px; }
+  .cxh-home-hero .cx-hero-service { font-size: 20px; }
+  .cxh-home-hero .cx-hero-barcode { display: none; }
   .cxh-tabbar { display: none; }
   @media (max-width: 760px) {
-    .cxh-rec-card { flex-basis: 78%; }
+    .cxh-rec-card { flex-basis: 64%; }
+    .cxh-rec-title { font-size: 22px; }
+    .cxh-home-hero.cx-hero { padding: 18px 18px 16px; border-radius: 18px; }
     .cxh-tabbar { display: flex; position: fixed; left: 12px; right: 12px; bottom: calc(10px + env(safe-area-inset-bottom)); z-index: 60; background: rgba(255,255,255,0.97); border: 1px solid var(--border); border-radius: 999px; padding: 6px; box-shadow: 0 10px 30px rgba(23,20,31,0.14); backdrop-filter: blur(10px); }
     .cxh-tab { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; border: none; background: transparent; color: #16181D; font-size: 12px; font-weight: 600; padding: 7px 0; border-radius: 999px; cursor: pointer; font-family: inherit; }
     .cxh-tab.active { background: #F0EFF4; color: var(--lime); }
@@ -7637,6 +7659,27 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
   const [loadingProviders, setLoadingProviders] = useState(false);
   const [providerSearch, setProviderSearch] = useState("");
   const [districtFilter, setDistrictFilter] = useState("All");
+  const [recentProviderIds, setRecentProviderIds] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("vaibook_recent_providers") || "[]"); } catch (e) { return []; }
+  });
+  // Customer's location, only if they allowed it — used for "0.9 mi" on
+  // the Nearby list. Never asked for on load unless already granted.
+  const [myPosition, setMyPosition] = useState(null);
+  const askMyPosition = () => {
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(
+      (pos) => setMyPosition({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+      () => { /* declined — distances just stay hidden */ },
+      { maximumAge: 600000, timeout: 10000 }
+    );
+  };
+  useEffect(() => {
+    try {
+      navigator.permissions?.query({ name: "geolocation" }).then((r) => { if (r.state === "granted") askMyPosition(); }).catch(() => {});
+    } catch (e) { /* ignore */ }
+  }, []);
+  // Team members of nearby businesses, for the "Nearby professionals" row.
+  const [homeStaff, setHomeStaff] = useState([]);
 
   const [bookings, setBookings] = useState([]);
   const [loadingBookings, setLoadingBookings] = useState(false);
@@ -8068,6 +8111,14 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
     setProviderReviews([]);
     setLightboxUrl(null);
     setSelectedProvider(provider);
+    if (provider?.id) {
+      try {
+        const prev = JSON.parse(localStorage.getItem("vaibook_recent_providers") || "[]");
+        const next = [provider.id, ...prev.filter((x) => x !== provider.id)].slice(0, 12);
+        localStorage.setItem("vaibook_recent_providers", JSON.stringify(next));
+        setRecentProviderIds(next);
+      } catch (e) { /* storage unavailable — just skip */ }
+    }
     setProviderHours([]);
     setBusyWindows([]);
     setMyLoyalty(null);
@@ -8909,6 +8960,37 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
     return Math.min(...prices);
   };
 
+  // HOME — extra Fresha-style rows.
+  const homeArea = providers.filter((p) => districtFilter === "All" || p.district === districtFilter);
+  const venueImage = (p) => (p?.portfolio_urls && p.portfolio_urls[0]) || p?.profile_photo_url || null;
+  const recentlyViewedProviders = recentProviderIds.map((id) => providers.find((p) => p.id === id)).filter(Boolean).slice(0, 8);
+  const NEW_DAYS = 45;
+  const newProviders = homeArea
+    .filter((p) => p.created_at && (Date.now() - new Date(p.created_at).getTime()) < NEW_DAYS * 86400000)
+    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+    .slice(0, 8);
+  const milesBetween = (a, b) => {
+    const R = 3958.8, toR = (x) => (x * Math.PI) / 180;
+    const dLat = toR(b.lat - a.lat), dLng = toR(b.lng - a.lng);
+    const h = Math.sin(dLat / 2) ** 2 + Math.cos(toR(a.lat)) * Math.cos(toR(b.lat)) * Math.sin(dLng / 2) ** 2;
+    return 2 * R * Math.asin(Math.sqrt(h));
+  };
+  const distanceTo = (p) => (myPosition && p.latitude != null && p.longitude != null) ? milesBetween(myPosition, { lat: Number(p.latitude), lng: Number(p.longitude) }) : null;
+  const distanceLabel = (p) => {
+    const mi = distanceTo(p);
+    if (mi == null) return null;
+    return mi > 30 ? ">30 mi" : `${mi < 10 ? mi.toFixed(1) : Math.round(mi)} mi`;
+  };
+  const nearbyProviders = [...homeArea]
+    .sort((a, b) => {
+      const da = distanceTo(a), db = distanceTo(b);
+      if (da != null && db != null) return da - db;
+      if (da != null) return -1;
+      if (db != null) return 1;
+      return (Number(providerRating(b)) || 0) - (Number(providerRating(a)) || 0);
+    })
+    .slice(0, 5);
+
   // HOME — "Recommended" row (Fresha style): Featured businesses first,
   // then best rated, then most reviewed. Follows the location picker.
   const homeEs = (i18n.language || "").toLowerCase().startsWith("es");
@@ -8952,6 +9034,16 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
     }
     return photos;
   })();
+
+  const nearbyIdsKey = nearbyProviders.map((p) => p.id).join(",");
+  useEffect(() => {
+    if (!nearbyIdsKey) { setHomeStaff([]); return; }
+    let cancelled = false;
+    supabase.from("provider_staff").select("id, name, avatar_url, provider_id")
+      .in("provider_id", nearbyIdsKey.split(",")).eq("is_active", true).limit(6)
+      .then(({ data }) => { if (!cancelled) setHomeStaff(data || []); }, () => {});
+    return () => { cancelled = true; };
+  }, [nearbyIdsKey]);
 
   // Not signed in, and didn't arrive via a "#book-<id>" QR/NFC/link scan —
   // same gate ProviderPortal and AdminPortal already use (see their own
@@ -9025,9 +9117,10 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
             <div className="cxh-top">
               <label className="cxh-location">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="var(--lime)" aria-hidden="true"><path d="M12 2a7 7 0 0 0-7 7c0 5.2 7 13 7 13s7-7.8 7-13a7 7 0 0 0-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"/></svg>
-                <span>{districtFilter === "All" ? hx("All of Belize", "Todo Belice") : districtFilter}</span>
+                <span>{districtFilter !== "All" ? districtFilter : myPosition ? hx("Current location", "Ubicación actual") : hx("All of Belize", "Todo Belice")}</span>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
-                <select value={districtFilter} onChange={(e) => setDistrictFilter(e.target.value)} aria-label={hx("Choose your district", "Elige tu distrito")}>
+                <select value={districtFilter} onChange={(e) => { if (e.target.value === "__me") { askMyPosition(); setDistrictFilter("All"); } else setDistrictFilter(e.target.value); }} aria-label={hx("Choose your district", "Elige tu distrito")}>
+                  <option value="__me">📍 {hx("Use my current location", "Usar mi ubicación actual")}</option>
                   <option value="All">{hx("All of Belize", "Todo Belice")}</option>
                   {DISTRICTS.map((d) => <option key={d} value={d}>{d}</option>)}
                 </select>
@@ -9062,7 +9155,7 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                 a perforated tear line, then actions below it. This is the
                 one thing a customer actually opens the app to check, so
                 it's the biggest, first thing they see. */}
-            <div className="cx-hero">
+            <div className="cx-hero cxh-home-hero">
               {nextAppointment ? (
                 <>
                   <div className="cx-hero-eyebrow">🎟️ {t("customerPortal.home.securedSpot")}</div>
@@ -9112,27 +9205,32 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
               )}
             </div>
 
-            {/* RECOMMENDED — big photo cards, side-scrolling (Fresha style). */}
-            {recommendedProviders.length > 0 && (
-              <div className="cxh-rec">
-                <h2 className="cxh-rec-title">{hx("Recommended", "Recomendados")}</h2>
+            {/* PHOTO ROWS (Fresha style): Recommended, Recently viewed, New. */}
+            {[
+              ["rec", hx("Recommended", "Recomendados"), recommendedProviders, (p) => p.is_featured ? hx("Featured", "Destacado") : null],
+              ["recent", hx("Recently viewed", "Vistos recientemente"), recentlyViewedProviders, (p) => p.is_featured ? hx("Featured", "Destacado") : null],
+              ["new", hx("New to VaiBook", "Nuevos en VaiBook"), newProviders, () => hx("New", "Nuevo")],
+            ].filter(([, , list]) => list.length > 0).map(([key, title, list, badgeFor]) => (
+              <div className="cxh-rec" key={key}>
+                <h2 className="cxh-rec-title">{title}</h2>
                 <div className="cxh-rec-row">
-                  {recommendedProviders.map((p) => {
+                  {list.map((p) => {
                     const rating = providerRating(p);
                     const reviewCount = (p.reviews || []).length;
-                    const cover = coverImageUrl(p);
+                    const cover = venueImage(p);
                     const fav = favoriteIds.has(p.id);
+                    const badge = badgeFor(p);
                     return (
                       <div className="cxh-rec-card" key={p.id} onClick={() => openBooking(p)}>
                         <div className="cxh-rec-img" style={cover ? { background: `center/cover no-repeat url(${cover})` } : undefined}>
                           {!cover && <span className="cxh-rec-icon">{iconForServiceType(p.service_type)}</span>}
-                          {p.is_featured && <span className="cxh-rec-badge">{hx("Featured", "Destacado")}</span>}
+                          {badge && <span className="cxh-rec-badge">{badge}</span>}
                           <button
                             className="cxh-rec-heart"
                             onClick={(e) => toggleFavorite(e, p.id)}
                             aria-label={fav ? t("customerPortal.browse.removeFromFavorites") : t("customerPortal.browse.addToFavorites")}
                           >
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill={fav ? "#fff" : "none"} stroke="#fff" strokeWidth="2" strokeLinejoin="round"><path d="M12 20.5s-7.5-4.6-9.3-9.2C1.5 8 3.6 4.5 7.2 4.5c2 0 3.6 1.1 4.8 2.8 1.2-1.7 2.8-2.8 4.8-2.8 3.6 0 5.7 3.5 4.5 6.8-1.8 4.6-9.3 9.2-9.3 9.2z"/></svg>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill={fav ? "#fff" : "none"} stroke="#fff" strokeWidth="2" strokeLinejoin="round"><path d="M12 20.5s-7.5-4.6-9.3-9.2C1.5 8 3.6 4.5 7.2 4.5c2 0 3.6 1.1 4.8 2.8 1.2-1.7 2.8-2.8 4.8-2.8 3.6 0 5.7 3.5 4.5 6.8-1.8 4.6-9.3 9.2-9.3 9.2z"/></svg>
                           </button>
                         </div>
                         <div className="cxh-rec-head">
@@ -9143,7 +9241,74 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                         <div className="cxh-rec-meta">
                           <span style={{ textTransform: "capitalize" }}>{p.service_type}</span>
                           {" · "}
-                          {reviewCount > 0 ? hx(`${reviewCount} review${reviewCount === 1 ? "" : "s"}`, `${reviewCount} reseña${reviewCount === 1 ? "" : "s"}`) : hx("New on VaiBook", "Nuevo en VaiBook")}
+                          {reviewCount > 0 ? hx(`${reviewCount} review${reviewCount === 1 ? "" : "s"}`, `${reviewCount} reseña${reviewCount === 1 ? "" : "s"}`) : hx("No reviews yet", "Sin reseñas aún")}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+
+            {/* NEARBY BUSINESSES — list rows with a photo on the left. */}
+            {nearbyProviders.length > 0 && (
+              <div className="cxh-rec">
+                <div className="cxh-list-head">
+                  <h2 className="cxh-rec-title">{hx("Nearby businesses", "Negocios cercanos")}</h2>
+                  <button className="cxh-seeall" onClick={() => { setProviderSearch(""); setTab("browse"); }}>{hx("See all", "Ver todo")}</button>
+                </div>
+                <div className="cxh-list">
+                  {nearbyProviders.map((p) => {
+                    const rating = providerRating(p);
+                    const reviewCount = (p.reviews || []).length;
+                    const cover = venueImage(p);
+                    const fav = favoriteIds.has(p.id);
+                    const dist = distanceLabel(p);
+                    return (
+                      <div className="cxh-list-row" key={p.id} onClick={() => openBooking(p)}>
+                        <div className="cxh-list-img" style={cover ? { background: `center/cover no-repeat url(${cover})` } : undefined}>
+                          {!cover && <span>{iconForServiceType(p.service_type)}</span>}
+                        </div>
+                        <div className="cxh-list-body">
+                          <div className="cxh-list-name">{p.business_name}</div>
+                          <div className="cxh-rec-meta cxh-ellipsis">{dist ? `${dist} · ` : ""}{p.district}</div>
+                          <div className="cxh-list-rating">
+                            {rating ? <><span>★</span><b>{rating}</b> <em>{hx(`${reviewCount} reviews`, `${reviewCount} reseñas`)}</em></> : <em style={{ textTransform: "capitalize" }}>{p.service_type}</em>}
+                          </div>
+                        </div>
+                        <button className="cxh-list-heart" onClick={(e) => toggleFavorite(e, p.id)} aria-label={fav ? t("customerPortal.browse.removeFromFavorites") : t("customerPortal.browse.addToFavorites")}>
+                          <svg width="22" height="22" viewBox="0 0 24 24" fill={fav ? "var(--lime)" : "none"} stroke={fav ? "var(--lime)" : "#9AA0AC"} strokeWidth="1.8" strokeLinejoin="round"><path d="M12 20.5s-7.5-4.6-9.3-9.2C1.5 8 3.6 4.5 7.2 4.5c2 0 3.6 1.1 4.8 2.8 1.2-1.7 2.8-2.8 4.8-2.8 3.6 0 5.7 3.5 4.5 6.8-1.8 4.6-9.3 9.2-9.3 9.2z"/></svg>
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* NEARBY PROFESSIONALS — team members at those businesses. */}
+            {homeStaff.length > 0 && (
+              <div className="cxh-rec">
+                <div className="cxh-list-head">
+                  <h2 className="cxh-rec-title">{hx("Nearby professionals", "Profesionales cercanos")}</h2>
+                </div>
+                <div className="cxh-list">
+                  {homeStaff.map((m) => {
+                    const p = providers.find((x) => x.id === m.provider_id);
+                    if (!p) return null;
+                    const rating = providerRating(p);
+                    const reviewCount = (p.reviews || []).length;
+                    const dist = distanceLabel(p);
+                    return (
+                      <div className="cxh-list-row cxh-pro-row" key={m.id} onClick={() => openBooking(p)}>
+                        <div className="cxh-pro-avatar" style={m.avatar_url ? { background: `center/cover no-repeat url(${m.avatar_url})` } : undefined}>
+                          {!m.avatar_url && <span>{(m.name || "?").trim().charAt(0).toUpperCase()}</span>}
+                        </div>
+                        <div className="cxh-list-body">
+                          <div className="cxh-list-name">{m.name}</div>
+                          <div className="cxh-rec-meta cxh-ellipsis">{dist ? `${dist} · ` : ""}{p.district}</div>
+                          <div className="cxh-rec-meta cxh-ellipsis">{p.business_name}</div>
+                          {rating && <div className="cxh-list-rating"><span>★</span><b>{rating}</b> <em>{hx(`${reviewCount} reviews`, `${reviewCount} reseñas`)}</em></div>}
                         </div>
                       </div>
                     );
