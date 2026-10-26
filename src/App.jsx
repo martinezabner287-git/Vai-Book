@@ -12346,21 +12346,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
       <main className="portal-content">
         {tab === "dashboard" && (
           <>
-            {/* ELITE WELCOME — one-time "you're live" nudge, only for an
-                active provider who hasn't dismissed it. Dismissing (with
-                or without downloading) hides it for good. */}
-            {providerProfile.is_active && !launchBannerDismissed && (
-              <div className="launch-banner">
-                <div>
-                  <div className="launch-banner-title">🎉 {t("providerPortal.dashboard.launchBannerTitle")}</div>
-                  <div className="launch-banner-sub">{t("providerPortal.dashboard.launchBannerSub")}</div>
-                </div>
-                <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
-                  <button className="btn-sm ghost" onClick={dismissLaunchBanner}>{t("providerPortal.dashboard.dismiss")}</button>
-                  <button className="btn-sm lime" onClick={() => setShowLaunchGraphic(true)}>{t("providerPortal.dashboard.getLaunchGraphic")}</button>
-                </div>
-              </div>
-            )}
+            {/* "You're live on VaiBook!" launch banner removed at the owner's request (2026-10-25). */}
 
             <div className="portal-header">
               <h2>{t("providerPortal.nav.dashboard")}</h2>
