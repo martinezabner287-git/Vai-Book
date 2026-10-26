@@ -1286,6 +1286,67 @@ const css = `
   .setup-tip { background: rgba(76,61,196,0.08); border: 1px solid rgba(76,61,196,0.25); border-radius: 100px; padding: 9px 14px; font-size: 13px; font-weight: 600; font-family: inherit; color: #4C3DC4; cursor: pointer; }
   .setup-link { background: none; border: none; color: #4C3DC4; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; }
 
+
+  /* AGREEMENTS */
+  .agree-chip { display: inline-block; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 100px; margin-left: 6px; vertical-align: middle; border: none; font-family: inherit; }
+  .agree-chip.signed { background: #DCFCE7; color: #166534; }
+  .agree-chip.pending { background: #FEF3C7; color: #92400E; }
+  .agree-chip.expired { background: #FEE2E2; color: #991B1B; }
+  .agree-chip-btn { cursor: pointer; margin-left: 0; }
+  .booking-item.agree-row { flex-wrap: wrap; }
+  .agree-row .booking-info { flex: 1 1 200px; }
+  .agree-error { color: #B91C1C; font-size: 13px; margin: 8px 0; }
+  .agree-hint { font-size: 12px; color: var(--muted); margin-top: 6px; line-height: 1.45; }
+  .agree-muted { color: var(--muted); font-size: 14px; }
+  .agree-empty { text-align: center; padding: 28px 12px; }
+  .agree-empty-icon { font-size: 30px; margin-bottom: 8px; }
+  .agree-empty-title { font-weight: 700; color: var(--dark-text); }
+  .agree-empty-hint { font-size: 13px; color: var(--muted); margin-top: 4px; }
+  .agree-sheet { max-height: 92vh; overflow-y: auto; }
+  .agree-sheet-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 14px; }
+  .agree-sheet-head h3 { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 20px; font-weight: 800; color: var(--dark-text); margin: 0; }
+  .agree-toolbar { display: flex; gap: 6px; margin-bottom: 8px; align-items: center; }
+  .agree-toolbar button { width: 36px; height: 34px; border-radius: 8px; border: 1px solid var(--border); background: white; cursor: pointer; font-size: 14px; color: var(--dark-text); font-family: inherit; }
+  .agree-toolbar button:disabled { opacity: .4; cursor: default; }
+  .agree-toolbar .agree-toolbar-preview { width: auto; padding: 0 12px; margin-left: auto; font-weight: 600; font-size: 13px; }
+  .input-group textarea.agree-textarea { height: 220px; font-size: 15px; line-height: 1.5; }
+  .agree-preview { border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 14px; min-height: 220px; max-height: 320px; overflow-y: auto; background: white; }
+  .agree-pills { display: flex; gap: 8px; flex-wrap: wrap; }
+  .agree-pill { border: 1px solid var(--border); background: white; border-radius: 100px; padding: 8px 16px; font-size: 13px; font-family: inherit; cursor: pointer; color: var(--dark-text); }
+  .agree-pill.active { background: var(--dark-text); color: white; border-color: var(--dark-text); }
+  .agree-body { font-size: 15px; line-height: 1.6; color: var(--dark-text); word-wrap: break-word; }
+  .agree-body p { margin: 0 0 6px; }
+  .agree-body h3 { font-size: 16px; font-weight: 800; margin: 14px 0 6px; }
+  .agree-body ul { margin: 4px 0 8px; padding-left: 22px; }
+  .agree-body li { margin-bottom: 3px; }
+  .agree-spacer { height: 8px; }
+  .agree-link-box { background: var(--sand); border-radius: 10px; padding: 12px 14px; font-size: 13px; word-break: break-all; color: var(--dark-text); margin: 12px 0 14px; }
+  .agree-sign-btn { display: block; width: 100%; text-align: center; background: var(--dark-text); color: white; border: none; border-radius: 12px; padding: 15px 0; font-size: 15px; font-weight: 700; font-family: inherit; cursor: pointer; text-decoration: none; margin-top: 6px; }
+  .agree-sign-btn:disabled { opacity: .45; cursor: default; }
+  .agree-wa-btn { background: #25D366; color: #0B3D1E; }
+  .agree-view-scroll { max-height: 55vh; overflow-y: auto; margin-bottom: 12px; }
+  .agree-view-sig { border-top: 1px solid var(--border); margin-top: 16px; padding-top: 12px; }
+  .agree-view-sig img { display: block; max-width: 100%; width: 300px; height: auto; margin: 6px 0; background: white; border-radius: 6px; }
+  .agree-sign-page { min-height: 100vh; background: #F4F2EE; padding: 0 16px 40px; font-family: 'Plus Jakarta Sans', -apple-system, sans-serif; }
+  .agree-sign-top { max-width: 640px; margin: 0 auto; padding: 22px 4px 16px; }
+  .agree-sign-logo { font-size: 22px; font-weight: 800; color: #4C3DC4; letter-spacing: -0.5px; }
+  .agree-sign-logo span { color: #F2B705; }
+  .agree-sign-card { max-width: 640px; margin: 0 auto; background: white; border-radius: 20px; padding: 26px 22px; box-shadow: 0 10px 30px rgba(23,20,31,0.06); }
+  .agree-sign-from { font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #6B6578; }
+  .agree-sign-title { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 24px; font-weight: 800; color: #17141F; margin: 6px 0 16px; line-height: 1.2; }
+  .agree-sign-form { border-top: 1px solid #E7E2F5; margin-top: 22px; padding-top: 18px; }
+  .agree-sign-label { font-size: 12px; font-weight: 600; color: #17141F; display: block; margin-bottom: 6px; }
+  .sig-pad-wrap { position: relative; border: 1px dashed #B9B2CC; border-radius: 12px; background: #FCFBFF; overflow: hidden; }
+  .sig-pad { display: block; touch-action: none; cursor: crosshair; }
+  .sig-pad-line { position: absolute; left: 20px; right: 20px; bottom: 40px; border-bottom: 1px solid #E7E2F5; pointer-events: none; }
+  .sig-pad-clear { position: absolute; top: 8px; right: 8px; background: white; border: 1px solid #E7E2F5; border-radius: 8px; padding: 5px 10px; font-size: 12px; cursor: pointer; font-family: inherit; color: #17141F; }
+  .agree-check { display: flex; gap: 10px; align-items: flex-start; font-size: 14px; color: #17141F; margin: 16px 0 6px; cursor: pointer; line-height: 1.4; }
+  .agree-check input { width: 20px; height: 20px; margin: 0; flex-shrink: 0; accent-color: #4C3DC4; }
+  .agree-sign-done { border-top: 1px solid #E7E2F5; margin-top: 22px; padding-top: 18px; text-align: center; }
+  .agree-sign-done-title { font-size: 22px; font-weight: 800; color: #166534; margin-bottom: 6px; }
+  .agree-sign-done p { color: #6B6578; font-size: 14px; }
+  .agree-powered { text-align: center; font-size: 12px; color: #8C86A0; margin-top: 18px; }
+
   /* SETTINGS HUB (provider Settings tab) */
   .settings-hub { max-width: 560px; margin-bottom: 32px; }
   .settings-hub-group { margin-bottom: 22px; }
@@ -2663,6 +2724,809 @@ function ProviderCarousel({ providers, badgeFor, onCardClick, ctaLabel, favorite
         <button className="carousel-arrow" onClick={scrollNext} aria-label="Scroll for more">→</button>
       )}
     </div>
+  );
+}
+
+// ── AGREEMENTS / E-SIGNATURES ────────────────────────────────────────────
+// Provider writes an agreement once (AgreementsPanel), sends a private link
+// to a client (#sign-<token>), the client signs on their phone with a drawn
+// signature (AgreementSignPage), and the signed copy is kept on the
+// provider's records. Needs supabase_agreements.sql run once in Supabase.
+// Text kept here (EN/ES) so the feature ships in App.jsx alone.
+const AGREE_TEXT = {
+  en: {
+    navAgreements: "Agreements",
+    title: "Agreements",
+    subtitle: "Write an agreement once, then send it to any client. They sign on their phone and the signed copy is saved here.",
+    add: "+ New agreement",
+    emptyTitle: "No agreements yet",
+    emptyHint: "Consent forms, liability waivers, aftercare agreements, model releases.",
+    templatesTitle: "Your agreements",
+    renewsNever: "Never renews",
+    renewsEvery: "Renews every {n}",
+    months6: "6 months",
+    year1: "1 year",
+    years2: "2 years",
+    never: "Never",
+    send: "Send",
+    edit: "Edit",
+    delete: "Delete",
+    confirmDelete: "Delete \"{name}\"? Copies already sent or signed are kept.",
+    newTitle: "New agreement",
+    editTitle: "Edit agreement",
+    nameLabel: "Name",
+    namePlaceholder: "Massage consent form",
+    nameHint: "Clients see this name on the link you send.",
+    bodyLabel: "Agreement",
+    bodyPlaceholder: "I understand that massage therapy is not a substitute for medical care...",
+    formatHint: "Select text, then tap B, I, H or • to format it.",
+    preview: "Preview",
+    write: "Write",
+    renewLabel: "Renews every",
+    renewHint: "Clients must sign again once their signature is this old.",
+    save: "Save agreement",
+    saving: "Saving...",
+    cancel: "Cancel",
+    close: "Close",
+    sentTitle: "Sent & signed",
+    sentEmpty: "Nothing sent yet. Tap Send on an agreement, or use \"Send agreement\" on a client.",
+    statusPending: "Waiting for signature",
+    statusSigned: "Signed",
+    statusExpired: "Expired",
+    statusVoid: "Cancelled",
+    signedOn: "Signed {date}",
+    validUntil: "valid until {date}",
+    expiredOn: "expired {date}",
+    sentOn: "Sent {date}",
+    view: "View",
+    shareAgain: "Share link",
+    voidAction: "Cancel",
+    confirmVoid: "Cancel this agreement link? The client won't be able to sign it.",
+    sendTitle: "Send an agreement",
+    whichAgreement: "Agreement",
+    whichClient: "Client",
+    otherClient: "Someone else (type their name)",
+    clientName: "Client name",
+    clientPhone: "WhatsApp number (optional)",
+    createLink: "Create signing link",
+    creating: "Creating...",
+    linkReady: "Link ready for {name}",
+    linkReadyHint: "Send it however you like. Once they sign, it shows as Signed here and on their client record.",
+    whatsapp: "Send on WhatsApp",
+    copy: "Copy link",
+    copied: "Copied ✓",
+    waMessage: "Hi {name}, please read and sign \"{title}\" from {business} before your appointment: {url}",
+    needSetup: "Agreements aren't switched on yet. Run supabase_agreements.sql in Supabase (SQL Editor) once, then refresh.",
+    loadError: "Couldn't load agreements: {msg}",
+    saveError: "Couldn't save: {msg}",
+    signedCopy: "Signed copy",
+    signedBy: "Signed by {name}",
+    print: "Print / save PDF",
+    clientChipSigned: "✍️ Signed",
+    clientChipPending: "✍️ Sent",
+    clientChipExpired: "✍️ Expired",
+    sendAgreement: "Send agreement",
+    // Client signing page
+    signLoading: "Loading agreement...",
+    signNotFound: "This link isn't valid anymore. Ask the business to send you a new one.",
+    signFrom: "From {business}",
+    signYourName: "Your full name",
+    signHere: "Sign here",
+    signClear: "Clear",
+    signAgree: "I have read this agreement and I agree to it.",
+    signButton: "Sign agreement",
+    signing: "Signing...",
+    signDoneTitle: "Signed ✓",
+    signDoneSub: "Thanks, {name}. {business} has your signed copy. You can close this page.",
+    signAlready: "This agreement was signed by {name} on {date}.",
+    signNeedName: "Please type your full name.",
+    signNeedInk: "Please draw your signature in the box.",
+    signNeedAgree: "Please tick the box to confirm you agree.",
+    poweredBy: "Secure signing by VaiBook",
+  },
+  es: {
+    navAgreements: "Acuerdos",
+    title: "Acuerdos",
+    subtitle: "Escribe un acuerdo una vez y envíalo a cualquier cliente. Lo firman en su teléfono y la copia firmada se guarda aquí.",
+    add: "+ Nuevo acuerdo",
+    emptyTitle: "Aún no hay acuerdos",
+    emptyHint: "Formularios de consentimiento, exenciones de responsabilidad, cuidados posteriores, autorizaciones de modelo.",
+    templatesTitle: "Tus acuerdos",
+    renewsNever: "No se renueva",
+    renewsEvery: "Se renueva cada {n}",
+    months6: "6 meses",
+    year1: "1 año",
+    years2: "2 años",
+    never: "Nunca",
+    send: "Enviar",
+    edit: "Editar",
+    delete: "Eliminar",
+    confirmDelete: "¿Eliminar \"{name}\"? Las copias ya enviadas o firmadas se conservan.",
+    newTitle: "Nuevo acuerdo",
+    editTitle: "Editar acuerdo",
+    nameLabel: "Nombre",
+    namePlaceholder: "Consentimiento para masaje",
+    nameHint: "Los clientes ven este nombre en el enlace que envías.",
+    bodyLabel: "Acuerdo",
+    bodyPlaceholder: "Entiendo que la terapia de masaje no sustituye la atención médica...",
+    formatHint: "Selecciona texto y toca B, I, H o • para darle formato.",
+    preview: "Vista previa",
+    write: "Escribir",
+    renewLabel: "Se renueva cada",
+    renewHint: "Los clientes deben firmar de nuevo cuando su firma tenga esta antigüedad.",
+    save: "Guardar acuerdo",
+    saving: "Guardando...",
+    cancel: "Cancelar",
+    close: "Cerrar",
+    sentTitle: "Enviados y firmados",
+    sentEmpty: "Nada enviado aún. Toca Enviar en un acuerdo, o usa \"Enviar acuerdo\" en un cliente.",
+    statusPending: "Esperando firma",
+    statusSigned: "Firmado",
+    statusExpired: "Vencido",
+    statusVoid: "Cancelado",
+    signedOn: "Firmado {date}",
+    validUntil: "válido hasta {date}",
+    expiredOn: "venció {date}",
+    sentOn: "Enviado {date}",
+    view: "Ver",
+    shareAgain: "Compartir enlace",
+    voidAction: "Cancelar",
+    confirmVoid: "¿Cancelar este enlace? El cliente no podrá firmarlo.",
+    sendTitle: "Enviar un acuerdo",
+    whichAgreement: "Acuerdo",
+    whichClient: "Cliente",
+    otherClient: "Otra persona (escribe su nombre)",
+    clientName: "Nombre del cliente",
+    clientPhone: "Número de WhatsApp (opcional)",
+    createLink: "Crear enlace de firma",
+    creating: "Creando...",
+    linkReady: "Enlace listo para {name}",
+    linkReadyHint: "Envíalo como prefieras. Cuando firme, aparecerá como Firmado aquí y en su ficha de cliente.",
+    whatsapp: "Enviar por WhatsApp",
+    copy: "Copiar enlace",
+    copied: "Copiado ✓",
+    waMessage: "Hola {name}, por favor lee y firma \"{title}\" de {business} antes de tu cita: {url}",
+    needSetup: "Los acuerdos aún no están activados. Ejecuta supabase_agreements.sql en Supabase (SQL Editor) una vez y recarga.",
+    loadError: "No se pudieron cargar los acuerdos: {msg}",
+    saveError: "No se pudo guardar: {msg}",
+    signedCopy: "Copia firmada",
+    signedBy: "Firmado por {name}",
+    print: "Imprimir / guardar PDF",
+    clientChipSigned: "✍️ Firmado",
+    clientChipPending: "✍️ Enviado",
+    clientChipExpired: "✍️ Vencido",
+    sendAgreement: "Enviar acuerdo",
+    signLoading: "Cargando acuerdo...",
+    signNotFound: "Este enlace ya no es válido. Pide al negocio que te envíe uno nuevo.",
+    signFrom: "De {business}",
+    signYourName: "Tu nombre completo",
+    signHere: "Firma aquí",
+    signClear: "Borrar",
+    signAgree: "He leído este acuerdo y estoy de acuerdo.",
+    signButton: "Firmar acuerdo",
+    signing: "Firmando...",
+    signDoneTitle: "Firmado ✓",
+    signDoneSub: "Gracias, {name}. {business} tiene tu copia firmada. Puedes cerrar esta página.",
+    signAlready: "Este acuerdo fue firmado por {name} el {date}.",
+    signNeedName: "Por favor escribe tu nombre completo.",
+    signNeedInk: "Por favor dibuja tu firma en el recuadro.",
+    signNeedAgree: "Marca la casilla para confirmar que estás de acuerdo.",
+    poweredBy: "Firma segura con VaiBook",
+  },
+};
+const agreeText = (lang, key, vars) => {
+  const dict = AGREE_TEXT[(lang || "en").slice(0, 2)] || AGREE_TEXT.en;
+  let str = dict[key] || AGREE_TEXT.en[key] || key;
+  if (vars) Object.keys(vars).forEach((k) => { str = str.split(`{${k}}`).join(vars[k]); });
+  return str;
+};
+const AGREEMENT_RENEW_OPTIONS = [0, 6, 12, 24];
+const renewLabel = (lang, months) => {
+  if (!months) return agreeText(lang, "never");
+  return agreeText(lang, months === 6 ? "months6" : months === 12 ? "year1" : "years2");
+};
+const agreementDate = (iso, lang) => {
+  if (!iso) return "";
+  try { return new Date(iso).toLocaleDateString((lang || "en").startsWith("es") ? "es" : "en-US", { year: "numeric", month: "short", day: "numeric" }); } catch (e) { return ""; }
+};
+// pending | signed | expired | void
+const agreementStatus = (r) => {
+  if (!r) return null;
+  if (r.status === "void") return "void";
+  if (r.status === "pending") return "pending";
+  if (r.expires_at && new Date(r.expires_at) < new Date()) return "expired";
+  return "signed";
+};
+const agreementSignUrl = (token) => `${window.location.origin}/#sign-${token}`;
+const agreementWhatsAppUrl = (phone, message) => {
+  let digits = String(phone || "").replace(/\D/g, "");
+  if (digits.length === 7) digits = `501${digits}`; // local Belize number
+  return digits ? `https://wa.me/${digits}?text=${encodeURIComponent(message)}` : `https://wa.me/?text=${encodeURIComponent(message)}`;
+};
+const copyText = async (text) => {
+  try { await navigator.clipboard.writeText(text); return true; } catch (e) {
+    try {
+      const ta = document.createElement("textarea");
+      ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
+      document.body.appendChild(ta); ta.select();
+      const ok = document.execCommand("copy");
+      document.body.removeChild(ta);
+      return ok;
+    } catch (e2) { return false; }
+  }
+};
+
+// Light formatting: **bold**, _italic_, "## " heading lines, "• "/"- " bullets.
+// Rendered as React elements (never raw HTML), so nothing typed can inject code.
+function renderAgreementInline(text, keyPrefix) {
+  const parts = String(text).split(/(\*\*[^*]+\*\*|_[^_\s][^_]*_)/g);
+  return parts.map((part, i) => {
+    if (part.startsWith("**") && part.endsWith("**") && part.length > 4) return <strong key={`${keyPrefix}-${i}`}>{part.slice(2, -2)}</strong>;
+    if (part.startsWith("_") && part.endsWith("_") && part.length > 2) return <em key={`${keyPrefix}-${i}`}>{part.slice(1, -1)}</em>;
+    return part;
+  });
+}
+function AgreementBody({ text }) {
+  const lines = String(text || "").split("\n");
+  const blocks = [];
+  let bullets = [];
+  const flush = (key) => {
+    if (bullets.length) { blocks.push(<ul key={`ul-${key}`}>{bullets}</ul>); bullets = []; }
+  };
+  lines.forEach((raw, i) => {
+    const line = raw.replace(/\s+$/, "");
+    const bullet = line.match(/^\s*(?:•|-|\*)\s+(.*)$/);
+    if (bullet) { bullets.push(<li key={`li-${i}`}>{renderAgreementInline(bullet[1], `li-${i}`)}</li>); return; }
+    flush(i);
+    if (line.startsWith("## ")) blocks.push(<h3 key={`h-${i}`}>{renderAgreementInline(line.slice(3), `h-${i}`)}</h3>);
+    else if (line.trim() === "") blocks.push(<div key={`sp-${i}`} className="agree-spacer" />);
+    else blocks.push(<p key={`p-${i}`}>{renderAgreementInline(line, `p-${i}`)}</p>);
+  });
+  flush("end");
+  return <div className="agree-body">{blocks}</div>;
+}
+// Same formatting, as escaped HTML — only for the print window.
+const agreementBodyToHtml = (text) => {
+  const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  const inline = (s) => esc(s).replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>").replace(/_([^_\s][^_]*)_/g, "<em>$1</em>");
+  let html = ""; let inList = false;
+  String(text || "").split("\n").forEach((raw) => {
+    const line = raw.replace(/\s+$/, "");
+    const bullet = line.match(/^\s*(?:•|-|\*)\s+(.*)$/);
+    if (bullet) { if (!inList) { html += "<ul>"; inList = true; } html += `<li>${inline(bullet[1])}</li>`; return; }
+    if (inList) { html += "</ul>"; inList = false; }
+    if (line.startsWith("## ")) html += `<h3>${inline(line.slice(3))}</h3>`;
+    else if (line.trim() === "") html += "<br/>";
+    else html += `<p>${inline(line)}</p>`;
+  });
+  if (inList) html += "</ul>";
+  return html;
+};
+const printSignedAgreement = (r, businessName, lang) => {
+  const esc = (s) => String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  const sig = r.signature_png && r.signature_png.startsWith("data:image/png;base64,") ? r.signature_png : "";
+  const w = window.open("", "_blank");
+  if (!w) return;
+  w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>${esc(r.title)}</title>
+<style>body{font-family:-apple-system,Helvetica,Arial,sans-serif;color:#17141F;max-width:720px;margin:40px auto;padding:0 24px;line-height:1.55}
+h1{font-size:22px;margin:0 0 4px}.muted{color:#6B6578;font-size:13px}h3{font-size:16px;margin:18px 0 6px}
+.sig{margin-top:32px;border-top:1px solid #ddd;padding-top:16px}.sig img{max-width:320px;height:auto;display:block;margin:8px 0}</style></head><body>
+<div class="muted">${esc(businessName)}</div><h1>${esc(r.title)}</h1>
+<div>${agreementBodyToHtml(r.body)}</div>
+<div class="sig"><div><strong>${esc(agreeText(lang, "signedBy", { name: r.signer_name || "" }))}</strong></div>
+${sig ? `<img src="${sig}" alt="Signature"/>` : ""}
+<div class="muted">${esc(agreementDate(r.signed_at, lang))}${r.expires_at ? " · " + esc(agreeText(lang, "validUntil", { date: agreementDate(r.expires_at, lang) })) : ""}</div></div>
+</body></html>`);
+  w.document.close();
+  w.focus();
+  setTimeout(() => { try { w.print(); } catch (e) { /* user can print manually */ } }, 300);
+};
+
+// Finger/mouse signature box. Draws on a canvas; the parent reads the PNG
+// from canvasRef when signing.
+function SignaturePad({ canvasRef, onInk, clearLabel }) {
+  const wrapRef = useRef(null);
+  const drawing = useRef(false);
+  const last = useRef(null);
+  const setup = () => {
+    const canvas = canvasRef.current;
+    const wrap = wrapRef.current;
+    if (!canvas || !wrap) return;
+    const dpr = window.devicePixelRatio || 1;
+    const w = wrap.clientWidth;
+    const h = 180;
+    canvas.width = Math.round(w * dpr);
+    canvas.height = Math.round(h * dpr);
+    canvas.style.width = `${w}px`;
+    canvas.style.height = `${h}px`;
+    const ctx = canvas.getContext("2d");
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.lineWidth = 2.4;
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    ctx.strokeStyle = "#17141F";
+    onInk(false);
+  };
+  useEffect(() => {
+    setup();
+    // eslint-disable-next-line
+  }, []);
+  const point = (e) => {
+    const rect = canvasRef.current.getBoundingClientRect();
+    return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+  };
+  const down = (e) => {
+    e.preventDefault();
+    drawing.current = true;
+    last.current = point(e);
+    try { canvasRef.current.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ }
+    const ctx = canvasRef.current.getContext("2d");
+    ctx.beginPath(); ctx.arc(last.current.x, last.current.y, 1.1, 0, Math.PI * 2); ctx.fillStyle = "#17141F"; ctx.fill();
+    onInk(true);
+  };
+  const move = (e) => {
+    if (!drawing.current) return;
+    e.preventDefault();
+    const p = point(e);
+    const ctx = canvasRef.current.getContext("2d");
+    ctx.beginPath(); ctx.moveTo(last.current.x, last.current.y); ctx.lineTo(p.x, p.y); ctx.stroke();
+    last.current = p;
+  };
+  const up = () => { drawing.current = false; };
+  return (
+    <div className="sig-pad-wrap" ref={wrapRef}>
+      <canvas
+        ref={canvasRef}
+        className="sig-pad"
+        onPointerDown={down}
+        onPointerMove={move}
+        onPointerUp={up}
+        onPointerLeave={up}
+        onPointerCancel={up}
+      />
+      <div className="sig-pad-line" />
+      <button type="button" className="sig-pad-clear" onClick={setup}>{clearLabel}</button>
+    </div>
+  );
+}
+// Shrinks the drawn signature to 1x before saving, to keep the PNG small.
+const signaturePngFromCanvas = (canvas) => {
+  try {
+    const w = parseInt(canvas.style.width, 10) || canvas.width;
+    const h = parseInt(canvas.style.height, 10) || canvas.height;
+    const out = document.createElement("canvas");
+    out.width = w; out.height = h;
+    out.getContext("2d").drawImage(canvas, 0, 0, w, h);
+    return out.toDataURL("image/png");
+  } catch (e) { return null; }
+};
+
+// Public page a client opens from the link (#sign-<token>). No login needed.
+function AgreementSignPage({ token }) {
+  const { i18n } = useTranslation();
+  const at = (k, v) => agreeText(i18n.language, k, v);
+  const [doc, setDoc] = useState(null);
+  const [state, setState] = useState("loading"); // loading | ready | notfound | done
+  const [name, setName] = useState("");
+  const [agreed, setAgreed] = useState(false);
+  const [hasInk, setHasInk] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const [justSigned, setJustSigned] = useState(false);
+  const canvasRef = useRef(null);
+  useEffect(() => {
+    (async () => {
+      const { data, error: err } = await supabase.rpc("get_agreement_for_signing", { p_token: token });
+      const row = Array.isArray(data) ? data[0] : data;
+      if (err || !row) { setState("notfound"); return; }
+      setDoc(row);
+      setName(row.client_name || "");
+      setState(row.status === "signed" ? "done" : "ready");
+    })();
+  }, [token]);
+  const submit = async () => {
+    setError("");
+    if (name.trim().length < 2) { setError(at("signNeedName")); return; }
+    if (!hasInk) { setError(at("signNeedInk")); return; }
+    if (!agreed) { setError(at("signNeedAgree")); return; }
+    const png = signaturePngFromCanvas(canvasRef.current);
+    if (!png) { setError(at("signNeedInk")); return; }
+    setBusy(true);
+    const { data, error: err } = await supabase.rpc("sign_agreement", {
+      p_token: token, p_signer_name: name.trim(), p_signature_png: png, p_user_agent: navigator.userAgent || null,
+    });
+    setBusy(false);
+    if (err) { setError(err.message || "Error"); return; }
+    setDoc((d) => ({ ...d, status: "signed", signer_name: name.trim(), signed_at: data }));
+    setJustSigned(true);
+    setState("done");
+  };
+  return (
+    <div className="agree-sign-page">
+      <div className="agree-sign-top">
+        <span className="agree-sign-logo">vai<span>book</span></span>
+      </div>
+      <div className="agree-sign-card">
+        {state === "loading" && <p className="agree-muted">{at("signLoading")}</p>}
+        {state === "notfound" && <p className="agree-muted">{at("signNotFound")}</p>}
+        {(state === "ready" || state === "done") && doc && (
+          <>
+            <div className="agree-sign-from">{at("signFrom", { business: doc.business_name || "" })}</div>
+            <h1 className="agree-sign-title">{doc.title}</h1>
+            <AgreementBody text={doc.body} />
+            {state === "done" ? (
+              <div className="agree-sign-done">
+                <div className="agree-sign-done-title">{at("signDoneTitle")}</div>
+                <p>{justSigned ? at("signDoneSub", { name: doc.signer_name || name, business: doc.business_name || "" }) : at("signAlready", { name: doc.signer_name || "", date: agreementDate(doc.signed_at, i18n.language) })}</p>
+              </div>
+            ) : (
+              <div className="agree-sign-form">
+                <div className="input-group">
+                  <label>{at("signYourName")}</label>
+                  <input value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" maxLength={120} />
+                </div>
+                <label className="agree-sign-label">{at("signHere")}</label>
+                <SignaturePad canvasRef={canvasRef} onInk={(v) => { setHasInk(v); if (v) setError(""); }} clearLabel={at("signClear")} />
+                <label className="agree-check">
+                  <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} />
+                  <span>{at("signAgree")}</span>
+                </label>
+                {error && <p className="agree-error">{error}</p>}
+                <button className="agree-sign-btn" onClick={submit} disabled={busy}>{busy ? at("signing") : at("signButton")}</button>
+              </div>
+            )}
+          </>
+        )}
+      </div>
+      <div className="agree-powered">🔒 {at("poweredBy")}</div>
+    </div>
+  );
+}
+
+// Provider's Agreements page: templates, send sheet, sent/signed list, viewer.
+function AgreementsPanel({ providerId, businessName, clients, requests, requestsError, onReloadRequests, sendFor, onSendForConsumed }) {
+  const { i18n } = useTranslation();
+  const lang = i18n.language;
+  const at = (k, v) => agreeText(lang, k, v);
+  const [templates, setTemplates] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [loadErr, setLoadErr] = useState(null);
+  const [editing, setEditing] = useState(null); // {id?, name, body, renew_months}
+  const [previewing, setPreviewing] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saveErr, setSaveErr] = useState("");
+  const [sendSheet, setSendSheet] = useState(null); // {templateId, clientId, name, phone}
+  const [creating, setCreating] = useState(false);
+  const [createdLink, setCreatedLink] = useState(null); // {url, phone, name, title}
+  const [copied, setCopied] = useState(false);
+  const [viewing, setViewing] = useState(null);
+  const bodyRef = useRef(null);
+  const missingSetup = (err) => err && (err.code === "PGRST205" || err.code === "42P01" || /agreement_/.test(err.message || ""));
+
+  const loadTemplates = async () => {
+    if (!providerId) return;
+    setLoading(true);
+    const { data, error } = await supabase.from("agreement_templates").select("*").eq("provider_id", providerId).eq("is_archived", false).order("created_at", { ascending: true });
+    if (error) setLoadErr(error); else { setLoadErr(null); setTemplates(data || []); }
+    setLoading(false);
+  };
+  useEffect(() => { loadTemplates(); onReloadRequests && onReloadRequests(); /* eslint-disable-next-line */ }, [providerId]);
+
+  // Arriving from a client's "Send agreement" button.
+  useEffect(() => {
+    if (sendFor && !loading) {
+      setSendSheet({ templateId: templates[0]?.id || "", clientId: sendFor.id, name: sendFor.name || "", phone: sendFor.phone || "" });
+      onSendForConsumed && onSendForConsumed();
+    }
+    // eslint-disable-next-line
+  }, [sendFor, loading]);
+
+  const wrapSelection = (kind) => {
+    const ta = bodyRef.current;
+    if (!ta || !editing) return;
+    const { selectionStart: s, selectionEnd: e, value } = ta;
+    let next = value; let caret = e;
+    if (kind === "b" || kind === "i") {
+      const mark = kind === "b" ? "**" : "_";
+      const sel = value.slice(s, e) || (kind === "b" ? "bold" : "italic");
+      next = value.slice(0, s) + mark + sel + mark + value.slice(e);
+      caret = s + mark.length * 2 + sel.length;
+    } else {
+      const prefix = kind === "h" ? "## " : "• ";
+      const lineStart = value.lastIndexOf("\n", s - 1) + 1;
+      const lineEnd = value.indexOf("\n", e) === -1 ? value.length : value.indexOf("\n", e);
+      const block = value.slice(lineStart, lineEnd).split("\n").map((l) => (l.startsWith(prefix) ? l.slice(prefix.length) : prefix + l)).join("\n");
+      next = value.slice(0, lineStart) + block + value.slice(lineEnd);
+      caret = lineStart + block.length;
+    }
+    setEditing((ed) => ({ ...ed, body: next }));
+    setTimeout(() => { try { ta.focus(); ta.setSelectionRange(caret, caret); } catch (err) { /* ignore */ } }, 0);
+  };
+
+  const saveTemplate = async () => {
+    if (!editing) return;
+    const name = editing.name.trim();
+    const body = editing.body.trim();
+    if (!name || !body) return;
+    setSaving(true); setSaveErr("");
+    const fields = { name, body, renew_months: editing.renew_months || 0 };
+    const res = editing.id
+      ? await supabase.from("agreement_templates").update(fields).eq("id", editing.id).select().single()
+      : await supabase.from("agreement_templates").insert({ ...fields, provider_id: providerId }).select().single();
+    setSaving(false);
+    if (res.error) { setSaveErr(at("saveError", { msg: res.error.message })); return; }
+    setEditing(null); setPreviewing(false);
+    loadTemplates();
+  };
+  const deleteTemplate = async (tpl) => {
+    if (!window.confirm(at("confirmDelete", { name: tpl.name }))) return;
+    const { error } = await supabase.from("agreement_templates").delete().eq("id", tpl.id);
+    if (error) { setSaveErr(at("saveError", { msg: error.message })); return; }
+    loadTemplates();
+  };
+
+  const createRequest = async () => {
+    if (!sendSheet) return;
+    const tpl = templates.find((x) => x.id === sendSheet.templateId);
+    if (!tpl) return;
+    const client = sendSheet.clientId && sendSheet.clientId !== "other" ? clients.find((c) => c.id === sendSheet.clientId) : null;
+    const clientName = (client ? client.name : sendSheet.name).trim();
+    const clientPhone = (client ? client.phone || sendSheet.phone : sendSheet.phone).trim();
+    if (!clientName) return;
+    setCreating(true); setSaveErr("");
+    const { data, error } = await supabase.from("agreement_requests").insert({
+      provider_id: providerId,
+      template_id: tpl.id,
+      customer_id: client ? client.id : null,
+      client_name: clientName,
+      client_phone: clientPhone || null,
+      title: tpl.name,
+      body: tpl.body,
+      renew_months: tpl.renew_months || 0,
+    }).select("id, token, title, client_name, client_phone").single();
+    setCreating(false);
+    if (error) { setSaveErr(at("saveError", { msg: error.message })); return; }
+    setSendSheet(null);
+    setCopied(false);
+    setCreatedLink({ url: agreementSignUrl(data.token), phone: data.client_phone, name: data.client_name, title: data.title });
+    onReloadRequests && onReloadRequests();
+  };
+  const shareExisting = (r) => {
+    setCopied(false);
+    setCreatedLink({ url: agreementSignUrl(r.token), phone: r.client_phone, name: r.client_name, title: r.title });
+  };
+  const voidRequest = async (r) => {
+    if (!window.confirm(at("confirmVoid"))) return;
+    const { error } = await supabase.from("agreement_requests").update({ status: "void" }).eq("id", r.id);
+    if (error) { setSaveErr(at("saveError", { msg: error.message })); return; }
+    onReloadRequests && onReloadRequests();
+  };
+  const openSigned = async (r) => {
+    const { data } = await supabase.from("agreement_requests").select("*").eq("id", r.id).single();
+    setViewing(data || r);
+  };
+
+  if (missingSetup(loadErr) || missingSetup(requestsError)) {
+    return (
+      <>
+        <div className="portal-header"><h2>{at("title")}</h2></div>
+        <div className="card" style={{ maxWidth: 560 }}><p style={{ fontSize: 14, lineHeight: 1.6 }}>{at("needSetup")}</p></div>
+      </>
+    );
+  }
+
+  const visibleRequests = (requests || []).filter((r) => r.status !== "void");
+  const statusLabel = (r) => {
+    const s = agreementStatus(r);
+    if (s === "pending") return <span className="agree-chip pending">{at("statusPending")}</span>;
+    if (s === "expired") return <span className="agree-chip expired">{at("statusExpired")}</span>;
+    return <span className="agree-chip signed">{at("statusSigned")}</span>;
+  };
+  const statusMeta = (r) => {
+    const s = agreementStatus(r);
+    if (s === "pending") return at("sentOn", { date: agreementDate(r.created_at, lang) });
+    if (s === "expired") return `${at("signedOn", { date: agreementDate(r.signed_at, lang) })} · ${at("expiredOn", { date: agreementDate(r.expires_at, lang) })}`;
+    return r.expires_at ? `${at("signedOn", { date: agreementDate(r.signed_at, lang) })} · ${at("validUntil", { date: agreementDate(r.expires_at, lang) })}` : at("signedOn", { date: agreementDate(r.signed_at, lang) });
+  };
+  const waMessage = createdLink ? at("waMessage", { name: (createdLink.name || "").split(" ")[0], title: createdLink.title, business: businessName || "", url: createdLink.url }) : "";
+
+  return (
+    <>
+      <div className="portal-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16, flexWrap: "wrap" }}>
+        <div style={{ maxWidth: 560 }}>
+          <h2>{at("title")}</h2>
+          <p>{at("subtitle")}</p>
+        </div>
+        <button className="btn-sm forest" onClick={() => { setEditing({ name: "", body: "", renew_months: 0 }); setPreviewing(false); setSaveErr(""); }}>{at("add")}</button>
+      </div>
+      {loadErr && <p className="agree-error">{at("loadError", { msg: loadErr.message })}</p>}
+      {saveErr && !editing && <p className="agree-error">{saveErr}</p>}
+
+      <div className="card" style={{ maxWidth: 720 }}>
+        <div className="card-title">{at("templatesTitle")}</div>
+        {!loading && templates.length === 0 && (
+          <div className="agree-empty">
+            <div className="agree-empty-icon">📝</div>
+            <div className="agree-empty-title">{at("emptyTitle")}</div>
+            <div className="agree-empty-hint">{at("emptyHint")}</div>
+          </div>
+        )}
+        {templates.map((tpl) => (
+          <div key={tpl.id} className="booking-item agree-row" style={{ alignItems: "center", gap: 12 }}>
+            <div className="booking-info" style={{ flex: 1, minWidth: 0 }}>
+              <div className="title">{tpl.name}</div>
+              <div className="meta">{tpl.renew_months ? at("renewsEvery", { n: renewLabel(lang, tpl.renew_months) }) : at("renewsNever")}</div>
+            </div>
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap", justifyContent: "flex-end" }}>
+              <button className="btn-sm forest" onClick={() => setSendSheet({ templateId: tpl.id, clientId: clients[0]?.id || "other", name: "", phone: "" })}>{at("send")}</button>
+              <button className="btn-sm ghost" onClick={() => { setEditing({ id: tpl.id, name: tpl.name, body: tpl.body, renew_months: tpl.renew_months || 0 }); setPreviewing(false); setSaveErr(""); }}>{at("edit")}</button>
+              <button className="btn-sm ghost" onClick={() => deleteTemplate(tpl)}>{at("delete")}</button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="card" style={{ maxWidth: 720, marginTop: 20 }}>
+        <div className="card-title">{at("sentTitle")}</div>
+        {visibleRequests.length === 0 && <p style={{ fontSize: 13, color: "var(--muted)", padding: "8px 0" }}>{at("sentEmpty")}</p>}
+        {visibleRequests.map((r) => {
+          const s = agreementStatus(r);
+          return (
+            <div key={r.id} className="booking-item agree-row" style={{ alignItems: "center", gap: 12 }}>
+              <div className="booking-info" style={{ flex: 1, minWidth: 0 }}>
+                <div className="title">{r.client_name || "—"} {statusLabel(r)}</div>
+                <div className="meta">{r.title} · {statusMeta(r)}</div>
+              </div>
+              <div style={{ display: "flex", gap: 6, flexWrap: "wrap", justifyContent: "flex-end" }}>
+                {s === "pending" && <button className="btn-sm forest" onClick={() => shareExisting(r)}>{at("shareAgain")}</button>}
+                {s === "pending" && <button className="btn-sm ghost" onClick={() => voidRequest(r)}>{at("voidAction")}</button>}
+                {(s === "signed" || s === "expired") && <button className="btn-sm ghost" onClick={() => openSigned(r)}>{at("view")}</button>}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* EDITOR */}
+      {editing && (
+        <div className="sheet-overlay" onClick={() => !saving && setEditing(null)}>
+          <div className="sheet-panel agree-sheet" onClick={(e) => e.stopPropagation()}>
+            <div className="sheet-handle"></div>
+            <div className="agree-sheet-head">
+              <h3>{editing.id ? at("editTitle") : at("newTitle")}</h3>
+              <button className="setup-card-close" onClick={() => setEditing(null)} aria-label={at("close")}>×</button>
+            </div>
+            <div className="input-group">
+              <label>{at("nameLabel")}</label>
+              <input value={editing.name} maxLength={120} placeholder={at("namePlaceholder")} onChange={(e) => setEditing((ed) => ({ ...ed, name: e.target.value }))} />
+              <div className="agree-hint">{at("nameHint")}</div>
+            </div>
+            <div className="input-group">
+              <label>{at("bodyLabel")}</label>
+              <div className="agree-toolbar">
+                <button type="button" onClick={() => wrapSelection("b")} disabled={previewing}><strong>B</strong></button>
+                <button type="button" onClick={() => wrapSelection("i")} disabled={previewing}><em>I</em></button>
+                <button type="button" onClick={() => wrapSelection("h")} disabled={previewing}>H</button>
+                <button type="button" onClick={() => wrapSelection("bullet")} disabled={previewing}>•</button>
+                <button type="button" className="agree-toolbar-preview" onClick={() => setPreviewing((p) => !p)}>{previewing ? at("write") : at("preview")}</button>
+              </div>
+              {previewing ? (
+                <div className="agree-preview"><AgreementBody text={editing.body} /></div>
+              ) : (
+                <textarea ref={bodyRef} className="agree-textarea" value={editing.body} maxLength={20000} placeholder={at("bodyPlaceholder")} onChange={(e) => setEditing((ed) => ({ ...ed, body: e.target.value }))} />
+              )}
+              <div className="agree-hint">{at("formatHint")}</div>
+            </div>
+            <div className="input-group">
+              <label>{at("renewLabel")}</label>
+              <div className="agree-pills">
+                {AGREEMENT_RENEW_OPTIONS.map((m) => (
+                  <button key={m} type="button" className={`agree-pill ${editing.renew_months === m ? "active" : ""}`} onClick={() => setEditing((ed) => ({ ...ed, renew_months: m }))}>{renewLabel(lang, m)}</button>
+                ))}
+              </div>
+              <div className="agree-hint">{at("renewHint")}</div>
+            </div>
+            {saveErr && <p className="agree-error">{saveErr}</p>}
+            <button className="agree-sign-btn" onClick={saveTemplate} disabled={saving || !editing.name.trim() || !editing.body.trim()}>{saving ? at("saving") : at("save")}</button>
+          </div>
+        </div>
+      )}
+
+      {/* SEND SHEET */}
+      {sendSheet && (
+        <div className="sheet-overlay" onClick={() => !creating && setSendSheet(null)}>
+          <div className="sheet-panel agree-sheet" onClick={(e) => e.stopPropagation()}>
+            <div className="sheet-handle"></div>
+            <div className="agree-sheet-head">
+              <h3>{at("sendTitle")}</h3>
+              <button className="setup-card-close" onClick={() => setSendSheet(null)} aria-label={at("close")}>×</button>
+            </div>
+            {templates.length === 0 ? (
+              <>
+                <p style={{ fontSize: 14, color: "var(--muted)" }}>{at("emptyTitle")}</p>
+                <button className="agree-sign-btn" onClick={() => { setSendSheet(null); setEditing({ name: "", body: "", renew_months: 0 }); }}>{at("add")}</button>
+              </>
+            ) : (
+              <>
+                <div className="input-group">
+                  <label>{at("whichAgreement")}</label>
+                  <select value={sendSheet.templateId} onChange={(e) => setSendSheet((ss) => ({ ...ss, templateId: e.target.value }))}>
+                    {templates.map((tpl) => <option key={tpl.id} value={tpl.id}>{tpl.name}</option>)}
+                  </select>
+                </div>
+                <div className="input-group">
+                  <label>{at("whichClient")}</label>
+                  <select value={sendSheet.clientId || "other"} onChange={(e) => setSendSheet((ss) => ({ ...ss, clientId: e.target.value }))}>
+                    {clients.map((c) => <option key={c.id} value={c.id}>{c.name}{c.phone ? ` · ${c.phone}` : ""}</option>)}
+                    <option value="other">{at("otherClient")}</option>
+                  </select>
+                </div>
+                {(sendSheet.clientId === "other" || !sendSheet.clientId) && (
+                  <>
+                    <div className="input-group">
+                      <label>{at("clientName")}</label>
+                      <input value={sendSheet.name} maxLength={120} onChange={(e) => setSendSheet((ss) => ({ ...ss, name: e.target.value }))} />
+                    </div>
+                    <div className="input-group">
+                      <label>{at("clientPhone")}</label>
+                      <input value={sendSheet.phone} maxLength={40} inputMode="tel" placeholder="+501 600-0000" onChange={(e) => setSendSheet((ss) => ({ ...ss, phone: e.target.value }))} />
+                    </div>
+                  </>
+                )}
+                {saveErr && <p className="agree-error">{saveErr}</p>}
+                <button
+                  className="agree-sign-btn"
+                  onClick={createRequest}
+                  disabled={creating || !sendSheet.templateId || ((sendSheet.clientId === "other" || !sendSheet.clientId) && !sendSheet.name.trim())}
+                >
+                  {creating ? at("creating") : at("createLink")}
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* LINK READY */}
+      {createdLink && (
+        <div className="sheet-overlay" onClick={() => setCreatedLink(null)}>
+          <div className="sheet-panel agree-sheet" onClick={(e) => e.stopPropagation()}>
+            <div className="sheet-handle"></div>
+            <div className="agree-sheet-head">
+              <h3>{at("linkReady", { name: createdLink.name || "" })}</h3>
+              <button className="setup-card-close" onClick={() => setCreatedLink(null)} aria-label={at("close")}>×</button>
+            </div>
+            <p className="agree-hint" style={{ marginTop: 0 }}>{at("linkReadyHint")}</p>
+            <div className="agree-link-box">{createdLink.url}</div>
+            <a className="agree-sign-btn agree-wa-btn" href={agreementWhatsAppUrl(createdLink.phone, waMessage)} target="_blank" rel="noreferrer">{at("whatsapp")}</a>
+            <button className="btn-sm ghost" style={{ width: "100%", padding: "12px 0", marginTop: 8 }} onClick={async () => { const ok = await copyText(createdLink.url); setCopied(ok); }}>{copied ? at("copied") : at("copy")}</button>
+          </div>
+        </div>
+      )}
+
+      {/* SIGNED COPY VIEWER */}
+      {viewing && (
+        <div className="sheet-overlay" onClick={() => setViewing(null)}>
+          <div className="sheet-panel agree-sheet" onClick={(e) => e.stopPropagation()}>
+            <div className="sheet-handle"></div>
+            <div className="agree-sheet-head">
+              <h3>{at("signedCopy")}</h3>
+              <button className="setup-card-close" onClick={() => setViewing(null)} aria-label={at("close")}>×</button>
+            </div>
+            <div className="agree-view-scroll">
+              <div className="agree-sign-title" style={{ fontSize: 18 }}>{viewing.title}</div>
+              <AgreementBody text={viewing.body} />
+              <div className="agree-view-sig">
+                <div style={{ fontWeight: 700 }}>{at("signedBy", { name: viewing.signer_name || "" })}</div>
+                {viewing.signature_png && viewing.signature_png.startsWith("data:image/png;base64,") && <img src={viewing.signature_png} alt="" />}
+                <div className="agree-hint">{statusMeta(viewing)}</div>
+              </div>
+            </div>
+            <button className="agree-sign-btn" onClick={() => printSignedAgreement(viewing, businessName, lang)}>{at("print")}</button>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 
@@ -4396,6 +5260,7 @@ const PORTAL_TOOLS_BY_VIEW = {
     { id: "reviews", icon: "⭐", label: "My reviews" },
     { id: "review", icon: "📈", label: "Monthly review" },
     { id: "profile", icon: "👤", label: "Public profile" },
+    { id: "agreements", icon: "✍️", label: "Agreements" },
     { id: "modules", icon: "🧩", label: "Modules" },
     { id: "settings", icon: "⚙️", label: "Settings" },
   ],
@@ -8724,6 +9589,7 @@ function StaffPortal({ onNav, session, staffProfile, onSignOut }) {
 function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSignOut, onProviderProfileUpdate }) {
   const { t, i18n } = useTranslation();
   const st = (key, vars) => setupText(i18n.language, key, vars);
+  const at = (key, vars) => agreeText(i18n.language, key, vars);
   // Remembers which tab this account was on, so a refresh lands back on
   // "My bookings" (or wherever) instead of always resetting to "Dashboard"
   // — same sessionStorage pattern as App's own vaibook_last_view, just
@@ -8911,6 +9777,27 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
     setSetupGoalsEditing(false);
     try { if (providerId) localStorage.setItem(`vaibook_setup_goals_${providerId}`, JSON.stringify(setupGoals)); } catch (e) { /* storage unavailable */ }
   };
+  // AGREEMENTS — sent/signed copies, loaded here (not inside the panel) so
+  // the Clients tab can show each client's agreement status too.
+  const [agreementRequests, setAgreementRequests] = useState([]);
+  const [agreementRequestsError, setAgreementRequestsError] = useState(null);
+  const [agreementSendFor, setAgreementSendFor] = useState(null);
+  const loadAgreementRequests = async () => {
+    if (!providerId) return;
+    const { data, error } = await supabase
+      .from("agreement_requests")
+      .select("id, token, customer_id, client_name, client_phone, title, body, renew_months, status, signer_name, signed_at, expires_at, created_at")
+      .eq("provider_id", providerId)
+      .order("created_at", { ascending: false })
+      .limit(500);
+    if (error) { setAgreementRequestsError(error); return; }
+    setAgreementRequestsError(null);
+    setAgreementRequests(data || []);
+  };
+  useEffect(() => {
+    if (providerId && (tab === "clients" || tab === "agreements")) loadAgreementRequests();
+    // eslint-disable-next-line
+  }, [providerId, tab]);
   // Jump to Settings and scroll to one of its cards.
   const goToSettingsCard = (cardId) => {
     setTab("settings");
@@ -10197,6 +11084,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
       label: t("providerPortal.nav.groupGrowth"),
       items: [
         { id: "reviews", icon: "⭐", label: t("providerPortal.nav.reviews") },
+        { id: "agreements", icon: "✍️", label: at("navAgreements") },
         { id: "modules", icon: "🧩", label: t("providerPortal.nav.addons") },
       ],
     },
@@ -11001,9 +11889,12 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
               {allClients.length > 0 && filteredClients.length === 0 && (
                 <p style={{ fontSize: 13, color: "var(--muted)", padding: "16px 0" }}>{t("providerPortal.clients.noMatch", { query: clientSearch })}</p>
               )}
-              {filteredClients.map((c) => (
-                <div key={c.id} className="booking-item" style={{ alignItems: "center" }}>
-                  <div className="booking-info" style={{ flex: 1 }}>
+              {filteredClients.map((c) => {
+                const latestAgreement = agreementRequests.find((r) => r.customer_id === c.id && r.status !== "void");
+                const agreementState = agreementStatus(latestAgreement);
+                return (
+                <div key={c.id} className="booking-item" style={{ alignItems: "center", gap: 10 }}>
+                  <div className="booking-info" style={{ flex: 1, minWidth: 0 }}>
                     <div className="title">
                       {c.name}
                       {c.hasUpcoming && (
@@ -11016,8 +11907,17 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                       {c.lastDate && ` · last ${c.lastDate.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`}
                     </div>
                   </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", justifyContent: "flex-end" }}>
+                    {agreementState && (
+                      <button className={`agree-chip ${agreementState} agree-chip-btn`} onClick={() => setTab("agreements")}>
+                        {at(agreementState === "signed" ? "clientChipSigned" : agreementState === "expired" ? "clientChipExpired" : "clientChipPending")}
+                      </button>
+                    )}
+                    <button className="btn-sm ghost" onClick={() => { setAgreementSendFor({ id: c.id, name: c.name, phone: c.phone }); setTab("agreements"); }}>{at("sendAgreement")}</button>
+                  </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
 
             {isProOrAbove && providerProfile?.loyalty_enabled && (
@@ -12317,6 +13217,18 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
         )}
 
         {tab === "modules" && <ModulesPanel />}
+        {tab === "agreements" && (
+          <AgreementsPanel
+            providerId={providerId}
+            businessName={providerProfile?.business_name || ""}
+            clients={allClients}
+            requests={agreementRequests}
+            requestsError={agreementRequestsError}
+            onReloadRequests={loadAgreementRequests}
+            sendFor={agreementSendFor}
+            onSendForConsumed={() => setAgreementSendFor(null)}
+          />
+        )}
 
         {tab === "settings" && (
           <>
@@ -12336,6 +13248,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                 { group: st("groupBookingPage"), rows: [
                   { title: st("rowDeposits"), desc: st("rowDepositsDesc"), go: () => goToSettingsCard("settings-deposits") },
                   { title: st("rowWalkins"), desc: st("rowWalkinsDesc"), go: () => goToSettingsCard("settings-walkins") },
+                  { title: at("navAgreements"), desc: at("emptyHint"), go: () => setTab("agreements") },
                   { title: st("rowPortfolio"), desc: st("rowPortfolioDesc"), go: () => setTab("profile") },
                   { title: st("rowReviews"), desc: st("rowReviewsDesc"), go: () => setTab("reviews") },
                 ] },
@@ -14427,6 +15340,18 @@ export default function App() {
       sessionStorage.removeItem("vaibook_admin_tab");
     } catch (e) { /* ignore */ }
   };
+
+  // Agreement signing link (#sign-<token>) — a standalone public page, no
+  // login or site chrome, so a client can sign straight from WhatsApp.
+  const signMatch = window.location.hash.match(/^#sign-([a-f0-9]{32,})$/);
+  if (signMatch) {
+    return (
+      <>
+        <style>{css}</style>
+        <AgreementSignPage token={signMatch[1]} />
+      </>
+    );
+  }
 
   if (loading) {
     return (
