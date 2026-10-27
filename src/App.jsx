@@ -2941,6 +2941,38 @@ const css = `
   .tax-fine { font-size: 11.5px; color: var(--muted); line-height: 1.55; margin: 6px 0 0; }
 
 
+
+  /* ===== GATE SCREEN (loading + sign-in) ===== */
+  .gate { position: relative; min-height: 100vh; min-height: 100dvh; display: flex; align-items: center; justify-content: center; padding: 32px 16px; overflow: hidden;
+    background: radial-gradient(120% 80% at 50% 0%, #EEEBFF 0%, #FAF9F6 55%, #FAF9F6 100%); color: #16181D; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; }
+  .gate-glow { position: absolute; width: 520px; height: 520px; border-radius: 50%; top: -220px; right: -160px; background: radial-gradient(circle, rgba(108,92,231,0.22), rgba(108,92,231,0) 70%); pointer-events: none; }
+  .gate-glow::after { content: ""; position: absolute; width: 420px; height: 420px; border-radius: 50%; left: -520px; top: 560px; background: radial-gradient(circle, rgba(76,61,196,0.14), rgba(76,61,196,0) 70%); }
+  .gate-inner { position: relative; width: 100%; max-width: 380px; display: flex; flex-direction: column; align-items: center; gap: 22px; animation: gateIn .5s ease both; }
+  @keyframes gateIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  .gate-logo { display: flex; align-items: center; gap: 10px; }
+  .gate-word { font-size: 28px; font-weight: 800; letter-spacing: -0.03em; color: #16181D; }
+  .gate-word span { color: #4C3DC4; }
+  .gate-tag { font-size: 12px; font-weight: 700; color: #4C3DC4; background: #EEEBFF; border-radius: 999px; padding: 4px 10px; text-transform: lowercase; }
+  .gate-card { width: 100%; box-sizing: border-box; background: #fff; border: 1px solid #ECE9E2; border-radius: 22px; padding: 24px 20px; text-align: center;
+    box-shadow: 0 1px 2px rgba(22,24,29,0.04), 0 18px 40px -18px rgba(76,61,196,0.25); }
+  .gate-title { font-size: 19px; font-weight: 800; margin: 0 0 14px; letter-spacing: -0.01em; }
+  .gate-icon { font-size: 34px; margin-bottom: 8px; }
+  .gate-sub { font-size: 15px; line-height: 1.55; color: #4B5060; margin: 0 0 18px; }
+  .gate-btn { width: 100%; border: none; border-radius: 999px; padding: 14px 18px; background: #16181D; color: #fff; font: inherit; font-size: 15px; font-weight: 700; cursor: pointer; transition: transform .15s, box-shadow .15s; }
+  .gate-btn:hover { transform: translateY(-1px); box-shadow: 0 8px 20px -8px rgba(22,24,29,0.45); }
+  .gate-btn.ghost { background: #fff; color: #16181D; border: 1.5px solid #16181D; }
+  .gate-back { display: block; margin: 14px auto 0; background: none; border: none; font: inherit; font-size: 14px; font-weight: 600; color: #6C7281; cursor: pointer; }
+  .gate-back:hover { color: #16181D; }
+  .gate-card .biz-login-card { border: none; padding: 0; margin: 0; }
+  .gate-foot { font-size: 12.5px; color: #8A8F9C; text-align: center; }
+  .gate-loading { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+  .gate-bars rect { transform-box: fill-box; transform-origin: 50% 100%; animation: gateBar 1.1s ease-in-out infinite; }
+  .gate-bars rect:nth-child(2) { animation-delay: .15s; }
+  .gate-bars rect:nth-child(3) { animation-delay: .3s; }
+  @keyframes gateBar { 0%, 100% { transform: scaleY(1); opacity: 1; } 50% { transform: scaleY(0.55); opacity: .75; } }
+  .gate-loading .gate-word { font-size: 30px; margin-top: 4px; }
+  .gate-loading-text { font-size: 13.5px; color: #8A8F9C; font-weight: 600; letter-spacing: .01em; }
+  @media (prefers-reduced-motion: reduce) { .gate-bars rect, .gate-inner { animation: none; } }
   /* ===== BILLING TERMS (6 months / monthly) ===== */
   .term-toggle { display: flex; gap: 4px; width: fit-content; margin: 0 auto 22px; background: #EEECE7; border-radius: 999px; padding: 4px; }
   .term-toggle button { border: none; background: transparent; font: inherit; font-weight: 700; font-size: 14px; padding: 9px 16px; border-radius: 999px; cursor: pointer; color: #3A3F4B; display: flex; align-items: center; gap: 6px; }
@@ -3103,6 +3135,42 @@ const css = `
 // moss green climbing to the lime accent — the "growth" motif agreed on
 // for VaiBook. Renders as a plain <svg> so it drops in anywhere the
 // wordmark appears, at any size, without an external image file.
+// ── GATE SCREEN — loading splash + every "please sign in" screen ─────
+// One calm, light screen (soft glow, full-colour logo, white card) instead
+// of the old solid-purple pages where the purple logo and "book" vanished
+// into the background. `loading` shows the animated logo bars instead of
+// a card.
+function GateScreen({ tag, loading, loadingText, children }) {
+  return (
+    <div className="gate">
+      <div className="gate-glow" aria-hidden="true" />
+      <div className="gate-inner">
+        {loading ? (
+          <div className="gate-loading" role="status" aria-live="polite">
+            <svg className="gate-bars" width="64" height="64" viewBox="0 0 100 100" aria-hidden="true">
+              <rect x="6" y="62" width="26" height="32" rx="6" fill="#4C3DC4" />
+              <rect x="37" y="38" width="26" height="56" rx="6" fill="#6C5CE7" />
+              <rect x="68" y="6" width="26" height="88" rx="6" fill="#4C3DC4" />
+            </svg>
+            <div className="gate-word">vai<span>book</span></div>
+            <div className="gate-loading-text">{loadingText || "Loading…"}</div>
+          </div>
+        ) : (
+          <>
+            <div className="gate-logo">
+              <VaiBookMark size={30} />
+              <span className="gate-word">vai<span>book</span></span>
+              {tag && <span className="gate-tag">{tag}</span>}
+            </div>
+            <div className="gate-card">{children}</div>
+          </>
+        )}
+        <div className="gate-foot">Local services. Booked easily. Built for Belize 🇧🇿</div>
+      </div>
+    </div>
+  );
+}
+
 function VaiBookMark({ size = 26, style }) {
   return (
     <svg
@@ -9590,18 +9658,11 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
   // modal with no sign-in required, same as always.
   if (!session && !cameViaBookingLink) {
     return (
-      <div style={{ minHeight: "100vh", background: "var(--forest)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
-        <div style={{ textAlign: "center", maxWidth: 360 }}>
-          <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 28, fontWeight: 800, color: "var(--near-white)", marginBottom: 8, display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}>
-            <VaiBookMark size={30} />vai<span style={{ color: "var(--lime)" }}>book</span>
-          </div>
-          <p style={{ color: "rgba(255,255,255,0.6)", fontSize: 14, marginBottom: 24 }}>{t("customerPortal.signIn.subtitle")}</p>
-          <button className="btn-lime" style={{ width: "100%", padding: "12px 0" }} onClick={onSignIn}>{t("customerPortal.signIn.button")}</button>
-          <div style={{ marginTop: 20 }}>
-            <a style={{ color: "rgba(255,255,255,0.4)", fontSize: 13, cursor: "pointer" }} onClick={() => onNav("home")}>{t("customerPortal.signIn.backToSite")}</a>
-          </div>
-        </div>
-      </div>
+      <GateScreen>
+        <p className="gate-sub">{t("customerPortal.signIn.subtitle")}</p>
+        <button className="gate-btn" onClick={onSignIn}>{t("customerPortal.signIn.button")}</button>
+        <button className="gate-back" onClick={() => onNav("home")}>{t("customerPortal.signIn.backToSite")}</button>
+      </GateScreen>
     );
   }
 
@@ -11396,15 +11457,10 @@ function StaffPortal({ onNav, session, staffProfile, onSignOut }) {
 
   if (!session) {
     return (
-      <div style={{ minHeight: "100vh", background: "var(--forest)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
-        <div style={{ textAlign: "center", maxWidth: 360 }}>
-          <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 28, fontWeight: 800, color: "var(--near-white)", marginBottom: 8, display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}>
-            <VaiBookMark size={30} />vai<span style={{ color: "var(--lime)" }}>book</span>
-          </div>
-          <p style={{ color: "rgba(255,255,255,0.6)", fontSize: 14, marginBottom: 24 }}>{t("staffPortal.signInWithGoogle")}</p>
-          <button className="btn-lime" style={{ width: "100%", padding: "12px 0" }} onClick={() => onNav("home")}>← {t("staffPortal.backToSite")}</button>
-        </div>
-      </div>
+      <GateScreen tag="staff">
+        <p className="gate-sub">{t("staffPortal.signInWithGoogle")}</p>
+        <button className="gate-btn" onClick={() => onNav("home")}>← {t("staffPortal.backToSite")}</button>
+      </GateScreen>
     );
   }
 
@@ -13180,20 +13236,11 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
   // Not signed in at all
   if (!session) {
     return (
-      <div style={{ minHeight: "100vh", background: "var(--forest)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
-        <div style={{ textAlign: "center", maxWidth: 360 }}>
-          <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 28, fontWeight: 800, color: "var(--near-white)", marginBottom: 8, display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}>
-            <VaiBookMark size={30} />vai<span style={{ color: "var(--lime)" }}>book</span> <span style={{ color: "rgba(255,255,255,0.5)", fontWeight: 600, fontSize: 16 }}>providers</span>
-          </div>
-          <div className="biz-login-card" style={{ textAlign: "left", marginTop: 16 }}>
-            <div className="biz-login-title">{blText(i18n.language, "title")}</div>
-            <BusinessLoginForm onNav={onNav} onSignIn={onSignIn} />
-          </div>
-          <div style={{ marginTop: 20 }}>
-            <a style={{ color: "rgba(255,255,255,0.4)", fontSize: 13, cursor: "pointer" }} onClick={() => onNav("home")}>{t("providerPortal.signIn.backToSite")}</a>
-          </div>
-        </div>
-      </div>
+      <GateScreen tag={(i18n.language || "").startsWith("es") ? "negocios" : "for business"}>
+        <div className="gate-title">{blText(i18n.language, "title")}</div>
+        <div style={{ textAlign: "left" }}><BusinessLoginForm onNav={onNav} onSignIn={onSignIn} /></div>
+        <button className="gate-back" onClick={() => onNav("home")}>{t("providerPortal.signIn.backToSite")}</button>
+      </GateScreen>
     );
   }
 
@@ -14886,12 +14933,14 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                           />
                           <div style={{ flex: 1 }}>
                             <div style={{ fontSize: 14, fontWeight: 700 }}>
-                              {pl.name} <span style={{ fontWeight: 500, color: "var(--muted)" }}>— {pl.price}</span>
+                              {pl.name}
                               {pl.id === currentPlan.id && <span style={{ marginLeft: 8, fontSize: 11, fontWeight: 700, color: "var(--accent-text)" }}>{t("providerPortal.billing.yourPlanBadge")}</span>}
                             </div>
                             {pl.monthly > 0 && (
                               <div style={{ fontSize: 11.5, fontWeight: 700, color: "var(--accent-text)", marginTop: 2 }}>
-                                {i18n.language?.startsWith("es") ? `Desde BZ$${planTermPrice(pl, "six").perDay} al día` : `From BZ$${planTermPrice(pl, "six").perDay} a day`}
+                                {i18n.language?.startsWith("es")
+                                  ? `Mensual: BZ$${pl.monthly.toFixed(2)}/mes (BZ$${planTermPrice(pl, "monthly").perDay}/día) · 6 meses: BZ$${planTermPrice(pl, "six").perDay}/día`
+                                  : `Monthly: BZ$${pl.monthly.toFixed(2)}/mo (BZ$${planTermPrice(pl, "monthly").perDay}/day) · 6 months: BZ$${planTermPrice(pl, "six").perDay}/day`}
                               </div>
                             )}
                             <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 2 }}>{pl.desc}</div>
@@ -16411,7 +16460,7 @@ const PLANS = [
     // it's computed, not just in this label.
     // 2026-10-27: 6-month plan = BZ$1.99/day (BZ$417.90 for 7 months);
     // monthly raised to BZ$69.90 (BZ$2.33/day) so the 6-month plan is the deal.
-    id: "pro", name: "Solo", price: "BZ$1.99/day on 6 months", desc: "For solo practitioners", monthly: 69.9, sixMonthTotal: 417.9,
+    id: "pro", name: "Solo", price: "BZ$69.90/month, or BZ$1.99/day on 6 months", desc: "For solo practitioners", monthly: 69.9, sixMonthTotal: 417.9,
     tagline: "For solo practitioners who want frictionless booking, automated reminders, and deposits handled for them.",
     // Shown as the small italic line under the daily-price pill (public
     // pricing cards + the provider's own "Current plan" billing card) —
@@ -16435,7 +16484,7 @@ const PLANS = [
     // lands on exactly 4.99 wherever that math runs.
     // 2026-10-27: 6-month plan = BZ$4.99/day (BZ$1,047.90 for 7 months);
     // monthly BZ$174.90 (BZ$5.83/day).
-    id: "business", name: "Team", price: "BZ$4.99/day on 6 months", desc: `Base fee + BZ$${TEAM_PER_SEAT_PRICE}/seat after your first ${TEAM_FREE_SEATS}`, monthly: 174.9, sixMonthTotal: 1047.9,
+    id: "business", name: "Team", price: "BZ$174.90/month, or BZ$4.99/day on 6 months", desc: `Base fee + BZ$${TEAM_PER_SEAT_PRICE}/seat after your first ${TEAM_FREE_SEATS}`, monthly: 174.9, sixMonthTotal: 1047.9,
     priceNote: `Base fee includes your first ${TEAM_FREE_SEATS} staff seats — BZ$${TEAM_PER_SEAT_PRICE}/month for each seat after that`,
     tagline: "For teams — a base plan covering your shop, plus staff seats you add as you grow.",
     valueNote: "(Built for owners leading a team, not just themselves.)",
@@ -17129,43 +17178,30 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
   // Not signed in at all
   if (!session) {
     return (
-      <div style={{ minHeight: "100vh", background: "var(--forest)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
-        <div style={{ textAlign: "center", maxWidth: 360 }}>
-          <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 28, fontWeight: 800, color: "var(--near-white)", marginBottom: 8, display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}>
-            <VaiBookMark size={30} />vai<span style={{ color: "var(--lime)" }}>book</span> <span style={{ color: "rgba(255,255,255,0.5)", fontWeight: 600, fontSize: 16 }}>admin</span>
-          </div>
-          <p style={{ color: "rgba(255,255,255,0.6)", fontSize: 14, marginBottom: 24 }}>Sign in with the Google account approved for admin access.</p>
-          <button className="btn-lime" style={{ width: "100%", padding: "12px 0" }} onClick={onSignIn}>Sign in with Google</button>
-          <div style={{ marginTop: 20 }}>
-            <a style={{ color: "rgba(255,255,255,0.4)", fontSize: 13, cursor: "pointer" }} onClick={() => onNav("home")}>← Back to site</a>
-          </div>
-        </div>
-      </div>
+      <GateScreen tag="admin">
+        <p className="gate-sub">Sign in with the Google account approved for admin access.</p>
+        <button className="gate-btn" onClick={onSignIn}>Sign in with Google</button>
+        <button className="gate-back" onClick={() => onNav("home")}>← Back to site</button>
+      </GateScreen>
     );
   }
 
   // Signed in, checking admin status
   if (checkingAdmin) {
     return (
-      <div style={{ minHeight: "100vh", background: "var(--forest)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <div style={{ color: "rgba(255,255,255,0.5)", fontSize: 14 }}>Checking access...</div>
-      </div>
+      <GateScreen loading loadingText="Checking access…" />
     );
   }
 
   // Signed in but not on the admin allowlist
   if (!isAdmin) {
     return (
-      <div style={{ minHeight: "100vh", background: "var(--forest)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
-        <div style={{ textAlign: "center", maxWidth: 380 }}>
-          <div style={{ fontSize: 40, marginBottom: 12 }}>🔒</div>
-          <h2 style={{ color: "var(--near-white)", fontFamily: "'Plus Jakarta Sans', sans-serif", marginBottom: 8 }}>Not authorized</h2>
-          <p style={{ color: "rgba(255,255,255,0.6)", fontSize: 14, marginBottom: 24 }}>
-            {session.user.email} isn't on the VaiBook admin list. Ask an existing admin to add you in Supabase.
-          </p>
-          <button className="btn-ghost" onClick={onSignOut}>Sign out</button>
-        </div>
-      </div>
+      <GateScreen tag="admin">
+        <div className="gate-icon" aria-hidden="true">🔒</div>
+        <div className="gate-title">Not authorized</div>
+        <p className="gate-sub">{session.user.email} isn't on the VaiBook admin list. Ask an existing admin to add you in Supabase.</p>
+        <button className="gate-btn ghost" onClick={onSignOut}>Sign out</button>
+      </GateScreen>
     );
   }
 
@@ -18193,14 +18229,7 @@ export default function App() {
     return (
       <>
         <style>{css}</style>
-        <div style={{ minHeight: "100vh", background: "var(--forest)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <div style={{ textAlign: "center" }}>
-            <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 32, fontWeight: 800, color: "var(--near-white)", marginBottom: 12, display: "flex", alignItems: "center", justifyContent: "center", gap: 12 }}>
-              <VaiBookMark size={34} />vai<span style={{ color: "var(--lime)" }}>book</span>
-            </div>
-            <div style={{ color: "rgba(255,255,255,0.5)", fontSize: 14 }}>Loading...</div>
-          </div>
-        </div>
+        <GateScreen loading />
       </>
     );
   }
@@ -18240,7 +18269,7 @@ export default function App() {
       {view !== "auth" && !(view === "provider" && providerProfile) && <Nav onNav={setView} current={view} staffProfile={staffProfile} {...authProps} />}
       {view === "home" && !session && <LandingPage onNav={setView} {...authProps} />}
       {view === "home" && session && (
-        <div style={{ minHeight: "60vh", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--muted, #6C7281)", fontSize: 14 }}>Loading your account…</div>
+        <GateScreen loading loadingText="Loading your account…" />
       )}
       {view === "providers" && <ProviderLandingPage onNav={setView} {...authProps} />}
       {view === "customer" && (
