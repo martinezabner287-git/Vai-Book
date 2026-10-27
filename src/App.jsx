@@ -2799,6 +2799,79 @@ const css = `
   .day-chip.closed { opacity: 0.45; cursor: not-allowed; background: #F4F2EE; }
   .day-strip-other { margin-top: 6px; padding: 8px 10px !important; font-size: 13px !important; max-width: 180px; color: var(--muted); }
 
+  /* ===== BUSINESS HOME (provider dashboard) ===== */
+  .bh-hello { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin: 4px 0 20px; }
+  .bh-hello-title { font-size: 26px; font-weight: 800; letter-spacing: -0.02em; margin: 0; color: var(--text, #16181D); }
+  .bh-hello-date { margin: 2px 0 0; color: var(--muted); font-size: 14px; text-transform: capitalize; }
+  .bh-status { display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 700; border: 1px solid var(--border); background: #fff; color: var(--text, #16181D); cursor: pointer; font-family: inherit; }
+  .bh-status .bh-dot { width: 9px; height: 9px; border-radius: 50%; background: #9AA0AC; }
+  .bh-status-open .bh-dot { background: #16A34A; box-shadow: 0 0 0 4px rgba(22,163,74,0.15); }
+  .bh-status-break .bh-dot { background: #F59E0B; }
+  .bh-status-closed { cursor: default; color: var(--muted); }
+  .bh-section { background: #fff; border: 1px solid var(--border); border-radius: 18px; padding: 16px 16px 12px; margin-bottom: 16px; }
+  .bh-section-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .bh-section-head h3 { font-size: 17px; font-weight: 800; margin: 0; display: flex; align-items: center; gap: 8px; color: var(--text, #16181D); }
+  .bh-badge { background: #DC2626; color: #fff; border-radius: 999px; font-size: 12px; font-weight: 800; padding: 2px 8px; }
+  .bh-link { border: none; background: none; color: var(--lime); font-weight: 700; font-size: 13px; cursor: pointer; padding: 4px 0; font-family: inherit; }
+  .bh-link:disabled { opacity: 0.5; }
+  .bh-requests { display: flex; flex-direction: column; gap: 10px; }
+  .bh-req { display: grid; grid-template-columns: 1fr auto; gap: 6px 12px; padding: 12px; border-radius: 14px; background: var(--accent-soft); }
+  .bh-req.past { background: #FFF7ED; }
+  .bh-req-name { font-weight: 800; font-size: 15px; color: var(--text, #16181D); }
+  .bh-req-meta { font-size: 13px; color: var(--muted); margin-top: 2px; }
+  .bh-req-note { font-size: 12.5px; color: var(--muted); font-style: italic; margin-top: 4px; }
+  .bh-req-warn { font-size: 12.5px; color: #B45309; font-weight: 600; margin-top: 4px; }
+  .bh-req-price { font-weight: 800; font-size: 15px; color: var(--text, #16181D); }
+  .bh-req-actions { grid-column: 1 / -1; display: flex; gap: 8px; flex-wrap: wrap; }
+  .bh-btn { border: 1px solid var(--border); background: #fff; color: var(--text, #16181D); border-radius: 10px; padding: 9px 14px; font-weight: 700; font-size: 13.5px; cursor: pointer; font-family: inherit; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; }
+  .bh-btn:disabled { opacity: 0.55; cursor: default; }
+  .bh-btn-primary { background: var(--lime); border-color: var(--lime); color: #fff; min-width: 150px; }
+  @media (max-width: 560px) { .bh-btn-primary { flex: 1; min-width: 110px; } }
+  .bh-btn-icon { padding: 9px 11px; }
+  .bh-today { display: flex; flex-direction: column; }
+  .bh-row { display: grid; grid-template-columns: 70px 1fr; gap: 10px; padding: 10px 0; border-top: 1px solid var(--border); }
+  .bh-row:first-child { border-top: none; }
+  .bh-row-time { font-size: 13px; font-weight: 700; color: var(--muted); padding-top: 2px; }
+  .bh-row-body { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-width: 0; font-size: 14px; }
+  .bh-row-info { min-width: 0; }
+  .bh-row-name { font-weight: 700; color: var(--text, #16181D); display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .bh-row-meta { font-size: 12.5px; color: var(--muted); margin-top: 2px; }
+  .bh-row-actions { display: flex; gap: 6px; flex: none; }
+  .bh-row-free .bh-row-body { color: var(--muted); border: 1px dashed var(--border); border-radius: 10px; padding: 6px 10px; }
+  .bh-row-block .bh-row-body { color: #92400E; background: #FFF7ED; border-radius: 10px; padding: 6px 10px; }
+  .bh-row-booking.done { opacity: 0.6; }
+  .bh-arrived { font-size: 11px; font-weight: 700; color: var(--forest); background: var(--accent-soft); padding: 2px 7px; border-radius: 999px; }
+  .bh-st { font-weight: 700; text-transform: capitalize; }
+  .bh-empty { font-size: 13.5px; color: var(--muted); padding: 8px 0; margin: 0; }
+  .bh-actions { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 16px; }
+  .bh-action { display: flex; flex-direction: column; align-items: center; gap: 4px; border: 1px solid var(--border); background: #fff; border-radius: 14px; padding: 12px 4px; font-size: 20px; cursor: pointer; font-family: inherit; }
+  .bh-action span { font-size: 12px; font-weight: 700; color: var(--text, #16181D); }
+  .bh-action:disabled { opacity: 0.5; }
+  .bh-week { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+  .bh-day { display: flex; flex-direction: column; align-items: center; padding: 8px 2px; border-radius: 12px; background: #F7F5F1; text-align: center; }
+  .bh-day.today { background: var(--accent-soft); outline: 1.5px solid var(--lime); }
+  .bh-day.closed { opacity: 0.5; }
+  .bh-day-wd { font-size: 11px; color: var(--muted); font-weight: 600; text-transform: capitalize; }
+  .bh-day-num { font-size: 17px; font-weight: 800; color: var(--text, #16181D); }
+  .bh-day-count { font-size: 10.5px; color: var(--muted); line-height: 1.2; }
+  .bh-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 12px; border-top: 1px solid var(--border); padding-top: 12px; }
+  .bh-stats div { display: flex; flex-direction: column; gap: 2px; }
+  .bh-stats span { font-size: 11px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; }
+  .bh-stats strong { font-size: 18px; font-weight: 800; color: var(--text, #16181D); }
+  .bh-setup-bar { width: 100%; display: grid; grid-template-columns: 1fr 90px 16px; align-items: center; gap: 12px; background: #fff; border: 1px solid var(--border); border-radius: 14px; padding: 12px 16px; margin-bottom: 16px; cursor: pointer; font-family: inherit; text-align: left; }
+  .bh-setup-bar-text { display: flex; flex-direction: column; font-size: 12.5px; color: var(--muted); }
+  .bh-setup-bar-text strong { font-size: 14px; color: var(--text, #16181D); }
+  .bh-setup-bar-track { height: 6px; background: #EEECE7; border-radius: 999px; overflow: hidden; }
+  .bh-setup-bar-track span { display: block; height: 100%; background: var(--lime); }
+  .bh-setup-bar-arrow { color: var(--muted); font-size: 18px; }
+  @media (max-width: 560px) {
+    .bh-week { gap: 4px; }
+    .bh-day { padding: 7px 0; }
+    .bh-day-num { font-size: 15px; }
+    .bh-stats { grid-template-columns: repeat(2, 1fr); }
+    .bh-day-count { font-size: 9.5px; }
+  }
+
 `;
 
 // ── BRAND MARK ─────────────────────────────────────────────────
@@ -11313,6 +11386,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
   // localStorage (a nudge, not worth a schema change, same as the launch
   // banner above). Checklist itself is computed live from real data.
   const [setupHidden, setSetupHidden] = useState(true);
+  const [setupExpanded, setSetupExpanded] = useState(false);
   const [setupGoals, setSetupGoals] = useState([]);
   const [setupGoalsSaved, setSetupGoalsSaved] = useState(false);
   const [setupGoalsEditing, setSetupGoalsEditing] = useState(false);
@@ -13225,20 +13299,252 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
       </header>
 
       <main className="portal-content">
-        {tab === "dashboard" && (
-          <>
-            {/* "You're live on VaiBook!" launch banner removed at the owner's request (2026-10-25). */}
+        {tab === "dashboard" && (() => {
+          const es = (i18n.language || "").toLowerCase().startsWith("es");
+          const dx = (en, sp) => (es ? sp : en);
+          const nowMin = now.getHours() * 60 + now.getMinutes();
+          const toMin = (t) => (t ? hhmmToMinutes(String(t).slice(0, 5)) : null);
+          const fmtMin = (m) => formatBookingTime(`${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`);
+          const firstName = ((user?.full_name || "").trim().split(/\s+/)[0]) || providerProfile?.business_name || "";
+          const hour = now.getHours();
+          const greeting = hour < 12 ? dx("Good morning", "Buenos días") : hour < 18 ? dx("Good afternoon", "Buenas tardes") : dx("Good evening", "Buenas noches");
+          const todayHours = (hours || []).find((h) => h.day_of_week === now.getDay());
+          const openM = todayHours && todayHours.is_open ? toMin(todayHours.start_time) : null;
+          const closeM = todayHours && todayHours.is_open ? toMin(todayHours.end_time) : null;
+          const openNow = openM != null && closeM != null && nowMin >= openM && nowMin < closeM;
+          const custName = (b) => b.users?.full_name || b.walkin_customer_name || t("providerPortal.common.customerFallback");
+          const custPhone = (b) => b.users?.whatsapp_number || b.users?.phone || b.walkin_customer_phone || null;
+          const waLink = (b) => {
+            const ph = custPhone(b);
+            if (!ph) return null;
+            let digits = String(ph).replace(/\D/g, "");
+            if (digits.length === 7) digits = `501${digits}`;
+            const msg = dx(`Hi ${custName(b)}, this is ${providerProfile?.business_name || ""} about your ${b.services?.name || "appointment"} on ${formatBookingWhen(b)}.`,
+                           `Hola ${custName(b)}, te escribe ${providerProfile?.business_name || ""} sobre tu cita de ${b.services?.name || "servicio"} el ${formatBookingWhen(b)}.`);
+            return `https://wa.me/${digits}?text=${encodeURIComponent(msg)}`;
+          };
+          const isPast = (b) => { const dt = bookingDateTime(b.booking_date, b.booking_time); return !dt || dt <= now; };
 
-            <div className="portal-header">
-              <h2>{t("providerPortal.nav.dashboard")}</h2>
-              {/* The exact "today" count used to also repeat in the
-                  "Bookings today" stat card just below, and again in the
-                  "Today's appointments" list — three restatements of the
-                  same number. This subtitle now just anchors the date; the
-                  stat card is the one canonical place for the count. */}
-              <p>{now.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}</p>
+          // 1) Needs your answer: new requests + deposit receipts to check.
+          const receipts = bookings.filter((b) => b.status === "awaiting_payment" && b.payment_status === "receipt_uploaded");
+          const waiting = [...pendingBookings].sort((a, b) => (bookingDateTime(a.booking_date, a.booking_time) || 0) - (bookingDateTime(b.booking_date, b.booking_time) || 0));
+          const needsCount = waiting.length + receipts.length;
+
+          // 2) Today: bookings + breaks in time order, with free gaps.
+          const todayItems = [
+            ...todaysBookings.filter((b) => !["cancelled", "rejected"].includes(b.status)).map((b) => {
+              const st0 = toMin(b.booking_time) ?? 0;
+              const dur = Number(b.services?.duration_min) || Number(b.total_duration_min) || 30;
+              return { kind: "booking", start: st0, end: st0 + dur, b };
+            }),
+            ...blocks.filter((bl) => bl.block_date === localDateStr()).map((bl) => ({ kind: "block", start: toMin(bl.start_time) ?? 0, end: toMin(bl.end_time) ?? 0, bl })),
+          ].sort((a, b) => a.start - b.start);
+          const timeline = [];
+          if (openM != null && closeM != null) {
+            let cursor = Math.max(openM, Math.ceil(nowMin / 15) * 15);
+            todayItems.forEach((it) => {
+              if (it.start - cursor >= 45 && it.start > nowMin) timeline.push({ kind: "free", start: cursor, end: it.start });
+              timeline.push(it);
+              cursor = Math.max(cursor, it.end);
+            });
+            if (closeM - cursor >= 45) timeline.push({ kind: "free", start: cursor, end: closeM });
+          } else {
+            todayItems.forEach((it) => timeline.push(it));
+          }
+
+          // 3) Next 7 days at a glance.
+          const days7 = Array.from({ length: 7 }, (_, i) => new Date(now.getFullYear(), now.getMonth(), now.getDate() + i));
+          const activeOn = (d) => bookings.filter((b) => isSameLocalDay(b.booking_date, d) && !["cancelled", "rejected", "no_show"].includes(b.status)).length;
+          const weekCount = days7.reduce((n, d) => n + activeOn(d), 0);
+
+          return (
+          <>
+            {/* GREETING + OPEN/CLOSED */}
+            <div className="bh-hello">
+              <div>
+                <h2 className="bh-hello-title">{greeting}{firstName ? `, ${firstName}` : ""}</h2>
+                <p className="bh-hello-date">{now.toLocaleDateString(es ? "es" : "en-US", { weekday: "long", month: "long", day: "numeric" })}</p>
+              </div>
+              {activeBlock ? (
+                <button className="bh-status bh-status-break" onClick={resumeBookingsNow} disabled={resumingNow}>
+                  <span className="bh-dot" /> {resumingNow ? t("providerPortal.dashboard.reopening") : dx(`On a break · reopen now`, `En pausa · reabrir ya`)}
+                </button>
+              ) : openNow ? (
+                <button className="bh-status bh-status-open" onClick={openBlockSheet} title={dx("Take a break", "Tomar una pausa")}>
+                  <span className="bh-dot" /> {dx(`Open · until ${fmtMin(closeM)}`, `Abierto · hasta ${fmtMin(closeM)}`)}
+                </button>
+              ) : (
+                <span className="bh-status bh-status-closed">
+                  <span className="bh-dot" /> {openM != null && nowMin < openM ? dx(`Closed · opens ${fmtMin(openM)}`, `Cerrado · abre ${fmtMin(openM)}`) : dx("Closed now", "Cerrado ahora")}
+                </span>
+              )}
             </div>
 
+            {/* NEEDS YOUR ANSWER */}
+            {needsCount > 0 && (
+              <div className="bh-section">
+                <div className="bh-section-head">
+                  <h3>{dx("Needs your answer", "Esperan tu respuesta")} <span className="bh-badge">{needsCount}</span></h3>
+                </div>
+                <div className="bh-requests">
+                  {waiting.map((b) => {
+                    const past = isPast(b);
+                    return (
+                      <div className={`bh-req ${past ? "past" : ""}`} key={b.id}>
+                        <div className="bh-req-main">
+                          <div className="bh-req-name">{custName(b)}</div>
+                          <div className="bh-req-meta">{b.services?.name || "Service"} · {formatBookingWhen(b)}</div>
+                          {b.notes && <div className="bh-req-note">"{b.notes}"</div>}
+                          {past && <div className="bh-req-warn">⏰ {dx("This time already passed. Decline or offer a new time.", "Esta hora ya pasó. Declina u ofrece otra hora.")}</div>}
+                        </div>
+                        <div className="bh-req-price">BZ${b.total_amount ?? b.services?.price ?? "—"}</div>
+                        <div className="bh-req-actions">
+                          {!past && (
+                            <button className="bh-btn bh-btn-primary" disabled={busyId === b.id} onClick={() => submitResponse(b, "accept")}>
+                              {busyId === b.id ? t("providerPortal.common.sending") : t("providerPortal.bookings.accept")}
+                            </button>
+                          )}
+                          <button className="bh-btn" disabled={busyId === b.id} onClick={() => { setTab("bookings"); openResponse(b.id, "reject"); }}>
+                            {past ? dx("Decline / new time", "Declinar / otra hora") : t("providerPortal.bookings.decline")}
+                          </button>
+                          {waLink(b) && <a className="bh-btn bh-btn-icon" href={waLink(b)} target="_blank" rel="noreferrer" aria-label="WhatsApp">💬</a>}
+                        </div>
+                      </div>
+                    );
+                  })}
+                  {receipts.map((b) => (
+                    <div className="bh-req" key={b.id}>
+                      <div className="bh-req-main">
+                        <div className="bh-req-name">{custName(b)} · {dx("deposit sent", "envió depósito")}</div>
+                        <div className="bh-req-meta">{b.services?.name || "Service"} · {formatBookingWhen(b)}</div>
+                      </div>
+                      <div className="bh-req-price">BZ${b.downpayment_amount ?? "—"}</div>
+                      <div className="bh-req-actions">
+                        <button className="bh-btn bh-btn-primary" disabled={confirmingPaymentId === b.id} onClick={() => confirmPayment(b)}>
+                          {confirmingPaymentId === b.id ? t("providerPortal.bookings.confirming") : dx("Confirm payment", "Confirmar pago")}
+                        </button>
+                        {b.receipt_url && <button className="bh-btn" onClick={() => openPrivateFile(b.receipt_url)}>{t("providerPortal.common.viewReceipt")}</button>}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* TODAY */}
+            <div className="bh-section">
+              <div className="bh-section-head">
+                <h3>{dx("Today", "Hoy")}</h3>
+                <button className="bh-link" onClick={loadBookings} disabled={loadingBookings}>{loadingBookings ? dx("Refreshing…", "Actualizando…") : dx("Refresh", "Actualizar")}</button>
+              </div>
+              <div className="bh-today">
+                {timeline.length === 0 && (
+                  <p className="bh-empty">{openM == null ? dx("You're closed today. Enjoy the day off.", "Hoy no abres. Disfruta tu día libre.") : t("providerPortal.dashboard.nothingToday")}</p>
+                )}
+                {timeline.map((it, i) => {
+                  if (it.kind === "free") {
+                    return (
+                      <div className="bh-row bh-row-free" key={`f${i}`}>
+                        <div className="bh-row-time">{fmtMin(it.start)}</div>
+                        <div className="bh-row-body">
+                          <span>{dx(`Free until ${fmtMin(it.end)}`, `Libre hasta ${fmtMin(it.end)}`)}</span>
+                          {acceptsWalkins && it.start <= nowMin + 30 ? (
+                            <button className="bh-link" onClick={openWalkInSheet} disabled={activeServices.length === 0}>+ {t("providerPortal.dashboard.walkInButton")}</button>
+                          ) : (
+                            <button className="bh-link" onClick={() => { setTab("bookings"); openWalkInForm(); }}>+ {dx("Add appointment", "Agregar cita")}</button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  }
+                  if (it.kind === "block") {
+                    return (
+                      <div className="bh-row bh-row-block" key={it.bl.id}>
+                        <div className="bh-row-time">{fmtMin(it.start)}</div>
+                        <div className="bh-row-body">
+                          <span>⏸ {t("providerPortal.dashboard.away")} · {dx("until", "hasta")} {fmtMin(it.end)}</span>
+                          <button className="bh-link" onClick={() => removeBlock(it.bl.id)}>{t("providerPortal.common.remove")}</button>
+                        </div>
+                      </div>
+                    );
+                  }
+                  const b = it.b;
+                  const done = ["completed", "done"].includes(b.status);
+                  return (
+                    <div className={`bh-row bh-row-booking ${done ? "done" : ""}`} key={b.id}>
+                      <div className="bh-row-time">{fmtMin(it.start)}</div>
+                      <div className="bh-row-body">
+                        <div className="bh-row-info">
+                          <div className="bh-row-name">
+                            {custName(b)}
+                            {b.checked_in_at && <span className="bh-arrived">{t("providerPortal.dashboard.arrivedBadge")}</span>}
+                          </div>
+                          <div className="bh-row-meta">{b.services?.name || "Service"} · BZ${b.total_amount ?? b.services?.price ?? "—"} · <span className={`bh-st bh-st-${bookingStatusClass(b.status)}`}>{statusLabel(b.status)}</span></div>
+                        </div>
+                        <div className="bh-row-actions">
+                          {waLink(b) && <a className="bh-btn bh-btn-icon" href={waLink(b)} target="_blank" rel="noreferrer" aria-label="WhatsApp">💬</a>}
+                          {b.status === "confirmed" && (
+                            <button className="bh-btn" disabled={busyId === b.id} onClick={() => act(b.id, "completed")}>{t("providerPortal.bookings.markDone")}</button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* QUICK ACTIONS */}
+            <div className="bh-actions">
+              {acceptsWalkins && (
+                <button className="bh-action" onClick={openWalkInSheet} disabled={activeServices.length === 0}>🧾<span>{t("providerPortal.dashboard.walkInButton")}</span></button>
+              )}
+              <button className="bh-action" onClick={() => { setTab("bookings"); openWalkInForm(); }}>🗓️<span>{dx("Appointment", "Cita")}</span></button>
+              {activeBlock ? (
+                <button className="bh-action" onClick={resumeBookingsNow} disabled={resumingNow}>▶️<span>{dx("Reopen", "Reabrir")}</span></button>
+              ) : (
+                <button className="bh-action" onClick={openBlockSheet}>⏸<span>{dx("Block time", "Bloquear")}</span></button>
+              )}
+              <button className="bh-action" onClick={() => setShowQrModal(true)}>🔗<span>{dx("Share link", "Mi enlace")}</span></button>
+            </div>
+            {activeServices.length === 0 && <p className="bh-empty" style={{ marginTop: -8 }}>{t("providerPortal.dashboard.addServiceHint")}</p>}
+
+            {/* THIS WEEK */}
+            <div className="bh-section">
+              <div className="bh-section-head"><h3>{dx("Next 7 days", "Próximos 7 días")}</h3><button className="bh-link" onClick={() => setTab("bookings")}>{dx("All bookings ›", "Todas las citas ›")}</button></div>
+              <div className="bh-week">
+                {days7.map((d, i) => {
+                  const n = activeOn(d);
+                  const wh = (hours || []).find((h) => h.day_of_week === d.getDay());
+                  const closed = !wh || !wh.is_open;
+                  return (
+                    <div className={`bh-day ${i === 0 ? "today" : ""} ${closed ? "closed" : ""}`} key={i}>
+                      <span className="bh-day-wd">{i === 0 ? dx("Today", "Hoy") : d.toLocaleDateString(es ? "es" : "en-US", { weekday: "short" })}</span>
+                      <span className="bh-day-num">{d.getDate()}</span>
+                      <span className="bh-day-count">{closed ? dx("Closed", "Cerrado") : n === 0 ? "—" : dx(`${n} booked`, `${n} citas`)}</span>
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="bh-stats">
+                <div><span>{t("providerPortal.dashboard.todaysTake")}</span><strong>BZ${todayRevenue.toFixed(0)}</strong></div>
+                <div><span>{t("providerPortal.dashboard.thisMonthEarnings")}</span><strong>BZ${thisMonthEarnings.toFixed(0)}</strong></div>
+                <div><span>{dx("Booked this week", "Citas esta semana")}</span><strong>{weekCount}</strong></div>
+                <div><span>{t("providerPortal.dashboard.chairsFilled")}</span><strong>{chairsBookedPct}%</strong></div>
+              </div>
+            </div>
+
+            {/* REBOOKING RADAR — a quiet retention nudge, not another
+                inbox to manage: only surfaces when there's actually
+                someone worth reaching out to. */}
+            {rebookDueCount > 0 && (
+              <div className="rebook-radar">
+                <div className="rebook-radar-text">
+                  🔁 {t("providerPortal.dashboard.rebookRadarText", { count: rebookDueCount })}
+                </div>
+                <button className="rebook-radar-btn" onClick={() => setShowCheckInModal(true)}>{t("providerPortal.dashboard.sendCheckIn")}</button>
+              </div>
+            )}
             {/* FINISH YOUR PROFILE — checklist from real profile data + a
                 "what matters most" goal picker that turns into shortcuts. */}
             {(() => {
@@ -13263,6 +13569,18 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
               ];
               const showPicker = !setupGoalsSaved || setupGoalsEditing;
               const chosen = goals.filter((g) => setupGoals.includes(g.id));
+              if (!setupExpanded) {
+                return (
+                  <button className="bh-setup-bar" onClick={() => setSetupExpanded(true)}>
+                    <span className="bh-setup-bar-text">
+                      <strong>{st("finishTitle")}</strong>
+                      <span>{st("finishSub", { done: doneCount, total: steps.length })}</span>
+                    </span>
+                    <span className="bh-setup-bar-track"><span style={{ width: `${(doneCount / steps.length) * 100}%` }} /></span>
+                    <span className="bh-setup-bar-arrow">›</span>
+                  </button>
+                );
+              }
               return (
                 <div className="setup-card">
                   <div className="setup-card-head">
@@ -13319,232 +13637,9 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
               );
             })()}
 
-            {/* THE DOPAMINE CARD — instant financial payoff the moment the
-                dashboard opens. Today's Take is completed revenue only
-                (same definition as "This month earnings" below, just for
-                today); Chairs Filled is today's booked+blocked time against
-                today's open hours.
-                Chairs Filled context fix: this metric is really "% of
-                today's open hours booked," computed from one shared
-                open-hours schedule — there's no separate calendar per
-                chair. For a Business-plan shop with staff, a scope select
-                at least lets it answer "whose bookings" rather than being
-                an unexplained shop-wide number; a solo provider has no one
-                to scope by, so the metric is just shown smaller/quieter
-                instead, since it's a secondary stat next to Today's Take. */}
-            <div className="dopamine-card">
-              <div className="dopamine-metric">
-                <div className="dopamine-label">{t("providerPortal.dashboard.todaysTake")}</div>
-                <div className="dopamine-value">BZ${todayRevenue.toFixed(0)}</div>
-              </div>
-              <div className="dopamine-divider"></div>
-              {isBusinessPlan && staff.length > 0 ? (
-                <div className="dopamine-metric">
-                  <div className="dopamine-label-row">
-                    <span className="dopamine-label">{t("providerPortal.dashboard.chairsFilled")}</span>
-                    <select
-                      className="dopamine-staff-select"
-                      value={chairsStaffFilter}
-                      onChange={(e) => setChairsStaffFilter(e.target.value)}
-                      aria-label={t("providerPortal.dashboard.chairsFilledAriaLabel")}
-                    >
-                      <option value="all">{t("providerPortal.dashboard.wholeShop")}</option>
-                      {staff.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
-                    </select>
-                  </div>
-                  <div className="dopamine-value dopamine-value-sm">
-                    {filledChairSlots}/{totalChairSlots} <span className="dopamine-pct">{t("providerPortal.dashboard.pctBooked", { pct: chairsBookedPct })}</span>
-                  </div>
-                </div>
-              ) : (
-                <div className="dopamine-metric dopamine-metric-quiet">
-                  <div className="dopamine-label">{t("providerPortal.dashboard.chairsFilled")}</div>
-                  <div className="dopamine-value dopamine-value-xs">
-                    {filledChairSlots}/{totalChairSlots} <span className="dopamine-pct">{t("providerPortal.dashboard.pctOnly", { pct: chairsBookedPct })}</span>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* ZERO-FRICTION QUICK ACTIONS. Normally: Walk-In (primary,
-                revenue-right-now) + New Appointment (secondary, schedule
-                something for later) + Custom Block (secondary, pause) —
-                but Walk-In only shows for providers who take walk-ins (see
-                Settings); appointment-only providers get New Appointment as
-                the primary action instead, paired with Custom Block. New
-                Appointment opens the existing "+ Add appointment" form on
-                the Bookings tab (date/time/service/client, with
-                overlap-clash checking) rather than duplicating that form
-                here. The instant a block is active, everything collapses
-                into a single massive Resume Bookings Now button. */}
-            {activeBlock ? (
-              <button
-                className="panic-btn"
-                style={{ width: "100%", marginBottom: 20 }}
-                onClick={resumeBookingsNow}
-                disabled={resumingNow}
-              >
-                {resumingNow ? t("providerPortal.dashboard.reopening") : t("providerPortal.dashboard.resumeBookingsNow", { time: formatBookingTime(activeBlock.end_time) })}
-              </button>
-            ) : acceptsWalkins ? (
-              <>
-                <div className="quick-actions-row" style={{ display: "flex", gap: 10, alignItems: "stretch", marginBottom: activeServices.length === 0 ? 4 : 20 }}>
-                  <button
-                    className="panic-btn"
-                    style={{ flex: 3, marginBottom: 0 }}
-                    onClick={openWalkInSheet}
-                    disabled={activeServices.length === 0}
-                  >
-                    🧾 {t("providerPortal.dashboard.walkInButton")}
-                  </button>
-                  <button className="panic-btn-secondary" style={{ flex: 3 }} onClick={() => { setTab("bookings"); openWalkInForm(); }}>
-                    🗓️ {t("providerPortal.dashboard.newAppointmentButton")}
-                  </button>
-                  <button className="panic-btn-secondary" style={{ flex: 2 }} onClick={openBlockSheet}>
-                    ⏸ {t("providerPortal.dashboard.customBlockButton")}
-                  </button>
-                </div>
-                {activeServices.length === 0 && (
-                  <p style={{ fontSize: 12, color: "var(--muted)", margin: "0 0 20px" }}>{t("providerPortal.dashboard.addServiceHint")}</p>
-                )}
-              </>
-            ) : (
-              <div className="quick-actions-row" style={{ display: "flex", gap: 10, alignItems: "stretch", marginBottom: 20 }}>
-                <button className="panic-btn" style={{ flex: 3, marginBottom: 0 }} onClick={() => { setTab("bookings"); openWalkInForm(); }}>
-                  🗓️ {t("providerPortal.dashboard.newAppointmentButton")}
-                </button>
-                <button className="panic-btn-secondary" style={{ flex: 2 }} onClick={openBlockSheet}>
-                  ⏸ {t("providerPortal.dashboard.customBlockButton")}
-                </button>
-              </div>
-            )}
-
-            <div className="metric-grid">
-              <div className="metric"><div className="metric-label">{t("providerPortal.dashboard.thisMonthEarnings")}</div><div className="metric-value" style={{ color: "var(--forest-light)" }}>BZ${thisMonthEarnings.toFixed(0)}</div><div className="metric-sub">{t("providerPortal.dashboard.completedThisMonth", { count: thisMonthCompletedCount })}</div></div>
-              <div className="metric"><div className="metric-label">{t("providerPortal.dashboard.bookingsToday")}</div><div className="metric-value">{todaysBookings.length}</div><div className="metric-sub">{t("providerPortal.dashboard.confirmedAwaitingReply", { confirmed: todaysBookings.filter(b => b.status === "confirmed").length, pending: pendingBookings.length })}</div></div>
-              <div className="metric"><div className="metric-label">{t("providerPortal.dashboard.totalBookings")}</div><div className="metric-value">{bookings.length}</div><div className="metric-sub">{t("providerPortal.dashboard.allTime")}</div></div>
-              <div className="metric"><div className="metric-label">{t("providerPortal.dashboard.completionRate")}</div><div className="metric-value">{completionRate === null ? "—" : `${completionRate}%`}</div><div className="metric-sub">{completionRate === null ? t("providerPortal.dashboard.noFinishedBookings") : t("providerPortal.dashboard.ofFinishedBookings", { count: settledBookings.length })}</div></div>
-            </div>
-
-            {/* NEXT IN THE CHAIR — spotlight on the next confirmed
-                appointment, with a one-tap WhatsApp heads-up. The full
-                ordered list still lives in "Today's appointments" below;
-                this just calls out the very next one so it isn't missed
-                among blocks and past bookings. */}
-            {nextBooking && (
-              <div className="next-chair-card">
-                <div className="next-chair-label">⏭ {t("providerPortal.dashboard.nextInChair")}</div>
-                <div className="next-chair-body">
-                  <div>
-                    <div className="next-chair-name">{nextBookingName}</div>
-                    <div className="next-chair-meta">
-                      {nextBooking.services?.name || "Service"} · {formatBookingTime(nextBooking.booking_time)}
-                      {nextBooking.checked_in_at && (
-                        <span style={{ marginLeft: 8, fontSize: 11, fontWeight: 700, color: "var(--forest)", background: "var(--accent-soft)", padding: "2px 7px", borderRadius: 999 }}>
-                          {t("providerPortal.dashboard.arrivedBadge")} · {timeAgo(nextBooking.checked_in_at)}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  {nextBookingWhatsAppUrl && (
-                    <a className="next-chair-whatsapp" href={nextBookingWhatsAppUrl} target="_blank" rel="noreferrer" aria-label={t("providerPortal.dashboard.messageAriaLabel", { name: nextBookingName })} title={t("providerPortal.dashboard.messageOnWhatsapp")}>💬</a>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* YOUR SHOPFRONT — the booking link + QR code, chairside-ready.
-                This used to be its own "My QR code" tab; it lives here now
-                so it's one tap away while the client is literally sitting
-                in front of you, instead of buried in the sidebar. */}
-            <div className="shopfront-card">
-              <div className="shopfront-label">{t("providerPortal.dashboard.yourShopfront")}</div>
-              <div className="shopfront-url">{bookingUrl}</div>
-              <div className="shopfront-actions">
-                <button
-                  className="shopfront-btn shopfront-btn-outline"
-                  onClick={async () => {
-                    try {
-                      await navigator.clipboard.writeText(bookingUrl);
-                      setCopiedShopfrontLink(true);
-                      setTimeout(() => setCopiedShopfrontLink(false), 2000);
-                    } catch (e) { /* clipboard unavailable — link is shown above already */ }
-                  }}
-                >
-                  {copiedShopfrontLink ? t("providerPortal.dashboard.copied") : t("providerPortal.dashboard.copyLink")}
-                </button>
-                <button className="shopfront-btn shopfront-btn-outline" onClick={() => setShowQrModal(true)}>
-                  {t("providerPortal.dashboard.showQrCode")}
-                </button>
-              </div>
-            </div>
-
-            <div className="grid-2">
-              <div className="card">
-                <div className="card-title" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <span>{t("providerPortal.dashboard.todaysAppointments")}</span>
-                  <button className="btn-sm ghost" onClick={loadBookings} disabled={loadingBookings}>{loadingBookings ? "Refreshing..." : "Refresh"}</button>
-                </div>
-                {todaysBookings.length === 0 && blocks.filter(bl => bl.block_date === localDateStr()).length === 0 && <p style={{ fontSize: 13, color: "var(--muted)", padding: "16px 0" }}>{t("providerPortal.dashboard.nothingToday")}</p>}
-                {blocks.filter(bl => bl.block_date === localDateStr()).map((bl) => (
-                  <div className="block-row" key={bl.id}>
-                    <div className="dot"></div>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: 13, fontWeight: 700, color: "var(--dark-text)" }}>⏸ {t("providerPortal.dashboard.away")}</div>
-                      <div style={{ fontSize: 12, color: "var(--muted)" }}>{formatBookingTime(bl.start_time)} – {formatBookingTime(bl.end_time)} · {t("providerPortal.dashboard.calendarBlocked")}</div>
-                    </div>
-                    <button className="btn-sm ghost" style={{ fontSize: 11, padding: "5px 10px" }} onClick={() => removeBlock(bl.id)}>{t("providerPortal.common.remove")}</button>
-                  </div>
-                ))}
-                {todaysBookings.map((b) => (
-                  <div className="booking-item" key={b.id}>
-                    <div className={`booking-dot ${bookingStatusClass(b.status)}`}></div>
-                    <div className="booking-info">
-                      <div className="title">{b.services?.name || "Service"}</div>
-                      <div className="meta">
-                        {b.users?.full_name || b.walkin_customer_name || "Customer"} · {formatBookingTime(b.booking_time)}
-                        {b.checked_in_at && (
-                          <span style={{ marginLeft: 8, fontSize: 11, fontWeight: 700, color: "var(--forest)", background: "var(--accent-soft)", padding: "2px 7px", borderRadius: 999 }}>
-                            {t("providerPortal.dashboard.arrivedBadge")} · {timeAgo(b.checked_in_at)}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    <div>
-                      <span className="booking-amount">BZ${b.total_amount ?? b.services?.price ?? "—"}</span>
-                      <span className={`status-pill ${bookingStatusClass(b.status)}`}>{statusLabel(b.status)}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <div className="card">
-                <div className="card-title">{t("providerPortal.dashboard.recentBookings")}</div>
-                {bookings.length === 0 && <p style={{ fontSize: 13, color: "var(--muted)", padding: "16px 0" }}>{loadingBookings ? t("providerPortal.common.loading") : t("providerPortal.dashboard.noBookingsYet")}</p>}
-                {bookings.slice(0, 6).map((b) => (
-                  <div key={b.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: "1px solid var(--border)" }}>
-                    <div>
-                      <div style={{ fontSize: 13, fontWeight: 600 }}>{b.services?.name || "Service"}</div>
-                      <div style={{ fontSize: 12, color: "var(--muted)" }}>{formatBookingWhen(b)}</div>
-                    </div>
-                    <span className={`status-pill ${bookingStatusClass(b.status)}`}>{statusLabel(b.status)}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* REBOOKING RADAR — a quiet retention nudge, not another
-                inbox to manage: only surfaces when there's actually
-                someone worth reaching out to. */}
-            {rebookDueCount > 0 && (
-              <div className="rebook-radar">
-                <div className="rebook-radar-text">
-                  🔁 {t("providerPortal.dashboard.rebookRadarText", { count: rebookDueCount })}
-                </div>
-                <button className="rebook-radar-btn" onClick={() => setShowCheckInModal(true)}>{t("providerPortal.dashboard.sendCheckIn")}</button>
-              </div>
-            )}
           </>
-        )}
+          );
+        })()}
 
         {tab === "clients" && (
           <>
@@ -15113,8 +15208,6 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
           </>
         )}
       </main>
-
-      <SiteFooter />
 
       {/* CUSTOM BLOCK — bottom sheet, not a modal: say when you'll be back —
           "15m", "30m", "1h", or an exact resume time. Purely a pause from
