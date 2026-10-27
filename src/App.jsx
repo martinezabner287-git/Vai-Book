@@ -2131,7 +2131,8 @@ const css = `
   .multi-fab { position: sticky; bottom: 8px; background: var(--near-white); color: var(--dark-text); border: 1.5px solid var(--border); border-radius: 16px; padding: 14px 18px; display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 14px; box-shadow: 0 8px 24px rgba(23,20,31,0.14); z-index: 5; }
   .multi-fab .totals { font-size: 12px; line-height: 1.4; color: var(--muted); }
   .multi-fab .totals strong { color: var(--dark-text); font-size: 17px; display: block; }
-  .multi-fab button { background: var(--accent-soft); color: var(--forest); border: none; padding: 13px 18px; border-radius: 10px; font-weight: 800; font-size: 14px; cursor: pointer; white-space: nowrap; }
+  .service-card-price { font-weight: 800; font-size: 15px; color: var(--text, #16181D); white-space: nowrap; }
+  .multi-fab button { background: var(--lime); color: #fff; border: none; padding: 13px 18px; border-radius: 10px; font-weight: 800; font-size: 14px; cursor: pointer; white-space: nowrap; }
 
   /* BOTTOM SHEET (mobile-first — replaces a modal for quick provider actions) */
   .sheet-overlay { position: fixed; inset: 0; background: rgba(76,61,196,0.55); display: flex; align-items: flex-end; justify-content: center; z-index: 300; }
@@ -2785,6 +2786,18 @@ const css = `
     .cxh-tab.active { background: #F0EFF4; color: var(--lime); }
     .portal-content:has(.cxh-tabbar) { padding-bottom: 110px; }
   }
+
+  /* ===== DAY STRIP (booking date picker) ===== */
+  .day-strip { width: 0; min-width: 100%; display: flex; gap: 8px; overflow-x: auto; padding: 2px 2px 8px; scrollbar-width: none; scroll-snap-type: x proximity; }
+  .day-strip::-webkit-scrollbar { display: none; }
+  .day-chip { flex: 0 0 64px; scroll-snap-align: start; display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 9px 0 8px; border-radius: 14px; border: 1px solid var(--border); background: #fff; color: var(--text, #16181D); cursor: pointer; font-family: inherit; }
+  .day-chip-wd { font-size: 11.5px; font-weight: 600; color: var(--muted); text-transform: capitalize; }
+  .day-chip-num { font-size: 19px; font-weight: 800; line-height: 1.2; }
+  .day-chip-mo { font-size: 10.5px; color: var(--muted); text-transform: capitalize; }
+  .day-chip.active { background: var(--lime); border-color: var(--lime); color: #fff; }
+  .day-chip.active .day-chip-wd, .day-chip.active .day-chip-mo { color: rgba(255,255,255,0.85); }
+  .day-chip.closed { opacity: 0.45; cursor: not-allowed; background: #F4F2EE; }
+  .day-strip-other { margin-top: 6px; padding: 8px 10px !important; font-size: 13px !important; max-width: 180px; color: var(--muted); }
 
 `;
 
@@ -5088,6 +5101,55 @@ function computeDaySlots({ hours, busy, dateStr, durationMin, lunchBreakStart, l
     if (!isBusy) slots.push(minutesToHHMM(m));
   }
   return slots;
+}
+
+// First day (from today, up to 6 weeks out) on which this business could
+// fit a service of this length at all, going by its working hours. Used so
+// the time picker never opens on a day that's already closed.
+function firstOpenDate(hours, durationMin) {
+  const base = new Date();
+  for (let i = 0; i < 42; i++) {
+    const d = new Date(base.getFullYear(), base.getMonth(), base.getDate() + i);
+    const ds = localDateStr(d);
+    if (computeDaySlots({ hours, busy: [], dateStr: ds, durationMin: durationMin || 30 }).length > 0) return ds;
+  }
+  return localDateStr();
+}
+
+// Two weeks of tappable days instead of a bare date box. Days the business
+// is closed (or already past closing today) are greyed out.
+function DayStrip({ value, onChange, hours, durationMin }) {
+  const { i18n } = useTranslation();
+  const locale = (i18n.language || "en").toLowerCase().startsWith("es") ? "es" : "en";
+  const base = new Date();
+  const days = Array.from({ length: 14 }, (_, i) => new Date(base.getFullYear(), base.getMonth(), base.getDate() + i));
+  const ref = useRef(null);
+  useEffect(() => {
+    const el = ref.current && ref.current.querySelector(".day-chip.active");
+    if (el && el.scrollIntoView) el.scrollIntoView({ block: "nearest", inline: "center" });
+  }, [value]);
+  return (
+    <div className="day-strip" ref={ref}>
+      {days.map((d, i) => {
+        const ds = localDateStr(d);
+        const open = !hours || !hours.length || computeDaySlots({ hours, busy: [], dateStr: ds, durationMin: durationMin || 30 }).length > 0;
+        const label = i === 0 ? (locale === "es" ? "Hoy" : "Today") : i === 1 ? (locale === "es" ? "Mañana" : "Tmrw") : d.toLocaleDateString(locale, { weekday: "short" });
+        return (
+          <button
+            type="button"
+            key={ds}
+            disabled={!open}
+            className={`day-chip ${value === ds ? "active" : ""} ${open ? "" : "closed"}`}
+            onClick={() => onChange(ds)}
+          >
+            <span className="day-chip-wd">{label}</span>
+            <span className="day-chip-num">{d.getDate()}</span>
+            <span className="day-chip-mo">{open ? d.toLocaleDateString(locale, { month: "short" }) : (locale === "es" ? "Cerrado" : "Closed")}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
 }
 
 // Renders the actual score rather than five hardcoded stars — a 2-star
@@ -7749,6 +7811,7 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
   // supports it (navigator.share — covers Amazon's own "share" pattern on
   // mobile); clipboard copy with a brief inline confirmation otherwise.
   const [copiedServiceId, setCopiedServiceId] = useState(null);
+  // eslint-disable-next-line no-unused-vars
   const shareService = async (service) => {
     if (!selectedProvider) return;
     const url = `${window.location.origin}/#book-${selectedProvider.id}`;
@@ -8215,11 +8278,22 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
     setBookingService(drop.service);
   };
 
+  // Closing a business page: a signed-in customer stays in their account;
+  // a visitor who isn't signed in goes back to the main page they came
+  // from instead of an empty "account" screen.
+  const closeProviderView = () => {
+    setSelectedProvider(null);
+    if (!session) {
+      try { window.history.replaceState(null, "", window.location.pathname); } catch (e) { /* ignore */ }
+      onNav("home");
+    }
+  };
+
   const startBookingForService = (service) => {
     setBookingForm({
       service_id: service.id,
       service_ids: [],
-      date: localDateStr(),
+      date: firstOpenDate(providerHours, Number(service.duration_min) || 30),
       time: "",
       notes: "",
     });
@@ -8247,7 +8321,7 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
   // elsewhere (gallery/tabs/sidebar) still hides correctly during this step.
   const proceedToMultiServiceTime = () => {
     if (selectedServicesList.length === 0) return;
-    const today = localDateStr();
+    const today = firstOpenDate(providerHours, Math.max(...selectedServicesList.map((s) => Number(s.duration_min) || 30)));
     setMultiBookingTimes(Object.fromEntries(selectedServicesList.map((s) => [s.id, { date: today, time: "" }])));
     setBookingError("");
     setBookingForSomeoneElse(false);
@@ -8260,6 +8334,32 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
     setBookTogetherTime("");
     setBookingService({ isMulti: true });
   };
+
+  // Hours can finish loading a moment after "Book" is tapped. If the picker
+  // opened on a day this business can't take anyone, move to the first day
+  // it can, so nobody lands on "No open slots" for no reason.
+  useEffect(() => {
+    if (!bookingService || !providerHours.length) return;
+    const fits = (ds, dur) => computeDaySlots({ hours: providerHours, busy: [], dateStr: ds, durationMin: dur }).length > 0;
+    if (bookingService.isMulti) {
+      const longest = Math.max(30, ...selectedServicesList.map((s) => Number(s.duration_min) || 30));
+      if (bookTogetherDate && !bookTogetherTime && !fits(bookTogetherDate, multiTotalDuration || longest)) setBookTogetherDate(firstOpenDate(providerHours, multiTotalDuration || longest));
+      setMultiBookingTimes((prev) => {
+        let changed = false;
+        const next = { ...prev };
+        selectedServicesList.forEach((sv) => {
+          const cur = prev[sv.id];
+          const dur = Number(sv.duration_min) || 30;
+          if (cur && !cur.time && !fits(cur.date, dur)) { next[sv.id] = { date: firstOpenDate(providerHours, dur), time: "" }; changed = true; }
+        });
+        return changed ? next : prev;
+      });
+    } else if (bookingForm.date && !bookingForm.time) {
+      const dur = Number(bookingService.duration_min) || 30;
+      if (!fits(bookingForm.date, dur)) setBookingForm((f) => ({ ...f, date: firstOpenDate(providerHours, dur) }));
+    }
+    // eslint-disable-next-line
+  }, [providerHours, bookingService]);
 
   // Every distinct date currently chosen across the multi-service pickers —
   // used below to fetch (and cache) get_busy_windows once per date instead
@@ -9461,7 +9561,7 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
         )}
 
         {/* PHONE TAB BAR (Fresha style) */}
-        <nav className="cxh-tabbar" aria-label={hx("Main", "Principal")}>
+        {session && !selectedProvider && <nav className="cxh-tabbar" aria-label={hx("Main", "Principal")}>
           {[
             ["home", hx("Home", "Inicio"), <path key="i" d="M3 10.5L12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z" />],
             ["browse", hx("Search", "Buscar"), <g key="i"><circle cx="11" cy="11" r="7" /><path d="M20 20l-3.5-3.5" /></g>],
@@ -9473,7 +9573,7 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
               <span>{label}</span>
             </button>
           ))}
-        </nav>
+        </nav>}
 
         {tab === "browse" && (
           <>
@@ -10041,10 +10141,10 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
           return { day, i, isToday: i === new Date().getDay(), text: h && h.is_open && h.start_time && h.end_time ? `${formatTimeLabel(h.start_time)} – ${formatTimeLabel(h.end_time)}` : "Closed" };
         });
         return (
-          <div className="modal-overlay" onClick={() => setSelectedProvider(null)}>
+          <div className="modal-overlay" onClick={closeProviderView}>
             <div className="modal-panel profile-panel" onClick={(e) => e.stopPropagation()}>
               <div className="profile-scroll">
-                <span className="modal-close" onClick={() => setSelectedProvider(null)}>✕ {t("customerPortal.common.close")}</span>
+                <span className="modal-close" onClick={closeProviderView}>✕ {t("customerPortal.common.close")}</span>
 
                 <div className="profile-header-row">
                   <div className="profile-name-row">
@@ -10155,8 +10255,8 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                             <span style={{ fontSize: 16 }}>←</span> {t("customerPortal.booking.backToServices")}
                           </div>
                           <h3 style={{ fontSize: 20, fontWeight: 800, color: "var(--dark-text)", margin: "0 0 4px" }}>
-                            {bookingService.isMulti
-                              ? (selectedServicesList.length > 1 && bookTogetherMode ? t("customerPortal.booking.pickTimeTogether") : t("customerPortal.booking.pickTimesForEach"))
+                            {bookingService.isMulti && selectedServicesList.length > 1
+                              ? (bookTogetherMode ? t("customerPortal.booking.pickTimeTogether") : t("customerPortal.booking.pickTimesForEach"))
                               : t("customerPortal.booking.pickDateAndTime")}
                           </h3>
                           <p style={{ fontSize: 13, color: "var(--muted)", margin: "0 0 18px" }}>{t("customerPortal.booking.at")} {selectedProvider.business_name}</p>
@@ -10204,12 +10304,13 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                                   <div style={{ border: "1px solid var(--border)", borderRadius: 12, padding: "14px 16px", marginBottom: 14 }}>
                                     <div className="input-group">
                                       <label>{t("customerPortal.booking.date")}</label>
+                                      <DayStrip hours={providerHours} durationMin={multiTotalDuration} value={bookTogetherDate} onChange={(ds) => { setBookTogetherDate(ds); setBookTogetherTime(""); }} />
                                       <input
                                         type="date"
+                                        className="day-strip-other"
                                         min={localDateStr()}
                                         value={bookTogetherDate}
                                         onChange={e => { setBookTogetherDate(e.target.value); setBookTogetherTime(""); }}
-                                        style={{ padding: "13px 14px", fontSize: 15 }}
                                       />
                                     </div>
                                     <div className="input-group">
@@ -10266,7 +10367,7 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                                 </>
                               ) : (
                                 <>
-                                  <p style={{ fontSize: 12, color: "var(--muted)", margin: "0 0 18px" }}>{t("customerPortal.booking.eachServiceOwnTime")}</p>
+                                  {selectedServicesList.length > 1 && <p style={{ fontSize: 12, color: "var(--muted)", margin: "0 0 18px" }}>{t("customerPortal.booking.eachServiceOwnTime")}</p>}
                                   {selectedServicesList.map((service) => {
                                     const picked = multiBookingTimes[service.id] || { date: localDateStr(), time: "" };
                                     const slots = getMultiServiceSlots(service);
@@ -10277,12 +10378,13 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                                         </div>
                                         <div className="input-group">
                                           <label>{t("customerPortal.booking.date")}</label>
+                                          <DayStrip hours={providerHours} durationMin={Number(service.duration_min) || 30} value={picked.date} onChange={(ds) => setMultiBookingTimes(prev => ({ ...prev, [service.id]: { date: ds, time: "" } }))} />
                                           <input
                                             type="date"
+                                            className="day-strip-other"
                                             min={localDateStr()}
                                             value={picked.date}
                                             onChange={e => setMultiBookingTimes(prev => ({ ...prev, [service.id]: { date: e.target.value, time: "" } }))}
-                                            style={{ padding: "13px 14px", fontSize: 15 }}
                                           />
                                         </div>
                                         <div className="input-group">
@@ -10331,7 +10433,8 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                               </div>
                               <div className="input-group">
                                 <label>{t("customerPortal.booking.date")}</label>
-                                <input type="date" min={localDateStr()} value={bookingForm.date} onChange={e => setBookingForm(f => ({ ...f, date: e.target.value, time: "" }))} style={{ padding: "13px 14px", fontSize: 15 }} />
+                                <DayStrip hours={providerHours} durationMin={Number(bookingService.duration_min) || 30} value={bookingForm.date} onChange={(ds) => setBookingForm(f => ({ ...f, date: ds, time: "" }))} />
+                                <input type="date" className="day-strip-other" min={localDateStr()} value={bookingForm.date} onChange={e => setBookingForm(f => ({ ...f, date: e.target.value, time: "" }))} />
                               </div>
                               <div className="input-group">
                                 <label>{t("customerPortal.booking.availableTimes")}</label>
@@ -10578,7 +10681,7 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                           <p style={{ fontSize: 13, color: "var(--muted)" }}>{t("customerPortal.profile.noServicesListed")}</p>
                         ) : (
                           <div>
-                            <p style={{ fontSize: 12, color: "var(--muted)", margin: "0 0 4px" }}>{t("customerPortal.profile.tapServiceToAdd")}</p>
+                            <p style={{ fontSize: 12.5, color: "var(--muted)", margin: "0 0 6px" }}>{(i18n.language || "").toLowerCase().startsWith("es") ? "Toca lo que quieres. Puedes elegir más de uno." : "Tap what you'd like. You can pick more than one."}</p>
                             {(selectedProvider.services || []).filter(s => s.is_active !== false).map(s => {
                               const active = selectedServiceIds.includes(s.id);
                               return (
@@ -10591,17 +10694,7 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                                       {s.description && <div style={{ fontSize: 12.5, color: "var(--muted)", marginTop: 3, maxWidth: 280 }}>{s.description}</div>}
                                     </div>
                                   </div>
-                                  <div style={{ display: "flex", gap: 6 }} onClick={(e) => e.stopPropagation()}>
-                                    <button
-                                      className="btn-sm ghost"
-                                      onClick={() => shareService(s)}
-                                      aria-label={t("customerPortal.profile.shareServiceAria", { serviceName: s.name })}
-                                      title={t("customerPortal.profile.shareThisService")}
-                                    >
-                                      {copiedServiceId === s.id ? t("customerPortal.profile.linkCopied") : `📤 ${t("customerPortal.profile.share")}`}
-                                    </button>
-                                    <button className="btn-sm forest" onClick={() => startBookingForService(s)}>{t("customerPortal.profile.book")}</button>
-                                  </div>
+                                  <span className="service-card-price">BZ${s.price}</span>
                                 </div>
                               );
                             })}
@@ -11120,6 +11213,9 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
     return () => clearInterval(t);
   }, [user?.id]);
   const [hours, setHours] = useState(DEFAULT_HOURS);
+  // Whether this business has ever saved its opening hours. Without them
+  // customers see no times to book, so it's a setup step.
+  const [hoursSaved, setHoursSaved] = useState(true);
   const [savingHours, setSavingHours] = useState(false);
   const [selectedDay, setSelectedDay] = useState(null);
   const [profileForm, setProfileForm] = useState({ business_name: "", bio: "", district: "", whatsapp: "", instagram: "", facebook: "", tax_id: "", is_featured: false });
@@ -11871,6 +11967,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
     (async () => {
       if (!providerId) return;
       const wh = await getWorkingHours(providerId);
+      setHoursSaved(!!(wh && wh.length));
       if (wh && wh.length) {
         setHours(DAY_NAMES.map((day, i) => {
           const match = wh.find(w => w.day_of_week === i);
@@ -12318,7 +12415,8 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
   const saveHours = async () => {
     if (!providerId) return;
     setSavingHours(true);
-    await upsertWorkingHours(providerId, hours.map(h => ({ day_of_week: h.day_of_week, is_open: h.is_open, start_time: h.start_time, end_time: h.end_time })));
+    const ok = await upsertWorkingHours(providerId, hours.map(h => ({ day_of_week: h.day_of_week, is_open: h.is_open, start_time: h.start_time, end_time: h.end_time })));
+    if (ok !== false) setHoursSaved(true);
     setSavingHours(false);
   };
 
@@ -13143,6 +13241,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                 { id: "photo", done: !!pp.profile_photo_url, label: st("stepPhoto"), hint: st("stepPhotoHint"), go: () => setTab("profile") },
                 { id: "bio", done: !!(pp.bio && pp.bio.trim().length >= 10), label: st("stepBio"), hint: st("stepBioHint"), go: () => setTab("profile") },
                 { id: "services", done: activeServices.length > 0, label: st("stepServices"), hint: st("stepServicesHint"), go: () => setTab("services") },
+                { id: "hours", done: hoursSaved, label: (i18n.language || "").toLowerCase().startsWith("es") ? "Fija tu horario" : "Set your opening hours", hint: (i18n.language || "").toLowerCase().startsWith("es") ? "Sin horario, los clientes no ven horas para reservar" : "Without hours, clients see no times to book", go: () => setTab("calendar") },
                 { id: "portfolio", done: (pp.portfolio_urls || []).length >= 3, label: st("stepPortfolio"), hint: `${st("stepPortfolioHint")} (${Math.min((pp.portfolio_urls || []).length, 3)}/3)`, go: () => setTab("profile") },
                 { id: "contact", done: !!(pp.whatsapp || pp.instagram), label: st("stepContact"), hint: st("stepContactHint"), go: () => setTab("profile") },
               ];
@@ -13691,7 +13790,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                           </a>
                         );
                       })()}
-                      {["pending", "awaiting_payment", "confirmed"].includes(b.status) && (() => {
+                      {b.status === "confirmed" && (() => {
                         const customerName = b.users?.full_name || b.walkin_customer_name || t("providerPortal.common.customerFallback");
                         const customerPhone = b.users?.whatsapp_number || b.users?.phone || b.walkin_customer_phone || "";
                         const calLinks = buildAddToCalendarLinks({
@@ -13708,15 +13807,14 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                             <a className="btn-sm ghost" href={calLinks.googleUrl} target="_blank" rel="noreferrer" style={{ textDecoration: "none" }} title={t("providerPortal.dashboard.addToCalendar")}>
                               📅 {t("providerPortal.dashboard.addToCalendar")}
                             </a>
-                            <a className="btn-sm ghost" href={calLinks.icsHref} download={calLinks.icsFilename} style={{ textDecoration: "none" }} title={t("providerPortal.dashboard.downloadIcs")}>
-                              {t("providerPortal.dashboard.downloadIcs")}
-                            </a>
                           </>
                         );
                       })()}
                       {b.status === "pending" && respondingId !== b.id && (
                         <>
-                          <button className="btn-sm lime" disabled={busyId === b.id} onClick={() => openResponse(b.id, "accept")}>{t("providerPortal.bookings.accept")}</button>
+                          {bookingDateTime(b.booking_date, b.booking_time) > new Date() && (
+                            <button className="btn-sm lime" disabled={busyId === b.id} onClick={() => openResponse(b.id, "accept")}>{t("providerPortal.bookings.accept")}</button>
+                          )}
                           <button className="btn-sm ghost" disabled={busyId === b.id} onClick={() => openResponse(b.id, "reject")}>{t("providerPortal.bookings.decline")}</button>
                         </>
                       )}
@@ -13744,6 +13842,13 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                     </div>
                   </div>
 
+                  {b.status === "pending" && bookingDateTime(b.booking_date, b.booking_time) <= new Date() && (
+                    <p style={{ fontSize: 12.5, color: "#B45309", marginTop: 6, fontWeight: 600 }}>
+                      {(i18n.language || "").toLowerCase().startsWith("es")
+                        ? "⏰ Esta hora ya pasó sin respuesta. Declínala o propón otra hora para que el cliente no se quede esperando."
+                        : "⏰ This time passed without an answer. Decline it or propose a new time so the client isn't left waiting."}
+                    </p>
+                  )}
                   {b.notes && <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 6 }}>{t("providerPortal.bookings.customerNote", { notes: b.notes })}</p>}
 
                   {b.pending_reschedule_date && (
@@ -13843,7 +13948,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                     </>
                   )}
 
-                  {["cancelled", "rejected"].includes(b.status) && (
+                  {["cancelled", "rejected"].includes(b.status) && ((b.booking_refunds && b.booking_refunds.length > 0) || Number(b.downpayment_amount) > 0 || (b.payments && b.payments.length > 0)) && (
                     b.booking_refunds && b.booking_refunds.length > 0 ? (
                       <div style={{ marginTop: 8, background: "#E7F5EC", borderRadius: 8, padding: 12 }}>
                         <div style={{ fontSize: 13, fontWeight: 600, color: "var(--forest)" }}>💸 {t("providerPortal.bookings.refundRecorded", { amount: b.booking_refunds[0].amount })}</div>
