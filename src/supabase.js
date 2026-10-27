@@ -1870,3 +1870,30 @@ export const adminDeleteProvider = async (providerId) => {
   if (error) { reportActionError('adminDeleteProvider', error); console.error('Error deleting provider:', error.message); return false; }
   return true;
 };
+
+// ── SUPPORT / CONTACT US ────────────────────────────────────────────
+// Footer "Contact us" form. Saved in support_messages (admins read them in
+// the Admin portal → Messages) and every admin gets a phone alert.
+export const submitSupportMessage = async ({ name, contact, topic, message }) => {
+  const { error } = await supabase.rpc('submit_support_message', {
+    p_name: name, p_contact: contact, p_topic: topic || 'general', p_message: message,
+  });
+  if (error) { reportActionError('submitSupportMessage', error); return { ok: false, rateLimited: /RATE_LIMITED/.test(error.message || '') }; }
+  return { ok: true };
+};
+
+export const listSupportMessages = async () => {
+  const { data, error } = await supabase
+    .from('support_messages')
+    .select('id, created_at, name, contact, topic, message, status')
+    .order('created_at', { ascending: false })
+    .limit(200);
+  if (error) { console.error('Error loading support messages:', error.message); return []; }
+  return data || [];
+};
+
+export const setSupportMessageStatus = async (id, status) => {
+  const { error } = await supabase.from('support_messages').update({ status }).eq('id', id);
+  if (error) { reportActionError('setSupportMessageStatus', error); return false; }
+  return true;
+};

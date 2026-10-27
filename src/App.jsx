@@ -1,6 +1,6 @@
 
 import { useState, useEffect, useLayoutEffect, useRef, useContext, createContext, lazy, Suspense } from "react";
-import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, updateService, deleteService, getActiveProviders, getProviderDirectory, createBooking, getProviderBusyWindows, createBookingSafe, cancelBooking, markBookingCheckedIn, getCustomerBookings, uploadReceipt, submitReview, getProviderReviews, updateReview, sendBookingEmail, updateUserProfile, getPaymentMethods, addPaymentMethod, deletePaymentMethod, createNotification, getNotifications, markNotificationRead, markAllNotificationsRead, getCategoryDefaultFeatures, getProviderFeatureOverrides, setProviderFeatureOverride, getVisitNotes, upsertVisitNote, adminListProviders, adminUpdateProvider, adminDeleteProvider, adminCountCustomers, getFavoriteProviderIds, getFavoriteProviders, addFavorite, removeFavorite, getBookingMessages, sendBookingMessage, markBookingMessagesRead, getUnreadBookingMessages, getProviderMonthlyTrend, createProviderProfile, getProviderById, createWalkInBooking, submitProviderPayment, getMyProviderPayments, adminListProviderPayments, adminReviewProviderPayment, submitBookingRefund, adminListBookingRefunds, openPrivateFile, getProviderStaff, addProviderStaff, updateProviderStaff, deleteProviderStaff, getProviderStaffPublic, getLoyaltyAccount, getProviderLoyaltyCustomers, redeemLoyaltyReward, getMyStaffProfile, claimStaffSeatByEmail, getStaffBookings, getProviderNotifyEmail, getMaintenanceStatus, setMaintenanceMode, getSiteOfflineStatus, setSiteOffline, guestAuthWithPassword, updateGuestPassword, savePushSubscription, attachBookingServices, getProviderBlocks, insertProviderBlock, deleteProviderBlock, proposeBookingReschedule, confirmBookingReschedule, declineBookingReschedule, withdrawBookingReschedule, establishSoloSession, getServerSoloSessionToken, getLocalSoloSessionToken, clearLocalSoloSessionToken, subscribeToSoloSessionReplacement } from "./supabase";
+import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, updateService, deleteService, getActiveProviders, getProviderDirectory, createBooking, getProviderBusyWindows, createBookingSafe, cancelBooking, markBookingCheckedIn, getCustomerBookings, uploadReceipt, submitReview, getProviderReviews, updateReview, sendBookingEmail, updateUserProfile, getPaymentMethods, addPaymentMethod, deletePaymentMethod, createNotification, getNotifications, markNotificationRead, markAllNotificationsRead, getCategoryDefaultFeatures, getProviderFeatureOverrides, setProviderFeatureOverride, getVisitNotes, upsertVisitNote, adminListProviders, adminUpdateProvider, adminDeleteProvider, adminCountCustomers, getFavoriteProviderIds, getFavoriteProviders, addFavorite, removeFavorite, getBookingMessages, sendBookingMessage, markBookingMessagesRead, getUnreadBookingMessages, getProviderMonthlyTrend, createProviderProfile, getProviderById, createWalkInBooking, submitProviderPayment, getMyProviderPayments, adminListProviderPayments, adminReviewProviderPayment, submitBookingRefund, adminListBookingRefunds, openPrivateFile, getProviderStaff, addProviderStaff, updateProviderStaff, deleteProviderStaff, getProviderStaffPublic, getLoyaltyAccount, getProviderLoyaltyCustomers, redeemLoyaltyReward, getMyStaffProfile, claimStaffSeatByEmail, getStaffBookings, getProviderNotifyEmail, getMaintenanceStatus, setMaintenanceMode, getSiteOfflineStatus, setSiteOffline, guestAuthWithPassword, updateGuestPassword, savePushSubscription, attachBookingServices, getProviderBlocks, insertProviderBlock, deleteProviderBlock, proposeBookingReschedule, confirmBookingReschedule, declineBookingReschedule, withdrawBookingReschedule, establishSoloSession, getServerSoloSessionToken, getLocalSoloSessionToken, clearLocalSoloSessionToken, subscribeToSoloSessionReplacement, submitSupportMessage, listSupportMessages, setSupportMessageStatus } from "./supabase";
 import AdminDashboard from "./AdminDashboard";
 import ProfilePhotoModal from "./ProfilePhotoModal";
 import LanguageSelector from "./LanguageSelector";
@@ -19,6 +19,7 @@ const SUPPORT_EMAIL = "support@vaibook.bz";
 // the app it's coming from, without needing a real ticketing system —
 // same lightweight "just mailto, but a little smarter" approach as
 // vaiMediaMailtoUrl further down.
+// eslint-disable-next-line no-unused-vars
 const helpMailtoUrl = (subject, body) =>
   `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent(subject)}${body ? `&body=${encodeURIComponent(body)}` : ""}`;
 
@@ -45,6 +46,8 @@ const ProviderLocationMap = lazy(() => import("./MapWidgets").then((m) => ({ def
 // dashboard load.
 const WelcomePlaqueGenerator = lazy(() => import("./WelcomePlaqueGenerator"));
 const ShareKit = lazy(() => import("./ShareKit"));
+const InfoPages = lazy(() => import("./InfoPages"));
+const INFO_PAGE_IDS = ["about", "how-it-works", "districts", "blog", "help", "contact", "privacy", "terms"];
 function MapLoadingFallback({ height }) {
   return (
     <div style={{ height, width: "100%", display: "flex", alignItems: "center", justifyContent: "center", background: "var(--sand)", fontSize: 12.5, color: "var(--muted)" }}>
@@ -2936,6 +2939,135 @@ const css = `
   .tax-due { font-size: 13px; color: var(--text, #16181D); margin: 6px 0 12px; }
   .tax-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
   .tax-fine { font-size: 11.5px; color: var(--muted); line-height: 1.55; margin: 6px 0 0; }
+
+  /* ===== FOOTER INFO PAGES (About, Help, Privacy, …) ===== */
+  .footer-links a { color: inherit; text-decoration: none; }
+  .footer-links a:hover { color: #fff; text-decoration: underline; }
+  .help-form-sent { background: #ECFDF5; color: #065F46; border-radius: 12px; padding: 12px 14px; font-weight: 600; font-size: 14px; }
+  .ip-overlay { position: fixed; inset: 0; z-index: 4000; background: #FAF9F6; color: #16181D; }
+  .ip-scroll { position: absolute; inset: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+  .ip-top { position: sticky; top: 0; z-index: 1; display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: rgba(250,249,246,0.94); backdrop-filter: blur(8px); border-bottom: 1px solid #E8E5DE; }
+  .ip-back { background: none; border: none; font: inherit; font-size: 15px; font-weight: 700; color: #16181D; cursor: pointer; padding: 8px 4px; }
+  .ip-brand { font-weight: 800; font-size: 18px; letter-spacing: -0.02em; color: #16181D; }
+  .ip-brand span { color: #5B4BDB; }
+  .ip-main { max-width: 760px; margin: 0 auto; padding: 24px 16px 64px; }
+  .ip-main h1 { font-size: clamp(28px, 6vw, 40px); font-weight: 800; letter-spacing: -0.03em; margin: 8px 0 12px; }
+  .ip-lead { font-size: 17px; line-height: 1.6; color: #3A3F4B; margin: 0 0 20px; }
+  .ip-updated { font-size: 13px; color: #6C7281; margin: 0 0 12px; }
+  .ip-sec { margin: 26px 0; }
+  .ip-sec h2 { font-size: 19px; font-weight: 800; margin: 0 0 10px; }
+  .ip-sec p { font-size: 15px; line-height: 1.65; color: #3A3F4B; margin: 0; }
+  .ip-list { margin: 0; padding-left: 20px; }
+  .ip-list li { font-size: 15px; line-height: 1.6; color: #3A3F4B; margin-bottom: 8px; }
+  .ip-muted { color: #6C7281; font-size: 14px; line-height: 1.55; }
+  .ip-link { background: none; border: none; padding: 0; font: inherit; font-weight: 700; color: #5B4BDB; cursor: pointer; }
+  .ip-callout { margin-top: 28px; background: #fff; border: 1px solid #E8E5DE; border-radius: 14px; padding: 14px 16px; font-size: 15px; }
+  .ip-ctas { display: flex; gap: 10px; flex-wrap: wrap; margin: 18px 0 8px; }
+  .ip-btn { background: #16181D; color: #fff; border: none; border-radius: 999px; padding: 13px 22px; font: inherit; font-weight: 700; font-size: 15px; cursor: pointer; }
+  .ip-btn.ghost { background: #fff; color: #16181D; border: 1.5px solid #16181D; }
+  .ip-btn:disabled { opacity: 0.6; }
+  .ip-steps { list-style: none; padding: 0; margin: 0; display: grid; gap: 12px; }
+  .ip-steps li { display: grid; grid-template-columns: 36px 1fr; gap: 12px; background: #fff; border: 1px solid #E8E5DE; border-radius: 16px; padding: 14px; }
+  .ip-step-n { width: 32px; height: 32px; border-radius: 50%; background: #5B4BDB; color: #fff; font-weight: 800; display: flex; align-items: center; justify-content: center; }
+  .ip-steps strong { font-size: 15.5px; }
+  .ip-steps p { margin: 4px 0 0; font-size: 14.5px; color: #3A3F4B; line-height: 1.55; }
+  .ip-districts { display: grid; gap: 12px; }
+  .ip-district { background: #fff; border: 1px solid #E8E5DE; border-radius: 16px; padding: 14px 16px; }
+  .ip-district-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .ip-district-head h3 { margin: 0; font-size: 17px; font-weight: 800; }
+  .ip-pill { background: #EEEBFF; color: #3F33A8; font-size: 12px; font-weight: 700; border-radius: 999px; padding: 4px 10px; white-space: nowrap; }
+  .ip-biz { list-style: none; margin: 0; padding: 0; }
+  .ip-biz li { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 10px 0; border-top: 1px solid #F0EDE7; }
+  .ip-biz li div { display: flex; flex-direction: column; min-width: 0; }
+  .ip-biz strong { font-size: 15px; }
+  .ip-biz span { font-size: 13px; color: #6C7281; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ip-book { background: #16181D; color: #fff; text-decoration: none; border-radius: 999px; padding: 8px 16px; font-weight: 700; font-size: 13.5px; flex-shrink: 0; }
+  .ip-posts { display: grid; gap: 12px; }
+  .ip-post { background: #fff; border: 1px solid #E8E5DE; border-radius: 16px; padding: 16px; }
+  .ip-post h3 { font-size: 17px; font-weight: 800; margin: 8px 0 6px; }
+  .ip-post .ip-muted { margin: 0 0 8px; }
+  .ip-post-body { padding-left: 20px; margin: 4px 0 12px; }
+  .ip-post-body li { font-size: 15px; line-height: 1.6; color: #3A3F4B; margin-bottom: 8px; }
+  .ip-tag { display: inline-block; font-size: 11.5px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; border-radius: 999px; padding: 3px 9px; }
+  .ip-tag.c { background: #E0F2FE; color: #075985; }
+  .ip-tag.b { background: #EEEBFF; color: #3F33A8; }
+  .ip-search { width: 100%; box-sizing: border-box; padding: 13px 16px; border: 1px solid #DAD6CD; border-radius: 999px; font: inherit; font-size: 15px; background: #fff; margin-bottom: 4px; }
+  .ip-faq { background: #fff; border: 1px solid #E8E5DE; border-radius: 16px; overflow: hidden; }
+  .ip-faq-item + .ip-faq-item { border-top: 1px solid #F0EDE7; }
+  .ip-faq-item button { width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 12px; background: none; border: none; padding: 15px 16px; font: inherit; font-size: 15px; font-weight: 700; color: #16181D; text-align: left; cursor: pointer; }
+  .ip-faq-chev { font-size: 20px; color: #6C7281; flex-shrink: 0; }
+  .ip-faq-a { padding: 0 16px 16px; font-size: 14.5px; line-height: 1.6; color: #3A3F4B; }
+  .ip-form { display: grid; gap: 14px; background: #fff; border: 1px solid #E8E5DE; border-radius: 18px; padding: 18px; }
+  .ip-form label { display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 700; color: #3A3F4B; }
+  .ip-form input, .ip-form select, .ip-form textarea { padding: 12px 14px; border: 1px solid #DAD6CD; border-radius: 12px; font: inherit; font-size: 15px; background: #fff; color: #16181D; }
+  .ip-form textarea { resize: vertical; }
+  .ip-err { color: #B91C1C; font-size: 14px; margin: 0; }
+  .ip-sent { text-align: center; background: #fff; border: 1px solid #E8E5DE; border-radius: 18px; padding: 32px 18px; }
+  .ip-sent-icon { width: 52px; height: 52px; margin: 0 auto 12px; border-radius: 50%; background: #16A34A; color: #fff; font-size: 26px; font-weight: 800; display: flex; align-items: center; justify-content: center; }
+  .ip-sent p { font-size: 16px; line-height: 1.55; margin: 0 0 16px; }
+  .ip-more { margin-top: 40px; padding-top: 20px; border-top: 1px solid #E8E5DE; }
+  .ip-more h4 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em; color: #6C7281; margin: 0 0 10px; }
+  .ip-more div { display: flex; flex-wrap: wrap; gap: 8px; }
+  .ip-more button { background: #fff; border: 1px solid #E8E5DE; border-radius: 999px; padding: 8px 14px; font: inherit; font-size: 14px; font-weight: 600; color: #16181D; cursor: pointer; }
+
+  /* ===== MONTHLY INSIGHTS — month in detail ===== */
+  .mi { margin-bottom: 24px; }
+  .mi-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+  .mi-head h3 { font-size: 18px; font-weight: 800; margin: 0; color: var(--text, #16181D); }
+  .mi-head select { padding: 9px 12px; border: 1px solid var(--border); border-radius: 10px; font-size: 14px; font-family: inherit; background: #fff; text-transform: capitalize; }
+  .mi-card { background: #fff; border: 1px solid var(--border); border-radius: 18px; padding: 16px; margin-bottom: 14px; }
+  .mi-title { font-weight: 800; font-size: 15px; margin-bottom: 12px; color: var(--text, #16181D); }
+  .mi-bar { display: flex; height: 14px; border-radius: 999px; overflow: hidden; background: #EEECE7; margin-bottom: 12px; }
+  .mi-seg { display: block; height: 100%; }
+  .mi-seg.ok, .mi-dot.ok { background: #16A34A; }
+  .mi-seg.info, .mi-dot.info { background: var(--lime); }
+  .mi-seg.bad, .mi-dot.bad { background: #DC2626; }
+  .mi-seg.warn, .mi-dot.warn { background: #F59E0B; }
+  .mi-seg.muted, .mi-dot.muted { background: #9AA0AC; }
+  .mi-outcomes { display: grid; grid-template-columns: 1fr; gap: 2px; }
+  .mi-out { display: grid; grid-template-columns: 12px 1fr auto 76px; align-items: center; gap: 10px; font-size: 14px; padding: 6px 0; border-bottom: 1px solid var(--border); }
+  .mi-out:last-child { border-bottom: none; }
+  .mi-out.zero { opacity: 0.45; }
+  .mi-dot { width: 10px; height: 10px; border-radius: 50%; }
+  .mi-out-label { color: var(--text, #16181D); }
+  .mi-out-n { font-weight: 700; }
+  .mi-out-n small { color: var(--muted); font-weight: 500; }
+  .mi-out-money { text-align: right; color: var(--muted); font-weight: 600; }
+  .mi-lost { margin-top: 10px; background: #FEF2F2; color: #991B1B; border-radius: 12px; padding: 10px 12px; font-size: 14px; font-weight: 700; }
+  .mi-lost small { display: block; font-weight: 500; font-size: 12px; margin-top: 2px; }
+  .mi-tips { border-color: var(--lime); }
+  .mi-tip { display: grid; grid-template-columns: 26px 1fr; gap: 4px 8px; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 14px; }
+  .mi-tip:last-child { border-bottom: none; }
+  .mi-tip-icon { font-size: 18px; }
+  .mi-tip-text { color: var(--text, #16181D); line-height: 1.45; }
+  .mi-tip .bh-link { grid-column: 2; justify-self: start; }
+  .mi-days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; align-items: end; }
+  .mi-day { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .mi-day-bar { width: 100%; max-width: 34px; height: 90px; background: #F4F2EE; border-radius: 8px; display: flex; align-items: flex-end; overflow: hidden; }
+  .mi-day-bar span { display: block; width: 100%; background: #C9C3F2; border-radius: 8px 8px 0 0; }
+  .mi-day.top .mi-day-bar span { background: var(--lime); }
+  .mi-day-n { font-size: 13px; font-weight: 800; }
+  .mi-day-l { font-size: 11px; color: var(--muted); text-transform: capitalize; }
+  .mi-note { font-size: 13px; color: var(--muted); margin: 10px 0 0; }
+  .mi-svc { padding: 8px 0; border-bottom: 1px solid var(--border); }
+  .mi-svc:last-child { border-bottom: none; }
+  .mi-svc-top { display: flex; justify-content: space-between; font-size: 14px; }
+  .mi-svc-name { font-weight: 700; }
+  .mi-svc-rev { font-weight: 800; }
+  .mi-svc-bar { height: 6px; background: #F4F2EE; border-radius: 999px; overflow: hidden; margin: 6px 0; }
+  .mi-svc-bar span { display: block; height: 100%; background: var(--lime); }
+  .mi-svc-meta { font-size: 12.5px; color: var(--muted); display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .mi-flag { font-size: 11.5px; font-weight: 700; border-radius: 999px; padding: 2px 8px; }
+  .mi-flag.bad { background: #FEE2E2; color: #991B1B; }
+  .mi-flag.warn { background: #FEF3C7; color: #92400E; }
+  .mi-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .mi-stats div { display: flex; flex-direction: column; background: #F7F5F1; border-radius: 12px; padding: 10px; }
+  .mi-stats strong { font-size: 20px; font-weight: 800; }
+  .mi-stats span { font-size: 11.5px; color: var(--muted); }
+  .mi-noshows { margin-top: 12px; }
+  .mi-sub { font-size: 12px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 6px; }
+  .mi-ns-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; font-size: 14px; border-bottom: 1px solid var(--border); }
+  @media (max-width: 560px) { .mi-stats { grid-template-columns: repeat(2, 1fr); } .mi-out { grid-template-columns: 12px 1fr auto 64px; font-size: 13.5px; } }
 
 `;
 
@@ -5907,23 +6039,31 @@ function HelpCenter({ onNav }) {
 // on VaiBook's end could actually receive an attachment yet, and one shared
 // topic dropdown rather than Fresha's redundant two-dropdown structure.
 function HelpContactForm({ onNav }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [topic, setTopic] = useState("");
   const [email, setEmail] = useState("");
   const [description, setDescription] = useState("");
   const [error, setError] = useState("");
+  const [sendState, setSendState] = useState("idle");
   const DESCRIPTION_MAX = 1000;
+  const es = (i18n.language || "").toLowerCase().startsWith("es");
 
-  const handleSend = () => {
-    if (!topic || !email.trim() || !description.trim()) {
+  // Saves to the VaiBook support inbox (Admin → Messages + a phone alert to
+  // admins). It used to open a mailto to support@vaibook.bz, which can't
+  // receive mail until that domain is set up.
+  const handleSend = async () => {
+    if (!topic || !email.trim() || description.trim().length < 5) {
       setError(t("help.contact.validation"));
       return;
     }
     setError("");
-    const topicLabel = t(`help.contact.topics.${topic}`);
-    const subject = `${t("help.contact.emailSubjectPrefix")} — ${topicLabel}`;
-    const body = `${t("help.contact.emailBodyFrom")}: ${email.trim()}\n\n${description.trim()}`;
-    window.location.href = helpMailtoUrl(subject, body);
+    setSendState("sending");
+    const r = await submitSupportMessage({ name: email.trim().split("@")[0], contact: email.trim(), topic, message: description.trim() });
+    if (r.ok) { setSendState("sent"); return; }
+    setSendState("idle");
+    setError(r.rateLimited
+      ? (es ? "Enviaste varios mensajes en poco tiempo. Espera un poco e inténtalo otra vez." : "You've sent several messages in a short time. Please wait a little and try again.")
+      : (es ? "No se pudo enviar. Revisa tu conexión e inténtalo de nuevo." : "Couldn't send that. Please check your connection and try again."));
   };
 
   return (
@@ -5960,8 +6100,11 @@ function HelpContactForm({ onNav }) {
             <span className="help-form-hint help-form-charcount">{description.length}/{DESCRIPTION_MAX}</span>
           </div>
           {error && <p className="help-form-error">{error}</p>}
-          <button type="button" className="help-form-submit" onClick={handleSend}>{t("help.contact.send")}</button>
-          <p className="help-form-footnote">{t("help.contact.sendHint")}</p>
+          {sendState === "sent" ? (
+            <p className="help-form-sent">✓ {es ? "Gracias — recibimos tu mensaje. Te responderemos al correo que nos diste." : "Thanks — your message is in. We'll reply to the email you gave."}</p>
+          ) : (
+            <button type="button" className="help-form-submit" onClick={handleSend} disabled={sendState === "sending"}>{sendState === "sending" ? (es ? "Enviando…" : "Sending…") : t("help.contact.send")}</button>
+          )}
         </div>
       </div>
       <SiteFooter />
@@ -6353,6 +6496,7 @@ const PORTAL_TOOLS_BY_VIEW = {
     { id: "providers", icon: "🏪", label: "Providers" },
     { id: "payments", icon: "🧾", label: "Payments" },
     { id: "refunds", icon: "↩️", label: "Refunds" },
+    { id: "messages", icon: "📩", label: "Messages" },
     { id: "security", icon: "🚨", label: "Emergency" },
   ],
 };
@@ -7302,13 +7446,13 @@ function SiteFooter() {
         <div className="footer-links">
           <h5>{t("footer.company")}</h5>
           <ul>
-            <li>{t("footer.aboutVai")}</li><li>{t("footer.howItWorks")}</li><li>{t("footer.districts")}</li><li>{t("footer.blog")}</li>
+            <li><a href="#about">{t("footer.aboutVai")}</a></li><li><a href="#how-it-works">{t("footer.howItWorks")}</a></li><li><a href="#districts">{t("footer.districts")}</a></li><li><a href="#blog">{t("footer.blog")}</a></li>
           </ul>
         </div>
         <div className="footer-links">
           <h5>{t("footer.support")}</h5>
           <ul>
-            <li>{t("footer.helpCenter")}</li><li>{t("footer.contactUs")}</li><li>{t("footer.privacyPolicy")}</li><li>{t("footer.terms")}</li>
+            <li><a href="#help">{t("footer.helpCenter")}</a></li><li><a href="#contact">{t("footer.contactUs")}</a></li><li><a href="#privacy">{t("footer.privacyPolicy")}</a></li><li><a href="#terms">{t("footer.terms")}</a></li>
           </ul>
         </div>
         <div className="footer-links">
@@ -11347,6 +11491,8 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
     const d = new Date(nowForState.getFullYear(), nowForState.getMonth() - 1, 1);
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
   });
+  // Monthly insights: which month "Your month in detail" shows.
+  const [insightMonth, setInsightMonth] = useState(`${nowForState.getFullYear()}-${String(nowForState.getMonth() + 1).padStart(2, "0")}`);
   const [taxSettings, setTaxSettings] = useState({ category: "trade", customRate: "", gstRegistered: false, pricesIncludeGst: true, inputGst: "" });
   useEffect(() => {
     if (!providerProfile?.id) return;
@@ -14969,6 +15115,240 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                 <p>{t("providerPortal.monthlyReview.subtitle")}</p>
               </div>
 
+              {/* MONTH IN DETAIL — what happened to every booking this
+                  month, where money was lost, busy/quiet times, services,
+                  clients, and concrete changes to make. All from the
+                  bookings already loaded. */}
+              {(() => {
+                const es = (i18n.language || "").toLowerCase().startsWith("es");
+                const ix = (en, sp) => (es ? sp : en);
+                const loc = es ? "es" : "en-US";
+                const [iy, im] = insightMonth.split("-").map(Number);
+                const mStart = new Date(iy, im - 1, 1);
+                const mEnd = new Date(iy, im, 0, 23, 59, 59, 999);
+                const monthOpts = Array.from({ length: 6 }, (_, k) => {
+                  const d = new Date(now.getFullYear(), now.getMonth() - k, 1);
+                  return { value: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`, label: d.toLocaleDateString(loc, { month: "long", year: "numeric" }) };
+                });
+                const inMonth = bookings.filter((b) => { const d = bookingDateOnly(b.booking_date); return d && d >= mStart && d <= mEnd; });
+                const price = (b) => Number(b.total_amount ?? b.services?.price) || 0;
+                const isPastB = (b) => { const dt = bookingDateTime(b.booking_date, b.booking_time); return dt && dt < now; };
+                const groups = {
+                  done: inMonth.filter((b) => ["completed", "done"].includes(b.status)),
+                  noShow: inMonth.filter((b) => b.status === "no_show"),
+                  cancelled: inMonth.filter((b) => b.status === "cancelled"),
+                  declined: inMonth.filter((b) => b.status === "rejected"),
+                  expired: inMonth.filter((b) => b.status === "pending" && isPastB(b)),
+                  upcoming: inMonth.filter((b) => ["pending", "awaiting_payment", "confirmed"].includes(b.status) && !(b.status === "pending" && isPastB(b))),
+                };
+                const total = inMonth.length;
+                const pct = (n) => (total ? Math.round((n / total) * 100) : 0);
+                const sum = (arr) => arr.reduce((n, b) => n + price(b), 0);
+                const lost = { noShow: sum(groups.noShow), cancelled: sum(groups.cancelled), declined: sum(groups.declined), expired: sum(groups.expired) };
+                const lostTotal = lost.noShow + lost.cancelled + lost.declined + lost.expired;
+                const settled = groups.done.length + groups.noShow.length;
+                const noShowRate = settled ? Math.round((groups.noShow.length / settled) * 100) : 0;
+
+                // When people book (only bookings that happened or will happen).
+                const real = inMonth.filter((b) => !["rejected"].includes(b.status));
+                const dayNames = Array.from({ length: 7 }, (_, i) => new Date(2026, 0, 4 + i).toLocaleDateString(loc, { weekday: "short" }));
+                const byDay = Array(7).fill(0);
+                const slotsOf = (h) => (h < 12 ? 0 : h < 17 ? 1 : 2);
+                const slotNames = [ix("Morning", "Mañana"), ix("Afternoon", "Tarde"), ix("Evening", "Noche")];
+                const grid = Array.from({ length: 7 }, () => [0, 0, 0]);
+                real.forEach((b) => {
+                  const d = bookingDateOnly(b.booking_date); if (!d) return;
+                  const h = Number(String(b.booking_time || "12").slice(0, 2)) || 12;
+                  byDay[d.getDay()] += 1;
+                  grid[d.getDay()][slotsOf(h)] += 1;
+                });
+                const openDays = (hours || []).filter((h) => h.is_open).map((h) => h.day_of_week);
+                const maxDay = Math.max(1, ...byDay);
+                const busiest = byDay.indexOf(Math.max(...byDay));
+                const quietCandidates = (openDays.length ? openDays : [0, 1, 2, 3, 4, 5, 6]);
+                const quietest = quietCandidates.reduce((best, d) => (byDay[d] < byDay[best] ? d : best), quietCandidates[0]);
+                let bestCell = { d: 0, s: 0, n: -1 };
+                grid.forEach((row, d) => row.forEach((n, s0) => { if (n > bestCell.n) bestCell = { d, s: s0, n }; }));
+
+                // Services.
+                const svcMap = {};
+                inMonth.forEach((b) => {
+                  const name = b.services?.name || ix("Service", "Servicio");
+                  const e = svcMap[name] || (svcMap[name] = { name, booked: 0, done: 0, revenue: 0, noShow: 0, cancelled: 0 });
+                  if (b.status !== "rejected") e.booked += 1;
+                  if (["completed", "done"].includes(b.status)) { e.done += 1; e.revenue += price(b); }
+                  if (b.status === "no_show") e.noShow += 1;
+                  if (b.status === "cancelled") e.cancelled += 1;
+                });
+                const svcs = Object.values(svcMap).sort((a, b) => b.revenue - a.revenue || b.booked - a.booked);
+                const maxSvcRev = Math.max(1, ...svcs.map((s0) => s0.revenue));
+
+                // Clients.
+                const clientKey = (b) => b.customer_id || (b.walkin_customer_name ? `w:${b.walkin_customer_name.toLowerCase()}` : null);
+                const firstSeen = {};
+                bookings.forEach((b) => {
+                  const k = clientKey(b); const d = bookingDateOnly(b.booking_date);
+                  if (!k || !d || ["rejected", "cancelled"].includes(b.status)) return;
+                  if (!firstSeen[k] || d < firstSeen[k]) firstSeen[k] = d;
+                });
+                const monthClients = new Set(inMonth.filter((b) => !["rejected", "cancelled"].includes(b.status)).map(clientKey).filter(Boolean));
+                let newClients = 0;
+                monthClients.forEach((k) => { if (firstSeen[k] && firstSeen[k] >= mStart) newClients += 1; });
+                const returning = monthClients.size - newClients;
+                const nameOf = (b) => b.users?.full_name || b.walkin_customer_name || ix("Client", "Cliente");
+                const noShowByClient = {};
+                bookings.filter((b) => b.status === "no_show").forEach((b) => {
+                  const k = clientKey(b); if (!k) return;
+                  const e = noShowByClient[k] || (noShowByClient[k] = { name: nameOf(b), n: 0, phone: b.users?.whatsapp_number || b.users?.phone || b.walkin_customer_phone || null });
+                  e.n += 1;
+                });
+                const repeatNoShows = Object.values(noShowByClient).filter((c) => c.n >= 2).sort((a, b) => b.n - a.n);
+                const walkIns = inMonth.filter((b) => b.created_by_provider).length;
+
+                // Suggestions.
+                const tips = [];
+                if (groups.noShow.length && (noShowRate >= 10 || lost.noShow >= 100) && !providerProfile?.downpayment_required) {
+                  tips.push({ icon: "💳", text: ix(`No-shows cost you BZ$${lost.noShow.toFixed(0)} (${noShowRate}% of appointments). Asking for a deposit usually cuts this a lot.`, `Las ausencias te costaron BZ$${lost.noShow.toFixed(0)} (${noShowRate}% de las citas). Pedir un depósito suele reducirlas mucho.`), cta: ix("Turn on deposits", "Activar depósitos"), go: () => goToSettingsCard("settings-deposits") });
+                }
+                if (repeatNoShows.length) {
+                  tips.push({ icon: "🚩", text: ix(`${repeatNoShows.map((c) => c.name).slice(0, 3).join(", ")} missed 2 or more appointments. Ask them to pay ahead next time.`, `${repeatNoShows.map((c) => c.name).slice(0, 3).join(", ")} faltaron 2 veces o más. Pídeles pagar por adelantado la próxima vez.`) });
+                }
+                if (groups.expired.length) {
+                  tips.push({ icon: "⏰", text: ix(`${groups.expired.length} request${groups.expired.length === 1 ? "" : "s"} (BZ$${lost.expired.toFixed(0)}) expired without an answer. Turn on phone notifications, or auto-confirm bookings so clients don't wait.`, `${groups.expired.length} solicitud(es) (BZ$${lost.expired.toFixed(0)}) vencieron sin respuesta. Activa las notificaciones o la confirmación automática para que nadie espere.`), cta: ix("Notification settings", "Notificaciones"), go: () => goToSettingsCard("settings-notifications") });
+                }
+                if (groups.cancelled.length >= 2 && pct(groups.cancelled.length) >= 15) {
+                  tips.push({ icon: "📝", text: ix(`${groups.cancelled.length} bookings were cancelled (${pct(groups.cancelled.length)}%). A clear cancellation policy on your page helps, e.g. "cancel 24 hours ahead".`, `${groups.cancelled.length} citas se cancelaron (${pct(groups.cancelled.length)}%). Una política clara de cancelación ayuda, p. ej. "cancela con 24 horas".`), cta: ix("Edit policies", "Editar políticas"), go: () => goToSettingsCard("settings-bookingpage") });
+                }
+                if (real.length >= 4 && openDays.length && byDay[quietest] <= Math.max(1, Math.round(maxDay / 4))) {
+                  tips.push({ icon: "📣", text: ix(`${dayNames[quietest]} is your quietest open day. Send an announcement or a ${dayNames[quietest]} special to fill it.`, `El ${dayNames[quietest]} es tu día abierto más tranquilo. Envía un anuncio o una promo de ${dayNames[quietest]} para llenarlo.`), cta: ix("Send announcement", "Enviar anuncio"), go: () => setTab("announcements") });
+                }
+                const hasEarlierMonths = bookings.some((b) => { const d = bookingDateOnly(b.booking_date); return d && d < mStart && ["completed", "done"].includes(b.status); });
+                if (hasEarlierMonths && monthClients.size >= 3 && returning / monthClients.size < 0.3) {
+                  tips.push({ icon: "🔁", text: ix(`Only ${returning} of ${monthClients.size} clients came back. Rebook reminders bring regulars back automatically.`, `Solo ${returning} de ${monthClients.size} clientes regresaron. Los recordatorios de regreso traen a los habituales automáticamente.`), cta: ix("Rebook reminders", "Recordatorios"), go: () => setShowCheckInModal(true) });
+                }
+                if (svcs[0] && svcs[0].revenue > 0 && svcs.length > 1) {
+                  tips.push({ icon: "⭐", text: ix(`${svcs[0].name} brought in the most (BZ$${svcs[0].revenue.toFixed(0)}). Put it first and share a photo of it.`, `${svcs[0].name} generó más (BZ$${svcs[0].revenue.toFixed(0)}). Ponlo primero y comparte una foto.`) });
+                }
+
+                const outcome = [
+                  { key: "done", label: ix("Completed", "Completadas"), n: groups.done.length, money: sum(groups.done), cls: "ok" },
+                  { key: "upcoming", label: ix("Still upcoming", "Por venir"), n: groups.upcoming.length, money: sum(groups.upcoming), cls: "info" },
+                  { key: "noShow", label: ix("No-shows", "No se presentaron"), n: groups.noShow.length, money: lost.noShow, cls: "bad" },
+                  { key: "cancelled", label: ix("Cancelled", "Canceladas"), n: groups.cancelled.length, money: lost.cancelled, cls: "warn" },
+                  { key: "declined", label: ix("Declined by you", "Rechazadas por ti"), n: groups.declined.length, money: lost.declined, cls: "muted" },
+                  { key: "expired", label: ix("Never answered", "Sin respuesta"), n: groups.expired.length, money: lost.expired, cls: "bad" },
+                ];
+
+                return (
+                  <div className="mi">
+                    <div className="mi-head">
+                      <h3>{ix("Your month in detail", "Tu mes en detalle")}</h3>
+                      <select value={insightMonth} onChange={(e) => setInsightMonth(e.target.value)}>
+                        {monthOpts.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+                      </select>
+                    </div>
+
+                    {total === 0 ? (
+                      <p className="bh-empty">{ix("No bookings this month yet.", "Aún no hay citas este mes.")}</p>
+                    ) : (
+                      <>
+                        {/* Outcomes */}
+                        <div className="mi-card">
+                          <div className="mi-title">{ix(`What happened to your ${total} bookings`, `Qué pasó con tus ${total} citas`)}</div>
+                          <div className="mi-bar">
+                            {outcome.filter((o) => o.n > 0).map((o) => <span key={o.key} className={`mi-seg ${o.cls}`} style={{ width: `${(o.n / total) * 100}%` }} title={`${o.label}: ${o.n}`} />)}
+                          </div>
+                          <div className="mi-outcomes">
+                            {outcome.map((o) => (
+                              <div key={o.key} className={`mi-out ${o.n === 0 ? "zero" : ""}`}>
+                                <span className={`mi-dot ${o.cls}`} />
+                                <span className="mi-out-label">{o.label}</span>
+                                <span className="mi-out-n">{o.n} <small>({pct(o.n)}%)</small></span>
+                                <span className="mi-out-money">BZ${o.money.toFixed(0)}</span>
+                              </div>
+                            ))}
+                          </div>
+                          {lostTotal > 0 && (
+                            <div className="mi-lost">💸 {ix(`Money that didn't come in: BZ$${lostTotal.toFixed(0)}`, `Dinero que no entró: BZ$${lostTotal.toFixed(0)}`)} <small>{ix(`(no-shows BZ$${lost.noShow.toFixed(0)} · cancellations BZ$${lost.cancelled.toFixed(0)} · declined BZ$${lost.declined.toFixed(0)} · unanswered BZ$${lost.expired.toFixed(0)})`, `(ausencias BZ$${lost.noShow.toFixed(0)} · cancelaciones BZ$${lost.cancelled.toFixed(0)} · rechazadas BZ$${lost.declined.toFixed(0)} · sin respuesta BZ$${lost.expired.toFixed(0)})`)}</small></div>
+                          )}
+                        </div>
+
+                        {/* What to change */}
+                        {tips.length > 0 && (
+                          <div className="mi-card mi-tips">
+                            <div className="mi-title">{ix("What to change next month", "Qué cambiar el próximo mes")}</div>
+                            {tips.map((tp, k) => (
+                              <div key={k} className="mi-tip">
+                                <span className="mi-tip-icon">{tp.icon}</span>
+                                <span className="mi-tip-text">{tp.text}</span>
+                                {tp.cta && <button className="bh-link" onClick={tp.go}>{tp.cta} ›</button>}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* When */}
+                        <div className="mi-card">
+                          <div className="mi-title">{ix("When clients book", "Cuándo reservan tus clientes")}</div>
+                          <div className="mi-days">
+                            {byDay.map((n, d) => (
+                              <div key={d} className={`mi-day ${d === busiest && n > 0 ? "top" : ""}`}>
+                                <div className="mi-day-bar"><span style={{ height: `${(n / maxDay) * 100}%` }} /></div>
+                                <div className="mi-day-n">{n}</div>
+                                <div className="mi-day-l">{dayNames[d]}</div>
+                              </div>
+                            ))}
+                          </div>
+                          {real.length > 0 && (
+                            <p className="mi-note">
+                              {ix(`Busiest: ${dayNames[bestCell.d]} ${slotNames[bestCell.s].toLowerCase()}s. Quietest open day: ${dayNames[quietest]}.`, `Más ocupado: ${dayNames[bestCell.d]} por la ${slotNames[bestCell.s].toLowerCase()}. Día abierto más tranquilo: ${dayNames[quietest]}.`)}
+                            </p>
+                          )}
+                        </div>
+
+                        {/* Services */}
+                        <div className="mi-card">
+                          <div className="mi-title">{ix("Services", "Servicios")}</div>
+                          {svcs.map((sv) => (
+                            <div key={sv.name} className="mi-svc">
+                              <div className="mi-svc-top">
+                                <span className="mi-svc-name">{sv.name}</span>
+                                <span className="mi-svc-rev">BZ${sv.revenue.toFixed(0)}</span>
+                              </div>
+                              <div className="mi-svc-bar"><span style={{ width: `${(sv.revenue / maxSvcRev) * 100}%` }} /></div>
+                              <div className="mi-svc-meta">
+                                {ix(`${sv.booked} booked · ${sv.done} done`, `${sv.booked} reservadas · ${sv.done} hechas`)}
+                                {sv.noShow > 0 && <span className="mi-flag bad">{ix(`${sv.noShow} no-show${sv.noShow === 1 ? "" : "s"}`, `${sv.noShow} ausencia(s)`)}</span>}
+                                {sv.cancelled > 0 && <span className="mi-flag warn">{ix(`${sv.cancelled} cancelled`, `${sv.cancelled} canceladas`)}</span>}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* Clients */}
+                        <div className="mi-card">
+                          <div className="mi-title">{ix("Clients", "Clientes")}</div>
+                          <div className="mi-stats">
+                            <div><strong>{monthClients.size}</strong><span>{ix("clients", "clientes")}</span></div>
+                            <div><strong>{newClients}</strong><span>{ix("new", "nuevos")}</span></div>
+                            <div><strong>{returning}</strong><span>{ix("came back", "regresaron")}</span></div>
+                            <div><strong>{walkIns}</strong><span>{ix("walk-ins / added by you", "sin cita / agregadas por ti")}</span></div>
+                          </div>
+                          {repeatNoShows.length > 0 && (
+                            <div className="mi-noshows">
+                              <div className="mi-sub">{ix("Clients who often don't show up", "Clientes que suelen no presentarse")}</div>
+                              {repeatNoShows.slice(0, 5).map((c) => (
+                                <div key={c.name} className="mi-ns-row"><span>{c.name}</span><span className="mi-flag bad">{ix(`${c.n} no-shows`, `${c.n} ausencias`)}</span></div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                );
+              })()}
+
               {loadingTrend && monthlyTrend.length === 0 ? (
                 <p style={{ fontSize: 13, color: "var(--muted)", padding: "16px 0" }}>{t("providerPortal.common.loading")}</p>
               ) : (
@@ -16280,6 +16660,8 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
   // Share kit / "Scan to book" poster for any business, so VaiBook can
   // print and hand a poster to a shop.
   const [posterFor, setPosterFor] = useState(null);
+  const [supportMsgs, setSupportMsgs] = useState(null);
+  const [supportFilter, setSupportFilter] = useState("new");
   const [checkingAdmin, setCheckingAdmin] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const [apps, setApps] = useState([]);
@@ -16294,6 +16676,12 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
   useEffect(() => {
     try { sessionStorage.setItem("vaibook_admin_tab", tab); } catch (e) { /* ignore */ }
   }, [tab]);
+  useEffect(() => {
+    if (tab !== "messages" || supportMsgs !== null) return;
+    let alive = true;
+    listSupportMessages().then((m) => { if (alive) setSupportMsgs(m); });
+    return () => { alive = false; };
+  }, [tab, supportMsgs]);
 
   const [providers, setProviders] = useState([]);
   const [loadingProviders, setLoadingProviders] = useState(false);
@@ -16692,7 +17080,7 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
           />
         )}
 
-        {tab !== "overview" && tab !== "providers" && tab !== "payments" && tab !== "refunds" && tab !== "security" && (
+        {tab !== "overview" && tab !== "providers" && tab !== "payments" && tab !== "refunds" && tab !== "messages" && tab !== "security" && (
           <>
             <div className="portal-header">
               <h2>Provider applications</h2>
@@ -16916,6 +17304,57 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
                     </div>
                   </div>
                 ))}
+              </div>
+            </>
+          );
+        })()}
+
+        {tab === "messages" && (() => {
+          const all = supportMsgs || [];
+          const shown = all.filter((m) => supportFilter === "all" || m.status === supportFilter);
+          const replyHref = (m) => {
+            const c = (m.contact || "").trim();
+            if (c.includes("@")) return `mailto:${c}?subject=${encodeURIComponent("Re: your VaiBook message")}`;
+            const digits = c.replace(/[^0-9]/g, "");
+            if (digits.length >= 7) return `https://wa.me/${digits.length === 7 ? "501" + digits : digits}`;
+            return null;
+          };
+          return (
+            <>
+              <div className="portal-header">
+                <h2>Messages</h2>
+                <p>What people sent from Contact us and Help &amp; support. You also get a phone alert for each new one.</p>
+              </div>
+              <div className="card">
+                <div className="card-title" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                  <span style={{ display: "flex", gap: 6 }}>
+                    {[["new", `New (${all.filter((m) => m.status === "new").length})`], ["done", "Done"], ["all", "All"]].map(([k, l]) => (
+                      <button key={k} className="btn-sm" style={{ background: supportFilter === k ? "var(--accent-soft)" : "transparent", border: "1px solid var(--border)" }} onClick={() => setSupportFilter(k)}>{l}</button>
+                    ))}
+                  </span>
+                  <button className="btn-sm forest" onClick={() => { setSupportMsgs(null); }}>Refresh</button>
+                </div>
+                {supportMsgs === null && <p style={{ fontSize: 13, color: "var(--muted)", padding: "16px 0" }}>Loading...</p>}
+                {supportMsgs !== null && shown.length === 0 && <p style={{ fontSize: 13, color: "var(--muted)", padding: "16px 0" }}>No messages here.</p>}
+                {shown.map((m) => {
+                  const href = replyHref(m);
+                  return (
+                    <div key={m.id} style={{ borderTop: "1px solid var(--border)", padding: "12px 0" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", gap: 8, flexWrap: "wrap", fontSize: 13 }}>
+                        <strong>{m.name} <span style={{ fontWeight: 500, color: "var(--muted)" }}>· {m.contact}</span></strong>
+                        <span style={{ color: "var(--muted)" }}>{m.topic} · {new Date(m.created_at).toLocaleString()}</span>
+                      </div>
+                      <p style={{ fontSize: 14, whiteSpace: "pre-wrap", margin: "8px 0" }}>{m.message}</p>
+                      <div style={{ display: "flex", gap: 8 }}>
+                        {href && <a className="btn-sm forest" href={href} target="_blank" rel="noopener noreferrer" style={{ textDecoration: "none" }}>Reply</a>}
+                        <button className="btn-sm" style={{ border: "1px solid var(--border)" }} onClick={async () => {
+                          const next = m.status === "new" ? "done" : "new";
+                          if (await setSupportMessageStatus(m.id, next)) setSupportMsgs((list) => (list || []).map((x) => (x.id === m.id ? { ...x, status: next } : x)));
+                        }}>{m.status === "new" ? "Mark done" : "Move to new"}</button>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </>
           );
@@ -17149,11 +17588,24 @@ export default function App() {
     return !!parseBookingHash(h);
   });
 
+  // Footer info pages (#about, #privacy, …) open as a sheet over whatever
+  // view is underneath, so closing one lands the person back where they were.
+  const [infoPage, setInfoPage] = useState(() => {
+    const h = window.location.hash.replace("#", "");
+    return INFO_PAGE_IDS.includes(h) ? h : null;
+  });
+  const closeInfoPage = () => {
+    setInfoPage(null);
+    try { window.history.replaceState(null, "", window.location.pathname + window.location.search); } catch (e) { /* ignore */ }
+  };
+
   // Keep view in sync if the URL hash changes without a full page reload
   // (e.g. typing/pasting a #admin or #customer link into an already-open tab).
   useEffect(() => {
     const onHashChange = () => {
       const h = window.location.hash.replace("#", "");
+      if (INFO_PAGE_IDS.includes(h)) { setInfoPage(h); return; }
+      setInfoPage(null);
       const bookingId = parseBookingHash(h);
       if (bookingId) {
         setDeepLinkProviderId(bookingId);
@@ -17672,6 +18124,18 @@ export default function App() {
       {view === "help" && <HelpCenter onNav={setView} />}
       {view === "help-contact" && <HelpContactForm onNav={setView} />}
       {view === "help-faq" && <HelpFAQ onNav={setView} />}
+      {infoPage && (
+        <Suspense fallback={null}>
+          <InfoPages
+            page={infoPage}
+            user={user}
+            onClose={closeInfoPage}
+            onGo={(p) => { window.location.hash = p; }}
+            onFind={() => { closeInfoPage(); setView(session ? "customer" : "home"); window.scrollTo(0, 0); }}
+            onListBusiness={() => { closeInfoPage(); setView("providers"); window.scrollTo(0, 0); }}
+          />
+        </Suspense>
+      )}
     </>
   );
 }
