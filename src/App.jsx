@@ -13141,9 +13141,9 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
               const pp = providerProfile || {};
               const steps = [
                 { id: "photo", done: !!pp.profile_photo_url, label: st("stepPhoto"), hint: st("stepPhotoHint"), go: () => setTab("profile") },
-                { id: "bio", done: !!(pp.bio && pp.bio.trim().length >= 20), label: st("stepBio"), hint: st("stepBioHint"), go: () => setTab("profile") },
+                { id: "bio", done: !!(pp.bio && pp.bio.trim().length >= 10), label: st("stepBio"), hint: st("stepBioHint"), go: () => setTab("profile") },
                 { id: "services", done: activeServices.length > 0, label: st("stepServices"), hint: st("stepServicesHint"), go: () => setTab("services") },
-                { id: "portfolio", done: (pp.portfolio_urls || []).length >= 3, label: st("stepPortfolio"), hint: st("stepPortfolioHint"), go: () => setTab("profile") },
+                { id: "portfolio", done: (pp.portfolio_urls || []).length >= 3, label: st("stepPortfolio"), hint: `${st("stepPortfolioHint")} (${Math.min((pp.portfolio_urls || []).length, 3)}/3)`, go: () => setTab("profile") },
                 { id: "contact", done: !!(pp.whatsapp || pp.instagram), label: st("stepContact"), hint: st("stepContactHint"), go: () => setTab("profile") },
               ];
               const doneCount = steps.filter((s) => s.done).length;
