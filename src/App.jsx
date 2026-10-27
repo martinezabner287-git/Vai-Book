@@ -44,6 +44,7 @@ const ProviderLocationMap = lazy(() => import("./MapWidgets").then((m) => ({ def
 // moment a provider actually opens their launch graphic — not on every
 // dashboard load.
 const WelcomePlaqueGenerator = lazy(() => import("./WelcomePlaqueGenerator"));
+const ShareKit = lazy(() => import("./ShareKit"));
 function MapLoadingFallback({ height }) {
   return (
     <div style={{ height, width: "100%", display: "flex", alignItems: "center", justifyContent: "center", background: "var(--sand)", fontSize: 12.5, color: "var(--muted)" }}>
@@ -2871,6 +2872,51 @@ const css = `
     .bh-stats { grid-template-columns: repeat(2, 1fr); }
     .bh-day-count { font-size: 9.5px; }
   }
+
+  /* ===== ADD APPOINTMENT sheet ===== */
+  .appt-sheet { max-height: 88vh; overflow-y: auto; }
+  .appt-title { font-size: 18px; font-weight: 800; margin: 0 0 8px; color: var(--dark-text, #16181D); }
+  .appt-step { font-size: 12px; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); margin: 16px 0 8px; }
+  .appt-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .appt-chip { display: flex; flex-direction: column; align-items: flex-start; gap: 1px; border: 1px solid var(--border); background: #fff; border-radius: 12px; padding: 9px 12px; cursor: pointer; font-family: inherit; text-align: left; }
+  .appt-chip span { font-weight: 700; font-size: 14px; color: var(--text, #16181D); }
+  .appt-chip small { font-size: 11.5px; color: var(--muted); }
+  .appt-chip.active { border-color: var(--lime); background: var(--accent-soft); box-shadow: 0 0 0 1px var(--lime) inset; }
+  .appt-times { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 8px; margin-top: 8px; max-height: 180px; overflow-y: auto; }
+  .appt-time { border: 1px solid var(--border); background: #fff; border-radius: 10px; padding: 10px 4px; font-weight: 700; font-size: 13px; cursor: pointer; font-family: inherit; color: var(--text, #16181D); }
+  .appt-time.active { background: var(--lime); border-color: var(--lime); color: #fff; }
+  .appt-hint { font-size: 12.5px; color: var(--muted); margin: 8px 0 0; }
+  .appt-other-time { display: flex; align-items: center; gap: 10px; font-size: 12.5px; color: var(--muted); margin-top: 10px; }
+  .appt-other-time input { padding: 7px 10px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; }
+  .appt-input { width: 100%; box-sizing: border-box; padding: 12px 14px; border: 1px solid var(--border); border-radius: 12px; font-size: 15px; font-family: inherit; margin-bottom: 8px; background: #fff; }
+  .appt-suggest { display: flex; flex-wrap: wrap; gap: 6px; margin: -2px 0 8px; }
+  .appt-suggest button { border: 1px solid var(--border); background: var(--accent-soft); border-radius: 999px; padding: 6px 12px; font-size: 12.5px; cursor: pointer; font-family: inherit; }
+  .appt-save { width: 100%; padding: 14px 0 !important; font-size: 15px !important; border-radius: 12px !important; margin-top: 6px; }
+
+  /* ===== SHARE KIT (share link, QR, poster) ===== */
+  .sk-modal-panel { background: #fff; border-radius: 22px; width: min(760px, calc(100vw - 24px)); max-height: calc(100vh - 40px); overflow-y: auto; padding: 22px; box-sizing: border-box; }
+  .sk-title { font-size: 20px; font-weight: 800; margin: 0; color: #16181D; }
+  .sk-sub { font-size: 13.5px; color: var(--muted); margin: 4px 0 14px; }
+  .sk-profile { display: flex; gap: 14px; align-items: center; padding: 14px; border: 1px solid var(--border); border-radius: 16px; margin-bottom: 12px; }
+  .sk-avatar { flex: none; width: 60px; height: 60px; border-radius: 50%; background: var(--accent-soft) center/cover no-repeat; display: flex; align-items: center; justify-content: center; font-weight: 800; color: var(--lime); font-size: 20px; }
+  .sk-profile-text { min-width: 0; }
+  .sk-name { font-weight: 800; font-size: 16px; color: #16181D; }
+  .sk-meta { font-size: 13px; color: var(--muted); }
+  .sk-url { font-size: 12px; color: var(--lime); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sk-buttons { display: flex; flex-wrap: wrap; gap: 8px; }
+  .sk-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: 1px solid var(--border); background: #fff; color: #16181D; border-radius: 12px; padding: 10px 14px; font-weight: 700; font-size: 13.5px; cursor: pointer; font-family: inherit; text-decoration: none; }
+  .sk-btn:disabled { opacity: 0.5; cursor: default; }
+  .sk-btn-primary { background: var(--lime); border-color: var(--lime); color: #fff; }
+  .sk-note { font-size: 12.5px; color: var(--muted); background: var(--accent-soft); border-radius: 10px; padding: 10px 12px; margin: 10px 0 0; }
+  .sk-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 16px; }
+  .sk-panel { border: 1px solid var(--border); border-radius: 16px; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+  .sk-panel-title { font-weight: 800; font-size: 14px; color: #16181D; }
+  .sk-qr, .sk-poster { background: #F7F5F1; border-radius: 12px; display: flex; align-items: center; justify-content: center; min-height: 200px; color: var(--muted); font-size: 13px; }
+  .sk-qr img { width: 100%; max-width: 240px; height: auto; display: block; }
+  .sk-poster img { width: 100%; max-width: 260px; height: auto; display: block; border-radius: 6px; box-shadow: 0 6px 18px rgba(0,0,0,0.12); }
+  .sk-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .sk-row .sk-btn-primary { flex: 1; }
+  @media (max-width: 620px) { .sk-grid { grid-template-columns: 1fr; } .sk-modal-panel { padding: 16px; } }
 
 `;
 
@@ -11747,7 +11793,8 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
   const [walkInError, setWalkInError] = useState("");
 
   const openWalkInForm = () => {
-    setWalkInForm({ service_id: services[0]?.id || "", date: "", time: "10:00", name: "", phone: "", notes: "" });
+    const firstSvc = services.filter((sv) => sv.is_active !== false)[0] || services[0];
+    setWalkInForm({ service_id: firstSvc?.id || "", date: firstOpenDate(hours, Number(firstSvc?.duration_min) || 30), time: "", name: "", phone: "", notes: "" });
     setWalkInError("");
     setAddingWalkIn(true);
   };
@@ -13451,7 +13498,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                           {acceptsWalkins && it.start <= nowMin + 30 ? (
                             <button className="bh-link" onClick={openWalkInSheet} disabled={activeServices.length === 0}>+ {t("providerPortal.dashboard.walkInButton")}</button>
                           ) : (
-                            <button className="bh-link" onClick={() => { setTab("bookings"); openWalkInForm(); }}>+ {dx("Add appointment", "Agregar cita")}</button>
+                            <button className="bh-link" onClick={() => { openWalkInForm(); }}>+ {dx("Add appointment", "Agregar cita")}</button>
                           )}
                         </div>
                       </div>
@@ -13499,7 +13546,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
               {acceptsWalkins && (
                 <button className="bh-action" onClick={openWalkInSheet} disabled={activeServices.length === 0}>🧾<span>{t("providerPortal.dashboard.walkInButton")}</span></button>
               )}
-              <button className="bh-action" onClick={() => { setTab("bookings"); openWalkInForm(); }}>🗓️<span>{dx("Appointment", "Cita")}</span></button>
+              <button className="bh-action" onClick={() => { openWalkInForm(); }}>🗓️<span>{dx("Appointment", "Cita")}</span></button>
               {activeBlock ? (
                 <button className="bh-action" onClick={resumeBookingsNow} disabled={resumingNow}>▶️<span>{dx("Reopen", "Reabrir")}</span></button>
               ) : (
@@ -13780,51 +13827,6 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                   </div>
                 )}
               </div>
-
-              {addingWalkIn && (
-                <div style={{ background: "var(--sand)", borderRadius: 10, padding: 16, marginBottom: 16 }}>
-                  <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 10 }}>{t("providerPortal.bookings.addAnAppointment")}</div>
-                  {services.length === 0 ? (
-                    <p style={{ fontSize: 13, color: "var(--muted)" }}>{t("providerPortal.bookings.addServiceFirst")}</p>
-                  ) : (
-                    <>
-                      <div className="input-group">
-                        <label>{t("providerPortal.bookings.clientName")}</label>
-                        <input placeholder={t("providerPortal.bookings.clientNamePlaceholder")} value={walkInForm.name} onChange={e => setWalkInForm(f => ({ ...f, name: e.target.value }))} />
-                      </div>
-                      <div className="input-group">
-                        <label>{t("providerPortal.bookings.clientPhone")}</label>
-                        <input placeholder={t("providerPortal.common.phonePlaceholder")} value={walkInForm.phone} onChange={e => setWalkInForm(f => ({ ...f, phone: e.target.value }))} />
-                      </div>
-                      <div className="input-group">
-                        <label>{t("providerPortal.bookings.serviceLabel")}</label>
-                        <select value={walkInForm.service_id} onChange={e => setWalkInForm(f => ({ ...f, service_id: e.target.value }))}>
-                          {services.map(s => <option key={s.id} value={s.id}>{s.name} — BZ${s.price}</option>)}
-                        </select>
-                      </div>
-                      <div className="form-row">
-                        <div className="input-group">
-                          <label>{t("providerPortal.bookings.dateLabel")}</label>
-                          <input type="date" value={walkInForm.date} onChange={e => setWalkInForm(f => ({ ...f, date: e.target.value }))} />
-                        </div>
-                        <div className="input-group">
-                          <label>{t("providerPortal.bookings.timeLabel")}</label>
-                          <input type="time" value={walkInForm.time} onChange={e => setWalkInForm(f => ({ ...f, time: e.target.value }))} />
-                        </div>
-                      </div>
-                      <div className="input-group">
-                        <label>{t("providerPortal.bookings.notesLabel")}</label>
-                        <textarea placeholder={t("providerPortal.bookings.notesPlaceholder")} value={walkInForm.notes} onChange={e => setWalkInForm(f => ({ ...f, notes: e.target.value }))} style={{ minHeight: 50 }} />
-                      </div>
-                      {walkInError && <p style={{ fontSize: 12, color: "#B91C1C", marginBottom: 8 }}>{walkInError}</p>}
-                      <div style={{ display: "flex", gap: 8 }}>
-                        <button className="btn-sm lime" disabled={savingWalkIn} onClick={submitWalkIn}>{savingWalkIn ? t("providerPortal.common.saving") : t("providerPortal.bookings.saveAppointment")}</button>
-                        <button className="btn-sm ghost" onClick={closeWalkInForm}>{t("providerPortal.common.cancel")}</button>
-                      </div>
-                    </>
-                  )}
-                </div>
-              )}
 
               {visibleBookings.length === 0 && (
                 <p style={{ fontSize: 13, color: "var(--muted)", padding: "16px 0" }}>{loadingBookings ? t("providerPortal.common.loading") : bookingSearch.trim() ? t("providerPortal.bookings.noMatch") : t("providerPortal.bookings.noneYet")}</p>
@@ -15292,6 +15294,90 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
         </div>
       )}
 
+      {/* ADD APPOINTMENT — one simple sheet: what, when, who. */}
+      {addingWalkIn && (() => {
+        const es = (i18n.language || "").toLowerCase().startsWith("es");
+        const ax = (en, sp) => (es ? sp : en);
+        const svcList = services.filter((sv) => sv.is_active !== false);
+        const svc = svcList.find((sv) => sv.id === walkInForm.service_id) || null;
+        const dur = Number(svc?.duration_min) || 30;
+        const busy = bookings
+          .filter((b) => ["pending", "awaiting_payment", "confirmed"].includes(b.status) && String(b.booking_date).slice(0, 10) === walkInForm.date)
+          .map((b) => {
+            const st0 = String(b.booking_time || "").slice(0, 5);
+            return { start_time: st0, end_time: minutesToHHMM(hhmmToMinutes(st0) + (Number(b.services?.duration_min) || 30)) };
+          })
+          .concat(blocks.filter((bl) => bl.block_date === walkInForm.date).map((bl) => ({ start_time: String(bl.start_time).slice(0, 5), end_time: String(bl.end_time).slice(0, 5) })));
+        const slots = walkInForm.date ? computeDaySlots({ hours, busy, dateStr: walkInForm.date, durationMin: dur }) : [];
+        const known = [];
+        bookings.forEach((b) => {
+          const nm = (b.users?.full_name || b.walkin_customer_name || "").trim();
+          if (!nm || known.some((k) => k.name.toLowerCase() === nm.toLowerCase())) return;
+          known.push({ name: nm, phone: b.users?.whatsapp_number || b.users?.phone || b.walkin_customer_phone || "" });
+        });
+        const q = walkInForm.name.trim().toLowerCase();
+        const suggestions = q.length >= 1 ? known.filter((k) => k.name.toLowerCase().includes(q) && k.name.toLowerCase() !== q).slice(0, 4) : [];
+        const canSave = svc && walkInForm.date && walkInForm.time && walkInForm.name.trim();
+        return (
+          <div className="sheet-overlay" onClick={closeWalkInForm}>
+            <div className="sheet-panel appt-sheet" onClick={(e) => e.stopPropagation()}>
+              <div className="sheet-handle"></div>
+              <h3 className="appt-title">{t("providerPortal.bookings.addAnAppointment")}</h3>
+              {svcList.length === 0 ? (
+                <p style={{ fontSize: 13, color: "var(--muted)" }}>{t("providerPortal.bookings.addServiceFirst")}</p>
+              ) : (
+                <>
+                  <div className="appt-step">1 · {ax("Service", "Servicio")}</div>
+                  <div className="appt-chips">
+                    {svcList.map((sv) => (
+                      <button key={sv.id} type="button" className={`appt-chip ${walkInForm.service_id === sv.id ? "active" : ""}`} onClick={() => setWalkInForm((f) => ({ ...f, service_id: sv.id, time: "" }))}>
+                        <span>{sv.name}</span><small>BZ${sv.price} · {sv.duration_min} min</small>
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="appt-step">2 · {ax("Day & time", "Día y hora")}</div>
+                  <DayStrip hours={hours} durationMin={dur} value={walkInForm.date} onChange={(ds) => setWalkInForm((f) => ({ ...f, date: ds, time: "" }))} />
+                  {slots.length > 0 ? (
+                    <div className="appt-times">
+                      {slots.map((tm) => (
+                        <button key={tm} type="button" className={`appt-time ${walkInForm.time === tm ? "active" : ""}`} onClick={() => setWalkInForm((f) => ({ ...f, time: tm }))}>{formatBookingTime(tm)}</button>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="appt-hint">{ax("No free times left that day. Pick another day, or type a time below.", "No quedan horas libres ese día. Elige otro día o escribe una hora abajo.")}</p>
+                  )}
+                  <label className="appt-other-time">
+                    {ax("Other time", "Otra hora")}
+                    <input type="time" value={walkInForm.time} onChange={(e) => setWalkInForm((f) => ({ ...f, time: e.target.value }))} />
+                  </label>
+
+                  <div className="appt-step">3 · {ax("Client", "Cliente")}</div>
+                  <input className="appt-input" placeholder={t("providerPortal.bookings.clientNamePlaceholder")} value={walkInForm.name} onChange={(e) => setWalkInForm((f) => ({ ...f, name: e.target.value }))} />
+                  {suggestions.length > 0 && (
+                    <div className="appt-suggest">
+                      {suggestions.map((k) => (
+                        <button key={k.name} type="button" onClick={() => setWalkInForm((f) => ({ ...f, name: k.name, phone: f.phone || k.phone }))}>{k.name}{k.phone ? ` · ${k.phone}` : ""}</button>
+                      ))}
+                    </div>
+                  )}
+                  <input className="appt-input" inputMode="tel" placeholder={ax("WhatsApp number (optional)", "Número de WhatsApp (opcional)")} value={walkInForm.phone} onChange={(e) => setWalkInForm((f) => ({ ...f, phone: e.target.value }))} />
+                  <textarea className="appt-input" placeholder={ax("Note (optional)", "Nota (opcional)")} value={walkInForm.notes} onChange={(e) => setWalkInForm((f) => ({ ...f, notes: e.target.value }))} rows={2} />
+
+                  {walkInError && <p style={{ fontSize: 12.5, color: "#B91C1C", margin: "4px 0 8px" }}>{walkInError}</p>}
+                  <button className="btn-sm forest appt-save" disabled={savingWalkIn || !canSave} onClick={submitWalkIn}>
+                    {savingWalkIn ? t("providerPortal.common.saving") : canSave
+                      ? ax(`Save · ${svc.name}, ${formatBookingTime(walkInForm.time)}`, `Guardar · ${svc.name}, ${formatBookingTime(walkInForm.time)}`)
+                      : t("providerPortal.bookings.saveAppointment")}
+                  </button>
+                  <button className="btn-sm ghost" style={{ width: "100%", padding: "12px 0", marginTop: 8 }} onClick={closeWalkInForm}>{t("providerPortal.common.cancel")}</button>
+                </>
+              )}
+            </div>
+          </div>
+        );
+      })()}
+
       {/* ELITE WELCOME — the launch graphic modal. Lazy-loaded (pulls in
           the qrcode package) so it only costs bandwidth the moment a
           provider actually opens it. */}
@@ -15312,14 +15398,16 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
       {showQrModal && (
         <div className="qr-modal-overlay" onClick={() => setShowQrModal(false)}>
           <button className="qr-modal-close" onClick={() => setShowQrModal(false)} aria-label={t("providerPortal.qrModal.closeAriaLabel")}>✕</button>
-          <div className="qr-modal-panel" onClick={(e) => e.stopPropagation()}>
-            <img
-              src={qrImageUrl}
-              alt={t("providerPortal.qrModal.altText", { business: providerProfile?.business_name || t("providerPortal.qrModal.yourFallback") })}
-              className="qr-modal-img"
-            />
-            <div className="qr-modal-business">{providerProfile?.business_name || t("providerPortal.qrModal.bookWithUsFallback")}</div>
-            <p className="qr-modal-hint">{t("providerPortal.qrModal.scanHint")}</p>
+          <div className="sk-modal-panel" onClick={(e) => e.stopPropagation()}>
+            <Suspense fallback={<div className="plaque-loading">{t("providerPortal.launchGraphic.preparing")}</div>}>
+              <ShareKit
+                businessName={providerProfile?.business_name || ""}
+                bookingUrl={bookingUrl}
+                photoUrl={providerProfile?.profile_photo_url || null}
+                subtitle={[providerProfile?.service_type, providerProfile?.district].filter(Boolean).join(" · ")}
+                lang={i18n.language}
+              />
+            </Suspense>
           </div>
         </div>
       )}
@@ -16013,6 +16101,9 @@ const findSimilarApplications = (app, allApps) => {
 };
 
 function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
+  // Share kit / "Scan to book" poster for any business, so VaiBook can
+  // print and hand a poster to a shop.
+  const [posterFor, setPosterFor] = useState(null);
   const [checkingAdmin, setCheckingAdmin] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const [apps, setApps] = useState([]);
@@ -16379,6 +16470,22 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
 
   return (
     <div className="portal-layout">
+      {posterFor && (
+        <div className="qr-modal-overlay" onClick={() => setPosterFor(null)}>
+          <button className="qr-modal-close" onClick={() => setPosterFor(null)} aria-label="Close">✕</button>
+          <div className="sk-modal-panel" onClick={(e) => e.stopPropagation()}>
+            <Suspense fallback={<div className="plaque-loading">Preparing…</div>}>
+              <ShareKit
+                businessName={posterFor.business_name || ""}
+                bookingUrl={`https://vai-book.vercel.app/#book-${posterFor.id}`}
+                photoUrl={posterFor.profile_photo_url || null}
+                subtitle={[posterFor.service_type, posterFor.district].filter(Boolean).join(" · ")}
+                lang="en"
+              />
+            </Suspense>
+          </div>
+        </div>
+      )}
       {/* The persistent left sidebar was removed — every link and live badge
           count it held (Pending/Active/Rejected, Providers, Payments,
           Refunds, Emergency, Sign out) now lives exclusively in the top
@@ -16562,6 +16669,7 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
 
                       {!isConfirmingDelete && (
                         <div style={{ display: "flex", gap: 8 }}>
+                          <button className="btn-sm" style={{ background: "transparent", border: "1px solid var(--lime)", color: "var(--lime)" }} onClick={() => setPosterFor(p)}>Share / Poster</button>
                           <button className="btn-sm" style={{ background: "transparent", border: "1px solid var(--muted)", color: "var(--muted)" }} disabled={isSaving} onClick={() => startEditProvider(p)}>Edit</button>
                           <button className="btn-sm" style={{ background: "transparent", border: "1px solid var(--muted)", color: "var(--muted)" }} disabled={isSaving} onClick={() => toggleProviderActive(p)}>
                             {isSaving ? "..." : p.is_active ? "Suspend" : "Reactivate"}
