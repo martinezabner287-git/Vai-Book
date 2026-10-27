@@ -2918,6 +2918,25 @@ const css = `
   .sk-row .sk-btn-primary { flex: 1; }
   @media (max-width: 620px) { .sk-grid { grid-template-columns: 1fr; } .sk-modal-panel { padding: 16px; } }
 
+  /* ===== BELIZE TAX FILING card ===== */
+  .tax-sub { font-size: 13px; color: var(--muted); margin: 0 0 12px; }
+  .tax-warn { background: #FFF7ED; color: #92400E; border-radius: 10px; padding: 10px 12px; font-size: 13px; margin: 0 0 12px; }
+  .tax-controls { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 10px; }
+  .tax-controls label, .tax-gst-opts label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 700; color: var(--muted); flex: 1 1 180px; }
+  .tax-controls select, .tax-controls input, .tax-gst-opts input[type=number] { padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; font-size: 14px; font-family: inherit; background: #fff; color: var(--text, #16181D); }
+  .tax-check { display: flex !important; flex-direction: row !important; align-items: center; gap: 8px; font-size: 13.5px !important; font-weight: 600 !important; color: var(--text, #16181D) !important; margin: 6px 0; cursor: pointer; }
+  .tax-gst-opts { padding: 8px 12px; background: #F7F5F1; border-radius: 12px; margin: 4px 0 8px; display: flex; flex-direction: column; gap: 8px; }
+  .tax-forms { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; margin: 12px 0 8px; }
+  .tax-form { border: 1.5px solid var(--lime); border-radius: 14px; padding: 12px 14px; background: #fff; }
+  .tax-form-title { font-weight: 800; font-size: 14px; margin-bottom: 6px; color: var(--text, #16181D); }
+  .tax-line { display: flex; justify-content: space-between; gap: 10px; font-size: 13.5px; padding: 5px 0; border-bottom: 1px solid var(--border); color: var(--text, #16181D); }
+  .tax-line span { color: var(--muted); }
+  .tax-line.total { border-bottom: none; font-size: 15px; }
+  .tax-line.total span { color: var(--text, #16181D); font-weight: 700; }
+  .tax-due { font-size: 13px; color: var(--text, #16181D); margin: 6px 0 12px; }
+  .tax-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+  .tax-fine { font-size: 11.5px; color: var(--muted); line-height: 1.55; margin: 6px 0 0; }
+
 `;
 
 // ── BRAND MARK ─────────────────────────────────────────────────
@@ -5416,7 +5435,7 @@ function printInvoice(html) {
 // uses, so the two stay reconcilable without being the same document.
 // Built entirely client-side from bookings already loaded, same as
 // invoices — no new table or migration needed.
-function buildLedgerHtml({ providerName, providerTaxId, periodLabel, rows, taxRate = 0 }) {
+function buildLedgerHtml({ providerName, providerTaxId, periodLabel, rows, taxRate = 0, gstRegistered = false, summary = null }) {
   const esc = (s) => String(s ?? "").replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
   const total = rows.reduce((sum, r) => sum + (Number(r.amount) || 0), 0);
   // Amounts collected from customers are tax-inclusive, so the tax portion
@@ -5425,9 +5444,27 @@ function buildLedgerHtml({ providerName, providerTaxId, periodLabel, rows, taxRa
   const rate = Number(taxRate) || 0;
   const taxPortion = rate > 0 ? total - total / (1 + rate / 100) : 0;
   const netOfTax = total - taxPortion;
+  const cols = gstRegistered ? 7 : 5;
   const rowsHtml = rows.length
-    ? rows.map((r) => `<tr><td>${esc(r.dateLabel)}</td><td>${esc(r.orderNumber)}</td><td>${esc(r.serviceName)}</td><td>${esc(r.customerName)}</td><td class="amount-col">BZ$${Number(r.amount || 0).toFixed(2)}</td></tr>`).join("")
-    : `<tr><td colspan="5" style="color:#888;text-align:center;padding:24px 0;">No completed bookings in this period.</td></tr>`;
+    ? rows.map((r) => `<tr><td>${esc(r.dateLabel)}</td><td>${esc(r.orderNumber)}</td><td>${esc(r.serviceName)}</td><td>${esc(r.customerName)}</td><td class="amount-col">BZ$${Number(r.amount || 0).toFixed(2)}</td>${gstRegistered ? `<td class="amount-col">BZ$${Number(r.net || 0).toFixed(2)}</td><td class="amount-col">BZ$${Number(r.gst || 0).toFixed(2)}</td>` : ""}</tr>`).join("")
+    : `<tr><td colspan="${cols}" style="color:#888;text-align:center;padding:24px 0;">No completed bookings in this period.</td></tr>`;
+  const summaryHtml = summary ? `
+  <div class="filing">
+    <h2>Monthly Business Tax Return</h2>
+    <table class="sum">
+      <tr><td>Gross receipts for the month${gstRegistered ? " (excluding GST)" : ""}</td><td class="amount-col">BZ$${summary.grossReceipts.toFixed(2)}</td></tr>
+      <tr><td>Business Tax rate</td><td class="amount-col">${summary.businessTaxRate}%</td></tr>
+      <tr class="strong"><td>Business Tax payable</td><td class="amount-col">BZ$${summary.businessTax.toFixed(2)}</td></tr>
+    </table>
+    ${gstRegistered ? `
+    <h2>GST Return (BTS210) — 12.5%</h2>
+    <table class="sum">
+      <tr><td>Output tax (GST on your sales)</td><td class="amount-col">BZ$${summary.outputGst.toFixed(2)}</td></tr>
+      <tr><td>Input tax (GST you paid on business purchases)</td><td class="amount-col">BZ$${summary.inputGst.toFixed(2)}</td></tr>
+      <tr class="strong"><td>${summary.netGst >= 0 ? "Net GST payable" : "GST refund due"}</td><td class="amount-col">BZ$${Math.abs(summary.netGst).toFixed(2)}</td></tr>
+    </table>` : ""}
+    <p class="due">File and pay by <strong>${esc(summary.dueDate)}</strong> (15th of the following month) at the Belize Tax Service.</p>
+  </div>` : "";
 
   return `<!DOCTYPE html>
 <html>
@@ -5437,8 +5474,8 @@ function buildLedgerHtml({ providerName, providerTaxId, periodLabel, rows, taxRa
 <style>
   body { font-family: Arial, sans-serif; color: #17141F; max-width: 760px; margin: 40px auto; padding: 0 20px; }
   .head { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid #4C3DC4; padding-bottom: 16px; margin-bottom: 24px; }
-  .logo { font-size: 22px; font-weight: 800; color: #4C3DC4; }
-  .logo span { color: #C79404; }
+  .logo { font-size: 22px; font-weight: 800; color: #16181D; }
+  .logo span { color: #4C3DC4; }
   .meta { text-align: right; font-size: 13px; color: #555; }
   h1 { font-size: 18px; margin: 0 0 4px; }
   .party { font-size: 13px; line-height: 1.6; margin-bottom: 24px; }
@@ -5448,6 +5485,11 @@ function buildLedgerHtml({ providerName, providerTaxId, periodLabel, rows, taxRa
   .amount-col { text-align: right; }
   .total-row td { border-bottom: none; padding-top: 14px; font-size: 16px; font-weight: 800; }
   .footnote { font-size: 11.5px; color: #888; line-height: 1.6; margin-top: 32px; border-top: 1px solid #E5E5E5; padding-top: 16px; }
+  .filing { border: 2px solid #4C3DC4; border-radius: 10px; padding: 14px 18px; margin: 8px 0 16px; }
+  .filing h2 { font-size: 14px; margin: 8px 0 6px; color: #4C3DC4; }
+  .sum td { font-size: 13px; border-bottom: 1px solid #EEE; }
+  .sum .strong td { font-weight: 800; font-size: 14px; }
+  .due { font-size: 13px; margin: 10px 0 0; }
   @media print { body { margin: 0; padding: 20px; } }
 </style>
 </head>
@@ -5464,15 +5506,16 @@ function buildLedgerHtml({ providerName, providerTaxId, periodLabel, rows, taxRa
     ${providerTaxId ? `<div>Business reg./TIN: ${esc(providerTaxId)}</div>` : ""}
   </div>
   <table>
-    <thead><tr><th>Date</th><th>Order #</th><th>Service</th><th>Customer</th><th class="amount-col">Amount</th></tr></thead>
+    <thead><tr><th>Date</th><th>Receipt #</th><th>Service</th><th>Customer</th><th class="amount-col">Amount</th>${gstRegistered ? `<th class="amount-col">Net of GST</th><th class="amount-col">GST</th>` : ""}</tr></thead>
     <tbody>
       ${rowsHtml}
-      <tr class="total-row"><td colspan="4">Total collected (${rows.length} completed booking${rows.length === 1 ? "" : "s"})</td><td class="amount-col">BZ$${total.toFixed(2)}</td></tr>
+      <tr class="total-row"><td colspan="4">Total collected (${rows.length} completed booking${rows.length === 1 ? "" : "s"})</td><td class="amount-col">BZ$${total.toFixed(2)}</td>${gstRegistered ? `<td class="amount-col">BZ$${rows.reduce((n, r) => n + (Number(r.net) || 0), 0).toFixed(2)}</td><td class="amount-col">BZ$${rows.reduce((n, r) => n + (Number(r.gst) || 0), 0).toFixed(2)}</td>` : ""}</tr>
       ${rate > 0 ? `
       <tr><td colspan="4" style="padding-top:10px;">Net of tax</td><td class="amount-col">BZ$${netOfTax.toFixed(2)}</td></tr>
       <tr><td colspan="4"><strong>Tax included at ${rate}%</strong></td><td class="amount-col"><strong>BZ$${taxPortion.toFixed(2)}</strong></td></tr>` : ""}
     </tbody>
   </table>
+  ${summaryHtml}
   <div class="footnote">
     VaiBook is a booking marketplace, not a payment processor — every amount here reflects a transaction directly between this provider and their customer, generated from their VaiBook booking records for their own tax filing use. It is not issued by VaiBook and is not a formal receipt of taxes paid.${rate > 0 ? ` The tax figure above is a straight ${rate}% calculation on the amounts collected, provided for convenience — confirm your actual liability with your accountant or the tax department.` : ""}
   </div>
@@ -11297,9 +11340,26 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
   // white-screens the portal the moment either condition flips while the
   // component stays mounted.
   const nowForState = new Date();
-  const [ledgerStart, setLedgerStart] = useState(new Date(nowForState.getFullYear(), nowForState.getMonth(), 1).toISOString().slice(0, 10));
-  const [ledgerEnd, setLedgerEnd] = useState(new Date(nowForState.getFullYear(), nowForState.getMonth() + 1, 0).toISOString().slice(0, 10));
-  const [ledgerTaxRate, setLedgerTaxRate] = useState("");
+  // Belize tax filing helper (Earnings tab). The month defaults to LAST
+  // month — the one due on the 15th. Settings are remembered per business
+  // on this device.
+  const [taxMonth, setTaxMonth] = useState(() => {
+    const d = new Date(nowForState.getFullYear(), nowForState.getMonth() - 1, 1);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+  });
+  const [taxSettings, setTaxSettings] = useState({ category: "trade", customRate: "", gstRegistered: false, pricesIncludeGst: true, inputGst: "" });
+  useEffect(() => {
+    if (!providerProfile?.id) return;
+    try {
+      const saved = JSON.parse(localStorage.getItem(`vaibook_tax_${providerProfile.id}`) || "null");
+      if (saved) setTaxSettings((s0) => ({ ...s0, ...saved, inputGst: "" }));
+    } catch (e) { /* ignore */ }
+  }, [providerProfile?.id]);
+  const updateTaxSettings = (patch) => setTaxSettings((s0) => {
+    const next = { ...s0, ...patch };
+    try { if (providerProfile?.id) localStorage.setItem(`vaibook_tax_${providerProfile.id}`, JSON.stringify({ ...next, inputGst: "" })); } catch (e) { /* ignore */ }
+    return next;
+  });
   // Calendar month being viewed, as an offset from the current month.
   const [calOffset, setCalOffset] = useState(0);
   // The provider's own reviews.
@@ -13177,35 +13237,102 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
     : null;
   const currentMonthLabel = now.toLocaleDateString("en-US", { month: "long" });
 
-  // Sales & tax ledger — separate from per-booking invoices on purpose,
-  // see buildLedgerHtml. Defaults to the current calendar month (its state
-  // is declared at the top of the component with every other hook).
-  const printLedger = () => {
-    const start = ledgerStart ? bookingDateOnly(ledgerStart) : null;
-    const end = ledgerEnd ? bookingDateOnly(ledgerEnd) : null;
-    if (end) end.setHours(23, 59, 59, 999);
-    const rows = completedBookings
-      .filter((b) => {
-        const d = bookingDateOnly(b.booking_date);
-        return (!start || d >= start) && (!end || d <= end);
-      })
-      .sort((a, b) => (bookingDateTime(a.booking_date, a.booking_time) || 0) - (bookingDateTime(b.booking_date, b.booking_time) || 0))
-      .map((b) => ({
+  // ── BELIZE TAX FILING ─────────────────────────────────────────
+  // Monthly Business Tax (on gross receipts, due the 15th of the next
+  // month) and, for GST-registered businesses, the monthly GST return
+  // (BTS210, 12.5%, also due the 15th). Built from completed bookings.
+  const GST_RATE = 12.5;
+  const BUSINESS_TAX_RATES = { trade: 1.75, professional: 6 };
+  const businessTaxRate = taxSettings.category === "custom" ? (Number(taxSettings.customRate) || 0) : BUSINESS_TAX_RATES[taxSettings.category] || 0;
+  const [taxYear, taxMon] = taxMonth.split("-").map(Number);
+  const taxPeriodStart = new Date(taxYear, taxMon - 1, 1);
+  const taxPeriodEnd = new Date(taxYear, taxMon, 0, 23, 59, 59, 999);
+  const taxDueDate = new Date(taxYear, taxMon, 15);
+  const taxLocale = (i18n.language || "").toLowerCase().startsWith("es") ? "es" : "en-US";
+  const taxMonthLabel = taxPeriodStart.toLocaleDateString(taxLocale, { month: "long", year: "numeric" });
+  const taxRows = completedBookings
+    .filter((b) => { const d = bookingDateOnly(b.booking_date); return d && d >= taxPeriodStart && d <= taxPeriodEnd; })
+    .sort((a, b) => (bookingDateTime(a.booking_date, a.booking_time) || 0) - (bookingDateTime(b.booking_date, b.booking_time) || 0))
+    .map((b) => {
+      const amount = netAmount(b);
+      const gst = taxSettings.gstRegistered
+        ? (taxSettings.pricesIncludeGst ? amount - amount / (1 + GST_RATE / 100) : amount * GST_RATE / 100)
+        : 0;
+      const net = taxSettings.gstRegistered && taxSettings.pricesIncludeGst ? amount - gst : amount;
+      return {
+        date: String(b.booking_date).slice(0, 10),
         dateLabel: formatBookingDate(b.booking_date),
-        orderNumber: b.order_number || b.id?.slice(0, 8) || "—",
-        serviceName: b.services?.name || "Service",
-        customerName: b.users?.full_name || b.walkin_customer_name || "Customer",
-        amount: b.total_amount,
-      }));
-    const periodLabel = ledgerStart && ledgerEnd
-      ? `${formatBookingDate(ledgerStart)} – ${formatBookingDate(ledgerEnd)}`
-      : "All completed bookings";
+        receipt: b.order_number || b.id?.slice(0, 8) || "—",
+        customer: b.users?.full_name || b.walkin_customer_name || "Customer",
+        service: b.services?.name || "Service",
+        walkIn: !!b.created_by_provider,
+        amount, net, gst,
+      };
+    });
+  const taxGrossCollected = taxRows.reduce((n, r) => n + r.amount, 0);
+  const taxGrossReceipts = taxRows.reduce((n, r) => n + r.net, 0); // excludes GST
+  const taxOutputGst = taxRows.reduce((n, r) => n + r.gst, 0);
+  const taxInputGst = Number(taxSettings.inputGst) || 0;
+  const taxNetGst = taxOutputGst - taxInputGst;
+  const taxBusinessTax = taxGrossReceipts * businessTaxRate / 100;
+  const last12Turnover = completedBookings
+    .filter((b) => { const d = bookingDateOnly(b.booking_date); return d && d > new Date(now.getFullYear() - 1, now.getMonth(), now.getDate()); })
+    .reduce((n, b) => n + netAmount(b), 0);
+  const taxMonthOptions = Array.from({ length: 13 }, (_, k) => {
+    const d = new Date(now.getFullYear(), now.getMonth() - k, 1);
+    return { value: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`, label: d.toLocaleDateString(taxLocale, { month: "long", year: "numeric" }) };
+  });
+  const money = (n) => (Math.round((Number(n) || 0) * 100) / 100).toFixed(2);
+
+  const downloadTaxCsv = () => {
+    const q = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+    const lines = [];
+    lines.push([q("Business"), q(providerProfile?.business_name || "")].join(","));
+    lines.push([q("TIN"), q(providerProfile?.tax_id || "")].join(","));
+    lines.push([q("Period"), q(taxMonthLabel)].join(","));
+    lines.push("");
+    const head = ["Date", "Receipt #", "Client", "Service", "Walk-in", "Amount collected (BZ$)"];
+    if (taxSettings.gstRegistered) head.push("Net of GST (BZ$)", "GST 12.5% (BZ$)");
+    lines.push(head.map(q).join(","));
+    taxRows.forEach((r) => {
+      const row = [r.date, r.receipt, r.customer, r.service, r.walkIn ? "Yes" : "No", money(r.amount)];
+      if (taxSettings.gstRegistered) row.push(money(r.net), money(r.gst));
+      lines.push(row.map(q).join(","));
+    });
+    lines.push("");
+    lines.push([q("Gross receipts for Business Tax (BZ$)"), q(money(taxGrossReceipts))].join(","));
+    lines.push([q("Business Tax rate"), q(`${businessTaxRate}%`)].join(","));
+    lines.push([q("Business Tax due (BZ$)"), q(money(taxBusinessTax))].join(","));
+    if (taxSettings.gstRegistered) {
+      lines.push([q("Output GST (BZ$)"), q(money(taxOutputGst))].join(","));
+      lines.push([q("Input GST on purchases (BZ$)"), q(money(taxInputGst))].join(","));
+      lines.push([q("Net GST payable (BZ$)"), q(money(taxNetGst))].join(","));
+    }
+    lines.push([q("Due date"), q(`${taxDueDate.getFullYear()}-${String(taxDueDate.getMonth() + 1).padStart(2, "0")}-15`)].join(","));
+    const blob = new Blob(["﻿" + lines.join("\r\n")], { type: "text/csv;charset=utf-8" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `${(providerProfile?.business_name || "vaibook").toLowerCase().replace(/[^a-z0-9]+/g, "-")}-sales-${taxMonth}.csv`;
+    document.body.appendChild(a); a.click();
+    setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+  };
+
+  const printTaxReport = () => {
     printInvoice(buildLedgerHtml({
       providerName: providerProfile?.business_name || "Provider",
       providerTaxId: providerProfile?.tax_id || "",
-      periodLabel,
-      rows,
-      taxRate: Number(ledgerTaxRate) || 0,
+      periodLabel: taxMonthLabel,
+      rows: taxRows.map((r) => ({ dateLabel: r.dateLabel, orderNumber: r.receipt, serviceName: r.service, customerName: r.customer, amount: r.amount, net: r.net, gst: r.gst })),
+      gstRegistered: taxSettings.gstRegistered,
+      summary: {
+        grossReceipts: taxGrossReceipts,
+        businessTaxRate,
+        businessTax: taxBusinessTax,
+        outputGst: taxOutputGst,
+        inputGst: taxInputGst,
+        netGst: taxNetGst,
+        dueDate: taxDueDate.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }),
+      },
     }));
   };
 
@@ -14291,38 +14418,87 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
               <div className="metric"><div className="metric-label">{t("providerPortal.common.upcoming")}</div><div className="metric-value">BZ${pendingEarnings.toFixed(2)}</div><div className="metric-sub">{t("providerPortal.earnings.confirmedNotCompleted")}</div></div>
               <div className="metric"><div className="metric-label">{t("providerPortal.earnings.thisMonthLabel", { month: currentMonthLabel })}</div><div className="metric-value">BZ${thisMonthNetEarnings.toFixed(2)}</div><div className="metric-sub">{monthOverMonthPct === null ? t("providerPortal.common.noDataLastMonth") : t("providerPortal.common.vsLastMonth", { arrow: monthOverMonthPct >= 0 ? "↑" : "↓", pct: Math.abs(monthOverMonthPct) })}</div></div>
             </div>
-            <div className="card">
-              <div className="card-title">{t("providerPortal.earnings.salesTaxLedger")}</div>
-              <p style={{ fontSize: 13, color: "var(--muted)", marginBottom: 12 }}>
-                {t("providerPortal.earnings.ledgerHint")}
-              </p>
-              <div className="form-row">
-                <div className="input-group">
-                  <label>{t("providerPortal.earnings.from")}</label>
-                  <input type="date" value={ledgerStart} onChange={e => setLedgerStart(e.target.value)} />
+            {(() => {
+              const es = (i18n.language || "").toLowerCase().startsWith("es");
+              const tx = (en, sp) => (es ? sp : en);
+              const dueLabel = taxDueDate.toLocaleDateString(es ? "es" : "en-US", { month: "long", day: "numeric", year: "numeric" });
+              return (
+                <div className="card tax-card">
+                  <div className="card-title">🇧🇿 {tx("Belize tax filing", "Impuestos en Belice")}</div>
+                  <p className="tax-sub">{tx("Your monthly numbers for the Belize Tax Service, ready to copy onto the forms, plus a sales record for your files.", "Tus cifras mensuales para el Belize Tax Service, listas para copiar en los formularios, más un registro de ventas para tus archivos.")}</p>
+
+                  {!providerProfile?.tax_id && (
+                    <div className="tax-warn">
+                      {tx("Add your TIN (Tax Identification Number) so it prints on your records.", "Agrega tu TIN (número de identificación tributaria) para que aparezca en tus registros.")}{" "}
+                      <button className="bh-link" onClick={() => setTab("profile")}>{tx("Add TIN ›", "Agregar TIN ›")}</button>
+                    </div>
+                  )}
+
+                  <div className="tax-controls">
+                    <label>{tx("Month", "Mes")}
+                      <select value={taxMonth} onChange={(e) => setTaxMonth(e.target.value)}>
+                        {taxMonthOptions.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+                      </select>
+                    </label>
+                    <label>{tx("Business Tax category", "Categoría de Business Tax")}
+                      <select value={taxSettings.category} onChange={(e) => updateTaxSettings({ category: e.target.value })}>
+                        <option value="trade">{tx("Trade or business — 1.75%", "Comercio o negocio — 1.75%")}</option>
+                        <option value="professional">{tx("Professional services — 6%", "Servicios profesionales — 6%")}</option>
+                        <option value="custom">{tx("Other rate…", "Otra tasa…")}</option>
+                      </select>
+                    </label>
+                    {taxSettings.category === "custom" && (
+                      <label>{tx("Rate %", "Tasa %")}
+                        <input type="number" min="0" max="25" step="0.25" value={taxSettings.customRate} onChange={(e) => updateTaxSettings({ customRate: e.target.value })} />
+                      </label>
+                    )}
+                  </div>
+                  <label className="tax-check">
+                    <input type="checkbox" checked={taxSettings.gstRegistered} onChange={(e) => updateTaxSettings({ gstRegistered: e.target.checked })} />
+                    {tx("I'm registered for GST (12.5%)", "Estoy registrado para GST (12.5%)")}
+                  </label>
+                  {taxSettings.gstRegistered && (
+                    <div className="tax-gst-opts">
+                      <label className="tax-check">
+                        <input type="checkbox" checked={taxSettings.pricesIncludeGst} onChange={(e) => updateTaxSettings({ pricesIncludeGst: e.target.checked })} />
+                        {tx("My VaiBook prices already include GST", "Mis precios en VaiBook ya incluyen GST")}
+                      </label>
+                      <label>{tx("GST you paid on business purchases this month (input tax, BZ$)", "GST que pagaste en compras del negocio este mes (impuesto de entrada, BZ$)")}
+                        <input type="number" min="0" step="0.01" value={taxSettings.inputGst} onChange={(e) => updateTaxSettings({ inputGst: e.target.value })} placeholder="0.00" />
+                      </label>
+                    </div>
+                  )}
+
+                  <div className="tax-forms">
+                    <div className="tax-form">
+                      <div className="tax-form-title">{tx("Monthly Business Tax Return", "Declaración mensual de Business Tax")}</div>
+                      <div className="tax-line"><span>{tx("Gross receipts", "Ingresos brutos")}{taxSettings.gstRegistered ? tx(" (excl. GST)", " (sin GST)") : ""}</span><strong>BZ${money(taxGrossReceipts)}</strong></div>
+                      <div className="tax-line"><span>{tx("Rate", "Tasa")}</span><strong>{businessTaxRate}%</strong></div>
+                      <div className="tax-line total"><span>{tx("Business Tax to pay", "Business Tax a pagar")}</span><strong>BZ${money(taxBusinessTax)}</strong></div>
+                    </div>
+                    {taxSettings.gstRegistered && (
+                      <div className="tax-form">
+                        <div className="tax-form-title">{tx("GST Return (BTS210)", "Declaración de GST (BTS210)")}</div>
+                        <div className="tax-line"><span>{tx("Output tax (on your sales)", "Impuesto de salida (ventas)")}</span><strong>BZ${money(taxOutputGst)}</strong></div>
+                        <div className="tax-line"><span>{tx("Input tax (on purchases)", "Impuesto de entrada (compras)")}</span><strong>BZ${money(taxInputGst)}</strong></div>
+                        <div className="tax-line total"><span>{taxNetGst >= 0 ? tx("GST to pay", "GST a pagar") : tx("GST refund", "Reembolso de GST")}</span><strong>BZ${money(Math.abs(taxNetGst))}</strong></div>
+                      </div>
+                    )}
+                  </div>
+                  <p className="tax-due">⏰ {tx(`${taxMonthLabel}: file and pay by ${dueLabel}.`, `${taxMonthLabel}: declara y paga antes del ${dueLabel}.`)} {tx(`${taxRows.length} completed booking${taxRows.length === 1 ? "" : "s"}, BZ$${money(taxGrossCollected)} collected.`, `${taxRows.length} citas completadas, BZ$${money(taxGrossCollected)} cobrados.`)}</p>
+
+                  <div className="tax-actions">
+                    <button className="btn-sm forest" onClick={printTaxReport}>🧾 {tx("Print / save PDF", "Imprimir / guardar PDF")}</button>
+                    <button className="btn-sm ghost" onClick={downloadTaxCsv}>⬇️ {tx("Download for Excel (CSV)", "Descargar para Excel (CSV)")}</button>
+                  </div>
+
+                  {!taxSettings.gstRegistered && last12Turnover >= 60000 && (
+                    <div className="tax-warn">{tx(`Heads up: BZ$${money(last12Turnover)} in the last 12 months. Businesses over BZ$75,000 a year must register for GST.`, `Atención: BZ$${money(last12Turnover)} en los últimos 12 meses. Los negocios con más de BZ$75,000 al año deben registrarse para GST.`)}</div>
+                  )}
+                  <p className="tax-fine">{tx("Only bookings marked done in VaiBook are counted, so log walk-ins and cash sales here too to keep your totals complete. The rates shown are the standard Belize rates; confirm your category and amounts with the Belize Tax Service or your accountant before filing. Keep your records for at least 6 years.", "Solo se cuentan las citas marcadas como hechas en VaiBook; registra también los clientes sin cita y ventas en efectivo para que tus totales estén completos. Las tasas son las estándar de Belice; confirma tu categoría y montos con el Belize Tax Service o tu contador antes de declarar. Guarda tus registros al menos 6 años.")}</p>
                 </div>
-                <div className="input-group">
-                  <label>{t("providerPortal.earnings.to")}</label>
-                  <input type="date" value={ledgerEnd} onChange={e => setLedgerEnd(e.target.value)} />
-                </div>
-                <div className="input-group">
-                  <label>{t("providerPortal.earnings.taxRate")}</label>
-                  <input
-                    type="number"
-                    min="0"
-                    max="100"
-                    step="0.5"
-                    placeholder={t("providerPortal.earnings.taxRatePlaceholder")}
-                    value={ledgerTaxRate}
-                    onChange={e => setLedgerTaxRate(e.target.value)}
-                  />
-                </div>
-              </div>
-              <p style={{ fontSize: 12, color: "var(--muted)", marginBottom: 12 }}>
-                {t("providerPortal.earnings.taxRateExplain")}
-              </p>
-              <button className="btn-sm forest" onClick={printLedger}>🧾 {t("providerPortal.earnings.printLedger")}</button>
-            </div>
+              );
+            })()}
             <div className="card">
               <div className="card-title">{t("providerPortal.earnings.paymentDetailsTitle")}</div>
               <p style={{ fontSize: 13, color: "var(--muted)", marginBottom: 16 }}>{t("providerPortal.earnings.paymentDetailsHint")}</p>
