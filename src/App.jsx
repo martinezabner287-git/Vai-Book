@@ -12277,16 +12277,19 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
     setResponseMessage("");
   };
 
-  const submitResponse = async (booking) => {
+  // `typeOverride` lets "Accept" go through in one tap (no message box);
+  // Decline still opens the box so a reason can be given.
+  const submitResponse = async (booking, typeOverride) => {
     setBusyId(booking.id);
-    const msg = responseMessage.trim() || null;
+    const responseKind = typeOverride || responseType;
+    const msg = typeOverride ? null : (responseMessage.trim() || null);
     const custEmail = booking.users?.email;
     const custName = booking.users?.full_name;
     const serviceName = booking.services?.name || "your service";
     const dateStr = formatBookingDate(booking.booking_date);
     const timeStr = booking.booking_time?.slice(0, 5);
 
-    if (responseType === "accept") {
+    if (responseKind === "accept") {
       const requiresDeposit = !!providerProfile?.downpayment_required;
       const nextStatus = requiresDeposit ? "awaiting_payment" : "confirmed";
       await updateBooking(booking.id, { status: nextStatus, provider_message: msg });
@@ -13813,7 +13816,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                       {b.status === "pending" && respondingId !== b.id && (
                         <>
                           {bookingDateTime(b.booking_date, b.booking_time) > new Date() && (
-                            <button className="btn-sm lime" disabled={busyId === b.id} onClick={() => openResponse(b.id, "accept")}>{t("providerPortal.bookings.accept")}</button>
+                            <button className="btn-sm lime" disabled={busyId === b.id} onClick={() => submitResponse(b, "accept")}>{busyId === b.id ? t("providerPortal.common.sending") : t("providerPortal.bookings.accept")}</button>
                           )}
                           <button className="btn-sm ghost" disabled={busyId === b.id} onClick={() => openResponse(b.id, "reject")}>{t("providerPortal.bookings.decline")}</button>
                         </>
