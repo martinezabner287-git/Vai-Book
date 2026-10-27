@@ -606,7 +606,10 @@ export const getActiveProviders = async (filters = {}) => {
   // Defensive: PostgREST can infer a to-one embed (single object) instead of
   // an array depending on constraints, so normalize both embeds to arrays.
   const toArray = (v) => (v ? (Array.isArray(v) ? v : [v]) : []);
-  return (data || []).map((p) => ({
+  // A business with no bookable service yet can't take a booking, so
+  // customers never see it in search or on the home page until it has one.
+  const bookable = (p) => toArray(p.services).some((s) => s.is_active !== false);
+  return (data || []).filter(bookable).map((p) => ({
     ...p,
     services: toArray(p.services),
     reviews: toArray(p.reviews),
@@ -641,11 +644,13 @@ export const getProviderById = async (id) => {
 export const getProviderDirectory = async () => {
   const { data, error } = await supabase
     .from('provider_profiles')
-    .select('id, business_name, service_type, district, services(name)')
+    .select('id, business_name, service_type, district, services(name, is_active)')
     .eq('is_active', true);
   if (error) console.error(error.message);
   const toArray = (v) => (v ? (Array.isArray(v) ? v : [v]) : []);
-  return (data || []).map((p) => ({ ...p, services: toArray(p.services) }));
+  return (data || [])
+    .map((p) => ({ ...p, services: toArray(p.services).filter((s) => s.is_active !== false) }))
+    .filter((p) => p.services.length > 0);
 };
 
 // ── BOOKING HELPERS ──────────────────────────────────────────────
