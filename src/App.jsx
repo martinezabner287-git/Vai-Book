@@ -5445,12 +5445,16 @@ function usePushSubscription(userId) {
   const [subscribingPush, setSubscribingPush] = useState(false);
   const [pushError, setPushError] = useState("");
 
+  // On every sign-in: if this device already has push turned on, make sure
+  // it's registered to THIS account (it may have been set up while someone
+  // else was signed in on the same phone).
   useEffect(() => {
     if (!("serviceWorker" in navigator) || !("PushManager" in window)) return;
     navigator.serviceWorker.ready.then((reg) => reg.pushManager.getSubscription()).then((sub) => {
-      setPushEnabled(!!sub);
+      setPushEnabled(!!sub && !!userId);
+      if (sub && userId) savePushSubscription(userId, sub);
     }).catch(() => {});
-  }, []);
+  }, [userId]);
 
   const enablePushNotifications = async () => {
     setPushError("");

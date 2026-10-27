@@ -95,6 +95,7 @@ export const signInWithGoogle = async () => {
 };
 
 export const signOut = async () => {
+  await releaseThisDevicePush();
   const { error } = await supabase.auth.signOut();
   if (error) console.error('Sign out error:', error.message);
 };
@@ -1352,19 +1353,31 @@ export const sendEmailOtp = async (email, metadata) => {
 // where to deliver it. onConflict on endpoint so re-subscribing on the
 // same device/browser (e.g. after clearing the old one) just updates the
 // row instead of creating a duplicate.
+// Ties this device's push registration to whoever is signed in now. Uses a
+// server function so a phone that was used by another account before (a
+// customer, then the business) moves over instead of staying with the
+// previous account — see claim_push_subscription in Supabase.
 export const savePushSubscription = async (userId, subscription) => {
-  const json = subscription.toJSON();
-  const { error } = await supabase.from('push_subscriptions').upsert(
-    {
-      user_id: userId,
-      endpoint: json.endpoint,
-      p256dh: json.keys.p256dh,
-      auth: json.keys.auth,
-    },
-    { onConflict: 'endpoint' }
-  );
+  if (!userId || !subscription) return { error: null };
+  const json = subscription.toJSON ? subscription.toJSON() : subscription;
+  const { error } = await supabase.rpc('claim_push_subscription', {
+    p_endpoint: json.endpoint,
+    p_p256dh: json.keys && json.keys.p256dh,
+    p_auth: json.keys && json.keys.auth,
+  });
   if (error) console.error('Error saving push subscription:', error.message);
   return { error };
+};
+
+// Called right before signing out: this device stops getting the leaving
+// account's alerts.
+export const releaseThisDevicePush = async () => {
+  try {
+    if (!('serviceWorker' in navigator)) return;
+    const reg = await navigator.serviceWorker.getRegistration();
+    const sub = reg && (await reg.pushManager.getSubscription());
+    if (sub) await supabase.rpc('release_push_subscription', { p_endpoint: sub.endpoint });
+  } catch (e) { /* never block sign-out */ }
 };
 
 export const deletePushSubscription = async (endpoint) => {
