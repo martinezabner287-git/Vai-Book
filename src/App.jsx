@@ -2940,6 +2940,33 @@ const css = `
   .tax-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
   .tax-fine { font-size: 11.5px; color: var(--muted); line-height: 1.55; margin: 6px 0 0; }
 
+
+  /* ===== BILLING TERMS (6 months / monthly) ===== */
+  .term-toggle { display: flex; gap: 4px; width: fit-content; margin: 0 auto 22px; background: #EEECE7; border-radius: 999px; padding: 4px; }
+  .term-toggle button { border: none; background: transparent; font: inherit; font-weight: 700; font-size: 14px; padding: 9px 16px; border-radius: 999px; cursor: pointer; color: #3A3F4B; display: flex; align-items: center; gap: 6px; }
+  .term-toggle button.on { background: #fff; color: #16181D; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+  .term-save { background: #DCFCE7; color: #166534; font-size: 11px; font-weight: 800; border-radius: 999px; padding: 2px 8px; }
+  .vbl-plan-billing { font-size: 13px; color: var(--muted); margin: -2px 0 10px; line-height: 1.45; }
+  .vbl-plan-switch { background: #ECFDF5; color: #166534; border: 1px dashed #16A34A; border-radius: 10px; padding: 7px 10px; font: inherit; font-size: 12.5px; font-weight: 700; cursor: pointer; margin-bottom: 10px; text-align: left; }
+  .term-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+  .term-card { position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: 4px; text-align: left; background: #fff; border: 1.5px solid var(--border); border-radius: 14px; padding: 14px 12px 12px; cursor: pointer; font: inherit; color: var(--dark-text, #16181D); }
+  .term-card.on { border: 2px solid var(--forest); background: var(--sand); }
+  .term-card-badge { position: absolute; top: -10px; left: 10px; background: #16A34A; color: #fff; font-size: 10.5px; font-weight: 800; border-radius: 999px; padding: 3px 8px; white-space: nowrap; }
+  .term-card-title { font-size: 13px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+  .term-card-day { font-size: 26px; font-weight: 800; letter-spacing: -0.02em; line-height: 1.1; }
+  .term-card-day small { font-size: 13px; font-weight: 600; color: var(--muted); margin-left: 2px; }
+  .term-card-sub { font-size: 12px; color: var(--muted); line-height: 1.4; }
+  .pay-summary { background: #F7F5F1; border-radius: 12px; padding: 10px 12px; margin-bottom: 12px; }
+  .pay-summary-row { display: flex; justify-content: space-between; gap: 10px; font-size: 15px; padding: 3px 0; }
+  .pay-summary-row strong { font-size: 18px; }
+  .pay-summary-row.small { font-size: 12.5px; color: var(--muted); }
+  .pay-to { border: 1px solid var(--border); border-radius: 12px; padding: 10px 12px; margin-bottom: 12px; }
+  .pay-to-title { font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin-bottom: 6px; }
+  .pay-to-row { display: flex; flex-direction: column; font-size: 13.5px; padding: 4px 0; }
+  .pay-to-row span { white-space: pre-wrap; color: var(--dark-text, #16181D); }
+  .pay-to-empty { font-size: 13px; margin: 0; }
+  .pay-fine { font-size: 11.5px; color: var(--muted); line-height: 1.5; margin: 10px 0 0; }
+  @media (max-width: 420px) { .term-cards { grid-template-columns: 1fr; gap: 16px; } }
   /* ===== FOOTER INFO PAGES (About, Help, Privacy, …) ===== */
   .footer-links a { color: inherit; text-decoration: none; }
   .footer-links a:hover { color: #fff; text-decoration: underline; }
@@ -7769,7 +7796,7 @@ const LP_TEXT = {
     title2: "with VaiBook.",
     sub: "Let clients across Belize book you online, any time of day. No commission on your bookings, no setup fees.",
     cta: "Start Getting Booked",
-    heroNote: "Free to start · 14-day free trial on Solo and Team once you're approved",
+    heroNote: "From BZ$1.99 a day · 14-day free trial once you're approved",
     whyTitle: "Why businesses use VaiBook",
     why1t: "Clients book themselves", why1b: "Your real open times, bookable 24/7. No more answering calls and texts in the middle of an appointment.",
     why2t: "Fewer no-shows", why2b: "Ask for a deposit before you confirm, and clients get reminders before every visit.",
@@ -7781,8 +7808,8 @@ const LP_TEXT = {
     how3t: "Share your link", how3b: "Post your booking link or QR code on Instagram, WhatsApp, or at your front desk.",
     how4t: "Get booked", how4b: "Clients pick a time and book. You're notified right away and confirm with one tap.",
     payTitle: "Pricing & payments",
-    payBody: "Start free with up to 30 bookings a month. When you're ready for more, Solo is BZ${solo} a month and Team is BZ${team} a month, with a 14-day free trial once you're approved. Your clients pay you directly, in cash or by bank transfer, and deposits go straight to your bank account. VaiBook never takes a commission.",
-    payNote: "No setup fees. No contracts. Cancel anytime.",
+    payBody: "Start free with up to 30 bookings a month. When you're ready for more, Solo is just BZ$1.99 a day and Team BZ$4.99 a day on the 6-month plan — less than a soda. Your clients pay you directly, in cash or by bank transfer, and deposits go straight to your bank account. VaiBook never takes a commission.",
+    payNote: "Pay for 6 months, get the 7th free — and no setup fee. Or pay monthly (BZ${solo}/month for Solo, plus a one-time BZ$99 setup fee).",
     whoTitle: "Who can join",
     who1: "Barbers, hair salons, nail techs, spas, massage therapists, med spas, tattoo artists, trainers and more.",
     who2: "Solo professionals and registered businesses alike.",
@@ -7793,10 +7820,10 @@ const LP_TEXT = {
     tool3t: "Agreements", tool3b: "Consent forms and waivers your clients sign on their phone.",
     tool4t: "Announcements", tool4b: "Tell all your clients about promos, new hours or open spots at once.",
     pricingTitle: "Simple pricing",
-    pricingSub: "Start free. Upgrade when you're ready — your 14-day free trial starts once you're approved.",
+    pricingSub: "Less than BZ$2 a day. Pay for 6 months and get the 7th month free.",
     faqTitle: "Frequently asked questions",
-    q1: "What does it cost?", a1: "You can start free with up to 30 bookings a month. Paid plans are Solo (BZ${solo}/month) and Team (BZ${team}/month, includes your first {seats} staff seats). No setup fees and no contracts.",
-    q2: "Does VaiBook take a cut of my bookings?", a2: "No. You pay one flat monthly price and keep everything your clients pay you.",
+    q1: "What does it cost?", a1: "You can start free with up to 30 bookings a month. Solo is BZ$1.99 a day and Team BZ$4.99 a day (includes your first {seats} staff seats) when you pay for 6 months — you get 7 months and no setup fee. Paying monthly is BZ${solo}/month for Solo or BZ${team}/month for Team, plus a one-time BZ$99 setup fee on your first payment.",
+    q2: "Does VaiBook take a cut of my bookings?", a2: "No. You pay one flat price and keep everything your clients pay you.",
     q3: "How do my clients pay?", a3: "Directly to you. You can ask for a deposit to your bank account before you confirm a booking, and collect the rest at the appointment.",
     q4: "Do my clients need to download an app?", a4: "No. They book from your link in any phone browser, and can add VaiBook to their home screen if they like.",
     q5: "Can my staff have their own logins?", a5: "Yes. On the Team plan each staff member gets their own login and sees their own bookings.",
@@ -7808,7 +7835,7 @@ const LP_TEXT = {
     title2: "con VaiBook.",
     sub: "Deja que clientes de todo Belice reserven contigo en línea, a cualquier hora. Sin comisión por tus reservas y sin costos de inicio.",
     cta: "Empieza a recibir reservas",
-    heroNote: "Gratis para empezar · 14 días gratis en Solo y Team una vez aprobado",
+    heroNote: "Desde BZ$1.99 al día · 14 días gratis una vez aprobado",
     whyTitle: "Por qué los negocios usan VaiBook",
     why1t: "Los clientes reservan solos", why1b: "Tus horarios reales, disponibles 24/7. Se acabó contestar llamadas y mensajes en medio de una cita.",
     why2t: "Menos ausencias", why2b: "Pide un depósito antes de confirmar, y tus clientes reciben recordatorios antes de cada visita.",
@@ -7820,8 +7847,8 @@ const LP_TEXT = {
     how3t: "Comparte tu enlace", how3b: "Publica tu enlace o código QR en Instagram, WhatsApp o en tu recepción.",
     how4t: "Recibe reservas", how4b: "Los clientes eligen una hora y reservan. Te avisamos al instante y confirmas con un toque.",
     payTitle: "Precios y pagos",
-    payBody: "Empieza gratis con hasta 30 reservas al mes. Cuando quieras más, Solo cuesta BZ${solo} al mes y Team BZ${team} al mes, con 14 días gratis una vez aprobado. Tus clientes te pagan directamente, en efectivo o por transferencia, y los depósitos van directo a tu cuenta bancaria. VaiBook nunca cobra comisión.",
-    payNote: "Sin costos de inicio. Sin contratos. Cancela cuando quieras.",
+    payBody: "Empieza gratis con hasta 30 reservas al mes. Cuando quieras más, Solo cuesta solo BZ$1.99 al día y Team BZ$4.99 al día con el plan de 6 meses — menos que un refresco. Tus clientes te pagan directamente, en efectivo o por transferencia, y los depósitos van directo a tu cuenta bancaria. VaiBook nunca cobra comisión.",
+    payNote: "Paga 6 meses y el 7.º es gratis — sin costo de inicio. O paga mensual (BZ${solo}/mes para Solo, más un costo único de inicio de BZ$99).",
     whoTitle: "Quién puede unirse",
     who1: "Barberos, salones, técnicas de uñas, spas, masajistas, med spas, tatuadores, entrenadores y más.",
     who2: "Profesionales independientes y negocios registrados por igual.",
@@ -7832,10 +7859,10 @@ const LP_TEXT = {
     tool3t: "Acuerdos", tool3b: "Formularios de consentimiento y exenciones que tus clientes firman en su teléfono.",
     tool4t: "Anuncios", tool4b: "Avisa a todos tus clientes sobre promociones, horarios o espacios libres a la vez.",
     pricingTitle: "Precios simples",
-    pricingSub: "Empieza gratis. Mejora tu plan cuando quieras: tus 14 días gratis empiezan una vez aprobado.",
+    pricingSub: "Menos de BZ$2 al día. Paga 6 meses y el 7.º mes es gratis.",
     faqTitle: "Preguntas frecuentes",
-    q1: "¿Cuánto cuesta?", a1: "Puedes empezar gratis con hasta 30 reservas al mes. Los planes pagados son Solo (BZ${solo}/mes) y Team (BZ${team}/mes, incluye tus primeros {seats} puestos de personal). Sin costos de inicio y sin contratos.",
-    q2: "¿VaiBook se queda con una parte de mis reservas?", a2: "No. Pagas un precio mensual fijo y te quedas con todo lo que te pagan tus clientes.",
+    q1: "¿Cuánto cuesta?", a1: "Puedes empezar gratis con hasta 30 reservas al mes. Solo cuesta BZ$1.99 al día y Team BZ$4.99 al día (incluye tus primeros {seats} puestos de personal) si pagas 6 meses — recibes 7 meses y sin costo de inicio. Pagando mensual: Solo BZ${solo}/mes o Team BZ${team}/mes, más un costo único de inicio de BZ$99 en tu primer pago.",
+    q2: "¿VaiBook se queda con una parte de mis reservas?", a2: "No. Pagas un precio fijo y te quedas con todo lo que te pagan tus clientes.",
     q3: "¿Cómo me pagan mis clientes?", a3: "Directamente a ti. Puedes pedir un depósito a tu cuenta bancaria antes de confirmar una reserva y cobrar el resto en la cita.",
     q4: "¿Mis clientes necesitan descargar una app?", a4: "No. Reservan desde tu enlace en cualquier navegador del teléfono, y pueden agregar VaiBook a su pantalla de inicio si quieren.",
     q5: "¿Mi personal puede tener su propio acceso?", a5: "Sí. En el plan Team cada miembro del personal tiene su propio acceso y ve sus propias reservas.",
@@ -7875,6 +7902,9 @@ function ProviderLandingPage({ onNav }) {
   const solo = PLANS.find((p) => p.id === "pro");
   const team = PLANS.find((p) => p.id === "business");
   const money = { solo: (solo?.monthly || 0).toFixed(2), team: (team?.monthly || 0).toFixed(2), seats: TEAM_FREE_SEATS };
+  const [priceTerm, setPriceTerm] = useState("six");
+  const lpEs = (i18n.language || "").toLowerCase().startsWith("es");
+  const px = (en, es) => (lpEs ? es : en);
   const startSignup = (planId) => {
     if (planId) { try { localStorage.setItem("vaibook_signup_plan", planId); } catch (e) { /* ignore */ } }
     onNav("signup");
@@ -7960,19 +7990,47 @@ function ProviderLandingPage({ onNav }) {
         <div className="vbl-wrap">
           <h2 className="vbl-h2">{lt("pricingTitle")}</h2>
           <p className="vbl-center-sub">{lt("pricingSub")}</p>
+          <div className="term-toggle" role="tablist" aria-label={px("Billing period", "Periodo de pago")}>
+            <button role="tab" aria-selected={priceTerm === "six"} className={priceTerm === "six" ? "on" : ""} onClick={() => setPriceTerm("six")}>
+              {px("6 months", "6 meses")} <span className="term-save">{px("1 month free", "1 mes gratis")}</span>
+            </button>
+            <button role="tab" aria-selected={priceTerm === "monthly"} className={priceTerm === "monthly" ? "on" : ""} onClick={() => setPriceTerm("monthly")}>{px("Monthly", "Mensual")}</button>
+          </div>
           <div className="vbl-plans">
-            {PLANS.map((p) => (
+            {PLANS.map((p) => {
+              const tp = planTermPrice(p, priceTerm, { firstPayment: true });
+              return (
               <div className={`vbl-plan ${p.recommended ? "featured" : ""}`} key={p.id}>
                 {p.recommended && <div className="vbl-plan-badge">{t("providerLanding.recommended")}</div>}
                 <div className="vbl-plan-name">{p.name}</div>
-                <div className="vbl-plan-price">{p.monthly > 0 ? <>BZ${p.monthly.toFixed(2)}<span> /month</span></> : <>BZ$0<span> /month</span></>}</div>
+                {p.monthly > 0 ? (
+                  <>
+                    <div className="vbl-plan-price">BZ${tp.perDay}<span> {px("/day", "/día")}</span></div>
+                    <div className="vbl-plan-billing">
+                      {priceTerm === "six"
+                        ? px(`BZ$${tp.total.toFixed(2)} every 6 months · you get 7 months · no setup fee`, `BZ$${tp.total.toFixed(2)} cada 6 meses · recibes 7 meses · sin costo de inicio`)
+                        : px(`BZ$${tp.base.toFixed(2)} a month + BZ$${SETUP_FEE} one-time setup`, `BZ$${tp.base.toFixed(2)} al mes + BZ$${SETUP_FEE} de inicio (una vez)`)}
+                    </div>
+                    {priceTerm === "monthly" && (
+                      <button className="vbl-plan-switch" onClick={() => setPriceTerm("six")}>
+                        {px(`Save — get it for BZ$${planTermPrice(p, "six").perDay}/day on 6 months`, `Ahorra — BZ$${planTermPrice(p, "six").perDay}/día con 6 meses`)}
+                      </button>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <div className="vbl-plan-price">{px("Free", "Gratis")}</div>
+                    <div className="vbl-plan-billing">{px("Up to 30 bookings a month", "Hasta 30 reservas al mes")}</div>
+                  </>
+                )}
                 <div className="vbl-plan-tagline">{p.tagline}</div>
                 <ul>
                   {p.features.map((f, i) => (<li key={i}><span className="vbl-inline-icon"><LpIcon name="check" /></span>{f}</li>))}
                 </ul>
                 <button className={p.recommended ? "vbl-btn vbl-btn-full" : "vbl-btn-outline vbl-btn-full"} onClick={() => startSignup(p.id)}>{t("providerLanding.applyToJoin")}</button>
               </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </section>
@@ -12131,6 +12189,8 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
   // inside the portal at all before — every "View plans" button just
   // dropped them on a screen that showed the plan they already had.
   const [payingForPlan, setPayingForPlan] = useState("");
+  // "six" (pay 6 months, get 7 — the BZ$1.99/day deal) or "monthly".
+  const [payTerm, setPayTerm] = useState("six");
   // Bumping this key remounts the file input so it stops showing the name
   // of a file that's already been submitted.
   const [paymentFileKey, setPaymentFileKey] = useState(0);
@@ -12157,7 +12217,6 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
 
   const submitPayment = async () => {
     if (!paymentForm.receipt) { setPaymentError(t("providerPortal.billing.attachReceipt")); return; }
-    if (!paymentForm.periodLabel.trim()) { setPaymentError(t("providerPortal.billing.sayPeriod")); return; }
     // Same "starter defaults to pro" fallback as the picker's chosenPlan
     // above — keeps this in sync with whichever plan looked selected on
     // screen even if the provider never explicitly clicked a radio button.
@@ -12167,13 +12226,18 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
     // Team is the one plan whose real price isn't just plan.monthly — it's
     // the base fee plus whatever's owed for seats beyond the free ones
     // (teamPlanTotal, computed above from the seat-count picker below).
-    const amountDue = plan.id === "business" ? teamPlanTotal : plan.monthly;
+    const tp = planTermPrice(plan, payTerm, {
+      extraSeatsMonthly: plan.id === "business" ? teamExtraSeats * TEAM_PER_SEAT_PRICE : 0,
+      firstPayment: !hasPaidBefore,
+    });
+    const range = coverRange(tp.months);
     setSubmittingPayment(true);
     setPaymentError("");
     const ok = await submitProviderPayment(providerId, paymentForm.receipt, {
       plan: plan.id,
-      amount: amountDue,
-      periodLabel: paymentForm.periodLabel.trim(),
+      amount: tp.total,
+      periodLabel: `${range.label} (${tp.months === 1 ? "1 month" : `${tp.months} months`}${tp.setup ? ` + BZ$${tp.setup} setup` : ""})`,
+      months: tp.months,
     });
     setSubmittingPayment(false);
     if (ok) {
@@ -12219,8 +12283,20 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
   // upgrading fresh and telling you how many seats I'll need."
   const teamSeats = teamSeatsOverride !== null ? teamSeatsOverride : staff.length;
   const teamExtraSeats = Math.max(0, teamSeats - TEAM_FREE_SEATS);
-  const teamBaseFee = PLANS.find((p) => p.id === "business")?.monthly ?? 149.7;
+  const teamBaseFee = PLANS.find((p) => p.id === "business")?.monthly ?? 174.9;
   const teamPlanTotal = teamBaseFee + teamExtraSeats * TEAM_PER_SEAT_PRICE;
+  // Setup fee is only charged on a business's very first monthly payment.
+  const hasPaidBefore = !!providerProfile?.next_payment_due_date || payments.some((pm) => pm.status === "confirmed");
+  // What period a payment made today would cover: from the current due date
+  // (or today, if that's already past) forward by `months`.
+  const coverRange = (months) => {
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const due = providerProfile?.next_payment_due_date ? new Date(providerProfile.next_payment_due_date + "T00:00:00") : null;
+    const start = due && due > today ? due : today;
+    const end = new Date(start); end.setMonth(end.getMonth() + months);
+    const f = (d) => d.toLocaleDateString(i18n.language?.startsWith("es") ? "es" : "en-US", { month: "short", day: "numeric", year: "numeric" });
+    return { start, end, label: `${f(start)} – ${f(end)}` };
+  };
 
   const loadStaff = async () => {
     if (!providerId) return;
@@ -14714,7 +14790,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                     <div style={{ marginTop: 10, background: "#E7F5EC", border: "1px solid var(--forest)", borderRadius: 8, padding: "10px 14px" }}>
                       <p style={{ fontSize: 13, fontWeight: 700, color: "var(--forest)", margin: 0 }}>🎉 {t("providerPortal.billing.trialBannerTitle", { plan: currentPlan.name })}</p>
                       <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 4, marginBottom: 0 }}>
-                        {t("providerPortal.billing.trialBannerSub", { amount: (Math.round((currentPlan.monthly / 30) * 100) / 100).toFixed(2) })}
+                        {t("providerPortal.billing.trialBannerSub", { amount: planTermPrice(currentPlan, "six").perDay })}
                       </p>
                     </div>
                   ) : (
@@ -14815,7 +14891,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                             </div>
                             {pl.monthly > 0 && (
                               <div style={{ fontSize: 11.5, fontWeight: 700, color: "var(--accent-text)", marginTop: 2 }}>
-                                {t("providerPortal.billing.justPerDay", { amount: (Math.round((pl.monthly / 30) * 100) / 100).toFixed(2) })}
+                                {i18n.language?.startsWith("es") ? `Desde BZ$${planTermPrice(pl, "six").perDay} al día` : `From BZ$${planTermPrice(pl, "six").perDay} a day`}
                               </div>
                             )}
                             <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 2 }}>{pl.desc}</div>
@@ -14860,27 +14936,70 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                       <p style={{ fontSize: 13, color: "var(--muted)", marginTop: 8 }}>
                         {t("providerPortal.billing.freeTrialNote")}
                       </p>
-                    ) : (
+                    ) : (() => {
+                      const bes = (i18n.language || "").toLowerCase().startsWith("es");
+                      const bx = (en, es) => (bes ? es : en);
+                      const seatsMonthly = chosenPlan.id === "business" ? teamExtraSeats * TEAM_PER_SEAT_PRICE : 0;
+                      const six = planTermPrice(chosenPlan, "six", { extraSeatsMonthly: seatsMonthly });
+                      const mon = planTermPrice(chosenPlan, "monthly", { extraSeatsMonthly: seatsMonthly, firstPayment: !hasPaidBefore });
+                      const tp = payTerm === "six" ? six : mon;
+                      const range = coverRange(tp.months);
+                      const payTo = VAIBOOK_PAY_TO.filter((m) => (m.detail || "").trim());
+                      return (
                       <div style={{ marginTop: 8, paddingTop: 16, borderTop: "1px solid var(--border)" }}>
-                        <p style={{ fontSize: 13, marginBottom: 12 }}>
-                          {isUpgrade
-                            ? t("providerPortal.billing.sendForUpgrade", { amount: (chosenPlan.id === "business" ? teamPlanTotal : chosenPlan.monthly).toFixed(2), plan: chosenPlan.name })
-                            : t("providerPortal.billing.sendForRenewal", { amount: (chosenPlan.id === "business" ? teamPlanTotal : chosenPlan.monthly).toFixed(2), plan: chosenPlan.name })}
-                        </p>
-                        <div className="input-group">
-                          <label>{t("providerPortal.billing.whichPeriod")}</label>
-                          <input value={paymentForm.periodLabel} onChange={e => setPaymentForm(f => ({ ...f, periodLabel: e.target.value }))} placeholder={t("providerPortal.billing.periodPlaceholder")} />
+                        <div className="term-cards">
+                          <button type="button" className={`term-card ${payTerm === "six" ? "on" : ""}`} onClick={() => setPayTerm("six")}>
+                            <span className="term-card-badge">{bx("Best value · 1 month free", "Mejor precio · 1 mes gratis")}</span>
+                            <span className="term-card-title">{bx("6 months", "6 meses")}</span>
+                            <span className="term-card-day">BZ${six.perDay}<small>{bx("/day", "/día")}</small></span>
+                            <span className="term-card-sub">{bx(`Pay BZ$${six.total.toFixed(2)}, get 7 months. No setup fee.`, `Paga BZ$${six.total.toFixed(2)} y recibe 7 meses. Sin costo de inicio.`)}</span>
+                          </button>
+                          <button type="button" className={`term-card ${payTerm === "monthly" ? "on" : ""}`} onClick={() => setPayTerm("monthly")}>
+                            <span className="term-card-title">{bx("Monthly", "Mensual")}</span>
+                            <span className="term-card-day">BZ${mon.perDay}<small>{bx("/day", "/día")}</small></span>
+                            <span className="term-card-sub">
+                              {bx(`BZ$${mon.base.toFixed(2)} a month`, `BZ$${mon.base.toFixed(2)} al mes`)}
+                              {mon.setup > 0 && bx(` + BZ$${mon.setup} one-time setup on your first payment`, ` + BZ$${mon.setup} de inicio en tu primer pago`)}
+                            </span>
+                          </button>
                         </div>
+
+                        <div className="pay-summary">
+                          <div className="pay-summary-row"><span>{bx("Send", "Envía")}</span><strong>BZ${tp.total.toFixed(2)}</strong></div>
+                          {tp.setup > 0 && <div className="pay-summary-row small"><span>{bx("Includes one-time setup", "Incluye costo de inicio")}</span><span>BZ${tp.setup.toFixed(2)}</span></div>}
+                          <div className="pay-summary-row small"><span>{bx("Covers", "Cubre")}</span><span>{range.label} · {tp.months === 1 ? bx("1 month", "1 mes") : bx(`${tp.months} months`, `${tp.months} meses`)}</span></div>
+                          <div className="pay-summary-row small"><span>{bx("Works out to", "Equivale a")}</span><span>BZ${tp.perDay} {bx("a day", "al día")}</span></div>
+                        </div>
+
+                        <div className="pay-to">
+                          <div className="pay-to-title">{bx("Where to send it", "A dónde enviarlo")}</div>
+                          {payTo.length > 0 ? payTo.map((m) => (
+                            <div key={m.method} className="pay-to-row"><strong>{m.method}</strong><span>{m.detail}</span></div>
+                          )) : (
+                            <p className="pay-to-empty">
+                              {bx("Message us and we'll send you our bank and mobile-wallet details.", "Escríbenos y te enviamos nuestros datos de banco y billetera móvil.")}{" "}
+                              <a href="#contact">{bx("Contact us ›", "Contáctanos ›")}</a>
+                            </p>
+                          )}
+                        </div>
+
                         <div className="input-group">
                           <label>{t("providerPortal.billing.receiptLabel")}</label>
                           <input key={paymentFileKey} type="file" accept="image/*,application/pdf" onChange={e => setPaymentForm(f => ({ ...f, receipt: e.target.files?.[0] || null }))} />
                         </div>
                         {paymentError && <p style={{ fontSize: 12, color: "#B91C1C", marginBottom: 8 }}>{paymentError}</p>}
                         <button className="btn-sm lime" disabled={submittingPayment} onClick={submitPayment}>
-                          {submittingPayment ? t("providerPortal.billing.uploading") : isUpgrade ? t("providerPortal.billing.submitPaymentForPlan", { plan: chosenPlan.name }) : t("providerPortal.billing.submitPayment")}
+                          {submittingPayment ? t("providerPortal.billing.uploading") : bx(`Submit BZ$${tp.total.toFixed(2)} payment`, `Enviar pago de BZ$${tp.total.toFixed(2)}`)}
                         </button>
+                        <p className="pay-fine">
+                          {isUpgrade
+                            ? bx(`You'll move onto ${chosenPlan.name} as soon as we confirm your payment.`, `Pasarás a ${chosenPlan.name} en cuanto confirmemos tu pago.`)
+                            : bx("We'll confirm it as soon as we've checked the receipt, and your account stays active.", "Lo confirmaremos en cuanto revisemos el recibo, y tu cuenta sigue activa.")}{" "}
+                          {bx("Payments for a period already paid aren't refundable — you can switch plans or stop when your period ends.", "Los pagos de un periodo ya pagado no son reembolsables — puedes cambiar de plan o dejar de pagar al terminar tu periodo.")}
+                        </p>
                       </div>
-                    )}
+                      );
+                    })()}
                   </div>
                 );
               })()}
@@ -14896,7 +15015,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                   payments.map((pmt) => (
                     <div key={pmt.id} style={{ padding: "12px 0", borderBottom: "1px solid var(--border)", display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
                       <div>
-                        <div style={{ fontSize: 14, fontWeight: 600 }}>{pmt.period_label} — BZ${pmt.amount}</div>
+                        <div style={{ fontSize: 14, fontWeight: 600 }}>{pmt.period_label} — BZ${pmt.amount}{pmt.months_covered === 7 ? " · 6+1 months" : ""}</div>
                         <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 2 }}>{t("providerPortal.billing.submittedDate", { date: new Date(pmt.submitted_at).toLocaleDateString() })}</div>
                         {pmt.admin_note && <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 2, fontStyle: "italic" }}>{t("providerPortal.billing.adminNote", { note: pmt.admin_note })}</div>}
                         {pmt.receipt_url && <a href="#" onClick={(e) => { e.preventDefault(); openPrivateFile(pmt.receipt_url); }} style={{ fontSize: 12 }}>{t("providerPortal.common.viewReceipt")}</a>}
@@ -16232,6 +16351,37 @@ const vaiMediaMailtoUrl = () =>
 const TEAM_FREE_SEATS = 2;
 const TEAM_PER_SEAT_PRICE = 20;
 
+// ── BILLING TERMS (Hormozi continuity offer) ─────────────────────────
+// Two ways to pay: monthly, or 6 months up front that covers 7 months
+// ("pay 6, get 1 free"). The 6-month plan is the BZ$1.99/day headline;
+// monthly costs more per day and carries a one-time setup fee on the very
+// first payment, which the 6-month plan waives. No yearly plan and no
+// refunds on a period already paid (Abner, 2026-10-27).
+const SETUP_FEE = 99;
+const SIX_MONTH_PAID = 6;
+const SIX_MONTH_GET = 7;
+const SIX_MONTH_DAYS = SIX_MONTH_GET * 30;
+const dayRate = (total, days) => (Math.round((total / days) * 100) / 100).toFixed(2);
+// Where businesses send their VaiBook payment. Fill in `detail` for each
+// method you accept; methods left empty are hidden. If all are empty the
+// Billing tab tells them to message VaiBook for the details.
+const VAIBOOK_PAY_TO = [
+  { method: "Bank transfer", detail: "" },
+  { method: "DigiWallet", detail: "" },
+  { method: "E-Kyash", detail: "" },
+];
+// Price of a plan for a term. `extraSeatsMonthly` = Team seats beyond the free ones.
+const planTermPrice = (plan, term, { extraSeatsMonthly = 0, firstPayment = false } = {}) => {
+  if (!plan || plan.monthly <= 0) return { total: 0, perDay: "0.00", months: 1, setup: 0 };
+  if (term === "six") {
+    const total = Math.round(((plan.sixMonthTotal || plan.monthly * SIX_MONTH_PAID) + extraSeatsMonthly * SIX_MONTH_PAID) * 100) / 100;
+    return { total, perDay: dayRate(total, SIX_MONTH_DAYS), months: SIX_MONTH_GET, setup: 0 };
+  }
+  const base = Math.round((plan.monthly + extraSeatsMonthly) * 100) / 100;
+  const setup = firstPayment ? SETUP_FEE : 0;
+  return { total: base + setup, base, perDay: dayRate(base, 30), months: 1, setup };
+};
+
 const PLANS = [
   {
     // Renamed "Starter" -> "Trial" (display name only — `id` stays
@@ -16259,7 +16409,9 @@ const PLANS = [
     // (was BZ$50/mo ~= BZ$1.67/day). monthly is set to exactly 59.7 so
     // the existing (monthly/30) day-rate math lands on 1.99 everywhere
     // it's computed, not just in this label.
-    id: "pro", name: "Solo", price: "BZ$1.99/day", desc: "For solo practitioners", monthly: 59.7,
+    // 2026-10-27: 6-month plan = BZ$1.99/day (BZ$417.90 for 7 months);
+    // monthly raised to BZ$69.90 (BZ$2.33/day) so the 6-month plan is the deal.
+    id: "pro", name: "Solo", price: "BZ$1.99/day on 6 months", desc: "For solo practitioners", monthly: 69.9, sixMonthTotal: 417.9,
     tagline: "For solo practitioners who want frictionless booking, automated reminders, and deposits handled for them.",
     // Shown as the small italic line under the daily-price pill (public
     // pricing cards + the provider's own "Current plan" billing card) —
@@ -16281,7 +16433,9 @@ const PLANS = [
     // Repriced to BZ$4.99/day per the user's explicit pricing update
     // (was BZ$120/mo ~= BZ$4.00/day). monthly = 149.7 so (monthly/30)
     // lands on exactly 4.99 wherever that math runs.
-    id: "business", name: "Team", price: "BZ$4.99/day for 1 month", desc: `Base fee + BZ$${TEAM_PER_SEAT_PRICE}/seat after your first ${TEAM_FREE_SEATS}`, monthly: 149.7,
+    // 2026-10-27: 6-month plan = BZ$4.99/day (BZ$1,047.90 for 7 months);
+    // monthly BZ$174.90 (BZ$5.83/day).
+    id: "business", name: "Team", price: "BZ$4.99/day on 6 months", desc: `Base fee + BZ$${TEAM_PER_SEAT_PRICE}/seat after your first ${TEAM_FREE_SEATS}`, monthly: 174.9, sixMonthTotal: 1047.9,
     priceNote: `Base fee includes your first ${TEAM_FREE_SEATS} staff seats — BZ$${TEAM_PER_SEAT_PRICE}/month for each seat after that`,
     tagline: "For teams — a base plan covering your shop, plus staff seats you add as you grow.",
     valueNote: "(Built for owners leading a team, not just themselves.)",
@@ -17284,7 +17438,7 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
                   <div key={pmt.id} className="booking-item" style={{ alignItems: "flex-start" }}>
                     <div className="booking-info" style={{ flex: 1 }}>
                       <div className="title">{pmt.business_name} <span style={{ fontWeight: 500, color: "var(--muted)", fontSize: 12 }}>— {planLabel(pmt.plan)}</span></div>
-                      <div className="meta">{pmt.period_label} · BZ${pmt.amount}</div>
+                      <div className="meta">{pmt.period_label} · BZ${pmt.amount}{pmt.months_covered === 7 && <strong style={{ marginLeft: 6, color: "var(--forest)" }}>· 6-month plan (7 months)</strong>}</div>
                       <div className="meta" style={{ fontSize: 11 }}>Submitted {new Date(pmt.submitted_at).toLocaleDateString()}</div>
                       {pmt.receipt_url && <a href="#" onClick={(e) => { e.preventDefault(); openPrivateFile(pmt.receipt_url); }} style={{ fontSize: 12 }}>View receipt</a>}
                       {pmt.reviewed_at && (

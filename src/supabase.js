@@ -1040,7 +1040,7 @@ export const withdrawBookingReschedule = async (bookingId) => {
 // Uploads a receipt and records the submission in one call. Deliberately a
 // plain insert with no .select() — same RLS+RETURNING gotcha as elsewhere
 // in this file — so the caller re-fetches via getMyProviderPayments after.
-export const submitProviderPayment = async (providerId, file, { plan, amount, periodLabel }) => {
+export const submitProviderPayment = async (providerId, file, { plan, amount, periodLabel, months = 1 }) => {
   const path = `provider-payments/${providerId}/${Date.now()}-${file.name}`;
   const { error: uploadError } = await supabase.storage.from('vaibook').upload(path, file);
   if (uploadError) { reportActionError('submitProviderPayment', uploadError); console.error('Error uploading payment receipt:', uploadError.message); return false; }
@@ -1053,6 +1053,7 @@ export const submitProviderPayment = async (providerId, file, { plan, amount, pe
     amount,
     period_label: periodLabel,
     receipt_url: path,
+    months_covered: months === 7 ? 7 : 1,
   });
   if (error) { reportActionError('submitProviderPayment', error); console.error('Error submitting payment:', error.message); return false; }
   return true;
