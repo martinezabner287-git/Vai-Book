@@ -1,6 +1,6 @@
 
 import { useState, useEffect, useLayoutEffect, useRef, useContext, createContext, lazy, Suspense } from "react";
-import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, updateService, deleteService, getActiveProviders, getProviderDirectory, createBooking, getProviderBusyWindows, createBookingSafe, cancelBooking, markBookingCheckedIn, getCustomerBookings, uploadReceipt, submitReview, getProviderReviews, updateReview, sendBookingEmail, updateUserProfile, getPaymentMethods, addPaymentMethod, deletePaymentMethod, createNotification, getNotifications, markNotificationRead, markAllNotificationsRead, getCategoryDefaultFeatures, getProviderFeatureOverrides, setProviderFeatureOverride, getVisitNotes, upsertVisitNote, adminListProviders, adminUpdateProvider, adminDeleteProvider, adminCountCustomers, getFavoriteProviderIds, getFavoriteProviders, addFavorite, removeFavorite, getBookingMessages, sendBookingMessage, markBookingMessagesRead, getUnreadBookingMessages, getProviderMonthlyTrend, createProviderProfile, getProviderById, createWalkInBooking, submitProviderPayment, getMyProviderPayments, adminListProviderPayments, adminReviewProviderPayment, submitBookingRefund, adminListBookingRefunds, openPrivateFile, getProviderStaff, addProviderStaff, updateProviderStaff, deleteProviderStaff, getProviderStaffPublic, getLoyaltyAccount, getProviderLoyaltyCustomers, redeemLoyaltyReward, getMyStaffProfile, claimStaffSeatByEmail, getStaffBookings, getProviderNotifyEmail, getMaintenanceStatus, setMaintenanceMode, getSiteOfflineStatus, setSiteOffline, guestAuthWithPassword, updateGuestPassword, savePushSubscription, attachBookingServices, getProviderBlocks, insertProviderBlock, deleteProviderBlock, proposeBookingReschedule, confirmBookingReschedule, declineBookingReschedule, withdrawBookingReschedule, establishSoloSession, getServerSoloSessionToken, getLocalSoloSessionToken, clearLocalSoloSessionToken, subscribeToSoloSessionReplacement, submitSupportMessage, listSupportMessages, setSupportMessageStatus, getProviderMembershipPlans, getMyMembershipPlans, createMembershipPlan, updateMembershipPlan, subscribeToMembershipPlan, submitMembershipPayment, getMyMemberships, getProviderMembershipSubscribers, getProviderMembershipPayments, reviewMembershipPayment, cancelMembership, redeemMembershipVisit, startSoloTrial, adminStartProviderTrial, adminExtendProviderTrial, adminEndProviderTrial } from "./supabase";
+import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, updateService, deleteService, getActiveProviders, getProviderDirectory, createBooking, getProviderBusyWindows, createBookingSafe, cancelBooking, markBookingCheckedIn, getCustomerBookings, uploadReceipt, submitReview, getProviderReviews, updateReview, sendBookingEmail, updateUserProfile, getPaymentMethods, addPaymentMethod, deletePaymentMethod, createNotification, getNotifications, markNotificationRead, markAllNotificationsRead, getCategoryDefaultFeatures, getProviderFeatureOverrides, setProviderFeatureOverride, getVisitNotes, upsertVisitNote, adminListProviders, adminUpdateProvider, adminDeleteProvider, adminCountCustomers, getFavoriteProviderIds, getFavoriteProviders, addFavorite, removeFavorite, getBookingMessages, sendBookingMessage, markBookingMessagesRead, getUnreadBookingMessages, getProviderMonthlyTrend, createProviderProfile, getProviderById, createWalkInBooking, submitProviderPayment, getMyProviderPayments, adminListProviderPayments, adminReviewProviderPayment, submitBookingRefund, adminListBookingRefunds, openPrivateFile, getProviderStaff, addProviderStaff, updateProviderStaff, deleteProviderStaff, getProviderStaffPublic, getLoyaltyAccount, getProviderLoyaltyCustomers, redeemLoyaltyReward, getMyStaffProfile, claimStaffSeatByEmail, getStaffBookings, getProviderNotifyEmail, getMaintenanceStatus, setMaintenanceMode, getSiteOfflineStatus, setSiteOffline, guestAuthWithPassword, updateGuestPassword, savePushSubscription, attachBookingServices, getProviderBlocks, insertProviderBlock, deleteProviderBlock, proposeBookingReschedule, confirmBookingReschedule, declineBookingReschedule, withdrawBookingReschedule, establishSoloSession, getServerSoloSessionToken, getLocalSoloSessionToken, clearLocalSoloSessionToken, subscribeToSoloSessionReplacement, signInWithPhonePassword, customerPhoneAuth, adminResetPhonePassword, isPhoneLoginEmail, formatPhoneForDisplay, submitSupportMessage, listSupportMessages, setSupportMessageStatus, getProviderMembershipPlans, getMyMembershipPlans, createMembershipPlan, updateMembershipPlan, subscribeToMembershipPlan, submitMembershipPayment, getMyMemberships, getProviderMembershipSubscribers, getProviderMembershipPayments, reviewMembershipPayment, cancelMembership, redeemMembershipVisit, startSoloTrial, adminStartProviderTrial, adminExtendProviderTrial, adminEndProviderTrial } from "./supabase";
 import AdminDashboard from "./AdminDashboard";
 import ProfilePhotoModal from "./ProfilePhotoModal";
 import LanguageSelector from "./LanguageSelector";
@@ -3014,6 +3014,16 @@ const css = `
 
 
 
+
+  /* ===== CUSTOMER PHONE LOGIN ===== */
+  .phone-login { display: grid; gap: 12px; text-align: left; }
+  .phone-login label { display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 700; color: #3A3F4B; }
+  .phone-login input { padding: 12px 14px; border: 1px solid #DAD6CD; border-radius: 12px; font: inherit; font-size: 15px; background: #fff; color: #16181D; }
+  .phone-login-err { color: #B91C1C; font-size: 13.5px; margin: 0; }
+  .phone-login-help { font-size: 13px; color: #6C7281; margin: 0; text-align: center; line-height: 1.5; }
+  .phone-login-help a { color: #4C3DC4; font-weight: 700; text-decoration: none; }
+  .gate-or { display: flex; align-items: center; gap: 10px; margin: 16px 0; color: #8A8F9C; font-size: 12.5px; font-weight: 600; text-transform: uppercase; }
+  .gate-or::before, .gate-or::after { content: ""; flex: 1; height: 1px; background: #ECE9E2; }
   /* ===== GATE SCREEN (loading + sign-in) ===== */
   .gate { position: relative; min-height: 100vh; min-height: 100dvh; display: flex; align-items: center; justify-content: center; padding: 32px 16px; overflow: hidden;
     background: radial-gradient(120% 80% at 50% 0%, #EEEBFF 0%, #FAF9F6 55%, #FAF9F6 100%); color: #16181D; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; }
@@ -3254,6 +3264,42 @@ const css = `
 // moss green climbing to the lime accent — the "growth" motif agreed on
 // for VaiBook. Renders as a plain <svg> so it drops in anywhere the
 // wordmark appears, at any size, without an external image file.
+// ── CUSTOMER LOGIN: phone number + password ──────────────────────────
+// Customer accounts are phone + password (see customerPhoneAuth in
+// supabase.js). New customers create theirs at checkout the first time
+// they book; this box is for logging back in on any phone.
+const PL_TEXT = {
+  en: { phone: "WhatsApp number", password: "Password", login: "Log in", loggingIn: "Logging in…", wrong: "That number and password don't match. Check them and try again.", failed: "Couldn't log in. Check your connection and try again.", missing: "Enter your WhatsApp number and password.", forgot: "Forgot your password?", contact: "Message us", newHere: "New here? Find a business and book — you'll create your account at checkout.", or: "or" },
+  es: { phone: "Número de WhatsApp", password: "Contraseña", login: "Iniciar sesión", loggingIn: "Entrando…", wrong: "Ese número y contraseña no coinciden. Revísalos e inténtalo de nuevo.", failed: "No se pudo iniciar sesión. Revisa tu conexión e inténtalo de nuevo.", missing: "Escribe tu número de WhatsApp y tu contraseña.", forgot: "¿Olvidaste tu contraseña?", contact: "Escríbenos", newHere: "¿Nuevo aquí? Busca un negocio y reserva — crearás tu cuenta al confirmar.", or: "o" },
+};
+function CustomerPhoneLogin({ onSignedIn, compact }) {
+  const { i18n } = useTranslation();
+  const L = PL_TEXT[(i18n.language || "").toLowerCase().startsWith("es") ? "es" : "en"];
+  const [phone, setPhone] = useState(() => { try { return JSON.parse(localStorage.getItem("vaibook_guest_info") || "{}").whatsapp || ""; } catch (e) { return ""; } });
+  const [password, setPassword] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+  const submit = async (e) => {
+    e && e.preventDefault();
+    if ((phone.match(/\d/g) || []).length < 7 || !password) { setErr(L.missing); return; }
+    setBusy(true); setErr("");
+    const { error, code } = await signInWithPhonePassword(phone, password);
+    setBusy(false);
+    if (error) { setErr(code === "WRONG_PHONE_OR_PASSWORD" ? L.wrong : L.failed); return; }
+    onSignedIn && onSignedIn();
+  };
+  return (
+    <form className="phone-login" onSubmit={submit}>
+      <label>{L.phone}<input type="tel" inputMode="tel" autoComplete="tel" placeholder="+501 622 1234" value={phone} onChange={(e) => setPhone(e.target.value)} /></label>
+      <label>{L.password}<input type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} /></label>
+      {err && <p className="phone-login-err">{err}</p>}
+      <button type="submit" className="gate-btn" disabled={busy}>{busy ? L.loggingIn : L.login}</button>
+      <p className="phone-login-help">{L.forgot} <a href="#contact">{L.contact}</a></p>
+      {!compact && <p className="phone-login-help">{L.newHere}</p>}
+    </form>
+  );
+}
+
 // ── GATE SCREEN — loading splash + every "please sign in" screen ─────
 // One calm, light screen (soft glow, full-colour logo, white card) instead
 // of the old solid-purple pages where the purple logo and "book" vanished
@@ -6414,6 +6460,7 @@ function AuthChoice({ onNav, session, onSignIn, onSignOut }) {
   // either the ProviderLandingPage explainer or straight to this real
   // form, never a popup that quietly did nothing.)
   const [showProviderFork, setShowProviderFork] = useState(false);
+  const [showCustLogin, setShowCustLogin] = useState(false);
   return (
     <>
     <div className="auth-choice">
@@ -6427,8 +6474,19 @@ function AuthChoice({ onNav, session, onSignIn, onSignOut }) {
               is just the two real provider options, not those plus an
               unrelated customer card. The back link below still returns
               to both cards. */}
-          {!showProviderFork && (
-            <div className="auth-option-card" onClick={() => enterCustomerPortal(onNav, session, onSignIn)}>
+          {!showProviderFork && showCustLogin && !session && (
+            <div className="auth-provider-fork">
+              <div className="auth-provider-fork-heading">{t("auth.forCustomers")}</div>
+              <div className="biz-login-card">
+                <CustomerPhoneLogin onSignedIn={() => onNav("customer")} />
+                <div className="gate-or"><span>{(i18n.language || "").toLowerCase().startsWith("es") ? "o" : "or"}</span></div>
+                <button className="gate-btn ghost" onClick={() => enterCustomerPortal(onNav, session, onSignIn)}>{t("customerPortal.signIn.button")}</button>
+              </div>
+              <a className="auth-provider-fork-back" onClick={() => setShowCustLogin(false)}>{t("auth.back")}</a>
+            </div>
+          )}
+          {!showProviderFork && !(showCustLogin && !session) && (
+            <div className="auth-option-card" onClick={() => (session ? enterCustomerPortal(onNav, session, onSignIn) : setShowCustLogin(true))}>
               <div>
                 <h3>{t("auth.forCustomers")}</h3>
                 <p>{t("auth.bookLocalServices")}</p>
@@ -6436,7 +6494,7 @@ function AuthChoice({ onNav, session, onSignIn, onSignOut }) {
               <span className="auth-option-arrow">→</span>
             </div>
           )}
-          {!showProviderFork ? (
+          {(showCustLogin && !session) ? null : !showProviderFork ? (
             <div className="auth-option-card" onClick={() => setShowProviderFork(true)}>
               <div>
                 <h3>{t("auth.forProfessionals")}</h3>
@@ -10238,8 +10296,9 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
   if (!session && !cameViaBookingLink) {
     return (
       <GateScreen>
-        <p className="gate-sub">{t("customerPortal.signIn.subtitle")}</p>
-        <button className="gate-btn" onClick={onSignIn}>{t("customerPortal.signIn.button")}</button>
+        <CustomerPhoneLogin />
+        <div className="gate-or"><span>{(i18n.language || "").toLowerCase().startsWith("es") ? "o" : "or"}</span></div>
+        <button className="gate-btn ghost" onClick={onSignIn}>{t("customerPortal.signIn.button")}</button>
         <button className="gate-back" onClick={() => onNav("home")}>{t("customerPortal.signIn.backToSite")}</button>
       </GateScreen>
     );
@@ -11047,7 +11106,9 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                       onChange={(e) => setProfileForm({ ...profileForm, phone: e.target.value })}
                     />
                   </div>
-                  <div className="input-group"><label>{t("customerPortal.settings.email")}</label><input defaultValue={user?.email || session?.user?.email || ""} disabled /></div>
+                  {isPhoneLoginEmail(session?.user?.email)
+                    ? <div className="input-group"><label>{(i18n.language || "").toLowerCase().startsWith("es") ? "Inicias sesión con" : "You log in with"}</label><input defaultValue={formatPhoneForDisplay(user?.whatsapp_number || session?.user?.email?.split("@")[0])} disabled /></div>
+                    : <div className="input-group"><label>{t("customerPortal.settings.email")}</label><input defaultValue={user?.email || session?.user?.email || ""} disabled /></div>}
                   {!isPasswordAccount && (
                     <p style={{ fontSize: 12, color: "var(--muted)" }}>{t("customerPortal.settings.emailManagedByGoogle")}</p>
                   )}
@@ -11529,26 +11590,28 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                                   instead of discovering it from an error message.
                                   Feedback 2026-10-24. */}
                               <p className="guest-checkout-note">
-                                {t("customerPortal.booking.alreadyHaveAccount")}{" "}
-                                <span style={{ color: "var(--lime)", fontWeight: 600, cursor: "pointer" }} onClick={onSignIn}>{t("customerPortal.signIn.button")}</span>
+                                {(i18n.language || "").toLowerCase().startsWith("es")
+                                  ? "¿Ya reservaste antes? Escribe el mismo número y contraseña. O "
+                                  : "Booked before? Just use the same number and password. Or "}
+                                <span style={{ color: "var(--lime)", fontWeight: 600, cursor: "pointer" }} onClick={onSignIn}>{(i18n.language || "").toLowerCase().startsWith("es") ? "entra con Google" : "continue with Google"}</span>
                               </p>
                               <div className="input-group">
                                 <label>{t("customerPortal.booking.fullName")}</label>
                                 <input type="text" placeholder={t("customerPortal.booking.fullNamePlaceholder")} value={guestCheckoutForm.name} onChange={e => setGuestCheckoutForm(f => ({ ...f, name: e.target.value }))} />
                               </div>
                               <div className="input-group">
-                                <label>{t("customerPortal.booking.emailAddress")}</label>
-                                <input type="email" placeholder="you@example.com" value={guestCheckoutForm.email} onChange={e => setGuestCheckoutForm(f => ({ ...f, email: e.target.value }))} />
-                              </div>
-                              <div className="input-group">
                                 <label>{t("customerPortal.booking.whatsappNumber")}</label>
-                                <input type="tel" placeholder="+501 622 1234" value={guestCheckoutForm.whatsapp} onChange={e => setGuestCheckoutForm(f => ({ ...f, whatsapp: e.target.value }))} />
+                                <input type="tel" inputMode="tel" autoComplete="tel" placeholder="+501 622 1234" value={guestCheckoutForm.whatsapp} onChange={e => setGuestCheckoutForm(f => ({ ...f, whatsapp: e.target.value }))} />
                               </div>
                               <div className="input-group">
-                                <label>{t("customerPortal.booking.password")}</label>
-                                <input type="password" autoComplete="new-password" placeholder={t("customerPortal.booking.passwordPlaceholder")} value={guestCheckoutForm.password} onChange={e => setGuestCheckoutForm(f => ({ ...f, password: e.target.value }))} onKeyDown={e => { if (e.key === "Enter") e.preventDefault(); }} />
+                                <label>{(i18n.language || "").toLowerCase().startsWith("es") ? "Contraseña" : "Password"}</label>
+                                <input type="password" autoComplete="new-password" placeholder={(i18n.language || "").toLowerCase().startsWith("es") ? "Al menos 6 caracteres" : "At least 6 characters"} value={guestCheckoutForm.password} onChange={e => setGuestCheckoutForm(f => ({ ...f, password: e.target.value }))} onKeyDown={e => { if (e.key === "Enter") e.preventDefault(); }} />
                               </div>
-                              <p className="guest-checkout-note">{t("customerPortal.booking.emailCodeNote")}</p>
+                              <p className="guest-checkout-note">
+                                {(i18n.language || "").toLowerCase().startsWith("es")
+                                  ? "Sin correo. Tu número y contraseña son tu cuenta: entra desde cualquier teléfono para ver tus reservas. El negocio te contactará por WhatsApp."
+                                  : "No email needed. Your number and password are your account — log in from any phone to see your bookings. The business will reach you on WhatsApp."}
+                              </p>
                             </div>
                           )}
 
@@ -11616,11 +11679,10 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                                 return;
                               }
                               const guestName = guestCheckoutForm.name.trim();
-                              const guestEmail = guestCheckoutForm.email.trim().toLowerCase();
                               const guestWhatsapp = guestCheckoutForm.whatsapp.trim();
                               const guestPassword = guestCheckoutForm.password;
+                              const gEs = (i18n.language || "").toLowerCase().startsWith("es");
                               if (!guestName) { setBookingError(t("customerPortal.booking.enterFullName")); return; }
-                              if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(guestEmail)) { setBookingError(t("customerPortal.booking.enterValidEmail")); return; }
                               // WhatsApp used to be optional — the provider has no way to
                               // reach a guest who skipped it (the password only proves
                               // identity, it isn't a contact channel they're watching), so
@@ -11633,18 +11695,24 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                               // shorter password here would just bounce back as a signUp
                               // error anyway, so check it up front instead of round-
                               // tripping to find out.
-                              if (guestPassword.length < 6) { setBookingError(t("customerPortal.booking.enterValidPassword")); return; }
+                              if (guestPassword.length < 6) { setBookingError(gEs ? "Crea una contraseña de al menos 6 caracteres." : "Create a password with at least 6 characters."); return; }
                               setBookingError("");
                               // Remember name/email/WhatsApp for next time on this device
                               // (see the guestCheckoutForm initializer above) — never the
                               // password, which is typed fresh every booking.
-                              try { localStorage.setItem("vaibook_guest_info", JSON.stringify({ name: guestName, email: guestEmail, whatsapp: guestWhatsapp })); } catch (e) { /* ignore */ }
+                              try { localStorage.setItem("vaibook_guest_info", JSON.stringify({ name: guestName, whatsapp: guestWhatsapp })); } catch (e) { /* ignore */ }
                               setSubmittingGuestAuth(true);
                               setPendingView("customer");
-                              const { data, error, returning } = await guestAuthWithPassword(guestEmail, guestPassword, { full_name: guestName });
+                              const { data, error, code } = await customerPhoneAuth({ name: guestName, phone: guestWhatsapp, password: guestPassword });
                               setSubmittingGuestAuth(false);
                               if (error) {
-                                setBookingError(returning ? t("customerPortal.booking.wrongPassword") : t("customerPortal.booking.guestAuthFailed"));
+                                setBookingError(
+                                  code === "NUMBER_HAS_ACCOUNT"
+                                    ? (gEs ? "Este número ya tiene una cuenta y la contraseña no coincide. Inténtalo de nuevo o escríbenos (Contáctanos) si la olvidaste." : "This number already has an account and that password doesn't match. Try again, or message us (Contact us) if you forgot it.")
+                                    : code === "WEAK_PASSWORD"
+                                      ? (gEs ? "Esa contraseña es muy débil. Usa al menos 6 caracteres con letras y números." : "That password is too weak. Use at least 6 characters with letters and numbers.")
+                                      : t("customerPortal.booking.guestAuthFailed")
+                                );
                                 return;
                               }
                               // No session even though there's no error means Supabase is
@@ -11659,9 +11727,6 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                                 return;
                               }
                               const uid = data?.user?.id;
-                              if (guestWhatsapp && uid) {
-                                updateUserProfile(uid, { whatsapp_number: guestWhatsapp }).catch(() => {});
-                              }
                               bookingService.isMulti ? submitMultiServiceBooking(uid) : submitBooking(uid);
                             }}
                           >
@@ -18123,6 +18188,7 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
   const [posterFor, setPosterFor] = useState(null);
   const [supportMsgs, setSupportMsgs] = useState(null);
   const [supportFilter, setSupportFilter] = useState("new");
+  const [pwReset, setPwReset] = useState({ phone: "", password: "", busy: false, msg: "", ok: false });
   const [checkingAdmin, setCheckingAdmin] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const [apps, setApps] = useState([]);
@@ -18850,6 +18916,27 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
               <div className="portal-header">
                 <h2>Messages</h2>
                 <p>What people sent from Contact us and Help &amp; support. You also get a phone alert for each new one.</p>
+              </div>
+              <div className="card" style={{ marginBottom: 16 }}>
+                <div className="card-title">Reset a customer's password</div>
+                <p style={{ fontSize: 13, color: "var(--muted)", margin: "0 0 10px" }}>Customers log in with their WhatsApp number and a password (no email). If one forgets theirs, set a new one here and send it to them on WhatsApp.</p>
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "flex-end" }}>
+                  <div className="input-group" style={{ margin: 0, flex: "1 1 160px" }}><label>WhatsApp number</label><input type="tel" placeholder="+501 622 1234" value={pwReset.phone} onChange={(e) => setPwReset((r) => ({ ...r, phone: e.target.value, msg: "" }))} /></div>
+                  <div className="input-group" style={{ margin: 0, flex: "1 1 160px" }}><label>New password (6+ characters)</label><input type="text" value={pwReset.password} onChange={(e) => setPwReset((r) => ({ ...r, password: e.target.value, msg: "" }))} /></div>
+                  <button className="btn-sm forest" disabled={pwReset.busy} onClick={async () => {
+                    if ((pwReset.phone.match(/\d/g) || []).length < 7 || pwReset.password.length < 6) { setPwReset((r) => ({ ...r, ok: false, msg: "Enter the number and a new password of at least 6 characters." })); return; }
+                    setPwReset((r) => ({ ...r, busy: true, msg: "" }));
+                    const res = await adminResetPhonePassword(pwReset.phone, pwReset.password);
+                    const digits = pwReset.phone.replace(/\D/g, "");
+                    const wa = `https://wa.me/${digits.length === 7 ? "501" + digits : digits}?text=${encodeURIComponent(`Hi${res.name ? " " + res.name : ""}! Your VaiBook password has been reset. Log in with your WhatsApp number and this password: ${pwReset.password}`)}`;
+                    setPwReset((r) => ({ ...r, busy: false, ok: res.ok, wa: res.ok ? wa : "", msg: res.ok ? `Done — new password set for ${res.name}.` : res.code === "NO_ACCOUNT_FOR_NUMBER" ? "No customer account uses that number." : "Couldn't reset it. Try again." }));
+                  }}>{pwReset.busy ? "Saving…" : "Set password"}</button>
+                </div>
+                {pwReset.msg && (
+                  <p style={{ fontSize: 13, marginTop: 10, color: pwReset.ok ? "var(--forest)" : "#B91C1C" }}>
+                    {pwReset.msg} {pwReset.ok && pwReset.wa && <a href={pwReset.wa} target="_blank" rel="noopener noreferrer" style={{ fontWeight: 700 }}>Send it on WhatsApp ›</a>}
+                  </p>
+                )}
               </div>
               <div className="card">
                 <div className="card-title" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, flexWrap: "wrap" }}>

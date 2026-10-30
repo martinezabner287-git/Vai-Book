@@ -208,8 +208,12 @@ export const getOrCreateUser = async (authUser) => {
     .from('users')
     .insert({
       id: authUser.id,
-      full_name: authUser.user_metadata?.full_name || authUser.email,
-      email: authUser.email,
+      full_name: authUser.user_metadata?.full_name || (isPhoneLoginEmail(authUser.email) ? null : authUser.email),
+      // Phone + password customers sign in with a stand-in address
+      // (see phoneLoginEmail) — never store or email that.
+      email: isPhoneLoginEmail(authUser.email) ? null : authUser.email,
+      whatsapp_number: authUser.user_metadata?.whatsapp_number || null,
+      phone: authUser.user_metadata?.whatsapp_number || null,
       avatar_url: authUser.user_metadata?.avatar_url || null,
       oauth_provider: authUser.app_metadata?.provider || 'email',
       role: 'customer',
@@ -1433,6 +1437,62 @@ export const verifyEmailOtp = async (email, token) => {
 // explicit "already registered" error from signUp, so that's checked
 // too. Either way, a wrong password on a returning guest's email
 // surfaces as a normal verifyError the caller can show.
+// ── PHONE NUMBER + PASSWORD CUSTOMER ACCOUNTS (2026-10-30) ──────────
+// Customers in Belize live on WhatsApp, not email, so a customer account is
+// "phone number + password". Supabase Auth needs an email-shaped username,
+// so the phone number is turned into a stand-in login address that is never
+// shown or emailed (Auth → "Confirm email" is off, so nothing is sent).
+// The account lives on the server: log in on any phone and it's all there.
+const PHONE_LOGIN_DOMAIN = 'phone.vaibook.bz';
+export const normalizePhone = (raw) => {
+  let d = String(raw || '').replace(/\D/g, '');
+  if (d.startsWith('00')) d = d.slice(2);
+  if (d.length === 7) d = '501' + d;          // local Belize number
+  return d;
+};
+export const phoneLoginEmail = (raw) => `p${normalizePhone(raw)}@${PHONE_LOGIN_DOMAIN}`;
+export const isPhoneLoginEmail = (email) => typeof email === 'string' && email.toLowerCase().endsWith('@' + PHONE_LOGIN_DOMAIN);
+export const formatPhoneForDisplay = (raw) => {
+  const d = normalizePhone(raw);
+  if (d.length === 10 && d.startsWith('501')) return `+501 ${d.slice(3, 6)}-${d.slice(6)}`;
+  return d ? '+' + d : '';
+};
+
+// Log in with phone + password. Returns { data, error, code }.
+export const signInWithPhonePassword = async (phone, password) => {
+  const { data, error } = await supabase.auth.signInWithPassword({ email: phoneLoginEmail(phone), password });
+  if (error) return { data, error, code: /invalid login/i.test(error.message || '') ? 'WRONG_PHONE_OR_PASSWORD' : 'FAILED' };
+  return { data, error: null };
+};
+
+// Booking checkout: creates the account the first time, logs in after that.
+// Returns { data, error, code, returning }.
+export const customerPhoneAuth = async ({ name, phone, password }) => {
+  const email = phoneLoginEmail(phone);
+  const pretty = formatPhoneForDisplay(phone);
+  const { data, error } = await supabase.auth.signUp({
+    email, password, options: { data: { full_name: name, whatsapp_number: pretty } },
+  });
+  const already = (!error && data?.user && (data.user.identities || []).length === 0)
+    || (error && /already registered|already exists/i.test(error.message || ''));
+  if (already) {
+    const res = await signInWithPhonePassword(phone, password);
+    return { ...res, returning: true, code: res.error ? 'NUMBER_HAS_ACCOUNT' : undefined };
+  }
+  if (error) {
+    const weak = /password/i.test(error.message || '');
+    return { data, error, code: weak ? 'WEAK_PASSWORD' : 'FAILED', message: error.message, returning: false };
+  }
+  const uid = data?.user?.id;
+  if (uid && data?.session) {
+    // Make sure the profile row has their name + WhatsApp for the business.
+    const row = { full_name: name, whatsapp_number: pretty, phone: pretty, oauth_provider: 'phone' };
+    const { error: insErr } = await supabase.from('users').insert({ id: uid, ...row });
+    if (insErr) await supabase.from('users').update(row).eq('id', uid);
+  }
+  return { data, error: null, returning: false };
+};
+
 export const guestAuthWithPassword = async (email, password, metadata) => {
   const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
     email,
@@ -2119,4 +2179,11 @@ export const redeemMembershipVisit = async (membershipId) => {
   const { data, error } = await supabase.rpc('redeem_membership_visit', { p_membership_id: membershipId });
   if (error) { console.error('Error redeeming membership visit:', error.message); return false; }
   return !!data;
+};
+
+// Admin: set a new password for a phone-login customer who forgot theirs.
+export const adminResetPhonePassword = async (phone, password) => {
+  const { data, error } = await supabase.rpc('admin_reset_phone_password', { p_phone: phone, p_password: password });
+  if (error) return { ok: false, code: (error.message || '').match(/NO_ACCOUNT_FOR_NUMBER|PASSWORD_TOO_SHORT|NOT_AUTHORIZED/)?.[0] || 'FAILED' };
+  return { ok: true, name: data };
 };
