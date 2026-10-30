@@ -2022,6 +2022,19 @@ export const adminExtendProviderTrial = async (providerId, days) => {
   return data;
 };
 
+// Non-payment (2026-10-30): give an overdue business more time, or switch a
+// business that was auto-downgraded back on with a few days to pay.
+export const adminExtendPaymentDue = async (providerId, days = 7) => {
+  const { data, error } = await supabase.rpc('admin_extend_payment_due', { p_provider_id: providerId, p_days: days });
+  if (error) { reportActionError('adminExtendPaymentDue', error); return null; }
+  return data;
+};
+export const adminRestoreDowngradedPlan = async (providerId, days = 7) => {
+  const { data, error } = await supabase.rpc('admin_restore_downgraded_plan', { p_provider_id: providerId, p_days: days });
+  if (error) { reportActionError('adminRestoreDowngradedPlan', error); return null; }
+  return data;
+};
+
 export const adminEndProviderTrial = async (providerId) => {
   const { data, error } = await supabase.rpc('admin_end_provider_trial', { p_provider_id: providerId });
   if (error) { reportActionError('adminEndProviderTrial', error); console.error('Error ending trial:', error.message); return null; }

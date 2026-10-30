@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useLayoutEffect, useRef, useContext, createContext, lazy, Suspense } from "react";
 import { flushSync } from "react-dom";
-import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, updateService, deleteService, getActiveProviders, getProviderDirectory, createBooking, getProviderBusyWindows, createBookingSafe, cancelBooking, markBookingCheckedIn, getCustomerBookings, uploadReceipt, submitReview, getProviderReviews, updateReview, sendBookingEmail, updateUserProfile, getPaymentMethods, addPaymentMethod, deletePaymentMethod, createNotification, getNotifications, markNotificationRead, markAllNotificationsRead, getCategoryDefaultFeatures, getProviderFeatureOverrides, setProviderFeatureOverride, getVisitNotes, upsertVisitNote, adminListProviders, adminUpdateProvider, adminDeleteProvider, adminCountCustomers, getFavoriteProviderIds, getFavoriteProviders, addFavorite, removeFavorite, getBookingMessages, sendBookingMessage, markBookingMessagesRead, getUnreadBookingMessages, getProviderMonthlyTrend, createProviderProfile, getProviderById, createWalkInBooking, submitProviderPayment, getMyProviderPayments, adminListProviderPayments, adminReviewProviderPayment, submitBookingRefund, adminListBookingRefunds, openPrivateFile, getProviderStaff, addProviderStaff, updateProviderStaff, deleteProviderStaff, getProviderStaffPublic, getLoyaltyAccount, getProviderLoyaltyCustomers, redeemLoyaltyReward, getMyStaffProfile, claimStaffSeatByEmail, getStaffBookings, getProviderNotifyEmail, getMaintenanceStatus, setMaintenanceMode, getSiteOfflineStatus, setSiteOffline, guestAuthWithPassword, updateGuestPassword, savePushSubscription, attachBookingServices, getProviderBlocks, insertProviderBlock, deleteProviderBlock, proposeBookingReschedule, confirmBookingReschedule, declineBookingReschedule, withdrawBookingReschedule, establishSoloSession, getServerSoloSessionToken, getLocalSoloSessionToken, clearLocalSoloSessionToken, subscribeToSoloSessionReplacement, signInWithPhonePassword, customerPhoneAuth, adminResetPhonePassword, isPhoneLoginEmail, formatPhoneForDisplay, weakPasswordReason, submitSupportMessage, listSupportMessages, setSupportMessageStatus, getProviderMembershipPlans, getMyMembershipPlans, createMembershipPlan, updateMembershipPlan, subscribeToMembershipPlan, submitMembershipPayment, getMyMemberships, getProviderMembershipSubscribers, getProviderMembershipPayments, reviewMembershipPayment, cancelMembership, redeemMembershipVisit, startSoloTrial, adminStartProviderTrial, adminExtendProviderTrial, adminEndProviderTrial } from "./supabase";
+import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, updateService, deleteService, getActiveProviders, getProviderDirectory, createBooking, getProviderBusyWindows, createBookingSafe, cancelBooking, markBookingCheckedIn, getCustomerBookings, uploadReceipt, submitReview, getProviderReviews, updateReview, sendBookingEmail, updateUserProfile, getPaymentMethods, addPaymentMethod, deletePaymentMethod, createNotification, getNotifications, markNotificationRead, markAllNotificationsRead, getCategoryDefaultFeatures, getProviderFeatureOverrides, setProviderFeatureOverride, getVisitNotes, upsertVisitNote, adminListProviders, adminUpdateProvider, adminDeleteProvider, adminCountCustomers, getFavoriteProviderIds, getFavoriteProviders, addFavorite, removeFavorite, getBookingMessages, sendBookingMessage, markBookingMessagesRead, getUnreadBookingMessages, getProviderMonthlyTrend, createProviderProfile, getProviderById, createWalkInBooking, submitProviderPayment, getMyProviderPayments, adminListProviderPayments, adminReviewProviderPayment, submitBookingRefund, adminListBookingRefunds, openPrivateFile, getProviderStaff, addProviderStaff, updateProviderStaff, deleteProviderStaff, getProviderStaffPublic, getLoyaltyAccount, getProviderLoyaltyCustomers, redeemLoyaltyReward, getMyStaffProfile, claimStaffSeatByEmail, getStaffBookings, getProviderNotifyEmail, getMaintenanceStatus, setMaintenanceMode, getSiteOfflineStatus, setSiteOffline, guestAuthWithPassword, updateGuestPassword, savePushSubscription, attachBookingServices, getProviderBlocks, insertProviderBlock, deleteProviderBlock, proposeBookingReschedule, confirmBookingReschedule, declineBookingReschedule, withdrawBookingReschedule, establishSoloSession, getServerSoloSessionToken, getLocalSoloSessionToken, clearLocalSoloSessionToken, subscribeToSoloSessionReplacement, signInWithPhonePassword, customerPhoneAuth, adminResetPhonePassword, isPhoneLoginEmail, formatPhoneForDisplay, weakPasswordReason, submitSupportMessage, listSupportMessages, setSupportMessageStatus, getProviderMembershipPlans, getMyMembershipPlans, createMembershipPlan, updateMembershipPlan, subscribeToMembershipPlan, submitMembershipPayment, getMyMemberships, getProviderMembershipSubscribers, getProviderMembershipPayments, reviewMembershipPayment, cancelMembership, redeemMembershipVisit, startSoloTrial, adminStartProviderTrial, adminExtendProviderTrial, adminEndProviderTrial, adminExtendPaymentDue, adminRestoreDowngradedPlan } from "./supabase";
 import AdminDashboard from "./AdminDashboard";
 import ProfilePhotoModal from "./ProfilePhotoModal";
 import LanguageSelector from "./LanguageSelector";
@@ -34,6 +34,25 @@ function useTransitionState(init) {
     };
   }
   return [value, setRef.current];
+}
+
+// Non-payment status for a business (2026-10-30). Due date passes → 7-day
+// grace → the nightly job moves them to the free plan (run_billing_enforcement).
+const PAY_GRACE_DAYS = 7;
+function billingStatus(p) {
+  if (!p) return null;
+  const planName = (id) => (id === "business" ? "Team" : id === "pro" ? "Solo" : "Free");
+  if (p.downgraded_at && p.downgraded_from_plan) {
+    return { kind: "downgraded", plan: planName(p.downgraded_from_plan), since: new Date(p.downgraded_at) };
+  }
+  if (!["pro", "business"].includes(p.plan) || p.is_trial || !p.next_payment_due_date) return null;
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const due = new Date(p.next_payment_due_date + "T00:00:00");
+  const days = Math.round((due - today) / 86400000);
+  const graceEnd = new Date(due); graceEnd.setDate(graceEnd.getDate() + PAY_GRACE_DAYS);
+  if (days < 0) return { kind: "overdue", plan: planName(p.plan), due, graceEnd, daysLeft: Math.max(0, Math.round((graceEnd - today) / 86400000)) };
+  if (days <= 3) return { kind: "soon", plan: planName(p.plan), due, days };
+  return null;
 }
 
 // Default map center: Belize (roughly Belmopan) for providers who haven't set a pin yet.
@@ -14969,6 +14988,41 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
       </header>
 
       <main className="portal-content">
+        {(() => {
+          const bs = billingStatus(providerProfile);
+          if (!bs) return null;
+          // A business that chose to stay on the free plan stops seeing this after a month.
+          if (bs.kind === "downgraded" && Date.now() - bs.since.getTime() > 30 * 86400000) return null;
+          const es = (i18n.language || "").toLowerCase().startsWith("es");
+          const fmt = (d) => d.toLocaleDateString(es ? "es" : "en-US", { month: "short", day: "numeric" });
+          const tone = bs.kind === "soon" ? { bg: "#FFF8E6", border: "#F2C94C" } : { bg: "#FDECEC", border: "#E5484D" };
+          let title, body;
+          if (bs.kind === "soon") {
+            title = es ? `Tu pago de ${bs.plan} vence ${bs.days === 0 ? "hoy" : bs.days === 1 ? "mañana" : `en ${bs.days} días`}` : `Your ${bs.plan} payment is due ${bs.days === 0 ? "today" : bs.days === 1 ? "tomorrow" : `in ${bs.days} days`}`;
+            body = es ? `Vence el ${fmt(bs.due)}. Paga en Facturación para mantener tus funciones.` : `Due ${fmt(bs.due)}. Pay in Billing to keep your features without interruption.`;
+          } else if (bs.kind === "overdue") {
+            title = es ? "Tu pago está atrasado" : "Your payment is overdue";
+            body = es
+              ? `Paga antes del ${fmt(bs.graceEnd)} para mantener las funciones de ${bs.plan}. Después tu cuenta pasa al plan gratis (tus datos quedan seguros).`
+              : `Pay by ${fmt(bs.graceEnd)} to keep your ${bs.plan} features. After that your account moves to the free plan — your data stays safe.`;
+          } else {
+            title = es ? `Tu plan ${bs.plan} está en pausa` : `Your ${bs.plan} plan is paused`;
+            body = es
+              ? `No recibimos tu pago, así que tu cuenta pasó al plan gratis. Tus reservas, clientes e historial están seguros. Paga cuando quieras para reactivar ${bs.plan}.`
+              : `We didn't receive your payment, so your account moved to the free plan. Your bookings, clients and history are all safe. Pay anytime to switch ${bs.plan} back on.`;
+          }
+          return (
+            <div className="billing-alert" role="status" style={{ background: tone.bg, border: `1px solid ${tone.border}`, borderRadius: 14, padding: "12px 16px", margin: "0 0 16px", display: "flex", gap: 12, alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", color: "#16181D" }}>
+              <div style={{ minWidth: 0, flex: "1 1 240px" }}>
+                <div style={{ fontWeight: 800, fontSize: 14 }}>{title}</div>
+                <div style={{ fontSize: 13, marginTop: 2, lineHeight: 1.45 }}>{body}</div>
+              </div>
+              {tab !== "billing" && (
+                <button className="btn-sm forest" onClick={() => { setTab("billing"); window.scrollTo({ top: 0 }); }}>{es ? "Pagar ahora" : "Pay now"}</button>
+              )}
+            </div>
+          );
+        })()}
         {tab === "dashboard" && (() => {
           const es = (i18n.language || "").toLowerCase().startsWith("es");
           const dx = (en, sp) => (es ? sp : en);
@@ -18729,6 +18783,22 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
     else window.alert("Couldn't extend that trial. Please try again.");
   };
 
+  const handleAdminExtendPayment = async (provider) => {
+    if (!window.confirm(`Give ${provider.business_name} 7 more days to pay? Their due date moves forward a week, so they keep their plan longer.`)) return;
+    setTrialActionId(provider.id);
+    const updated = await adminExtendPaymentDue(provider.id, 7);
+    setTrialActionId(null);
+    if (updated) setProviders((prev) => prev.map((p) => (p.id === provider.id ? updated : p)));
+  };
+
+  const handleAdminRestorePlan = async (provider, planName) => {
+    if (!window.confirm(`Switch ${provider.business_name} back to ${planName} now? They'll have 7 days to pay before it pauses again.`)) return;
+    setTrialActionId(provider.id);
+    const updated = await adminRestoreDowngradedPlan(provider.id, 7);
+    setTrialActionId(null);
+    if (updated) setProviders((prev) => prev.map((p) => (p.id === provider.id ? updated : p)));
+  };
+
   const handleAdminEndTrial = async (provider) => {
     if (!window.confirm(`End ${provider.business_name}'s trial now and drop them back to Trial (free)? Use this if they're not going to convert — if they already paid, confirm their payment in the Payments tab instead, which ends the trial and applies the paid plan together.`)) return;
     setTrialActionId(provider.id);
@@ -18932,6 +19002,17 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
                 <button className="btn-sm forest" onClick={loadProviders} disabled={loadingProviders}>{loadingProviders ? "Refreshing..." : "Refresh"}</button>
               </div>
 
+              {(() => {
+                const overdue = providers.filter((p) => billingStatus(p)?.kind === "overdue").length;
+                const paused = providers.filter((p) => billingStatus(p)?.kind === "downgraded").length;
+                if (!overdue && !paused) return null;
+                return (
+                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap", margin: "8px 0 4px" }}>
+                    {overdue > 0 && <span style={{ fontSize: 12, fontWeight: 700, background: "#FDECEC", color: "#B91C1C", borderRadius: 100, padding: "3px 10px" }}>{overdue} overdue</span>}
+                    {paused > 0 && <span style={{ fontSize: 12, fontWeight: 700, background: "#F1F1F4", color: "#16181D", borderRadius: 100, padding: "3px 10px" }}>{paused} paused for non-payment</span>}
+                  </div>
+                );
+              })()}
               {providers.length === 0 && (
                 <p style={{ fontSize: 13, color: "var(--muted)", padding: "16px 0" }}>
                   {loadingProviders ? "Loading..." : "No providers yet."}
@@ -19004,12 +19085,38 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
                       >
                         {PLANS.map(pl => <option key={pl.id} value={pl.id}>{pl.name}</option>)}
                       </select>
-                      {(p.plan || "starter") !== "starter" && !p.is_trial && p.next_payment_due_date && (
-                        <span style={{ fontSize: 11, color: new Date(p.next_payment_due_date) < new Date() ? "#B91C1C" : "var(--muted)" }}>
-                          {new Date(p.next_payment_due_date) < new Date() ? "Overdue since " : "Next due "}
-                          {new Date(p.next_payment_due_date).toLocaleDateString([], { month: "short", day: "numeric", year: "numeric" })}
-                        </span>
-                      )}
+                      {(() => {
+                        const bs = billingStatus(p);
+                        const f = (d) => d.toLocaleDateString([], { month: "short", day: "numeric" });
+                        if (bs?.kind === "downgraded") {
+                          return (
+                            <>
+                              <span style={{ fontSize: 11, fontWeight: 700, color: "#B91C1C", textAlign: "right" }}>⏸ {bs.plan} paused for non-payment · {f(bs.since)}</span>
+                              <button className="btn-sm" style={{ background: "transparent", border: "1px solid var(--lime)", color: "var(--forest)" }} disabled={isTrialActioning} onClick={() => handleAdminRestorePlan(p, bs.plan)}>
+                                {isTrialActioning ? "..." : `Restore ${bs.plan} (7 days to pay)`}
+                              </button>
+                            </>
+                          );
+                        }
+                        if (!((p.plan || "starter") !== "starter" && !p.is_trial && p.next_payment_due_date)) return null;
+                        if (bs?.kind === "overdue") {
+                          return (
+                            <>
+                              <span style={{ fontSize: 11, fontWeight: 700, color: "#B91C1C", textAlign: "right" }}>
+                                Overdue since {f(bs.due)} · {bs.daysLeft === 0 ? "moves to free plan tonight" : `moves to free plan after ${f(bs.graceEnd)}`}
+                              </span>
+                              <button className="btn-sm" style={{ background: "transparent", border: "1px solid var(--lime)", color: "var(--forest)" }} disabled={isTrialActioning} onClick={() => handleAdminExtendPayment(p)}>
+                                {isTrialActioning ? "..." : "Extend 7 days"}
+                              </button>
+                            </>
+                          );
+                        }
+                        return (
+                          <span style={{ fontSize: 11, color: "var(--muted)" }}>
+                            Next due {new Date(p.next_payment_due_date + "T00:00:00").toLocaleDateString([], { month: "short", day: "numeric", year: "numeric" })}
+                          </span>
+                        );
+                      })()}
 
                       {/* Trial override controls — see handleAdminStartTrial
                           and friends. Kept visually separate (own row) from
