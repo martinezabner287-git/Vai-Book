@@ -2814,64 +2814,91 @@ const css = `
   .day-strip-other { margin-top: 6px; padding: 8px 10px !important; font-size: 13px !important; max-width: 180px; color: var(--muted); }
 
   /* ===== BUSINESS HOME (provider dashboard) ===== */
-  .bh-hello { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin: 4px 0 20px; }
-  .bh-hello-title { font-size: 26px; font-weight: 800; letter-spacing: -0.02em; margin: 0; color: var(--text, #16181D); }
-  .bh-hello-date { margin: 2px 0 0; color: var(--muted); font-size: 14px; text-transform: capitalize; }
-  .bh-status { display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 700; border: 1px solid var(--border); background: #fff; color: var(--text, #16181D); cursor: pointer; font-family: inherit; }
-  .bh-status .bh-dot { width: 9px; height: 9px; border-radius: 50%; background: #9AA0AC; }
-  .bh-status-open .bh-dot { background: #16A34A; box-shadow: 0 0 0 4px rgba(22,163,74,0.15); }
-  .bh-status-break .bh-dot { background: #F59E0B; }
-  .bh-status-closed { cursor: default; color: var(--muted); }
+  .bh-hero { position: relative; border-radius: 22px; padding: 20px 18px 18px; margin: 4px 0 16px; overflow: hidden;
+    background: linear-gradient(135deg, #152E59 0%, #1E3A6B 45%, var(--forest) 100%); color: #fff;
+    box-shadow: 0 16px 36px rgba(21,46,89,0.25); }
+  .bh-hero::before { content: ''; position: absolute; top: -60px; right: -50px; width: 180px; height: 180px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(140,122,240,0.5) 0%, rgba(140,122,240,0) 70%); pointer-events: none; }
+  .bh-hero::after { content: ''; position: absolute; bottom: -70px; left: -40px; width: 160px; height: 160px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(194,65,12,0.3) 0%, rgba(194,65,12,0) 70%); pointer-events: none; }
+  .bh-hello { position: relative; z-index: 1; display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin: 0; }
+  .bh-hello-title { font-size: 23px; font-weight: 800; letter-spacing: -0.02em; margin: 0; color: #fff; }
+  .bh-hello-date { margin: 3px 0 0; color: rgba(255,255,255,0.68); font-size: 13.5px; text-transform: capitalize; }
+  .bh-status { display: inline-flex; align-items: center; gap: 7px; border-radius: 999px; padding: 7px 13px; font-size: 12.5px; font-weight: 700; border: 1px solid rgba(255,255,255,0.28); background: rgba(255,255,255,0.14); color: #fff; cursor: pointer; font-family: inherit; white-space: nowrap; }
+  .bh-status .bh-dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.5); }
+  .bh-status-open .bh-dot { background: #4ADE80; box-shadow: 0 0 0 4px rgba(74,222,128,0.28); }
+  .bh-status-break .bh-dot { background: #FBBF24; }
+  .bh-status-closed { cursor: default; color: rgba(255,255,255,0.75); }
+  .bh-hero-mini { position: relative; z-index: 1; display: flex; gap: 8px; margin-top: 16px; }
+  .bh-hero-mini-stat { flex: 1; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.16); border-radius: 13px; padding: 9px 11px; min-width: 0; }
+  .bh-hero-mini-stat span { display: block; font-size: 10px; font-weight: 700; color: rgba(255,255,255,0.65); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .bh-hero-mini-stat strong { font-size: 16px; font-weight: 800; color: #fff; }
+  @media (max-width: 420px) { .bh-hero-mini-stat strong { font-size: 14px; } }
   .bh-section { background: #fff; border: 1px solid var(--border); border-radius: 18px; padding: 16px 16px 12px; margin-bottom: 16px; }
-  .bh-section-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
-  .bh-section-head h3 { font-size: 17px; font-weight: 800; margin: 0; display: flex; align-items: center; gap: 8px; color: var(--text, #16181D); }
-  .bh-badge { background: #DC2626; color: #fff; border-radius: 999px; font-size: 12px; font-weight: 800; padding: 2px 8px; }
-  .bh-link { border: none; background: none; color: var(--lime); font-weight: 700; font-size: 13px; cursor: pointer; padding: 4px 0; font-family: inherit; }
+  .bh-section-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .bh-section-head h3 { font-size: 16.5px; font-weight: 800; margin: 0; display: flex; align-items: center; gap: 9px; color: var(--text, #16181D); }
+  .bh-sec-icon { width: 28px; height: 28px; border-radius: 9px; display: inline-flex; align-items: center; justify-content: center; font-size: 13.5px; flex-shrink: 0; background: var(--accent-soft); }
+  .bh-sec-icon-violet { background: var(--accent-soft); }
+  .bh-sec-icon-amber { background: #FEF3C7; }
+  .bh-badge { background: var(--clay); color: #fff; border-radius: 999px; font-size: 12px; font-weight: 800; padding: 2px 8px; }
+  .bh-link { border: none; background: none; color: var(--forest); font-weight: 700; font-size: 13px; cursor: pointer; padding: 4px 0; font-family: inherit; }
   .bh-link:disabled { opacity: 0.5; }
-  .bh-requests { display: flex; flex-direction: column; gap: 10px; }
-  .bh-req { display: grid; grid-template-columns: 1fr auto; gap: 6px 12px; padding: 12px; border-radius: 14px; background: var(--accent-soft); }
-  .bh-req.past { background: #FFF7ED; }
-  .bh-req-name { font-weight: 800; font-size: 15px; color: var(--text, #16181D); }
-  .bh-req-meta { font-size: 13px; color: var(--muted); margin-top: 2px; }
+  .bh-requests { display: flex; flex-direction: column; gap: 8px; }
+  .bh-req { position: relative; display: grid; grid-template-columns: 1fr auto; gap: 6px 12px; padding: 12px 12px 12px 15px; border-radius: 14px;
+    background: linear-gradient(135deg, #F3F1FC 0%, var(--accent-soft) 100%); overflow: hidden; }
+  .bh-req::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--forest); }
+  .bh-req.past { background: linear-gradient(135deg, #FFF7ED 0%, #FFF1DE 100%); }
+  .bh-req.past::before { background: #D97706; }
+  .bh-req-name { font-weight: 800; font-size: 14.5px; color: var(--text, #16181D); }
+  .bh-req-meta { font-size: 12.5px; color: var(--muted); margin-top: 2px; }
   .bh-req-note { font-size: 12.5px; color: var(--muted); font-style: italic; margin-top: 4px; }
   .bh-req-warn { font-size: 12.5px; color: #B45309; font-weight: 600; margin-top: 4px; }
-  .bh-req-price { font-weight: 800; font-size: 15px; color: var(--text, #16181D); }
+  .bh-req-price { font-weight: 800; font-size: 14.5px; color: var(--text, #16181D); }
   .bh-req-actions { grid-column: 1 / -1; display: flex; gap: 8px; flex-wrap: wrap; }
   .bh-btn { border: 1px solid var(--border); background: #fff; color: var(--text, #16181D); border-radius: 10px; padding: 9px 14px; font-weight: 700; font-size: 13.5px; cursor: pointer; font-family: inherit; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; }
   .bh-btn:disabled { opacity: 0.55; cursor: default; }
-  .bh-btn-primary { background: var(--lime); border-color: var(--lime); color: #fff; min-width: 150px; }
+  .bh-btn-primary { background: linear-gradient(135deg, var(--forest) 0%, #7B3FE4 100%); border-color: transparent; color: #fff; min-width: 150px; box-shadow: 0 6px 14px rgba(76,61,196,0.25); }
   @media (max-width: 560px) { .bh-btn-primary { flex: 1; min-width: 110px; } }
   .bh-btn-icon { padding: 9px 11px; }
   .bh-today { display: flex; flex-direction: column; }
-  .bh-row { display: grid; grid-template-columns: 70px 1fr; gap: 10px; padding: 10px 0; border-top: 1px solid var(--border); }
-  .bh-row:first-child { border-top: none; }
-  .bh-row-time { font-size: 13px; font-weight: 700; color: var(--muted); padding-top: 2px; }
-  .bh-row-body { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-width: 0; font-size: 14px; }
+  .bh-row { display: grid; grid-template-columns: 54px 1fr; gap: 10px; padding: 7px 0; }
+  .bh-row-time { font-size: 12px; font-weight: 800; color: var(--muted); padding-top: 11px; }
+  .bh-row-body { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-width: 0; font-size: 14px;
+    background: #fff; border: 1px solid var(--border); border-radius: 13px; padding: 10px 13px; }
   .bh-row-info { min-width: 0; }
   .bh-row-name { font-weight: 700; color: var(--text, #16181D); display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
   .bh-row-meta { font-size: 12.5px; color: var(--muted); margin-top: 2px; }
   .bh-row-actions { display: flex; gap: 6px; flex: none; }
-  .bh-row-free .bh-row-body { color: var(--muted); border: 1px dashed var(--border); border-radius: 10px; padding: 6px 10px; }
-  .bh-row-block .bh-row-body { color: #92400E; background: #FFF7ED; border-radius: 10px; padding: 6px 10px; }
-  .bh-row-booking.done { opacity: 0.6; }
+  .bh-row-free .bh-row-body { color: var(--muted); border: 1px dashed var(--border); background: transparent; font-style: italic; font-size: 13px; }
+  .bh-row-block .bh-row-body { color: #92400E; background: #FFF7ED; border-color: #FDE7C8; }
+  .bh-row-booking.next .bh-row-body { background: linear-gradient(135deg, #F3F1FC 0%, #fff 100%); border-color: var(--forest-light); box-shadow: 0 2px 10px rgba(76,61,196,0.1); }
+  .bh-row-booking.done .bh-row-body { opacity: 0.6; }
   .bh-arrived { font-size: 11px; font-weight: 700; color: var(--forest); background: var(--accent-soft); padding: 2px 7px; border-radius: 999px; }
   .bh-st { font-weight: 700; text-transform: capitalize; }
+  .bh-st-confirmed, .bh-st-completed, .bh-st-done { color: var(--forest); }
   .bh-empty { font-size: 13.5px; color: var(--muted); padding: 8px 0; margin: 0; }
   .bh-actions { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 16px; }
-  .bh-action { display: flex; flex-direction: column; align-items: center; gap: 4px; border: 1px solid var(--border); background: #fff; border-radius: 14px; padding: 12px 4px; font-size: 20px; cursor: pointer; font-family: inherit; }
-  .bh-action span { font-size: 12px; font-weight: 700; color: var(--text, #16181D); }
+  .bh-action { display: flex; flex-direction: column; align-items: center; gap: 6px; border: 1px solid var(--border); background: #fff; border-radius: 14px; padding: 13px 4px; cursor: pointer; font-family: inherit; }
+  .bh-action-icon { width: 36px; height: 36px; border-radius: 11px; display: flex; align-items: center; justify-content: center; font-size: 16px; background: var(--accent-soft); }
+  .bh-action span:last-child { font-size: 11px; font-weight: 700; color: var(--text, #16181D); }
   .bh-action:disabled { opacity: 0.5; }
-  .bh-week { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
-  .bh-day { display: flex; flex-direction: column; align-items: center; padding: 8px 2px; border-radius: 12px; background: #F7F5F1; text-align: center; }
-  .bh-day.today { background: var(--accent-soft); outline: 1.5px solid var(--lime); }
+  .bh-week { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; margin-bottom: 14px; }
+  .bh-day { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 2px; border-radius: 12px; background: #fff; border: 1px solid var(--border); text-align: center; }
+  .bh-day.today { background: linear-gradient(160deg, var(--forest) 0%, #7B3FE4 100%); border-color: transparent; box-shadow: 0 8px 16px rgba(76,61,196,0.22); }
+  .bh-day.busy:not(.today) { border-color: var(--clay); }
   .bh-day.closed { opacity: 0.5; }
-  .bh-day-wd { font-size: 11px; color: var(--muted); font-weight: 600; text-transform: capitalize; }
-  .bh-day-num { font-size: 17px; font-weight: 800; color: var(--text, #16181D); }
-  .bh-day-count { font-size: 10.5px; color: var(--muted); line-height: 1.2; }
-  .bh-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 12px; border-top: 1px solid var(--border); padding-top: 12px; }
-  .bh-stats div { display: flex; flex-direction: column; gap: 2px; }
-  .bh-stats span { font-size: 11px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; }
-  .bh-stats strong { font-size: 18px; font-weight: 800; color: var(--text, #16181D); }
+  .bh-day-wd { font-size: 10.5px; color: var(--muted); font-weight: 700; text-transform: capitalize; }
+  .bh-day.today .bh-day-wd { color: rgba(255,255,255,0.75); }
+  .bh-day-num { font-size: 16px; font-weight: 800; color: var(--text, #16181D); }
+  .bh-day.today .bh-day-num { color: #fff; }
+  .bh-day-count { font-size: 10px; font-weight: 700; color: var(--muted); line-height: 1.2; }
+  .bh-day.today .bh-day-count { color: rgba(255,255,255,0.85); }
+  .bh-day.busy:not(.today) .bh-day-count { color: var(--clay); }
+  .mr-stat-grid.bh-week-stats { grid-template-columns: repeat(2, 1fr); margin-top: 0; margin-bottom: 0; }
+  @media (max-width: 640px) { .mr-stat-grid.bh-week-stats { grid-template-columns: repeat(2, 1fr); } }
+  .rebook-radar { background: linear-gradient(135deg, #FFF4ED 0%, #FEEBDD 100%); border: 1px solid #F7D7BE; border-radius: 16px; }
+  .rebook-radar-text { color: #7C2D12; }
+  .rebook-radar-btn { background: linear-gradient(135deg, var(--clay) 0%, #E25A1C 100%); border-radius: 999px; box-shadow: 0 8px 16px rgba(194,65,12,0.22); }
   .bh-setup-bar { width: 100%; display: grid; grid-template-columns: 1fr 90px 16px; align-items: center; gap: 12px; background: #fff; border: 1px solid var(--border); border-radius: 14px; padding: 12px 16px; margin-bottom: 16px; cursor: pointer; font-family: inherit; text-align: left; }
   .bh-setup-bar-text { display: flex; flex-direction: column; font-size: 12.5px; color: var(--muted); }
   .bh-setup-bar-text strong { font-size: 14px; color: var(--text, #16181D); }
@@ -14532,31 +14559,38 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
           return (
           <>
             {/* GREETING + OPEN/CLOSED */}
-            <div className="bh-hello">
-              <div>
-                <h2 className="bh-hello-title">{greeting}{firstName ? `, ${firstName}` : ""}</h2>
-                <p className="bh-hello-date">{now.toLocaleDateString(es ? "es" : "en-US", { weekday: "long", month: "long", day: "numeric" })}</p>
+            <div className="bh-hero">
+              <div className="bh-hello">
+                <div>
+                  <h2 className="bh-hello-title">{greeting}{firstName ? `, ${firstName}` : ""}</h2>
+                  <p className="bh-hello-date">{now.toLocaleDateString(es ? "es" : "en-US", { weekday: "long", month: "long", day: "numeric" })}</p>
+                </div>
+                {activeBlock ? (
+                  <button className="bh-status bh-status-break" onClick={resumeBookingsNow} disabled={resumingNow}>
+                    <span className="bh-dot" /> {resumingNow ? t("providerPortal.dashboard.reopening") : dx(`On a break · reopen now`, `En pausa · reabrir ya`)}
+                  </button>
+                ) : openNow ? (
+                  <button className="bh-status bh-status-open" onClick={openBlockSheet} title={dx("Take a break", "Tomar una pausa")}>
+                    <span className="bh-dot" /> {dx(`Open · until ${fmtMin(closeM)}`, `Abierto · hasta ${fmtMin(closeM)}`)}
+                  </button>
+                ) : (
+                  <span className="bh-status bh-status-closed">
+                    <span className="bh-dot" /> {openM != null && nowMin < openM ? dx(`Closed · opens ${fmtMin(openM)}`, `Cerrado · abre ${fmtMin(openM)}`) : dx("Closed now", "Cerrado ahora")}
+                  </span>
+                )}
               </div>
-              {activeBlock ? (
-                <button className="bh-status bh-status-break" onClick={resumeBookingsNow} disabled={resumingNow}>
-                  <span className="bh-dot" /> {resumingNow ? t("providerPortal.dashboard.reopening") : dx(`On a break · reopen now`, `En pausa · reabrir ya`)}
-                </button>
-              ) : openNow ? (
-                <button className="bh-status bh-status-open" onClick={openBlockSheet} title={dx("Take a break", "Tomar una pausa")}>
-                  <span className="bh-dot" /> {dx(`Open · until ${fmtMin(closeM)}`, `Abierto · hasta ${fmtMin(closeM)}`)}
-                </button>
-              ) : (
-                <span className="bh-status bh-status-closed">
-                  <span className="bh-dot" /> {openM != null && nowMin < openM ? dx(`Closed · opens ${fmtMin(openM)}`, `Cerrado · abre ${fmtMin(openM)}`) : dx("Closed now", "Cerrado ahora")}
-                </span>
-              )}
+              <div className="bh-hero-mini">
+                <div className="bh-hero-mini-stat"><span>{t("providerPortal.dashboard.todaysTake")}</span><strong>BZ${todayRevenue.toFixed(0)}</strong></div>
+                <div className="bh-hero-mini-stat"><span>{t("providerPortal.dashboard.thisMonthEarnings")}</span><strong>BZ${thisMonthEarnings.toFixed(0)}</strong></div>
+                <div className="bh-hero-mini-stat"><span>{t("providerPortal.dashboard.chairsFilled")}</span><strong>{chairsBookedPct}%</strong></div>
+              </div>
             </div>
 
             {/* NEEDS YOUR ANSWER */}
             {needsCount > 0 && (
               <div className="bh-section">
                 <div className="bh-section-head">
-                  <h3>{dx("Needs your answer", "Esperan tu respuesta")} <span className="bh-badge">{needsCount}</span></h3>
+                  <h3><span className="bh-sec-icon bh-sec-icon-violet">📩</span>{dx("Needs your answer", "Esperan tu respuesta")} <span className="bh-badge">{needsCount}</span></h3>
                 </div>
                 <div className="bh-requests">
                   {waiting.map((b) => {
@@ -14606,14 +14640,14 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
             {/* TODAY */}
             <div className="bh-section">
               <div className="bh-section-head">
-                <h3>{dx("Today", "Hoy")}</h3>
+                <h3><span className="bh-sec-icon bh-sec-icon-amber">📅</span>{dx("Today", "Hoy")}</h3>
                 <button className="bh-link" onClick={loadBookings} disabled={loadingBookings}>{loadingBookings ? dx("Refreshing…", "Actualizando…") : dx("Refresh", "Actualizar")}</button>
               </div>
               <div className="bh-today">
                 {timeline.length === 0 && (
                   <p className="bh-empty">{openM == null ? dx("You're closed today. Enjoy the day off.", "Hoy no abres. Disfruta tu día libre.") : t("providerPortal.dashboard.nothingToday")}</p>
                 )}
-                {timeline.map((it, i) => {
+                {(() => { const nextIdx = timeline.findIndex((it) => it.kind === "booking" && !["completed", "done", "cancelled", "rejected", "no_show"].includes(it.b.status)); return timeline.map((it, i) => {
                   if (it.kind === "free") {
                     return (
                       <div className="bh-row bh-row-free" key={`f${i}`}>
@@ -14643,7 +14677,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                   const b = it.b;
                   const done = ["completed", "done"].includes(b.status);
                   return (
-                    <div className={`bh-row bh-row-booking ${done ? "done" : ""}`} key={b.id}>
+                    <div className={`bh-row bh-row-booking ${done ? "done" : ""} ${i === nextIdx ? "next" : ""}`} key={b.id}>
                       <div className="bh-row-time">{fmtMin(it.start)}</div>
                       <div className="bh-row-body">
                         <div className="bh-row-info">
@@ -14662,47 +14696,68 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                       </div>
                     </div>
                   );
-                })}
+                }); })()}
               </div>
             </div>
 
             {/* QUICK ACTIONS */}
             <div className="bh-actions">
               {acceptsWalkins && (
-                <button className="bh-action" onClick={openWalkInSheet} disabled={activeServices.length === 0}>🧾<span>{t("providerPortal.dashboard.walkInButton")}</span></button>
+                <button className="bh-action" onClick={openWalkInSheet} disabled={activeServices.length === 0}><span className="bh-action-icon">🧾</span><span>{t("providerPortal.dashboard.walkInButton")}</span></button>
               )}
-              <button className="bh-action" onClick={() => { openWalkInForm(); }}>🗓️<span>{dx("Appointment", "Cita")}</span></button>
+              <button className="bh-action" onClick={() => { openWalkInForm(); }}><span className="bh-action-icon">🗓️</span><span>{dx("Appointment", "Cita")}</span></button>
               {activeBlock ? (
-                <button className="bh-action" onClick={resumeBookingsNow} disabled={resumingNow}>▶️<span>{dx("Reopen", "Reabrir")}</span></button>
+                <button className="bh-action" onClick={resumeBookingsNow} disabled={resumingNow}><span className="bh-action-icon">▶️</span><span>{dx("Reopen", "Reabrir")}</span></button>
               ) : (
-                <button className="bh-action" onClick={openBlockSheet}>⏸<span>{dx("Block time", "Bloquear")}</span></button>
+                <button className="bh-action" onClick={openBlockSheet}><span className="bh-action-icon">⏸</span><span>{dx("Block time", "Bloquear")}</span></button>
               )}
-              <button className="bh-action" onClick={() => setShowQrModal(true)}>🔗<span>{dx("Share link", "Mi enlace")}</span></button>
+              <button className="bh-action" onClick={() => setShowQrModal(true)}><span className="bh-action-icon">🔗</span><span>{dx("Share link", "Mi enlace")}</span></button>
             </div>
             {activeServices.length === 0 && <p className="bh-empty" style={{ marginTop: -8 }}>{t("providerPortal.dashboard.addServiceHint")}</p>}
 
             {/* THIS WEEK */}
             <div className="bh-section">
-              <div className="bh-section-head"><h3>{dx("Next 7 days", "Próximos 7 días")}</h3><button className="bh-link" onClick={() => setTab("bookings")}>{dx("All bookings ›", "Todas las citas ›")}</button></div>
+              <div className="bh-section-head"><h3><span className="bh-sec-icon bh-sec-icon-violet">📊</span>{dx("Next 7 days", "Próximos 7 días")}</h3><button className="bh-link" onClick={() => setTab("bookings")}>{dx("All bookings ›", "Todas las citas ›")}</button></div>
               <div className="bh-week">
-                {days7.map((d, i) => {
-                  const n = activeOn(d);
-                  const wh = (hours || []).find((h) => h.day_of_week === d.getDay());
-                  const closed = !wh || !wh.is_open;
-                  return (
-                    <div className={`bh-day ${i === 0 ? "today" : ""} ${closed ? "closed" : ""}`} key={i}>
-                      <span className="bh-day-wd">{i === 0 ? dx("Today", "Hoy") : d.toLocaleDateString(es ? "es" : "en-US", { weekday: "short" })}</span>
-                      <span className="bh-day-num">{d.getDate()}</span>
-                      <span className="bh-day-count">{closed ? dx("Closed", "Cerrado") : n === 0 ? "—" : dx(`${n} booked`, `${n} citas`)}</span>
-                    </div>
-                  );
-                })}
+                {(() => {
+                  const counts = days7.map((d) => activeOn(d));
+                  const maxCount = Math.max(0, ...counts);
+                  return days7.map((d, i) => {
+                    const n = counts[i];
+                    const wh = (hours || []).find((h) => h.day_of_week === d.getDay());
+                    const closed = !wh || !wh.is_open;
+                    const busy = !closed && n > 0 && n === maxCount && maxCount > 1;
+                    return (
+                      <div className={`bh-day ${i === 0 ? "today" : ""} ${closed ? "closed" : ""} ${busy ? "busy" : ""}`} key={i}>
+                        <span className="bh-day-wd">{i === 0 ? dx("Today", "Hoy") : d.toLocaleDateString(es ? "es" : "en-US", { weekday: "short" })}</span>
+                        <span className="bh-day-num">{d.getDate()}</span>
+                        <span className="bh-day-count">{closed ? dx("Closed", "Cerrado") : n === 0 ? "—" : dx(`${n} booked`, `${n} citas`)}</span>
+                      </div>
+                    );
+                  });
+                })()}
               </div>
-              <div className="bh-stats">
-                <div><span>{t("providerPortal.dashboard.todaysTake")}</span><strong>BZ${todayRevenue.toFixed(0)}</strong></div>
-                <div><span>{t("providerPortal.dashboard.thisMonthEarnings")}</span><strong>BZ${thisMonthEarnings.toFixed(0)}</strong></div>
-                <div><span>{dx("Booked this week", "Citas esta semana")}</span><strong>{weekCount}</strong></div>
-                <div><span>{t("providerPortal.dashboard.chairsFilled")}</span><strong>{chairsBookedPct}%</strong></div>
+              <div className="mr-stat-grid bh-week-stats">
+                <div className="mr-stat" style={{ "--mr-accent": "#D4795A", "--mr-accent-soft": "#FBEAE3" }}>
+                  <div className="mr-stat-icon">💰</div>
+                  <div className="mr-stat-label">{t("providerPortal.dashboard.todaysTake")}</div>
+                  <div className="mr-stat-value">BZ${todayRevenue.toFixed(0)}</div>
+                </div>
+                <div className="mr-stat" style={{ "--mr-accent": "var(--forest)", "--mr-accent-soft": "var(--accent-soft)" }}>
+                  <div className="mr-stat-icon">📅</div>
+                  <div className="mr-stat-label">{dx("Booked this week", "Citas esta semana")}</div>
+                  <div className="mr-stat-value">{weekCount}</div>
+                </div>
+                <div className="mr-stat" style={{ "--mr-accent": "#F59E0B", "--mr-accent-soft": "#FEF3C7" }}>
+                  <div className="mr-stat-icon">🪑</div>
+                  <div className="mr-stat-label">{t("providerPortal.dashboard.chairsFilled")}</div>
+                  <div className="mr-stat-value">{chairsBookedPct}%</div>
+                </div>
+                <div className="mr-stat" style={{ "--mr-accent": "#16A34A", "--mr-accent-soft": "#DCFCE7" }}>
+                  <div className="mr-stat-icon">📈</div>
+                  <div className="mr-stat-label">{t("providerPortal.dashboard.thisMonthEarnings")}</div>
+                  <div className="mr-stat-value">BZ${thisMonthEarnings.toFixed(0)}</div>
+                </div>
               </div>
             </div>
 
