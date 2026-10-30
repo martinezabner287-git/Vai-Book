@@ -1,6 +1,6 @@
 
 import { useState, useEffect, useLayoutEffect, useRef, useContext, createContext, lazy, Suspense } from "react";
-import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, updateService, deleteService, getActiveProviders, getProviderDirectory, createBooking, getProviderBusyWindows, createBookingSafe, cancelBooking, markBookingCheckedIn, getCustomerBookings, uploadReceipt, submitReview, getProviderReviews, updateReview, sendBookingEmail, updateUserProfile, getPaymentMethods, addPaymentMethod, deletePaymentMethod, createNotification, getNotifications, markNotificationRead, markAllNotificationsRead, getCategoryDefaultFeatures, getProviderFeatureOverrides, setProviderFeatureOverride, getVisitNotes, upsertVisitNote, adminListProviders, adminUpdateProvider, adminDeleteProvider, adminCountCustomers, getFavoriteProviderIds, getFavoriteProviders, addFavorite, removeFavorite, getBookingMessages, sendBookingMessage, markBookingMessagesRead, getUnreadBookingMessages, getProviderMonthlyTrend, createProviderProfile, getProviderById, createWalkInBooking, submitProviderPayment, getMyProviderPayments, adminListProviderPayments, adminReviewProviderPayment, submitBookingRefund, adminListBookingRefunds, openPrivateFile, getProviderStaff, addProviderStaff, updateProviderStaff, deleteProviderStaff, getProviderStaffPublic, getLoyaltyAccount, getProviderLoyaltyCustomers, redeemLoyaltyReward, getMyStaffProfile, claimStaffSeatByEmail, getStaffBookings, getProviderNotifyEmail, getMaintenanceStatus, setMaintenanceMode, getSiteOfflineStatus, setSiteOffline, guestAuthWithPassword, updateGuestPassword, savePushSubscription, attachBookingServices, getProviderBlocks, insertProviderBlock, deleteProviderBlock, proposeBookingReschedule, confirmBookingReschedule, declineBookingReschedule, withdrawBookingReschedule, establishSoloSession, getServerSoloSessionToken, getLocalSoloSessionToken, clearLocalSoloSessionToken, subscribeToSoloSessionReplacement, submitSupportMessage, listSupportMessages, setSupportMessageStatus, getProviderMembershipPlans, getMyMembershipPlans, createMembershipPlan, updateMembershipPlan, subscribeToMembershipPlan, submitMembershipPayment, getMyMemberships, getProviderMembershipSubscribers, getProviderMembershipPayments, reviewMembershipPayment, cancelMembership, redeemMembershipVisit } from "./supabase";
+import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, updateService, deleteService, getActiveProviders, getProviderDirectory, createBooking, getProviderBusyWindows, createBookingSafe, cancelBooking, markBookingCheckedIn, getCustomerBookings, uploadReceipt, submitReview, getProviderReviews, updateReview, sendBookingEmail, updateUserProfile, getPaymentMethods, addPaymentMethod, deletePaymentMethod, createNotification, getNotifications, markNotificationRead, markAllNotificationsRead, getCategoryDefaultFeatures, getProviderFeatureOverrides, setProviderFeatureOverride, getVisitNotes, upsertVisitNote, adminListProviders, adminUpdateProvider, adminDeleteProvider, adminCountCustomers, getFavoriteProviderIds, getFavoriteProviders, addFavorite, removeFavorite, getBookingMessages, sendBookingMessage, markBookingMessagesRead, getUnreadBookingMessages, getProviderMonthlyTrend, createProviderProfile, getProviderById, createWalkInBooking, submitProviderPayment, getMyProviderPayments, adminListProviderPayments, adminReviewProviderPayment, submitBookingRefund, adminListBookingRefunds, openPrivateFile, getProviderStaff, addProviderStaff, updateProviderStaff, deleteProviderStaff, getProviderStaffPublic, getLoyaltyAccount, getProviderLoyaltyCustomers, redeemLoyaltyReward, getMyStaffProfile, claimStaffSeatByEmail, getStaffBookings, getProviderNotifyEmail, getMaintenanceStatus, setMaintenanceMode, getSiteOfflineStatus, setSiteOffline, guestAuthWithPassword, updateGuestPassword, savePushSubscription, attachBookingServices, getProviderBlocks, insertProviderBlock, deleteProviderBlock, proposeBookingReschedule, confirmBookingReschedule, declineBookingReschedule, withdrawBookingReschedule, establishSoloSession, getServerSoloSessionToken, getLocalSoloSessionToken, clearLocalSoloSessionToken, subscribeToSoloSessionReplacement, submitSupportMessage, listSupportMessages, setSupportMessageStatus, getProviderMembershipPlans, getMyMembershipPlans, createMembershipPlan, updateMembershipPlan, subscribeToMembershipPlan, submitMembershipPayment, getMyMemberships, getProviderMembershipSubscribers, getProviderMembershipPayments, reviewMembershipPayment, cancelMembership, redeemMembershipVisit, startSoloTrial } from "./supabase";
 import AdminDashboard from "./AdminDashboard";
 import ProfilePhotoModal from "./ProfilePhotoModal";
 import LanguageSelector from "./LanguageSelector";
@@ -12285,6 +12285,8 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
   const [selectedDay, setSelectedDay] = useState(null);
   const [profileForm, setProfileForm] = useState({ business_name: "", bio: "", district: "", whatsapp: "", instagram: "", facebook: "", tax_id: "", is_featured: false });
   const [savingFeatured, setSavingFeatured] = useState(false);
+  const [startingTrial, setStartingTrial] = useState(false);
+  const [trialError, setTrialError] = useState(false);
 
   // Loyalty & rewards program (Business plan) — provider-configurable,
   // saved as its own small form rather than folded into profileForm so
@@ -13652,6 +13654,19 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
   // Reads the value back from what the server actually saved (not just
   // the optimistic flip) since a Business-plan-only trigger silently
   // resets this to false for anyone not on that plan.
+  const handleStartSoloTrial = async () => {
+    if (!providerId || startingTrial) return;
+    setStartingTrial(true);
+    setTrialError(false);
+    const { data, error } = await startSoloTrial(providerId);
+    if (data && !error) {
+      onProviderProfileUpdate && onProviderProfileUpdate(data);
+    } else {
+      setTrialError(true);
+    }
+    setStartingTrial(false);
+  };
+
   const toggleFeatured = async () => {
     if (!providerId || savingFeatured) return;
     setSavingFeatured(true);
@@ -15646,6 +15661,14 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                   <div className="card-title">🇧🇿 {tx("Belize tax filing", "Impuestos en Belice")}</div>
                   <p className="tax-sub">{tx("Your monthly numbers for the Belize Tax Service, ready to copy onto the forms, plus a sales record for your files.", "Tus cifras mensuales para el Belize Tax Service, listas para copiar en los formularios, más un registro de ventas para tus archivos.")}</p>
 
+                  {!isProOrAbove ? (
+                    <p style={{ fontSize: 13, color: "var(--muted)" }}>
+                      {tx("Solo and Team plans include the monthly tax forms, sales ledger, and CSV/PDF export below.", "Los planes Solo y Team incluyen los formularios de impuestos mensuales, el libro de ventas y la exportación en CSV/PDF a continuación.")}{" "}
+                      <a href="#" onClick={(e) => { e.preventDefault(); setTab("billing"); }}>{tx("View plans", "Ver planes")}</a>.
+                      {" "}{tx("Your individual booking invoices are always free to print, on every plan.", "Tus facturas de citas individuales siempre son gratis de imprimir, en cualquier plan.")}
+                    </p>
+                  ) : (
+                  <>
                   {!providerProfile?.tax_id && (
                     <div className="tax-warn">
                       {tx("Add your TIN (Tax Identification Number) so it prints on your records.", "Agrega tu TIN (número de identificación tributaria) para que aparezca en tus registros.")}{" "}
@@ -15715,6 +15738,8 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                     <div className="tax-warn">{tx(`Heads up: BZ$${money(last12Turnover)} in the last 12 months. Businesses over BZ$75,000 a year must register for GST.`, `Atención: BZ$${money(last12Turnover)} en los últimos 12 meses. Los negocios con más de BZ$75,000 al año deben registrarse para GST.`)}</div>
                   )}
                   <p className="tax-fine">{tx("Only bookings marked done in VaiBook are counted, so log walk-ins and cash sales here too to keep your totals complete. The rates shown are the standard Belize rates; confirm your category and amounts with the Belize Tax Service or your accountant before filing. Keep your records for at least 6 years.", "Solo se cuentan las citas marcadas como hechas en VaiBook; registra también los clientes sin cita y ventas en efectivo para que tus totales estén completos. Las tasas son las estándar de Belice; confirma tu categoría y montos con el Belize Tax Service o tu contador antes de declarar. Guarda tus registros al menos 6 años.")}</p>
+                  </>
+                  )}
                 </div>
               );
             })()}
@@ -15765,16 +15790,19 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
           const currentPlan = PLANS.find((p) => p.id === (providerProfile?.plan || "starter")) || PLANS[0];
           const statusColor = { pending: "#B45309", confirmed: "var(--forest)", rejected: "#B91C1C" };
           const statusBg = { pending: "#FEF3C7", confirmed: "#E7F5EC", rejected: "#FEE2E2" };
-          // FIX ("every provider is providing a service, they must be
-          // paying"): VaiBook has no backend trial-date tracking (no
-          // trial_ends_at column) — this is copy-only, the same
-          // marketing-copy-not-enforcement approach already used for the
-          // pricing page's "14-Day Free Trial" badge. `next_payment_due_date`
-          // is never set anywhere in this codebase except by an admin (or
-          // directly in Supabase), so its absence is a safe, already-existing
-          // signal for "hasn't been billed yet" — used here only to decide
-          // which copy to show, no new field and no changed gating logic.
-          const inTrial = currentPlan.monthly > 0 && !providerProfile?.next_payment_due_date;
+          // 2026-10-30: there's now a REAL 14-day Solo trial, tracked by
+          // is_trial/trial_ends_at (see start_solo_trial() in the
+          // database). `realTrialDaysLeft` drives the countdown banner
+          // below. The older `inTrial` copy-only banner (no backend
+          // date — see the removed comment this replaced) is kept as a
+          // fallback for the separate, pre-existing case of a paid plan
+          // with no due date yet for some other reason (e.g. an admin
+          // granted a plan directly); a real trial always takes priority
+          // over it.
+          const realTrialDaysLeft = providerProfile?.is_trial && providerProfile?.trial_ends_at
+            ? Math.max(0, Math.ceil((new Date(providerProfile.trial_ends_at) - new Date()) / (1000 * 60 * 60 * 24)))
+            : null;
+          const inTrial = !providerProfile?.is_trial && currentPlan.monthly > 0 && !providerProfile?.next_payment_due_date;
           return (
             <>
               <div className="portal-header"><h2>{t("providerPortal.nav.billing")}</h2><p>{t("providerPortal.billing.subtitle")}</p></div>
@@ -15783,7 +15811,16 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                 <div className="card-title">{t("providerPortal.billing.currentPlan")}</div>
                 <div style={{ fontSize: 20, fontWeight: 700 }}>{currentPlan.name} <span style={{ fontSize: 14, fontWeight: 500, color: "var(--muted)" }}>— {currentPlan.price}</span></div>
                 {currentPlan.monthly > 0 && (
-                  inTrial ? (
+                  realTrialDaysLeft !== null ? (
+                    <div style={{ marginTop: 10, background: "#E7F5EC", border: "1px solid var(--forest)", borderRadius: 8, padding: "10px 14px" }}>
+                      <p style={{ fontSize: 13, fontWeight: 700, color: "var(--forest)", margin: 0 }}>
+                        🎉 {t("providerPortal.billing.realTrialBannerTitle", { days: realTrialDaysLeft })}
+                      </p>
+                      <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 4, marginBottom: 0 }}>
+                        {t("providerPortal.billing.realTrialBannerSub", { date: new Date(providerProfile.trial_ends_at).toLocaleDateString([], { month: "long", day: "numeric" }) })}
+                      </p>
+                    </div>
+                  ) : inTrial ? (
                     <div style={{ marginTop: 10, background: "#E7F5EC", border: "1px solid var(--forest)", borderRadius: 8, padding: "10px 14px" }}>
                       <p style={{ fontSize: 13, fontWeight: 700, color: "var(--forest)", margin: 0 }}>🎉 {t("providerPortal.billing.trialBannerTitle", { plan: currentPlan.name })}</p>
                       <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 4, marginBottom: 0 }}>
@@ -15837,6 +15874,22 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                           </p>
                         )}
                       </div>
+                      {!providerProfile?.trial_used && (
+                        <div style={{ marginTop: 16, background: "var(--accent-soft)", border: "1px solid var(--forest)", borderRadius: 8, padding: "12px 14px" }}>
+                          <p style={{ fontSize: 13, fontWeight: 700, color: "var(--forest)", margin: 0 }}>
+                            {t("providerPortal.billing.soloTrialOfferTitle")}
+                          </p>
+                          <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 4, marginBottom: 10 }}>
+                            {t("providerPortal.billing.soloTrialOfferSub")}
+                          </p>
+                          <button className="btn-sm forest" disabled={startingTrial} onClick={handleStartSoloTrial}>
+                            {startingTrial ? t("providerPortal.common.saving") : t("providerPortal.billing.soloTrialOfferCta")}
+                          </button>
+                          {trialError && (
+                            <p style={{ fontSize: 12, color: "#B91C1C", marginTop: 8 }}>{t("providerPortal.billing.soloTrialOfferError")}</p>
+                          )}
+                        </div>
+                      )}
                     </>
                   );
                 })()}
@@ -16868,6 +16921,12 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
             <div className="card" id="settings-deposits" style={{ maxWidth: 480, marginTop: 20, scrollMarginTop: 120 }}>
               <div className="card-title">{t("providerPortal.settings.depositTitle")}</div>
               <p style={{ fontSize: 13, color: "var(--muted)", marginTop: -8, marginBottom: 16 }}>{t("providerPortal.settings.depositHint")}</p>
+              {!isProOrAbove ? (
+                <p style={{ fontSize: 13, color: "var(--muted)" }}>
+                  {t("providerPortal.settings.depositUpsell")} <a href="#" onClick={(e) => { e.preventDefault(); setTab("billing"); }}>{t("providerPortal.profile.viewPlans")}</a>.
+                </p>
+              ) : (
+              <>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", borderBottom: "1px solid var(--border)" }}>
                 <span style={{ fontSize: 14 }}>{t("providerPortal.settings.requireDeposit")}</span>
                 <div className={`toggle ${depositForm.downpayment_required ? "on" : ""}`} onClick={() => setDepositForm(f => ({ ...f, downpayment_required: !f.downpayment_required }))}></div>
@@ -16881,18 +16940,29 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                 </div>
               )}
 
+              {/* 2026-10-30: this toggle used to be live but was actually
+                  entirely inert — nothing in the booking-creation flow
+                  ever read auto_confirm_bookings, so turning it on or off
+                  changed nothing about how a booking got confirmed. Saving
+                  it was *also* broken (see the migration note on the
+                  auto_confirm_bookings column) until this same round.
+                  Disabled with a plain explanation rather than left live
+                  and silently doing nothing, until the real
+                  instant-confirm behavior is actually built. */}
               {!depositForm.downpayment_required && (
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", borderBottom: "1px solid var(--border)", gap: 16 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", borderBottom: "1px solid var(--border)", gap: 16, opacity: 0.55 }}>
                   <div>
                     <span style={{ fontSize: 14 }}>{t("providerPortal.settings.skipReview")}</span>
                     <div style={{ fontSize: 12, color: "var(--muted)" }}>
-                      {t("providerPortal.settings.skipReviewHint")}
+                      {t("providerPortal.settings.skipReviewComingSoon")}
                     </div>
                   </div>
-                  <div className={`toggle ${depositForm.auto_confirm_bookings ? "on" : ""}`} onClick={() => setDepositForm(f => ({ ...f, auto_confirm_bookings: !f.auto_confirm_bookings }))}></div>
+                  <div className="toggle" style={{ cursor: "default" }}></div>
                 </div>
               )}
               <button className="btn-sm forest" style={{ marginTop: 12 }} onClick={saveDepositSettings} disabled={savingDeposit}>{savingDeposit ? t("providerPortal.common.saving") : t("providerPortal.settings.saveDepositSettings")}</button>
+              </>
+              )}
 
               <div className="card-title" id="settings-notifications" style={{ marginTop: 28, scrollMarginTop: 120 }}>{t("providerPortal.settings.notificationsTitle")}</div>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", borderBottom: "1px solid var(--border)", gap: 16 }}>
@@ -17447,12 +17517,20 @@ const PLANS = [
     // plan, never something that reads as a permanent free tier.
     id: "starter", name: "Trial", price: "Free", desc: "Up to 30 bookings/month", monthly: 0,
     tagline: "Get listed and start taking bookings — no cost, no card required.",
+    // 2026-10-30: trimmed to what Trial actually keeps once deposits and
+    // the sales ledger moved to Solo+ (see trg_enforce_deposit_requires_paid_plan
+    // / the gated tax-card in the Earnings tab). 24/7 guest booking and
+    // automated reminders were removed from Solo's list below instead of
+    // being gated here — they were never actually plan-restricted in the
+    // code, so they're listed on whichever plan is telling the truth.
     features: [
       "Up to 30 bookings a month",
       "Your own booking page & calendar",
+      "24/7 guest booking — no app download for your clients",
+      "Automated appointment reminders to cut no-shows",
       "Customer messaging & notifications",
       "Client reviews",
-      "Invoices, refunds & sales ledger",
+      "Invoices & refunds",
     ],
   },
   {
@@ -17466,7 +17544,7 @@ const PLANS = [
     // 2026-10-27: 6-month plan = BZ$1.99/day (BZ$417.90 for 7 months);
     // monthly raised to BZ$69.90 (BZ$2.33/day) so the 6-month plan is the deal.
     id: "pro", name: "Solo", price: "BZ$69.90/month, or BZ$1.99/day on 6 months", desc: "For solo practitioners", monthly: 69.9, sixMonthTotal: 417.9,
-    tagline: "For solo practitioners who want frictionless booking, automated reminders, and deposits handled for them.",
+    tagline: "For solo practitioners who want deposit protection against no-shows, plus their own loyalty program.",
     // Shown as the small italic line under the daily-price pill (public
     // pricing cards + the provider's own "Current plan" billing card) —
     // one plan-specific line instead of the single generic string every
@@ -17475,11 +17553,10 @@ const PLANS = [
     valueNote: "(Pays for itself with a single haircut.)",
     recommended: true,
     features: [
-      "24/7 guest booking — no app download for your clients",
-      "Automated appointment reminders to cut no-shows",
-      "Customizable deposits routed to your bank",
-      "Your own booking page & calendar",
+      "Customizable deposits routed to your bank — never caught out by a no-show",
       "Loyalty & rewards program",
+      "Monthly tax forms, sales ledger & CSV/PDF export",
+      "Try free for 14 days, no card required",
       "A \"Solo\" badge customers see on your listing",
     ],
   },
