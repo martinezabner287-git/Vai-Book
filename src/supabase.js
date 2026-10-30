@@ -785,6 +785,15 @@ const throwKnownGuardErrors = (error) => {
     err.code = 'STARTER_LIMIT_REACHED';
     throw err;
   }
+  // Server-side booking checks (create_booking_safe, 2026-10-30): surfaced
+  // with a code the booking screen turns into a plain-language message.
+  for (const code of ['PAST_DATE', 'PROVIDER_UNAVAILABLE', 'SERVICE_UNAVAILABLE', 'NOT_AUTHORIZED']) {
+    if (error.message.includes(code)) {
+      const err = new Error(code);
+      err.code = code;
+      throw err;
+    }
+  }
   if (error.message.includes('NOT_ELIGIBLE_FOR_REVIEW')) {
     const err = new Error('NOT_ELIGIBLE_FOR_REVIEW');
     err.code = 'NOT_ELIGIBLE_FOR_REVIEW';

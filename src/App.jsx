@@ -9761,6 +9761,8 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
         setBookingError(t("customerPortal.booking.maintenanceMode"));
       } else if (err?.code === "STARTER_LIMIT_REACHED") {
         setBookingError(t("customerPortal.booking.starterLimitReached", { providerName: selectedProvider?.business_name || t("customerPortal.booking.thisProvider") }));
+      } else if (BOOKING_SERVER_MESSAGES[err?.code]) {
+        setBookingError(BOOKING_SERVER_MESSAGES[err.code][(i18n.language || "").toLowerCase().startsWith("es") ? "es" : "en"]);
       } else {
         setBookingError(t("customerPortal.booking.genericError"));
       }
@@ -9846,6 +9848,8 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
           setBookingError(t("customerPortal.booking.maintenanceMode"));
         } else if (err?.code === "STARTER_LIMIT_REACHED") {
           setBookingError(t("customerPortal.booking.starterLimitReached", { providerName: selectedProvider?.business_name || t("customerPortal.booking.thisProvider") }));
+        } else if (BOOKING_SERVER_MESSAGES[err?.code]) {
+          setBookingError(BOOKING_SERVER_MESSAGES[err.code][(i18n.language || "").toLowerCase().startsWith("es") ? "es" : "en"]);
         } else {
           setBookingError(t("customerPortal.booking.genericError"));
         }
@@ -15987,7 +15991,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                     </div>
                   ) : inTrial ? (
                     <div style={{ marginTop: 10, background: "#E7F5EC", border: "1px solid var(--forest)", borderRadius: 8, padding: "10px 14px" }}>
-                      <p style={{ fontSize: 13, fontWeight: 700, color: "var(--forest)", margin: 0 }}>🎉 {t("providerPortal.billing.trialBannerTitle", { plan: currentPlan.name })}</p>
+                      <p style={{ fontSize: 13, fontWeight: 700, color: "var(--forest)", margin: 0 }}>{t("providerPortal.billing.trialBannerTitle", { plan: currentPlan.name })}</p>
                       <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 4, marginBottom: 0 }}>
                         {t("providerPortal.billing.trialBannerSub", { amount: planTermPrice(currentPlan, "six").perDay })}
                       </p>
@@ -17647,6 +17651,13 @@ const TEAM_PER_SEAT_PRICE = 20;
 // first payment, which the 6-month plan waives. No yearly plan and no
 // refunds on a period already paid (Abner, 2026-10-27).
 const SETUP_FEE = 99;
+// Plain-language messages for the server-side booking checks.
+const BOOKING_SERVER_MESSAGES = {
+  PAST_DATE: { en: "That date has already passed. Please pick today or a later day.", es: "Esa fecha ya pasó. Elige hoy o un día posterior." },
+  PROVIDER_UNAVAILABLE: { en: "This business isn't taking bookings right now.", es: "Este negocio no está aceptando reservas en este momento." },
+  SERVICE_UNAVAILABLE: { en: "This service isn't available anymore. Please pick another one.", es: "Este servicio ya no está disponible. Elige otro." },
+  NOT_AUTHORIZED: { en: "Please sign in again, then try booking once more.", es: "Inicia sesión de nuevo y vuelve a intentar la reserva." },
+};
 const SIX_MONTH_PAID = 6;
 const SIX_MONTH_GET = 7;
 const SIX_MONTH_DAYS = SIX_MONTH_GET * 30;

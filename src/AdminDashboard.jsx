@@ -213,7 +213,7 @@ const ADMIN_DASHBOARD_CSS = `
   }
   .acc-metric-highlight { box-shadow: 0 10px 30px rgba(198,241,53,0.18), 0 10px 26px rgba(13,61,46,0.18); border: 1px solid rgba(198,241,53,0.3); }
   .acc-metric-label { font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: rgba(245,239,224,0.6); margin-bottom: 8px; }
-  .acc-metric-value { font-size: 28px; font-weight: 800; color: var(--lime); font-family: 'Plus Jakarta Sans', sans-serif; letter-spacing: -0.02em; line-height: 1.1; }
+  .acc-metric-value { font-size: 28px; font-weight: 800; color: #FFFFFF; font-family: 'Plus Jakarta Sans', sans-serif; letter-spacing: -0.02em; line-height: 1.1; }
   .acc-metric-sub { font-size: 11.5px; color: rgba(245,239,224,0.55); margin-top: 6px; }
 
   /* Sections — dense list rows, not padded cards, so a full queue or roster
@@ -240,7 +240,7 @@ const ADMIN_DASHBOARD_CSS = `
   .acc-addon-pill { font-size: 11px; font-weight: 700; color: var(--forest); background: rgba(198,241,53,0.18); border: 1px solid rgba(198,241,53,0.4); padding: 3px 9px; border-radius: 100px; }
 
   .acc-btn-approve {
-    background: var(--lime); color: var(--forest); border: none; font-weight: 800; font-size: 12.5px;
+    background: var(--lime); color: #FFFFFF; border: none; font-weight: 800; font-size: 12.5px;
     padding: 9px 16px; border-radius: 100px; cursor: pointer; white-space: nowrap;
     box-shadow: 0 6px 16px rgba(198,241,53,0.3);
   }
