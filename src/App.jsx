@@ -1,6 +1,6 @@
 
 import { useState, useEffect, useLayoutEffect, useRef, useContext, createContext, lazy, Suspense } from "react";
-import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, updateService, deleteService, getActiveProviders, getProviderDirectory, createBooking, getProviderBusyWindows, createBookingSafe, cancelBooking, markBookingCheckedIn, getCustomerBookings, uploadReceipt, submitReview, getProviderReviews, updateReview, sendBookingEmail, updateUserProfile, getPaymentMethods, addPaymentMethod, deletePaymentMethod, createNotification, getNotifications, markNotificationRead, markAllNotificationsRead, getCategoryDefaultFeatures, getProviderFeatureOverrides, setProviderFeatureOverride, getVisitNotes, upsertVisitNote, adminListProviders, adminUpdateProvider, adminDeleteProvider, adminCountCustomers, getFavoriteProviderIds, getFavoriteProviders, addFavorite, removeFavorite, getBookingMessages, sendBookingMessage, markBookingMessagesRead, getUnreadBookingMessages, getProviderMonthlyTrend, createProviderProfile, getProviderById, createWalkInBooking, submitProviderPayment, getMyProviderPayments, adminListProviderPayments, adminReviewProviderPayment, submitBookingRefund, adminListBookingRefunds, openPrivateFile, getProviderStaff, addProviderStaff, updateProviderStaff, deleteProviderStaff, getProviderStaffPublic, getLoyaltyAccount, getProviderLoyaltyCustomers, redeemLoyaltyReward, getMyStaffProfile, claimStaffSeatByEmail, getStaffBookings, getProviderNotifyEmail, getMaintenanceStatus, setMaintenanceMode, getSiteOfflineStatus, setSiteOffline, guestAuthWithPassword, updateGuestPassword, savePushSubscription, attachBookingServices, getProviderBlocks, insertProviderBlock, deleteProviderBlock, proposeBookingReschedule, confirmBookingReschedule, declineBookingReschedule, withdrawBookingReschedule, establishSoloSession, getServerSoloSessionToken, getLocalSoloSessionToken, clearLocalSoloSessionToken, subscribeToSoloSessionReplacement, submitSupportMessage, listSupportMessages, setSupportMessageStatus, getProviderMembershipPlans, getMyMembershipPlans, createMembershipPlan, updateMembershipPlan, subscribeToMembershipPlan, submitMembershipPayment, getMyMemberships, getProviderMembershipSubscribers, getProviderMembershipPayments, reviewMembershipPayment, cancelMembership, redeemMembershipVisit, startSoloTrial } from "./supabase";
+import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, updateService, deleteService, getActiveProviders, getProviderDirectory, createBooking, getProviderBusyWindows, createBookingSafe, cancelBooking, markBookingCheckedIn, getCustomerBookings, uploadReceipt, submitReview, getProviderReviews, updateReview, sendBookingEmail, updateUserProfile, getPaymentMethods, addPaymentMethod, deletePaymentMethod, createNotification, getNotifications, markNotificationRead, markAllNotificationsRead, getCategoryDefaultFeatures, getProviderFeatureOverrides, setProviderFeatureOverride, getVisitNotes, upsertVisitNote, adminListProviders, adminUpdateProvider, adminDeleteProvider, adminCountCustomers, getFavoriteProviderIds, getFavoriteProviders, addFavorite, removeFavorite, getBookingMessages, sendBookingMessage, markBookingMessagesRead, getUnreadBookingMessages, getProviderMonthlyTrend, createProviderProfile, getProviderById, createWalkInBooking, submitProviderPayment, getMyProviderPayments, adminListProviderPayments, adminReviewProviderPayment, submitBookingRefund, adminListBookingRefunds, openPrivateFile, getProviderStaff, addProviderStaff, updateProviderStaff, deleteProviderStaff, getProviderStaffPublic, getLoyaltyAccount, getProviderLoyaltyCustomers, redeemLoyaltyReward, getMyStaffProfile, claimStaffSeatByEmail, getStaffBookings, getProviderNotifyEmail, getMaintenanceStatus, setMaintenanceMode, getSiteOfflineStatus, setSiteOffline, guestAuthWithPassword, updateGuestPassword, savePushSubscription, attachBookingServices, getProviderBlocks, insertProviderBlock, deleteProviderBlock, proposeBookingReschedule, confirmBookingReschedule, declineBookingReschedule, withdrawBookingReschedule, establishSoloSession, getServerSoloSessionToken, getLocalSoloSessionToken, clearLocalSoloSessionToken, subscribeToSoloSessionReplacement, submitSupportMessage, listSupportMessages, setSupportMessageStatus, getProviderMembershipPlans, getMyMembershipPlans, createMembershipPlan, updateMembershipPlan, subscribeToMembershipPlan, submitMembershipPayment, getMyMemberships, getProviderMembershipSubscribers, getProviderMembershipPayments, reviewMembershipPayment, cancelMembership, redeemMembershipVisit, startSoloTrial, adminStartProviderTrial, adminExtendProviderTrial, adminEndProviderTrial } from "./supabase";
 import AdminDashboard from "./AdminDashboard";
 import ProfilePhotoModal from "./ProfilePhotoModal";
 import LanguageSelector from "./LanguageSelector";
@@ -17973,6 +17973,11 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
   const [editingProviderId, setEditingProviderId] = useState(null);
   const [providerEditForm, setProviderEditForm] = useState({});
   const [savingProviderId, setSavingProviderId] = useState(null);
+  // 2026-10-30: which provider's trial is currently being started/extended/
+  // ended via the admin override controls below — separate from
+  // savingProviderId so a trial action's spinner doesn't also disable the
+  // plan dropdown/edit/suspend buttons on the same row, and vice versa.
+  const [trialActionId, setTrialActionId] = useState(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
 
@@ -18248,6 +18253,42 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
     else window.alert(`Couldn't ${provider.is_active ? "suspend" : "reactivate"} that provider. Please try again.`);
   };
 
+  // 2026-10-30: admin override controls for a provider's 14-day trial —
+  // distinct from the provider's own self-serve "Start free trial" button
+  // on their Billing tab (handleStartSoloTrial / startSoloTrial), which
+  // only works once, on their own account, from Trial. These call the
+  // admin-only RPCs instead (see adminStartProviderTrial/etc. in
+  // supabase.js), which skip that eligibility check entirely.
+  const handleAdminStartTrial = async (provider) => {
+    if (!window.confirm(`Start a 14-day free trial of Solo for ${provider.business_name}? This moves them to Solo immediately, no payment required for 14 days.`)) return;
+    setTrialActionId(provider.id);
+    const updated = await adminStartProviderTrial(provider.id);
+    setTrialActionId(null);
+    if (updated) setProviders((prev) => prev.map((p) => (p.id === provider.id ? updated : p)));
+    else window.alert("Couldn't start a trial for that provider. Please try again.");
+  };
+
+  const handleAdminExtendTrial = async (provider) => {
+    const raw = window.prompt(`Extend ${provider.business_name}'s trial by how many days?`, "7");
+    if (raw === null) return;
+    const days = parseInt(raw, 10);
+    if (!Number.isFinite(days) || days < 1) { window.alert("Enter a whole number of days, 1 or more."); return; }
+    setTrialActionId(provider.id);
+    const updated = await adminExtendProviderTrial(provider.id, days);
+    setTrialActionId(null);
+    if (updated) setProviders((prev) => prev.map((p) => (p.id === provider.id ? updated : p)));
+    else window.alert("Couldn't extend that trial. Please try again.");
+  };
+
+  const handleAdminEndTrial = async (provider) => {
+    if (!window.confirm(`End ${provider.business_name}'s trial now and drop them back to Trial (free)? Use this if they're not going to convert — if they already paid, confirm their payment in the Payments tab instead, which ends the trial and applies the paid plan together.`)) return;
+    setTrialActionId(provider.id);
+    const updated = await adminEndProviderTrial(provider.id);
+    setTrialActionId(null);
+    if (updated) setProviders((prev) => prev.map((p) => (p.id === provider.id ? updated : p)));
+    else window.alert("Couldn't end that trial. Please try again.");
+  };
+
   const confirmDeleteProvider = async (providerId) => {
     setDeletingId(providerId);
     const ok = await adminDeleteProvider(providerId);
@@ -18433,6 +18474,7 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
               <div className="metric"><div className="metric-label">Total</div><div className="metric-value">{providers.length}</div><div className="metric-sub">All providers</div></div>
               <div className="metric"><div className="metric-label">Live providers</div><div className="metric-value" style={{ color: "var(--lime)" }}>{providers.filter(p => p.is_active).length}</div><div className="metric-sub">Signed in and visible in search</div></div>
               <div className="metric"><div className="metric-label">Suspended</div><div className="metric-value">{providers.filter(p => !p.is_active).length}</div><div className="metric-sub">Hidden from customers</div></div>
+              <div className="metric"><div className="metric-label">In trial</div><div className="metric-value" style={{ color: "var(--forest)" }}>{providers.filter(p => p.is_trial).length}</div><div className="metric-sub">On the 14-day free trial right now</div></div>
             </div>
 
             <div className="card">
@@ -18452,6 +18494,15 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
                 const isSaving = savingProviderId === p.id;
                 const isConfirmingDelete = confirmDeleteId === p.id;
                 const isDeleting = deletingId === p.id;
+                // 2026-10-30: trial badge — the plan dropdown alone can't tell
+                // "paying Solo" apart from "Solo on day 6 of a free trial",
+                // which is exactly the gap this round's admin work closes.
+                // Days-left is ceil'd so "12h left" still reads as "1 day
+                // left" rather than "0 days left" (which read as expired).
+                const isTrialActioning = trialActionId === p.id;
+                const trialDaysLeft = p.is_trial && p.trial_ends_at
+                  ? Math.max(0, Math.ceil((new Date(p.trial_ends_at) - new Date()) / (1000 * 60 * 60 * 24)))
+                  : null;
 
                 if (isEditing) {
                   return (
@@ -18484,6 +18535,14 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
                       </div>
                       <div className="meta">{p.service_type} · {p.district}</div>
                       {p.whatsapp && <div className="meta">{p.whatsapp}</div>}
+                      {trialDaysLeft !== null && (
+                        <div style={{ marginTop: 4, fontSize: 11, fontWeight: 700, color: "var(--forest)", background: "rgba(198,241,53,0.25)", display: "inline-block", padding: "2px 8px", borderRadius: 100 }}>
+                          🎁 Trial — {trialDaysLeft === 0 ? "ends today" : `${trialDaysLeft} day${trialDaysLeft === 1 ? "" : "s"} left`}
+                        </div>
+                      )}
+                      {!p.is_trial && (p.plan || "starter") === "starter" && p.trial_used && (
+                        <div style={{ marginTop: 4, fontSize: 11, color: "var(--muted)" }}>Already used their free trial</div>
+                      )}
                     </div>
 
                     <div style={{ display: "flex", flexDirection: "column", gap: 8, alignItems: "flex-end", flexShrink: 0 }}>
@@ -18496,11 +18555,30 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
                       >
                         {PLANS.map(pl => <option key={pl.id} value={pl.id}>{pl.name}</option>)}
                       </select>
-                      {(p.plan || "starter") !== "starter" && p.next_payment_due_date && (
+                      {(p.plan || "starter") !== "starter" && !p.is_trial && p.next_payment_due_date && (
                         <span style={{ fontSize: 11, color: new Date(p.next_payment_due_date) < new Date() ? "#B91C1C" : "var(--muted)" }}>
                           {new Date(p.next_payment_due_date) < new Date() ? "Overdue since " : "Next due "}
                           {new Date(p.next_payment_due_date).toLocaleDateString([], { month: "short", day: "numeric", year: "numeric" })}
                         </span>
+                      )}
+
+                      {/* Trial override controls — see handleAdminStartTrial
+                          and friends. Kept visually separate (own row) from
+                          the Edit/Suspend/Delete group below so they don't
+                          get mistaken for destructive actions. */}
+                      {p.is_trial ? (
+                        <div style={{ display: "flex", gap: 8 }}>
+                          <button className="btn-sm" style={{ background: "transparent", border: "1px solid var(--lime)", color: "var(--forest)" }} disabled={isTrialActioning} onClick={() => handleAdminExtendTrial(p)}>
+                            {isTrialActioning ? "..." : "Extend"}
+                          </button>
+                          <button className="btn-sm" style={{ background: "transparent", border: "1px solid var(--muted)", color: "var(--muted)" }} disabled={isTrialActioning} onClick={() => handleAdminEndTrial(p)}>
+                            End trial
+                          </button>
+                        </div>
+                      ) : (p.plan || "starter") === "starter" && (
+                        <button className="btn-sm" style={{ background: "transparent", border: "1px solid var(--lime)", color: "var(--forest)" }} disabled={isTrialActioning} onClick={() => handleAdminStartTrial(p)}>
+                          {isTrialActioning ? "..." : p.trial_used ? "Start trial again" : "Start trial"}
+                        </button>
                       )}
 
                       {!isConfirmingDelete && (
