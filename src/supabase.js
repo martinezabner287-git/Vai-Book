@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import i18n from './i18n';
 
 const SUPABASE_URL = 'https://nvfpdkpzrtpmvmgzvdca.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_zpAA2Gdcm_BJhu1D56tsTw_sBpZXiNA';
@@ -1459,6 +1460,52 @@ export const formatPhoneForDisplay = (raw) => {
   return d ? '+' + d : '';
 };
 
+// ── WEAK-PASSWORD CHECK (2026-10-30) ─────────────────────────────
+// Supabase's "Prevent use of leaked passwords" is Pro-plan only, so this
+// blocks the passwords that get guessed first: the classic lists, runs
+// like 123456 / abcdef, repeats like 111111 / 121212, common words with
+// numbers tacked on (belize2024, password1), and the person's own phone
+// number. Only checked when a password is CREATED or CHANGED — anyone who
+// already has an older weak password can still log in with it.
+const COMMON_PASSWORDS = new Set(['123456','1234567','12345678','123456789','1234567890','0123456789','111111','000000','121212','123123','112233','696969','666666','654321','7654321','87654321','987654321','147258','147258369','159753','159357','102030','101010','789456','789456123','456789','qwerty','qwerty123','qwertyuiop','asdfgh','asdfghjkl','zxcvbn','1q2w3e','1q2w3e4r','1qaz2wsx','abc123','abcd1234','abcdef','abcdefg','password','password1','password123','passw0rd','iloveyou','letmein','welcome','monkey','dragon','football','soccer','princess','sunshine','superman','batman','master','shadow','trustno1','contraseña','contrasena','teamo','teamo123']);
+const WEAK_WORDS = new Set(['password','passw0rd','belize','belice','vaibook','vai','qwerty','iloveyou','teamo','letmein','welcome','admin','abc','abcd','contrasena','contraseña','love','amor','god','dios','jesus']);
+const isRun = (str) => {
+  if (str.length < 4) return false;
+  let up = true, down = true;
+  for (let i = 1; i < str.length; i++) {
+    const d = str.charCodeAt(i) - str.charCodeAt(i - 1);
+    if (d !== 1) up = false;
+    if (d !== -1) down = false;
+  }
+  return up || down;
+};
+const isRepeat = (str) => {
+  for (let n = 1; n <= 3; n++) {
+    if (str.length >= n * 2 && str.length % n === 0 && str.slice(0, n).repeat(str.length / n) === str) return true;
+  }
+  return false;
+};
+// Returns null when the password is fine, otherwise a short message in
+// the visitor's language.
+export const weakPasswordReason = (password, phone) => {
+  const es = String(i18n.language || '').toLowerCase().startsWith('es');
+  const pw = String(password || '');
+  const low = pw.toLowerCase();
+  if (pw.length < 6) return es ? 'Usa al menos 6 caracteres.' : 'Use at least 6 characters.';
+  const phoneDigits = normalizePhone(phone);
+  const local = phoneDigits.startsWith('501') ? phoneDigits.slice(3) : phoneDigits;
+  const pwDigits = low.replace(/\D/g, '');
+  if (local.length >= 7 && (pwDigits.includes(local) || pwDigits === phoneDigits)) {
+    return es ? 'No uses tu número de teléfono como contraseña — es lo primero que alguien probaría.' : "Don't use your phone number as your password — it's the first thing someone would try.";
+  }
+  const letters = low.replace(/[^a-zñ]/g, '');
+  if (COMMON_PASSWORDS.has(low) || isRun(low) || isRepeat(low)
+      || (letters && WEAK_WORDS.has(letters) && /^[a-zñ0-9]+$/.test(low))) {
+    return es ? 'Esa contraseña es muy fácil de adivinar. Prueba otra (por ejemplo, una palabra que te guste + números).' : 'That password is too easy to guess. Try something harder (for example, a word you like + some numbers).';
+  }
+  return null;
+};
+
 // Log in with phone + password. Returns { data, error, code }.
 export const signInWithPhonePassword = async (phone, password) => {
   const { data, error } = await supabase.auth.signInWithPassword({ email: phoneLoginEmail(phone), password });
@@ -1471,6 +1518,14 @@ export const signInWithPhonePassword = async (phone, password) => {
 export const customerPhoneAuth = async ({ name, phone, password }) => {
   const email = phoneLoginEmail(phone);
   const pretty = formatPhoneForDisplay(phone);
+  const weak = weakPasswordReason(password, phone);
+  if (weak) {
+    // Could be an existing customer whose older password predates this
+    // check — let them in; only block creating a NEW account with it.
+    const res = await signInWithPhonePassword(phone, password);
+    if (!res.error) return { ...res, returning: true };
+    return { data: null, error: new Error(weak), code: 'WEAK_PASSWORD', message: weak, returning: false };
+  }
   const { data, error } = await supabase.auth.signUp({
     email, password, options: { data: { full_name: name, whatsapp_number: pretty } },
   });
@@ -1495,6 +1550,12 @@ export const customerPhoneAuth = async ({ name, phone, password }) => {
 };
 
 export const guestAuthWithPassword = async (email, password, metadata) => {
+  const weak = weakPasswordReason(password, metadata?.phone);
+  if (weak) {
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (!error) return { data, error: null, returning: true };
+    return { data: null, error: new Error(weak), returning: false, weak: true };
+  }
   const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
     email,
     password,
@@ -1530,7 +1591,9 @@ export const guestAuthWithPassword = async (email, password, metadata) => {
 // right after signing up, to something they're sure they'll remember.
 // Google-based accounts never see this (no password exists on them to
 // change) — see isPasswordAccount in App.jsx's Settings tab.
-export const updateGuestPassword = async (newPassword) => {
+export const updateGuestPassword = async (newPassword, phone) => {
+  const weak = weakPasswordReason(newPassword, phone);
+  if (weak) return { data: null, error: new Error(weak) };
   const { data, error } = await supabase.auth.updateUser({ password: newPassword });
   if (error) console.error('Error updating password:', error.message);
   return { data, error };
