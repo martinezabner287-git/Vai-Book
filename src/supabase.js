@@ -2052,6 +2052,17 @@ export const reviewMembershipPayment = async (paymentId, status, note) => {
   return true;
 };
 
+// Self-service: start a one-time, 14-day free trial of Solo. Only
+// succeeds once, from the free Trial plan — see start_solo_trial() in the
+// database for the real eligibility/authorization check (this is just a
+// thin wrapper; the error message it returns, e.g. TRIAL_NOT_ELIGIBLE, is
+// what the caller actually relies on).
+export const startSoloTrial = async (providerId) => {
+  const { data, error } = await supabase.rpc('start_solo_trial', { p_provider_id: providerId });
+  if (error) { reportActionError('startSoloTrial', error); console.error('Error starting Solo trial:', error.message); }
+  return { data, error };
+};
+
 export const cancelMembership = async (membershipId) => {
   const { error } = await supabase.rpc('cancel_customer_membership', { p_membership_id: membershipId });
   if (error) { reportActionError('cancelMembership', error); console.error('Error cancelling membership:', error.message); return false; }
