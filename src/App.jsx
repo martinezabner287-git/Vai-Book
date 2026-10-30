@@ -1,6 +1,6 @@
 
 import { useState, useEffect, useLayoutEffect, useRef, useContext, createContext, lazy, Suspense } from "react";
-import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, updateService, deleteService, getActiveProviders, getProviderDirectory, createBooking, getProviderBusyWindows, createBookingSafe, cancelBooking, markBookingCheckedIn, getCustomerBookings, uploadReceipt, submitReview, getProviderReviews, updateReview, sendBookingEmail, updateUserProfile, getPaymentMethods, addPaymentMethod, deletePaymentMethod, createNotification, getNotifications, markNotificationRead, markAllNotificationsRead, getCategoryDefaultFeatures, getProviderFeatureOverrides, setProviderFeatureOverride, getVisitNotes, upsertVisitNote, adminListProviders, adminUpdateProvider, adminDeleteProvider, adminCountCustomers, getFavoriteProviderIds, getFavoriteProviders, addFavorite, removeFavorite, getBookingMessages, sendBookingMessage, markBookingMessagesRead, getUnreadBookingMessages, getProviderMonthlyTrend, createProviderProfile, getProviderById, createWalkInBooking, submitProviderPayment, getMyProviderPayments, adminListProviderPayments, adminReviewProviderPayment, submitBookingRefund, adminListBookingRefunds, openPrivateFile, getProviderStaff, addProviderStaff, updateProviderStaff, deleteProviderStaff, getProviderStaffPublic, getLoyaltyAccount, getProviderLoyaltyCustomers, redeemLoyaltyReward, getMyStaffProfile, claimStaffSeatByEmail, getStaffBookings, getProviderNotifyEmail, getMaintenanceStatus, setMaintenanceMode, getSiteOfflineStatus, setSiteOffline, guestAuthWithPassword, updateGuestPassword, savePushSubscription, attachBookingServices, getProviderBlocks, insertProviderBlock, deleteProviderBlock, proposeBookingReschedule, confirmBookingReschedule, declineBookingReschedule, withdrawBookingReschedule, establishSoloSession, getServerSoloSessionToken, getLocalSoloSessionToken, clearLocalSoloSessionToken, subscribeToSoloSessionReplacement, submitSupportMessage, listSupportMessages, setSupportMessageStatus } from "./supabase";
+import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, updateService, deleteService, getActiveProviders, getProviderDirectory, createBooking, getProviderBusyWindows, createBookingSafe, cancelBooking, markBookingCheckedIn, getCustomerBookings, uploadReceipt, submitReview, getProviderReviews, updateReview, sendBookingEmail, updateUserProfile, getPaymentMethods, addPaymentMethod, deletePaymentMethod, createNotification, getNotifications, markNotificationRead, markAllNotificationsRead, getCategoryDefaultFeatures, getProviderFeatureOverrides, setProviderFeatureOverride, getVisitNotes, upsertVisitNote, adminListProviders, adminUpdateProvider, adminDeleteProvider, adminCountCustomers, getFavoriteProviderIds, getFavoriteProviders, addFavorite, removeFavorite, getBookingMessages, sendBookingMessage, markBookingMessagesRead, getUnreadBookingMessages, getProviderMonthlyTrend, createProviderProfile, getProviderById, createWalkInBooking, submitProviderPayment, getMyProviderPayments, adminListProviderPayments, adminReviewProviderPayment, submitBookingRefund, adminListBookingRefunds, openPrivateFile, getProviderStaff, addProviderStaff, updateProviderStaff, deleteProviderStaff, getProviderStaffPublic, getLoyaltyAccount, getProviderLoyaltyCustomers, redeemLoyaltyReward, getMyStaffProfile, claimStaffSeatByEmail, getStaffBookings, getProviderNotifyEmail, getMaintenanceStatus, setMaintenanceMode, getSiteOfflineStatus, setSiteOffline, guestAuthWithPassword, updateGuestPassword, savePushSubscription, attachBookingServices, getProviderBlocks, insertProviderBlock, deleteProviderBlock, proposeBookingReschedule, confirmBookingReschedule, declineBookingReschedule, withdrawBookingReschedule, establishSoloSession, getServerSoloSessionToken, getLocalSoloSessionToken, clearLocalSoloSessionToken, subscribeToSoloSessionReplacement, submitSupportMessage, listSupportMessages, setSupportMessageStatus, getProviderMembershipPlans, getMyMembershipPlans, createMembershipPlan, updateMembershipPlan, subscribeToMembershipPlan, submitMembershipPayment, getMyMemberships, getProviderMembershipSubscribers, getProviderMembershipPayments, reviewMembershipPayment, cancelMembership, redeemMembershipVisit } from "./supabase";
 import AdminDashboard from "./AdminDashboard";
 import ProfilePhotoModal from "./ProfilePhotoModal";
 import LanguageSelector from "./LanguageSelector";
@@ -2136,6 +2136,16 @@ const css = `
   .multi-fab .totals { font-size: 12px; line-height: 1.4; color: var(--muted); }
   .multi-fab .totals strong { color: var(--dark-text); font-size: 17px; display: block; }
   .service-card-price { font-weight: 800; font-size: 15px; color: var(--text, #16181D); white-space: nowrap; }
+  /* Quantity stepper — replaces .service-card-price once a service has a
+     unit in the cart, so a second (or third) person going together can be
+     added without a separate "duplicate this service" control. Stays a
+     small, deliberately plain pill (not another solid indigo block) for
+     the same "too much purple on one screen" reason .service-card.active
+     above already settled on an outline-only selected state. */
+  .service-card-qty { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+  .service-card-qty button { width: 26px; height: 26px; border-radius: 50%; border: 1.5px solid var(--forest); background: transparent; color: var(--forest); font-size: 15px; font-weight: 800; line-height: 1; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; }
+  .service-card-qty button:hover { background: var(--sand); }
+  .service-card-qty span { min-width: 14px; text-align: center; font-weight: 800; font-size: 14px; color: var(--dark-text); }
   .multi-fab button { background: var(--lime); color: #fff; border: none; padding: 13px 18px; border-radius: 10px; font-weight: 800; font-size: 14px; cursor: pointer; white-space: nowrap; }
 
   /* BOTTOM SHEET (mobile-first — replaces a modal for quick provider actions) */
@@ -8400,6 +8410,19 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
   const [loadingHours, setLoadingHours] = useState(false);
   const [busyWindows, setBusyWindows] = useState([]);
   const [myLoyalty, setMyLoyalty] = useState(null);
+  // MEMBERSHIP PLANS — "customer subscribes to one provider" (see
+  // supabase_membership_plans.sql). providerMembershipPlans is this
+  // provider's own active plan list (public, fetched whenever a provider's
+  // profile opens — see openBooking); myProviderMembership is the signed-in
+  // customer's own membership row against THIS provider specifically, if
+  // any (pending awaiting payment review, active, or cancelled).
+  const [providerMembershipPlans, setProviderMembershipPlans] = useState([]);
+  const [myProviderMembership, setMyProviderMembership] = useState(null);
+  const [subscribingPlanId, setSubscribingPlanId] = useState(null);
+  const [membershipPaymentFile, setMembershipPaymentFile] = useState(null);
+  const [submittingMembershipPayment, setSubmittingMembershipPayment] = useState(false);
+  const [membershipError, setMembershipError] = useState("");
+  const [cancellingMembership, setCancellingMembership] = useState(false);
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [cancellingId, setCancellingId] = useState(null);
   // Set right after a booking goes through — offers a one-tap WhatsApp
@@ -8683,6 +8706,11 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
     setMyLoyalty(null);
     setTeamStaff([]);
     setSelectedStaffId(null);
+    setProviderMembershipPlans([]);
+    setMyProviderMembership(null);
+    setSubscribingPlanId(null);
+    setMembershipPaymentFile(null);
+    setMembershipError("");
     if (provider?.id) {
       setLoadingHours(true);
       getWorkingHours(provider.id).then((hrs) => { setProviderHours(hrs || []); setLoadingHours(false); });
@@ -8694,6 +8722,16 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
       if (provider.allow_staff_selection) {
         setLoadingTeam(true);
         getProviderStaffPublic(provider.id).then((data) => { setTeamStaff(data || []); setLoadingTeam(false); });
+      }
+      // Membership plans — public, fetched regardless of sign-in (same as
+      // services) so the Memberships tab can show even to a guest; the
+      // customer's own membership row only resolves once signed in.
+      getProviderMembershipPlans(provider.id).then((plans) => setProviderMembershipPlans(plans || []));
+      if (user?.id) {
+        getMyMemberships(user.id).then((list) => {
+          const mine = (list || []).find((m) => m.provider_id === provider.id && m.status !== "cancelled" && m.status !== "expired");
+          setMyProviderMembership(mine || null);
+        });
       }
     }
   };
@@ -8740,13 +8778,43 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
   };
 
   // ── Multi-service checkout ────────────────────────────────────────
-  // Tapping a service card (not the "Book" button) toggles it into this
-  // running selection instead of jumping straight into the date/time step —
-  // the sticky total bar below the list is what actually advances.
-  const toggleServiceSelect = (service) => {
-    setSelectedServiceIds((ids) => (ids.includes(service.id) ? ids.filter((id) => id !== service.id) : [...ids, service.id]));
-  };
-  const selectedServicesList = (selectedProvider?.services || []).filter((s) => selectedServiceIds.includes(s.id));
+  // Tapping a service card (not the "Book" button) adds it to this running
+  // selection instead of jumping straight into the date/time step — the
+  // sticky total bar below the list is what actually advances.
+  //
+  // ADDED — quantity support: selectedServiceIds can now hold the SAME
+  // service id more than once (one array entry per unit), so e.g. two
+  // people going together can both get an Infrared Sauna session in one
+  // cart. Previously this was a plain Set-like toggle (in/out), which made
+  // adding a second unit of the same service impossible — tapping the row
+  // again just removed it. addServiceUnit/removeServiceUnit replace that
+  // single toggle; the service-card UI below now shows a −/+ stepper once
+  // a service has at least one unit instead of a single checkmark.
+  const addServiceUnit = (service) => setSelectedServiceIds((ids) => [...ids, service.id]);
+  const removeServiceUnit = (service) => setSelectedServiceIds((ids) => {
+    const idx = ids.lastIndexOf(service.id);
+    if (idx === -1) return ids;
+    const next = [...ids];
+    next.splice(idx, 1);
+    return next;
+  });
+  // Expands selectedServiceIds (which can repeat) into one entry per unit,
+  // each carrying a cartKey distinct from the underlying service's real id
+  // whenever it's a repeat — multiBookingTimes/getMultiServiceSlots/
+  // applyBookTogetherSlot below all key off cartKey (not service.id) so two
+  // units of the same service each get their own date/time slot instead of
+  // silently sharing (and overwriting) one. cartKey === id for every
+  // service's first/only unit, so none of that keying changes for the
+  // still-overwhelmingly-common case of one unit per service.
+  const selectedServicesList = (() => {
+    const counts = {};
+    return selectedServiceIds.map((id) => {
+      const svc = (selectedProvider?.services || []).find((s) => s.id === id);
+      if (!svc) return null;
+      const n = (counts[id] = (counts[id] || 0) + 1);
+      return { ...svc, cartKey: n > 1 ? `${id}#${n}` : id };
+    }).filter(Boolean);
+  })();
   const multiTotalPrice = selectedServicesList.reduce((sum, s) => sum + (Number(s.price) || 0), 0);
   const multiTotalDuration = selectedServicesList.reduce((sum, s) => sum + (Number(s.duration_min) || 0), 0);
 
@@ -8758,7 +8826,7 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
   const proceedToMultiServiceTime = () => {
     if (selectedServicesList.length === 0) return;
     const today = firstOpenDate(providerHours, Math.max(...selectedServicesList.map((s) => Number(s.duration_min) || 30)));
-    setMultiBookingTimes(Object.fromEntries(selectedServicesList.map((s) => [s.id, { date: today, time: "" }])));
+    setMultiBookingTimes(Object.fromEntries(selectedServicesList.map((s) => [s.cartKey, { date: today, time: "" }])));
     setBookingError("");
     setBookingForSomeoneElse(false);
     setRecipientForm({ name: "", whatsapp: "" });
@@ -8784,9 +8852,9 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
         let changed = false;
         const next = { ...prev };
         selectedServicesList.forEach((sv) => {
-          const cur = prev[sv.id];
+          const cur = prev[sv.cartKey];
           const dur = Number(sv.duration_min) || 30;
-          if (cur && !cur.time && !fits(cur.date, dur)) { next[sv.id] = { date: firstOpenDate(providerHours, dur), time: "" }; changed = true; }
+          if (cur && !cur.time && !fits(cur.date, dur)) { next[sv.cartKey] = { date: firstOpenDate(providerHours, dur), time: "" }; changed = true; }
         });
         return changed ? next : prev;
       });
@@ -8834,7 +8902,7 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
   // same date — so two services in the same cart can never be scheduled to
   // overlap each other, not just against the provider's existing calendar.
   const getMultiServiceSlots = (service) => {
-    const picked = multiBookingTimes[service.id];
+    const picked = multiBookingTimes[service.cartKey];
     if (!picked?.date) return [];
     const durationMin = Number(service.duration_min) || 30;
     const dow = new Date(picked.date + "T00:00:00").getDay();
@@ -8849,9 +8917,9 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
       ? { start_time: selectedProvider.lunch_break_start, end_time: minutesToTime(timeToMinutes(selectedProvider.lunch_break_start) + Number(selectedProvider.lunch_break_minutes)) }
       : null;
     const otherPicksSameDay = selectedServicesList
-      .filter((s) => s.id !== service.id && multiBookingTimes[s.id]?.date === picked.date && multiBookingTimes[s.id]?.time)
+      .filter((s) => s.cartKey !== service.cartKey && multiBookingTimes[s.cartKey]?.date === picked.date && multiBookingTimes[s.cartKey]?.time)
       .map((s) => {
-        const t = multiBookingTimes[s.id].time;
+        const t = multiBookingTimes[s.cartKey].time;
         const start = timeToMinutes(t);
         return { start_time: t, end_time: minutesToTime(start + (Number(s.duration_min) || 30)) };
       });
@@ -8899,7 +8967,7 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
     let cursor = timeToMinutes(time);
     const next = {};
     selectedServicesList.forEach((s) => {
-      next[s.id] = { date, time: minutesToTime(cursor) };
+      next[s.cartKey] = { date, time: minutesToTime(cursor) };
       cursor += Number(s.duration_min) || 30;
     });
     setMultiBookingTimes(next);
@@ -9051,16 +9119,83 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
     }
   };
 
+  // ── MEMBERSHIP PLANS — subscribe / pay / cancel ─────────────────────
+  // Whether the customer's ACTIVE membership with this provider covers a
+  // given service — used client-side to show "Covered by your membership"
+  // before booking. Doesn't check remaining visit quota (visit_limit): that
+  // check is only ever authoritative server-side, inside
+  // redeem_membership_visit's row-locked read (see createOneBooking below)
+  // — a stale client-side count could otherwise let someone see "covered"
+  // right up until the actual redemption call correctly declines it.
+  const membershipCoversService = (service) => {
+    if (!myProviderMembership || myProviderMembership.status !== "active" || !service) return false;
+    const plan = myProviderMembership.membership_plans;
+    if (!plan) return false;
+    const included = plan.included_service_ids;
+    return !included || included.length === 0 || included.includes(service.id);
+  };
+
+  const startMembershipSubscribe = async (plan) => {
+    setMembershipError("");
+    try {
+      const newId = await subscribeToMembershipPlan(plan.id);
+      setMyProviderMembership({
+        id: newId, status: "pending", plan_id: plan.id, visits_used: 0,
+        membership_plans: plan, provider_id: selectedProvider.id, customer_id: user?.id,
+        period_start: null, period_end: null,
+      });
+      setSubscribingPlanId(plan.id);
+    } catch (err) {
+      setMembershipError(err?.code === "ALREADY_SUBSCRIBED"
+        ? t("customerPortal.profile.membershipAlreadySubscribed")
+        : t("customerPortal.profile.membershipSubscribeFailed"));
+    }
+  };
+
+  const submitMembershipReceipt = async () => {
+    if (!membershipPaymentFile || !myProviderMembership || !user?.id) return;
+    const plan = providerMembershipPlans.find((p) => p.id === subscribingPlanId) || myProviderMembership.membership_plans;
+    setSubmittingMembershipPayment(true);
+    const ok = await submitMembershipPayment(myProviderMembership.id, selectedProvider.id, user.id, membershipPaymentFile, {
+      amount: plan?.price,
+      periodLabel: new Date().toLocaleDateString(undefined, { month: "long", year: "numeric" }),
+    });
+    setSubmittingMembershipPayment(false);
+    if (ok) {
+      setSubscribingPlanId(null);
+      setMembershipPaymentFile(null);
+    } else {
+      setMembershipError(t("customerPortal.profile.membershipPaymentFailed"));
+    }
+  };
+
+  const cancelMyMembership = async () => {
+    if (!myProviderMembership) return;
+    setCancellingMembership(true);
+    const ok = await cancelMembership(myProviderMembership.id);
+    setCancellingMembership(false);
+    if (ok) setMyProviderMembership((m) => (m ? { ...m, status: "cancelled" } : m));
+  };
+
   // Creates one booking (service_id/date/time/total/downpayment) via the
   // hardened create_booking_safe RPC, then fires the provider notification +
   // email. Shared by the single-service flow below and, called once per
   // service in sequence, by submitMultiServiceBooking — the per-booking
   // logic (deposit math, notification copy, email) is identical either way,
-  // only which service/date/time/notes feed it differs.
-  const createOneBooking = async ({ bookingCustomerId, service, dateStr, timeStr, notes, staffId }) => {
-    const total = Number(service.price) || 0;
+  // only which service/date/time/notes/membership coverage feed it differs.
+  //
+  // membershipId, when passed, attempts to redeem one visit from that
+  // membership (server-side, race-safe — see redeem_membership_visit) and,
+  // if it succeeds, zeroes this booking's price and waives any downpayment.
+  // If redemption is declined (quota ran out, membership lapsed since the
+  // page loaded, etc.) this silently falls back to the service's normal
+  // price instead of erroring the whole booking out — the customer still
+  // gets their appointment, just not comped.
+  const createOneBooking = async ({ bookingCustomerId, service, dateStr, timeStr, notes, staffId, membershipId }) => {
+    const coveredByMembership = membershipId ? await redeemMembershipVisit(membershipId) : false;
+    const total = coveredByMembership ? 0 : (Number(service.price) || 0);
     const dpPct = selectedProvider.downpayment_required ? (selectedProvider.downpayment_pct || 50) : 0;
-    const downpayment = dpPct ? Math.round(total * dpPct) / 100 : null;
+    const downpayment = (dpPct && !coveredByMembership) ? Math.round(total * dpPct) / 100 : null;
     const order_number = `VB-${Date.now().toString(36).toUpperCase()}${Math.random().toString(36).slice(2, 5).toUpperCase()}`;
     const created = await createBookingSafe({
       order_number,
@@ -9086,6 +9221,10 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
       // already has, same as any walk-in squeezed onto the calendar today.
       created.staff_id = staffId;
       await updateBooking(created.id, { staff_id: staffId });
+    }
+    if (created && coveredByMembership) {
+      created.covered_by_membership = true;
+      await updateBooking(created.id, { covered_by_membership: true });
     }
     if (created) {
       // FIXED — these used to be awaited one after another (in-app
@@ -9172,7 +9311,7 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
 
     let created = null;
     try {
-      created = await createOneBooking({ bookingCustomerId, service, dateStr: bookingForm.date, timeStr: bookingForm.time, notes: notesToSend, staffId: selectedStaffId });
+      created = await createOneBooking({ bookingCustomerId, service, dateStr: bookingForm.date, timeStr: bookingForm.time, notes: notesToSend, staffId: selectedStaffId, membershipId: membershipCoversService(service) ? myProviderMembership.id : null });
     } catch (err) {
       setSubmittingBooking(false);
       if (err?.code === "SLOT_TAKEN") {
@@ -9225,7 +9364,7 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
     if (providerProfile) { setBookingError(t("customerPortal.booking.providerCannotBook")); return; }
     const bookingCustomerId = overrideCustomerId || user?.id;
     if (!bookingCustomerId) { setBookingError(t("customerPortal.booking.signInAgain")); return; }
-    const missingTime = selectedServicesList.find((s) => !multiBookingTimes[s.id]?.date || !multiBookingTimes[s.id]?.time);
+    const missingTime = selectedServicesList.find((s) => !multiBookingTimes[s.cartKey]?.date || !multiBookingTimes[s.cartKey]?.time);
     if (missingTime) {
       setBookingError(t("customerPortal.booking.chooseTimeForEach", { service: missingTime.name }));
       return;
@@ -9233,8 +9372,8 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
     for (const s of selectedServicesList) {
       const check = validate(bookingRequestSchema, {
         service_id: s.id,
-        date: multiBookingTimes[s.id].date,
-        time: multiBookingTimes[s.id].time,
+        date: multiBookingTimes[s.cartKey].date,
+        time: multiBookingTimes[s.cartKey].time,
         notes: bookingForm.notes || null,
       });
       if (!check.ok) { setBookingError(check.message); return; }
@@ -9250,10 +9389,10 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
 
     const createdSoFar = [];
     for (const service of selectedServicesList) {
-      const { date: dateStr, time: timeStr } = multiBookingTimes[service.id];
+      const { date: dateStr, time: timeStr } = multiBookingTimes[service.cartKey];
       let created = null;
       try {
-        created = await createOneBooking({ bookingCustomerId, service, dateStr, timeStr, notes: notesToSend, staffId: selectedStaffId });
+        created = await createOneBooking({ bookingCustomerId, service, dateStr, timeStr, notes: notesToSend, staffId: selectedStaffId, membershipId: membershipCoversService(service) ? myProviderMembership.id : null });
       } catch (err) {
         // Undo everything already created in this same cart — the customer
         // only ever clicked "Request booking" once, so a failure on service
@@ -9264,7 +9403,7 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
         if (err?.code === "SLOT_TAKEN") {
           setBookingError(t("customerPortal.booking.multiSlotTaken", { service: service.name }));
           setMultiBusyWindowsByDate((prev) => { const next = { ...prev }; delete next[dateStr]; return next; });
-          setMultiBookingTimes((prev) => ({ ...prev, [service.id]: { ...prev[service.id], time: "" } }));
+          setMultiBookingTimes((prev) => ({ ...prev, [service.cartKey]: { ...prev[service.cartKey], time: "" } }));
         } else if (err?.code === "RATE_LIMITED") {
           setBookingError(t("customerPortal.booking.rateLimited"));
         } else if (err?.code === "MAINTENANCE_MODE") {
@@ -10666,6 +10805,7 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                         {[
                           { id: "services", label: t("customerPortal.profile.tabServices") },
                           ...(selectedProvider.allow_staff_selection ? [{ id: "team", label: t("customerPortal.profile.tabTeam") }] : []),
+                          ...(providerMembershipPlans.length > 0 ? [{ id: "memberships", label: t("customerPortal.profile.tabMemberships") }] : []),
                           { id: "portfolio", label: t("customerPortal.profile.tabPortfolio") },
                           { id: "reviews", label: t("customerPortal.profile.tabReviews") },
                           { id: "about", label: t("customerPortal.profile.tabAbout") },
@@ -10785,9 +10925,9 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                                     )}
                                   </div>
                                   {selectedServicesList.map((service) => {
-                                    const picked = multiBookingTimes[service.id];
+                                    const picked = multiBookingTimes[service.cartKey];
                                     return (
-                                      <div key={service.id} style={{ display: "flex", justifyContent: "space-between", fontSize: 12.5, color: "var(--muted)", padding: "4px 2px" }}>
+                                      <div key={service.cartKey} style={{ display: "flex", justifyContent: "space-between", fontSize: 12.5, color: "var(--muted)", padding: "4px 2px" }}>
                                         <span>{service.name}</span>
                                         <span>{picked?.time ? formatTimeLabel(picked.time) : "—"}</span>
                                       </div>
@@ -10798,22 +10938,22 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                                 <>
                                   {selectedServicesList.length > 1 && <p style={{ fontSize: 12, color: "var(--muted)", margin: "0 0 18px" }}>{t("customerPortal.booking.eachServiceOwnTime")}</p>}
                                   {selectedServicesList.map((service) => {
-                                    const picked = multiBookingTimes[service.id] || { date: localDateStr(), time: "" };
+                                    const picked = multiBookingTimes[service.cartKey] || { date: localDateStr(), time: "" };
                                     const slots = getMultiServiceSlots(service);
                                     return (
-                                      <div key={service.id} style={{ border: "1px solid var(--border)", borderRadius: 12, padding: "14px 16px", marginBottom: 14 }}>
+                                      <div key={service.cartKey} style={{ border: "1px solid var(--border)", borderRadius: 12, padding: "14px 16px", marginBottom: 14 }}>
                                         <div style={{ fontSize: 13, marginBottom: 12 }}>
                                           <strong>{service.name}</strong> — BZ${service.price} · {t("customerPortal.booking.durationMin", { count: service.duration_min })}
                                         </div>
                                         <div className="input-group">
                                           <label>{t("customerPortal.booking.date")}</label>
-                                          <DayStrip hours={providerHours} durationMin={Number(service.duration_min) || 30} value={picked.date} onChange={(ds) => setMultiBookingTimes(prev => ({ ...prev, [service.id]: { date: ds, time: "" } }))} />
+                                          <DayStrip hours={providerHours} durationMin={Number(service.duration_min) || 30} value={picked.date} onChange={(ds) => setMultiBookingTimes(prev => ({ ...prev, [service.cartKey]: { date: ds, time: "" } }))} />
                                           <input
                                             type="date"
                                             className="day-strip-other"
                                             min={localDateStr()}
                                             value={picked.date}
-                                            onChange={e => setMultiBookingTimes(prev => ({ ...prev, [service.id]: { date: e.target.value, time: "" } }))}
+                                            onChange={e => setMultiBookingTimes(prev => ({ ...prev, [service.cartKey]: { date: e.target.value, time: "" } }))}
                                           />
                                         </div>
                                         <div className="input-group">
@@ -10830,7 +10970,7 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                                                 <button
                                                   type="button"
                                                   key={t}
-                                                  onClick={() => setMultiBookingTimes(prev => ({ ...prev, [service.id]: { ...prev[service.id], time: t } }))}
+                                                  onClick={() => setMultiBookingTimes(prev => ({ ...prev, [service.cartKey]: { ...prev[service.cartKey], time: t } }))}
                                                   className="btn-sm"
                                                   style={{
                                                     padding: "11px 4px",
@@ -11112,18 +11252,36 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                           <div>
                             <p style={{ fontSize: 12.5, color: "var(--muted)", margin: "0 0 6px" }}>{(i18n.language || "").toLowerCase().startsWith("es") ? "Toca lo que quieres. Puedes elegir más de uno." : "Tap what you'd like. You can pick more than one."}</p>
                             {(selectedProvider.services || []).filter(s => s.is_active !== false).map(s => {
-                              const active = selectedServiceIds.includes(s.id);
+                              // ADDED — quantity stepper: a plain tap still adds the
+                              // first unit (and still reads as a toggle for anyone
+                              // who only ever wants one), but once a service has a
+                              // unit in the cart, the price on the right is replaced
+                              // by −/+ controls instead of the row just going inert —
+                              // that's what actually lets e.g. two people going
+                              // together each get their own Infrared Sauna session in
+                              // the same booking. See addServiceUnit/removeServiceUnit.
+                              const qty = selectedServiceIds.filter((id) => id === s.id).length;
+                              const active = qty > 0;
                               return (
-                                <div key={s.id} className={`service-card ${active ? "active" : ""}`} onClick={() => toggleServiceSelect(s)}>
+                                <div key={s.id} className={`service-card ${active ? "active" : ""}`} onClick={() => { if (!active) addServiceUnit(s); }}>
                                   <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                                     <span className="service-card-check">✓</span>
                                     <div>
                                       <div className="service-card-name" style={{ fontWeight: 600, fontSize: 14, color: "var(--dark-text)" }}>{s.name}</div>
                                       <div className="service-card-meta" style={{ fontSize: 12, color: "var(--muted)" }}>{t("customerPortal.booking.durationMin", { count: s.duration_min })} · BZ${s.price}</div>
                                       {s.description && <div style={{ fontSize: 12.5, color: "var(--muted)", marginTop: 3, maxWidth: 280 }}>{s.description}</div>}
+                                      {membershipCoversService(s) && <div style={{ fontSize: 11.5, color: "var(--forest)", fontWeight: 700, marginTop: 3 }}>✓ {t("customerPortal.booking.coveredByMembership")}</div>}
                                     </div>
                                   </div>
-                                  <span className="service-card-price">BZ${s.price}</span>
+                                  {active ? (
+                                    <div className="service-card-qty" onClick={(e) => e.stopPropagation()}>
+                                      <button type="button" onClick={() => removeServiceUnit(s)} aria-label={t("customerPortal.booking.qtyDecrease")}>−</button>
+                                      <span>{qty}</span>
+                                      <button type="button" onClick={() => addServiceUnit(s)} aria-label={t("customerPortal.booking.qtyIncrease")}>+</button>
+                                    </div>
+                                  ) : (
+                                    <span className="service-card-price">BZ${s.price}</span>
+                                  )}
                                 </div>
                               );
                             })}
@@ -11139,6 +11297,82 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                           </div>
                         )
                       )
+                    )}
+
+                    {profileTab === "memberships" && (
+                      <div>
+                        {membershipError && <p style={{ fontSize: 12.5, color: "#B91C1C", margin: "0 0 10px" }}>{membershipError}</p>}
+                        {myProviderMembership && myProviderMembership.status !== "cancelled" && (
+                          <div style={{ background: "var(--sand)", borderRadius: 12, padding: "14px 16px", marginBottom: 16 }}>
+                            {myProviderMembership.status === "pending" ? (
+                              <p style={{ fontSize: 13, margin: 0, color: "var(--dark-text)" }}>{t("customerPortal.profile.membershipPendingReview")}</p>
+                            ) : (
+                              <>
+                                <p style={{ fontSize: 13, fontWeight: 700, margin: "0 0 4px", color: "var(--dark-text)" }}>✓ {myProviderMembership.membership_plans?.name}</p>
+                                <p style={{ fontSize: 12.5, color: "var(--muted)", margin: 0 }}>
+                                  {myProviderMembership.membership_plans?.visit_limit
+                                    ? t("customerPortal.profile.membershipVisitsUsed", { used: myProviderMembership.visits_used, limit: myProviderMembership.membership_plans.visit_limit })
+                                    : t("customerPortal.profile.membershipUnlimited")}
+                                  {myProviderMembership.period_end ? ` · ${t("customerPortal.profile.membershipRenews", { date: formatBookingDate(myProviderMembership.period_end) })}` : ""}
+                                </p>
+                                <span
+                                  style={{ fontSize: 12, color: "var(--clay)", cursor: cancellingMembership ? "default" : "pointer", fontWeight: 600, display: "inline-block", marginTop: 8, opacity: cancellingMembership ? 0.6 : 1 }}
+                                  onClick={() => { if (!cancellingMembership) cancelMyMembership(); }}
+                                >
+                                  {cancellingMembership ? t("customerPortal.settings.saving") : t("customerPortal.profile.membershipCancel")}
+                                </span>
+                              </>
+                            )}
+                          </div>
+                        )}
+                        {providerMembershipPlans
+                          .filter((plan) => !myProviderMembership || myProviderMembership.status === "cancelled" || myProviderMembership.plan_id !== plan.id)
+                          .map((plan) => (
+                            <div key={plan.id} className="service-card" style={{ cursor: "default" }}>
+                              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                                <div>
+                                  <div className="service-card-name" style={{ fontWeight: 700, fontSize: 14, color: "var(--dark-text)" }}>{plan.name}</div>
+                                  <div className="service-card-meta" style={{ fontSize: 12, color: "var(--muted)" }}>
+                                    {plan.visit_limit ? t("customerPortal.profile.membershipVisitsPerMonth", { count: plan.visit_limit }) : t("customerPortal.profile.membershipUnlimited")}
+                                  </div>
+                                  {plan.description && <div style={{ fontSize: 12.5, color: "var(--muted)", marginTop: 3, maxWidth: 280 }}>{plan.description}</div>}
+                                </div>
+                              </div>
+                              <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6 }}>
+                                <span className="service-card-price">BZ${plan.price}{t("customerPortal.profile.membershipPerMonth")}</span>
+                                {(!myProviderMembership || myProviderMembership.status === "cancelled") && (
+                                  <button
+                                    className="btn-sm forest"
+                                    disabled={!user?.id}
+                                    onClick={() => (user?.id ? startMembershipSubscribe(plan) : onSignIn())}
+                                  >
+                                    {user?.id ? t("customerPortal.profile.membershipSubscribe") : t("customerPortal.profile.membershipSignInToSubscribe")}
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        {subscribingPlanId && (
+                          <div style={{ border: "1px solid var(--border)", borderRadius: 12, padding: "14px 16px", marginTop: 10 }}>
+                            <p style={{ fontSize: 13, fontWeight: 700, margin: "0 0 8px", color: "var(--dark-text)" }}>{t("customerPortal.profile.membershipPayTitle")}</p>
+                            <p style={{ fontSize: 12.5, color: "var(--muted)", margin: "0 0 10px" }}>{t("customerPortal.profile.membershipPayInstructions")}</p>
+                            {(selectedProvider.bank_name || selectedProvider.account_number) && (
+                              <div style={{ fontSize: 12.5, color: "var(--dark-text)", background: "var(--sand)", borderRadius: 8, padding: "8px 10px", marginBottom: 10 }}>
+                                {selectedProvider.bank_name && <div>{t("customerPortal.profile.membershipBank")}: {selectedProvider.bank_name}</div>}
+                                {selectedProvider.account_name && <div>{t("customerPortal.profile.membershipAccountName")}: {selectedProvider.account_name}</div>}
+                                {selectedProvider.account_number && <div>{t("customerPortal.profile.membershipAccountNumber")}: {selectedProvider.account_number}</div>}
+                              </div>
+                            )}
+                            <input type="file" accept="image/*,.pdf" onChange={(e) => setMembershipPaymentFile(e.target.files?.[0] || null)} />
+                            <div style={{ display: "flex", gap: 10, marginTop: 10 }}>
+                              <button className="btn-primary" disabled={!membershipPaymentFile || submittingMembershipPayment} onClick={submitMembershipReceipt}>
+                                {submittingMembershipPayment ? t("customerPortal.settings.saving") : t("customerPortal.profile.membershipSubmitReceipt")}
+                              </button>
+                              <button className="btn-ghost" disabled={submittingMembershipPayment} onClick={() => setSubscribingPlanId(null)}>{t("customerPortal.common.cancel")}</button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     )}
 
                     {profileTab === "team" && (
@@ -11703,6 +11937,21 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
   const [editingServiceId, setEditingServiceId] = useState(null);
   const [editServiceForm, setEditServiceForm] = useState({ name: "", price: "", duration_min: 15, description: "" });
   const [savingServiceEdit, setSavingServiceEdit] = useState(false);
+  // MEMBERSHIP PLANS — provider side (create/edit plans, review payments,
+  // see subscribers). See supabase_membership_plans.sql +
+  // customerPortal's own Memberships tab (the subscribe side) in
+  // CustomerPortal above.
+  const [membershipPlans, setMembershipPlans] = useState([]);
+  const [membershipSubscribers, setMembershipSubscribers] = useState([]);
+  const [membershipPaymentsQueue, setMembershipPaymentsQueue] = useState([]);
+  const [loadingMemberships, setLoadingMemberships] = useState(false);
+  const [planForm, setPlanForm] = useState({ name: "", price: "", visitLimit: "", description: "", includedServiceIds: [] });
+  const [savingPlan, setSavingPlan] = useState(false);
+  const [planError, setPlanError] = useState("");
+  const [editingPlanId, setEditingPlanId] = useState(null);
+  const [editPlanForm, setEditPlanForm] = useState({ name: "", price: "", visitLimit: "", description: "", includedServiceIds: [] });
+  const [savingPlanEdit, setSavingPlanEdit] = useState(false);
+  const [reviewingMembershipPaymentId, setReviewingMembershipPaymentId] = useState(null);
   const [respondingId, setRespondingId] = useState(null);
   const [responseType, setResponseType] = useState(null);
   const [responseMessage, setResponseMessage] = useState("");
@@ -12498,6 +12747,79 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
     }
   }, [providerProfile]);
 
+  // MEMBERSHIP PLANS — loaded separately from the big profile-load effect
+  // above (no embed for these on providerProfile) whenever the provider id
+  // is known, same trigger the Staff tab's own loadStaff() effect uses.
+  const loadMemberships = async () => {
+    if (!providerProfile?.id) return;
+    setLoadingMemberships(true);
+    const [plans, subs, payments] = await Promise.all([
+      getMyMembershipPlans(providerProfile.id),
+      getProviderMembershipSubscribers(providerProfile.id),
+      getProviderMembershipPayments(providerProfile.id),
+    ]);
+    setMembershipPlans(plans || []);
+    setMembershipSubscribers(subs || []);
+    setMembershipPaymentsQueue(payments || []);
+    setLoadingMemberships(false);
+  };
+  useEffect(() => { loadMemberships(); }, [providerProfile?.id]);
+
+  const handleAddPlan = async () => {
+    if (!planForm.name.trim() || !planForm.price) return;
+    setSavingPlan(true);
+    setPlanError("");
+    const created = await createMembershipPlan(providerProfile.id, {
+      name: planForm.name.trim(),
+      description: planForm.description,
+      price: Number(planForm.price) || 0,
+      visitLimit: planForm.visitLimit ? Number(planForm.visitLimit) : null,
+      includedServiceIds: planForm.includedServiceIds,
+    });
+    setSavingPlan(false);
+    if (created) {
+      setMembershipPlans((prev) => [...prev, created]);
+      setPlanForm({ name: "", price: "", visitLimit: "", description: "", includedServiceIds: [] });
+    } else {
+      setPlanError(t("providerPortal.memberships.saveFailed"));
+    }
+  };
+
+  const handleStartEditPlan = (plan) => {
+    setEditingPlanId(plan.id);
+    setEditPlanForm({
+      name: plan.name, price: String(plan.price), visitLimit: plan.visit_limit ? String(plan.visit_limit) : "",
+      description: plan.description || "", includedServiceIds: plan.included_service_ids || [],
+    });
+  };
+  const handleCancelEditPlan = () => setEditingPlanId(null);
+  const handleSaveEditPlan = async (planId) => {
+    setSavingPlanEdit(true);
+    const updated = await updateMembershipPlan(planId, {
+      name: editPlanForm.name.trim(),
+      description: editPlanForm.description,
+      price: Number(editPlanForm.price) || 0,
+      visitLimit: editPlanForm.visitLimit ? Number(editPlanForm.visitLimit) : null,
+      includedServiceIds: editPlanForm.includedServiceIds,
+    });
+    setSavingPlanEdit(false);
+    if (updated) {
+      setMembershipPlans((prev) => prev.map((p) => (p.id === planId ? updated : p)));
+      setEditingPlanId(null);
+    }
+  };
+  const handleTogglePlanActive = async (plan) => {
+    const updated = await updateMembershipPlan(plan.id, { isActive: !plan.is_active });
+    if (updated) setMembershipPlans((prev) => prev.map((p) => (p.id === plan.id ? updated : p)));
+  };
+
+  const handleReviewMembershipPayment = async (paymentId, status) => {
+    setReviewingMembershipPaymentId(paymentId);
+    const ok = await reviewMembershipPayment(paymentId, status);
+    setReviewingMembershipPaymentId(null);
+    if (ok) await loadMemberships();
+  };
+
   const act = async (id, status) => {
     const target = bookings.find((b) => b.id === id);
     // Cancelling and marking a no-show both end a booking the provider
@@ -13207,6 +13529,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
       label: t("providerPortal.nav.groupOperations"),
       items: [
         { id: "services", icon: "✂️", label: t("providerPortal.nav.services") },
+        { id: "memberships", icon: "🎟️", label: t("providerPortal.nav.memberships") },
         { id: "calendar", icon: "🗓️", label: t("providerPortal.nav.availability") },
         { id: "staff", icon: "👥", label: t("providerPortal.nav.staff") },
         { id: "earnings", icon: "💰", label: t("providerPortal.nav.earnings") },
@@ -14676,6 +14999,155 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                 {serviceError && <p className={serviceError === st("serviceDescriptionSkipped") ? "mk-success" : "agree-error"} style={{ wordBreak: "break-word" }}>{serviceError}</p>}
               </div>
             </div>
+          </>
+        )}
+
+        {tab === "memberships" && (
+          <>
+            <div className="portal-header"><h2>{t("providerPortal.nav.memberships")}</h2><p>{t("providerPortal.memberships.subtitle")}</p></div>
+
+            {membershipPaymentsQueue.some((p) => p.status === "pending") && (
+              <div className="card" style={{ maxWidth: 560, marginBottom: 20 }}>
+                <div className="card-title">{t("providerPortal.memberships.paymentsToReview")}</div>
+                {membershipPaymentsQueue.filter((p) => p.status === "pending").map((p) => (
+                  <div key={p.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: "1px solid var(--border)" }}>
+                    <div>
+                      <div style={{ fontSize: 14, fontWeight: 600 }}>{p.users?.full_name || p.users?.email || t("providerPortal.memberships.unknownCustomer")}</div>
+                      <div style={{ fontSize: 12, color: "var(--muted)" }}>{p.customer_memberships?.membership_plans?.name} · BZ${p.amount} · {p.period_label}</div>
+                      {p.receipt_url && (
+                        <span style={{ fontSize: 12, color: "var(--forest)", cursor: "pointer", fontWeight: 600 }} onClick={() => openPrivateFile(p.receipt_url)}>
+                          {t("providerPortal.common.viewReceipt")}
+                        </span>
+                      )}
+                    </div>
+                    <div style={{ display: "flex", gap: 8 }}>
+                      <button className="btn-sm lime" disabled={reviewingMembershipPaymentId === p.id} onClick={() => handleReviewMembershipPayment(p.id, "confirmed")}>{t("providerPortal.memberships.approve")}</button>
+                      <button className="btn-sm ghost" disabled={reviewingMembershipPaymentId === p.id} onClick={() => handleReviewMembershipPayment(p.id, "rejected")}>{t("providerPortal.memberships.reject")}</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div className="card" style={{ maxWidth: 560 }}>
+              <div className="card-title">{t("providerPortal.memberships.yourPlans")}</div>
+              {!loadingMemberships && membershipPlans.length === 0 && (
+                <p style={{ fontSize: 13, color: "var(--muted)", padding: "12px 0" }}>{t("providerPortal.memberships.noneYet")}</p>
+              )}
+              {membershipPlans.map((plan) => (
+                <div className="provider-service" key={plan.id} style={{ display: "block" }}>
+                  {editingPlanId === plan.id ? (
+                    <div style={{ padding: "8px 0" }}>
+                      <div className="input-group"><label>{t("providerPortal.memberships.planName")}</label><input value={editPlanForm.name} onChange={e => setEditPlanForm(f => ({ ...f, name: e.target.value }))} /></div>
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                        <div className="input-group"><label>{t("providerPortal.memberships.priceMonthly")}</label><input type="number" value={editPlanForm.price} onChange={e => setEditPlanForm(f => ({ ...f, price: e.target.value }))} /></div>
+                        <div className="input-group"><label>{t("providerPortal.memberships.visitLimit")}</label><input type="number" placeholder={t("providerPortal.memberships.unlimitedPlaceholder")} value={editPlanForm.visitLimit} onChange={e => setEditPlanForm(f => ({ ...f, visitLimit: e.target.value }))} /></div>
+                      </div>
+                      <div className="input-group">
+                        <label>{t("providerPortal.memberships.descriptionLabel")}</label>
+                        <textarea rows={2} value={editPlanForm.description} onChange={e => setEditPlanForm(f => ({ ...f, description: e.target.value }))} />
+                      </div>
+                      <div className="input-group">
+                        <label>{t("providerPortal.memberships.coveredServices")}</label>
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                          {services.map((s) => (
+                            <label key={s.id} style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12.5, color: "var(--dark-text)" }}>
+                              <input
+                                type="checkbox"
+                                checked={editPlanForm.includedServiceIds.includes(s.id)}
+                                onChange={(e) => setEditPlanForm((f) => ({
+                                  ...f,
+                                  includedServiceIds: e.target.checked ? [...f.includedServiceIds, s.id] : f.includedServiceIds.filter((id) => id !== s.id),
+                                }))}
+                              />
+                              {s.name}
+                            </label>
+                          ))}
+                        </div>
+                        <p style={{ fontSize: 11.5, color: "var(--muted)", margin: "4px 0 0" }}>{t("providerPortal.memberships.coveredServicesHint")}</p>
+                      </div>
+                      <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+                        <button className="btn-sm lime" disabled={savingPlanEdit || !editPlanForm.name.trim()} onClick={() => handleSaveEditPlan(plan.id)}>{savingPlanEdit ? t("providerPortal.common.saving") : t("providerPortal.common.save")}</button>
+                        <button className="btn-sm ghost" onClick={handleCancelEditPlan}>{t("providerPortal.common.cancel")}</button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                      <div>
+                        <div style={{ fontSize: 14, fontWeight: 600 }}>
+                          {plan.name}
+                          {!plan.is_active && <span style={{ marginLeft: 8, fontSize: 11, fontWeight: 700, color: "var(--muted)" }}>{t("providerPortal.memberships.paused")}</span>}
+                        </div>
+                        <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 2 }}>
+                          {plan.visit_limit ? t("providerPortal.memberships.visitsPerMonth", { count: plan.visit_limit }) : t("providerPortal.memberships.unlimitedVisits")}
+                          {plan.included_service_ids?.length ? ` · ${t("providerPortal.memberships.someServicesCovered", { count: plan.included_service_ids.length })}` : ` · ${t("providerPortal.memberships.allServicesCovered")}`}
+                        </div>
+                        {plan.description && <div style={{ fontSize: 12.5, color: "var(--muted)", marginTop: 4, maxWidth: 320 }}>{plan.description}</div>}
+                      </div>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <span style={{ fontWeight: 700, color: "var(--accent-text)" }}>BZ${plan.price}/mo</span>
+                        <button className="btn-sm ghost" style={{ fontSize: 12 }} onClick={() => handleStartEditPlan(plan)}>{t("providerPortal.common.edit")}</button>
+                        <button className="btn-sm ghost" style={{ fontSize: 12 }} onClick={() => handleTogglePlanActive(plan)}>{plan.is_active ? t("providerPortal.memberships.pause") : t("providerPortal.memberships.resume")}</button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+              <div style={{ marginTop: 20, paddingTop: 16, borderTop: "1px solid var(--border)" }}>
+                <div className="card-title">{t("providerPortal.memberships.addPlan")}</div>
+                <div className="input-group"><label>{t("providerPortal.memberships.planName")}</label><input placeholder={t("providerPortal.memberships.planNamePlaceholder")} value={planForm.name} onChange={e => setPlanForm(f => ({ ...f, name: e.target.value }))} /></div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                  <div className="input-group"><label>{t("providerPortal.memberships.priceMonthly")}</label><input type="number" placeholder="0" value={planForm.price} onChange={e => setPlanForm(f => ({ ...f, price: e.target.value }))} /></div>
+                  <div className="input-group"><label>{t("providerPortal.memberships.visitLimit")}</label><input type="number" placeholder={t("providerPortal.memberships.unlimitedPlaceholder")} value={planForm.visitLimit} onChange={e => setPlanForm(f => ({ ...f, visitLimit: e.target.value }))} /></div>
+                </div>
+                <div className="input-group">
+                  <label>{t("providerPortal.memberships.descriptionLabel")}</label>
+                  <textarea rows={2} placeholder={t("providerPortal.memberships.descriptionPlaceholder")} value={planForm.description} onChange={e => setPlanForm(f => ({ ...f, description: e.target.value }))} />
+                </div>
+                {services.length > 0 && (
+                  <div className="input-group">
+                    <label>{t("providerPortal.memberships.coveredServices")}</label>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                      {services.map((s) => (
+                        <label key={s.id} style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12.5, color: "var(--dark-text)" }}>
+                          <input
+                            type="checkbox"
+                            checked={planForm.includedServiceIds.includes(s.id)}
+                            onChange={(e) => setPlanForm((f) => ({
+                              ...f,
+                              includedServiceIds: e.target.checked ? [...f.includedServiceIds, s.id] : f.includedServiceIds.filter((id) => id !== s.id),
+                            }))}
+                          />
+                          {s.name}
+                        </label>
+                      ))}
+                    </div>
+                    <p style={{ fontSize: 11.5, color: "var(--muted)", margin: "4px 0 0" }}>{t("providerPortal.memberships.coveredServicesHint")}</p>
+                  </div>
+                )}
+                <button className="btn-sm lime" onClick={handleAddPlan} disabled={savingPlan || !planForm.name.trim() || !planForm.price}>{savingPlan ? t("providerPortal.common.adding") : t("providerPortal.memberships.addPlan")}</button>
+                {planError && <p className="agree-error" style={{ wordBreak: "break-word" }}>{planError}</p>}
+              </div>
+            </div>
+
+            {membershipSubscribers.length > 0 && (
+              <div className="card" style={{ maxWidth: 560, marginTop: 20 }}>
+                <div className="card-title">{t("providerPortal.memberships.subscribers")}</div>
+                {membershipSubscribers.map((m) => (
+                  <div key={m.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: "1px solid var(--border)" }}>
+                    <div>
+                      <div style={{ fontSize: 14, fontWeight: 600 }}>{m.users?.full_name || m.users?.email || t("providerPortal.memberships.unknownCustomer")}</div>
+                      <div style={{ fontSize: 12, color: "var(--muted)" }}>
+                        {m.membership_plans?.name} ·{" "}
+                        {m.status === "active"
+                          ? (m.membership_plans?.visit_limit ? t("providerPortal.memberships.visitsUsed", { used: m.visits_used, limit: m.membership_plans.visit_limit }) : t("providerPortal.memberships.unlimitedVisits"))
+                          : t(`providerPortal.memberships.status_${m.status}`)}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </>
         )}
 
