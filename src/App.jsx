@@ -3015,6 +3015,14 @@ const css = `
 
 
 
+
+  /* ===== BUSINESS PROFILE AS A FULL PAGE (not a pop-up) ===== */
+  .modal-overlay.profile-page { background: #FFFFFF; padding: 0; display: block; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
+  .profile-page .modal-panel.profile-panel { max-width: 1080px; width: 100%; margin: 0 auto; max-height: none; min-height: 100%; border-radius: 0; overflow: visible; box-shadow: none; }
+  .profile-topbar { position: sticky; top: 0; z-index: 6; display: flex; align-items: center; gap: 12px; padding: 10px 16px; background: rgba(255,255,255,0.96); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border-bottom: 1px solid var(--border); }
+  .profile-back { border: none; background: none; font: inherit; font-weight: 700; font-size: 15px; color: var(--dark-text, #16181D); cursor: pointer; padding: 8px 4px; white-space: nowrap; }
+  .profile-topbar-name { font-weight: 800; font-size: 15px; color: var(--dark-text, #16181D); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  @media (max-width: 640px) { .profile-page .profile-scroll { padding: 18px 16px 32px; } }
   /* ===== CUSTOMER PHONE LOGIN ===== */
   .phone-login { display: grid; gap: 12px; text-align: left; }
   .phone-login label { display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 700; color: #3A3F4B; }
@@ -9271,6 +9279,36 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
       onNav("home");
     }
   };
+  // The business profile is a full page (2026-10-30), so the phone's back
+  // gesture / browser Back should close it instead of leaving the site.
+  // Opening it adds one history entry; Back pops it and closes the page.
+  const closeProviderViewRef = useRef(closeProviderView);
+  closeProviderViewRef.current = closeProviderView;
+  const selectedProviderId = selectedProvider?.id || null;
+  useEffect(() => {
+    if (!selectedProviderId) return;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    try {
+      if (!(window.history.state && window.history.state.vbProfile)) {
+        window.history.pushState({ ...(window.history.state || {}), vbProfile: true }, "", window.location.href);
+      }
+    } catch (e) { /* ignore */ }
+    const onPop = (e) => {
+      if (!(e.state && e.state.vbProfile)) closeProviderViewRef.current();
+    };
+    window.addEventListener("popstate", onPop);
+    return () => {
+      window.removeEventListener("popstate", onPop);
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [selectedProviderId]);
+  const closeProviderViewFromUi = () => {
+    try {
+      if (window.history.state && window.history.state.vbProfile) { window.history.back(); return; }
+    } catch (e) { /* ignore */ }
+    closeProviderView();
+  };
 
   const startBookingForService = (service) => {
     setBookingForm({
@@ -11231,10 +11269,13 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
           return { day, i, isToday: i === new Date().getDay(), text: h && h.is_open && h.start_time && h.end_time ? `${formatTimeLabel(h.start_time)} – ${formatTimeLabel(h.end_time)}` : "Closed" };
         });
         return (
-          <div className="modal-overlay" onClick={closeProviderView}>
+          <div className="modal-overlay profile-page">
             <div className="modal-panel profile-panel" onClick={(e) => e.stopPropagation()}>
+              <div className="profile-topbar">
+                <button className="profile-back" onClick={closeProviderViewFromUi}>← {t("auth.back")}</button>
+                <span className="profile-topbar-name">{selectedProvider.business_name}</span>
+              </div>
               <div className="profile-scroll">
-                <span className="modal-close" onClick={closeProviderView}>✕ {t("customerPortal.common.close")}</span>
 
                 <div className="profile-header-row">
                   <div className="profile-name-row">
