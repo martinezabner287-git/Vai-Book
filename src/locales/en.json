@@ -638,6 +638,7 @@
     "customerFallback": "Customer",
     "markDone": "Mark done",
     "markDoneFailed": "Couldn't mark that done. Please check your connection and try again.",
+    "confirmDecline": "Decline this booking request? The customer will be notified right away.",
     "myBookings": "My bookings",
     "onlyAssignedAppointments": "Only appointments assigned to you show up here.",
     "saving": "Saving...",
