@@ -1063,7 +1063,9 @@
       "bookingVolumeHint": "Reservas totales recibidas cada mes.",
       "reviewsRatings": "Reseñas y calificaciones",
       "reviewsRatingsHint": "Tu calificación promedio de estrellas cada mes.",
-      "emailSummaryNote": "También te enviamos este resumen automáticamente por correo al inicio de cada mes."
+      "emailSummaryNote": "También te enviamos este resumen automáticamente por correo al inicio de cada mes.",
+      "shareButton": "Comparte tu mes",
+      "downloadImage": "Descargar imagen"
     },
     "profile": {
       "subtitle": "Esto es lo que ven los clientes cuando te encuentran.",
