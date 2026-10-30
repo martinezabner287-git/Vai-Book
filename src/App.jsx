@@ -11697,8 +11697,8 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                                   Feedback 2026-10-24. */}
                               <p className="guest-checkout-note">
                                 {(i18n.language || "").toLowerCase().startsWith("es")
-                                  ? "¿Ya reservaste antes? Escribe el mismo número y contraseña."
-                                  : "Booked before? Just use the same number and password."}
+                                  ? "¿Ya tienes cuenta? Solo escribe tu número y contraseña — no hace falta el nombre."
+                                  : "Already have an account? Just enter your number and password — no need for your name."}
                               </p>
                               <div className="input-group">
                                 <label>{t("customerPortal.booking.fullName")}</label>
@@ -11787,7 +11787,6 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                               const guestWhatsapp = guestCheckoutForm.whatsapp.trim();
                               const guestPassword = guestCheckoutForm.password;
                               const gEs = (i18n.language || "").toLowerCase().startsWith("es");
-                              if (!guestName) { setBookingError(t("customerPortal.booking.enterFullName")); return; }
                               // WhatsApp used to be optional — the provider has no way to
                               // reach a guest who skipped it (the password only proves
                               // identity, it isn't a contact channel they're watching), so
@@ -11802,6 +11801,22 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                               // tripping to find out.
                               if (guestPassword.length < 6) { setBookingError(gEs ? "Crea una contraseña de al menos 6 caracteres." : "Create a password with at least 6 characters."); return; }
                               setBookingError("");
+                              // Returning customer: name left blank → just log in with
+                              // number + password (their account already has their name).
+                              if (!guestName) {
+                                setSubmittingGuestAuth(true);
+                                const { data: li, error: liErr } = await signInWithPhonePassword(guestWhatsapp, guestPassword);
+                                setSubmittingGuestAuth(false);
+                                if (liErr) {
+                                  setBookingError(gEs
+                                    ? "No encontramos una cuenta con ese número y contraseña. Si eres nuevo, escribe tu nombre para crear tu cuenta."
+                                    : "We couldn't find an account with that number and password. New here? Add your name to create your account.");
+                                  return;
+                                }
+                                const liUid = li?.user?.id;
+                                bookingService.isMulti ? submitMultiServiceBooking(liUid) : submitBooking(liUid);
+                                return;
+                              }
                               // Remember name/email/WhatsApp for next time on this device
                               // (see the guestCheckoutForm initializer above) — never the
                               // password, which is typed fresh every booking.
