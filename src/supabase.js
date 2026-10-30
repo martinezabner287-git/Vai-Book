@@ -1862,6 +1862,34 @@ export const adminUpdateProvider = async (providerId, updates) => {
   return data;
 };
 
+// 2026-10-30: manual trial controls for the admin Providers tab (see
+// admin_start_provider_trial / admin_extend_provider_trial /
+// admin_end_provider_trial in Supabase). These are deliberately separate
+// from the self-serve start_solo_trial RPC a provider calls on their own
+// profile — that one checks auth.uid() against the profile's owner and
+// refuses a second trial once trial_used is set, which is exactly right
+// for the self-serve button but wrong for an admin override (e.g.
+// granting Henry's lodge contact a trial by hand, or re-granting one as
+// a favor). These three are admin-only (checked server-side against the
+// admins table) and don't carry the self-serve eligibility restrictions.
+export const adminStartProviderTrial = async (providerId) => {
+  const { data, error } = await supabase.rpc('admin_start_provider_trial', { p_provider_id: providerId });
+  if (error) { reportActionError('adminStartProviderTrial', error); console.error('Error starting trial:', error.message); return null; }
+  return data;
+};
+
+export const adminExtendProviderTrial = async (providerId, days) => {
+  const { data, error } = await supabase.rpc('admin_extend_provider_trial', { p_provider_id: providerId, p_days: days });
+  if (error) { reportActionError('adminExtendProviderTrial', error); console.error('Error extending trial:', error.message); return null; }
+  return data;
+};
+
+export const adminEndProviderTrial = async (providerId) => {
+  const { data, error } = await supabase.rpc('admin_end_provider_trial', { p_provider_id: providerId });
+  if (error) { reportActionError('adminEndProviderTrial', error); console.error('Error ending trial:', error.message); return null; }
+  return data;
+};
+
 // Irreversible — deletes the provider and every row tied to them
 // (services, bookings, reviews, working hours, payment methods, feature
 // overrides, visit notes, VIP tags). The UI requires a confirmation step
