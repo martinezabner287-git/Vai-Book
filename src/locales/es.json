@@ -638,6 +638,7 @@
     "customerFallback": "Cliente",
     "markDone": "Marcar como hecho",
     "markDoneFailed": "No se pudo marcar como hecho. Revisa tu conexión e inténtalo de nuevo.",
+    "confirmDecline": "¿Rechazar esta solicitud de reserva? Se notificará al cliente de inmediato.",
     "myBookings": "Mis reservas",
     "onlyAssignedAppointments": "Aquí solo aparecen las citas asignadas a ti.",
     "saving": "Guardando...",
