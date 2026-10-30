@@ -3016,6 +3016,19 @@ const css = `
 
 
 
+
+  /* ===== WHO'S COMING (party size) ===== */
+  .party-box { border: 1.5px solid var(--border); border-radius: 14px; padding: 12px 14px; margin: 4px 0 14px; background: #fff; }
+  .party-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+  .party-title { font-weight: 800; font-size: 14.5px; color: var(--dark-text, #16181D); }
+  .party-sub { font-size: 12.5px; color: var(--muted); margin-top: 2px; line-height: 1.4; }
+  .party-stepper { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+  .party-stepper button { width: 36px; height: 36px; border-radius: 50%; border: 1.5px solid var(--forest); background: #fff; color: var(--forest); font-size: 20px; font-weight: 700; line-height: 1; cursor: pointer; }
+  .party-stepper button:disabled { opacity: .35; cursor: default; }
+  .party-stepper span { min-width: 18px; text-align: center; font-weight: 800; font-size: 17px; }
+  .party-foot { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--border); font-size: 13px; color: var(--dark-text, #16181D); }
+  .party-foot strong { font-weight: 800; }
+  .party-badge { display: inline-block; background: #EEEBFF; color: #3F33A8; font-size: 11.5px; font-weight: 800; border-radius: 999px; padding: 2px 9px; margin-top: 4px; }
   /* ===== BUSINESS PROFILE AS A FULL PAGE (not a pop-up) ===== */
   .modal-overlay.profile-page { background: #FFFFFF; padding: 0; display: block; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
   .profile-page .modal-panel.profile-panel { max-width: 1080px; width: 100%; margin: 0 auto; max-height: none; min-height: 100%; border-radius: 0; overflow: visible; box-shadow: none; }
@@ -8871,6 +8884,9 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
   }, [deepLinkProviderId]);
 
   const [bookingForm, setBookingForm] = useState({ service_id: "", service_ids: [], date: "", time: "10:00", notes: "" });
+  // "Who's coming?" — how many people this booking is for (1 = just me).
+  const [partySize, setPartySize] = useState(1);
+  useEffect(() => { setPartySize(1); }, [selectedProvider?.id]);
   // Multi-service checkout: tapping a service card toggles it in/out of this
   // set (see the service-card list below) — a totally separate interaction
   // from the existing single-service "Book" button, which still books that
@@ -9740,7 +9756,9 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
   // gets their appointment, just not comped.
   const createOneBooking = async ({ bookingCustomerId, service, dateStr, timeStr, notes, staffId, membershipId }) => {
     const coveredByMembership = membershipId ? await redeemMembershipVisit(membershipId) : false;
-    const total = coveredByMembership ? 0 : (Number(service.price) || 0);
+    const people = Math.min(Math.max(Number(partySize) || 1, 1), 10);
+    const unitPrice = Number(service.price) || 0;
+    const total = coveredByMembership ? unitPrice * (people - 1) : unitPrice * people;
     const dpPct = selectedProvider.downpayment_required ? (selectedProvider.downpayment_pct || 50) : 0;
     const downpayment = (dpPct && !coveredByMembership) ? Math.round(total * dpPct) / 100 : null;
     const order_number = `VB-${Date.now().toString(36).toUpperCase()}${Math.random().toString(36).slice(2, 5).toUpperCase()}`;
@@ -9754,6 +9772,7 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
       total_amount: total,
       downpayment_amount: downpayment,
       notes: notes ? notes.trim() : null,
+      party_size: people,
     });
     if (created && staffId) {
       // create_booking_safe's own SQL isn't something this file can see or
@@ -9791,7 +9810,7 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
       setJustBooked((prev) => ({
         provider: selectedProvider,
         confirmed: instant && (!prev || prev.provider?.id !== selectedProvider.id || prev.confirmed !== false),
-        items: [...(prev && prev.provider?.id === selectedProvider.id ? prev.items : []), `${service.name} — ${whenLabel}`],
+        items: [...(prev && prev.provider?.id === selectedProvider.id ? prev.items : []), `${service.name}${people > 1 ? ` (${people} people)` : ""} — ${whenLabel}`],
       }));
       (async () => {
         try {
@@ -9800,8 +9819,8 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
               user_id: selectedProvider.user_id,
               title: instant ? "New booking ✅" : "New booking request",
               body: instant
-                ? `${user?.full_name || guestCheckoutForm.name || "A customer"} booked ${service.name} on ${whenLabel}. It's confirmed and in your calendar.`
-                : `${user?.full_name || guestCheckoutForm.name || "A customer"} requested ${service.name} on ${whenLabel}.`,
+                ? `${user?.full_name || guestCheckoutForm.name || "A customer"} booked ${service.name}${people > 1 ? ` for ${people} people` : ""} on ${whenLabel}. It's confirmed and in your calendar.`
+                : `${user?.full_name || guestCheckoutForm.name || "A customer"} requested ${service.name}${people > 1 ? ` for ${people} people` : ""} on ${whenLabel}.`,
               type: instant ? "booking_confirmed_new" : "booking_requested",
               booking_id: created.id,
             });
@@ -11624,6 +11643,31 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                             </div>
                           )}
 
+                          {(() => {
+                            const es = (i18n.language || "").toLowerCase().startsWith("es");
+                            const unit = bookingService?.isMulti ? selectedServicesList.reduce((n, sv) => n + (Number(sv.price) || 0), 0) : (Number(bookingService?.price) || 0);
+                            const label = partySize === 1 ? (es ? "Solo yo" : "Just me") : (es ? `Yo + ${partySize - 1} más` : `Me + ${partySize - 1} more`);
+                            return (
+                              <div className="party-box">
+                                <div className="party-head">
+                                  <div>
+                                    <div className="party-title">{es ? "¿Quién viene?" : "Who's coming?"}</div>
+                                    <div className="party-sub">{es ? "¿Traes a alguien? Agrégalo para que el negocio se prepare." : "Bringing someone? Add them so the business can get ready."}</div>
+                                  </div>
+                                  <div className="party-stepper">
+                                    <button type="button" aria-label={es ? "Una persona menos" : "One less person"} disabled={partySize <= 1} onClick={() => setPartySize((n) => Math.max(1, n - 1))}>−</button>
+                                    <span>{partySize}</span>
+                                    <button type="button" aria-label={es ? "Una persona más" : "One more person"} disabled={partySize >= 10} onClick={() => setPartySize((n) => Math.min(10, n + 1))}>+</button>
+                                  </div>
+                                </div>
+                                <div className="party-foot">
+                                  <span>👥 {label}</span>
+                                  {partySize > 1 && unit > 0 && <strong>BZ${unit.toFixed(2)} × {partySize} = BZ${(unit * partySize).toFixed(2)}</strong>}
+                                </div>
+                              </div>
+                            );
+                          })()}
+
                           <div className="input-group"><label>{t("customerPortal.booking.notesOptional")}</label><textarea placeholder={t("customerPortal.booking.notesPlaceholder")} value={bookingForm.notes} onChange={e => setBookingForm(f => ({ ...f, notes: e.target.value }))} style={{ minHeight: 60 }} /></div>
 
                           {selectedProvider.downpayment_required && (
@@ -11829,7 +11873,7 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                               const qty = selectedServiceIds.filter((id) => id === s.id).length;
                               const active = qty > 0;
                               return (
-                                <div key={s.id} className={`service-card ${active ? "active" : ""}`} onClick={() => { if (!active) addServiceUnit(s); }}>
+                                <div key={s.id} className={`service-card ${active ? "active" : ""}`} onClick={() => { if (!active) addServiceUnit(s); else setSelectedServiceIds((ids) => ids.filter((id) => id !== s.id)); }}>
                                   <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                                     <span className="service-card-check">✓</span>
                                     <div>
@@ -11839,15 +11883,7 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                                       {membershipCoversService(s) && <div style={{ fontSize: 11.5, color: "var(--forest)", fontWeight: 700, marginTop: 3 }}>✓ {t("customerPortal.booking.coveredByMembership")}</div>}
                                     </div>
                                   </div>
-                                  {active ? (
-                                    <div className="service-card-qty" onClick={(e) => e.stopPropagation()}>
-                                      <button type="button" onClick={() => removeServiceUnit(s)} aria-label={t("customerPortal.booking.qtyDecrease")}>−</button>
-                                      <span>{qty}</span>
-                                      <button type="button" onClick={() => addServiceUnit(s)} aria-label={t("customerPortal.booking.qtyIncrease")}>+</button>
-                                    </div>
-                                  ) : (
-                                    <span className="service-card-price">BZ${s.price}</span>
-                                  )}
+                                  <span className="service-card-price">BZ${s.price}</span>
                                 </div>
                               );
                             })}
@@ -12447,6 +12483,7 @@ function StaffPortal({ onNav, session, staffProfile, onSignOut }) {
                 the customer left at booking time, same spot ProviderPortal
                 shows it. Previously invisible to whoever's actually running
                 the appointment if that wasn't the owner. */}
+            {b.party_size > 1 && <span className="party-badge">👥 {b.party_size} {(i18n.language || "").toLowerCase().startsWith("es") ? "personas" : "people"}</span>}
             {b.notes && <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 6 }}>{t("providerPortal.bookings.customerNote", { notes: b.notes })}</p>}
           </div>
           );
@@ -14922,7 +14959,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                       <div className={`bh-req ${past ? "past" : ""}`} key={b.id}>
                         <div className="bh-req-main">
                           <div className="bh-req-name">{custName(b)}</div>
-                          <div className="bh-req-meta">{b.services?.name || "Service"} · {formatBookingWhen(b)}</div>
+                          <div className="bh-req-meta">{b.services?.name || "Service"} · {formatBookingWhen(b)} {b.party_size > 1 && <span className="party-badge">👥 {b.party_size} {(i18n.language || "").toLowerCase().startsWith("es") ? "personas" : "people"}</span>}</div>
                           {b.notes && <div className="bh-req-note">"{b.notes}"</div>}
                           {past && <div className="bh-req-warn">⏰ {dx("This time already passed. Decline or offer a new time.", "Esta hora ya pasó. Declina u ofrece otra hora.")}</div>}
                         </div>
@@ -14945,7 +14982,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                     <div className="bh-req" key={b.id}>
                       <div className="bh-req-main">
                         <div className="bh-req-name">{custName(b)} · {dx("deposit sent", "envió depósito")}</div>
-                        <div className="bh-req-meta">{b.services?.name || "Service"} · {formatBookingWhen(b)}</div>
+                        <div className="bh-req-meta">{b.services?.name || "Service"} · {formatBookingWhen(b)} {b.party_size > 1 && <span className="party-badge">👥 {b.party_size} {(i18n.language || "").toLowerCase().startsWith("es") ? "personas" : "people"}</span>}</div>
                       </div>
                       <div className="bh-req-price">BZ${b.downpayment_amount ?? "—"}</div>
                       <div className="bh-req-actions">
@@ -15008,7 +15045,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                             {custName(b)}
                             {b.checked_in_at && <span className="bh-arrived">{t("providerPortal.dashboard.arrivedBadge")}</span>}
                           </div>
-                          <div className="bh-row-meta">{b.services?.name || "Service"} · BZ${b.total_amount ?? b.services?.price ?? "—"} · <span className={`bh-st bh-st-${bookingStatusClass(b.status)}`}>{statusLabel(b.status)}</span></div>
+                          <div className="bh-row-meta">{b.party_size > 1 ? `👥 ${b.party_size} · ` : ""}{b.services?.name || "Service"} · BZ${b.total_amount ?? b.services?.price ?? "—"} · <span className={`bh-st bh-st-${bookingStatusClass(b.status)}`}>{statusLabel(b.status)}</span></div>
                         </div>
                         <div className="bh-row-actions">
                           {waLink(b) && <a className="bh-btn bh-btn-icon" href={waLink(b)} target="_blank" rel="noreferrer" aria-label="WhatsApp">💬</a>}
@@ -15459,6 +15496,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                         : "⏰ This time passed without an answer. Decline it or propose a new time so the client isn't left waiting."}
                     </p>
                   )}
+                  {b.party_size > 1 && <span className="party-badge">👥 {b.party_size} {(i18n.language || "").toLowerCase().startsWith("es") ? "personas" : "people"}</span>}
                   {b.notes && <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 6 }}>{t("providerPortal.bookings.customerNote", { notes: b.notes })}</p>}
 
                   {b.pending_reschedule_date && (

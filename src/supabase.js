@@ -757,6 +757,7 @@ export const createBookingSafe = async (booking) => {
     p_total_amount: booking.total_amount,
     p_downpayment_amount: booking.downpayment_amount,
     p_notes: booking.notes,
+    p_party_size: booking.party_size || 1,
   });
   if (error) {
     throwKnownGuardErrors(error);
