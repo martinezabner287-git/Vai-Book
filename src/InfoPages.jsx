@@ -73,7 +73,7 @@ const C = {
       c: [
         ["Find a business", "Search by service or name, or pick your district to see who's close to you."],
         ["Pick a service and a time", "You only see times the business is actually open and free."],
-        ["Send your request", "The business confirms it. If they ask for a deposit, you send it and upload the receipt — your spot is held once they confirm the payment."],
+        ["Book it", "If the business doesn't ask for a deposit, your booking is confirmed straight away. If they do, they accept your request, you send the deposit and upload the receipt, and your spot is locked in once they confirm the payment."],
         ["Get reminded and show up", "You'll get an alert when it's confirmed and before your appointment. Need to change plans? Cancel or reschedule from My bookings."],
       ],
       bTitle: "For businesses",
@@ -138,7 +138,7 @@ const C = {
       cTitle: "Customers",
       c: [
         ["Do I need an account to book?", "You can open any business link without an account. To send a booking you'll add your name and contact details so the business knows who's coming; with an account you can also see all your bookings, favourites and receipts in one place."],
-        ["When is my booking confirmed?", "When the business accepts it — you'll get an alert. If the business asks for a deposit, your booking is confirmed once they've checked your payment receipt."],
+        ["When is my booking confirmed?", "Right away, unless the business asks for a deposit. With a deposit, the business accepts your request first, then confirms once they've checked your payment receipt. You'll get an alert either way."],
         ["How do I pay a deposit?", "The booking shows the business's payment details. Send the deposit, then upload a photo of the receipt on the booking. Payments go straight to the business, not to VaiBook."],
         ["How do I cancel or change a booking?", "Go to My bookings, open the booking and tap Cancel, or ask the business to propose a new time. Please cancel as early as you can — deposits are refunded according to each business's own policy."],
         ["I'm not getting notifications.", "Add VaiBook to your home screen, open it from there, and turn on notifications in Settings. On iPhone, notifications only work when VaiBook is opened from the home-screen icon."],
@@ -221,7 +221,7 @@ const C = {
           "We may suspend or close accounts that break these terms, misuse the platform, or put other people at risk.",
         ]],
         ["Bookings", [
-          "A booking request is not confirmed until the business accepts it, or — where a deposit is required — until the business confirms your payment.",
+          "A booking is confirmed straight away when the business doesn't require a deposit. Where a deposit is required, it is confirmed once the business accepts it and confirms your payment.",
           "Please turn up on time and cancel as early as possible if you can't make it. Repeated no-shows may lead businesses to require deposits from you or decline your requests.",
           "Businesses may decline, reschedule or cancel bookings, and should tell you as soon as possible when they do.",
         ]],
@@ -274,7 +274,7 @@ const C = {
       c: [
         ["Encuentra un negocio", "Busca por servicio o nombre, o elige tu distrito para ver quién está cerca."],
         ["Elige el servicio y la hora", "Solo ves las horas en que el negocio está abierto y libre."],
-        ["Envía tu solicitud", "El negocio la confirma. Si pide depósito, lo envías y subes el recibo — tu espacio queda apartado cuando confirman el pago."],
+        ["Reserva", "Si el negocio no pide depósito, tu reserva queda confirmada al instante. Si lo pide, acepta tu solicitud, envías el depósito y subes el recibo, y tu espacio queda apartado cuando confirman el pago."],
         ["Recibe recordatorios y llega", "Recibirás una alerta cuando se confirme y antes de tu cita. ¿Cambio de planes? Cancela o cambia la hora desde Mis reservas."],
       ],
       bTitle: "Para negocios",
@@ -339,7 +339,7 @@ const C = {
       cTitle: "Clientes",
       c: [
         ["¿Necesito una cuenta para reservar?", "Puedes abrir el enlace de cualquier negocio sin cuenta. Para enviar una reserva agregas tu nombre y contacto para que el negocio sepa quién viene; con una cuenta además ves tus reservas, favoritos y recibos en un solo lugar."],
-        ["¿Cuándo queda confirmada mi reserva?", "Cuando el negocio la acepta — recibirás una alerta. Si el negocio pide depósito, se confirma cuando revisan tu recibo de pago."],
+        ["¿Cuándo queda confirmada mi reserva?", "Al instante, salvo que el negocio pida depósito. Con depósito, el negocio acepta tu solicitud y la confirma cuando revisa tu recibo de pago. Recibirás una alerta en ambos casos."],
         ["¿Cómo pago un depósito?", "La reserva muestra los datos de pago del negocio. Envía el depósito y sube una foto del recibo en la reserva. El pago va directo al negocio, no a VaiBook."],
         ["¿Cómo cancelo o cambio una reserva?", "Ve a Mis reservas, abre la reserva y toca Cancelar, o pide al negocio que proponga otra hora. Cancela lo antes posible — los depósitos se reembolsan según la política de cada negocio."],
         ["No me llegan las notificaciones.", "Agrega VaiBook a tu pantalla de inicio, ábrelo desde ahí y activa las notificaciones en Ajustes. En iPhone solo funcionan si abres VaiBook desde el ícono."],
@@ -422,7 +422,7 @@ const C = {
           "Podemos suspender o cerrar cuentas que incumplan estos términos, abusen de la plataforma o pongan en riesgo a otros.",
         ]],
         ["Reservas", [
-          "Una solicitud no está confirmada hasta que el negocio la acepta o — si pide depósito — hasta que confirma tu pago.",
+          "Una reserva queda confirmada al instante cuando el negocio no pide depósito. Si pide depósito, se confirma cuando el negocio la acepta y confirma tu pago.",
           "Llega a tiempo y cancela lo antes posible si no puedes ir. Las ausencias repetidas pueden hacer que los negocios te pidan depósito o rechacen tus solicitudes.",
           "Los negocios pueden rechazar, reprogramar o cancelar reservas, y deben avisarte lo antes posible.",
         ]],

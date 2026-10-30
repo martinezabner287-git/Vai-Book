@@ -9734,8 +9734,10 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
       // in this file.
       const finalTotal = Number(created.total_amount) || total;
       const whenLabel = `${formatBookingDate(dateStr)} at ${formatBookingTime(timeStr)}`;
+      const instant = created.status === "confirmed";
       setJustBooked((prev) => ({
         provider: selectedProvider,
+        confirmed: instant && (!prev || prev.provider?.id !== selectedProvider.id || prev.confirmed !== false),
         items: [...(prev && prev.provider?.id === selectedProvider.id ? prev.items : []), `${service.name} — ${whenLabel}`],
       }));
       (async () => {
@@ -9743,9 +9745,11 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
           if (selectedProvider.user_id) {
             await createNotification({
               user_id: selectedProvider.user_id,
-              title: "New booking request",
-              body: `${user?.full_name || guestCheckoutForm.name || "A customer"} requested ${service.name} on ${whenLabel}.`,
-              type: "booking_requested",
+              title: instant ? "New booking ✅" : "New booking request",
+              body: instant
+                ? `${user?.full_name || guestCheckoutForm.name || "A customer"} booked ${service.name} on ${whenLabel}. It's confirmed and in your calendar.`
+                : `${user?.full_name || guestCheckoutForm.name || "A customer"} requested ${service.name} on ${whenLabel}.`,
+              type: instant ? "booking_confirmed_new" : "booking_requested",
               booking_id: created.id,
             });
           }
@@ -9758,8 +9762,8 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
           if (providerEmail) {
             await sendBookingEmail({
               to: providerEmail,
-              subject: `New booking request — ${service.name}, ${whenLabel}`,
-              html: `<p>Hi ${selectedProvider.business_name || "there"},</p><p><strong>${user?.full_name || guestCheckoutForm.name || "A customer"}</strong> just requested <strong>${service.name}</strong> for <strong>${whenLabel}</strong> (BZ$${finalTotal.toFixed(2)}).</p>${notes ? `<p>Their note: "${notes.trim()}"</p>` : ""}<p>Open VaiBook to accept or decline it. You can turn these emails off under Settings → Notifications.</p>`,
+              subject: `${instant ? "New booking" : "New booking request"} — ${service.name}, ${whenLabel}`,
+              html: `<p>Hi ${selectedProvider.business_name || "there"},</p><p><strong>${user?.full_name || guestCheckoutForm.name || "A customer"}</strong> just ${instant ? "booked" : "requested"} <strong>${service.name}</strong> for <strong>${whenLabel}</strong> (BZ$${finalTotal.toFixed(2)}).</p>${notes ? `<p>Their note: "${notes.trim()}"</p>` : ""}<p>${instant ? "It's confirmed and in your calendar." : "Open VaiBook to accept or decline it."} You can turn these emails off under Settings → Notifications.</p>`,
             });
           }
         } catch (err) {
@@ -10778,9 +10782,13 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                 <div className="card" style={{ marginBottom: 16, borderColor: "var(--lime)", background: "var(--accent-soft)" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "flex-start" }}>
                     <div>
-                      <div style={{ fontWeight: 700, fontSize: 15 }}>{es ? "¡Reserva enviada! ✅" : "Booking sent! ✅"}</div>
+                      <div style={{ fontWeight: 700, fontSize: 15 }}>
+                        {justBooked.confirmed ? (es ? "¡Reserva confirmada! ✅" : "You're booked! ✅") : (es ? "¡Solicitud enviada! ✅" : "Request sent! ✅")}
+                      </div>
                       <div style={{ fontSize: 13, color: "var(--muted)", marginTop: 4, lineHeight: 1.5 }}>
-                        {es ? `Avísale a ${justBooked.provider.business_name} por WhatsApp para que te confirme más rápido.` : `Give ${justBooked.provider.business_name} a heads-up on WhatsApp so they confirm faster.`}
+                        {justBooked.confirmed
+                          ? (es ? `${justBooked.provider.business_name} ya tiene tu cita. Escríbeles por WhatsApp si necesitas algo.` : `${justBooked.provider.business_name} has your appointment. Message them on WhatsApp if you need anything.`)
+                          : (es ? `${justBooked.provider.business_name} aceptará tu solicitud y te enviará los datos del depósito. Avísales por WhatsApp para que sea más rápido.` : `${justBooked.provider.business_name} will accept your request and send you the deposit details. Give them a heads-up on WhatsApp to speed it up.`)}
                       </div>
                     </div>
                     <button aria-label="Close" onClick={() => setJustBooked(null)} style={{ border: "none", background: "none", fontSize: 18, cursor: "pointer", color: "var(--muted)" }}>×</button>
@@ -11730,7 +11738,7 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                               bookingService.isMulti ? submitMultiServiceBooking(uid) : submitBooking(uid);
                             }}
                           >
-                            {submittingBooking ? t("customerPortal.booking.sendingRequest") : submittingGuestAuth ? t("customerPortal.booking.settingUpAccount") : user?.id ? t("customerPortal.booking.requestBooking") : t("customerPortal.common.continue")}
+                            {submittingBooking ? t("customerPortal.booking.sendingRequest") : submittingGuestAuth ? t("customerPortal.booking.settingUpAccount") : user?.id ? (selectedProvider?.downpayment_required ? t("customerPortal.booking.requestBooking") : ((i18n.language || "").toLowerCase().startsWith("es") ? "Confirmar reserva" : "Confirm booking")) : t("customerPortal.common.continue")}
                           </button>
                           <p className="checkout-liability-note">
                             {t("customerPortal.booking.liabilityNote")}
@@ -17183,17 +17191,15 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                   Disabled with a plain explanation rather than left live
                   and silently doing nothing, until the real
                   instant-confirm behavior is actually built. */}
-              {!depositForm.downpayment_required && (
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", borderBottom: "1px solid var(--border)", gap: 16, opacity: 0.55 }}>
-                  <div>
-                    <span style={{ fontSize: 14 }}>{t("providerPortal.settings.skipReview")}</span>
-                    <div style={{ fontSize: 12, color: "var(--muted)" }}>
-                      {t("providerPortal.settings.skipReviewComingSoon")}
-                    </div>
-                  </div>
-                  <div className="toggle" style={{ cursor: "default" }}></div>
-                </div>
-              )}
+              <p style={{ fontSize: 12.5, color: "var(--muted)", margin: "10px 0 0", lineHeight: 1.5 }}>
+                {(i18n.language || "").toLowerCase().startsWith("es")
+                  ? (depositForm.downpayment_required
+                      ? "Con depósito, cada reserva llega como solicitud: la aceptas, el cliente paga el depósito y la confirmas."
+                      : "Sin depósito, las reservas se confirman al instante y aparecen en tu calendario. Activa el depósito si prefieres aprobar cada reserva.")
+                  : (depositForm.downpayment_required
+                      ? "With a deposit, each booking comes in as a request: you accept it, the client pays the deposit, and you confirm."
+                      : "Without a deposit, bookings are confirmed instantly and go straight into your calendar. Turn on a deposit if you'd rather approve each booking.")}
+              </p>
               <button className="btn-sm forest" style={{ marginTop: 12 }} onClick={saveDepositSettings} disabled={savingDeposit}>{savingDeposit ? t("providerPortal.common.saving") : t("providerPortal.settings.saveDepositSettings")}</button>
               </>
               )}
