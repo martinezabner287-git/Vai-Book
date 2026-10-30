@@ -534,11 +534,16 @@ export const claimStaffSeatByEmail = async () => {
   return data || null;
 };
 
+// 2026-10-30: added phone/whatsapp_number to the users() join — a staff
+// member had no way to actually reach a registered customer (only a
+// walk-in's manually-entered phone was ever visible), which is the single
+// most basic thing you need to run a shift. See StaffPortal's new WhatsApp
+// link, same wa.me pattern ProviderPortal already uses per booking.
 export const getStaffBookings = async (staffId) => {
   if (!staffId) return [];
   const { data, error } = await supabase
     .from('bookings')
-    .select('*, users(full_name, email, avatar_url), services(name, price)')
+    .select('*, users(full_name, email, avatar_url, phone, whatsapp_number), services(name, price, duration_min)')
     .eq('staff_id', staffId)
     .order('booking_date', { ascending: true });
   if (error) { console.error('Error fetching staff bookings:', error.message); return []; }
