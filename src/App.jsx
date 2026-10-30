@@ -3300,6 +3300,20 @@ function CustomerPhoneLogin({ onSignedIn, compact }) {
   );
 }
 
+// Standalone "log in as a customer" screen (view "customer-login") — where
+// every customer sign-in prompt lands now that customers don't use Google.
+function CustomerLoginScreen({ session, onNav }) {
+  const { i18n } = useTranslation();
+  useEffect(() => { if (session) onNav("customer"); }, [session, onNav]);
+  if (session) return null;
+  return (
+    <GateScreen>
+      <CustomerPhoneLogin onSignedIn={() => onNav("customer")} />
+      <button className="gate-back" onClick={() => onNav("home")}>{(i18n.language || "").toLowerCase().startsWith("es") ? "← Volver al sitio" : "← Back to site"}</button>
+    </GateScreen>
+  );
+}
+
 // ── GATE SCREEN — loading splash + every "please sign in" screen ─────
 // One calm, light screen (soft glow, full-colour logo, white card) instead
 // of the old solid-purple pages where the purple logo and "book" vanished
@@ -6402,6 +6416,9 @@ function takePendingView() {
 
 function switchToPortal(targetPortal, onNav, session, onSignIn) {
   if (!session) {
+    // Customers log in with WhatsApp number + password only (2026-10-30) —
+    // no Google for customers. Businesses/admin keep their own sign-in.
+    if (targetPortal === "customer") { onNav("customer-login"); return; }
     setPendingView(targetPortal);
     onSignIn();
     return;
@@ -6479,8 +6496,6 @@ function AuthChoice({ onNav, session, onSignIn, onSignOut }) {
               <div className="auth-provider-fork-heading">{t("auth.forCustomers")}</div>
               <div className="biz-login-card">
                 <CustomerPhoneLogin onSignedIn={() => onNav("customer")} />
-                <div className="gate-or"><span>{(i18n.language || "").toLowerCase().startsWith("es") ? "o" : "or"}</span></div>
-                <button className="gate-btn ghost" onClick={() => enterCustomerPortal(onNav, session, onSignIn)}>{t("customerPortal.signIn.button")}</button>
               </div>
               <a className="auth-provider-fork-back" onClick={() => setShowCustLogin(false)}>{t("auth.back")}</a>
             </div>
@@ -7654,7 +7669,7 @@ function LandingPage({ onNav, session, user, onSignIn, onSignOut }) {
   }, [user?.id]);
   const toggleFavorite = async (e, providerId) => {
     e.stopPropagation();
-    if (!session) { onSignIn(); return; }
+    if (!session) { onNav("customer-login"); return; }
     if (!user?.id || togglingFavoriteId === providerId) return;
     setTogglingFavoriteId(providerId);
     const isFav = favoriteIds.has(providerId);
@@ -9007,7 +9022,7 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
     // a CSS :active state) — so it looked broken rather than gated. Same fix
     // as the Search/category login-gate: let them know a sign-in is what's
     // actually needed, same as LandingPage's own heart button already does.
-    if (!session) { onSignIn && onSignIn(); return; }
+    if (!session) { onNav("customer-login"); return; }
     if (!user?.id || togglingFavoriteId === providerId) return;
     setTogglingFavoriteId(providerId);
     const isFav = favoriteIds.has(providerId);
@@ -10301,8 +10316,6 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
     return (
       <GateScreen>
         <CustomerPhoneLogin />
-        <div className="gate-or"><span>{(i18n.language || "").toLowerCase().startsWith("es") ? "o" : "or"}</span></div>
-        <button className="gate-btn ghost" onClick={onSignIn}>{t("customerPortal.signIn.button")}</button>
         <button className="gate-back" onClick={() => onNav("home")}>{t("customerPortal.signIn.backToSite")}</button>
       </GateScreen>
     );
@@ -11599,9 +11612,8 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                                   Feedback 2026-10-24. */}
                               <p className="guest-checkout-note">
                                 {(i18n.language || "").toLowerCase().startsWith("es")
-                                  ? "¿Ya reservaste antes? Escribe el mismo número y contraseña. O "
-                                  : "Booked before? Just use the same number and password. Or "}
-                                <span style={{ color: "var(--lime)", fontWeight: 600, cursor: "pointer" }} onClick={onSignIn}>{(i18n.language || "").toLowerCase().startsWith("es") ? "entra con Google" : "continue with Google"}</span>
+                                  ? "¿Ya reservaste antes? Escribe el mismo número y contraseña."
+                                  : "Booked before? Just use the same number and password."}
                               </p>
                               <div className="input-group">
                                 <label>{t("customerPortal.booking.fullName")}</label>
@@ -11856,8 +11868,7 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                                 {(!myProviderMembership || myProviderMembership.status === "cancelled") && (
                                   <button
                                     className="btn-sm forest"
-                                    disabled={!user?.id}
-                                    onClick={() => (user?.id ? startMembershipSubscribe(plan) : onSignIn())}
+                                    onClick={() => (user?.id ? startMembershipSubscribe(plan) : onNav("customer-login"))}
                                   >
                                     {user?.id ? t("customerPortal.profile.membershipSubscribe") : t("customerPortal.profile.membershipSignInToSubscribe")}
                                   </button>
@@ -19767,6 +19778,7 @@ export default function App() {
       {view === "signup" && <ProviderSignup onNav={setView} {...authProps} />}
       {view === "admin" && <AdminPortal onNav={setView} {...authProps} />}
       {view === "auth" && <AuthChoice onNav={setView} {...authProps} />}
+      {view === "customer-login" && <CustomerLoginScreen session={session} onNav={setView} />}
       {view === "help" && <HelpCenter onNav={setView} />}
       {view === "help-contact" && <HelpContactForm onNav={setView} />}
       {view === "help-faq" && <HelpFAQ onNav={setView} />}
