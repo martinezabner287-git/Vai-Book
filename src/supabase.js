@@ -1898,3 +1898,172 @@ export const setSupportMessageStatus = async (id, status) => {
   if (error) { reportActionError('setSupportMessageStatus', error); return false; }
   return true;
 };
+
+// ── MEMBERSHIP PLANS (customer <-> one provider, recurring) ────────────
+// See supabase_membership_plans.sql for the tables, RLS, and the four RPCs
+// this wraps (subscribe/review/cancel/redeem). Mirrors the PROVIDER PLAN
+// PAYMENTS section above in shape — manual bank-transfer + receipt upload —
+// except the PROVIDER reviews the payment here, not a VaiBook admin, since
+// this is a customer<->provider relationship, not provider<->VaiBook.
+
+// Public list for a provider's profile page — active plans only, cheapest
+// first so the most approachable option leads.
+export const getProviderMembershipPlans = async (providerId) => {
+  if (!providerId) return [];
+  const { data, error } = await supabase
+    .from('membership_plans')
+    .select('*')
+    .eq('provider_id', providerId)
+    .eq('is_active', true)
+    .order('price', { ascending: true });
+  if (error) { console.error('Error fetching membership plans:', error.message); return []; }
+  return data || [];
+};
+
+// Provider's own management view — includes paused (is_active=false) plans
+// too, so they can see/re-enable something they turned off.
+export const getMyMembershipPlans = async (providerId) => {
+  if (!providerId) return [];
+  const { data, error } = await supabase
+    .from('membership_plans')
+    .select('*')
+    .eq('provider_id', providerId)
+    .order('created_at', { ascending: true });
+  if (error) { console.error('Error fetching membership plans:', error.message); return []; }
+  return data || [];
+};
+
+export const createMembershipPlan = async (providerId, { name, description, price, visitLimit, includedServiceIds }) => {
+  const { data, error } = await supabase
+    .from('membership_plans')
+    .insert({
+      provider_id: providerId,
+      name,
+      description: description || null,
+      price,
+      visit_limit: visitLimit || null,
+      included_service_ids: includedServiceIds && includedServiceIds.length ? includedServiceIds : null,
+    })
+    .select()
+    .single();
+  if (error) { reportActionError('createMembershipPlan', error); console.error('Error creating membership plan:', error.message); return null; }
+  return data;
+};
+
+// Pass only the fields you want to change.
+export const updateMembershipPlan = async (planId, updates) => {
+  const payload = {};
+  if (updates.name !== undefined) payload.name = updates.name;
+  if (updates.description !== undefined) payload.description = updates.description || null;
+  if (updates.price !== undefined) payload.price = updates.price;
+  if (updates.visitLimit !== undefined) payload.visit_limit = updates.visitLimit || null;
+  if (updates.includedServiceIds !== undefined) payload.included_service_ids = updates.includedServiceIds && updates.includedServiceIds.length ? updates.includedServiceIds : null;
+  if (updates.isActive !== undefined) payload.is_active = updates.isActive;
+  const { data, error } = await supabase.from('membership_plans').update(payload).eq('id', planId).select().single();
+  if (error) { reportActionError('updateMembershipPlan', error); console.error('Error updating membership plan:', error.message); return null; }
+  return data;
+};
+
+// Creates a pending membership row for the signed-in customer. Throws with
+// .code === 'ALREADY_SUBSCRIBED' if they already have a pending/active
+// membership with this provider (see subscribe_to_membership_plan).
+export const subscribeToMembershipPlan = async (planId) => {
+  const { data, error } = await supabase.rpc('subscribe_to_membership_plan', { p_plan_id: planId });
+  if (error) {
+    if (error.message && error.message.includes('ALREADY_SUBSCRIBED')) {
+      const err = new Error('ALREADY_SUBSCRIBED');
+      err.code = 'ALREADY_SUBSCRIBED';
+      throw err;
+    }
+    reportActionError('subscribeToMembershipPlan', error);
+    console.error('Error subscribing to membership plan:', error.message);
+    throw error;
+  }
+  return data; // new membership id
+};
+
+// Uploads the receipt and records the submission in one call, same
+// deliberately-no-.select() shape as submitProviderPayment (RLS+RETURNING
+// gotcha) — the caller re-fetches via getMyMemberships after.
+export const submitMembershipPayment = async (membershipId, providerId, customerId, file, { amount, periodLabel }) => {
+  const path = `membership-payments/${customerId}/${Date.now()}-${file.name}`;
+  const { error: uploadError } = await supabase.storage.from('vaibook').upload(path, file);
+  if (uploadError) { reportActionError('submitMembershipPayment', uploadError); console.error('Error uploading membership payment receipt:', uploadError.message); return false; }
+
+  const { error } = await supabase.from('membership_payments').insert({
+    membership_id: membershipId,
+    provider_id: providerId,
+    customer_id: customerId,
+    amount,
+    period_label: periodLabel,
+    receipt_url: path,
+  });
+  if (error) { reportActionError('submitMembershipPayment', error); console.error('Error submitting membership payment:', error.message); return false; }
+  return true;
+};
+
+// A signed-in customer's own memberships across every provider — used both
+// by the booking flow (to check coverage for the provider being booked)
+// and an account-area "My memberships" list.
+export const getMyMemberships = async (customerId) => {
+  if (!customerId) return [];
+  const { data, error } = await supabase
+    .from('customer_memberships')
+    .select('*, membership_plans(name, price, visit_limit, included_service_ids), provider_profiles(business_name)')
+    .eq('customer_id', customerId)
+    .order('created_at', { ascending: false });
+  if (error) { console.error('Error fetching memberships:', error.message); return []; }
+  return data || [];
+};
+
+// Provider's subscriber list — every membership against their plans, with
+// the customer's name/email and plan name joined in.
+export const getProviderMembershipSubscribers = async (providerId) => {
+  if (!providerId) return [];
+  const { data, error } = await supabase
+    .from('customer_memberships')
+    .select('*, users(full_name, email), membership_plans(name, price, visit_limit)')
+    .eq('provider_id', providerId)
+    .order('created_at', { ascending: false });
+  if (error) { console.error('Error fetching membership subscribers:', error.message); return []; }
+  return data || [];
+};
+
+// Provider's payment review queue — pending first (what they actually need
+// to act on), same ordering convention as other review queues in this file.
+export const getProviderMembershipPayments = async (providerId) => {
+  if (!providerId) return [];
+  const { data, error } = await supabase
+    .from('membership_payments')
+    .select('*, users(full_name, email), customer_memberships(membership_plans(name))')
+    .eq('provider_id', providerId)
+    .order('submitted_at', { ascending: false });
+  if (error) { console.error('Error fetching membership payments:', error.message); return []; }
+  return data || [];
+};
+
+export const reviewMembershipPayment = async (paymentId, status, note) => {
+  const { error } = await supabase.rpc('provider_review_membership_payment', {
+    p_payment_id: paymentId,
+    p_status: status,
+    p_note: note || null,
+  });
+  if (error) { reportActionError('reviewMembershipPayment', error); console.error('Error reviewing membership payment:', error.message); return false; }
+  return true;
+};
+
+export const cancelMembership = async (membershipId) => {
+  const { error } = await supabase.rpc('cancel_customer_membership', { p_membership_id: membershipId });
+  if (error) { reportActionError('cancelMembership', error); console.error('Error cancelling membership:', error.message); return false; }
+  return true;
+};
+
+// Called right when a covered booking is actually created — race-safe
+// server-side quota check (see redeem_membership_visit). Returns false
+// (not a thrown error) on anything that makes this visit non-redeemable,
+// so the caller can cleanly fall back to charging full price.
+export const redeemMembershipVisit = async (membershipId) => {
+  const { data, error } = await supabase.rpc('redeem_membership_visit', { p_membership_id: membershipId });
+  if (error) { console.error('Error redeeming membership visit:', error.message); return false; }
+  return !!data;
+};
