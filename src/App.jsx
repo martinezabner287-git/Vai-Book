@@ -3138,6 +3138,53 @@ const css = `
   .mi-ns-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; font-size: 14px; border-bottom: 1px solid var(--border); }
   @media (max-width: 560px) { .mi-stats { grid-template-columns: repeat(2, 1fr); } .mi-out { grid-template-columns: 12px 1fr auto 64px; font-size: 13.5px; } }
 
+  /* Segmented-bar figure polish (marks-and-anatomy.md "Figures"): a 2px
+     surface gap separates each part instead of a hairline border, and
+     every part is fully rounded on its own rather than relying on the
+     container's overflow:hidden to fake rounded ends at the two tips only. */
+  .mi-bar { display: flex; gap: 2px; height: 14px; border-radius: 999px; background: transparent; margin-bottom: 12px; }
+  .mi-seg { display: block; height: 100%; border-radius: 999px; background: #EEECE7; }
+  .mi-day-bar span { background: linear-gradient(180deg, #C9C3F2 0%, #AFA6EC 100%); }
+  .mi-day.top .mi-day-bar span { background: linear-gradient(180deg, var(--forest-mid) 0%, var(--forest) 100%); }
+  .mi-svc-bar span { background: linear-gradient(90deg, var(--forest-light) 0%, var(--forest) 100%); }
+
+  /* ── MONTHLY REVIEW — stat tiles & chart cards ──────────────────────
+     Scoped to the Monthly Review tab only (new classes, not a redefinition
+     of the shared .metric/.metric-grid used elsewhere) so this pass
+     doesn't repaint the dashboard or other tabs' stat tiles. */
+  .mr-stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 20px; }
+  .mr-stat { position: relative; background: var(--near-white); border: 1px solid var(--border); border-radius: 16px; padding: 18px 18px 16px; overflow: hidden; }
+  .mr-stat::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--mr-accent, var(--forest)); }
+  .mr-stat-icon { width: 34px; height: 34px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 16px; background: var(--mr-accent-soft, var(--accent-soft)); margin-bottom: 10px; }
+  .mr-stat-label { font-size: 11.5px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 6px; }
+  .mr-stat-value { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 28px; font-weight: 800; color: var(--dark-text); line-height: 1.1; }
+  .mr-stat-sub { font-size: 12px; color: var(--muted); margin-top: 6px; }
+  .mr-stat-sub.up { color: #15803D; font-weight: 700; }
+  .mr-stat-sub.down { color: #B91C1C; font-weight: 700; }
+  @media (max-width: 640px) { .mr-stat-grid { grid-template-columns: 1fr; } }
+
+  .mr-chart-card { background: var(--near-white); border: 1px solid var(--border); border-radius: 18px; padding: 20px 20px 10px; margin-bottom: 18px; }
+  .mr-chart-head { display: flex; align-items: center; gap: 10px; margin-bottom: 2px; }
+  .mr-chart-icon { width: 30px; height: 30px; border-radius: 9px; display: flex; align-items: center; justify-content: center; font-size: 14px; background: var(--mr-accent-soft, var(--accent-soft)); flex-shrink: 0; }
+  .mr-chart-title { font-size: 15px; font-weight: 800; color: var(--dark-text); }
+  .mr-chart-hint { font-size: 12.5px; color: var(--muted); margin: 2px 0 10px 40px; }
+
+  /* ── SHARE YOUR MONTH — downloadable recap card ─────────────────────
+     A vertical (story-shaped) branded summary a provider can post, drawn
+     straight onto a <canvas> at export resolution (see MonthRecapCard) so
+     the on-screen preview IS the exported pixels — no separate HTML/canvas
+     rendering paths to keep in sync. */
+  .mr-share-btn { display: inline-flex; align-items: center; gap: 8px; background: linear-gradient(135deg, var(--forest) 0%, #7B3FE4 100%); color: #fff; font-weight: 800; font-size: 14px; padding: 13px 22px; border-radius: 100px; border: none; cursor: pointer; box-shadow: 0 10px 24px rgba(76,61,196,0.3); transition: transform .15s ease, box-shadow .2s ease; margin-bottom: 20px; }
+  .mr-share-btn:hover { transform: translateY(-1px); box-shadow: 0 14px 30px rgba(76,61,196,0.38); }
+  .mr-recap-panel { background: transparent; box-shadow: none; padding: 0; max-width: 360px; display: flex; flex-direction: column; align-items: center; gap: 16px; }
+  .mr-recap-canvas-wrap { width: 100%; border-radius: 22px; overflow: hidden; box-shadow: 0 20px 50px rgba(11,24,37,0.45); line-height: 0; }
+  .mr-recap-canvas-wrap canvas { width: 100%; height: auto; display: block; }
+  .mr-recap-actions { display: flex; gap: 10px; width: 100%; }
+  .mr-recap-actions button { flex: 1; }
+  .mr-recap-close { background: rgba(255,255,255,0.12); color: #fff; border: 1px solid rgba(255,255,255,0.25); border-radius: 100px; padding: 12px 0; font-weight: 700; font-size: 13.5px; cursor: pointer; }
+  .mr-recap-download { background: #fff; color: var(--forest); border: none; border-radius: 100px; padding: 12px 0; font-weight: 800; font-size: 13.5px; cursor: pointer; }
+  .mr-recap-download:disabled { opacity: 0.6; cursor: default; }
+
 `;
 
 // ── BRAND MARK ─────────────────────────────────────────────────
@@ -5219,13 +5266,22 @@ function monthLabelFromDateStr(s) {
 // and a native tooltip rather than a full interactive-tooltip layer — kept
 // intentionally simple to match how the rest of this app is built (plain
 // inline SVG, no charting library).
-function TrendChart({ points, kind = "line", color, formatValue }) {
+// Redesigned per the dataviz skill: gridlines + value axis, a translucent
+// gradient wash under line charts (never a saturated block), rounded
+// bar caps capped at 24px, selective direct labels (just the latest point
+// and the peak — not every point, see marks-and-anatomy.md), and a real
+// hover/focus tooltip layer (every value a tooltip shows is also reachable
+// without it, via these same direct labels). Text always rides a text
+// token, never the series color.
+function TrendChart({ points, kind = "line", color, formatValue, ariaLabel }) {
+  const [hoverIdx, setHoverIdx] = useState(null);
   const width = 560;
-  const height = 170;
-  const padTop = 30;
-  const padBottom = 26;
-  const padSide = 22;
-  const plotW = width - padSide * 2;
+  const height = 192;
+  const padTop = 28;
+  const padBottom = 28;
+  const padSide = 14;
+  const padLeft = 42;
+  const plotW = width - padLeft - padSide;
   const plotH = height - padTop - padBottom;
 
   const values = points.map((p) => p.y).filter((v) => v != null);
@@ -5234,9 +5290,23 @@ function TrendChart({ points, kind = "line", color, formatValue }) {
   const niceMax = maxV === 0 ? 1 : maxV * 1.2;
 
   const stepX = points.length > 1 ? plotW / (points.length - 1) : 0;
-  const xFor = (i) => padSide + (points.length > 1 ? i * stepX : plotW / 2);
+  const xFor = (i) => padLeft + (points.length > 1 ? i * stepX : plotW / 2);
   const yFor = (v) => padTop + plotH - (Math.max(v || 0, 0) / niceMax) * plotH;
   const fmt = (v) => (formatValue ? formatValue(v) : v);
+  const gradId = useRef(`tg-${Math.random().toString(36).slice(2, 9)}`).current;
+  // Axis gridline values (niceMax * a fraction) land on ordinary JS floats
+  // like 37.199999999999996 (31 * 1.2) — fine for plotting, unreadable as a
+  // tick label. Round to a clean step before handing it to formatValue:
+  // one decimal for small (rating-scale) values, a whole number under 100,
+  // the nearest clean step above that.
+  const niceAxisValue = (v) => {
+    if (!v) return 0;
+    const abs = Math.abs(v);
+    if (abs < 10) return Math.round(v * 10) / 10;
+    if (abs < 100) return Math.round(v);
+    const magnitude = Math.pow(10, Math.floor(Math.log10(abs)) - 1);
+    return Math.round(v / magnitude) * magnitude;
+  };
 
   if (!hasData) {
     return (
@@ -5246,56 +5316,329 @@ function TrendChart({ points, kind = "line", color, formatValue }) {
     );
   }
 
+  const lastIdx = points.length - 1;
+  const peakIdx = points.reduce((best, p, i) => (p.y != null && (best === -1 || p.y > points[best].y) ? i : best), -1);
+  const directLabelIdx = new Set([lastIdx, peakIdx].filter((i) => i >= 0 && points[i].y != null));
+  const gridFractions = [0, 0.5, 1];
+  const hovered = hoverIdx != null ? points[hoverIdx] : null;
+  const tooltipLeftPct = hoverIdx != null ? (xFor(hoverIdx) / width) * 100 : 0;
+  const tooltipTopPct = hoverIdx != null && hovered?.y != null ? (yFor(hovered.y) / height) * 100 : 0;
+  const tooltipFlip = tooltipLeftPct > 78;
+
   return (
-    <svg viewBox={`0 0 ${width} ${height}`} style={{ width: "100%", height: "auto", display: "block" }}>
-      <line x1={padSide} y1={padTop + plotH} x2={width - padSide} y2={padTop + plotH} style={{ stroke: "var(--border)" }} strokeWidth="1" />
+    <div style={{ position: "relative" }}>
+      <svg
+        viewBox={`0 0 ${width} ${height}`}
+        style={{ width: "100%", height: "auto", display: "block", overflow: "visible" }}
+        role="img"
+        aria-label={ariaLabel || points.map((p) => `${p.label}: ${p.y == null ? "no data" : fmt(p.y)}`).join(", ")}
+        onMouseLeave={() => setHoverIdx(null)}
+      >
+        <defs>
+          <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={color} stopOpacity="0.22" />
+            <stop offset="100%" stopColor={color} stopOpacity="0" />
+          </linearGradient>
+        </defs>
 
-      {kind === "bar" && points.map((p, i) => {
-        const barW = Math.min(34, stepX * 0.5) || 34;
-        const x = xFor(i) - barW / 2;
-        const y = yFor(p.y || 0);
-        const barH = padTop + plotH - y;
-        return (
-          <g key={i}>
-            <rect x={x} y={y} width={barW} height={Math.max(barH, 0)} rx={4} fill={color}>
-              <title>{`${p.label}: ${p.y == null ? "—" : fmt(p.y)}`}</title>
-            </rect>
-            {p.y != null && (
-              <text x={xFor(i)} y={y - 8} textAnchor="middle" fontSize="11" fontWeight="700" style={{ fill: "var(--dark-text)" }}>{fmt(p.y)}</text>
-            )}
-            <text x={xFor(i)} y={padTop + plotH + 18} textAnchor="middle" fontSize="11" style={{ fill: "var(--muted)" }}>{p.label}</text>
-          </g>
-        );
-      })}
-
-      {kind === "line" && (
-        <>
-          <path
-            d={points
-              .map((p, i) => (p.y == null ? null : `${xFor(i)} ${yFor(p.y)}`))
-              .reduce((acc, seg, idx) => (seg == null ? { d: acc.d, pen: false } : { d: `${acc.d}${acc.pen ? " L " : `${acc.d ? " " : ""}M `}${seg}`, pen: true }), { d: "", pen: false }).d}
-            fill="none"
-            stroke={color}
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-          {points.map((p, i) => (
-            <g key={i}>
-              {p.y != null && (
-                <circle cx={xFor(i)} cy={yFor(p.y)} r="4" fill="white" stroke={color} strokeWidth="2">
-                  <title>{`${p.label}: ${fmt(p.y)}`}</title>
-                </circle>
-              )}
-              {p.y != null && (
-                <text x={xFor(i)} y={yFor(p.y) - 11} textAnchor="middle" fontSize="11" fontWeight="700" style={{ fill: "var(--dark-text)" }}>{fmt(p.y)}</text>
-              )}
-              <text x={xFor(i)} y={padTop + plotH + 18} textAnchor="middle" fontSize="11" style={{ fill: "var(--muted)" }}>{p.label}</text>
+        {/* Recessive gridlines + value axis — one hairline step off the
+            surface, round numbers at 0 / mid / max. */}
+        {gridFractions.map((f, gi) => {
+          const y = padTop + plotH * (1 - f);
+          return (
+            <g key={gi}>
+              <line x1={padLeft} y1={y} x2={width - padSide} y2={y} stroke="var(--border)" strokeWidth="1" />
+              <text x={padLeft - 8} y={y + 3} textAnchor="end" fontSize="10" style={{ fill: "var(--muted)" }}>{fmt(niceAxisValue(niceMax * f))}</text>
             </g>
-          ))}
-        </>
+          );
+        })}
+
+        {kind === "bar" && points.map((p, i) => {
+          const barW = Math.min(24, stepX * 0.56) || 24;
+          const x = xFor(i) - barW / 2;
+          const y = yFor(p.y || 0);
+          const barH = padTop + plotH - y;
+          const active = hoverIdx === i;
+          return (
+            <g
+              key={i}
+              tabIndex={0}
+              style={{ cursor: "pointer", outline: "none" }}
+              onMouseEnter={() => setHoverIdx(i)}
+              onFocus={() => setHoverIdx(i)}
+              onMouseLeave={() => setHoverIdx(null)}
+              onBlur={() => setHoverIdx(null)}
+            >
+              {/* hit target wider than the bar itself */}
+              <rect x={x - 6} y={padTop} width={barW + 12} height={plotH} fill="transparent" />
+              <rect x={x} y={y} width={barW} height={Math.max(barH, 0)} rx={4} fill={color} opacity={active ? 1 : 0.86} />
+              {p.y != null && directLabelIdx.has(i) && (
+                <text x={xFor(i)} y={y - 8} textAnchor="middle" fontSize="11" fontWeight="700" style={{ fill: "var(--dark-text)" }}>{fmt(p.y)}</text>
+              )}
+              <text x={xFor(i)} y={padTop + plotH + 20} textAnchor="middle" fontSize="11" style={{ fill: "var(--muted)" }}>{p.label}</text>
+            </g>
+          );
+        })}
+
+        {kind === "line" && (
+          <>
+            {/* area wash under the line — a hue tint, never a solid block */}
+            <path
+              d={(() => {
+                const line = points.map((p, i) => (p.y == null ? null : `${xFor(i)} ${yFor(p.y)}`))
+                  .reduce((acc, seg) => (seg == null ? { d: acc.d, pen: false } : { d: `${acc.d}${acc.pen ? " L " : `${acc.d ? " " : ""}M `}${seg}`, pen: true }), { d: "", pen: false }).d;
+                if (!line) return "";
+                const firstI = points.findIndex((p) => p.y != null);
+                const lastI = points.length - 1 - [...points].reverse().findIndex((p) => p.y != null);
+                return `${line} L ${xFor(lastI)} ${padTop + plotH} L ${xFor(firstI)} ${padTop + plotH} Z`;
+              })()}
+              fill={`url(#${gradId})`}
+              stroke="none"
+            />
+            <path
+              d={points
+                .map((p, i) => (p.y == null ? null : `${xFor(i)} ${yFor(p.y)}`))
+                .reduce((acc, seg) => (seg == null ? { d: acc.d, pen: false } : { d: `${acc.d}${acc.pen ? " L " : `${acc.d ? " " : ""}M `}${seg}`, pen: true }), { d: "", pen: false }).d}
+              fill="none"
+              stroke={color}
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            {points.map((p, i) => (
+              <g
+                key={i}
+                tabIndex={p.y != null ? 0 : -1}
+                style={{ cursor: p.y != null ? "pointer" : "default", outline: "none" }}
+                onMouseEnter={() => p.y != null && setHoverIdx(i)}
+                onFocus={() => p.y != null && setHoverIdx(i)}
+                onMouseLeave={() => setHoverIdx(null)}
+                onBlur={() => setHoverIdx(null)}
+              >
+                {p.y != null && <circle cx={xFor(i)} cy={yFor(p.y)} r="14" fill="transparent" />}
+                {p.y != null && (
+                  <circle cx={xFor(i)} cy={yFor(p.y)} r={hoverIdx === i ? 5.5 : 4} fill={color} stroke="var(--near-white)" strokeWidth="2" />
+                )}
+                {p.y != null && directLabelIdx.has(i) && (
+                  <text x={xFor(i)} y={yFor(p.y) - 12} textAnchor="middle" fontSize="11" fontWeight="700" style={{ fill: "var(--dark-text)" }}>{fmt(p.y)}</text>
+                )}
+                <text x={xFor(i)} y={padTop + plotH + 20} textAnchor="middle" fontSize="11" style={{ fill: "var(--muted)" }}>{p.label}</text>
+              </g>
+            ))}
+          </>
+        )}
+      </svg>
+
+      {hovered && hovered.y != null && (
+        <div
+          style={{
+            position: "absolute", pointerEvents: "none",
+            left: `${tooltipLeftPct}%`, top: `${tooltipTopPct}%`,
+            transform: `translate(${tooltipFlip ? "-100%" : "0%"}, -130%) translateX(${tooltipFlip ? "10px" : "-10px"})`,
+            background: "var(--dark-text)", color: "#fff", borderRadius: 8, padding: "6px 10px",
+            fontSize: 12, whiteSpace: "nowrap", boxShadow: "0 6px 16px rgba(0,0,0,0.18)", zIndex: 2,
+          }}
+        >
+          <strong>{fmt(hovered.y)}</strong>
+          <span style={{ opacity: 0.75, marginLeft: 6 }}>{hovered.label}</span>
+        </div>
       )}
-    </svg>
+    </div>
+  );
+}
+
+// ── MONTH RECAP CARD — "Share your month" ──────────────────────────────
+// A vertical, story-shaped (1080x1920) branded summary a provider can
+// download and post. Drawn straight onto a <canvas> at full export
+// resolution (displayed scaled down via CSS) so the on-screen preview IS
+// the exported image — one rendering path, not an HTML preview plus a
+// separate canvas/html2canvas export that could drift out of sync. No
+// external image is ever drawn into the canvas (no QR code, no uploaded
+// photo), so the canvas never gets tainted and toBlob() always works.
+function roundRectPath(ctx, x, y, w, h, r) {
+  const rad = Math.max(0, Math.min(r, w / 2, h / 2));
+  ctx.beginPath();
+  ctx.moveTo(x + rad, y);
+  ctx.arcTo(x + w, y, x + w, y + h, rad);
+  ctx.arcTo(x + w, y + h, x, y + h, rad);
+  ctx.arcTo(x, y + h, x, y, rad);
+  ctx.arcTo(x, y, x + w, y, rad);
+  ctx.closePath();
+}
+
+// Greedy word-wrap against the canvas's own measured text width, capped at
+// maxLines — the last line gets an ellipsis (character-trimmed until it
+// fits) only when real content was actually cut off, never appended to a
+// line that already said everything.
+function wrapCanvasLines(ctx, text, maxWidth, maxLines) {
+  const words = String(text || "").split(/\s+/).filter(Boolean);
+  if (!words.length) return [""];
+  const lines = [];
+  let line = "";
+  for (const w of words) {
+    const test = line ? `${line} ${w}` : w;
+    if (line && ctx.measureText(test).width > maxWidth) {
+      lines.push(line);
+      line = w;
+      if (lines.length === maxLines) break;
+    } else {
+      line = test;
+    }
+  }
+  const consumed = lines.reduce((n, l) => n + l.split(/\s+/).length, 0);
+  if (lines.length < maxLines && line) { lines.push(line); }
+  else if (lines.length === maxLines && consumed < words.length) {
+    let last = lines[maxLines - 1];
+    while (last.length > 1 && ctx.measureText(`${last}…`).width > maxWidth) last = last.slice(0, -1);
+    lines[maxLines - 1] = `${last.trimEnd()}…`;
+  }
+  return lines.length ? lines : [""];
+}
+
+function drawMonthRecap(canvas, d) {
+  const ctx = canvas.getContext("2d");
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+
+  // Background — brand indigo/navy diagonal, plus two soft glows (clay
+  // accent top-right, a warm white wash bottom-left) so it reads as a
+  // designed card rather than a flat gradient swatch.
+  const bg = ctx.createLinearGradient(0, 0, W, H);
+  bg.addColorStop(0, "#152E59");
+  bg.addColorStop(0.55, "#2E2A8C");
+  bg.addColorStop(1, "#4C3DC4");
+  ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
+
+  const glow1 = ctx.createRadialGradient(W * 0.88, H * 0.1, 0, W * 0.88, H * 0.1, W * 0.6);
+  glow1.addColorStop(0, "rgba(194,65,12,0.32)"); glow1.addColorStop(1, "rgba(194,65,12,0)");
+  ctx.fillStyle = glow1; ctx.fillRect(0, 0, W, H);
+
+  const glow2 = ctx.createRadialGradient(W * 0.05, H * 0.95, 0, W * 0.05, H * 0.95, W * 0.65);
+  glow2.addColorStop(0, "rgba(255,255,255,0.12)"); glow2.addColorStop(1, "rgba(255,255,255,0)");
+  ctx.fillStyle = glow2; ctx.fillRect(0, 0, W, H);
+
+  const pad = 72;
+  ctx.textAlign = "left"; ctx.textBaseline = "alphabetic";
+  let y = 128;
+
+  ctx.fillStyle = "rgba(255,255,255,0.9)";
+  ctx.font = "800 30px 'Plus Jakarta Sans', sans-serif";
+  ctx.fillText("VaiBook", pad, y);
+  y += 84;
+
+  ctx.fillStyle = "#FFFFFF";
+  ctx.font = "800 58px 'Plus Jakarta Sans', sans-serif";
+  const nameLines = wrapCanvasLines(ctx, d.businessName, W - pad * 2, 2);
+  nameLines.forEach((line, i) => ctx.fillText(line, pad, y + i * 66));
+  y += nameLines.length * 66 + 14;
+
+  ctx.font = "700 27px 'Plus Jakarta Sans', sans-serif";
+  const mw = ctx.measureText(d.monthLabel).width;
+  roundRectPath(ctx, pad, y, mw + 44, 50, 25);
+  ctx.fillStyle = "rgba(255,255,255,0.16)"; ctx.fill();
+  ctx.fillStyle = "#fff"; ctx.textBaseline = "middle";
+  ctx.fillText(d.monthLabel, pad + 22, y + 26);
+  ctx.textBaseline = "alphabetic";
+  y += 128;
+
+  ctx.font = "700 25px 'Plus Jakarta Sans', sans-serif";
+  ctx.fillStyle = "rgba(255,255,255,0.65)";
+  ctx.fillText(d.revenueLabel, pad, y);
+  y += 104;
+  ctx.font = "800 148px 'Plus Jakarta Sans', sans-serif";
+  ctx.fillStyle = "#FFFFFF";
+  ctx.fillText(d.revenueValue, pad, y);
+  if (d.revenueDeltaText) {
+    ctx.font = "700 27px 'Plus Jakarta Sans', sans-serif";
+    ctx.fillStyle = d.revenueUp ? "#86EFAC" : "#FCA5A5";
+    ctx.fillText(d.revenueDeltaText, pad, y + 50);
+  }
+  y += 136;
+
+  const chips = [
+    { label: d.bookingsLabel, value: d.bookingsValue },
+    { label: d.ratingLabel, value: d.ratingValue },
+    { label: d.completionLabel, value: d.completionValue },
+  ];
+  const chipGap = 18;
+  const chipW = (W - pad * 2 - chipGap * 2) / 3;
+  const chipH = 192;
+  chips.forEach((c, i) => {
+    const cx = pad + i * (chipW + chipGap);
+    roundRectPath(ctx, cx, y, chipW, chipH, 22);
+    ctx.fillStyle = "rgba(255,255,255,0.12)"; ctx.fill();
+    ctx.font = "800 50px 'Plus Jakarta Sans', sans-serif";
+    ctx.fillStyle = "#FFFFFF";
+    ctx.fillText(c.value, cx + 22, y + 82);
+    ctx.font = "600 20px 'Plus Jakarta Sans', sans-serif";
+    ctx.fillStyle = "rgba(255,255,255,0.65)";
+    wrapCanvasLines(ctx, c.label, chipW - 44, 2).forEach((line, li) => ctx.fillText(line, cx + 22, y + 118 + li * 25));
+  });
+  y += chipH + 64;
+
+  ctx.font = "700 23px 'Plus Jakarta Sans', sans-serif";
+  ctx.fillStyle = "rgba(255,255,255,0.55)";
+  ctx.fillText(d.footerLine1, pad, H - 150);
+  ctx.font = "800 29px 'Plus Jakarta Sans', sans-serif";
+  ctx.fillStyle = "#FFFFFF";
+  ctx.fillText(d.footerLine2, pad, H - 108);
+
+  ctx.strokeStyle = "rgba(255,255,255,0.18)"; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(pad, H - 80); ctx.lineTo(W - pad, H - 80); ctx.stroke();
+
+  ctx.font = "600 19px 'Plus Jakarta Sans', sans-serif";
+  ctx.fillStyle = "rgba(255,255,255,0.45)";
+  ctx.fillText(d.poweredBy, pad, H - 44);
+}
+
+function MonthRecapCard({ onClose, data }) {
+  const canvasRef = useRef(null);
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    const draw = () => { if (!cancelled && canvasRef.current) { drawMonthRecap(canvasRef.current, data); setReady(true); } };
+    draw(); // draw immediately so something always shows
+    // Canvas text only picks up a web font once it's actually loaded —
+    // re-draw once the Google Font this whole app already @imports has
+    // finished loading, in case this is the very first paint that needs it.
+    if (document.fonts && document.fonts.ready) {
+      Promise.all([
+        document.fonts.load("800 58px 'Plus Jakarta Sans'").catch(() => {}),
+        document.fonts.ready,
+      ]).then(draw).catch(() => {});
+    }
+    return () => { cancelled = true; };
+  }, [data]);
+
+  const download = () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    canvas.toBlob((blob) => {
+      if (!blob) return;
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${(data.businessName || "vaibook").replace(/[^a-z0-9]+/gi, "-").toLowerCase()}-${data.fileMonth}.png`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 4000);
+    }, "image/png");
+  };
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="mr-recap-panel" onClick={(e) => e.stopPropagation()}>
+        <div className="mr-recap-canvas-wrap">
+          <canvas ref={canvasRef} width={1080} height={1920} />
+        </div>
+        <div className="mr-recap-actions">
+          <button className="mr-recap-close" onClick={onClose}>{data.closeLabel}</button>
+          <button className="mr-recap-download" onClick={download} disabled={!ready}>{data.downloadLabel}</button>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -12666,6 +13009,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
 
   const [monthlyTrend, setMonthlyTrend] = useState([]);
   const [loadingTrend, setLoadingTrend] = useState(false);
+  const [showRecap, setShowRecap] = useState(false);
 
   const loadMonthlyTrend = async () => {
     if (!providerId) return;
@@ -15820,6 +16164,44 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                 <p>{t("providerPortal.monthlyReview.subtitle")}</p>
               </div>
 
+              {thisMonth && (
+                <button className="mr-share-btn" onClick={() => setShowRecap(true)}>
+                  📸 {t("providerPortal.monthlyReview.shareButton")}
+                </button>
+              )}
+
+              {showRecap && thisMonth && (() => {
+                const es = (i18n.language || "").toLowerCase().startsWith("es");
+                const monthDate = new Date(thisMonth.month_start);
+                const revenue = Number(thisMonth.revenue_total) || 0;
+                const rating = thisMonth.avg_rating != null ? Number(thisMonth.avg_rating) : null;
+                return (
+                  <MonthRecapCard
+                    onClose={() => setShowRecap(false)}
+                    data={{
+                      businessName: providerProfile?.business_name || "VaiBook",
+                      monthLabel: monthDate.toLocaleDateString(es ? "es" : "en-US", { month: "long", year: "numeric" }),
+                      fileMonth: `${monthDate.getFullYear()}-${String(monthDate.getMonth() + 1).padStart(2, "0")}`,
+                      revenueLabel: es ? "Ingresos del mes" : "Revenue this month",
+                      revenueValue: `BZ$${revenue.toFixed(0)}`,
+                      revenueDeltaText: revenueDeltaPct == null ? null : `${revenueDeltaPct >= 0 ? "↑" : "↓"} ${Math.abs(revenueDeltaPct)}% ${es ? "vs. mes anterior" : "vs. last month"}`,
+                      revenueUp: revenueDeltaPct != null && revenueDeltaPct >= 0,
+                      bookingsLabel: es ? "citas" : "bookings",
+                      bookingsValue: String(thisMonth.bookings_total || 0),
+                      ratingLabel: es ? "calificación" : "avg rating",
+                      ratingValue: rating != null ? `${rating.toFixed(1)}★` : "—",
+                      completionLabel: es ? "completadas" : "completion",
+                      completionValue: completionPct != null ? `${completionPct}%` : "—",
+                      footerLine1: es ? "Reserva conmigo" : "Book with me",
+                      footerLine2: bookingUrl.replace(/^https?:\/\//, ""),
+                      poweredBy: es ? "Hecho con VaiBook" : "Made with VaiBook",
+                      closeLabel: t("providerPortal.common.close"),
+                      downloadLabel: t("providerPortal.monthlyReview.downloadImage"),
+                    }}
+                  />
+                );
+              })()}
+
               {/* MONTH IN DETAIL — what happened to every booking this
                   month, where money was lost, busy/quiet times, services,
                   clients, and concrete changes to make. All from the
@@ -16058,39 +16440,51 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                 <p style={{ fontSize: 13, color: "var(--muted)", padding: "16px 0" }}>{t("providerPortal.common.loading")}</p>
               ) : (
                 <>
-                  <div className="metric-grid" style={{ gridTemplateColumns: "1fr 1fr 1fr" }}>
-                    <div className="metric">
-                      <div className="metric-label">{t("providerPortal.monthlyReview.revenueThisMonth")}</div>
-                      <div className="metric-value" style={{ color: "var(--clay)" }}>BZ${thisMonth ? Number(thisMonth.revenue_total).toFixed(0) : "0"}</div>
-                      <div className="metric-sub">{revenueDeltaPct === null ? t("providerPortal.common.noDataLastMonth") : t("providerPortal.common.vsLastMonth", { arrow: revenueDeltaPct >= 0 ? "↑" : "↓", pct: Math.abs(revenueDeltaPct) })}</div>
+                  <div className="mr-stat-grid">
+                    <div className="mr-stat" style={{ "--mr-accent": "#D4795A", "--mr-accent-soft": "#FBEAE3" }}>
+                      <div className="mr-stat-icon">💰</div>
+                      <div className="mr-stat-label">{t("providerPortal.monthlyReview.revenueThisMonth")}</div>
+                      <div className="mr-stat-value">BZ${thisMonth ? Number(thisMonth.revenue_total).toFixed(0) : "0"}</div>
+                      <div className={`mr-stat-sub ${revenueDeltaPct == null ? "" : revenueDeltaPct >= 0 ? "up" : "down"}`}>{revenueDeltaPct === null ? t("providerPortal.common.noDataLastMonth") : t("providerPortal.common.vsLastMonth", { arrow: revenueDeltaPct >= 0 ? "↑" : "↓", pct: Math.abs(revenueDeltaPct) })}</div>
                     </div>
-                    <div className="metric">
-                      <div className="metric-label">{t("providerPortal.monthlyReview.bookingsThisMonth")}</div>
-                      <div className="metric-value">{thisMonth ? thisMonth.bookings_total : 0}</div>
-                      <div className="metric-sub">{completionPct === null ? t("providerPortal.monthlyReview.noBookingsYet") : t("providerPortal.monthlyReview.pctCompleted", { pct: completionPct })}</div>
+                    <div className="mr-stat" style={{ "--mr-accent": "var(--forest)", "--mr-accent-soft": "var(--accent-soft)" }}>
+                      <div className="mr-stat-icon">📅</div>
+                      <div className="mr-stat-label">{t("providerPortal.monthlyReview.bookingsThisMonth")}</div>
+                      <div className="mr-stat-value">{thisMonth ? thisMonth.bookings_total : 0}</div>
+                      <div className="mr-stat-sub">{completionPct === null ? t("providerPortal.monthlyReview.noBookingsYet") : t("providerPortal.monthlyReview.pctCompleted", { pct: completionPct })}</div>
                     </div>
-                    <div className="metric">
-                      <div className="metric-label">{t("providerPortal.monthlyReview.avgRating")}</div>
-                      <div className="metric-value">{thisMonth && thisMonth.avg_rating != null ? Number(thisMonth.avg_rating).toFixed(1) : "—"}</div>
-                      <div className="metric-sub">{thisMonth && thisMonth.reviews_count ? t("providerPortal.monthlyReview.reviewsThisMonth", { count: thisMonth.reviews_count }) : t("providerPortal.monthlyReview.noReviewsYet")}</div>
+                    <div className="mr-stat" style={{ "--mr-accent": "#F59E0B", "--mr-accent-soft": "#FEF3C7" }}>
+                      <div className="mr-stat-icon">⭐</div>
+                      <div className="mr-stat-label">{t("providerPortal.monthlyReview.avgRating")}</div>
+                      <div className="mr-stat-value">{thisMonth && thisMonth.avg_rating != null ? Number(thisMonth.avg_rating).toFixed(1) : "—"}</div>
+                      <div className="mr-stat-sub">{thisMonth && thisMonth.reviews_count ? t("providerPortal.monthlyReview.reviewsThisMonth", { count: thisMonth.reviews_count }) : t("providerPortal.monthlyReview.noReviewsYet")}</div>
                     </div>
                   </div>
 
-                  <div className="card" style={{ marginBottom: 20 }}>
-                    <div className="card-title">{t("providerPortal.monthlyReview.revenueTrend")}</div>
-                    <p style={{ fontSize: 12.5, color: "var(--muted)", marginTop: -8, marginBottom: 12 }}>{t("providerPortal.monthlyReview.revenueTrendHint")}</p>
+                  <div className="mr-chart-card">
+                    <div className="mr-chart-head">
+                      <div className="mr-chart-icon" style={{ background: "#FBEAE3" }}>💰</div>
+                      <div className="mr-chart-title">{t("providerPortal.monthlyReview.revenueTrend")}</div>
+                    </div>
+                    <p className="mr-chart-hint">{t("providerPortal.monthlyReview.revenueTrendHint")}</p>
                     <TrendChart points={revenuePoints} kind="line" color="#D4795A" formatValue={(v) => `$${Math.round(v)}`} />
                   </div>
 
-                  <div className="card" style={{ marginBottom: 20 }}>
-                    <div className="card-title">{t("providerPortal.monthlyReview.bookingVolume")}</div>
-                    <p style={{ fontSize: 12.5, color: "var(--muted)", marginTop: -8, marginBottom: 12 }}>{t("providerPortal.monthlyReview.bookingVolumeHint")}</p>
-                    <TrendChart points={bookingPoints} kind="bar" color="#1BAF7A" formatValue={(v) => `${v}`} />
+                  <div className="mr-chart-card">
+                    <div className="mr-chart-head">
+                      <div className="mr-chart-icon" style={{ background: "var(--accent-soft)" }}>📅</div>
+                      <div className="mr-chart-title">{t("providerPortal.monthlyReview.bookingVolume")}</div>
+                    </div>
+                    <p className="mr-chart-hint">{t("providerPortal.monthlyReview.bookingVolumeHint")}</p>
+                    <TrendChart points={bookingPoints} kind="bar" color="var(--forest)" formatValue={(v) => `${v}`} />
                   </div>
 
-                  <div className="card">
-                    <div className="card-title">{t("providerPortal.monthlyReview.reviewsRatings")}</div>
-                    <p style={{ fontSize: 12.5, color: "var(--muted)", marginTop: -8, marginBottom: 12 }}>{t("providerPortal.monthlyReview.reviewsRatingsHint")}</p>
+                  <div className="mr-chart-card">
+                    <div className="mr-chart-head">
+                      <div className="mr-chart-icon" style={{ background: "#FEF3C7" }}>⭐</div>
+                      <div className="mr-chart-title">{t("providerPortal.monthlyReview.reviewsRatings")}</div>
+                    </div>
+                    <p className="mr-chart-hint">{t("providerPortal.monthlyReview.reviewsRatingsHint")}</p>
                     <TrendChart points={ratingPoints} kind="line" color="#F59E0B" formatValue={(v) => `${v.toFixed(1)}★`} />
                     {monthlyTrend.some((m) => m.reviews_count > 0) && (
                       <div style={{ display: "flex", justifyContent: "space-around", marginTop: 4, paddingTop: 10, borderTop: "1px solid var(--border)" }}>
