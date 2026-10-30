@@ -1093,10 +1093,35 @@ const css = `
      what actually governs now that the .lp-theme horizontal-scroll variant
      above is mobile-gated, so the pills line up with the hero instead of
      stopping 280px short of it. */
-  .services-pills { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; max-width: 1320px; margin: 0 auto; }
-  .service-pill { display: inline-flex; align-items: center; gap: 9px; background: #fff; border: 1px solid var(--border); color: var(--dark-text); padding: 13px 22px; border-radius: 100px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all .2s; }
-  .service-pill:hover { border-color: var(--forest); color: var(--forest); box-shadow: 0 2px 10px rgba(76,61,196,0.08); }
-  .service-pill .icon { font-size: 18px; line-height: 1; }
+  .services-pills { display: flex; flex-wrap: wrap; gap: 14px; justify-content: center; max-width: 1320px; margin: 0 auto; }
+  /* 2026-10-30: "more aesthetic" pass — each pill's icon now sits in a
+     small tinted chip using that category's own SERVICES[].bg color
+     (previously defined but never actually applied anywhere), so the row
+     reads as a set of distinct categories instead of identical white
+     pills differing only by text. Also dropped the "badge-pill" class
+     this button used to carry alongside "service-pill" — badge-pill
+     forces background/border/radius with !important (by design, it's
+     the shared "always-glass-white" look used by the hero search and
+     Customer Portal Home's discover pills), which was silently
+     overriding this section's own .lp-theme dark-mode rule below.
+     .service-pill alone already matched badge-pill's look in light mode,
+     so dropping it changes nothing there and lets dark mode darken these
+     pills correctly, same as it was always meant to. */
+  .service-pill {
+    display: inline-flex; align-items: center; gap: 11px;
+    background: #fff; border: 1px solid var(--border); color: var(--dark-text);
+    padding: 8px 22px 8px 8px; border-radius: 100px; font-size: 14px; font-weight: 600;
+    cursor: pointer; transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease, color .2s ease;
+    box-shadow: 0 1px 3px rgba(23,20,31,0.05);
+  }
+  .service-pill:hover { border-color: var(--forest); color: var(--forest); box-shadow: 0 12px 26px rgba(23,20,31,0.1); transform: translateY(-2px); }
+  .service-pill .icon-chip {
+    width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0;
+    display: inline-flex; align-items: center; justify-content: center;
+    transition: transform .2s ease;
+  }
+  .service-pill:hover .icon-chip { transform: scale(1.08); }
+  .service-pill .icon { font-size: 17px; line-height: 1; }
 
   /* BROWSE BY DISTRICT */
   .browse-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 32px 24px; max-width: 1100px; margin: 0 auto 44px; }
@@ -6994,7 +7019,7 @@ function setPortalTab(tabId) {
   window.dispatchEvent(new CustomEvent("vaibook-set-portal-tab", { detail: { tab: tabId } }));
 }
 
-function Nav({ onNav, current, session, user, providerProfile, staffProfile, onSignIn, onSignOut }) {
+function Nav({ onNav, current, session, user, providerProfile, staffProfile, isAdminAccount, onSignIn, onSignOut }) {
   const { t } = useTranslation();
   const [menuOpen, setMenuOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
@@ -7438,6 +7463,28 @@ function Nav({ onNav, current, session, user, providerProfile, staffProfile, onS
                   )}
                 </>
               )}
+              {/* 2026-10-30: an admin account used to only ever reach the
+                  admin portal automatically on sign-in, with no way back in
+                  if they deliberately switched to browsing as a customer/
+                  provider (and nothing to switch away WITH in the first
+                  place, short of editing the URL hash by hand) — see the
+                  home-redirect effect in App() for the other half of this
+                  fix. onNav("admin") directly rather than
+                  switchToPortal/enterProviderPortal's sign-in gate, since
+                  this branch only ever renders while already signed in. */}
+              {current === "admin" && (
+                <>
+                  <hr />
+                  <button className="nav-dropdown-item" onClick={() => goAccount(() => onNav("customer"))}>
+                    <span className="icn">🛍️</span> {t("nav.switchToCustomer")}
+                  </button>
+                </>
+              )}
+              {isAdminAccount && (current === "customer" || current === "provider") && (
+                <button className="nav-dropdown-item" onClick={() => goAccount(() => onNav("admin"))}>
+                  <span className="icn">🎛️</span> {t("nav.switchToAdmin")}
+                </button>
+              )}
               <hr />
               <LanguageSelector variant="menu" />
               <hr />
@@ -7789,7 +7836,7 @@ function LandingPage({ onNav, session, user, onSignIn, onSignOut }) {
             // Browse tab, see its categoryMatch filter) rather than a
             // second, separate filtering path.
             <button
-              className="service-pill badge-pill"
+              className="service-pill"
               key={i}
               onClick={() => {
                 try {
@@ -7798,7 +7845,8 @@ function LandingPage({ onNav, session, user, onSignIn, onSignOut }) {
                 browseAsGuest(onNav);
               }}
             >
-              <span className="icon">{s.icon}</span> {t(`services.${s.key}.name`)}
+              <span className="icon-chip" style={{ background: `${s.bg}1F` }}><span className="icon">{s.icon}</span></span>
+              {t(`services.${s.key}.name`)}
             </button>
           ))}
         </div>
@@ -18996,6 +19044,14 @@ export default function App() {
   // profile — the "home → portal" redirect below waits for this so a
   // business owner is never sent to the customer side by mistake.
   const [rolesReadyFor, setRolesReadyFor] = useState(null);
+  // 2026-10-30: whether the signed-in account is on the admin allowlist —
+  // set once alongside the existing checkIsAdmin calls below (maybeGoToAdmin,
+  // the home-redirect effect) rather than queried fresh everywhere it's
+  // needed. Nav reads this to offer a "Switch to Admin"/"Switch to
+  // customer" menu item for admin accounts (see nav.switchToAdmin below),
+  // so an admin isn't limited to the automatic sign-in redirect as the
+  // only way in or out of the admin portal.
+  const [isAdminAccount, setIsAdminAccount] = useState(false);
 
   // getOrCreateUser can now throw on a real query failure (see
   // supabase.js) rather than silently treating it as "no users row yet"
@@ -19102,10 +19158,15 @@ export default function App() {
   // opening a booking link or the provider portal on purpose should still
   // land there, not get bounced.
   const maybeGoToAdmin = async (email, hadPendingView) => {
+    // Checked (and isAdminAccount set) before the early-returns below, so
+    // Nav knows this is an admin account and can offer the "Switch to
+    // Admin" menu item even when a deep link sends them straight into the
+    // customer/provider portal instead of auto-redirecting here.
+    const ok = await checkIsAdmin(email);
+    setIsAdminAccount(ok);
     if (hadPendingView) return false;
     const h = window.location.hash.replace("#", "");
     if (h === "customer" || h === "provider" || parseBookingHash(h)) return false;
-    const ok = await checkIsAdmin(email);
     if (ok) { setView("admin"); return true; }
     return false;
   };
@@ -19225,6 +19286,7 @@ export default function App() {
         setProviderProfile(null);
         setStaffProfile(null);
         setRolesReadyFor(null);
+        setIsAdminAccount(false);
       }
     });
 
@@ -19336,6 +19398,19 @@ export default function App() {
   // the logo, a "Back to site" link), send them to their own portal's
   // home instead: admins → admin portal, business owners and staff →
   // business portal, everyone else → customer home.
+  //
+  // 2026-10-30: this used to send an admin account to the admin portal
+  // every single time, with no way to tap the logo while deliberately
+  // browsing as a customer/provider (via the new "Switch to customer" /
+  // "Switch to provider" items in Nav's account menu, see PORTAL_TOOLS_BY_
+  // VIEW / enterCustomerPortal below) without being bounced straight back.
+  // Now checks vaibook_last_view first — the same sessionStorage record
+  // restoreLastPortalView already keeps for a plain refresh — and honors a
+  // deliberate switch away from the account's default portal before
+  // falling back to the admin/business/customer default. Only applies
+  // when the account can actually use that view (hasBusinessSide for
+  // "provider"), so a stale value never strands anyone on a view they've
+  // lost access to.
   const homeIsSignedIn = view === "home" && !!session;
   const hasBusinessSide = !!providerProfile || !!staffProfile;
   const signedInUserId = session?.user?.id || null;
@@ -19346,6 +19421,13 @@ export default function App() {
       let isAdmin = false;
       try { isAdmin = await checkIsAdmin(session.user.email); } catch (e) { /* treat as not admin */ }
       if (cancelled) return;
+      setIsAdminAccount(isAdmin);
+
+      let lastChosen = null;
+      try { lastChosen = sessionStorage.getItem("vaibook_last_view"); } catch (e) { /* ignore */ }
+      if (lastChosen === "customer") { setView("customer"); return; }
+      if (lastChosen === "provider" && hasBusinessSide) { setView("provider"); return; }
+
       if (isAdmin) setView("admin");
       else if (hasBusinessSide) setView("provider");
       else {
@@ -19402,7 +19484,7 @@ export default function App() {
   }
 
   const authProps = {
-    session, user, providerProfile,
+    session, user, providerProfile, isAdminAccount,
     onSignIn: signInWithGoogle, onSignOut: handleSignOut,
     onUserUpdate: setUser, onProviderProfileUpdate: (u) => setProviderProfile((prev) => (prev && u ? { ...prev, ...u } : u)),
   };
