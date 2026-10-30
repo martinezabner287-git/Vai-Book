@@ -12125,6 +12125,86 @@ function StaffPortal({ onNav, session, staffProfile, onSignOut }) {
     }
   };
 
+  // 2026-10-30: "essentials needed to run" pass — a staff member could
+  // only view a booking already confirmed by the owner and mark it done.
+  // A pending request just sat there with nothing to do about it (the
+  // owner had to be the one to accept/decline, even on a shift where
+  // they're not around), and there was no way to flag a no-show, see a
+  // customer's note, or actually reach the customer (see getStaffBookings'
+  // new phone/whatsapp_number columns). These mirror ProviderPortal's own
+  // act()/submitResponse() closely (same status transitions, same
+  // notification/email side effects) so a booking behaves identically
+  // regardless of who on the team handled it — just without the owner-only
+  // stuff (reschedule, cancel, reassigning staff, payment/refund handling)
+  // that belongs with whoever's accountable for the business side.
+  const providerForStaff = staffProfile?.provider_profiles;
+
+  const respondToBooking = async (booking, accept) => {
+    if (!accept && !window.confirm(t("staffPortal.confirmDecline"))) return;
+    setBusyId(booking.id);
+    const serviceName = booking.services?.name || "your service";
+    const dateStr = formatBookingDate(booking.booking_date);
+    const custEmail = booking.users?.email;
+    const businessName = providerForStaff?.business_name || "Your provider";
+    let updated;
+
+    if (accept) {
+      const requiresDeposit = !!providerForStaff?.downpayment_required;
+      const nextStatus = requiresDeposit ? "awaiting_payment" : "confirmed";
+      updated = await updateBooking(booking.id, { status: nextStatus });
+      if (updated) {
+        if (custEmail) {
+          const subject = requiresDeposit ? `${businessName} accepted your booking — deposit needed` : `${businessName} confirmed your booking`;
+          const html = requiresDeposit
+            ? `<p>Your booking for ${serviceName} on ${dateStr} has been accepted.</p><p>Please upload your deposit receipt in your VaiBook account to confirm your appointment.</p>`
+            : bookingConfirmedEmailHtml({ customerName: booking.users?.full_name, providerProfile: providerForStaff, serviceName, dateStr, timeStr: booking.booking_time?.slice(0, 5), total: booking.total_amount, deposit: null });
+          sendBookingEmail({ to: custEmail, subject, html });
+        }
+        if (booking.customer_id) {
+          createNotification({
+            user_id: booking.customer_id,
+            title: requiresDeposit ? "Booking accepted — deposit needed" : "Booking confirmed!",
+            body: requiresDeposit ? `${businessName} accepted your ${serviceName} request. Upload your deposit to confirm.` : `${businessName} confirmed your ${serviceName} booking on ${dateStr}.`,
+            type: requiresDeposit ? "booking_accepted_deposit" : "booking_confirmed",
+            booking_id: booking.id,
+          });
+        }
+      }
+    } else {
+      updated = await updateBooking(booking.id, { status: "rejected" });
+      if (updated) {
+        if (custEmail) {
+          sendBookingEmail({ to: custEmail, subject: `${businessName} declined your booking request`, html: `<p>Unfortunately your booking request for ${serviceName} on ${dateStr} was declined.</p>` });
+        }
+        if (booking.customer_id) {
+          createNotification({ user_id: booking.customer_id, title: "Booking declined", body: `${businessName} declined your ${serviceName} request for ${dateStr}.`, type: "booking_rejected", booking_id: booking.id });
+        }
+      }
+    }
+
+    setBusyId(null);
+    if (!updated) { window.alert(t("providerPortal.errors.updateBookingFailed")); return; }
+    setBookings((prev) => prev.map((b) => (b.id === booking.id ? { ...b, ...updated } : b)));
+  };
+
+  const markNoShow = async (booking) => {
+    if (!window.confirm(t("providerPortal.confirm.markNoShow"))) return;
+    setBusyId(booking.id);
+    const updated = await updateBookingStatus(booking.id, "no_show");
+    setBusyId(null);
+    if (!updated) { window.alert(t("providerPortal.errors.updateBookingFailed")); return; }
+    setBookings((prev) => prev.map((b) => (b.id === booking.id ? { ...b, ...updated } : b)));
+    if (booking.customer_id) {
+      createNotification({
+        user_id: booking.customer_id,
+        title: "Marked as a no-show",
+        body: `${providerForStaff?.business_name || "Your provider"} marked your ${formatBookingWhen(booking)} appointment as a no-show.`,
+        type: "booking_no_show",
+        booking_id: booking.id,
+      });
+    }
+  };
+
   if (!session) {
     return (
       <GateScreen tag="staff">
@@ -12184,27 +12264,64 @@ function StaffPortal({ onNav, session, staffProfile, onSignOut }) {
         {!loadingBookings && visibleBookings.length === 0 && (
           <p style={{ fontSize: 13, color: "var(--muted)", padding: "16px 0" }}>{bookingSearch.trim() ? t("customerPortal.bookings.noSearchMatch") : t("customerPortal.bookings.emptyState")}</p>
         )}
-        {visibleBookings.map((b) => (
+        {visibleBookings.map((b) => {
+          const waPhone = b.users?.whatsapp_number || b.users?.phone || b.walkin_customer_phone || null;
+          const customerName = b.users?.full_name || b.walkin_customer_name || t("staffPortal.customerFallback");
+          const isBusy = busyId === b.id;
+          return (
           <div key={b.id} style={{ padding: "14px 0", borderBottom: "1px solid var(--border)" }}>
             <div className="booking-item" style={{ padding: 0, border: "none" }}>
               <div className={`booking-dot ${bookingStatusClass(b.status)}`}></div>
               <div className="booking-info">
                 <div className="title">{b.services?.name || t("customerPortal.common.serviceFallback")}</div>
                 <div className="meta">
-                  {b.users?.full_name || b.walkin_customer_name || t("staffPortal.customerFallback")}
+                  {customerName}
+                  {b.walkin_customer_phone && ` · ${b.walkin_customer_phone}`}
                   {" · "}{formatBookingWhen(b)}
                 </div>
               </div>
-              <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+              <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", justifyContent: "flex-end" }}>
                 <span className="booking-amount">BZ${b.total_amount ?? b.services?.price ?? "—"}</span>
                 <span className={`status-pill ${bookingStatusClass(b.status)}`}>{statusLabel(b.status)}</span>
+                {/* Reaching the customer was previously impossible from here
+                    at all — getStaffBookings now actually selects phone/
+                    whatsapp_number, see supabase.js. */}
+                {waPhone && (
+                  <a
+                    className="btn-sm ghost"
+                    href={`https://wa.me/${waPhone.replace(/[^\d]/g, "")}?text=${encodeURIComponent(`Hi ${customerName}, this is about your ${b.services?.name || "appointment"} booking on ${formatBookingWhen(b)}.`)}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    style={{ textDecoration: "none" }}
+                    title={t("providerPortal.dashboard.messageOnWhatsapp")}
+                  >
+                    💬 {t("providerPortal.dashboard.messageOnWhatsapp")}
+                  </a>
+                )}
+                {b.status === "pending" && (
+                  <>
+                    {bookingDateTime(b.booking_date, b.booking_time) > new Date() && (
+                      <button className="btn-sm lime" disabled={isBusy} onClick={() => respondToBooking(b, true)}>{isBusy ? t("staffPortal.saving") : t("providerPortal.bookings.accept")}</button>
+                    )}
+                    <button className="btn-sm ghost" disabled={isBusy} onClick={() => respondToBooking(b, false)}>{t("providerPortal.bookings.decline")}</button>
+                  </>
+                )}
                 {b.status === "confirmed" && (
-                  <button className="btn-sm forest" disabled={busyId === b.id} onClick={() => markDone(b.id)}>{busyId === b.id ? t("staffPortal.saving") : t("staffPortal.markDone")}</button>
+                  <>
+                    <button className="btn-sm forest" disabled={isBusy} onClick={() => markDone(b.id)}>{isBusy ? t("staffPortal.saving") : t("staffPortal.markDone")}</button>
+                    <button className="btn-sm ghost" disabled={isBusy} onClick={() => markNoShow(b)}>{t("providerPortal.bookings.noShowButton")}</button>
+                  </>
                 )}
               </div>
             </div>
+            {/* Allergies, preferred products, "running 10 min late" — whatever
+                the customer left at booking time, same spot ProviderPortal
+                shows it. Previously invisible to whoever's actually running
+                the appointment if that wasn't the owner. */}
+            {b.notes && <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 6 }}>{t("providerPortal.bookings.customerNote", { notes: b.notes })}</p>}
           </div>
-        ))}
+          );
+        })}
       </div>
     </div>
     <SiteFooter />
