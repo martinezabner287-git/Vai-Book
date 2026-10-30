@@ -1,5 +1,6 @@
 
 import { useState, useEffect, useLayoutEffect, useRef, useContext, createContext, lazy, Suspense } from "react";
+import { flushSync } from "react-dom";
 import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, updateService, deleteService, getActiveProviders, getProviderDirectory, createBooking, getProviderBusyWindows, createBookingSafe, cancelBooking, markBookingCheckedIn, getCustomerBookings, uploadReceipt, submitReview, getProviderReviews, updateReview, sendBookingEmail, updateUserProfile, getPaymentMethods, addPaymentMethod, deletePaymentMethod, createNotification, getNotifications, markNotificationRead, markAllNotificationsRead, getCategoryDefaultFeatures, getProviderFeatureOverrides, setProviderFeatureOverride, getVisitNotes, upsertVisitNote, adminListProviders, adminUpdateProvider, adminDeleteProvider, adminCountCustomers, getFavoriteProviderIds, getFavoriteProviders, addFavorite, removeFavorite, getBookingMessages, sendBookingMessage, markBookingMessagesRead, getUnreadBookingMessages, getProviderMonthlyTrend, createProviderProfile, getProviderById, createWalkInBooking, submitProviderPayment, getMyProviderPayments, adminListProviderPayments, adminReviewProviderPayment, submitBookingRefund, adminListBookingRefunds, openPrivateFile, getProviderStaff, addProviderStaff, updateProviderStaff, deleteProviderStaff, getProviderStaffPublic, getLoyaltyAccount, getProviderLoyaltyCustomers, redeemLoyaltyReward, getMyStaffProfile, claimStaffSeatByEmail, getStaffBookings, getProviderNotifyEmail, getMaintenanceStatus, setMaintenanceMode, getSiteOfflineStatus, setSiteOffline, guestAuthWithPassword, updateGuestPassword, savePushSubscription, attachBookingServices, getProviderBlocks, insertProviderBlock, deleteProviderBlock, proposeBookingReschedule, confirmBookingReschedule, declineBookingReschedule, withdrawBookingReschedule, establishSoloSession, getServerSoloSessionToken, getLocalSoloSessionToken, clearLocalSoloSessionToken, subscribeToSoloSessionReplacement, signInWithPhonePassword, customerPhoneAuth, adminResetPhonePassword, isPhoneLoginEmail, formatPhoneForDisplay, submitSupportMessage, listSupportMessages, setSupportMessageStatus, getProviderMembershipPlans, getMyMembershipPlans, createMembershipPlan, updateMembershipPlan, subscribeToMembershipPlan, submitMembershipPayment, getMyMemberships, getProviderMembershipSubscribers, getProviderMembershipPayments, reviewMembershipPayment, cancelMembership, redeemMembershipVisit, startSoloTrial, adminStartProviderTrial, adminExtendProviderTrial, adminEndProviderTrial } from "./supabase";
 import AdminDashboard from "./AdminDashboard";
 import ProfilePhotoModal from "./ProfilePhotoModal";
@@ -7,6 +8,33 @@ import LanguageSelector from "./LanguageSelector";
 import { useTranslation } from "react-i18next";
 import { compressImageFile } from "./imageUtils";
 import { bookingRequestSchema, rescheduleProposalSchema, validate } from "./validation";
+
+// App-like page changes: on browsers with the View Transitions API (Chrome,
+// Edge, Safari 18+, recent Android) a screen or tab change cross-fades
+// instead of snapping; everywhere else it simply changes as before.
+function withViewTransition(update) {
+  let reduce = false;
+  try { reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e) { /* ignore */ }
+  if (typeof document === "undefined" || !document.startViewTransition || reduce || document.visibilityState !== "visible") { update(); return; }
+  try {
+    document.startViewTransition(() => { flushSync(update); });
+  } catch (e) { update(); }
+}
+// A useState whose setter animates the change (see withViewTransition).
+function useTransitionState(init) {
+  const [value, setValueRaw] = useState(init);
+  const ref = useRef(value);
+  ref.current = value;
+  const setRef = useRef(null);
+  if (!setRef.current) {
+    setRef.current = (next) => {
+      const resolved = typeof next === "function" ? next(ref.current) : next;
+      if (resolved === ref.current) return;
+      withViewTransition(() => setValueRaw(resolved));
+    };
+  }
+  return [value, setRef.current];
+}
 
 // Default map center: Belize (roughly Belmopan) for providers who haven't set a pin yet.
 const BELIZE_CENTER = [17.25, -88.77];
@@ -3036,6 +3064,37 @@ const css = `
   .profile-back { border: none; background: none; font: inherit; font-weight: 700; font-size: 15px; color: var(--dark-text, #16181D); cursor: pointer; padding: 8px 4px; white-space: nowrap; }
   .profile-topbar-name { font-weight: 800; font-size: 15px; color: var(--dark-text, #16181D); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   @media (max-width: 640px) { .profile-page .profile-scroll { padding: 18px 16px 32px; } }
+
+  /* ── App-like motion ─────────────────────────────────────────────
+     Screen/tab changes cross-fade with a small lift (View Transitions
+     API); the top bars and bottom tab bar stay put instead of fading. */
+  ::view-transition-old(root) { animation: vbFadeOut .14s ease-out both; }
+  ::view-transition-new(root) { animation: vbFadeUp .26s cubic-bezier(.2,.8,.2,1) both; }
+  ::view-transition-group(vb-nav), ::view-transition-group(vb-topbar), ::view-transition-group(vb-tabbar) { animation-duration: 0s; }
+  .nav { view-transition-name: vb-nav; }
+  .provider-topbar { view-transition-name: vb-topbar; }
+  .cxh-tabbar { view-transition-name: vb-tabbar; }
+  @keyframes vbFadeOut { to { opacity: 0; } }
+  @keyframes vbFadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  @keyframes vbSlideIn { from { transform: translateX(28px); opacity: 0; } to { transform: none; opacity: 1; } }
+  @keyframes vbPop { from { transform: scale(.97); opacity: 0; } to { transform: none; opacity: 1; } }
+  /* Full-page business profile slides in like a native screen. */
+  .modal-overlay.profile-page { animation: vbSlideIn .28s cubic-bezier(.2,.8,.2,1) both; }
+  /* Other pop-ups ease in instead of appearing abruptly. */
+  .modal-overlay:not(.profile-page) { animation: vbFadeIn .18s ease-out both; }
+  .modal-overlay:not(.profile-page) > .modal-panel, .modal-overlay:not(.profile-page) > .modal { animation: vbPop .22s cubic-bezier(.2,.8,.2,1) both; }
+  @keyframes vbFadeIn { from { opacity: 0; } to { opacity: 1; } }
+  /* Instant, native-feeling taps: no 300ms double-tap delay, no grey
+     flash, and a quick press-down on anything tappable. */
+  html { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+  button, .btn, .btn-sm, .tab, .cxh-tab, a[class*="btn"], [role="button"] { -webkit-tap-highlight-color: transparent; }
+  :where(button:not(:disabled):not(.carousel-arrow), .btn, .btn-sm, a[class*="btn"], .tab, [role="button"]):active { transform: scale(.97); transition: transform .08s ease-out; }
+  :where(.service-card, .provider-card, .carousel-card):active { transform: scale(.985); transition: transform .1s ease-out; }
+  @media (prefers-reduced-motion: reduce) {
+    ::view-transition-old(root), ::view-transition-new(root) { animation: none; }
+    .modal-overlay, .modal-overlay > .modal-panel, .modal-overlay > .modal { animation: none !important; }
+    :where(button, .btn, .btn-sm, .tab):active { transform: none; }
+  }
   /* ===== CUSTOMER PHONE LOGIN ===== */
   .phone-login { display: grid; gap: 12px; text-align: left; }
   .phone-login label { display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 700; color: #3A3F4B; }
@@ -8690,7 +8749,7 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
   // "My bookings" (or wherever) instead of always resetting to "Home" —
   // same sessionStorage pattern as App's own vaibook_last_view, just
   // scoped one level deeper. Cleared on sign-out (see handleSignOut).
-  const [tab, setTab] = useState(() => {
+  const [tab, setTab] = useTransitionState(() => {
     try { return sessionStorage.getItem("vaibook_customer_tab") || "home"; } catch (e) { return "home"; }
   });
   useEffect(() => {
@@ -8961,7 +9020,21 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
   // Set right after a booking goes through — offers a one-tap WhatsApp
   // heads-up to the business, so they hear about it even when they're
   // not in the app.
-  const [justBooked, setJustBooked] = useState(null);
+  // Kept in sessionStorage so the card survives the trip to WhatsApp and
+  // back (iOS often reloads the page when you return to it).
+  const [justBooked, setJustBookedState] = useState(() => {
+    try { const raw = sessionStorage.getItem("vaibook_just_booked"); return raw ? JSON.parse(raw) : null; } catch { return null; }
+  });
+  const setJustBooked = (next) => {
+    setJustBookedState((prev) => {
+      const val = typeof next === "function" ? next(prev) : next;
+      try {
+        if (val) sessionStorage.setItem("vaibook_just_booked", JSON.stringify({ ...val, provider: val.provider ? { id: val.provider.id, business_name: val.provider.business_name, whatsapp: val.provider.whatsapp } : null }));
+        else sessionStorage.removeItem("vaibook_just_booked");
+      } catch { /* storage unavailable — the card just won't survive a reload */ }
+      return val;
+    });
+  };
   const [checkingInId, setCheckingInId] = useState(null);
   const [rescheduleRespondingId, setRescheduleRespondingId] = useState(null);
   const [rescheduleRespondError, setRescheduleRespondError] = useState({});
@@ -9155,6 +9228,22 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
 
   useEffect(() => {
     loadBookings();
+  }, [user?.id]);
+
+  // Coming back to the app (from WhatsApp, another tab, a locked phone):
+  // quietly refresh the list so it's never stale, without a loading flash.
+  useEffect(() => {
+    if (!user?.id) return undefined;
+    let last = Date.now();
+    const refresh = async () => {
+      if (document.visibilityState !== "visible" || Date.now() - last < 4000) return;
+      last = Date.now();
+      const data = await getCustomerBookings(user.id);
+      if (data) setBookings(data);
+    };
+    document.addEventListener("visibilitychange", refresh);
+    window.addEventListener("focus", refresh);
+    return () => { document.removeEventListener("visibilitychange", refresh); window.removeEventListener("focus", refresh); };
   }, [user?.id]);
 
   const [arrivalByProvider, setArrivalByProvider] = useState({});
@@ -10860,12 +10949,19 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                           ? (es ? `${justBooked.provider.business_name} ya tiene tu cita. Escríbeles por WhatsApp si necesitas algo.` : `${justBooked.provider.business_name} has your appointment. Message them on WhatsApp if you need anything.`)
                           : (es ? `${justBooked.provider.business_name} aceptará tu solicitud y te enviará los datos del depósito. Avísales por WhatsApp para que sea más rápido.` : `${justBooked.provider.business_name} will accept your request and send you the deposit details. Give them a heads-up on WhatsApp to speed it up.`)}
                       </div>
+                      {(user?.whatsapp_number || user?.phone) && (
+                        <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 6, lineHeight: 1.5 }}>
+                          {es
+                            ? `Guardada en tu cuenta (${user.whatsapp_number || user.phone}). Entra con ese número y tu contraseña en cualquier teléfono para verla.`
+                            : `Saved to your account (${user.whatsapp_number || user.phone}). Log in with that number and your password on any phone to see it.`}
+                        </div>
+                      )}
                     </div>
                     <button aria-label="Close" onClick={() => setJustBooked(null)} style={{ border: "none", background: "none", fontSize: 18, cursor: "pointer", color: "var(--muted)" }}>×</button>
                   </div>
                   {phone.length >= 7 && (
-                    <a className="btn-sm forest" style={{ display: "inline-block", marginTop: 10, textDecoration: "none" }} href={`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`} target="_blank" rel="noopener noreferrer" onClick={() => setTimeout(() => setJustBooked(null), 500)}>
-                      💬 {es ? "Avisar por WhatsApp" : "Message on WhatsApp"}
+                    <a className="btn-sm forest" style={{ display: "inline-block", marginTop: 10, textDecoration: "none" }} href={`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`} target="_blank" rel="noopener noreferrer" onClick={() => setJustBooked((prev) => (prev ? { ...prev, messaged: true } : prev))}>
+                      💬 {justBooked.messaged ? (es ? "Escribir de nuevo" : "Message again") : (es ? "Avisar por WhatsApp" : "Message on WhatsApp")}
                     </a>
                   )}
                 </div>
@@ -12537,7 +12633,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
   // "My bookings" (or wherever) instead of always resetting to "Dashboard"
   // — same sessionStorage pattern as App's own vaibook_last_view, just
   // scoped one level deeper. Cleared on sign-out (see handleSignOut).
-  const [tab, setTab] = useState(() => {
+  const [tab, setTab] = useTransitionState(() => {
     try { return sessionStorage.getItem("vaibook_provider_tab") || "dashboard"; } catch (e) { return "dashboard"; }
   });
   useEffect(() => {
@@ -18308,7 +18404,7 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
   // "Payments" (or wherever) instead of always resetting to "Overview" —
   // same sessionStorage pattern as App's own vaibook_last_view, just
   // scoped one level deeper. Cleared on sign-out (see handleSignOut).
-  const [tab, setTab] = useState(() => {
+  const [tab, setTab] = useTransitionState(() => {
     try { return sessionStorage.getItem("vaibook_admin_tab") || "overview"; } catch (e) { return "overview"; }
   });
   useEffect(() => {
@@ -19251,7 +19347,7 @@ function ActionErrorToast() {
 }
 
 export default function App() {
-  const [view, setView] = useState(() => {
+  const [view, setView] = useTransitionState(() => {
     const h = window.location.hash.replace("#", "");
     if (parseBookingHash(h)) return "customer";
     if (h === "admin" || h === "customer" || h === "provider" || h === "providers") return h;
