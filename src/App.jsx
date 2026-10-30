@@ -1,6 +1,6 @@
 
 import { useState, useEffect, useLayoutEffect, useRef, useContext, createContext, lazy, Suspense } from "react";
-import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, updateService, deleteService, getActiveProviders, getProviderDirectory, createBooking, getProviderBusyWindows, createBookingSafe, cancelBooking, markBookingCheckedIn, getCustomerBookings, uploadReceipt, submitReview, getProviderReviews, updateReview, sendBookingEmail, updateUserProfile, getPaymentMethods, addPaymentMethod, deletePaymentMethod, createNotification, getNotifications, markNotificationRead, markAllNotificationsRead, getCategoryDefaultFeatures, getProviderFeatureOverrides, setProviderFeatureOverride, getVisitNotes, upsertVisitNote, adminListProviders, adminUpdateProvider, adminDeleteProvider, adminCountCustomers, getFavoriteProviderIds, getFavoriteProviders, addFavorite, removeFavorite, getBookingMessages, sendBookingMessage, markBookingMessagesRead, getUnreadBookingMessages, getProviderMonthlyTrend, createProviderProfile, getProviderById, createWalkInBooking, submitProviderPayment, getMyProviderPayments, adminListProviderPayments, adminReviewProviderPayment, submitBookingRefund, adminListBookingRefunds, openPrivateFile, getProviderStaff, addProviderStaff, updateProviderStaff, deleteProviderStaff, getProviderStaffPublic, getLoyaltyAccount, getProviderLoyaltyCustomers, redeemLoyaltyReward, getMyStaffProfile, claimStaffSeatByEmail, getStaffBookings, getProviderNotifyEmail, getMaintenanceStatus, setMaintenanceMode, getSiteOfflineStatus, setSiteOffline, guestAuthWithPassword, updateGuestPassword, savePushSubscription, attachBookingServices, getProviderBlocks, insertProviderBlock, deleteProviderBlock, proposeBookingReschedule, confirmBookingReschedule, declineBookingReschedule, withdrawBookingReschedule, establishSoloSession, getServerSoloSessionToken, getLocalSoloSessionToken, clearLocalSoloSessionToken, subscribeToSoloSessionReplacement, submitSupportMessage, listSupportMessages, setSupportMessageStatus, getProviderMembershipPlans, getMyMembershipPlans, createMembershipPlan, updateMembershipPlan, subscribeToMembershipPlan, submitMembershipPayment, getMyMemberships, getProviderMembershipSubscribers, getProviderMembershipPayments, reviewMembershipPayment, cancelMembership, redeemMembershipVisit, startSoloTrial, adminStartProviderTrial, adminExtendProviderTrial, adminEndProviderTrial } from "./supabase";
+import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, updateService, deleteService, getActiveProviders, getProviderDirectory, createBooking, getProviderBusyWindows, createBookingSafe, cancelBooking, markBookingCheckedIn, getCustomerBookings, uploadReceipt, submitReview, getProviderReviews, updateReview, sendBookingEmail, updateUserProfile, getPaymentMethods, addPaymentMethod, deletePaymentMethod, createNotification, getNotifications, markNotificationRead, markAllNotificationsRead, getCategoryDefaultFeatures, getProviderFeatureOverrides, setProviderFeatureOverride, getVisitNotes, upsertVisitNote, adminListProviders, adminUpdateProvider, adminDeleteProvider, adminCountCustomers, getFavoriteProviderIds, getFavoriteProviders, addFavorite, removeFavorite, getBookingMessages, sendBookingMessage, markBookingMessagesRead, getUnreadBookingMessages, getProviderMonthlyTrend, createProviderProfile, getProviderById, createWalkInBooking, submitProviderPayment, getMyProviderPayments, adminListProviderPayments, adminReviewProviderPayment, submitBookingRefund, adminListBookingRefunds, openPrivateFile, getProviderStaff, addProviderStaff, updateProviderStaff, deleteProviderStaff, getProviderStaffPublic, getLoyaltyAccount, getProviderLoyaltyCustomers, redeemLoyaltyReward, getMyStaffProfile, claimStaffSeatByEmail, getStaffBookings, getProviderNotifyEmail, getMaintenanceStatus, setMaintenanceMode, getSiteOfflineStatus, setSiteOffline, guestAuthWithPassword, updateGuestPassword, savePushSubscription, attachBookingServices, getProviderBlocks, insertProviderBlock, deleteProviderBlock, proposeBookingReschedule, confirmBookingReschedule, declineBookingReschedule, withdrawBookingReschedule, establishSoloSession, getServerSoloSessionToken, getLocalSoloSessionToken, clearLocalSoloSessionToken, subscribeToSoloSessionReplacement, guestSignInWithPhone, submitSupportMessage, listSupportMessages, setSupportMessageStatus, getProviderMembershipPlans, getMyMembershipPlans, createMembershipPlan, updateMembershipPlan, subscribeToMembershipPlan, submitMembershipPayment, getMyMemberships, getProviderMembershipSubscribers, getProviderMembershipPayments, reviewMembershipPayment, cancelMembership, redeemMembershipVisit, startSoloTrial, adminStartProviderTrial, adminExtendProviderTrial, adminEndProviderTrial } from "./supabase";
 import AdminDashboard from "./AdminDashboard";
 import ProfilePhotoModal from "./ProfilePhotoModal";
 import LanguageSelector from "./LanguageSelector";
@@ -11537,18 +11537,14 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                                 <input type="text" placeholder={t("customerPortal.booking.fullNamePlaceholder")} value={guestCheckoutForm.name} onChange={e => setGuestCheckoutForm(f => ({ ...f, name: e.target.value }))} />
                               </div>
                               <div className="input-group">
-                                <label>{t("customerPortal.booking.emailAddress")}</label>
-                                <input type="email" placeholder="you@example.com" value={guestCheckoutForm.email} onChange={e => setGuestCheckoutForm(f => ({ ...f, email: e.target.value }))} />
-                              </div>
-                              <div className="input-group">
                                 <label>{t("customerPortal.booking.whatsappNumber")}</label>
-                                <input type="tel" placeholder="+501 622 1234" value={guestCheckoutForm.whatsapp} onChange={e => setGuestCheckoutForm(f => ({ ...f, whatsapp: e.target.value }))} />
+                                <input type="tel" inputMode="tel" autoComplete="tel" placeholder="+501 622 1234" value={guestCheckoutForm.whatsapp} onChange={e => setGuestCheckoutForm(f => ({ ...f, whatsapp: e.target.value }))} />
                               </div>
-                              <div className="input-group">
-                                <label>{t("customerPortal.booking.password")}</label>
-                                <input type="password" autoComplete="new-password" placeholder={t("customerPortal.booking.passwordPlaceholder")} value={guestCheckoutForm.password} onChange={e => setGuestCheckoutForm(f => ({ ...f, password: e.target.value }))} onKeyDown={e => { if (e.key === "Enter") e.preventDefault(); }} />
-                              </div>
-                              <p className="guest-checkout-note">{t("customerPortal.booking.emailCodeNote")}</p>
+                              <p className="guest-checkout-note">
+                                {(i18n.language || "").toLowerCase().startsWith("es")
+                                  ? "Sin correo ni contraseña. El negocio te contactará por WhatsApp, y tus reservas quedan guardadas en este teléfono."
+                                  : "No email or password needed. The business will reach you on WhatsApp, and your bookings are saved on this phone."}
+                              </p>
                             </div>
                           )}
 
@@ -11616,11 +11612,8 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                                 return;
                               }
                               const guestName = guestCheckoutForm.name.trim();
-                              const guestEmail = guestCheckoutForm.email.trim().toLowerCase();
                               const guestWhatsapp = guestCheckoutForm.whatsapp.trim();
-                              const guestPassword = guestCheckoutForm.password;
                               if (!guestName) { setBookingError(t("customerPortal.booking.enterFullName")); return; }
-                              if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(guestEmail)) { setBookingError(t("customerPortal.booking.enterValidEmail")); return; }
                               // WhatsApp used to be optional — the provider has no way to
                               // reach a guest who skipped it (the password only proves
                               // identity, it isn't a contact channel they're watching), so
@@ -11633,18 +11626,17 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                               // shorter password here would just bounce back as a signUp
                               // error anyway, so check it up front instead of round-
                               // tripping to find out.
-                              if (guestPassword.length < 6) { setBookingError(t("customerPortal.booking.enterValidPassword")); return; }
                               setBookingError("");
                               // Remember name/email/WhatsApp for next time on this device
                               // (see the guestCheckoutForm initializer above) — never the
                               // password, which is typed fresh every booking.
-                              try { localStorage.setItem("vaibook_guest_info", JSON.stringify({ name: guestName, email: guestEmail, whatsapp: guestWhatsapp })); } catch (e) { /* ignore */ }
+                              try { localStorage.setItem("vaibook_guest_info", JSON.stringify({ name: guestName, whatsapp: guestWhatsapp })); } catch (e) { /* ignore */ }
                               setSubmittingGuestAuth(true);
                               setPendingView("customer");
-                              const { data, error, returning } = await guestAuthWithPassword(guestEmail, guestPassword, { full_name: guestName });
+                              const { data, error } = await guestSignInWithPhone(guestName, guestWhatsapp);
                               setSubmittingGuestAuth(false);
                               if (error) {
-                                setBookingError(returning ? t("customerPortal.booking.wrongPassword") : t("customerPortal.booking.guestAuthFailed"));
+                                setBookingError(t("customerPortal.booking.guestAuthFailed"));
                                 return;
                               }
                               // No session even though there's no error means Supabase is
@@ -11659,9 +11651,6 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                                 return;
                               }
                               const uid = data?.user?.id;
-                              if (guestWhatsapp && uid) {
-                                updateUserProfile(uid, { whatsapp_number: guestWhatsapp }).catch(() => {});
-                              }
                               bookingService.isMulti ? submitMultiServiceBooking(uid) : submitBooking(uid);
                             }}
                           >
@@ -19567,6 +19556,15 @@ export default function App() {
   }, [homeIsSignedIn, loading, rolesReadyFor, signedInUserId, hasBusinessSide]);
 
   const handleSignOut = async () => {
+    // A name + WhatsApp guest account only lives on this phone — logging out
+    // means they can't get back to those bookings, so make sure first.
+    if (session?.user?.is_anonymous) {
+      const es = (typeof navigator !== "undefined" && (navigator.language || "").toLowerCase().startsWith("es"));
+      const ok = window.confirm(es
+        ? "Reservaste como invitado. Si cierras sesión, ya no verás estas reservas en este teléfono. ¿Cerrar sesión de todos modos?"
+        : "You booked as a guest. If you log out, you won't see these bookings on this phone anymore. Log out anyway?");
+      if (!ok) return;
+    }
     clearLocalSoloSessionToken();
     await signOut();
     setView("home");

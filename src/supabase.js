@@ -1433,6 +1433,28 @@ export const verifyEmailOtp = async (email, token) => {
 // explicit "already registered" error from signUp, so that's checked
 // too. Either way, a wrong password on a returning guest's email
 // surfaces as a normal verifyError the caller can show.
+// Guest checkout with just a name + WhatsApp number (2026-10-30). Uses
+// Supabase anonymous sign-in: the guest gets a real (email-less) account on
+// this device, so My bookings, cancelling, alerts and reviews all work
+// exactly like a normal account. Requires Auth → "Allow anonymous sign-ins".
+export const guestSignInWithPhone = async (name, whatsapp) => {
+  const { data, error } = await supabase.auth.signInAnonymously({
+    options: { data: { full_name: name, whatsapp_number: whatsapp } },
+  });
+  if (error) { console.error('Error starting guest session:', error.message); return { data, error }; }
+  const uid = data?.user?.id;
+  if (uid) {
+    const row = { full_name: name, whatsapp_number: whatsapp, phone: whatsapp, oauth_provider: 'guest' };
+    const { error: insErr } = await supabase.from('users').insert({ id: uid, ...row });
+    if (insErr) {
+      // Row already created by the sign-in listener — just fill in the details.
+      const { error: updErr } = await supabase.from('users').update(row).eq('id', uid);
+      if (updErr) console.error('Error saving guest details:', updErr.message);
+    }
+  }
+  return { data, error: null };
+};
+
 export const guestAuthWithPassword = async (email, password, metadata) => {
   const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
     email,
