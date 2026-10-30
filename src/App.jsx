@@ -4461,7 +4461,11 @@ function AgreementsPanel({ providerId, businessName, clients, requests, requests
     const { data, error } = await supabase.from("agreement_requests").insert({
       provider_id: providerId,
       template_id: tpl.id,
-      customer_id: client ? client.id : null,
+      // client.id may be a synthetic "walkin:..." key (see allClients in
+      // ProviderPortal) rather than a real customer_id — customer_id is a
+      // real FK, so a walk-in client (customerId: null) goes through the
+      // same path as a typed-in "other" name/phone, not as an account.
+      customer_id: client ? client.customerId : null,
       client_name: clientName,
       client_phone: clientPhone || null,
       title: tpl.name,
@@ -13766,11 +13770,69 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
     .sort((a, b) => (a.recentlyReminded ? 1 : 0) - (b.recentlyReminded ? 1 : 0) || a.lastDate - b.lastDate);
   const rebookDueCount = quietRegulars.filter((c) => !c.recentlyReminded).length;
 
+  // Walk-in / "add appointment for someone" bookings have no customer_id
+  // (no VaiBook account), so they were previously invisible to the Clients
+  // directory entirely — but the provider just typed that person's name in
+  // themselves, so "I added their appointment, why aren't they in Clients?"
+  // was a real gap. Folded in here: a walk-in whose phone matches an
+  // existing registered customer's is merged into that same client's
+  // history (same person, this visit just wasn't booked through their own
+  // account) rather than creating a confusing duplicate card; a phone-less
+  // or new walk-in still gets its own card, marked `isWalkIn` so the UI can
+  // badge it and so FK-sensitive features (sending a VaiBook app
+  // notification, which needs a real account) know to treat it differently
+  // from `customerId`. Generic POS "Walk-in" sales (see submitWalkInSale,
+  // which stamps the literal name "Walk-in" — no real person was typed in)
+  // are deliberately excluded: there's no actual client to show, just an
+  // anonymous transaction. Either way this stays OUT of customerHistory
+  // itself above (and therefore out of Rebooking Radar) when it can't be
+  // matched to a real account — a phone-less walk-in has no reliable
+  // identity to track repeat visits by, and no account to ever notify.
+  const normalizePhone = (p) => (p ? String(p).replace(/\D/g, "") : "");
+  const registeredByPhone = {};
+  Object.values(customerHistory).forEach((c) => {
+    const np = normalizePhone(c.phone);
+    if (np) registeredByPhone[np] = c.id;
+  });
+  const walkInHistory = {};
+  bookings.forEach((b) => {
+    if (b.customer_id) return;
+    if (!b.walkin_customer_name || b.walkin_customer_name.trim().toLowerCase() === "walk-in") return;
+    if (!["completed", "done", "confirmed", "pending", "awaiting_payment"].includes(b.status)) return;
+    const d = bookingDateOnly(b.booking_date);
+    if (!d) return;
+    const isUpcoming = d >= bookingDateOnly(localDateStr()) && ["pending", "awaiting_payment", "confirmed"].includes(b.status);
+    const np = normalizePhone(b.walkin_customer_phone);
+    if (np && registeredByPhone[np]) {
+      // Same phone as a real account — fold this visit into their existing
+      // customerHistory entry instead of a separate walk-in card.
+      const entry = customerHistory[registeredByPhone[np]];
+      entry.visits += 1;
+      if (!entry.lastDate || d > entry.lastDate) entry.lastDate = d;
+      if (isUpcoming) entry.hasUpcoming = true;
+      return;
+    }
+    const key = np || `name:${b.walkin_customer_name.trim().toLowerCase()}`;
+    const entry = walkInHistory[key] || {
+      id: `walkin:${key}`, customerId: null, isWalkIn: true,
+      name: b.walkin_customer_name.trim(), email: null, phone: b.walkin_customer_phone || null,
+      visits: 0, lastDate: null, hasUpcoming: false,
+    };
+    entry.visits += 1;
+    if (!entry.phone && b.walkin_customer_phone) entry.phone = b.walkin_customer_phone;
+    if (!entry.lastDate || d > entry.lastDate) entry.lastDate = d;
+    if (isUpcoming) entry.hasUpcoming = true;
+    walkInHistory[key] = entry;
+  });
+
   // "Clients" tab — replaces the old manually-starred "VIP clients" list
   // with a real directory: every registered customer who has ever actually
-  // booked with this provider (walk-ins have no account/customer_id, so
-  // they can't appear here), most recent visit first.
-  const allClients = Object.values(customerHistory).sort((a, b) => (b.lastDate?.getTime() || 0) - (a.lastDate?.getTime() || 0));
+  // booked with this provider, plus every named walk-in appointment that
+  // couldn't be matched to one (see above), most recent visit first.
+  const allClients = [
+    ...Object.values(customerHistory).map((c) => ({ ...c, customerId: c.id, isWalkIn: false })),
+    ...Object.values(walkInHistory),
+  ].sort((a, b) => (b.lastDate?.getTime() || 0) - (a.lastDate?.getTime() || 0));
   // (clientSearch state moved to the top of ProviderPortal — it used to be
   // declared here, after the early returns above, which crashed the whole
   // portal to a white screen whenever sign-in state changed.)
@@ -14435,13 +14497,16 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                 <p style={{ fontSize: 13, color: "var(--muted)", padding: "16px 0" }}>{t("providerPortal.clients.noMatch", { query: clientSearch })}</p>
               )}
               {filteredClients.map((c) => {
-                const latestAgreement = agreementRequests.find((r) => r.customer_id === c.id && r.status !== "void");
+                const latestAgreement = c.customerId ? agreementRequests.find((r) => r.customer_id === c.customerId && r.status !== "void") : null;
                 const agreementState = agreementStatus(latestAgreement);
                 return (
                 <div key={c.id} className="booking-item" style={{ alignItems: "center", gap: 10 }}>
                   <div className="booking-info" style={{ flex: 1, minWidth: 0 }}>
                     <div className="title">
                       {c.name}
+                      {c.isWalkIn && (
+                        <span style={{ marginLeft: 8, fontSize: 11, fontWeight: 700, color: "var(--muted)", background: "var(--border)", padding: "2px 7px", borderRadius: 5, verticalAlign: "middle" }}>{t("providerPortal.clients.walkIn")}</span>
+                      )}
                       {c.hasUpcoming && (
                         <span style={{ marginLeft: 8, fontSize: 11, fontWeight: 700, color: "var(--forest)", background: "var(--accent-soft)", padding: "2px 7px", borderRadius: 5, verticalAlign: "middle" }}>{t("providerPortal.common.upcoming")}</span>
                       )}
@@ -14458,7 +14523,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                         {at(agreementState === "signed" ? "clientChipSigned" : agreementState === "expired" ? "clientChipExpired" : "clientChipPending")}
                       </button>
                     )}
-                    <button className="btn-sm ghost" onClick={() => { setAgreementSendFor({ id: c.id, name: c.name, phone: c.phone }); setTab("agreements"); }}>{at("sendAgreement")}</button>
+                    <button className="btn-sm ghost" onClick={() => { setAgreementSendFor({ id: c.customerId, name: c.name, phone: c.phone }); setTab("agreements"); }}>{at("sendAgreement")}</button>
                   </div>
                 </div>
                 );
@@ -16214,7 +16279,12 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
           <AnnouncementsPanel
             providerId={providerId}
             businessName={providerProfile?.business_name || ""}
-            clients={allClients}
+            // Registered accounts only — a walk-in client has no VaiBook
+            // account to receive the in-app notification this panel sends
+            // (send_announcement runs server-side against real accounts),
+            // so including them here would just overstate the audience
+            // count without actually reaching anyone extra.
+            clients={allClients.filter((c) => !c.isWalkIn)}
             bookingUrl={bookingUrl}
           />
         )}
