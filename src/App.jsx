@@ -760,11 +760,18 @@ const css = `
     position: relative; overflow: hidden; padding: 100px 48px 88px; text-align: left;
     background: var(--bg-primary);
   }
-  /* Blurred drifting color blobs removed — restrained-palette pass. Lime
-     and the mid-green accent were showing up here too, on top of the nav,
-     the search button and the category tiles, which read as "every element
-     got the brand color" rather than a deliberate accent. The hero is now
-     a flat surface; color is reserved for the Search button below. */
+  /* GLOW PASS (2026-10-30): brings back a soft, restrained version of the
+     blobs the "restrained-palette pass" above removed — this time as two
+     fixed, gentle radial washes (not animated/drifting) so they read as
+     ambient brand color rather than "every element got the brand color."
+     Approved via an explicit mockup before/after, same as the earlier
+     flat-surface decision this supersedes. */
+  .search-hero::before, .search-hero::after { content: ''; position: absolute; z-index: 0; border-radius: 50%; pointer-events: none; }
+  .search-hero::before { top: -180px; left: 50%; transform: translateX(-50%); width: 720px; height: 480px;
+    background: radial-gradient(ellipse, rgba(140,122,240,0.16) 0%, rgba(140,122,240,0) 70%); }
+  .search-hero::after { bottom: -160px; right: -120px; width: 420px; height: 420px;
+    background: radial-gradient(circle, rgba(194,65,12,0.08) 0%, rgba(194,65,12,0) 70%); }
+  @media (max-width: 640px) { .search-hero::before { width: 420px; height: 300px; top: -120px; } }
   /* Widened from 780px so the hero's own content box lines up with the
      page's actual edge (the same 48px .section padding every row below it
      uses) on virtually every real laptop/tablet/phone width, instead of
@@ -851,14 +858,10 @@ const css = `
      service_type/district on each live record) — never fabricated, same
      standard as the rest of this page's "trending"/"new" sections. */
   .stat-band { background: var(--sand); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: 28px 48px; }
-  .stat-band-inner { max-width: 1320px; margin: 0 auto; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 20px; }
-  .stat-item { display: flex; align-items: center; gap: 12px; }
-  .stat-icon { font-size: 20px; }
-  .stat-item strong { display: block; font-size: 22px; font-weight: 800; color: var(--dark-text); line-height: 1.1; }
-  .stat-item span { font-size: 12.5px; color: var(--muted); font-weight: 600; }
+  .mr-stat-grid.stat-band-inner { grid-template-columns: repeat(4, 1fr); max-width: 1320px; margin: 0 auto; }
   @media (max-width: 768px) {
     .stat-band { padding: 22px 24px; }
-    .stat-band-inner { justify-content: center; gap: 24px; }
+    .mr-stat-grid.stat-band-inner { grid-template-columns: repeat(2, 1fr); }
   }
 
   /* SEARCH SUGGESTIONS (autocomplete dropdown, shared by hero + browse search bars) */
@@ -1028,6 +1031,7 @@ const css = `
   .tny-card {
     flex: 0 0 230px; scroll-snap-align: start; background: var(--bg-elevated);
     border: 1px solid var(--card-border); border-radius: 20px; overflow: hidden; cursor: pointer;
+    box-shadow: 0 10px 24px rgba(22,24,29,0.07);
     transition: transform .15s ease, background .2s ease, box-shadow .2s ease;
   }
   .tny-card:hover { transform: translateY(-4px); background: var(--bg-elevated-hover); box-shadow: var(--card-shadow); }
@@ -1059,7 +1063,7 @@ const css = `
      using var(--accent-text) below), so this needs the same treatment to
      stay readable in dark mode instead of going dark-purple-on-dark. */
   .tny-price-tag { font-size: 13px; font-weight: 700; color: var(--text-primary); }
-  .tny-deposit-badge { font-size: 11px; font-weight: 600; color: var(--text-tertiary); white-space: nowrap; }
+  .tny-deposit-badge { font-size: 11px; font-weight: 700; color: #B45309; background: #FEF3C7; padding: 3px 8px; border-radius: 6px; white-space: nowrap; }
 
   /* STATS BAR */
   .marketing-strip { background: var(--sand); padding: 40px 48px; display: flex; justify-content: space-around; gap: 32px; flex-wrap: wrap; }
@@ -1556,6 +1560,7 @@ const css = `
      as every other card on this page) with the forest/gold palette kept
      only as accents — same ticket-stub shape and layout, calmer finish. */
   .cx-hero { position: relative; overflow: hidden; background: #FFFFFF; border: 1px solid var(--border); border-radius: 22px; padding: 30px 28px; margin-bottom: 24px; box-shadow: 0 10px 30px rgba(23,20,31,0.06); }
+  .cx-hero::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px; background: linear-gradient(90deg, var(--forest) 0%, #7B3FE4 55%, var(--clay) 100%); }
   .cx-hero::after { content: ''; position: absolute; top: -60px; right: -60px; width: 220px; height: 220px; background: radial-gradient(circle, rgba(76,61,196,0.07) 0%, rgba(76,61,196,0) 70%); pointer-events: none; }
   .cx-hero-eyebrow { display: inline-flex; align-items: center; font-size: 11.5px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--forest); background: rgba(76,61,196,0.08); padding: 5px 11px; border-radius: 100px; margin-bottom: 12px; }
   .cx-hero-service { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 26px; font-weight: 800; color: var(--dark-text); line-height: 1.15; }
@@ -2484,9 +2489,10 @@ const css = `
     background: #fff !important;
     border: 1px solid var(--border-subtle) !important;
     border-radius: 100px;
-    transition: border-color .2s ease;
+    box-shadow: 0 20px 44px rgba(76,61,196,0.14);
+    transition: border-color .2s ease, box-shadow .2s ease;
   }
-  .search-glass:focus-within { border-color: var(--forest) !important; }
+  .search-glass:focus-within { border-color: var(--forest) !important; box-shadow: 0 20px 44px rgba(76,61,196,0.22); }
   .search-glass input, .search-glass select { color: var(--text-primary) !important; }
   .search-glass input::placeholder { color: var(--text-tertiary) !important; }
 
@@ -2583,7 +2589,10 @@ const css = `
   /* Dark bands that stay dark (footer, marketing heroes, login panel)
      use Vai Buy's navy/ink instead of purple. Indigo text placed on them
      is lifted to a light tint so it stays readable. */
-  .footer { background: var(--ink); }
+  .footer { position: relative; overflow: hidden; background: linear-gradient(165deg, var(--ink) 0%, var(--navy) 55%, #1E3A6B 100%); }
+  .footer::before { content: ''; position: absolute; top: -80px; left: -60px; width: 260px; height: 260px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(140,122,240,0.18) 0%, rgba(140,122,240,0) 70%); pointer-events: none; }
+  .footer > * { position: relative; z-index: 1; }
   .auth-choice-panel, .for-business-cta, .hero { background: var(--navy); }
   .footer [style*="var(--lime)"], .footer [style*="var(--forest)"],
   .auth-choice-panel [style*="var(--lime)"], .auth-choice-panel-logo span,
@@ -2752,19 +2761,20 @@ const css = `
   .cxh-top { margin-bottom: 22px; }
   .cxh-location { position: relative; display: inline-flex; align-items: center; gap: 8px; font-size: 17px; font-weight: 600; color: var(--text, #16181D); margin: 4px 0 16px; cursor: pointer; }
   .cxh-location select { position: absolute; inset: 0; opacity: 0; cursor: pointer; font-size: 16px; }
-  .cxh-search { position: relative; display: flex; align-items: center; gap: 10px; background: #fff; border: 1px solid var(--border); border-radius: 999px; padding: 7px 7px 7px 20px; box-shadow: 0 8px 24px rgba(23,20,31,0.07); color: var(--text, #16181D); }
+  .cxh-search { position: relative; display: flex; align-items: center; gap: 10px; background: #fff; border: 1px solid var(--border); border-radius: 999px; padding: 7px 7px 7px 20px; box-shadow: 0 16px 36px rgba(76,61,196,0.12); color: var(--text, #16181D); transition: box-shadow .2s ease; }
+  .cxh-search:focus-within { box-shadow: 0 16px 36px rgba(76,61,196,0.2); }
   .cxh-search input { flex: 1; min-width: 0; border: none; outline: none; background: transparent; font-size: 16px; color: var(--text, #16181D); font-family: inherit; }
-  .cxh-search-btn { flex: none; background: #0B0B0F; color: #fff; border: none; border-radius: 999px; padding: 12px 22px; font-size: 15px; font-weight: 600; cursor: pointer; font-family: inherit; }
+  .cxh-search-btn { flex: none; background: linear-gradient(135deg, var(--forest) 0%, #7B3FE4 100%); color: #fff; border: none; border-radius: 999px; padding: 12px 22px; font-size: 15px; font-weight: 600; cursor: pointer; font-family: inherit; }
   .cxh-search .suggestions-dropdown { top: calc(100% + 6px); left: 0; right: 0; }
   .cxh-rec { margin: 8px 0 28px; }
   .cxh-rec-title { font-size: 26px; font-weight: 800; letter-spacing: -0.02em; margin: 0 0 14px; color: var(--text, #16181D); }
   .cxh-rec-row { display: flex; gap: 16px; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 6px; scrollbar-width: none; }
   .cxh-rec-row::-webkit-scrollbar { display: none; }
   .cxh-rec-card { flex: 0 0 250px; scroll-snap-align: start; cursor: pointer; min-width: 0; }
-  .cxh-rec-img { position: relative; aspect-ratio: 3 / 2; border-radius: 18px; background: var(--accent-soft); display: flex; align-items: center; justify-content: center; overflow: hidden; }
+  .cxh-rec-img { position: relative; aspect-ratio: 3 / 2; border-radius: 18px; background: var(--accent-soft); display: flex; align-items: center; justify-content: center; overflow: hidden; box-shadow: 0 10px 24px rgba(22,24,29,0.12); }
   .cxh-rec-icon { font-size: 52px; }
-  .cxh-rec-badge { position: absolute; top: 12px; left: 12px; background: rgba(255,250,240,0.92); color: #16181D; font-size: 13px; font-weight: 600; padding: 6px 12px; border-radius: 999px; }
-  .cxh-rec-heart { position: absolute; top: 10px; right: 10px; width: 38px; height: 38px; border: none; border-radius: 50%; background: rgba(0,0,0,0.18); display: flex; align-items: center; justify-content: center; cursor: pointer; }
+  .cxh-rec-badge { position: absolute; top: 12px; left: 12px; background: rgba(255,255,255,0.92); backdrop-filter: blur(4px); color: #16181D; font-size: 13px; font-weight: 600; padding: 6px 12px; border-radius: 999px; }
+  .cxh-rec-heart { position: absolute; top: 10px; right: 10px; width: 38px; height: 38px; border: none; border-radius: 50%; background: rgba(0,0,0,0.22); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; cursor: pointer; }
   .cxh-rec-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-top: 12px; }
   .cxh-rec-name { font-size: 17px; font-weight: 700; color: var(--text, #16181D); line-height: 1.25; }
   .cxh-rec-rating { flex: none; font-size: 15px; font-weight: 600; color: var(--text, #16181D); display: flex; align-items: center; gap: 4px; }
@@ -2796,8 +2806,8 @@ const css = `
     .cxh-rec-title { font-size: 22px; }
     .cxh-home-hero.cx-hero { padding: 18px 18px 16px; border-radius: 18px; }
     .cxh-tabbar { display: flex; position: fixed; left: 12px; right: 12px; bottom: calc(10px + env(safe-area-inset-bottom)); z-index: 60; background: rgba(255,255,255,0.97); border: 1px solid var(--border); border-radius: 999px; padding: 6px; box-shadow: 0 10px 30px rgba(23,20,31,0.14); backdrop-filter: blur(10px); }
-    .cxh-tab { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; border: none; background: transparent; color: #16181D; font-size: 12px; font-weight: 600; padding: 7px 0; border-radius: 999px; cursor: pointer; font-family: inherit; }
-    .cxh-tab.active { background: #F0EFF4; color: var(--lime); }
+    .cxh-tab { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; border: none; background: transparent; color: #16181D; font-size: 12px; font-weight: 600; padding: 7px 0; border-radius: 999px; cursor: pointer; font-family: inherit; transition: background .15s ease, color .15s ease; }
+    .cxh-tab.active { background: var(--accent-soft); color: var(--forest); }
     .portal-content:has(.cxh-tabbar) { padding-bottom: 110px; }
   }
 
@@ -7737,22 +7747,26 @@ function LandingPage({ onNav, session, user, onSignIn, onSignOut }) {
           a flash of zeros. */}
       {!loadingDiscover && discoverProviders.length > 0 && (
         <section className="stat-band">
-          <div className="stat-band-inner">
-            <div className="stat-item">
-              <span className="stat-icon" aria-hidden="true">👥</span>
-              <div><strong>{discoverProviders.length}</strong><span>{t("hero.stats.activeProviders")}</span></div>
+          <div className="mr-stat-grid stat-band-inner">
+            <div className="mr-stat" style={{ "--mr-accent": "#4C3DC4", "--mr-accent-soft": "var(--accent-soft)" }}>
+              <div className="mr-stat-icon" aria-hidden="true">👥</div>
+              <div className="mr-stat-label">{t("hero.stats.activeProviders")}</div>
+              <div className="mr-stat-value">{discoverProviders.length}</div>
             </div>
-            <div className="stat-item">
-              <span className="stat-icon" aria-hidden="true">🧾</span>
-              <div><strong>{totalServicesListed}</strong><span>{t("hero.stats.servicesListed")}</span></div>
+            <div className="mr-stat" style={{ "--mr-accent": "#D4795A", "--mr-accent-soft": "#FBEAE3" }}>
+              <div className="mr-stat-icon" aria-hidden="true">🧾</div>
+              <div className="mr-stat-label">{t("hero.stats.servicesListed")}</div>
+              <div className="mr-stat-value">{totalServicesListed}</div>
             </div>
-            <div className="stat-item">
-              <span className="stat-icon" aria-hidden="true">🗂️</span>
-              <div><strong>{categoriesCovered}/{SERVICES.length}</strong><span>{t("hero.stats.categoriesCovered")}</span></div>
+            <div className="mr-stat" style={{ "--mr-accent": "#16A34A", "--mr-accent-soft": "#DCFCE7" }}>
+              <div className="mr-stat-icon" aria-hidden="true">🗂️</div>
+              <div className="mr-stat-label">{t("hero.stats.categoriesCovered")}</div>
+              <div className="mr-stat-value">{categoriesCovered}/{SERVICES.length}</div>
             </div>
-            <div className="stat-item">
-              <span className="stat-icon" aria-hidden="true">📍</span>
-              <div><strong>{districtsCovered}/{DISTRICTS.length}</strong><span>{t("hero.stats.districtsCovered")}</span></div>
+            <div className="mr-stat" style={{ "--mr-accent": "#F59E0B", "--mr-accent-soft": "#FEF3C7" }}>
+              <div className="mr-stat-icon" aria-hidden="true">📍</div>
+              <div className="mr-stat-label">{t("hero.stats.districtsCovered")}</div>
+              <div className="mr-stat-value">{districtsCovered}/{DISTRICTS.length}</div>
             </div>
           </div>
         </section>
