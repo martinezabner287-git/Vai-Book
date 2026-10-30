@@ -1063,7 +1063,9 @@
       "bookingVolumeHint": "Total bookings received each month.",
       "reviewsRatings": "Reviews & ratings",
       "reviewsRatingsHint": "Your average star rating each month.",
-      "emailSummaryNote": "We also email you this summary automatically at the start of each month."
+      "emailSummaryNote": "We also email you this summary automatically at the start of each month.",
+      "shareButton": "Share your month",
+      "downloadImage": "Download image"
     },
     "profile": {
       "subtitle": "This is what customers see when they find you.",
