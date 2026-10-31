@@ -2175,6 +2175,22 @@ const css = `
 
   .lightbox-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: flex; align-items: center; justify-content: center; z-index: 300; padding: 24px; cursor: zoom-out; }
   .lightbox-overlay img { max-width: 92vw; max-height: 92vh; border-radius: 10px; object-fit: contain; }
+  .gallery-hero { position: relative; }
+  .gallery-count-btn { position: absolute; left: 12px; bottom: 12px; background: rgba(255,255,255,0.95); color: #16181D; border: none; border-radius: 100px; padding: 7px 12px; font-size: 12px; font-weight: 700; cursor: pointer; box-shadow: 0 2px 10px rgba(0,0,0,0.2); }
+  .photos-sheet { position: fixed; inset: 0; z-index: 260; background: #FFFFFF; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; animation: vbSlideIn .26s cubic-bezier(.2,.8,.2,1) both; }
+  .photos-sheet-top { position: sticky; top: 0; z-index: 2; display: flex; align-items: center; gap: 12px; padding: 10px 16px; background: rgba(255,255,255,0.96); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border-bottom: 1px solid var(--border); }
+  .photos-sheet-title { font-weight: 800; font-size: 15px; color: #16181D; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .photos-sheet-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 6px; padding: 12px; max-width: 1080px; margin: 0 auto; }
+  .photos-sheet-item { padding: 0; border: none; background: #F1F0F5; border-radius: 12px; overflow: hidden; aspect-ratio: 1 / 1; cursor: zoom-in; }
+  .photos-sheet-item img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  @media (max-width: 640px) { .photos-sheet-grid { grid-template-columns: 1fr 1fr; padding: 8px; gap: 4px; } .photos-sheet-item { border-radius: 8px; } }
+  .photo-viewer { position: fixed; inset: 0; z-index: 300; background: rgba(8,8,12,0.95); display: flex; align-items: center; justify-content: center; animation: vbFadeIn .18s ease-out both; touch-action: pan-y; }
+  .photo-viewer img { max-width: 94vw; max-height: 86vh; border-radius: 10px; object-fit: contain; animation: vbPop .2s ease-out both; user-select: none; -webkit-user-drag: none; }
+  .photo-viewer-close { position: absolute; top: 14px; right: 14px; width: 40px; height: 40px; border-radius: 50%; border: none; background: rgba(255,255,255,0.14); color: #FFFFFF; font-size: 18px; cursor: pointer; }
+  .photo-viewer-count { position: absolute; top: 22px; left: 50%; transform: translateX(-50%); color: rgba(255,255,255,0.85); font-size: 13px; font-weight: 700; letter-spacing: .04em; }
+  .photo-viewer-nav { position: absolute; top: 50%; transform: translateY(-50%); width: 44px; height: 44px; border-radius: 50%; border: none; background: rgba(255,255,255,0.14); color: #FFFFFF; font-size: 28px; line-height: 1; cursor: pointer; }
+  .photo-viewer-nav.prev { left: 12px; } .photo-viewer-nav.next { right: 12px; }
+  @media (max-width: 640px) { .photo-viewer-nav { display: none; } }
 
   .tab-row { display: flex; gap: 4px; margin-bottom: 24px; background: white; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 4px; }
   .tab { flex: 1; text-align: center; padding: 8px; font-size: 13px; font-weight: 500; color: var(--muted); cursor: pointer; border-radius: 6px; transition: all .2s; }
@@ -3142,7 +3158,7 @@ const css = `
     input:not([type=checkbox]):not([type=radio]):not([type=range]), select, textarea { font-size: 16px !important; }
   }
   button, .btn, .btn-sm, .tab, .cxh-tab, a[class*="btn"], [role="button"] { -webkit-tap-highlight-color: transparent; }
-  :where(button:not(:disabled):not(.carousel-arrow), .btn, .btn-sm, a[class*="btn"], .tab, [role="button"]):active { transform: scale(.97); transition: transform .08s ease-out; }
+  :where(button:not(:disabled):not(.carousel-arrow):not(.photo-viewer-nav), .btn, .btn-sm, a[class*="btn"], .tab, [role="button"]):active { transform: scale(.97); transition: transform .08s ease-out; }
   :where(.service-card, .provider-card, .carousel-card):active { transform: scale(.985); transition: transform .1s ease-out; }
   @media (prefers-reduced-motion: reduce) {
     ::view-transition-old(root), ::view-transition-new(root) { animation: none; }
@@ -9143,7 +9159,23 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
   const [bookTogetherTime, setBookTogetherTime] = useState("");
   const [providerReviews, setProviderReviews] = useState([]);
   const [loadingReviews, setLoadingReviews] = useState(false);
-  const [lightboxUrl, setLightboxUrl] = useState(null);
+  const [, setLightboxUrl] = useState(null);
+  // Business photos (2026-10-30): the Portfolio tab repeated the gallery at
+  // the top of the page, so it's gone — the gallery itself opens an
+  // all-photos sheet and a swipeable full-screen viewer instead.
+  const [allPhotos, setAllPhotos] = useState(null);       // array of urls, or null
+  const [photoViewer, setPhotoViewer] = useState(null);   // { photos, index }, or null
+  const photoTouchX = useRef(null);
+  useEffect(() => {
+    if (!photoViewer) return undefined;
+    const onKey = (e) => {
+      if (e.key === "Escape") setPhotoViewer(null);
+      if (e.key === "ArrowRight") setPhotoViewer((v) => v && { ...v, index: (v.index + 1) % v.photos.length });
+      if (e.key === "ArrowLeft") setPhotoViewer((v) => v && { ...v, index: (v.index - 1 + v.photos.length) % v.photos.length });
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [photoViewer]);
   const [showBrowseSuggestions, setShowBrowseSuggestions] = useState(false);
 
   // HOME FEED — "Last-Minute Drops": real same-day openings, computed from
@@ -9385,6 +9417,8 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
     setMultiBusyWindowsByDate({});
     setProviderReviews([]);
     setLightboxUrl(null);
+    setAllPhotos(null);
+    setPhotoViewer(null);
     setSelectedProvider(provider);
     if (provider?.id) {
       try {
@@ -11620,13 +11654,17 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                       <div className="gallery-hero gallery-fallback">{iconForServiceType(selectedProvider.service_type)}</div>
                     ) : (
                       <>
-                        <div className="gallery-hero" style={{ backgroundImage: `url(${photos[0]})` }} onClick={() => setLightboxUrl(photos[0])} />
+                        <div className="gallery-hero" style={{ backgroundImage: `url(${photos[0]})` }} onClick={() => setPhotoViewer({ photos, index: 0 })}>
+                          {photos.length > 1 && photos.length <= 3 && (
+                            <button className="gallery-count-btn" onClick={(e) => { e.stopPropagation(); setAllPhotos(photos); }}>📷 {photos.length}</button>
+                          )}
+                        </div>
                         {photos.length > 1 && (
                           <div className="gallery-side">
                             {photos.slice(1, 3).map((url, i) => (
-                              <div key={url} className="gallery-side-img" style={{ backgroundImage: `url(${url})` }} onClick={() => (photos.length > 3 && i === 1 ? setProfileTab("portfolio") : setLightboxUrl(url))}>
+                              <div key={url} className="gallery-side-img" style={{ backgroundImage: `url(${url})` }} onClick={() => (photos.length > 3 && i === 1 ? setAllPhotos(photos) : setPhotoViewer({ photos, index: i + 1 }))}>
                                 {i === 1 && photos.length > 3 && (
-                                  <button className="gallery-more-btn" onClick={(e) => { e.stopPropagation(); setProfileTab("portfolio"); }}>{t("customerPortal.profile.seeAllPhotos")}</button>
+                                  <button className="gallery-more-btn" onClick={(e) => { e.stopPropagation(); setAllPhotos(photos); }}>{t("customerPortal.profile.seeAllPhotos")} ({photos.length})</button>
                                 )}
                               </div>
                             ))}
@@ -11658,7 +11696,6 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                           { id: "services", label: t("customerPortal.profile.tabServices") },
                           ...(selectedProvider.allow_staff_selection ? [{ id: "team", label: t("customerPortal.profile.tabTeam") }] : []),
                           ...(providerMembershipPlans.length > 0 ? [{ id: "memberships", label: t("customerPortal.profile.tabMemberships") }] : []),
-                          { id: "portfolio", label: t("customerPortal.profile.tabPortfolio") },
                           { id: "reviews", label: t("customerPortal.profile.tabReviews") },
                           { id: "about", label: t("customerPortal.profile.tabAbout") },
                         ].map((opt) => (
@@ -12304,17 +12341,6 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                       )
                     )}
 
-                    {profileTab === "portfolio" && (
-                      photos.length > 0 ? (
-                        <div className="portfolio-grid">
-                          {photos.map((url) => (
-                            <img key={url} src={url} alt={t("customerPortal.profile.providerWorkAlt")} className="portfolio-thumb" loading="lazy" decoding="async" onClick={() => setLightboxUrl(url)} />
-                          ))}
-                        </div>
-                      ) : (
-                        <p style={{ fontSize: 13, color: "var(--muted)" }}>{t("customerPortal.profile.noPortfolioPhotosYet")}</p>
-                      )
-                    )}
 
                     {profileTab === "reviews" && (
                       loadingReviews ? (
@@ -12520,9 +12546,46 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
         );
       })()}
 
-      {lightboxUrl && (
-        <div className="lightbox-overlay" onClick={() => setLightboxUrl(null)}>
-          <img src={lightboxUrl} alt={t("customerPortal.profile.providerWorkAlt")} decoding="async" />
+      {allPhotos && (
+        <div className="photos-sheet" role="dialog" aria-modal="true" aria-label={t("customerPortal.profile.seeAllPhotos")}>
+          <div className="photos-sheet-top">
+            <button className="profile-back" onClick={() => setAllPhotos(null)}>← {(i18n.language || "").toLowerCase().startsWith("es") ? "Volver" : "Back"}</button>
+            <span className="photos-sheet-title">{selectedProvider?.business_name} · {allPhotos.length} {(i18n.language || "").toLowerCase().startsWith("es") ? "fotos" : "photos"}</span>
+          </div>
+          <div className="photos-sheet-grid">
+            {allPhotos.map((url, i) => (
+              <button key={url} className="photos-sheet-item" onClick={() => setPhotoViewer({ photos: allPhotos, index: i })}>
+                <img src={url} alt={t("customerPortal.profile.providerWorkAlt")} loading="lazy" decoding="async" />
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {photoViewer && (
+        <div
+          className="photo-viewer"
+          role="dialog"
+          aria-modal="true"
+          onClick={() => setPhotoViewer(null)}
+          onTouchStart={(e) => { photoTouchX.current = e.touches[0].clientX; }}
+          onTouchEnd={(e) => {
+            const start = photoTouchX.current; photoTouchX.current = null;
+            if (start == null) return;
+            const dx = e.changedTouches[0].clientX - start;
+            if (Math.abs(dx) < 40) return;
+            setPhotoViewer((v) => v && { ...v, index: (v.index + (dx < 0 ? 1 : -1) + v.photos.length) % v.photos.length });
+          }}
+        >
+          <button className="photo-viewer-close" aria-label="Close" onClick={(e) => { e.stopPropagation(); setPhotoViewer(null); }}>✕</button>
+          {photoViewer.photos.length > 1 && <div className="photo-viewer-count">{photoViewer.index + 1} / {photoViewer.photos.length}</div>}
+          <img key={photoViewer.index} src={photoViewer.photos[photoViewer.index]} alt={t("customerPortal.profile.providerWorkAlt")} decoding="async" onClick={(e) => e.stopPropagation()} />
+          {photoViewer.photos.length > 1 && (
+            <>
+              <button className="photo-viewer-nav prev" aria-label="Previous photo" onClick={(e) => { e.stopPropagation(); setPhotoViewer((v) => ({ ...v, index: (v.index - 1 + v.photos.length) % v.photos.length })); }}>‹</button>
+              <button className="photo-viewer-nav next" aria-label="Next photo" onClick={(e) => { e.stopPropagation(); setPhotoViewer((v) => ({ ...v, index: (v.index + 1) % v.photos.length })); }}>›</button>
+            </>
+          )}
         </div>
       )}
     </div>
