@@ -2545,7 +2545,7 @@ const css = `
   /* Never shown while something is open on top of the page… */
   body:has(.sheet-overlay, .modal-overlay, .photo-viewer, .photos-sheet, .lightbox-overlay, .qr-modal-overlay, .vbn-drawer-overlay) .a2hs-banner { display: none; }
   /* …and it sits above the customer bottom tab bar, not on top of it. */
-  body:has(.vbn-bottom) .a2hs-banner { bottom: calc(84px + env(safe-area-inset-bottom)); }
+  body:has(.vbn-bottom) .a2hs-banner { bottom: calc(100px + env(safe-area-inset-bottom)); }
   @keyframes a2hsSlideUp {
     from { transform: translateY(24px); opacity: 0; }
     to { transform: translateY(0); opacity: 1; }
@@ -3231,10 +3231,11 @@ const css = `
     .vbn-top { display: flex; position: sticky; top: 0; z-index: 150; align-items: center; justify-content: space-between; gap: 6px;
                padding: 10px 12px 10px 16px; padding-top: calc(10px + env(safe-area-inset-top));
                background: rgba(253,252,249,0.96); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); view-transition-name: vb-mtop; }
-    .vbn-bottom { display: flex; position: fixed; left: 0; right: 0; bottom: 0; z-index: 90;
-                  background: rgba(253,252,249,0.98); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-                  border-top: 1px solid var(--border); padding: 6px 2px calc(6px + env(safe-area-inset-bottom)); view-transition-name: vb-mbottom; }
-    body:has(.vbn-bottom) { padding-bottom: calc(70px + env(safe-area-inset-bottom)); }
+    .vbn-bottom { display: flex; position: fixed; left: 14px; right: 14px; bottom: calc(12px + env(safe-area-inset-bottom)); z-index: 90;
+                  max-width: 520px; margin: 0 auto; background: rgba(255,255,255,0.97); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+                  border: 1px solid rgba(22,24,29,0.06); border-radius: 999px; padding: 6px; gap: 2px;
+                  box-shadow: 0 10px 30px rgba(22,24,29,0.12), 0 2px 6px rgba(22,24,29,0.06); view-transition-name: vb-mbottom; }
+    body:has(.vbn-bottom) { padding-bottom: calc(96px + env(safe-area-inset-bottom)); }
   }
   ::view-transition-group(vb-mtop), ::view-transition-group(vb-mbottom) { animation-duration: 0s; }
   .vbn-logo { display: inline-flex; align-items: center; gap: 7px; background: none; border: none; padding: 4px 0; cursor: pointer; font-family: inherit; min-width: 0; flex: 0 1 auto; overflow: hidden; }
@@ -3252,10 +3253,10 @@ const css = `
     .vbn-logo svg { display: none !important; }
     .vbn-icon-btn { width: 40px; }
   }
-  .vbn-tab { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 3px; background: none; border: none; color: #6C7281;
-             font-family: inherit; font-size: 11.5px; font-weight: 600; padding: 5px 0 3px; cursor: pointer; }
+  .vbn-tab { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 2px; background: none; border: none; color: #16181D;
+             font-family: inherit; font-size: 12.5px; font-weight: 700; padding: 8px 0 7px; border-radius: 999px; cursor: pointer; transition: background .18s ease, color .18s ease; }
   .vbn-tab span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
-  .vbn-tab.active { color: var(--forest); }
+  .vbn-tab.active { color: #5B4BE0; background: #EFEFF2; }
   .vbn-drawer-overlay { position: fixed; inset: 0; z-index: 400; background: rgba(17,17,26,0.42); animation: vbFadeIn .18s ease-out both; }
   .vbn-drawer { position: absolute; top: 0; right: 0; bottom: 0; width: min(86vw, 380px); background: #FDFCF9; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain;
                 padding: calc(14px + env(safe-area-inset-top)) 16px calc(24px + env(safe-area-inset-bottom)); box-shadow: -18px 0 50px rgba(17,17,26,0.18);
@@ -7522,6 +7523,7 @@ const VBN_ICONS = {
   bookings: <g><rect x="3.5" y="5" width="17" height="16" rx="2" /><path d="M3.5 10h17M8 3v4M16 3v4" /></g>,
   saved: <path d="M12 20.5s-7.5-4.6-9.2-9.3C1.7 8 3.6 4.5 7.2 4.5c2 0 3.6 1.1 4.8 2.8 1.2-1.7 2.8-2.8 4.8-2.8 3.6 0 5.5 3.5 4.4 6.7-1.7 4.7-9.2 9.3-9.2 9.3z" />,
   account: <g><circle cx="12" cy="8" r="4" /><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6" /></g>,
+  search: <g><circle cx="11" cy="11" r="7" /><path d="M20 20l-3.5-3.5" /></g>,
   menu: <path d="M4 7h16M4 12h16M4 17h16" />,
   close: <path d="M6 6l12 12M18 6L6 18" />,
   store: <g><path d="M4 9.5V20h16V9.5" /><path d="M3 9.5l1.6-5h14.8L21 9.5c0 1.5-1.2 2.5-2.6 2.5S15.8 11 15.8 9.5c0 1.5-1.3 2.5-2.9 2.5S10 11 10 9.5C10 11 8.8 12 7.3 12S4.6 11 3 9.5z" /><path d="M10 20v-5h4v5" /></g>,
@@ -7652,20 +7654,19 @@ function BottomTabBar({ view, session, onNav }) {
     window.addEventListener("vaibook-customer-tab-changed", on);
     return () => window.removeEventListener("vaibook-customer-tab-changed", on);
   }, []);
-  const active = view === "customer" ? ({ home: "home", browse: "explore", bookings: "bookings", favorites: "saved", settings: "account", payments: "account", reviews: "account", profile: "account" })[custTab] || "home"
+  const active = view === "customer" ? ({ home: "home", browse: "search", bookings: "bookings", favorites: "account", settings: "account", payments: "account", reviews: "account", profile: "account" })[custTab] || "home"
     : view === "home" ? "home" : view === "customer-login" ? "account" : "";
   const tabs = [
     ["home", vbnT("Home", "Inicio"), () => (session ? vbnGoCustomerTab("home", view, onNav) : (onNav("home"), window.scrollTo({ top: 0 })))],
-    ["explore", vbnT("Explore", "Explorar"), () => vbnExplore(view, session, onNav)],
-    ["bookings", vbnT("Bookings", "Citas"), () => (session ? vbnGoCustomerTab("bookings", view, onNav) : onNav("customer-login"))],
-    ["saved", vbnT("Saved", "Guardados"), () => (session ? vbnGoCustomerTab("favorites", view, onNav) : onNav("customer-login"))],
-    ["account", vbnT("Account", "Cuenta"), () => (session ? vbnGoCustomerTab("settings", view, onNav) : onNav("customer-login"))],
+    ["search", vbnT("Search", "Buscar"), () => vbnExplore(view, session, onNav)],
+    ["bookings", vbnT("Activity", "Actividad"), () => (session ? vbnGoCustomerTab("bookings", view, onNav) : onNav("customer-login"))],
+    ["account", vbnT("Profile", "Perfil"), () => (session ? vbnGoCustomerTab("settings", view, onNav) : onNav("customer-login"))],
   ];
   return (
     <nav className="vbn-bottom" aria-label={vbnT("Main", "Principal")}>
       {tabs.map(([id, label, onClick]) => (
         <button key={id} className={`vbn-tab${active === id ? " active" : ""}`} onClick={onClick} aria-current={active === id ? "page" : undefined}>
-          <VbnIcon name={id === "explore" ? "explore" : id} size={25} filled={active === id && (id === "home" || id === "saved")} />
+          <VbnIcon name={id} size={26} filled={active === id && id === "home"} />
           <span>{label}</span>
         </button>
       ))}
@@ -8218,6 +8219,10 @@ function Nav({ onNav, current, session, user, providerProfile, staffProfile, isA
   );
 }
 
+// Landing page stat band (Active providers / Services listed / Categories /
+// Districts) — hidden for now (2026-10-31); flip to true to bring it back.
+const SHOW_LANDING_STAT_BAND = false;
+
 function LandingPage({ onNav, session, user, onSignIn, onSignOut }) {
   const { t } = useTranslation();
   const [heroQuery, setHeroQuery] = useState("");
@@ -8446,7 +8451,7 @@ function LandingPage({ onNav, session, user, onSignIn, onSignOut }) {
           Covered" bar). Only rendered once providers have actually loaded,
           same guard the old hero-stat-line sentence used, so it never shows
           a flash of zeros. */}
-      {!loadingDiscover && discoverProviders.length > 0 && (
+      {SHOW_LANDING_STAT_BAND && !loadingDiscover && discoverProviders.length > 0 && (
         <section className="stat-band">
           <div className="mr-stat-grid stat-band-inner">
             <div className="mr-stat" style={{ "--mr-accent": "#4C3DC4", "--mr-accent-soft": "var(--accent-soft)" }}>
