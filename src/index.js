@@ -22,6 +22,17 @@ window.addEventListener('unhandledrejection', (e) => {
   if (r && (r instanceof Error)) reportClientError(r);
 });
 
+// App-like feel on phones: no pinch-zoom or double-tap zoom on the page.
+// Android follows the viewport meta tag; iPhone Safari ignores it for pinch,
+// so the gesture is cancelled here. Maps keep their own pinch-to-zoom.
+const inZoomableArea = (t) => !!(t && t.closest && t.closest('.leaflet-container, [data-allow-zoom]'));
+['gesturestart', 'gesturechange', 'gestureend'].forEach((type) => {
+  document.addEventListener(type, (e) => { if (!inZoomableArea(e.target)) e.preventDefault(); }, { passive: false });
+});
+document.addEventListener('touchmove', (e) => {
+  if (e.touches && e.touches.length > 1 && !inZoomableArea(e.target)) e.preventDefault();
+}, { passive: false });
+
 // Registers the Web Push service worker (public/service-worker.js). This
 // alone doesn't ask for notification permission or subscribe anyone to
 // anything — it just makes the service worker available so the "Enable

@@ -3106,6 +3106,15 @@ const css = `
   /* Instant, native-feeling taps: no 300ms double-tap delay, no grey
      flash, and a quick press-down on anything tappable. */
   html { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+  /* Locked like a native app (2026-10-30): no text inflation on rotate, no
+     sideways drift, and on phones every field is at least 16px — anything
+     smaller makes iPhone Safari zoom the whole page in when you tap it, and
+     leave it zoomed. */
+  html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; overscroll-behavior-x: none; }
+  body { overscroll-behavior-x: none; }
+  @media (max-width: 900px) {
+    input:not([type=checkbox]):not([type=radio]):not([type=range]), select, textarea { font-size: 16px !important; }
+  }
   button, .btn, .btn-sm, .tab, .cxh-tab, a[class*="btn"], [role="button"] { -webkit-tap-highlight-color: transparent; }
   :where(button:not(:disabled):not(.carousel-arrow), .btn, .btn-sm, a[class*="btn"], .tab, [role="button"]):active { transform: scale(.97); transition: transform .08s ease-out; }
   :where(.service-card, .provider-card, .carousel-card):active { transform: scale(.985); transition: transform .1s ease-out; }
