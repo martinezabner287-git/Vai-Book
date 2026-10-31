@@ -22,6 +22,8 @@ let lastReported = { msg: "", at: 0 };
 export function reportClientError(error, stack) {
   try {
     const msg = String((error && (error.message || error)) || "");
+    // Browser noise, not crashes: an interrupted page transition.
+    if (/view transition|AbortError|InvalidStateError: .*transition/i.test(msg) || (error && /AbortError|InvalidStateError/.test(error.name || "") && /transition/i.test(msg + String(error.stack || "")))) return;
     if (msg === lastReported.msg && Date.now() - lastReported.at < 5000) return;
     lastReported = { msg, at: Date.now() };
     supabase

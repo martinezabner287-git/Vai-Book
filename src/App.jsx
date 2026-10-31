@@ -12,13 +12,45 @@ import { bookingRequestSchema, rescheduleProposalSchema, validate } from "./vali
 // App-like page changes: on browsers with the View Transitions API (Chrome,
 // Edge, Safari 18+, recent Android) a screen or tab change cross-fades
 // instead of snapping; everywhere else it simply changes as before.
+// iPhone / Safari: the native View Transitions API can leave the screen
+// blank when one transition interrupts another (seen on iOS 18 in the
+// crash log, 2026-10-30), so WebKit gets a plain CSS fade-in of the page
+// content instead — same feel, nothing that can get stuck. Chrome/Android
+// keep the native cross-fade, and never two at once.
+const IS_WEBKIT_ONLY = (() => {
+  try {
+    const ua = navigator.userAgent || "";
+    return /iPhone|iPad|iPod/.test(ua) || (/Safari\//.test(ua) && !/Chrome\/|Chromium\/|CriOS\/|Edg\//.test(ua));
+  } catch (e) { return false; }
+})();
+let activeViewTransition = null;
+function cssEnterFade() {
+  // Restart a short fade-in on whatever page content is showing.
+  requestAnimationFrame(() => {
+    document.querySelectorAll("main.portal-content, .vb-page-enter-target").forEach((el) => {
+      el.classList.remove("vb-page-enter");
+      void el.offsetWidth; // reflow so the animation restarts
+      el.classList.add("vb-page-enter");
+    });
+  });
+}
 function withViewTransition(update) {
   let reduce = false;
   try { reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e) { /* ignore */ }
-  if (typeof document === "undefined" || !document.startViewTransition || reduce || document.visibilityState !== "visible") { update(); return; }
+  if (typeof document === "undefined" || reduce || document.visibilityState !== "visible") { update(); return; }
+  if (IS_WEBKIT_ONLY || !document.startViewTransition || activeViewTransition) {
+    update();
+    if (!activeViewTransition) cssEnterFade();
+    return;
+  }
   try {
-    document.startViewTransition(() => { flushSync(update); });
-  } catch (e) { update(); }
+    const vt = document.startViewTransition(() => { flushSync(update); });
+    activeViewTransition = vt;
+    const done = () => { if (activeViewTransition === vt) activeViewTransition = null; };
+    // An interrupted transition rejects these promises — expected, not a crash.
+    [vt.ready, vt.finished, vt.updateCallbackDone].forEach((pr) => pr && pr.catch(() => {}));
+    (vt.finished || Promise.resolve()).then(done, done);
+  } catch (e) { activeViewTransition = null; update(); }
 }
 // A useState whose setter animates the change (see withViewTransition).
 function useTransitionState(init) {
@@ -26,11 +58,16 @@ function useTransitionState(init) {
   const ref = useRef(value);
   ref.current = value;
   const setRef = useRef(null);
+  // The latest value asked for. A transition applies its update a frame
+  // later, so it reads this instead of the value it started with — fast
+  // repeated taps always end on the LAST one, never an earlier one.
+  const latestRef = useRef(value);
   if (!setRef.current) {
     setRef.current = (next) => {
-      const resolved = typeof next === "function" ? next(ref.current) : next;
-      if (resolved === ref.current) return;
-      withViewTransition(() => setValueRaw(resolved));
+      const resolved = typeof next === "function" ? next(latestRef.current) : next;
+      if (resolved === latestRef.current && resolved === ref.current) return;
+      latestRef.current = resolved;
+      withViewTransition(() => setValueRaw(latestRef.current));
     };
   }
   return [value, setRef.current];
@@ -2498,9 +2535,16 @@ const css = `
     display: flex;
     align-items: center;
     gap: 12px;
-    z-index: 500;
+    /* Below every sheet / pop-up / full page (200–300): it used to sit at
+       500 and covered the break sheet's buttons on iPhone, so taps meant
+       for "Block until…" opened the install guide instead (2026-10-30). */
+    z-index: 150;
     animation: a2hsSlideUp .35s ease;
   }
+  /* Never shown while something is open on top of the page… */
+  body:has(.sheet-overlay, .modal-overlay, .photo-viewer, .photos-sheet, .lightbox-overlay, .qr-modal-overlay) .a2hs-banner { display: none; }
+  /* …and it sits above the customer bottom tab bar, not on top of it. */
+  body:has(.cxh-tabbar) .a2hs-banner { bottom: calc(96px + env(safe-area-inset-bottom)); }
   @keyframes a2hsSlideUp {
     from { transform: translateY(24px); opacity: 0; }
     to { transform: translateY(0); opacity: 1; }
@@ -3144,6 +3188,7 @@ const css = `
   .provider-topbar { view-transition-name: vb-topbar; }
   .cxh-tabbar { view-transition-name: vb-tabbar; }
   @keyframes vbFadeOut { to { opacity: 0; } }
+  .vb-page-enter { animation: vbFadeIn .2s ease-out both; } /* opacity only — a transform here would shift fixed bars inside the page */
   @keyframes vbFadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
   @keyframes vbSlideIn { from { transform: translateX(28px); opacity: 0; } to { transform: none; opacity: 1; } }
   @keyframes vbPop { from { transform: scale(.97); opacity: 0; } to { transform: none; opacity: 1; } }
