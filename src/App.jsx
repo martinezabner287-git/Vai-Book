@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useLayoutEffect, useRef, useContext, createContext, lazy, Suspense } from "react";
 import { flushSync } from "react-dom";
-import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, updateService, deleteService, getActiveProviders, getProviderDirectory, createBooking, getProviderBusyWindows, createBookingSafe, cancelBooking, markBookingCheckedIn, getCustomerBookings, uploadReceipt, submitReview, getProviderReviews, updateReview, sendBookingEmail, updateUserProfile, getPaymentMethods, addPaymentMethod, deletePaymentMethod, createNotification, getNotifications, markNotificationRead, markAllNotificationsRead, getCategoryDefaultFeatures, getProviderFeatureOverrides, setProviderFeatureOverride, getVisitNotes, upsertVisitNote, adminListProviders, adminUpdateProvider, adminDeleteProvider, adminCountCustomers, getFavoriteProviderIds, getFavoriteProviders, addFavorite, removeFavorite, getBookingMessages, sendBookingMessage, markBookingMessagesRead, getUnreadBookingMessages, getProviderMonthlyTrend, createProviderProfile, getProviderById, createWalkInBooking, submitProviderPayment, getMyProviderPayments, adminListProviderPayments, adminReviewProviderPayment, submitBookingRefund, adminListBookingRefunds, openPrivateFile, getProviderStaff, addProviderStaff, updateProviderStaff, deleteProviderStaff, getProviderStaffPublic, getLoyaltyAccount, getProviderLoyaltyCustomers, redeemLoyaltyReward, getMyStaffProfile, claimStaffSeatByEmail, getStaffBookings, getProviderNotifyEmail, getMaintenanceStatus, setMaintenanceMode, getSiteOfflineStatus, setSiteOffline, guestAuthWithPassword, updateGuestPassword, savePushSubscription, attachBookingServices, getProviderBlocks, insertProviderBlock, deleteProviderBlock, proposeBookingReschedule, confirmBookingReschedule, declineBookingReschedule, withdrawBookingReschedule, establishSoloSession, getServerSoloSessionToken, getLocalSoloSessionToken, clearLocalSoloSessionToken, subscribeToSoloSessionReplacement, signInWithPhonePassword, customerPhoneAuth, adminResetPhonePassword, isPhoneLoginEmail, formatPhoneForDisplay, weakPasswordReason, submitSupportMessage, listSupportMessages, setSupportMessageStatus, getProviderMembershipPlans, getMyMembershipPlans, createMembershipPlan, updateMembershipPlan, subscribeToMembershipPlan, submitMembershipPayment, getMyMemberships, getProviderMembershipSubscribers, getProviderMembershipPayments, reviewMembershipPayment, cancelMembership, redeemMembershipVisit, startSoloTrial, adminStartProviderTrial, adminExtendProviderTrial, adminEndProviderTrial, adminExtendPaymentDue, adminRestoreDowngradedPlan } from "./supabase";
+import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, updateService, deleteService, getActiveProviders, getProviderDirectory, createBooking, getProviderBusyWindows, createBookingSafe, cancelBooking, markBookingCheckedIn, getCustomerBookings, uploadReceipt, submitReview, getProviderReviews, updateReview, sendBookingEmail, updateUserProfile, getPaymentMethods, addPaymentMethod, deletePaymentMethod, createNotification, getNotifications, markNotificationRead, markAllNotificationsRead, getCategoryDefaultFeatures, getProviderFeatureOverrides, setProviderFeatureOverride, getVisitNotes, upsertVisitNote, adminListProviders, adminUpdateProvider, adminDeleteProvider, adminCountCustomers, getFavoriteProviderIds, getFavoriteProviders, addFavorite, removeFavorite, getBookingMessages, sendBookingMessage, markBookingMessagesRead, getUnreadBookingMessages, getProviderMonthlyTrend, createProviderProfile, getProviderById, createWalkInBooking, submitProviderPayment, getMyProviderPayments, adminListProviderPayments, adminReviewProviderPayment, submitBookingRefund, adminListBookingRefunds, openPrivateFile, getProviderStaff, addProviderStaff, updateProviderStaff, deleteProviderStaff, getProviderStaffPublic, getLoyaltyAccount, getProviderLoyaltyCustomers, redeemLoyaltyReward, getMyStaffProfile, claimStaffSeatByEmail, getStaffBookings, getProviderNotifyEmail, getMaintenanceStatus, setMaintenanceMode, getSiteOfflineStatus, setSiteOffline, guestAuthWithPassword, updateGuestPassword, savePushSubscription, attachBookingServices, getProviderBlocks, insertProviderBlock, deleteProviderBlock, proposeBookingReschedule, confirmBookingReschedule, declineBookingReschedule, withdrawBookingReschedule, establishSoloSession, getServerSoloSessionToken, getLocalSoloSessionToken, clearLocalSoloSessionToken, subscribeToSoloSessionReplacement, signInWithPhonePassword, customerPhoneAuth, adminResetPhonePassword, isPhoneLoginEmail, formatPhoneForDisplay, weakPasswordReason, submitSupportMessage, listSupportMessages, setSupportMessageStatus, getProviderMembershipPlans, getMyMembershipPlans, createMembershipPlan, updateMembershipPlan, subscribeToMembershipPlan, submitMembershipPayment, getMyMemberships, getProviderMembershipSubscribers, getProviderMembershipPayments, reviewMembershipPayment, cancelMembership, redeemMembershipVisit, startSoloTrial, adminStartProviderTrial, adminExtendProviderTrial, adminEndProviderTrial, adminExtendPaymentDue, adminRestoreDowngradedPlan, adminPlatformStats } from "./supabase";
 import AdminDashboard from "./AdminDashboard";
 import ProfilePhotoModal from "./ProfilePhotoModal";
 import LanguageSelector from "./LanguageSelector";
@@ -18717,6 +18717,23 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
   // / adminCountCustomers in supabase.js. null (not 0) while unloaded, so
   // the tile can show a loading dash instead of a misleading "0".
   const [customerCount, setCustomerCount] = useState(null);
+  // Command Center numbers (admin_platform_stats) — loaded when the overview
+  // is open and refreshed every minute while it stays open.
+  const [platformStats, setPlatformStats] = useState(null);
+  const [platformStatsLoading, setPlatformStatsLoading] = useState(false);
+  const [platformStatsError, setPlatformStatsError] = useState(false);
+  const loadPlatformStats = async () => {
+    setPlatformStatsLoading(true);
+    const data = await adminPlatformStats();
+    setPlatformStatsLoading(false);
+    if (data) { setPlatformStats(data); setPlatformStatsError(false); } else setPlatformStatsError(true);
+  };
+  useEffect(() => {
+    if (tab !== "overview") return undefined;
+    loadPlatformStats();
+    const id = setInterval(loadPlatformStats, 60000);
+    return () => clearInterval(id);
+  }, [tab]);
 
   // Emergency maintenance-mode switch — see supabase_security_hardening.sql.
   // Pauses new bookings and new provider applications app-wide, independent
@@ -19122,6 +19139,10 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
               return sum + (planDef?.monthly || 0);
             }, 0)}
             customerCount={customerCount}
+            platformStats={platformStats}
+            platformStatsLoading={platformStatsLoading}
+            platformStatsError={platformStatsError}
+            onRefreshStats={loadPlatformStats}
             busyId={busyId}
             onApprove={(id) => act(id, "active")}
             onDeny={(id) => act(id, "rejected")}

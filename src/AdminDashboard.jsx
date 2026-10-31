@@ -1,3 +1,4 @@
+import MissionControl from "./MissionControl";
 // ADMIN COMMAND CENTER — the overview tab for the admin portal: revenue at a
 // glance, the "Velvet Rope" approval queue, and a roster of who's live.
 //
@@ -30,7 +31,6 @@
 //   emergencyLabel — "Paused" / "Offline" / null, mirrors the sidebar's old Emergency badge
 //   onJump(tabId)  — switch the admin portal to another tab (used by the status strip)
 
-const money = (n) => `BZ$${Number(n || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
 
 const timeAgo = (iso) => {
   if (!iso) return "";
@@ -54,6 +54,10 @@ export default function AdminDashboard({
   refundsCount = 0,
   emergencyLabel = null,
   onJump,
+  platformStats = null,
+  platformStatsLoading = false,
+  platformStatsError = false,
+  onRefreshStats,
 }) {
   const jump = (tabId) => onJump && onJump(tabId);
   const hasAlerts = paymentsPending > 0 || refundsCount > 0 || emergencyLabel;
@@ -62,10 +66,7 @@ export default function AdminDashboard({
     <div className="acc-root">
       <style>{ADMIN_DASHBOARD_CSS}</style>
 
-      <div className="portal-header">
-        <h2>Command Center</h2>
-        <p>Your network at a glance — the Velvet Rope queue, who's live, and what's coming in.</p>
-      </div>
+      <MissionControl stats={platformStats} loading={platformStatsLoading} error={platformStatsError} onRefresh={onRefreshStats} />
 
       {/* Quick-jump status strip — these used to be badge counts on the
           sidebar (Payments / Refunds / Emergency); now that the sidebar's
@@ -84,31 +85,6 @@ export default function AdminDashboard({
         </div>
       )}
 
-      {/* 1. REVENUE & NETWORK OVERVIEW */}
-      <div className="acc-metrics">
-        <div className="acc-metric-card">
-          <div className="acc-metric-label">Pending Applications</div>
-          <div className="acc-metric-value">{pendingApps.length}</div>
-          <div className="acc-metric-sub">{pendingApps.length === 1 ? "shop waiting on the rope" : "shops waiting on the rope"}</div>
-        </div>
-        <div className="acc-metric-card">
-          <div className="acc-metric-label">Active Shops</div>
-          <div className="acc-metric-value">{activeProviders.length}</div>
-          <div className="acc-metric-sub">live and bookable right now</div>
-        </div>
-        <div className="acc-metric-card">
-          <div className="acc-metric-label">Customers</div>
-          <div className="acc-metric-value">{customerCount == null ? "—" : customerCount.toLocaleString()}</div>
-          <div className="acc-metric-sub">signed-up customer accounts</div>
-        </div>
-        <div className="acc-metric-card acc-metric-highlight">
-          <div className="acc-metric-label">Monthly Recurring Revenue</div>
-          <div className="acc-metric-value">{money(mrr)}</div>
-          <div className="acc-metric-sub">across every paid plan, before add-ons</div>
-        </div>
-      </div>
-
-      {/* 2. PENDING APPLICATIONS — THE VELVET ROPE QUEUE */}
       <div className="acc-section">
         <div className="acc-section-head">
           <h3>The Velvet Rope Queue</h3>

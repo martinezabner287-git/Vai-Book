@@ -52,3 +52,7 @@ create trigger guard_client_errors before insert on public.client_errors
 -- vaiplaza_store_link (applied): provider_profiles.vaiplaza_url + column
 -- grants + trg_vaiplaza_url_guard (Solo/Team only; https on vaiplaza or
 -- vaibuyandsell .com/.bz).
+
+-- admin_platform_stats (applied): admin-only jsonb of platform totals by role,
+-- money/bookings, 30-day sign-ups and per-district counts (customers counted
+-- in the district where they book most).

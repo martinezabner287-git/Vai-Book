@@ -2035,6 +2035,13 @@ export const adminRestoreDowngradedPlan = async (providerId, days = 7) => {
   return data;
 };
 
+// Admin Command Center numbers (admin_platform_stats, admin only).
+export const adminPlatformStats = async () => {
+  const { data, error } = await supabase.rpc('admin_platform_stats');
+  if (error) { console.error('admin_platform_stats:', error.message); return null; }
+  return data;
+};
+
 export const adminEndProviderTrial = async (providerId) => {
   const { data, error } = await supabase.rpc('admin_end_provider_trial', { p_provider_id: providerId });
   if (error) { reportActionError('adminEndProviderTrial', error); console.error('Error ending trial:', error.message); return null; }
