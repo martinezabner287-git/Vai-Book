@@ -3168,6 +3168,112 @@ const css = `
   button, .btn, .btn-sm, .tab, .cxh-tab, a[class*="btn"], [role="button"] { -webkit-tap-highlight-color: transparent; }
   :where(button:not(:disabled):not(.carousel-arrow):not(.photo-viewer-nav), .btn, .btn-sm, a[class*="btn"], .tab, [role="button"]):active { transform: scale(.97); transition: transform .08s ease-out; }
   :where(.service-card, .provider-card, .carousel-card):active { transform: scale(.985); transition: transform .1s ease-out; }
+  /* ── ADMIN: "Command Center" dark theme for the whole admin portal ──
+     (2026-10-30) Same look as the MissionControl panel — near-black with
+     violet / lime / cyan glow — carried through every admin tab, the top
+     bar and its menu. Scoped to .admin-dark (the AdminPortal root) and
+     body.admin-dark-body (set by App while view === "admin"), so customer
+     and business screens are untouched. */
+  body.admin-dark-body { background: #07060E; }
+  .admin-dark {
+    --forest: #8B7CFF; --forest-mid: #9D90FF; --forest-light: #B4A9FF; --lime: #8B7CFF;
+    --near-white: #0D0B18; --dark-text: #F4F3FA; --muted: #A3A0B8; --border: rgba(255,255,255,0.10);
+    --sand: rgba(255,255,255,0.06); --accent-soft: rgba(139,124,255,0.16); --page: #07060E; --navy: #8B7CFF;
+    color: #F4F3FA; color-scheme: dark;
+  }
+  .admin-dark .portal-content {
+    background: radial-gradient(900px 420px at -10% -5%, rgba(124,92,255,0.22), transparent 60%),
+                radial-gradient(700px 360px at 110% 30%, rgba(79,209,255,0.08), transparent 60%),
+                #07060E;
+    min-height: calc(100vh - 64px);
+  }
+  .admin-dark .portal-header h2 { color: #FFFFFF !important; letter-spacing: -.02em; }
+  .admin-dark .portal-header p { color: var(--muted); }
+  .admin-dark .card, .admin-dark .metric-card {
+    background: linear-gradient(180deg, rgba(255,255,255,0.055), rgba(255,255,255,0.02)) !important;
+    border: 1px solid rgba(255,255,255,0.09) !important; border-radius: 18px; color: #F4F3FA;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.05), 0 18px 40px rgba(0,0,0,0.25);
+  }
+  .admin-dark .card-title, .admin-dark h3, .admin-dark h4, .admin-dark .title { color: #FFFFFF !important; }
+  .admin-dark .meta, .admin-dark .booking-info .meta { color: var(--muted) !important; }
+  .admin-dark .booking-item { border-bottom-color: rgba(255,255,255,0.08); }
+  .admin-dark a { color: #B4A9FF; }
+  /* Forms */
+  .admin-dark input:not([type=checkbox]):not([type=radio]):not([type=range]), .admin-dark select, .admin-dark textarea {
+    background: rgba(255,255,255,0.05) !important; color: #F4F3FA !important; border-color: rgba(255,255,255,0.14) !important;
+  }
+  .admin-dark input::placeholder, .admin-dark textarea::placeholder { color: rgba(244,243,250,0.38); }
+  .admin-dark select option { background: #12101F; color: #F4F3FA; }
+  .admin-dark .input-group label { color: rgba(244,243,250,0.8); }
+  /* Buttons */
+  .admin-dark .btn-sm.forest { background: linear-gradient(135deg, #8B7CFF, #6C5CE7); color: #FFFFFF; box-shadow: 0 6px 18px rgba(139,124,255,0.3); }
+  .admin-dark .btn-sm.lime { background: rgba(198,241,53,0.14); color: #D9FF6B; border: 1px solid rgba(198,241,53,0.35); }
+  .admin-dark .btn-sm.ghost, .admin-dark .btn-sm:not(.forest):not(.lime) { color: #F4F3FA; border-color: rgba(255,255,255,0.18); }
+  .admin-dark .btn-sm.ghost:hover { border-color: #8B7CFF; }
+  .admin-dark .tab-row { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.1); }
+  .admin-dark .tab { color: var(--muted); }
+  .admin-dark .tab.active { background: #8B7CFF; color: #0B0A14; }
+  /* Status pills */
+  .admin-dark .status-pill.confirmed { background: rgba(52,211,153,0.15); color: #6EE7B7; }
+  .admin-dark .status-pill.pending { background: rgba(251,191,36,0.15); color: #FCD34D; }
+  .admin-dark .status-pill.done { background: rgba(255,255,255,0.08); color: #C9C6D9; }
+  .admin-dark .status-pill.rejected { background: rgba(248,113,113,0.15); color: #FCA5A5; }
+  .admin-dark .status-pill.awaiting { background: rgba(96,165,250,0.15); color: #93C5FD; }
+  /* Command Center lists (AdminDashboard) */
+  .admin-dark .acc-section-head h3 { color: #FFFFFF; font: 700 11px/1.2 ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .18em; text-transform: uppercase; }
+  .admin-dark .acc-section-count { background: rgba(139,124,255,0.18); color: #C9C2FF; }
+  .admin-dark .acc-list, .admin-dark .acc-empty { background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02)); border: 1px solid rgba(255,255,255,0.09); border-radius: 18px; color: var(--muted); }
+  .admin-dark .acc-row { border-bottom-color: rgba(255,255,255,0.07); }
+  .admin-dark .acc-row-title { color: #FFFFFF; }
+  .admin-dark .acc-plan-pill { background: rgba(139,124,255,0.16); color: #C9C2FF; border: 1px solid rgba(139,124,255,0.3); }
+  .admin-dark .acc-btn-manage { color: #F4F3FA; border-color: rgba(255,255,255,0.18); background: rgba(255,255,255,0.04); }
+  .admin-dark .acc-btn-approve { background: #C6F135; color: #0B0A14; box-shadow: 0 6px 18px rgba(198,241,53,0.3); }
+  .admin-dark .acc-alert-pill { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.12); color: #F4F3FA; }
+  .admin-dark .acc-alert-danger { background: rgba(248,113,113,0.15); border-color: rgba(248,113,113,0.4); color: #FCA5A5; }
+  /* Inline light backgrounds used inside admin tabs */
+  .admin-dark [style*="background: white"], .admin-dark [style*="background: rgb(255, 255, 255)"],
+  .admin-dark [style*="background: #fff;"], .admin-dark [style*="background: #FFFFFF"], .admin-dark [style*="background: #FFF;"],
+  .admin-dark [style*="background: var(--sand)"], .admin-dark [style*="background: rgb(244, 242, 238)"],
+  .admin-dark [style*="background: rgb(254, 242, 242)"], .admin-dark [style*="background: rgb(240, 253, 244)"] {
+    background: rgba(255,255,255,0.05) !important;
+  }
+  .admin-dark [style*="color: rgb(22, 24, 29)"], .admin-dark [style*="color: #16181D"] { color: #F4F3FA !important; }
+  .admin-dark [style*="color: rgb(185, 28, 28)"], .admin-dark [style*="color: #B91C1C"] { color: #FCA5A5 !important; }
+  .admin-dark [style*="color: rgb(21, 128, 61)"], .admin-dark [style*="color: #15803D"] { color: #6EE7B7 !important; }
+  .admin-dark .metric { background: linear-gradient(180deg, rgba(255,255,255,0.055), rgba(255,255,255,0.02)) !important; border: 1px solid rgba(255,255,255,0.09) !important; border-radius: 18px; }
+  .admin-dark .metric .metric-value { color: #FFFFFF !important; letter-spacing: -.02em; }
+  .admin-dark .metric-label { color: rgba(244,243,250,0.55); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .14em; font-size: 10.5px; }
+  .admin-dark .admin-prov-actions > div { flex-wrap: wrap; justify-content: flex-end; }
+  @media (max-width: 720px) {
+    .admin-dark .admin-prov-row { flex-direction: column; gap: 12px; }
+    .admin-dark .admin-prov-actions { align-items: flex-start !important; width: 100%; }
+    .admin-dark .admin-prov-actions > div { justify-content: flex-start; }
+    .admin-dark .admin-prov-actions span { text-align: left !important; }
+  }
+  body.admin-dark-body .footer { background: #07060E !important; border-top: 1px solid rgba(255,255,255,0.06); }
+  body.admin-dark-body .footer .hero-get-app-btn { background: rgba(255,255,255,0.06) !important; color: #F4F3FA !important; border: 1px solid rgba(255,255,255,0.14) !important; box-shadow: none !important; }
+  /* Top bar + account menu while in the admin portal */
+  body.admin-dark-body .nav-outer, body.admin-dark-body .nav-outer.nav-outer--light {
+    background: rgba(7,6,14,0.88) !important; border-bottom: 1px solid rgba(255,255,255,0.08) !important;
+    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  }
+  body.admin-dark-body .nav-logo { color: rgba(255,255,255,0.6) !important; }
+  body.admin-dark-body .nav-logo span { color: #FFFFFF !important; }
+  body.admin-dark-body .nav-strip { background: #0D0B18; border-bottom: 1px solid rgba(255,255,255,0.06); }
+  body.admin-dark-body .nav-menu-btn, body.admin-dark-body .nav-avatar-btn, body.admin-dark-body .nav-search-toggle, body.admin-dark-body .lang-toggle {
+    background: rgba(255,255,255,0.06) !important; border-color: rgba(255,255,255,0.14) !important; color: #F4F3FA !important;
+  }
+  body.admin-dark-body .nav-avatar-circle { background: rgba(139,124,255,0.22); color: #E4DEFF; }
+  body.admin-dark-body .nav-avatar-caret { color: #F4F3FA; }
+  body.admin-dark-body .nav-account-dropdown {
+    background: #12101F !important; border-color: rgba(255,255,255,0.1) !important; box-shadow: 0 24px 60px rgba(0,0,0,0.55) !important;
+  }
+  body.admin-dark-body .nav-account-name { color: #FFFFFF; }
+  body.admin-dark-body .nav-dropdown-item { color: #E7E5F2 !important; }
+  body.admin-dark-body .nav-dropdown-item:hover, body.admin-dark-body .nav-dropdown-item.active { background: rgba(139,124,255,0.16) !important; color: #FFFFFF !important; }
+  body.admin-dark-body .nav-account-dropdown hr, body.admin-dark-body .nav-dropdown-divider { border-color: rgba(255,255,255,0.08); background: rgba(255,255,255,0.08); }
+  body.admin-dark-body .nav-dropdown-section, body.admin-dark-body .nav-dropdown-label { color: rgba(244,243,250,0.45); }
+
   /* ── Layout safety net (2026-10-30) ─────────────────────────────────
      Rules that keep any screen from coming apart on smaller phones or with
      a bigger text setting — added after a business's Memberships form
@@ -3317,6 +3423,22 @@ const css = `
   .ip-more h4 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em; color: #6C7281; margin: 0 0 10px; }
   .ip-more div { display: flex; flex-wrap: wrap; gap: 8px; }
   .ip-more button { background: #fff; border: 1px solid #E8E5DE; border-radius: 999px; padding: 8px 14px; font: inherit; font-size: 14px; font-weight: 600; color: #16181D; cursor: pointer; }
+  /* Small phones: rows of buttons / labels wrap onto a second line instead
+     of pushing the page sideways (found by tests/layoutcheck.py). Only kicks
+     in when a row actually doesn't fit — wide screens are unchanged. */
+  .portal-content, .card, .acct-side { min-width: 0; max-width: 100%; }
+  .acct-side-nav { min-width: 0; max-width: 100%; }
+  .booking-info { min-width: 0; }
+  .cal-grid { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+  @media (max-width: 600px) {
+    .portal-content .booking-item, .portal-content .card-title { flex-wrap: wrap; row-gap: 10px; }
+    .portal-content .booking-item > .booking-info { flex: 1 1 160px; }
+    .portal-content [style*="display: flex"][style*="justify-content: flex-end"] { justify-content: flex-start !important; }
+    .portal-content [style*="display: flex"]:not([style*="nowrap"]):not([style*="column"]) { flex-wrap: wrap; }
+    .portal-content .metric-grid { grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)) !important; }
+    .cal-grid { gap: 2px; }
+    .cal-day-label { font-size: 11px; overflow: hidden; text-overflow: ellipsis; }
+  }
 
   /* ===== MONTHLY INSIGHTS — month in detail ===== */
   .mi { margin-bottom: 24px; }
@@ -19190,7 +19312,7 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
   const planLabel = (id) => (PLANS.find(p => p.id === id)?.name) || id;
 
   return (
-    <div className="portal-layout">
+    <div className="portal-layout admin-dark">
       {posterFor && (
         <div className="qr-modal-overlay" onClick={() => setPosterFor(null)}>
           <button className="qr-modal-close" onClick={() => setPosterFor(null)} aria-label="Close">✕</button>
@@ -19384,8 +19506,8 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
                 }
 
                 return (
-                  <div key={p.id} className="booking-item" style={{ alignItems: "flex-start" }}>
-                    <div className="booking-info" style={{ flex: 1 }}>
+                  <div key={p.id} className="booking-item admin-prov-row" style={{ alignItems: "flex-start" }}>
+                    <div className="booking-info" style={{ flex: 1, minWidth: 0 }}>
                       <div className="title">
                         {p.business_name}{" "}
                         <span style={{ fontWeight: 500, color: p.is_active ? "var(--lime)" : "var(--muted)", fontSize: 12 }}>
@@ -19404,7 +19526,7 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
                       )}
                     </div>
 
-                    <div style={{ display: "flex", flexDirection: "column", gap: 8, alignItems: "flex-end", flexShrink: 0 }}>
+                    <div className="admin-prov-actions" style={{ display: "flex", flexDirection: "column", gap: 8, alignItems: "flex-end", flexShrink: 0 }}>
                       <select
                         className="input"
                         style={{ padding: "4px 8px", fontSize: 12 }}
@@ -19804,6 +19926,12 @@ export default function App() {
     } catch (e) { /* ignore */ }
     return "home";
   });
+  // Admin portal wears the dark Command Center theme end to end — the top
+  // bar and page background live outside AdminPortal, so flag the body.
+  useEffect(() => {
+    document.body.classList.toggle("admin-dark-body", view === "admin");
+    return () => document.body.classList.remove("admin-dark-body");
+  }, [view]);
 
   // Which provider a QR-code / booking-link deep link pointed at, if any —
   // consumed once by CustomerPortal to jump straight to that provider's

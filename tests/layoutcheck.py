@@ -46,6 +46,30 @@ CHECK = r'''() => {
     }
     const r = el.getBoundingClientRect();
     if ((own.length || isCtl) && r.right > vw + 2 && !inHScroll(el) && !floating(el)) out.push('OFF-SCREEN right=' + Math.round(r.right) + ' ' + desc(el));
+    // 3b) cut off by a parent that hides overflow (no scrollbar to reach it)
+    if ((own.length || (isCtl && el.tagName !== 'IMG')) && !floating(el)) {
+      for (let n = el.parentElement; n && n !== document.body; n = n.parentElement) {
+        const cs = getComputedStyle(n);
+        if (cs.overflowX === 'auto' || cs.overflowX === 'scroll') break;
+        if (cs.overflowX === 'hidden' || cs.overflowX === 'clip') {
+          const pr = n.getBoundingClientRect();
+          const ownCs = getComputedStyle(el);
+          if (ownCs.textOverflow !== 'ellipsis' && (r.right > pr.right + 3 || r.left < pr.left - 3) && r.width < pr.width * 3) out.push('CLIPPED by ' + n.tagName.toLowerCase() + '.' + String(n.className).split(' ')[0] + ': ' + desc(el));
+          break;
+        }
+      }
+    }
+  });
+  // 3c) a whole page section that silently scrolls sideways (content wider than the screen)
+  document.querySelectorAll('main, .portal-content, .card, .modal-panel, .profile-scroll, .portal-layout, .acc-list').forEach((n) => {
+    if (!vis(n)) return;
+    if (n.scrollWidth > n.clientWidth + 4) {
+      const nr = n.getBoundingClientRect();
+      const culprits = [...n.querySelectorAll('*')].filter((c) => { const r = c.getBoundingClientRect(); return r.width > 0 && r.right > nr.right + 2 && !floating(c); })
+        .filter((c) => ![...c.children].some((k) => k.getBoundingClientRect().right > nr.right + 2))
+        .slice(0, 3).map((c) => desc(c) + ' w=' + Math.round(c.getBoundingClientRect().width) + ' ws=' + getComputedStyle(c).whiteSpace + ' minw=' + getComputedStyle(c).minWidth + ' par=' + (c.parentElement && (c.parentElement.className || c.parentElement.tagName)));
+      out.push('SIDEWAYS-SCROLL in ' + n.tagName.toLowerCase() + '.' + String(n.className).split(' ')[0] + ' (' + n.scrollWidth + ' > ' + n.clientWidth + ') <- ' + culprits.join(' | '));
+    }
   });
   // 4) text / controls drawn on top of each other
   const L = leaves.filter((el) => !floating(el)).slice(0, 450).map((el) => [el, el.getBoundingClientRect()]);
