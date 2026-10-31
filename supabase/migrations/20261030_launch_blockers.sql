@@ -62,3 +62,9 @@ create trigger guard_client_errors before insert on public.client_errors
 -- verse_for_day(date) rotating by Belize date, send_daily_verse() inserting a
 -- 'daily_verse' notification per active business owner (push follows), cron
 -- 'vaibook-daily-verse' at 11:00 UTC = 5:00 AM Belize.
+
+-- daily_verse_themes / daily_verse_title_theme / daily_verse_strict_rotation
+-- (applied 2026-10-31): daily_verses.theme (business 41, wealth 23, health 21,
+-- others 22 = 107 KJV verses); verse_for_day cycles business → wealth →
+-- health → others daily, each theme walking its own list; notification title
+-- carries the theme.

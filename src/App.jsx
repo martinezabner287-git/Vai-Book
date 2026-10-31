@@ -3170,6 +3170,11 @@ const css = `
   .profile-back { border: none; background: none; font: inherit; font-weight: 700; font-size: 15px; color: var(--dark-text, #16181D); cursor: pointer; padding: 8px 4px; white-space: nowrap; }
   .bh-verse { margin: 14px 0 18px; padding: 16px 18px; border-radius: 18px; background: linear-gradient(135deg, #FFF8EC 0%, #F6F1FF 100%); border: 1px solid #EFE4CF; }
   .bh-verse-eyebrow { font-size: 11px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: #9A6B1F; margin-bottom: 6px; }
+  .bh-verse-eyebrow { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .bh-verse-theme { font-size: 10.5px; letter-spacing: .06em; padding: 3px 9px; border-radius: 999px; background: #F3E8D2; color: #7A5414; }
+  .bh-verse-theme.t-wealth { background: #E6F4EA; color: #1E6B3A; }
+  .bh-verse-theme.t-health { background: #E3F1FB; color: #1B5E8C; }
+  .bh-verse-theme.t-others { background: #EFEAFE; color: #4C3DC4; }
   .bh-verse-text { margin: 0; font-family: Georgia, 'Times New Roman', serif; font-size: 16px; line-height: 1.55; color: #16181D; font-style: italic; }
   .bh-verse-ref { margin-top: 8px; font-size: 13px; font-weight: 700; color: #4C3DC4; }
   .bh-verse-ref span { color: var(--muted); font-weight: 500; }
@@ -15555,7 +15560,14 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
             {/* MORNING VERSE — same verse every business gets at 5 AM (send_daily_verse). */}
             {dailyVerse && providerProfile?.daily_verse_enabled !== false && (
               <div className="bh-verse">
-                <div className="bh-verse-eyebrow">🌅 {dx("Verse for today", "Versículo de hoy")}</div>
+                <div className="bh-verse-eyebrow">
+                  🌅 {dx("Verse for today", "Versículo de hoy")}
+                  {dailyVerse.theme && (
+                    <span className={`bh-verse-theme t-${dailyVerse.theme}`}>
+                      {({ business: dx("Business", "Negocio"), wealth: dx("Wealth", "Riqueza"), health: dx("Health", "Salud"), others: dx("Treating others", "Cómo tratar a otros") })[dailyVerse.theme] || ""}
+                    </span>
+                  )}
+                </div>
                 <p className="bh-verse-text">“{dailyVerse.body}”</p>
                 <div className="bh-verse-ref">{dailyVerse.ref} <span>· KJV</span></div>
               </div>
@@ -17905,8 +17917,8 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "4px 0 0", gap: 16 }}>
                 <div style={{ fontSize: 13, color: "var(--muted)", lineHeight: 1.5 }}>
                   {(i18n.language || "").toLowerCase().startsWith("es")
-                    ? "Cada día a las 5:00 AM, un versículo sobre el trabajo y los negocios — como notificación y en tu panel."
-                    : "Every day at 5:00 AM, a verse about work and business — as a notification and on your dashboard."}
+                    ? "Cada día a las 5:00 AM, un versículo sobre negocios, riqueza, salud o cómo tratar a otros — como notificación y en tu panel."
+                    : "Every day at 5:00 AM, a verse on business, wealth, health or how to treat others — as a notification and on your dashboard."}
                 </div>
                 <div
                   className={`toggle ${providerProfile?.daily_verse_enabled !== false ? "on" : ""}`}
