@@ -3123,7 +3123,8 @@ const css = `
   .vaiplaza-store-text strong { font-size: 15px; font-weight: 800; }
   .vaiplaza-store-text span { font-size: 12px; opacity: .9; }
   .vaiplaza-store-arrow { font-size: 26px; line-height: 1; opacity: .9; }
-  .profile-topbar-name { font-weight: 800; font-size: 15px; color: var(--dark-text, #16181D); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .profile-topbar-name { font-weight: 800; font-size: 15px; color: var(--dark-text, #16181D); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; opacity: 0; transform: translateY(4px); transition: opacity .2s ease, transform .2s ease; }
+  .profile-topbar-name.shown { opacity: 1; transform: none; }
   @media (max-width: 640px) { .profile-page .profile-scroll { padding: 18px 16px 32px; } }
 
   /* ── App-like motion ─────────────────────────────────────────────
@@ -3702,7 +3703,7 @@ const providerOpenNow = (p) => {
 const planBadge = (p) => {
   const plan = p?.plan;
   if (plan === "business") return { label: "✓ Team", bg: "var(--forest)", color: "#fff" };
-  if (plan === "pro") return { label: "✓ Pro", bg: "var(--sand)", color: "var(--forest)" };
+  if (plan === "pro") return { label: "✓ Solo", bg: "var(--sand)", color: "var(--forest)" };
   return null;
 };
 
@@ -9160,6 +9161,7 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
   const [providerReviews, setProviderReviews] = useState([]);
   const [loadingReviews, setLoadingReviews] = useState(false);
   const [, setLightboxUrl] = useState(null);
+  const [profileScrolled, setProfileScrolled] = useState(false);
   // Business photos (2026-10-30): the Portfolio tab repeated the gallery at
   // the top of the page, so it's gone — the gallery itself opens an
   // all-photos sheet and a swipeable full-screen viewer instead.
@@ -9419,6 +9421,7 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
     setLightboxUrl(null);
     setAllPhotos(null);
     setPhotoViewer(null);
+    setProfileScrolled(false);
     setSelectedProvider(provider);
     if (provider?.id) {
       try {
@@ -11592,11 +11595,12 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
           return { day, i, isToday: i === new Date().getDay(), text: h && h.is_open && h.start_time && h.end_time ? `${formatTimeLabel(h.start_time)} – ${formatTimeLabel(h.end_time)}` : "Closed" };
         });
         return (
-          <div className="modal-overlay profile-page">
+          <div className="modal-overlay profile-page" onScroll={(e) => { const sc = e.currentTarget.scrollTop > 70; if (sc !== profileScrolled) setProfileScrolled(sc); }}>
             <div className="modal-panel profile-panel" onClick={(e) => e.stopPropagation()}>
               <div className="profile-topbar">
                 <button className="profile-back" onClick={closeProviderViewFromUi}>← {t("auth.back")}</button>
-                <span className="profile-topbar-name">{selectedProvider.business_name}</span>
+                {/* Only appears once the big name below has scrolled away — no repeating it twice on screen. */}
+                <span className={`profile-topbar-name${profileScrolled ? " shown" : ""}`} aria-hidden={!profileScrolled}>{selectedProvider.business_name}</span>
               </div>
               <div className="profile-scroll">
 
@@ -11628,8 +11632,13 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                   {rating ? (
                     <span className="stars"><StarRating value={rating} size={15} /> {rating} <span style={{ color: "var(--muted)" }}>({selectedProvider.reviews.length})</span></span>
                   ) : <span>{t("customerPortal.browse.noReviewsYet")}</span>}
-                  <span className="dot">·</span>
-                  <span className={openStatus.open ? "open-txt" : "closed-txt"}>{openStatus.label}</span>
+                  {/* Open/closed lives on the booking card (with the hours) — shown here only while booking, when that card is hidden. */}
+                  {bookingService && (
+                    <>
+                      <span className="dot">·</span>
+                      <span className={openStatus.open ? "open-txt" : "closed-txt"}>{openStatus.label}</span>
+                    </>
+                  )}
                   <span className="dot">·</span>
                   <span>{selectedProvider.service_type}</span>
                   <span className="dot">·</span>
@@ -12464,7 +12473,6 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                   {!bookingService && (
                   <aside className="profile-sidebar">
                     <div className="profile-sidebar-card">
-                      <h3>{selectedProvider.business_name}</h3>
                       {/* Rating already shows right above in profile-meta (which is
                           always visible, booking in progress or not) — this card
                           used to repeat it verbatim just a few inches below.
