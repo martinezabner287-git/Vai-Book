@@ -3168,6 +3168,11 @@ const css = `
   .profile-page .modal-panel.profile-panel { max-width: 1080px; width: 100%; margin: 0 auto; max-height: none; min-height: 100%; border-radius: 0; overflow: visible; box-shadow: none; }
   .profile-topbar { position: sticky; top: 0; z-index: 6; display: flex; align-items: center; gap: 12px; padding: 10px 16px; background: rgba(255,255,255,0.96); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border-bottom: 1px solid var(--border); }
   .profile-back { border: none; background: none; font: inherit; font-weight: 700; font-size: 15px; color: var(--dark-text, #16181D); cursor: pointer; padding: 8px 4px; white-space: nowrap; }
+  .bh-verse { margin: 14px 0 18px; padding: 16px 18px; border-radius: 18px; background: linear-gradient(135deg, #FFF8EC 0%, #F6F1FF 100%); border: 1px solid #EFE4CF; }
+  .bh-verse-eyebrow { font-size: 11px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: #9A6B1F; margin-bottom: 6px; }
+  .bh-verse-text { margin: 0; font-family: Georgia, 'Times New Roman', serif; font-size: 16px; line-height: 1.55; color: #16181D; font-style: italic; }
+  .bh-verse-ref { margin-top: 8px; font-size: 13px; font-weight: 700; color: #4C3DC4; }
+  .bh-verse-ref span { color: var(--muted); font-weight: 500; }
   .vaiplaza-store-btn { display: flex; align-items: center; gap: 12px; width: 100%; box-sizing: border-box; margin: 10px 0 6px; padding: 12px 14px; border-radius: 14px; background: linear-gradient(135deg, #0B5FD8, #0A84C6); color: #FFFFFF; text-decoration: none; box-shadow: 0 6px 18px rgba(11,95,216,0.25); }
   .vaiplaza-store-icon { width: 38px; height: 38px; border-radius: 10px; background: rgba(255,255,255,0.18); display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
   .vaiplaza-store-text { display: flex; flex-direction: column; min-width: 0; flex: 1; }
@@ -7248,6 +7253,7 @@ function InstallAppGuide({ suppressBanner }) {
 // depending on who's being notified — handled separately below.
 const NOTIF_DESTINATIONS = {
   booking_requested: { view: "provider", tab: "bookings" },
+  daily_verse: { view: "provider", tab: "dashboard" },
   booking_confirmed_new: { view: "provider", tab: "bookings" },
   booking_cancelled: { view: "provider", tab: "bookings" },
   receipt_uploaded: { view: "provider", tab: "bookings" },
@@ -13165,6 +13171,18 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
   const [selectedDay, setSelectedDay] = useState(null);
   const [profileForm, setProfileForm] = useState({ business_name: "", bio: "", district: "", whatsapp: "", instagram: "", facebook: "", tax_id: "", is_featured: false });
   const [vaiplazaDraft, setVaiplazaDraft] = useState(null);
+  // Morning business verse (daily_verses / verse_for_day) — the 5 AM push
+  // and the dashboard card show the same verse for the day.
+  const [dailyVerse, setDailyVerse] = useState(null);
+  const [savingVersePref, setSavingVersePref] = useState(false);
+  useEffect(() => {
+    let off = false;
+    supabase.rpc("verse_for_day").then(({ data }) => {
+      const row = Array.isArray(data) ? data[0] : data;
+      if (!off && row && row.ref) setDailyVerse(row);
+    }, () => {});
+    return () => { off = true; };
+  }, []);
   const [savingVaiplaza, setSavingVaiplaza] = useState(false);
   const [vaiplazaMsg, setVaiplazaMsg] = useState(null);
   const [savingFeatured, setSavingFeatured] = useState(false);
@@ -15534,6 +15552,15 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
               </div>
             </div>
 
+            {/* MORNING VERSE — same verse every business gets at 5 AM (send_daily_verse). */}
+            {dailyVerse && providerProfile?.daily_verse_enabled !== false && (
+              <div className="bh-verse">
+                <div className="bh-verse-eyebrow">🌅 {dx("Verse for today", "Versículo de hoy")}</div>
+                <p className="bh-verse-text">“{dailyVerse.body}”</p>
+                <div className="bh-verse-ref">{dailyVerse.ref} <span>· KJV</span></div>
+              </div>
+            )}
+
             {/* NEEDS YOUR ANSWER */}
             {needsCount > 0 && (
               <div className="bh-section">
@@ -17870,6 +17897,30 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                 <button className="btn-sm forest" onClick={saveBookingPage} disabled={bpSaving}>{bpSaving ? bt("saving") : bt("save")}</button>
                 {bpMsg === "ok" && <span style={{ fontSize: 13, fontWeight: 600, color: "#15803D" }}>{bt("saved")}</span>}
                 {bpMsg && bpMsg !== "ok" && <span style={{ fontSize: 13, fontWeight: 600, color: "#B91C1C" }}>{bpMsg}</span>}
+              </div>
+            </div>
+
+            <div className="card" id="settings-verse" style={{ maxWidth: 480, marginBottom: 20, scrollMarginTop: 120 }}>
+              <div className="card-title">🌅 {(i18n.language || "").toLowerCase().startsWith("es") ? "Versículo de la mañana" : "Morning Bible verse"}</div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "4px 0 0", gap: 16 }}>
+                <div style={{ fontSize: 13, color: "var(--muted)", lineHeight: 1.5 }}>
+                  {(i18n.language || "").toLowerCase().startsWith("es")
+                    ? "Cada día a las 5:00 AM, un versículo sobre el trabajo y los negocios — como notificación y en tu panel."
+                    : "Every day at 5:00 AM, a verse about work and business — as a notification and on your dashboard."}
+                </div>
+                <div
+                  className={`toggle ${providerProfile?.daily_verse_enabled !== false ? "on" : ""}`}
+                  role="switch"
+                  aria-checked={providerProfile?.daily_verse_enabled !== false}
+                  style={{ opacity: savingVersePref ? 0.5 : 1, flexShrink: 0 }}
+                  onClick={async () => {
+                    if (savingVersePref || !providerProfile) return;
+                    setSavingVersePref(true);
+                    const updated = await upsertProviderProfile({ id: providerProfile.id, user_id: providerProfile.user_id, daily_verse_enabled: providerProfile.daily_verse_enabled === false });
+                    setSavingVersePref(false);
+                    if (updated) onProviderProfileUpdate && onProviderProfileUpdate(updated);
+                  }}
+                ></div>
               </div>
             </div>
 

@@ -56,3 +56,9 @@ create trigger guard_client_errors before insert on public.client_errors
 -- admin_platform_stats (applied): admin-only jsonb of platform totals by role,
 -- money/bookings, 30-day sign-ups and per-district counts (customers counted
 -- in the district where they book most).
+
+-- daily_business_verse (applied 2026-10-31): daily_verses (60 KJV verses on
+-- work/business), provider_profiles.daily_verse_enabled (default true),
+-- verse_for_day(date) rotating by Belize date, send_daily_verse() inserting a
+-- 'daily_verse' notification per active business owner (push follows), cron
+-- 'vaibook-daily-verse' at 11:00 UTC = 5:00 AM Belize.
