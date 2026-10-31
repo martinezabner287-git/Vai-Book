@@ -200,6 +200,13 @@ function timeAgo(dateStr) {
 // provider typing "@myshop" or pasting the full profile URL both land on
 // a working link. Built at render time, not saved time, so the raw value
 // in the database stays whatever the provider actually typed.
+// VaiPlaza store front link (2026-10-30) — paid plans only (also enforced
+// by trg_vaiplaza_url_guard). Returns the link to show, or null.
+const VAIPLAZA_URL_RE = /^https:\/\/([a-z0-9-]+\.)*(vaiplaza|vaibuyandsell)\.(com|bz)(\/[^\s<>"]*)?$/i;
+function vaiplazaStoreUrl(p) {
+  if (!p || !["pro", "business"].includes(p.plan) || !p.vaiplaza_url) return null;
+  return VAIPLAZA_URL_RE.test(p.vaiplaza_url) ? p.vaiplaza_url : null;
+}
 function instagramProfileUrl(v) {
   if (!v) return null;
   const clean = String(v).trim().replace(/^@/, "").replace(/^https?:\/\/(www\.)?instagram\.com\//i, "").replace(/\/+$/, "");
@@ -3094,6 +3101,12 @@ const css = `
   .profile-page .modal-panel.profile-panel { max-width: 1080px; width: 100%; margin: 0 auto; max-height: none; min-height: 100%; border-radius: 0; overflow: visible; box-shadow: none; }
   .profile-topbar { position: sticky; top: 0; z-index: 6; display: flex; align-items: center; gap: 12px; padding: 10px 16px; background: rgba(255,255,255,0.96); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border-bottom: 1px solid var(--border); }
   .profile-back { border: none; background: none; font: inherit; font-weight: 700; font-size: 15px; color: var(--dark-text, #16181D); cursor: pointer; padding: 8px 4px; white-space: nowrap; }
+  .vaiplaza-store-btn { display: flex; align-items: center; gap: 12px; width: 100%; box-sizing: border-box; margin: 10px 0 6px; padding: 12px 14px; border-radius: 14px; background: linear-gradient(135deg, #0B5FD8, #0A84C6); color: #FFFFFF; text-decoration: none; box-shadow: 0 6px 18px rgba(11,95,216,0.25); }
+  .vaiplaza-store-icon { width: 38px; height: 38px; border-radius: 10px; background: rgba(255,255,255,0.18); display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+  .vaiplaza-store-text { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+  .vaiplaza-store-text strong { font-size: 15px; font-weight: 800; }
+  .vaiplaza-store-text span { font-size: 12px; opacity: .9; }
+  .vaiplaza-store-arrow { font-size: 26px; line-height: 1; opacity: .9; }
   .profile-topbar-name { font-weight: 800; font-size: 15px; color: var(--dark-text, #16181D); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   @media (max-width: 640px) { .profile-page .profile-scroll { padding: 18px 16px 32px; } }
 
@@ -12462,6 +12475,16 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                       >
                         {t("customerPortal.profile.bookNow")}
                       </button>
+                      {vaiplazaStoreUrl(selectedProvider) && (
+                        <a className="vaiplaza-store-btn" href={vaiplazaStoreUrl(selectedProvider)} target="_blank" rel="noopener noreferrer">
+                          <span className="vaiplaza-store-icon" aria-hidden="true">🛍️</span>
+                          <span className="vaiplaza-store-text">
+                            <strong>{(i18n.language || "").toLowerCase().startsWith("es") ? "Visita nuestra tienda en VaiPlaza" : "Shop our store on VaiPlaza"}</strong>
+                            <span>{(i18n.language || "").toLowerCase().startsWith("es") ? "Productos de este negocio, en línea" : "Products from this business, online"}</span>
+                          </span>
+                          <span className="vaiplaza-store-arrow" aria-hidden="true">›</span>
+                        </a>
+                      )}
 
                       <div className="sidebar-row clickable" onClick={() => setHoursExpanded(v => !v)}>
                         <span>🕐 <span className={openStatus.open ? "open-txt" : "closed-txt"}>{openStatus.label}</span></span>
@@ -12887,6 +12910,9 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
   const [savingHours, setSavingHours] = useState(false);
   const [selectedDay, setSelectedDay] = useState(null);
   const [profileForm, setProfileForm] = useState({ business_name: "", bio: "", district: "", whatsapp: "", instagram: "", facebook: "", tax_id: "", is_featured: false });
+  const [vaiplazaDraft, setVaiplazaDraft] = useState(null);
+  const [savingVaiplaza, setSavingVaiplaza] = useState(false);
+  const [vaiplazaMsg, setVaiplazaMsg] = useState(null);
   const [savingFeatured, setSavingFeatured] = useState(false);
   const [startingTrial, setStartingTrial] = useState(false);
   const [trialError, setTrialError] = useState(false);
@@ -17334,6 +17360,57 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
               </div>
             </div>
 
+            {(() => {
+              const es = (i18n.language || "").toLowerCase().startsWith("es");
+              const paid = ["pro", "business"].includes(providerProfile?.plan);
+              const current = providerProfile?.vaiplaza_url || "";
+              const dirty = vaiplazaDraft !== null && vaiplazaDraft.trim() !== current;
+              const value = vaiplazaDraft !== null ? vaiplazaDraft : current;
+              const saveStore = async (next) => {
+                const v = (next ?? value).trim();
+                if (v && !VAIPLAZA_URL_RE.test(v)) { setVaiplazaMsg({ error: es ? "Pega el enlace de tu tienda en VaiPlaza (empieza con https://)." : "Paste your store link from VaiPlaza (it starts with https://)." }); return; }
+                setVaiplazaMsg(null); setSavingVaiplaza(true);
+                const updated = await upsertProviderProfile({ id: providerProfile.id, user_id: providerProfile.user_id, vaiplaza_url: v || null });
+                setSavingVaiplaza(false);
+                if (updated) {
+                  onProviderProfileUpdate && onProviderProfileUpdate(updated);
+                  setVaiplazaDraft(null);
+                  setVaiplazaMsg({ ok: v ? (es ? "Listo — tu tienda aparece en tu página de reservas." : "Saved — your store now shows on your booking page.") : (es ? "Enlace quitado." : "Link removed.") });
+                }
+              };
+              return (
+                <div className="card" style={{ maxWidth: 560, marginTop: 20 }}>
+                  <div className="card-title">🛍️ {es ? "Tu tienda en VaiPlaza" : "Your VaiPlaza store"}</div>
+                  {paid ? (
+                    <>
+                      <p style={{ fontSize: 13, color: "var(--muted)", marginBottom: 12, lineHeight: 1.5 }}>
+                        {es
+                          ? "¿Vendes productos? Agrega el enlace de tu tienda en VaiPlaza y tus clientes verán un botón \"Visita nuestra tienda\" en tu página de reservas."
+                          : "Sell products too? Add your VaiPlaza store link and customers see a \"Shop our store\" button on your booking page."}
+                      </p>
+                      <div className="input-group" style={{ marginBottom: 10 }}>
+                        <label>{es ? "Enlace de tu tienda" : "Store link"}</label>
+                        <input type="url" inputMode="url" placeholder="https://vaiplaza.bz/store/your-shop" value={value} onChange={(e) => { setVaiplazaDraft(e.target.value); setVaiplazaMsg(null); }} />
+                      </div>
+                      <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+                        <button className="btn-sm forest" disabled={savingVaiplaza || !dirty} onClick={() => saveStore()}>{savingVaiplaza ? t("providerPortal.common.saving") : (es ? "Guardar enlace" : "Save link")}</button>
+                        {current && !dirty && <button className="btn-sm ghost" disabled={savingVaiplaza} onClick={() => saveStore("")}>{es ? "Quitar" : "Remove"}</button>}
+                        {vaiplazaMsg?.ok && <span style={{ fontSize: 13, fontWeight: 600, color: "#15803D" }}>{vaiplazaMsg.ok}</span>}
+                        {vaiplazaMsg?.error && <span style={{ fontSize: 13, fontWeight: 600, color: "#B91C1C" }}>{vaiplazaMsg.error}</span>}
+                      </div>
+                    </>
+                  ) : (
+                    <p style={{ fontSize: 13, color: "var(--muted)", lineHeight: 1.5, margin: 0 }}>
+                      {es
+                        ? "Con los planes Solo y Team puedes mostrar tu tienda de VaiPlaza en tu página de reservas, para que tus clientes también compren tus productos. "
+                        : "On the Solo and Team plans you can show your VaiPlaza store on your booking page, so clients can shop your products too. "}
+                      <a href="#" onClick={(e) => { e.preventDefault(); setTab("billing"); }}>{t("providerPortal.profile.viewPlans")}</a>.
+                    </p>
+                  )}
+                </div>
+              );
+            })()}
+
             <div className="card" style={{ maxWidth: 560, marginTop: 20 }}>
               <div className="card-title">{t("providerPortal.profile.featuredTitle")}</div>
               {isBusinessPlan ? (
@@ -18201,6 +18278,7 @@ const PLANS = [
       "Customizable deposits routed to your bank — never caught out by a no-show",
       "Loyalty & rewards program",
       "Monthly tax forms, sales ledger & CSV/PDF export",
+      "Link your own VaiPlaza store front on your booking page",
       "Try free for 14 days, no card required",
       "A \"Solo\" badge customers see on your listing",
     ],

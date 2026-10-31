@@ -48,3 +48,7 @@ create trigger guard_client_errors before insert on public.client_errors
 -- now also allows a review once a confirmed booking's end time has passed
 -- (Belize time); no_show/cancelled/rejected stay ineligible. The
 -- client_errors block above was applied in the same migration.
+
+-- vaiplaza_store_link (applied): provider_profiles.vaiplaza_url + column
+-- grants + trg_vaiplaza_url_guard (Solo/Team only; https on vaiplaza or
+-- vaibuyandsell .com/.bz).
