@@ -2875,6 +2875,16 @@ const css = `
   .cxh-home-hero .cx-hero-countdown { font-size: 38px; }
   .cxh-home-hero .cx-hero-service { font-size: 20px; }
   .cxh-home-hero .cx-hero-barcode { display: none; }
+  /* After the appointment: tap-to-rate stars / missed notice (2026-10-30) */
+  .after-visit-text { font-size: 14px; color: var(--muted); line-height: 1.5; margin: 6px 0 4px; }
+  .after-visit-stars { display: flex; gap: 6px; margin: 14px 0 4px; }
+  .after-visit-stars button { width: 46px; height: 46px; border-radius: 12px; border: 1px solid var(--border); background: #FAFAF8; font-size: 26px; line-height: 1; color: #D9D6E3; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; transition: transform .12s ease, color .12s ease, background .12s ease; }
+  .after-visit-stars button.on { color: #F5A524; background: #FFF6E5; border-color: #F5D9A4; }
+  .after-visit-hint { font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+  .after-visit-comment { width: 100%; box-sizing: border-box; min-height: 72px; margin: 12px 0 2px; padding: 12px 14px; border: 1px solid var(--border); border-radius: 12px; font: inherit; font-size: 16px; resize: vertical; background: #FFFFFF; color: #16181D; }
+  .after-visit-card { margin-top: -10px; }
+  .after-visit.compact .cx-hero-service { font-size: 17px; }
+  .after-visit.compact .after-visit-stars button { width: 40px; height: 40px; font-size: 22px; }
   .cxh-tabbar { display: none; }
   @media (max-width: 760px) {
     .cxh-rec-card { flex-basis: 64%; }
@@ -5955,6 +5965,22 @@ function formatBookingWhen(b) {
 // "Next Appointment" hero countdown. Pure function (takes `now` as a plain
 // timestamp) so the component just re-renders it off a ticking state value
 // instead of this needing its own timer.
+// When an appointment ends: start + its length (multi-service total, else the
+// service's duration, else an hour). A confirmed booking whose end has passed
+// is "done" for the customer — they can review it right away, without
+// waiting for the business to tap "Mark done" (2026-10-30).
+function bookingEndAt(b) {
+  const start = bookingDateTime(b.booking_date, b.booking_time);
+  if (!start) return null;
+  const mins = Number(b.total_duration_min) || Number(b.services?.duration_min) || 60;
+  return new Date(start.getTime() + mins * 60000);
+}
+function isDoneForCustomer(b, now) {
+  if (b.status === "completed") return true;
+  if (b.status !== "confirmed") return false;
+  const end = bookingEndAt(b);
+  return !!end && end.getTime() <= now;
+}
 function formatCountdown(target, now) {
   if (!target) return "";
   const diffMs = target.getTime() - now;
@@ -10303,13 +10329,14 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
       return;
     }
     await loadBookings();
+    if (!existing) setReviewThanks({ name: booking.provider_profiles?.business_name || "", at: Date.now() });
     setReviewingId(null);
     setSubmittingReview(false);
   };
 
-  const upcomingBookings = bookings.filter((b) => ["pending", "awaiting_payment", "confirmed"].includes(b.status));
-  const completedBookings = bookings.filter((b) => b.status === "completed");
-  const rejectedBookings = bookings.filter((b) => b.status === "rejected" || b.status === "cancelled");
+  const upcomingBookings = bookings.filter((b) => ["pending", "awaiting_payment", "confirmed"].includes(b.status) && !isDoneForCustomer(b, nowTick));
+  const completedBookings = bookings.filter((b) => isDoneForCustomer(b, nowTick));
+  const rejectedBookings = bookings.filter((b) => b.status === "rejected" || b.status === "cancelled" || b.status === "no_show");
   const bookingNameFn = (b) => b.provider_profiles?.business_name || b.services?.name || "";
   const visibleBookings = filterAndSortBookings(
     bookingTab === "upcoming" ? upcomingBookings : bookingTab === "completed" ? completedBookings : rejectedBookings,
@@ -10325,7 +10352,7 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
   // `bookings` query orders newest-booked-first, which isn't the same as
   // "what's happening soonest."
   const nextAppointment = upcomingBookings
-    .filter((b) => bookingDateTime(b.booking_date, b.booking_time))
+    .filter((b) => bookingDateTime(b.booking_date, b.booking_time) && (bookingEndAt(b)?.getTime() || 0) > nowTick)
     .sort((a, b) => bookingDateTime(a.booking_date, a.booking_time) - bookingDateTime(b.booking_date, b.booking_time))[0] || null;
   const nextAppointmentAt = nextAppointment ? bookingDateTime(nextAppointment.booking_date, nextAppointment.booking_time) : null;
   const nextAppointmentProvider = nextAppointment?.provider_profiles;
@@ -10335,6 +10362,34 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
   // until the provider happened to notice it. It's now a direct status
   // write (see handleCheckIn/markBookingCheckedIn) — instant, no waiting
   // on a human to read and react to anything.
+
+  // ── After the appointment (2026-10-30) ───────────────────────────────
+  // Once the time is up the ticket turns into "How was it?" with tap-to-rate
+  // stars right there; if the business marked it missed, the customer sees
+  // that instead. Each can be dismissed ("Not now" / "Got it").
+  const [dismissedPrompts, setDismissedPrompts] = useState(() => {
+    try { return new Set(JSON.parse(localStorage.getItem("vaibook_dismissed_prompts") || "[]")); } catch (e) { return new Set(); }
+  });
+  const dismissPrompt = (id) => {
+    setDismissedPrompts((prev) => {
+      const next = new Set(prev); next.add(id);
+      try { localStorage.setItem("vaibook_dismissed_prompts", JSON.stringify([...next].slice(-100))); } catch (e) { /* ignore */ }
+      return next;
+    });
+    if (reviewingId === id) setReviewingId(null);
+  };
+  const [reviewThanks, setReviewThanks] = useState(null);
+  const reviewPromptBooking = bookings
+    .filter((b) => isDoneForCustomer(b, nowTick)
+      && !(b.reviews && b.reviews.length)
+      && !dismissedPrompts.has(b.id)
+      && !(b.provider_profiles?.user_id && b.provider_profiles.user_id === user?.id)
+      && nowTick - (bookingEndAt(b)?.getTime() || 0) < 14 * 86400000)
+    .sort((a, b) => (bookingEndAt(b)?.getTime() || 0) - (bookingEndAt(a)?.getTime() || 0))[0] || null;
+  const missedBooking = bookings
+    .filter((b) => b.status === "no_show" && !dismissedPrompts.has(b.id)
+      && nowTick - (bookingDateTime(b.booking_date, b.booking_time)?.getTime() || 0) < 7 * 86400000)
+    .sort((a, b) => (bookingDateTime(b.booking_date, b.booking_time)?.getTime() || 0) - (bookingDateTime(a.booking_date, a.booking_time)?.getTime() || 0))[0] || null;
 
   // ── Dashboard redesign: "Quick Rebook" ────────────────────────────────
   // Most recently visited providers, deduped, in booking-history order
@@ -10413,6 +10468,75 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
   // then best rated, then most reviewed. Follows the location picker.
   const homeEs = (i18n.language || "").toLowerCase().startsWith("es");
   const hx = (en, es) => (homeEs ? es : en);
+
+  // Content for the home ticket once an appointment is over: "How was it?"
+  // with stars you tap right there, or "We missed you" when the business
+  // marked it as missed. `compact` = shown as a slim card under the ticket
+  // when there's also a next appointment coming up.
+  const renderAfterVisit = (kind, b, compact) => {
+    const svc = b.services?.name || hx("your appointment", "tu cita");
+    const biz = b.provider_profiles?.business_name || hx("the business", "el negocio");
+    if (kind === "missed") {
+      const liveProvider = providers.find((p) => p.id === b.provider_profiles?.id) || b.provider_profiles;
+      return (
+        <div className={`after-visit${compact ? " compact" : ""}`}>
+          <div className="cx-hero-eyebrow">🕒 {hx("Missed appointment", "Cita perdida")}</div>
+          <div className="cx-hero-service">{hx("We missed you", "Te extrañamos")}</div>
+          <div className="after-visit-text">
+            {hx(`${biz} marked your ${svc} on ${formatBookingWhen(b)} as missed.`, `${biz} marcó tu ${svc} del ${formatBookingWhen(b)} como no asistida.`)}
+          </div>
+          <div className="cx-hero-actions">
+            {liveProvider?.id && <button className="cx-btn-neon" onClick={() => openBooking(liveProvider)}>{hx("Book again", "Reservar de nuevo")}</button>}
+            <button className="cx-btn-ghost" onClick={() => dismissPrompt(b.id)}>{hx("Got it", "Entendido")}</button>
+          </div>
+        </div>
+      );
+    }
+    const open = reviewingId === b.id;
+    return (
+      <div className={`after-visit${compact ? " compact" : ""}`}>
+        <div className="cx-hero-eyebrow">⭐ {hx("How did it go?", "¿Cómo te fue?")}</div>
+        <div className="cx-hero-service">{hx(`How was your ${svc}?`, `¿Qué tal tu ${svc}?`)}</div>
+        <div className="cx-hero-provider">{biz} · {formatBookingWhen(b)}</div>
+        <div className="after-visit-stars" role="radiogroup" aria-label={hx("Rate it", "Califica")}>
+          {[1, 2, 3, 4, 5].map((n) => (
+            <button
+              key={n}
+              type="button"
+              role="radio"
+              aria-checked={open && reviewForm.rating === n}
+              aria-label={`${n} ${n === 1 ? hx("star", "estrella") : hx("stars", "estrellas")}`}
+              className={open && n <= reviewForm.rating ? "on" : ""}
+              onClick={() => { setReviewingId(b.id); setReviewForm((f) => ({ rating: n, comment: open ? f.comment : "" })); }}
+            >★</button>
+          ))}
+        </div>
+        {!open && <div className="after-visit-hint">{hx("Tap a star to rate", "Toca una estrella para calificar")}</div>}
+        {open && (
+          <>
+            <textarea
+              className="after-visit-comment"
+              placeholder={hx("Tell others what you liked (optional)", "Cuéntales a otros qué te gustó (opcional)")}
+              value={reviewForm.comment}
+              onChange={(e) => setReviewForm((f) => ({ ...f, comment: e.target.value }))}
+              maxLength={600}
+            />
+            <div className="cx-hero-actions">
+              <button className="cx-btn-neon" disabled={submittingReview} onClick={() => submitBookingReview(b)}>
+                {submittingReview ? hx("Sending…", "Enviando…") : hx("Post review", "Publicar reseña")}
+              </button>
+              <button className="cx-btn-ghost" onClick={() => dismissPrompt(b.id)}>{hx("Not now", "Ahora no")}</button>
+            </div>
+          </>
+        )}
+        {!open && (
+          <div className="cx-hero-actions">
+            <button className="cx-btn-ghost" onClick={() => dismissPrompt(b.id)}>{hx("Not now", "Ahora no")}</button>
+          </div>
+        )}
+      </div>
+    );
+  };
   const recommendedProviders = providers
     .filter((p) => districtFilter === "All" || p.district === districtFilter)
     .map((p) => ({ p, r: Number(providerRating(p)) || 0, n: (p.reviews || []).length }))
@@ -10571,7 +10695,7 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                   <div className="cx-hero-eyebrow">🎟️ {t("customerPortal.home.securedSpot")}</div>
                   <div className="cx-hero-service">{nextAppointment.services?.name || t("customerPortal.home.appointmentFallback")}</div>
                   <div className="cx-hero-provider">{nextAppointmentProvider?.business_name || t("customerPortal.home.providerFallback")}</div>
-                  <div className="cx-hero-countdown">{formatCountdown(nextAppointmentAt, nowTick)}</div>
+                  <div className="cx-hero-countdown">{nextAppointmentAt && nextAppointmentAt.getTime() <= nowTick ? hx("Happening now", "En curso") : formatCountdown(nextAppointmentAt, nowTick)}</div>
                   <div className="cx-hero-when">{formatBookingWhen(nextAppointment)}</div>
                   <div className="cx-hero-divider" />
                   <div className="cx-hero-actions">
@@ -10604,6 +10728,19 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                   </div>
                   <div className="cx-hero-barcode" />
                 </>
+              ) : missedBooking ? (
+                renderAfterVisit("missed", missedBooking, false)
+              ) : reviewPromptBooking ? (
+                renderAfterVisit("review", reviewPromptBooking, false)
+              ) : reviewThanks && nowTick - reviewThanks.at < 60000 ? (
+                <>
+                  <div className="cx-hero-eyebrow">💜 {hx("Review posted", "Reseña publicada")}</div>
+                  <div className="cx-hero-service">{hx("Thanks for your review!", "¡Gracias por tu reseña!")}</div>
+                  <div className="cx-hero-provider">{hx(`It helps ${reviewThanks.name || "them"} and other customers.`, `Ayuda a ${reviewThanks.name || "ellos"} y a otros clientes.`)}</div>
+                  <div className="cx-hero-actions">
+                    <button className="cx-btn-neon" onClick={() => setTab("browse")}>{t("customerPortal.home.findAProvider")}</button>
+                  </div>
+                </>
               ) : (
                 <>
                   <div className="cx-hero-eyebrow">{t("customerPortal.home.noUpcomingAppointments")}</div>
@@ -10614,6 +10751,11 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                 </>
               )}
             </div>
+            {nextAppointment && (missedBooking || reviewPromptBooking) && (
+              <div className="cx-hero cxh-home-hero after-visit-card">
+                {missedBooking ? renderAfterVisit("missed", missedBooking, true) : renderAfterVisit("review", reviewPromptBooking, true)}
+              </div>
+            )}
 
             {/* PHOTO ROWS (Fresha style): Recommended, Recently viewed, New. */}
             {[
@@ -11014,10 +11156,13 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                 // going public (see supabase_review_privacy.sql) — while
                 // held, the customer can still edit it in place.
                 const reviewIsHeld = hasReview && b.reviews[0].hold_until && new Date(b.reviews[0].hold_until) > new Date();
+                // Confirmed + time is over → shown as done, and reviewable now.
+                const doneB = isDoneForCustomer(b, nowTick);
+                const shownStatus = doneB ? "completed" : b.status;
                 return (
                   <div key={b.id} style={{ padding: "14px 0", borderBottom: "1px solid var(--border)" }}>
                     <div className="booking-item" style={{ padding: 0, border: "none" }}>
-                      <div className={`booking-dot ${bookingStatusClass(b.status)}`}></div>
+                      <div className={`booking-dot ${bookingStatusClass(shownStatus)}`}></div>
                       <div className="booking-info">
                         <div className="title">
                           {b.services?.name || t("customerPortal.common.serviceFallback")}
@@ -11033,7 +11178,7 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                       </div>
                       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                         <span className="booking-amount">BZ${b.total_amount ?? "—"}</span>
-                        <span className={`status-pill ${bookingStatusClass(b.status)}`}>{statusLabel(b.status)}</span>
+                        <span className={`status-pill ${bookingStatusClass(shownStatus)}`}>{statusLabel(shownStatus)}</span>
                       </div>
                     </div>
 
@@ -11077,7 +11222,7 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                       </div>
                     )}
 
-                    {["pending", "awaiting_payment", "confirmed"].includes(b.status) && (() => {
+                    {!doneB && ["pending", "awaiting_payment", "confirmed"].includes(b.status) && (() => {
                       const calLinks = buildAddToCalendarLinks({
                         uid: b.id,
                         title: `${b.services?.name || t("customerPortal.common.serviceFallback")} — ${b.provider_profiles?.business_name || "VaiBook"}`,
@@ -11099,7 +11244,7 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                       );
                     })()}
 
-                    {["pending", "awaiting_payment", "confirmed"].includes(b.status) && (
+                    {!doneB && ["pending", "awaiting_payment", "confirmed"].includes(b.status) && (
                       <button
                         className="btn-sm ghost"
                         style={{ marginTop: 8, color: "#B91C1C" }}
@@ -11154,7 +11299,7 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                       </details>
                     )}
 
-                    {b.status === "completed" && (
+                    {doneB && (
                       <button
                         className="btn-sm ghost"
                         style={{ marginTop: 8, marginRight: 8, fontSize: 12 }}
@@ -11176,10 +11321,10 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                         🧾 {t("customerPortal.bookings.printDownloadInvoice")}
                       </button>
                     )}
-                    {b.status === "completed" && !hasReview && reviewingId !== b.id && (
+                    {doneB && !hasReview && reviewingId !== b.id && (
                       <button className="btn-sm ghost" style={{ marginTop: 8 }} onClick={() => openReview(b.id, null)}>{t("customerPortal.reviews.leaveAReview")}</button>
                     )}
-                    {b.status === "completed" && reviewingId === b.id && (
+                    {doneB && reviewingId === b.id && (
                       <div style={{ marginTop: 10, background: "var(--sand)", borderRadius: 8, padding: 12 }}>
                         <div className="star-picker">
                           {[1,2,3,4,5].map(n => (
@@ -11195,7 +11340,7 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                         </div>
                       </div>
                     )}
-                    {b.status === "completed" && hasReview && reviewingId !== b.id && (
+                    {doneB && hasReview && reviewingId !== b.id && (
                       <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 6 }}>
                         {t("customerPortal.reviews.youRatedThis")} {"★".repeat(b.reviews[0].rating)}{b.reviews[0].comment ? ` — "${b.reviews[0].comment}"` : ""}
                         {reviewIsHeld && (
@@ -11210,7 +11355,7 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                       </p>
                     )}
 
-                    {["pending", "awaiting_payment", "confirmed"].includes(b.status) && (
+                    {!doneB && ["pending", "awaiting_payment", "confirmed"].includes(b.status) && (
                       <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 8 }}>
                         {t("customerPortal.bookings.needDifferentTime")}
                       </p>

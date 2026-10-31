@@ -43,3 +43,8 @@ revoke execute on function public.trg_client_errors_guard() from public, anon, a
 drop trigger if exists guard_client_errors on public.client_errors;
 create trigger guard_client_errors before insert on public.client_errors
   for each row execute function public.trg_client_errors_guard();
+
+-- review_after_appointment_and_client_errors (applied): before_review_insert
+-- now also allows a review once a confirmed booking's end time has passed
+-- (Belize time); no_show/cancelled/rejected stay ineligible. The
+-- client_errors block above was applied in the same migration.
