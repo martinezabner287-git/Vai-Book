@@ -1,10 +1,11 @@
 
-import { useState, useEffect, useLayoutEffect, useRef, useContext, createContext, lazy, Suspense } from "react";
+import { useState, useEffect, useLayoutEffect, useRef, useContext, createContext, lazy, Suspense, useCallback } from "react";
 import { flushSync } from "react-dom";
 import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, updateService, deleteService, getActiveProviders, getProviderDirectory, createBooking, getProviderBusyWindows, createBookingSafe, cancelBooking, markBookingCheckedIn, getCustomerBookings, uploadReceipt, submitReview, getProviderReviews, updateReview, sendBookingEmail, updateUserProfile, getPaymentMethods, addPaymentMethod, deletePaymentMethod, createNotification, getNotifications, markNotificationRead, markAllNotificationsRead, getCategoryDefaultFeatures, getProviderFeatureOverrides, setProviderFeatureOverride, getVisitNotes, upsertVisitNote, adminListProviders, adminUpdateProvider, adminDeleteProvider, adminCountCustomers, getFavoriteProviderIds, getFavoriteProviders, addFavorite, removeFavorite, getBookingMessages, sendBookingMessage, markBookingMessagesRead, getUnreadBookingMessages, getProviderMonthlyTrend, createProviderProfile, getProviderById, createWalkInBooking, submitProviderPayment, getMyProviderPayments, adminListProviderPayments, adminReviewProviderPayment, submitBookingRefund, adminListBookingRefunds, openPrivateFile, getProviderStaff, addProviderStaff, updateProviderStaff, deleteProviderStaff, getProviderStaffPublic, getLoyaltyAccount, getProviderLoyaltyCustomers, redeemLoyaltyReward, getMyStaffProfile, claimStaffSeatByEmail, getStaffBookings, getProviderNotifyEmail, getMaintenanceStatus, setMaintenanceMode, getSiteOfflineStatus, setSiteOffline, guestAuthWithPassword, updateGuestPassword, savePushSubscription, attachBookingServices, getProviderBlocks, insertProviderBlock, deleteProviderBlock, proposeBookingReschedule, confirmBookingReschedule, declineBookingReschedule, withdrawBookingReschedule, establishSoloSession, getServerSoloSessionToken, getLocalSoloSessionToken, clearLocalSoloSessionToken, subscribeToSoloSessionReplacement, signInWithPhonePassword, customerPhoneAuth, adminResetPhonePassword, isPhoneLoginEmail, formatPhoneForDisplay, weakPasswordReason, submitSupportMessage, listSupportMessages, setSupportMessageStatus, getProviderMembershipPlans, getMyMembershipPlans, createMembershipPlan, updateMembershipPlan, subscribeToMembershipPlan, submitMembershipPayment, getMyMemberships, getProviderMembershipSubscribers, getProviderMembershipPayments, reviewMembershipPayment, cancelMembership, redeemMembershipVisit, startSoloTrial, adminStartProviderTrial, adminExtendProviderTrial, adminEndProviderTrial, adminExtendPaymentDue, adminRestoreDowngradedPlan, adminPlatformStats } from "./supabase";
 import AdminDashboard from "./AdminDashboard";
 import ProfilePhotoModal from "./ProfilePhotoModal";
 import LanguageSelector from "./LanguageSelector";
+import i18n from "./i18n";
 import { useTranslation } from "react-i18next";
 import { compressImageFile } from "./imageUtils";
 import { bookingRequestSchema, rescheduleProposalSchema, validate } from "./validation";
@@ -2542,9 +2543,9 @@ const css = `
     animation: a2hsSlideUp .35s ease;
   }
   /* Never shown while something is open on top of the page… */
-  body:has(.sheet-overlay, .modal-overlay, .photo-viewer, .photos-sheet, .lightbox-overlay, .qr-modal-overlay) .a2hs-banner { display: none; }
+  body:has(.sheet-overlay, .modal-overlay, .photo-viewer, .photos-sheet, .lightbox-overlay, .qr-modal-overlay, .vbn-drawer-overlay) .a2hs-banner { display: none; }
   /* …and it sits above the customer bottom tab bar, not on top of it. */
-  body:has(.cxh-tabbar) .a2hs-banner { bottom: calc(96px + env(safe-area-inset-bottom)); }
+  body:has(.vbn-bottom) .a2hs-banner { bottom: calc(84px + env(safe-area-inset-bottom)); }
   @keyframes a2hsSlideUp {
     from { transform: translateY(24px); opacity: 0; }
     to { transform: translateY(0); opacity: 1; }
@@ -3223,6 +3224,59 @@ const css = `
   button, .btn, .btn-sm, .tab, .cxh-tab, a[class*="btn"], [role="button"] { -webkit-tap-highlight-color: transparent; }
   :where(button:not(:disabled):not(.carousel-arrow):not(.photo-viewer-nav), .btn, .btn-sm, a[class*="btn"], .tab, [role="button"]):active { transform: scale(.97); transition: transform .08s ease-out; }
   :where(.service-card, .provider-card, .carousel-card):active { transform: scale(.985); transition: transform .1s ease-out; }
+  /* ── PHONE NAVIGATION (Vai Buy style, 2026-10-31) ────────────────── */
+  .vbn-top, .vbn-bottom { display: none; }
+  @media (max-width: 900px) {
+    .nav-outer--desktop-only { display: none !important; }
+    .vbn-top { display: flex; position: sticky; top: 0; z-index: 150; align-items: center; justify-content: space-between; gap: 6px;
+               padding: 10px 12px 10px 16px; padding-top: calc(10px + env(safe-area-inset-top));
+               background: rgba(253,252,249,0.96); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); view-transition-name: vb-mtop; }
+    .vbn-bottom { display: flex; position: fixed; left: 0; right: 0; bottom: 0; z-index: 90;
+                  background: rgba(253,252,249,0.98); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+                  border-top: 1px solid var(--border); padding: 6px 2px calc(6px + env(safe-area-inset-bottom)); view-transition-name: vb-mbottom; }
+    body:has(.vbn-bottom) { padding-bottom: calc(70px + env(safe-area-inset-bottom)); }
+  }
+  ::view-transition-group(vb-mtop), ::view-transition-group(vb-mbottom) { animation-duration: 0s; }
+  .vbn-logo { display: inline-flex; align-items: center; gap: 7px; background: none; border: none; padding: 4px 0; cursor: pointer; font-family: inherit; min-width: 0; flex: 0 1 auto; overflow: hidden; }
+  @media (max-width: 440px) { .vbn-top .vbn-logo svg { display: none !important; } .vbn-logo-word { font-size: 20px; } }
+  .vbn-logo-word { font-size: 21px; font-weight: 800; letter-spacing: -.02em; color: #16181D; white-space: nowrap; }
+  .vbn-logo-word span { font-weight: 500; color: #8A8E99; margin-right: 1px; }
+  .vbn-top-actions { display: flex; align-items: center; gap: 2px; flex-shrink: 0; }
+  .vbn-provide-btn { display: inline-flex; align-items: center; gap: 6px; height: 38px; padding: 0 12px; margin-right: 4px; border-radius: 999px;
+                     border: 1px solid var(--forest); background: var(--accent-soft); color: var(--forest); font-family: inherit; font-size: 13px; font-weight: 700; line-height: 1; white-space: nowrap; cursor: pointer; }
+  .vbn-icon-btn { width: 44px; height: 44px; display: inline-flex; align-items: center; justify-content: center; border: none; background: none; color: #152E59; border-radius: 12px; cursor: pointer; }
+  @media (max-width: 380px) {
+    .vbn-provide-btn svg { display: none; }
+    .vbn-provide-btn { padding: 0 10px; font-size: 12px; }
+    .vbn-logo-word { font-size: 19px; }
+    .vbn-logo svg { display: none !important; }
+    .vbn-icon-btn { width: 40px; }
+  }
+  .vbn-tab { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 3px; background: none; border: none; color: #6C7281;
+             font-family: inherit; font-size: 11.5px; font-weight: 600; padding: 5px 0 3px; cursor: pointer; }
+  .vbn-tab span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+  .vbn-tab.active { color: var(--forest); }
+  .vbn-drawer-overlay { position: fixed; inset: 0; z-index: 400; background: rgba(17,17,26,0.42); animation: vbFadeIn .18s ease-out both; }
+  .vbn-drawer { position: absolute; top: 0; right: 0; bottom: 0; width: min(86vw, 380px); background: #FDFCF9; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain;
+                padding: calc(14px + env(safe-area-inset-top)) 16px calc(24px + env(safe-area-inset-bottom)); box-shadow: -18px 0 50px rgba(17,17,26,0.18);
+                animation: vbnSlide .26s cubic-bezier(.2,.8,.2,1) both; }
+  @keyframes vbnSlide { from { transform: translateX(100%); } to { transform: none; } }
+  .vbn-drawer-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+  .vbn-close { width: 44px; height: 44px; border-radius: 50%; border: none; background: #EEF0F3; color: #152E59; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
+  .vbn-hello { display: flex; align-items: center; gap: 14px; width: 100%; text-align: left; padding: 14px; border: 1px solid var(--border); border-radius: 18px; background: #FFFFFF; cursor: pointer; font-family: inherit; margin-bottom: 8px; }
+  .vbn-hello-avatar { width: 48px; height: 48px; border-radius: 50%; background: var(--accent-soft); color: var(--forest); display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .vbn-hello-text { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+  .vbn-hello-text strong { font-size: 18px; font-weight: 800; color: #16181D; }
+  .vbn-hello-text span { display: inline-flex; align-items: center; gap: 4px; font-size: 14px; color: #5B5E6B; }
+  .vbn-section { font-size: 12.5px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: #8A8E99; padding: 16px 8px 6px; }
+  .vbn-item { display: flex; align-items: center; gap: 16px; width: 100%; padding: 12px 8px; border: none; background: none; border-radius: 12px; font-family: inherit; font-size: 17px; font-weight: 500; color: #16181D; text-align: left; cursor: pointer; }
+  .vbn-item svg { color: #5B5E6B; flex-shrink: 0; }
+  .vbn-item:active { background: #F1EFEA; }
+  .vbn-item.danger, .vbn-item.danger svg { color: #B91C1C; }
+  .vbn-divider { height: 1px; background: var(--border); margin: 10px 4px 0; }
+  .vbn-drawer-foot { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
+  @media (prefers-reduced-motion: reduce) { .vbn-drawer, .vbn-drawer-overlay { animation: none; } }
+
   /* ── ADMIN: "Command Center" dark theme for the whole admin portal ──
      (2026-10-30) Same look as the MissionControl panel — near-black with
      violet / lime / cyan glow — carried through every admin tab, the top
@@ -7454,7 +7508,172 @@ function setPortalTab(tabId) {
   window.dispatchEvent(new CustomEvent("vaibook-set-portal-tab", { detail: { tab: tabId } }));
 }
 
-function Nav({ onNav, current, session, user, providerProfile, staffProfile, isAdminAccount, onSignIn, onSignOut }) {
+// ── PHONE NAVIGATION, Vai Buy style (2026-10-31) ─────────────────────
+// Top bar: logo · "Provide my service" (where Vai Buy has its cart) ·
+// account · menu. The menu opens a side drawer (account card, Book / For
+// businesses / Help & support sections). A full-width bottom tab bar
+// (Home · Explore · Bookings · Saved · Account) sits on the landing page,
+// customer pages and help pages. Phones only — desktop keeps <Nav>.
+const MOBILE_NAV_VIEWS = ["home", "customer", "providers", "help", "help-contact", "help-faq", "customer-login"];
+const BOTTOM_BAR_VIEWS = ["home", "customer", "help", "help-contact", "help-faq", "customer-login"];
+const VBN_ICONS = {
+  home: <path d="M3 10.5L12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z" />,
+  explore: <g><rect x="3.5" y="3.5" width="7" height="7" rx="1.6" /><rect x="13.5" y="3.5" width="7" height="7" rx="1.6" /><rect x="3.5" y="13.5" width="7" height="7" rx="1.6" /><rect x="13.5" y="13.5" width="7" height="7" rx="1.6" /></g>,
+  bookings: <g><rect x="3.5" y="5" width="17" height="16" rx="2" /><path d="M3.5 10h17M8 3v4M16 3v4" /></g>,
+  saved: <path d="M12 20.5s-7.5-4.6-9.2-9.3C1.7 8 3.6 4.5 7.2 4.5c2 0 3.6 1.1 4.8 2.8 1.2-1.7 2.8-2.8 4.8-2.8 3.6 0 5.5 3.5 4.4 6.7-1.7 4.7-9.2 9.3-9.2 9.3z" />,
+  account: <g><circle cx="12" cy="8" r="4" /><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6" /></g>,
+  menu: <path d="M4 7h16M4 12h16M4 17h16" />,
+  close: <path d="M6 6l12 12M18 6L6 18" />,
+  store: <g><path d="M4 9.5V20h16V9.5" /><path d="M3 9.5l1.6-5h14.8L21 9.5c0 1.5-1.2 2.5-2.6 2.5S15.8 11 15.8 9.5c0 1.5-1.3 2.5-2.9 2.5S10 11 10 9.5C10 11 8.8 12 7.3 12S4.6 11 3 9.5z" /><path d="M10 20v-5h4v5" /></g>,
+  briefcase: <g><rect x="3" y="7" width="18" height="13" rx="2" /><path d="M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M3 12.5h18" /></g>,
+  tag: <g><path d="M20.6 13.4l-7.2 7.2a1.4 1.4 0 0 1-2 0L3 12.2V3h9.2l8.4 8.4a1.4 1.4 0 0 1 0 2z" /><circle cx="7.5" cy="7.5" r="1.4" /></g>,
+  help: <g><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="3.6" /><path d="M5.6 5.6l3.9 3.9M14.5 14.5l3.9 3.9M18.4 5.6l-3.9 3.9M9.5 14.5l-3.9 3.9" /></g>,
+  mail: <g><rect x="3" y="5" width="18" height="14" rx="2" /><path d="M3.5 6.5L12 13l8.5-6.5" /></g>,
+  phone: <g><rect x="7" y="2.5" width="10" height="19" rx="2.2" /><path d="M11 18.5h2" /></g>,
+  swap: <path d="M7 4L3 8l4 4M3 8h14M17 20l4-4-4-4M21 16H7" />,
+  logout: <g><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3" /><path d="M10 17l-5-5 5-5M5 12h11" /></g>,
+  chevron: <path d="M9 6l6 6-6 6" />,
+  shield: <path d="M12 3l8 3v6c0 4.6-3.4 8.3-8 9-4.6-.7-8-4.4-8-9V6z" />,
+};
+function VbnIcon({ name, size = 24, filled }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill={filled ? "currentColor" : "none"} stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      {VBN_ICONS[name]}
+    </svg>
+  );
+}
+const vbnEs = () => String(i18n.language || "").toLowerCase().startsWith("es");
+const vbnT = (en, es) => (vbnEs() ? es : en);
+function vbnExplore(view, session, onNav) {
+  if (session) { vbnGoCustomerTab("browse", view, onNav); return; }
+  // Logged-out visitors browse on the landing page itself.
+  const jump = () => (document.getElementById("services") || document.getElementById("discover"))?.scrollIntoView({ behavior: "smooth", block: "start" });
+  if (view !== "home") { onNav("home"); setTimeout(jump, 120); } else jump();
+}
+function vbnGoCustomerTab(tab, view, onNav) {
+  try { sessionStorage.setItem("vaibook_customer_tab", tab); } catch (e) { /* ignore */ }
+  if (view === "customer") setPortalTab(tab); else onNav("customer");
+  window.scrollTo({ top: 0 });
+}
+
+function MobileTopBar({ view, session, onNav, onOpenMenu }) {
+  useTranslation(); // re-render when the language changes
+  return (
+    <header className="vbn-top">
+      <button className="vbn-logo" onClick={() => onNav(session ? "customer" : "home")} aria-label="VaiBook home">
+        <VaiBookMark size={26} /> <span className="vbn-logo-word"><span>vai</span>book</span>
+      </button>
+      <div className="vbn-top-actions">
+        {view !== "providers" && (
+          <button className="vbn-provide-btn" onClick={() => { onNav("providers"); window.scrollTo({ top: 0 }); }}>
+            <VbnIcon name="store" size={17} /> {vbnT("Provide my service", "Ofrecer mi servicio")}
+          </button>
+        )}
+        <button className="vbn-icon-btn" aria-label={vbnT("Account", "Cuenta")}
+          onClick={() => (session ? vbnGoCustomerTab("settings", view, onNav) : onNav("customer-login"))}>
+          <VbnIcon name="account" size={25} />
+        </button>
+        <button className="vbn-icon-btn" aria-label={vbnT("Menu", "Menú")} onClick={onOpenMenu}>
+          <VbnIcon name="menu" size={27} />
+        </button>
+      </div>
+    </header>
+  );
+}
+
+function MobileDrawer({ open, onClose, view, session, user, providerProfile, staffProfile, isAdminAccount, onNav, onSignIn, onSignOut }) {
+  useTranslation(); // re-render when the language changes
+  useEffect(() => {
+    if (!open) return undefined;
+    const onKey = (e) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", onKey);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { window.removeEventListener("keydown", onKey); document.body.style.overflow = prev; };
+  }, [open, onClose]);
+  if (!open) return null;
+  const go = (fn) => { onClose(); fn(); };
+  const first = (user?.full_name || "").trim().split(/\s+/)[0];
+  const Item = ({ icon, label, onClick, danger }) => (
+    <button className={`vbn-item${danger ? " danger" : ""}`} onClick={() => go(onClick)}>
+      <VbnIcon name={icon} size={22} /> <span>{label}</span>
+    </button>
+  );
+  return (
+    <div className="vbn-drawer-overlay" onClick={onClose}>
+      <aside className="vbn-drawer" role="dialog" aria-modal="true" aria-label={vbnT("Menu", "Menú")} onClick={(e) => e.stopPropagation()}>
+        <div className="vbn-drawer-head">
+          <span className="vbn-logo"><VaiBookMark size={26} /> <span className="vbn-logo-word"><span>vai</span>book</span></span>
+          <button className="vbn-close" onClick={onClose} aria-label={vbnT("Close menu", "Cerrar menú")}><VbnIcon name="close" size={22} /></button>
+        </div>
+        <button className="vbn-hello" onClick={() => go(() => (session ? vbnGoCustomerTab("settings", view, onNav) : onNav("customer-login")))}>
+          <span className="vbn-hello-avatar"><VbnIcon name="account" size={26} /></span>
+          <span className="vbn-hello-text">
+            <strong>{session ? (first ? vbnT(`Hello, ${first}`, `Hola, ${first}`) : vbnT("Hello!", "¡Hola!")) : vbnT("Welcome to VaiBook", "Bienvenido a VaiBook")}</strong>
+            <span>{session ? vbnT("View your account", "Ver tu cuenta") : vbnT("Log in or sign up", "Inicia sesión o regístrate")} <VbnIcon name="chevron" size={15} /></span>
+          </span>
+        </button>
+
+        <div className="vbn-section">{vbnT("Book", "Reservar")}</div>
+        <Item icon="home" label={vbnT("Home", "Inicio")} onClick={() => (session ? vbnGoCustomerTab("home", view, onNav) : onNav("home"))} />
+        <Item icon="explore" label={vbnT("Explore services", "Explorar servicios")} onClick={() => vbnExplore(view, session, onNav)} />
+        <Item icon="bookings" label={vbnT("My bookings", "Mis citas")} onClick={() => (session ? vbnGoCustomerTab("bookings", view, onNav) : onNav("customer-login"))} />
+        <Item icon="saved" label={vbnT("Saved", "Guardados")} onClick={() => (session ? vbnGoCustomerTab("favorites", view, onNav) : onNav("customer-login"))} />
+
+        <div className="vbn-divider" />
+        <div className="vbn-section">{vbnT("For businesses", "Para negocios")}</div>
+        <Item icon="store" label={vbnT("Provide my service", "Ofrecer mi servicio")} onClick={() => { onNav("providers"); window.scrollTo({ top: 0 }); }} />
+        <Item icon="tag" label={vbnT("Plans & pricing", "Planes y precios")} onClick={() => scrollToProvidersSection("pricing", onNav, view)} />
+        {(providerProfile || staffProfile)
+          ? <Item icon="swap" label={vbnT("Go to my business", "Ir a mi negocio")} onClick={() => onNav("provider")} />
+          : <Item icon="briefcase" label={vbnT("Business log in", "Acceso de negocios")} onClick={() => enterProviderPortal(onNav, session, onSignIn)} />}
+        {isAdminAccount && <Item icon="shield" label={vbnT("Admin", "Administración")} onClick={() => onNav("admin")} />}
+
+        <div className="vbn-divider" />
+        <div className="vbn-section">{vbnT("Help & support", "Ayuda y soporte")}</div>
+        <Item icon="help" label={vbnT("Help center", "Centro de ayuda")} onClick={() => onNav("help")} />
+        <Item icon="mail" label={vbnT("Contact us", "Contáctanos")} onClick={() => onNav("help-contact")} />
+        <Item icon="phone" label={vbnT("Add to Home Screen", "Agregar a la pantalla de inicio")} onClick={openInstallAppGuide} />
+
+        <div className="vbn-drawer-foot">
+          <LanguageSelector />
+          {session && <Item icon="logout" label={vbnT("Log out", "Cerrar sesión")} onClick={onSignOut} danger />}
+        </div>
+      </aside>
+    </div>
+  );
+}
+
+function BottomTabBar({ view, session, onNav }) {
+  useTranslation(); // re-render when the language changes
+  const [custTab, setCustTab] = useState(() => { try { return sessionStorage.getItem("vaibook_customer_tab") || "home"; } catch (e) { return "home"; } });
+  useEffect(() => {
+    const on = (e) => setCustTab(e.detail && e.detail.tab);
+    window.addEventListener("vaibook-customer-tab-changed", on);
+    return () => window.removeEventListener("vaibook-customer-tab-changed", on);
+  }, []);
+  const active = view === "customer" ? ({ home: "home", browse: "explore", bookings: "bookings", favorites: "saved", settings: "account", payments: "account", reviews: "account", profile: "account" })[custTab] || "home"
+    : view === "home" ? "home" : view === "customer-login" ? "account" : "";
+  const tabs = [
+    ["home", vbnT("Home", "Inicio"), () => (session ? vbnGoCustomerTab("home", view, onNav) : (onNav("home"), window.scrollTo({ top: 0 })))],
+    ["explore", vbnT("Explore", "Explorar"), () => vbnExplore(view, session, onNav)],
+    ["bookings", vbnT("Bookings", "Citas"), () => (session ? vbnGoCustomerTab("bookings", view, onNav) : onNav("customer-login"))],
+    ["saved", vbnT("Saved", "Guardados"), () => (session ? vbnGoCustomerTab("favorites", view, onNav) : onNav("customer-login"))],
+    ["account", vbnT("Account", "Cuenta"), () => (session ? vbnGoCustomerTab("settings", view, onNav) : onNav("customer-login"))],
+  ];
+  return (
+    <nav className="vbn-bottom" aria-label={vbnT("Main", "Principal")}>
+      {tabs.map(([id, label, onClick]) => (
+        <button key={id} className={`vbn-tab${active === id ? " active" : ""}`} onClick={onClick} aria-current={active === id ? "page" : undefined}>
+          <VbnIcon name={id === "explore" ? "explore" : id} size={25} filled={active === id && (id === "home" || id === "saved")} />
+          <span>{label}</span>
+        </button>
+      ))}
+    </nav>
+  );
+}
+
+function Nav({ onNav, current, session, user, providerProfile, staffProfile, isAdminAccount, onSignIn, onSignOut, hideOnMobile }) {
   const { t } = useTranslation();
   const [menuOpen, setMenuOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
@@ -7662,7 +7881,7 @@ function Nav({ onNav, current, session, user, providerProfile, staffProfile, isA
   const navOuterLight = current !== "providers";
 
   return (
-    <div className={`nav-outer${navOuterLight ? " nav-outer--light" : ""}`} ref={navRef}>
+    <div className={`nav-outer${navOuterLight ? " nav-outer--light" : ""}${hideOnMobile ? " nav-outer--desktop-only" : ""}`} ref={navRef}>
     <nav className="nav">
       {/* Mark dropped here only — the bars icon ate space the nav pills
           needed on a phone screen, and "vaibook" alone still reads fine at
@@ -9036,6 +9255,7 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
   });
   useEffect(() => {
     try { sessionStorage.setItem("vaibook_customer_tab", tab); } catch (e) { /* ignore */ }
+    window.dispatchEvent(new CustomEvent("vaibook-customer-tab-changed", { detail: { tab } }));
   }, [tab]);
 
   // Lets the top nav's account dropdown (with the same tools list as the
@@ -11192,20 +11412,7 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
           </>
         )}
 
-        {/* PHONE TAB BAR (Fresha style) */}
-        {session && !selectedProvider && <nav className="cxh-tabbar" aria-label={hx("Main", "Principal")}>
-          {[
-            ["home", hx("Home", "Inicio"), <path key="i" d="M3 10.5L12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z" />],
-            ["browse", hx("Search", "Buscar"), <g key="i"><circle cx="11" cy="11" r="7" /><path d="M20 20l-3.5-3.5" /></g>],
-            ["bookings", hx("Bookings", "Citas"), <g key="i"><rect x="3.5" y="5" width="17" height="16" rx="2" /><path d="M3.5 10h17M8 3v4M16 3v4" /></g>],
-            ["settings", hx("Profile", "Perfil"), <g key="i"><circle cx="12" cy="8" r="4" /><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6" /></g>],
-          ].map(([id, label, icon]) => (
-            <button key={id} className={`cxh-tab ${tab === id ? "active" : ""}`} onClick={() => { setTab(id); window.scrollTo({ top: 0 }); }}>
-              <svg width="26" height="26" viewBox="0 0 24 24" fill={tab === id && id === "home" ? "currentColor" : "none"} stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">{icon}</svg>
-              <span>{label}</span>
-            </button>
-          ))}
-        </nav>}
+        {/* Phone tab bar now lives in App (BottomTabBar), shared with the landing page. */}
 
         {tab === "browse" && (
           <>
@@ -20036,6 +20243,8 @@ export default function App() {
   });
   // Admin portal wears the dark Command Center theme end to end — the top
   // bar and page background live outside AdminPortal, so flag the body.
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const closeMobileMenu = useCallback(() => setMobileMenuOpen(false), []);
   useEffect(() => {
     document.body.classList.toggle("admin-dark-body", view === "admin");
     return () => document.body.classList.remove("admin-dark-body");
@@ -20604,7 +20813,10 @@ export default function App() {
           would just be a redundant second header above it. Every other
           view — including the Staff Portal, which still uses the old
           sidebar layout — keeps the global nav as before. */}
-      {view !== "auth" && !(view === "provider" && providerProfile) && <Nav onNav={setView} current={view} staffProfile={staffProfile} {...authProps} />}
+      {view !== "auth" && !(view === "provider" && providerProfile) && <Nav onNav={setView} current={view} staffProfile={staffProfile} hideOnMobile={MOBILE_NAV_VIEWS.includes(view)} {...authProps} />}
+      {MOBILE_NAV_VIEWS.includes(view) && <MobileTopBar view={view} session={session} onNav={setView} onOpenMenu={() => setMobileMenuOpen(true)} />}
+      <MobileDrawer open={mobileMenuOpen} onClose={closeMobileMenu} view={view} staffProfile={staffProfile} onNav={setView} {...authProps} />
+      {BOTTOM_BAR_VIEWS.includes(view) && <BottomTabBar view={view} session={session} onNav={setView} />}
       {view === "home" && !session && <LandingPage onNav={setView} {...authProps} />}
       {view === "home" && session && (
         <GateScreen loading loadingText="Loading your account…" />
