@@ -3361,12 +3361,12 @@ const css = `
   .admin-dark .metric { background: linear-gradient(180deg, rgba(255,255,255,0.055), rgba(255,255,255,0.02)) !important; border: 1px solid rgba(255,255,255,0.09) !important; border-radius: 18px; }
   .admin-dark .metric .metric-value { color: #FFFFFF !important; letter-spacing: -.02em; }
   .admin-dark .metric-label { color: rgba(244,243,250,0.55); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .14em; font-size: 10.5px; }
-  .admin-dark .admin-prov-actions > div { flex-wrap: wrap; justify-content: flex-end; }
+  .admin-light .admin-prov-actions > div { flex-wrap: wrap; justify-content: flex-end; }
   @media (max-width: 720px) {
-    .admin-dark .admin-prov-row { flex-direction: column; gap: 12px; }
-    .admin-dark .admin-prov-actions { align-items: flex-start !important; width: 100%; }
-    .admin-dark .admin-prov-actions > div { justify-content: flex-start; }
-    .admin-dark .admin-prov-actions span { text-align: left !important; }
+    .admin-light .admin-prov-row { flex-direction: column; gap: 12px; }
+    .admin-light .admin-prov-actions { align-items: flex-start !important; width: 100%; }
+    .admin-light .admin-prov-actions > div { justify-content: flex-start; }
+    .admin-light .admin-prov-actions span { text-align: left !important; }
   }
   body.admin-dark-body .footer { background: #07060E !important; border-top: 1px solid rgba(255,255,255,0.06); }
   body.admin-dark-body .footer .hero-get-app-btn { background: rgba(255,255,255,0.06) !important; color: #F4F3FA !important; border: 1px solid rgba(255,255,255,0.14) !important; box-shadow: none !important; }
@@ -19702,7 +19702,7 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
   const planLabel = (id) => (PLANS.find(p => p.id === id)?.name) || id;
 
   return (
-    <div className="portal-layout admin-dark">
+    <div className="portal-layout admin-light">
       {posterFor && (
         <div className="qr-modal-overlay" onClick={() => setPosterFor(null)}>
           <button className="qr-modal-close" onClick={() => setPosterFor(null)} aria-label="Close">✕</button>
@@ -20321,7 +20321,7 @@ export default function App() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const closeMobileMenu = useCallback(() => setMobileMenuOpen(false), []);
   useEffect(() => {
-    document.body.classList.toggle("admin-dark-body", view === "admin");
+    document.body.classList.remove("admin-dark-body");
     return () => document.body.classList.remove("admin-dark-body");
   }, [view]);
 
