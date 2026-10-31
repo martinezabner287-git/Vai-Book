@@ -2202,6 +2202,13 @@ const css = `
   .input-group input:focus, .input-group select:focus, .input-group textarea:focus { border-color: var(--forest); }
   .input-group input:disabled { background: var(--sand); color: var(--muted); cursor: default; }
   .input-group textarea { resize: vertical; height: 80px; }
+  /* Checkboxes/radios inside a form group keep their natural size (the rule
+     above makes every input full-width, which blew them up into big boxes). */
+  .input-group input[type=checkbox], .input-group input[type=radio] { width: auto; padding: 0; border: none; border-radius: 0; height: auto; flex-shrink: 0; }
+  .svc-checks { display: flex; flex-direction: column; gap: 8px; }
+  .svc-check { display: flex !important; align-items: center; gap: 12px; padding: 12px 14px; margin: 0 !important; border: 1px solid var(--border); border-radius: 12px; background: #FFFFFF; font-size: 14px !important; font-weight: 600 !important; color: var(--dark-text) !important; letter-spacing: 0 !important; cursor: pointer; transition: border-color .15s, background .15s; }
+  .svc-check.on { border-color: var(--forest); background: var(--accent-soft); }
+  .svc-check input[type=checkbox] { width: 20px !important; height: 20px !important; min-height: 0 !important; accent-color: var(--forest); margin: 0; }
   .btn-sm { padding: 8px 16px; font-size: 13px; font-weight: 600; border-radius: var(--radius-sm); cursor: pointer; border: none; transition: opacity .2s; }
   .btn-sm:hover { opacity: .85; }
   .btn-sm.forest { background: var(--forest); color: var(--near-white); }
@@ -3161,6 +3168,15 @@ const css = `
   button, .btn, .btn-sm, .tab, .cxh-tab, a[class*="btn"], [role="button"] { -webkit-tap-highlight-color: transparent; }
   :where(button:not(:disabled):not(.carousel-arrow):not(.photo-viewer-nav), .btn, .btn-sm, a[class*="btn"], .tab, [role="button"]):active { transform: scale(.97); transition: transform .08s ease-out; }
   :where(.service-card, .provider-card, .carousel-card):active { transform: scale(.985); transition: transform .1s ease-out; }
+  /* ── Layout safety net (2026-10-30) ─────────────────────────────────
+     Rules that keep any screen from coming apart on smaller phones or with
+     a bigger text setting — added after a business's Memberships form
+     rendered with giant checkboxes on one phone and fine on another. */
+  input[type=checkbox], input[type=radio] { flex-shrink: 0; }
+  .input-group input[type=checkbox], .input-group input[type=radio],
+  .help-form-group input[type=checkbox], .help-form-group input[type=radio],
+  .ip-form input[type=checkbox], .ip-form input[type=radio] { width: 18px !important; height: 18px !important; min-height: 0 !important; padding: 0 !important; border-radius: 4px; }
+  label, p, li, h1, h2, h3, h4, .title, .meta, .card-title, td, th { overflow-wrap: break-word; }
   @media (prefers-reduced-motion: reduce) {
     ::view-transition-old(root), ::view-transition-new(root) { animation: none; }
     .modal-overlay, .modal-overlay > .modal-panel, .modal-overlay > .modal { animation: none !important; }
@@ -16279,9 +16295,9 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                       </div>
                       <div className="input-group">
                         <label>{t("providerPortal.memberships.coveredServices")}</label>
-                        <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                        <div className="svc-checks">
                           {services.map((s) => (
-                            <label key={s.id} style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12.5, color: "var(--dark-text)" }}>
+                            <label key={s.id} className={`svc-check${(editPlanForm.includedServiceIds || []).includes(s.id) ? " on" : ""}`}>
                               <input
                                 type="checkbox"
                                 checked={editPlanForm.includedServiceIds.includes(s.id)}
@@ -16337,9 +16353,9 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                 {services.length > 0 && (
                   <div className="input-group">
                     <label>{t("providerPortal.memberships.coveredServices")}</label>
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                    <div className="svc-checks">
                       {services.map((s) => (
-                        <label key={s.id} style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12.5, color: "var(--dark-text)" }}>
+                        <label key={s.id} className={`svc-check${(planForm.includedServiceIds || []).includes(s.id) ? " on" : ""}`}>
                           <input
                             type="checkbox"
                             checked={planForm.includedServiceIds.includes(s.id)}
@@ -16370,7 +16386,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                       <div style={{ fontSize: 12, color: "var(--muted)" }}>
                         {m.membership_plans?.name} ·{" "}
                         {m.status === "active"
-                          ? (m.membership_plans?.visit_limit ? t("providerPortal.memberships.visitsUsed", { used: m.visits_used, limit: m.membership_plans.visit_limit }) : t("providerPortal.memberships.unlimitedVisits"))
+                          ? (m.membership_plans?.visit_limit ? t("providerPortal.memberships.visitsUsed", { used: m.visits_used || 0, limit: m.membership_plans.visit_limit, count: m.membership_plans.visit_limit }) : t("providerPortal.memberships.unlimitedVisits"))
                           : t(`providerPortal.memberships.status_${m.status}`)}
                       </div>
                     </div>
@@ -16939,8 +16955,8 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
           <>
             <div className="portal-header"><h2>{t("providerPortal.nav.reviews")}</h2><p>{t("providerPortal.reviews.subtitle")}</p></div>
             <div className="card">
-              <div className="card-title" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <span>
+              <div className="card-title" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+                <span style={{ display: "inline-flex", alignItems: "center", flexWrap: "wrap", gap: "2px 6px", minWidth: 0 }}>
                   {myReviews.length > 0 && (
                     <>
                       <StarRating value={(myReviews.reduce((sum, r) => sum + (Number(r.rating) || 0), 0) / myReviews.length).toFixed(1)} size={15} />{" "}

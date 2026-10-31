@@ -1183,7 +1183,7 @@
       "planNamePlaceholder": "ej. Cortes ilimitados",
       "priceMonthly": "Precio / mes (BZ$)",
       "visitLimit": "Visitas / mes",
-      "unlimitedPlaceholder": "Vacío = ilimitado",
+      "unlimitedPlaceholder": "Ilimitadas",
       "descriptionLabel": "Descripción (opcional)",
       "descriptionPlaceholder": "Qué incluye, condiciones...",
       "coveredServices": "Servicios cubiertos",

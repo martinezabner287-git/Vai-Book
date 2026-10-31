@@ -1183,7 +1183,7 @@
       "planNamePlaceholder": "e.g. Unlimited Haircuts",
       "priceMonthly": "Price / month (BZ$)",
       "visitLimit": "Visits / month",
-      "unlimitedPlaceholder": "Blank = unlimited",
+      "unlimitedPlaceholder": "Unlimited",
       "descriptionLabel": "Description (optional)",
       "descriptionPlaceholder": "What's included, any fine print...",
       "coveredServices": "Covered services",
