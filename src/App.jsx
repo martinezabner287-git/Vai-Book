@@ -3226,6 +3226,14 @@ const css = `
   :where(.service-card, .provider-card, .carousel-card):active { transform: scale(.985); transition: transform .1s ease-out; }
   /* ── PHONE NAVIGATION (Vai Buy style, 2026-10-31) ────────────────── */
   .vbn-top, .vbn-bottom { display: none; }
+  .login-intro { display: flex; gap: 12px; align-items: center; text-align: left; padding: 12px 14px; margin-bottom: 16px; border-radius: 14px; background: var(--accent-soft); }
+  .login-intro > span { font-size: 22px; }
+  .biz-login-split { display: flex; align-items: center; gap: 10px; margin: 18px 0 10px; color: #8A8E99; font-size: 12.5px; font-weight: 600; }
+  .biz-login-split::before, .biz-login-split::after { content: ""; flex: 1; height: 1px; background: var(--border); }
+  .biz-login-btn { width: 100%; display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 13px 16px; border-radius: 999px;
+                   border: 1.5px solid var(--forest); background: #FFFFFF; color: var(--forest); font-family: inherit; font-size: 15px; font-weight: 700; cursor: pointer; }
+  .login-intro strong { display: block; font-size: 15px; color: #16181D; }
+  .login-intro p { margin: 2px 0 0; font-size: 13px; color: #5B5E6B; line-height: 1.4; }
   @media (max-width: 900px) {
     .nav-outer--desktop-only { display: none !important; }
     .vbn-top { display: flex; position: sticky; top: 0; z-index: 150; align-items: center; justify-content: space-between; gap: 6px;
@@ -3703,11 +3711,35 @@ function CustomerPhoneLogin({ onSignedIn, compact }) {
 // every customer sign-in prompt lands now that customers don't use Google.
 function CustomerLoginScreen({ session, onNav }) {
   const { i18n } = useTranslation();
-  useEffect(() => { if (session) onNav("customer"); }, [session, onNav]);
+  const [reason, setReason] = useState(() => { try { return sessionStorage.getItem("vaibook_login_reason") || ""; } catch (e) { return ""; } });
+  useEffect(() => {
+    const on = (e) => setReason((e.detail && e.detail.reason) || "");
+    window.addEventListener("vaibook-login-reason", on);
+    return () => window.removeEventListener("vaibook-login-reason", on);
+  }, []);
+  // After logging in, land on the page they were trying to reach.
+  const target = reason === "bookings" ? "bookings" : reason === "saved" ? "favorites" : null;
+  const afterLogin = () => {
+    if (target) { try { sessionStorage.setItem("vaibook_customer_tab", target); } catch (e) { /* ignore */ } }
+    try { sessionStorage.removeItem("vaibook_login_reason"); } catch (e) { /* ignore */ }
+    onNav("customer");
+  };
+  useEffect(() => { if (session) afterLogin(); }, [session]); // eslint-disable-line
   if (session) return null;
+  const es = (i18n.language || "").toLowerCase().startsWith("es");
+  const intro = reason === "bookings"
+    ? { icon: "📅", title: es ? "Tus citas" : "Your bookings", text: es ? "Inicia sesión para ver tus citas próximas y pasadas." : "Log in to see your upcoming and past appointments." }
+    : reason === "saved"
+      ? { icon: "♡", title: es ? "Tus guardados" : "Your saved places", text: es ? "Inicia sesión para ver los negocios que guardaste." : "Log in to see the businesses you saved." }
+      : { icon: "👤", title: es ? "Tu perfil" : "Your profile", text: es ? "Inicia sesión para ver tu cuenta." : "Log in to see your account." };
   return (
     <GateScreen>
-      <CustomerPhoneLogin onSignedIn={() => onNav("customer")} />
+      <div className="login-intro"><span aria-hidden="true">{intro.icon}</span><div><strong>{intro.title}</strong><p>{intro.text}</p></div></div>
+      <CustomerPhoneLogin onSignedIn={afterLogin} />
+      <div className="biz-login-split"><span>{es ? "¿Tienes un negocio?" : "Own a business?"}</span></div>
+      <button className="biz-login-btn" onClick={() => openBusinessLogin(onNav, session)}>
+        <span aria-hidden="true">💼</span> {es ? "Acceso para negocios" : "Business log in"}
+      </button>
       <button className="gate-back" onClick={() => onNav("home")}>{(i18n.language || "").toLowerCase().startsWith("es") ? "← Volver al sitio" : "← Back to site"}</button>
     </GateScreen>
   );
@@ -6849,6 +6881,15 @@ function enterProviderPortal(onNav, session, onSignIn) {
   switchToPortal("provider", onNav, session, onSignIn);
 }
 
+// Business sign-in (email + password or Google) — the business panel of
+// the sign-in page, opened directly. Signed-in owners go to their portal.
+function openBusinessLogin(onNav, session) {
+  if (session) { onNav("provider"); return; }
+  try { sessionStorage.setItem("vaibook_auth_biz", "1"); } catch (e) { /* ignore */ }
+  onNav("auth");
+  window.scrollTo({ top: 0 });
+}
+
 // Browsing/searching never actually needed a session — the "#book-<id>"
 // deep link (every "Book Now" card, QR code, NFC tag) has always jumped
 // straight into CustomerPortal with no sign-in required, because
@@ -6873,7 +6914,12 @@ function browseAsGuest(onNav) {
 
 function AuthChoice({ onNav, session, onSignIn, onSignOut }) {
   const { t, i18n } = useTranslation();
-  const [showBizLogin, setShowBizLogin] = useState(false);
+  // Opened straight on the business sign-in when coming from a
+  // "Business log in" button (vaibook_auth_biz flag, 2026-10-31).
+  const [showBizLogin, setShowBizLogin] = useState(() => {
+    try { return sessionStorage.getItem("vaibook_auth_biz") === "1"; } catch (e) { return false; }
+  });
+  useEffect(() => { try { sessionStorage.removeItem("vaibook_auth_biz"); } catch (e) { /* ignore */ } }, []);
   // GAP FIX: this card used to go straight to Google sign-in, as if
   // "For professionals" on a page titled "Sign up / log in" could only
   // mean "I already have an approved business." A brand-new provider has
@@ -6891,7 +6937,7 @@ function AuthChoice({ onNav, session, onSignIn, onSignOut }) {
   // join" entry point in the app, including this one, now goes through
   // either the ProviderLandingPage explainer or straight to this real
   // form, never a popup that quietly did nothing.)
-  const [showProviderFork, setShowProviderFork] = useState(false);
+  const [showProviderFork, setShowProviderFork] = useState(() => { try { return sessionStorage.getItem("vaibook_auth_biz") === "1"; } catch (e) { return false; } });
   const [showCustLogin, setShowCustLogin] = useState(false);
   return (
     <>
@@ -7548,9 +7594,24 @@ const vbnEs = () => String(i18n.language || "").toLowerCase().startsWith("es");
 const vbnT = (en, es) => (vbnEs() ? es : en);
 function vbnExplore(view, session, onNav) {
   if (session) { vbnGoCustomerTab("browse", view, onNav); return; }
-  // Logged-out visitors browse on the landing page itself.
-  const jump = () => (document.getElementById("services") || document.getElementById("discover"))?.scrollIntoView({ behavior: "smooth", block: "start" });
-  if (view !== "home") { onNav("home"); setTimeout(jump, 120); } else jump();
+  // Logged-out visitors search from the landing page's own search box:
+  // bring it into view and open the keyboard on it.
+  const jump = () => {
+    const bar = document.getElementById("main-search-bar");
+    if (!bar) return;
+    bar.scrollIntoView({ behavior: "smooth", block: "center" });
+    const input = bar.querySelector("input");
+    if (input) { try { input.focus({ preventScroll: true }); } catch (e) { input.focus(); } }
+  };
+  if (view !== "home") { onNav("home"); setTimeout(jump, 150); } else jump();
+}
+// Why the login screen was opened (so it can say so, and the bottom bar
+// can highlight the right tab): "bookings" | "account".
+function vbnLogin(reason, onNav) {
+  try { sessionStorage.setItem("vaibook_login_reason", reason); } catch (e) { /* ignore */ }
+  window.dispatchEvent(new CustomEvent("vaibook-login-reason", { detail: { reason } }));
+  onNav("customer-login");
+  window.scrollTo({ top: 0 });
 }
 function vbnGoCustomerTab(tab, view, onNav) {
   try { sessionStorage.setItem("vaibook_customer_tab", tab); } catch (e) { /* ignore */ }
@@ -7619,8 +7680,8 @@ function MobileDrawer({ open, onClose, view, session, user, providerProfile, sta
         <div className="vbn-section">{vbnT("Book", "Reservar")}</div>
         <Item icon="home" label={vbnT("Home", "Inicio")} onClick={() => (session ? vbnGoCustomerTab("home", view, onNav) : onNav("home"))} />
         <Item icon="explore" label={vbnT("Explore services", "Explorar servicios")} onClick={() => vbnExplore(view, session, onNav)} />
-        <Item icon="bookings" label={vbnT("My bookings", "Mis citas")} onClick={() => (session ? vbnGoCustomerTab("bookings", view, onNav) : onNav("customer-login"))} />
-        <Item icon="saved" label={vbnT("Saved", "Guardados")} onClick={() => (session ? vbnGoCustomerTab("favorites", view, onNav) : onNav("customer-login"))} />
+        <Item icon="bookings" label={vbnT("My bookings", "Mis citas")} onClick={() => (session ? vbnGoCustomerTab("bookings", view, onNav) : vbnLogin("bookings", onNav))} />
+        <Item icon="saved" label={vbnT("Saved", "Guardados")} onClick={() => (session ? vbnGoCustomerTab("favorites", view, onNav) : vbnLogin("saved", onNav))} />
 
         <div className="vbn-divider" />
         <div className="vbn-section">{vbnT("For businesses", "Para negocios")}</div>
@@ -7628,7 +7689,7 @@ function MobileDrawer({ open, onClose, view, session, user, providerProfile, sta
         <Item icon="tag" label={vbnT("Plans & pricing", "Planes y precios")} onClick={() => scrollToProvidersSection("pricing", onNav, view)} />
         {(providerProfile || staffProfile)
           ? <Item icon="swap" label={vbnT("Go to my business", "Ir a mi negocio")} onClick={() => onNav("provider")} />
-          : <Item icon="briefcase" label={vbnT("Business log in", "Acceso de negocios")} onClick={() => enterProviderPortal(onNav, session, onSignIn)} />}
+          : <Item icon="briefcase" label={vbnT("Business log in", "Acceso de negocios")} onClick={() => openBusinessLogin(onNav, session)} />}
         {isAdminAccount && <Item icon="shield" label={vbnT("Admin", "Administración")} onClick={() => onNav("admin")} />}
 
         <div className="vbn-divider" />
@@ -7654,13 +7715,22 @@ function BottomTabBar({ view, session, onNav }) {
     window.addEventListener("vaibook-customer-tab-changed", on);
     return () => window.removeEventListener("vaibook-customer-tab-changed", on);
   }, []);
+  const [guestSearch, setGuestSearch] = useState(false);
+  const [loginReason, setLoginReason] = useState(() => { try { return sessionStorage.getItem("vaibook_login_reason") || "account"; } catch (e) { return "account"; } });
+  useEffect(() => {
+    const on = (e) => setLoginReason((e.detail && e.detail.reason) || "account");
+    window.addEventListener("vaibook-login-reason", on);
+    return () => window.removeEventListener("vaibook-login-reason", on);
+  }, []);
+  // Leaving the landing page clears the "searching" highlight.
+  useEffect(() => { if (view !== "home") setGuestSearch(false); }, [view]);
   const active = view === "customer" ? ({ home: "home", browse: "search", bookings: "bookings", favorites: "account", settings: "account", payments: "account", reviews: "account", profile: "account" })[custTab] || "home"
-    : view === "home" ? "home" : view === "customer-login" ? "account" : "";
+    : view === "home" ? (guestSearch ? "search" : "home") : view === "customer-login" ? (loginReason === "bookings" ? "bookings" : "account") : "";
   const tabs = [
-    ["home", vbnT("Home", "Inicio"), () => (session ? vbnGoCustomerTab("home", view, onNav) : (onNav("home"), window.scrollTo({ top: 0 })))],
-    ["search", vbnT("Search", "Buscar"), () => vbnExplore(view, session, onNav)],
-    ["bookings", vbnT("Activity", "Actividad"), () => (session ? vbnGoCustomerTab("bookings", view, onNav) : onNav("customer-login"))],
-    ["account", vbnT("Profile", "Perfil"), () => (session ? vbnGoCustomerTab("settings", view, onNav) : onNav("customer-login"))],
+    ["home", vbnT("Home", "Inicio"), () => { setGuestSearch(false); if (session) vbnGoCustomerTab("home", view, onNav); else { onNav("home"); window.scrollTo({ top: 0, behavior: "smooth" }); } }],
+    ["search", vbnT("Search", "Buscar"), () => { setGuestSearch(true); vbnExplore(view, session, onNav); }],
+    ["bookings", vbnT("Activity", "Actividad"), () => (session ? vbnGoCustomerTab("bookings", view, onNav) : vbnLogin("bookings", onNav))],
+    ["account", vbnT("Profile", "Perfil"), () => (session ? vbnGoCustomerTab("settings", view, onNav) : vbnLogin("account", onNav))],
   ];
   return (
     <nav className="vbn-bottom" aria-label={vbnT("Main", "Principal")}>
