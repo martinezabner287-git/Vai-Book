@@ -6997,6 +6997,7 @@ function InstallAppGuide({ suppressBanner }) {
 // depending on who's being notified — handled separately below.
 const NOTIF_DESTINATIONS = {
   booking_requested: { view: "provider", tab: "bookings" },
+  booking_confirmed_new: { view: "provider", tab: "bookings" },
   booking_cancelled: { view: "provider", tab: "bookings" },
   receipt_uploaded: { view: "provider", tab: "bookings" },
   review: { view: "provider", tab: "bookings" },
@@ -9922,17 +9923,10 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
       }));
       (async () => {
         try {
-          if (selectedProvider.user_id) {
-            await createNotification({
-              user_id: selectedProvider.user_id,
-              title: instant ? "New booking ✅" : "New booking request",
-              body: instant
-                ? `${user?.full_name || guestCheckoutForm.name || "A customer"} booked ${service.name}${people > 1 ? ` for ${people} people` : ""} on ${whenLabel}. It's confirmed and in your calendar.`
-                : `${user?.full_name || guestCheckoutForm.name || "A customer"} requested ${service.name}${people > 1 ? ` for ${people} people` : ""} on ${whenLabel}.`,
-              type: instant ? "booking_confirmed_new" : "booking_requested",
-              booking_id: created.id,
-            });
-          }
+          // The business's in-app alert + push now comes from the database
+          // (trg_notify_provider_booking, 2026-10-30), in the same
+          // transaction as the booking — it no longer depends on this tab
+          // staying open long enough to send it.
           // A provider who isn't sitting in the app had no way of knowing a
           // request had come in. The address is resolved server-side for
           // this one booking (and only if they still want these emails)
@@ -10120,22 +10114,13 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
   const handleCancelBooking = async (bookingId) => {
     if (!window.confirm(t("customerPortal.booking.cancelConfirm"))) return;
     setCancellingId(bookingId);
-    const cancelled = bookings.find((b) => b.id === bookingId);
     const updated = await cancelBooking(bookingId);
     // cancelBooking already returns the updated row — patch it in place
     // instead of re-fetching this customer's entire booking history (every
     // past booking, with four joined tables) just to show one status flip.
     if (updated) setBookings((prev) => prev.map((b) => (b.id === bookingId ? { ...b, ...updated } : b)));
     setCancellingId(null);
-    if (cancelled?.provider_profiles?.user_id) {
-      createNotification({
-        user_id: cancelled.provider_profiles.user_id,
-        title: "Booking cancelled",
-        body: `${user?.full_name || "A customer"} cancelled their booking${cancelled?.services?.name ? ` for ${cancelled.services.name}` : ""} on ${new Date(cancelled.booking_date).toLocaleDateString()}.`,
-        type: "booking_cancelled",
-        booking_id: bookingId,
-      });
-    }
+    // The business is told by the database (trg_notify_provider_booking).
   };
 
   // "Check In" — writes checked_in_at straight onto the booking instead of

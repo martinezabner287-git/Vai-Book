@@ -1,15 +1,26 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
+import AppErrorBoundary, { reportClientError } from './AppErrorBoundary';
 import { ThemeProvider } from './ThemeContext';
 import './i18n';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
-  <ThemeProvider>
-    <App />
-  </ThemeProvider>
+  <AppErrorBoundary>
+    <ThemeProvider>
+      <App />
+    </ThemeProvider>
+  </AppErrorBoundary>
 );
+
+// Errors outside of drawing a screen (a failed promise, an event handler)
+// don't reach the boundary — log them too, without interrupting anyone.
+window.addEventListener('error', (e) => { if (e && e.error) reportClientError(e.error); });
+window.addEventListener('unhandledrejection', (e) => {
+  const r = e && e.reason;
+  if (r && (r instanceof Error)) reportClientError(r);
+});
 
 // Registers the Web Push service worker (public/service-worker.js). This
 // alone doesn't ask for notification permission or subscribe anyone to
