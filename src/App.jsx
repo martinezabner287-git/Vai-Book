@@ -712,7 +712,10 @@ const css = `
   .nav-avatar-btn:hover { border-color: var(--lime); }
   .nav-avatar-circle { width: 30px; height: 30px; border-radius: 50%; background: var(--accent-soft); color: var(--forest); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; flex-shrink: 0; }
   .profile-avatar-circle { width: 84px; height: 84px; border-radius: 50%; background: var(--accent-soft); color: var(--forest); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 30px; }
-  .nav-avatar-caret { font-size: 10px; color: rgba(250,250,247,0.7); }
+  .nav-avatar-caret { display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; color: #16181D; opacity: .75; transition: transform .2s ease, opacity .2s; }
+  .nav-avatar-caret.open { transform: rotate(180deg); opacity: 1; }
+  .nav-avatar-caret .menu-chevron { display: block; }
+  :root[data-theme="dark"] .nav-avatar-caret { color: #F5F5F7; }
   /* Wraps just the avatar circle (not the whole nav-avatar-btn, which also
      has the caret) so the unread badge sits pinned to the circle's own
      top-right corner regardless of button padding/caret width. */
@@ -1325,7 +1328,7 @@ const css = `
   .provider-hamburger { display: none; background: none; border: 1px solid rgba(255,255,255,0.3); color: #FFFFFF; width: 38px; height: 38px; border-radius: 8px; font-size: 16px; cursor: pointer; flex-shrink: 0; }
   .provider-topbar-right { flex-shrink: 0; margin-left: auto; }
   .provider-avatar-wrap { position: relative; }
-  .provider-avatar-btn { background: none; border: none; cursor: pointer; padding: 0; display: flex; align-items: center; }
+  .provider-avatar-btn { background: none; border: 1px solid var(--border, #E6E3EE); border-radius: 100px; cursor: pointer; padding: 3px 8px 3px 3px; gap: 4px; display: flex; align-items: center; }
   .provider-avatar-btn .avatar { flex-shrink: 0; }
   .provider-account-dropdown { top: calc(100% + 10px); min-width: 240px; }
   .provider-dropdown-header { padding: 6px 14px 10px; }
@@ -7467,7 +7470,7 @@ function Nav({ onNav, current, session, user, providerProfile, staffProfile, isA
                   <span className="nav-avatar-circle">{initials}</span>
                   {unreadCount > 0 && <span className="nav-avatar-badge">{unreadCount > 9 ? "9+" : unreadCount}</span>}
                 </span>
-                <span className="nav-avatar-caret">▾</span>
+                <span className={`nav-avatar-caret${accountOpen ? " open" : ""}`}><svg className="menu-chevron" width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 4.5 6 8l3.5-3.5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg></span>
               </button>
               {accountOpen && (
                 <div className="nav-account-dropdown">
@@ -7620,7 +7623,7 @@ function Nav({ onNav, current, session, user, providerProfile, staffProfile, isA
               <span className="nav-avatar-circle">{initials}</span>
               {unreadCount > 0 && <span className="nav-avatar-badge">{unreadCount > 9 ? "9+" : unreadCount}</span>}
             </span>
-            <span className="nav-avatar-caret">▾</span>
+            <span className={`nav-avatar-caret${accountOpen ? " open" : ""}`}><svg className="menu-chevron" width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 4.5 6 8l3.5-3.5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg></span>
           </button>
           {accountOpen && (
             <div className={`nav-account-dropdown${current === "customer" ? " cx-account-dropdown" : ""}`}>
@@ -14934,6 +14937,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
               aria-expanded={providerMenuOpen}
             >
               <span className="avatar">{(providerProfile.business_name || "V")[0].toUpperCase()}</span>
+              <span className={`nav-avatar-caret provider-caret${providerMenuOpen ? " open" : ""}`}><svg className="menu-chevron" width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 4.5 6 8l3.5-3.5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg></span>
             </button>
             {providerMenuOpen && (
               <div className="nav-dropdown provider-account-dropdown">
