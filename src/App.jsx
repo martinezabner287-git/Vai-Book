@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useLayoutEffect, useRef, useContext, createContext, lazy, Suspense, useCallback } from "react";
 import { flushSync } from "react-dom";
-import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, updateService, deleteService, getActiveProviders, getProviderDirectory, createBooking, getProviderBusyWindows, createBookingSafe, cancelBooking, markBookingCheckedIn, getCustomerBookings, uploadReceipt, submitReview, getProviderReviews, updateReview, sendBookingEmail, updateUserProfile, getPaymentMethods, addPaymentMethod, deletePaymentMethod, createNotification, getNotifications, markNotificationRead, markAllNotificationsRead, getCategoryDefaultFeatures, getProviderFeatureOverrides, setProviderFeatureOverride, getVisitNotes, upsertVisitNote, adminListProviders, adminUpdateProvider, adminDeleteProvider, adminCountCustomers, getFavoriteProviderIds, getFavoriteProviders, addFavorite, removeFavorite, getBookingMessages, sendBookingMessage, markBookingMessagesRead, getUnreadBookingMessages, getProviderMonthlyTrend, createProviderProfile, getProviderById, createWalkInBooking, submitProviderPayment, getMyProviderPayments, adminListProviderPayments, adminReviewProviderPayment, submitBookingRefund, adminListBookingRefunds, openPrivateFile, getProviderStaff, addProviderStaff, updateProviderStaff, deleteProviderStaff, getProviderStaffPublic, getLoyaltyAccount, getProviderLoyaltyCustomers, redeemLoyaltyReward, getMyStaffProfile, claimStaffSeatByEmail, getStaffBookings, getProviderNotifyEmail, getMaintenanceStatus, setMaintenanceMode, getSiteOfflineStatus, setSiteOffline, guestAuthWithPassword, updateGuestPassword, savePushSubscription, attachBookingServices, getProviderBlocks, insertProviderBlock, deleteProviderBlock, proposeBookingReschedule, confirmBookingReschedule, declineBookingReschedule, withdrawBookingReschedule, establishSoloSession, getServerSoloSessionToken, getLocalSoloSessionToken, clearLocalSoloSessionToken, subscribeToSoloSessionReplacement, signInWithPhonePassword, customerPhoneAuth, adminResetPhonePassword, isPhoneLoginEmail, formatPhoneForDisplay, weakPasswordReason, submitSupportMessage, listSupportMessages, setSupportMessageStatus, getProviderMembershipPlans, getMyMembershipPlans, createMembershipPlan, updateMembershipPlan, subscribeToMembershipPlan, submitMembershipPayment, getMyMemberships, getProviderMembershipSubscribers, getProviderMembershipPayments, reviewMembershipPayment, cancelMembership, redeemMembershipVisit, startSoloTrial, adminStartProviderTrial, adminExtendProviderTrial, adminEndProviderTrial, adminExtendPaymentDue, adminRestoreDowngradedPlan, adminPlatformStats, setBookingAnswers } from "./supabase";
+import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, updateService, deleteService, getActiveProviders, getProviderDirectory, createBooking, getProviderBusyWindows, createBookingSafe, cancelBooking, markBookingCheckedIn, getCustomerBookings, uploadReceipt, submitReview, getProviderReviews, updateReview, sendBookingEmail, updateUserProfile, getPaymentMethods, addPaymentMethod, deletePaymentMethod, createNotification, getNotifications, markNotificationRead, markAllNotificationsRead, getCategoryDefaultFeatures, getProviderFeatureOverrides, setProviderFeatureOverride, getVisitNotes, upsertVisitNote, adminListProviders, adminUpdateProvider, adminDeleteProvider, adminCountCustomers, getFavoriteProviderIds, getFavoriteProviders, addFavorite, removeFavorite, getBookingMessages, sendBookingMessage, markBookingMessagesRead, getUnreadBookingMessages, getProviderMonthlyTrend, createProviderProfile, getProviderById, createWalkInBooking, submitProviderPayment, getMyProviderPayments, adminListProviderPayments, adminReviewProviderPayment, submitBookingRefund, adminListBookingRefunds, openPrivateFile, getProviderStaff, addProviderStaff, updateProviderStaff, deleteProviderStaff, getProviderStaffPublic, getLoyaltyAccount, getProviderLoyaltyCustomers, redeemLoyaltyReward, getMyStaffProfile, claimStaffSeatByEmail, getStaffBookings, getProviderNotifyEmail, getMaintenanceStatus, setMaintenanceMode, getSiteOfflineStatus, setSiteOffline, guestAuthWithPassword, updateGuestPassword, savePushSubscription, attachBookingServices, getProviderBlocks, insertProviderBlock, deleteProviderBlock, proposeBookingReschedule, confirmBookingReschedule, declineBookingReschedule, withdrawBookingReschedule, establishSoloSession, getServerSoloSessionToken, getLocalSoloSessionToken, clearLocalSoloSessionToken, subscribeToSoloSessionReplacement, signInWithPhonePassword, customerPhoneAuth, adminResetPhonePassword, isPhoneLoginEmail, formatPhoneForDisplay, weakPasswordReason, submitSupportMessage, listSupportMessages, setSupportMessageStatus, getProviderMembershipPlans, getMyMembershipPlans, createMembershipPlan, updateMembershipPlan, subscribeToMembershipPlan, submitMembershipPayment, getMyMemberships, getProviderMembershipSubscribers, getProviderMembershipPayments, reviewMembershipPayment, cancelMembership, redeemMembershipVisit, startSoloTrial, adminStartProviderTrial, adminExtendProviderTrial, adminEndProviderTrial, adminExtendPaymentDue, adminRestoreDowngradedPlan, adminPlatformStats, setBookingAnswers, getFormEmail } from "./supabase";
 import AdminDashboard from "./AdminDashboard";
 import ProfilePhotoModal from "./ProfilePhotoModal";
 import LanguageSelector from "./LanguageSelector";
@@ -3414,6 +3414,17 @@ const css = `
   .bq-opts { display: flex; flex-direction: column; gap: 6px; padding-left: 30px; }
   .bq-reqline { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--dark-text); }
   .bq-reqline input { width: 18px !important; height: 18px !important; accent-color: var(--forest); }
+  .bq-input { width: 100%; box-sizing: border-box; font: inherit; font-size: 16px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; background: #fff; }
+  .cf-open { margin-top: 8px; }
+  .cf-overlay { position: fixed; inset: 0; background: rgba(22,24,29,0.55); z-index: 1200; display: flex; align-items: flex-start; justify-content: center; padding: 16px; overflow-y: auto; }
+  .cf-panel { width: 100%; max-width: 680px; background: #F4F3F8; border-radius: 18px; padding: 14px; margin: auto 0; }
+  .cf-bar { display: flex; gap: 8px; justify-content: flex-end; margin-bottom: 12px; flex-wrap: wrap; }
+  @media print {
+    body.printing-form * { visibility: hidden !important; }
+    body.printing-form .client-form-print, body.printing-form .client-form-print * { visibility: visible !important; }
+    body.printing-form .client-form-print { position: absolute; left: 0; top: 0; width: 100%; }
+    body.printing-form .cf-overlay { position: static; background: none; padding: 0; }
+  }
   /* Site banner (admin Settings → Site banner) */
   .vb-site-banner { position: relative; display: flex; align-items: center; justify-content: center; gap: 10px; padding: 10px 44px 10px 16px; font-size: 14px; line-height: 1.4; text-align: center; background: #EEECFD; color: #2E2580; }
   .vb-site-banner a { color: inherit; text-decoration: none; }
@@ -9594,6 +9605,11 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
   const [bqAnswers, setBqAnswers] = useState({});
   const [bqShowErr, setBqShowErr] = useState(false);
   useEffect(() => { setBqAnswers({}); setBqShowErr(false); }, [selectedProvider?.id]);
+  useEffect(() => {
+    if (!cleanQuestions(selectedProvider?.booking_questions).length) return;
+    const nm = (user?.full_name || "").trim();
+    if (nm) setBqAnswers((a) => (a.__idname ? a : { ...a, __idname: nm }));
+  }, [selectedProvider?.id, user?.full_name]);
   const bookingQuestionsBlock = () => {
     if (answersMissing(selectedProvider?.booking_questions, bqAnswers).length) {
       setBqShowErr(true);
@@ -10554,7 +10570,20 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
       const payload = answersPayload(selectedProvider.booking_questions, bqAnswers);
       if (payload.length) {
         created.answers = payload;
-        try { await setBookingAnswers(created.id, payload); } catch (e) { console.error("Saving booking answers failed:", e); }
+        try {
+          await setBookingAnswers(created.id, payload);
+          // A copy of the completed form to the business's email.
+          const formTo = await getFormEmail(created.id);
+          if (formTo) {
+            const idName = (payload.find((x) => x.type === "idname") || {}).a || user?.full_name || "Client";
+            const whenTxt = `${formatBookingDate(dateStr)} at ${formatBookingTime(timeStr)}`;
+            sendBookingEmail({
+              to: formTo,
+              subject: `Client form: ${idName} · ${service.name}, ${whenTxt}`,
+              html: clientFormEmailHtml({ business: selectedProvider.business_name, logo: selectedProvider.profile_photo_url || null, phone: user?.whatsapp_number || user?.phone || "", service: service.name, when: whenTxt, answers: payload, submittedAt: new Date().toISOString() }),
+            }).catch((e) => console.error("Client form email failed:", e));
+          }
+        } catch (e) { console.error("Saving booking answers failed:", e); }
       }
     }
     if (created && coveredByMembership) {
@@ -13417,6 +13446,7 @@ function StaffPortal({ onNav, session, staffProfile, onSignOut }) {
             {b.party_size > 1 && <span className="party-badge">👥 {b.party_size} {(i18n.language || "").toLowerCase().startsWith("es") ? "personas" : "people"}</span>}
             {b.notes && <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 6 }}>{t("providerPortal.bookings.customerNote", { notes: b.notes })}</p>}
                   <BookingAnswers answers={b.answers} />
+                  <ClientFormButton booking={b} provider={typeof providerProfile !== "undefined" ? providerProfile : null} />
           </div>
           );
         })}
@@ -15967,6 +15997,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                           <div className="bh-req-meta">{b.services?.name || "Service"} · {formatBookingWhen(b)} {b.party_size > 1 && <span className="party-badge">👥 {b.party_size} {(i18n.language || "").toLowerCase().startsWith("es") ? "personas" : "people"}</span>}</div>
                           {b.notes && <div className="bh-req-note">"{b.notes}"</div>}
                           <BookingAnswers answers={b.answers} compact />
+                          <ClientFormButton booking={b} provider={providerProfile} />
                           {past && <div className="bh-req-warn">⏰ {dx("This time already passed. Decline or offer a new time.", "Esta hora ya pasó. Declina u ofrece otra hora.")}</div>}
                         </div>
                         <div className="bh-req-price">BZ${b.total_amount ?? b.services?.price ?? "—"}</div>
@@ -16505,6 +16536,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                   {b.party_size > 1 && <span className="party-badge">👥 {b.party_size} {(i18n.language || "").toLowerCase().startsWith("es") ? "personas" : "people"}</span>}
                   {b.notes && <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 6 }}>{t("providerPortal.bookings.customerNote", { notes: b.notes })}</p>}
                   <BookingAnswers answers={b.answers} />
+                  <ClientFormButton booking={b} provider={typeof providerProfile !== "undefined" ? providerProfile : null} />
 
                   {b.pending_reschedule_date && (
                     <p style={{ fontSize: 12, color: "var(--accent-text)", marginTop: 6, fontWeight: 600 }}>
@@ -19205,25 +19237,33 @@ function questionTemplateKey(serviceType) {
   return "general";
 }
 const cleanQuestions = (qs) => (Array.isArray(qs) ? qs : []).filter((q) => q && String(q.label || "").trim()).slice(0, 10);
-const answersMissing = (qs, answers) => cleanQuestions(qs).filter((q) => {
+const answersMissing = (qs, answers) => (cleanQuestions(qs).length && !idNameOkTop(answers.__idname) ? [{ id: "__idname" }] : []).concat(cleanQuestions(qs).filter((q) => {
   if (!q.required) return false;
   const a = answers[q.id];
   if (q.type === "agree") return a !== true;
   return a === undefined || a === null || String(a).trim() === "";
-});
-const answersPayload = (qs, answers) => cleanQuestions(qs)
+}));
+function idNameOkTop(v) { return String(v || "").trim().split(/\s+/).filter((w) => w.length >= 2).length >= 2; }
+const answersPayload = (qs, answers) => (cleanQuestions(qs).length && String(answers.__idname || "").trim() ? [{ q: ID_NAME_Q, type: "idname", a: String(answers.__idname).trim().replace(/\s+/g, " ") }] : []).concat(cleanQuestions(qs)
   .map((q) => ({ q: q.label, type: q.type, a: q.type === "agree" ? (answers[q.id] === true ? "Agreed" : "") : (answers[q.id] === undefined ? "" : String(answers[q.id]).trim()) }))
-  .filter((x) => x.a !== "");
+  .filter((x) => x.a !== ""));
 
+const idNameOk = (v) => String(v || "").trim().split(/\s+/).filter((w) => w.length >= 2).length >= 2;
 function BookingQuestionsForm({ questions, answers, onChange, showErrors }) {
   const es = String(i18n.language || "").toLowerCase().startsWith("es");
   const qs = cleanQuestions(questions);
   if (!qs.length) return null;
   const missing = new Set(showErrors ? answersMissing(qs, answers).map((q) => q.id) : []);
   const set = (id, v) => onChange({ ...answers, [id]: v });
+  const idBad = showErrors && !idNameOk(answers.__idname);
   return (
     <div className="bq-form">
-      <div className="bq-title">{es ? "Unas preguntas del negocio" : "A few questions from the business"}</div>
+      <div className="bq-title">{es ? "Formulario del negocio" : "Form from the business"}</div>
+      <div className={`bq-item${idBad ? " bq-missing" : ""}`}>
+        <div className="bq-label">{es ? "Nombre completo (como en tu ID)" : "Full name (as on your ID)"}<b className="bq-req"> *</b></div>
+        <input className="bq-input" autoComplete="name" maxLength={120} value={answers.__idname || ""} onChange={(e) => set("__idname", e.target.value)} placeholder={es ? "Nombre y apellidos" : "First and last name"} />
+        {idBad && <div className="bq-err">{es ? "Escribe tu nombre y apellido como aparecen en tu ID." : "Enter your first and last name as they appear on your ID."}</div>}
+      </div>
       {qs.map((q) => (
         <div className={`bq-item${missing.has(q.id) ? " bq-missing" : ""}`} key={q.id}>
           {q.type === "agree" ? (
@@ -19251,13 +19291,95 @@ function BookingQuestionsForm({ questions, answers, onChange, showErrors }) {
   );
 }
 
+// ── CLIENT FORM DOCUMENT (2026-11-01) ────────────────────────────────
+// The completed form as a one-page document: business logo + name, the
+// client's ID name and contact, the appointment, every answer, and the
+// agreement ticked with date/time. Same HTML is emailed to the business and
+// shown in the portal ("View form" → Save as PDF / Print).
+const ID_NAME_Q = "Full name (as on ID)";
+const escHtml = (v) => String(v === null || v === undefined ? "" : v).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+function clientFormInnerHtml({ business, logo, phone, service, when, answers, submittedAt }) {
+  const list = (Array.isArray(answers) ? answers : []).filter((x) => x && x.q && x.a);
+  const idName = (list.find((x) => x.type === "idname") || {}).a || "";
+  const rest = list.filter((x) => x.type !== "idname");
+  const qa = rest.filter((x) => x.type !== "agree");
+  const agreed = rest.filter((x) => x.type === "agree");
+  const signed = submittedAt ? new Date(submittedAt) : null;
+  const signedTxt = signed && !isNaN(signed) ? signed.toLocaleString("en-US", { timeZone: "America/Belize", month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" }) : "";
+  const initial = escHtml(String(business || "?").trim().charAt(0).toUpperCase());
+  const logoHtml = logo
+    ? `<img src="${escHtml(logo)}" alt="" width="56" height="56" style="width:56px;height:56px;border-radius:14px;object-fit:cover;display:block" />`
+    : `<div style="width:56px;height:56px;border-radius:14px;background:#5B4BE0;color:#fff;font:800 24px/56px Arial,sans-serif;text-align:center">${initial}</div>`;
+  const row = (label, value) => `<tr><td style="padding:10px 0;border-bottom:1px solid #EEECF3;vertical-align:top"><div style="font:600 12px Arial,sans-serif;color:#6B6E7B;margin-bottom:3px">${escHtml(label)}</div><div style="font:600 15px/1.45 Arial,sans-serif;color:#16181D;white-space:pre-wrap">${escHtml(value)}</div></td></tr>`;
+  return `
+  <div style="max-width:640px;margin:0 auto;background:#fff;border:1px solid #E8E6EF;border-radius:16px;padding:24px;font-family:Arial,Helvetica,sans-serif;color:#16181D">
+    <table role="presentation" style="width:100%;border-collapse:collapse"><tr>
+      <td style="width:68px;vertical-align:middle">${logoHtml}</td>
+      <td style="vertical-align:middle"><div style="font:800 19px Arial,sans-serif">${escHtml(business || "Business")}</div><div style="font:600 13px Arial,sans-serif;color:#5B4BE0;margin-top:2px">Client intake form</div></td>
+    </tr></table>
+    <div style="margin:18px 0 6px;padding:14px;background:#F7F6FB;border-radius:12px">
+      <table role="presentation" style="width:100%;border-collapse:collapse">
+        <tr><td style="font:600 12px Arial,sans-serif;color:#6B6E7B;padding-bottom:2px">Full name (as on ID)</td></tr>
+        <tr><td style="font:800 18px Arial,sans-serif;padding-bottom:10px">${escHtml(idName || "—")}</td></tr>
+        <tr><td style="font:14px/1.6 Arial,sans-serif;color:#2A2D38">${phone ? `📱 ${escHtml(phone)}<br/>` : ""}${service ? `🗓️ ${escHtml(service)}${when ? ` · ${escHtml(when)}` : ""}` : ""}</td></tr>
+      </table>
+    </div>
+    ${qa.length ? `<table role="presentation" style="width:100%;border-collapse:collapse;margin-top:6px">${qa.map((x) => row(x.q, x.a)).join("")}</table>` : ""}
+    ${agreed.length ? `<div style="margin-top:16px">${agreed.map((x) => `<div style="display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border:1px solid #CDEBD8;background:#F0FAF4;border-radius:12px;margin-bottom:8px"><span style="font:800 16px Arial,sans-serif;color:#15803D">✓</span><span style="font:14px/1.5 Arial,sans-serif;color:#14532D"><b>Agreed:</b> ${escHtml(x.q)}</span></div>`).join("")}</div>` : ""}
+    <div style="margin-top:18px;padding-top:12px;border-top:1px solid #EEECF3;font:12px/1.5 Arial,sans-serif;color:#6B6E7B">
+      ${signedTxt ? `Completed and agreed by ${escHtml(idName || "the client")} on ${escHtml(signedTxt)} (Belize time) when booking through VaiBook.` : "Completed when booking through VaiBook."}
+    </div>
+  </div>`;
+}
+function clientFormEmailHtml(opts) {
+  return `<div style="background:#F4F3F8;padding:20px 12px">${clientFormInnerHtml(opts)}<p style="text-align:center;font:12px Arial,sans-serif;color:#8A8E99;margin:14px 0 0">Keep this email as your copy. You can also open it any time from the booking in your VaiBook portal.</p></div>`;
+}
+function ClientFormButton({ booking, provider }) {
+  const [open, setOpen] = useState(false);
+  const answers = Array.isArray(booking && booking.answers) ? booking.answers : [];
+  if (!answers.length) return null;
+  const es = String(i18n.language || "").toLowerCase().startsWith("es");
+  const u = booking.users || {};
+  const html = clientFormInnerHtml({
+    business: (provider && provider.business_name) || "",
+    logo: (provider && provider.profile_photo_url) || null,
+    phone: u.whatsapp_number || u.phone || booking.walkin_customer_phone || "",
+    service: (booking.services && booking.services.name) || "",
+    when: booking.booking_date ? `${new Date(booking.booking_date + "T12:00:00").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" })}${booking.booking_time ? ` at ${formatTimeLabelStatic(String(booking.booking_time).slice(0, 5))}` : ""}` : "",
+    answers,
+    submittedAt: booking.created_at,
+  });
+  const print = () => {
+    document.body.classList.add("printing-form");
+    const done = () => { document.body.classList.remove("printing-form"); window.removeEventListener("afterprint", done); };
+    window.addEventListener("afterprint", done);
+    setTimeout(() => { try { window.print(); } catch (e) { done(); } setTimeout(done, 60000); }, 50);
+  };
+  return (
+    <>
+      <button type="button" className="btn-sm ghost cf-open" onClick={() => setOpen(true)}>📄 {es ? "Ver formulario" : "View form"}</button>
+      {open && (
+        <div className="cf-overlay" onClick={() => setOpen(false)}>
+          <div className="cf-panel" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label={es ? "Formulario del cliente" : "Client form"}>
+            <div className="cf-bar">
+              <button type="button" className="btn-sm forest" onClick={print}>{es ? "Guardar PDF / Imprimir" : "Save as PDF / Print"}</button>
+              <button type="button" className="btn-sm ghost" onClick={() => setOpen(false)}>{es ? "Cerrar" : "Close"}</button>
+            </div>
+            <div className="client-form-print" dangerouslySetInnerHTML={{ __html: html }} />
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
 function BookingAnswers({ answers, compact }) {
   const list = Array.isArray(answers) ? answers.filter((x) => x && x.q && x.a) : [];
   if (!list.length) return null;
   return (
     <div className={`bq-answers${compact ? " compact" : ""}`}>
       {list.map((x, i) => (
-        <div className="bq-ans" key={i}><span className="bq-ans-q">{x.q}</span><span className="bq-ans-a">{x.type === "agree" ? "✓ " : ""}{x.a}</span></div>
+        <div className="bq-ans" key={i}><span className="bq-ans-q">{x.type === "idname" ? ID_NAME_Q : x.q}</span><span className="bq-ans-a">{x.type === "agree" ? "✓ " : ""}{x.a}</span></div>
       ))}
     </div>
   );

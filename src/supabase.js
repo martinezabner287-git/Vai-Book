@@ -2282,3 +2282,11 @@ export const setBookingAnswers = async (bookingId, answers) => {
   if (error) throw error;
   return true;
 };
+
+// The business's email for a completed client form (only for the customer who
+// made the booking, once answers are saved). See get_form_email.
+export const getFormEmail = async (bookingId) => {
+  const { data, error } = await supabase.rpc('get_form_email', { p_booking_id: bookingId });
+  if (error) { console.error('get_form_email failed:', error.message); return null; }
+  return data || null;
+};

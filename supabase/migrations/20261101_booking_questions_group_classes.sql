@@ -29,3 +29,17 @@ grant select (answers) on public.bookings to authenticated;
 -- trg_booking_platform_rules: for classes with class_times, customers can
 --   only book those times (the business itself can add anyone, any time).
 -- (Full function bodies as applied live; see pg_get_functiondef.)
+
+-- Client form copy by email (migration client_form_email_recipient):
+create or replace function public.get_form_email(p_booking_id uuid)
+returns text language sql stable security definer set search_path = public as $$
+  select c.email
+    from bookings b
+    join provider_contact_emails c on c.provider_id = b.provider_id
+   where b.id = p_booking_id
+     and b.customer_id = auth.uid()
+     and b.answers is not null
+   limit 1
+$$;
+revoke all on function public.get_form_email(uuid) from public, anon;
+grant execute on function public.get_form_email(uuid) to authenticated;
