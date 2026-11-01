@@ -62,7 +62,8 @@ function Sparkline({ points }) {
   );
 }
 
-export default function MissionControl({ stats, loading, error, onRefresh }) {
+export default function MissionControl({ stats, loading, error, onRefresh, onOpen }) {
+  const open = (tab, filter) => () => onOpen && onOpen(tab, filter);
   const [privacy, setPrivacy] = useState(() => {
     try { return localStorage.getItem("vaibook_mc_privacy") === "1"; } catch (e) { return false; }
   });
@@ -108,6 +109,7 @@ export default function MissionControl({ stats, loading, error, onRefresh }) {
           <div className="mc-hero-sub">
             {Number(s.new_users_7d) > 0 && <span className="mc-up">▲ {fmt(s.new_users_7d)} this week</span>}
             <span className="mc-muted">{fmt(signupsMonth)} joined in the last 30 days</span>
+            {onOpen && <button type="button" className="mc-link" onClick={open("customers", "all")}>See everyone →</button>}
           </div>
         </div>
         <Sparkline points={s.signups_30d} />
@@ -115,40 +117,40 @@ export default function MissionControl({ stats, loading, error, onRefresh }) {
 
       <div className="mc-roles">
         {[
-          { key: "businesses", icon: "🏪", label: "Businesses", value: s.businesses, sub: `${fmt(s.businesses_live)} live · ${fmt(s.paid_businesses)} paying`, color: "#5B4BE0" },
-          { key: "team", icon: "🧑‍🔧", label: "Team members", value: s.team_members, sub: "staff with their own login", color: "#16A34A" },
-          { key: "customers", icon: "🙋", label: "Customers", value: s.customers, sub: "booking on VaiBook", color: "#0EA5E9" },
+          { key: "businesses", icon: "🏪", label: "Businesses", value: s.businesses, sub: `${fmt(s.businesses_live)} live · ${fmt(s.paid_businesses)} paying`, color: "#5B4BE0", go: ["providers"] },
+          { key: "team", icon: "🧑‍🔧", label: "Team members", value: s.team_members, sub: "staff with their own login", color: "#16A34A", go: ["customers", "team"] },
+          { key: "customers", icon: "🙋", label: "Customers", value: s.customers, sub: "booking on VaiBook", color: "#0EA5E9", go: ["customers", "customer"] },
         ].map((r) => (
-          <div className="mc-role" key={r.key} style={{ "--c": r.color }}>
+          <button type="button" className="mc-role mc-tap" key={r.key} style={{ "--c": r.color }} onClick={open(...r.go)} aria-label={`${r.label}: ${fmt(r.value)}. Open`}>
             <div className="mc-role-head"><span className="mc-role-icon">{r.icon}</span><span className="mc-label">{r.label.toUpperCase()}</span></div>
             <div className="mc-role-num"><Count value={r.value} /></div>
             <div className="mc-role-bar"><span style={{ width: `${pct(r.value)}%` }} /></div>
             <div className="mc-role-sub">{r.sub}</div>
-          </div>
+          </button>
         ))}
       </div>
 
       <div className="mc-kpis">
-        <div className="mc-kpi">
+        <button type="button" className="mc-kpi mc-tap" onClick={open("payments")}>
           <div className="mc-label">MRR</div>
           <div className={`mc-kpi-num${privacy ? " blur" : ""}`}><Count value={s.mrr} money /></div>
           <div className="mc-kpi-sub">monthly recurring</div>
-        </div>
-        <div className="mc-kpi">
+        </button>
+        <button type="button" className="mc-kpi mc-tap" onClick={open("bookings")}>
           <div className="mc-label">BOOKINGS · 30D</div>
           <div className="mc-kpi-num"><Count value={s.bookings_30d} /></div>
           <div className="mc-kpi-sub">{fmt(s.bookings_total)} all time</div>
-        </div>
-        <div className="mc-kpi">
+        </button>
+        <button type="button" className="mc-kpi mc-tap" onClick={open("bookings")}>
           <div className="mc-label">BOOKED · 30D</div>
           <div className={`mc-kpi-num${privacy ? " blur" : ""}`}><Count value={s.booked_value_30d} money /></div>
           <div className="mc-kpi-sub">through VaiBook</div>
-        </div>
-        <div className="mc-kpi">
+        </button>
+        <button type="button" className="mc-kpi mc-tap" onClick={open("reviews")}>
           <div className="mc-label">RATING</div>
           <div className="mc-kpi-num">{s.avg_rating ? <>★ <Count value={s.avg_rating} decimals={1} /></> : "—"}</div>
-          <div className="mc-kpi-sub">{fmt(s.reviews)} review{Number(s.reviews) === 1 ? "" : "s"}</div>
-        </div>
+          <div className="mc-kpi-sub">{fmt(s.reviews)} review{Number(s.reviews) === 1 ? "" : "s"}{Number(s.reviews_hidden) > 0 ? ` · ${fmt(s.reviews_hidden)} hidden` : ""}</div>
+        </button>
       </div>
 
       <div className="mc-districts">
@@ -164,7 +166,7 @@ export default function MissionControl({ stats, loading, error, onRefresh }) {
           const tot = Number(d.total) || 0;
           const w = (n) => `${((Number(n) || 0) / maxDistrict) * 100}%`;
           return (
-            <div className={`mc-drow${tot ? "" : " empty"}`} key={d.district}>
+            <button type="button" className={`mc-drow mc-tap${tot ? "" : " empty"}`} key={d.district} onClick={open("providers", d.district)} aria-label={`${d.district}: open its businesses`}>
               <div className="mc-dname">{d.district}</div>
               {tot ? (
                 <div className="mc-dbar">
@@ -178,7 +180,7 @@ export default function MissionControl({ stats, loading, error, onRefresh }) {
                   <><b>{fmt(d.businesses)}</b><b className="t">{fmt(d.team)}</b><b className="c">{fmt(d.customers)}</b></>
                 ) : <span className="mc-muted">—</span>}
               </div>
-            </div>
+            </button>
           );
         })}
         {Number(s.customers_no_district) > 0 && (
@@ -246,6 +248,15 @@ const MC_CSS = `
   .mc-dempty { font-size: 11.5px; font-style: italic; color: rgba(22,24,29,0.32); letter-spacing: .02em; }
   .mc-dnums { display: flex; gap: 8px; font: 700 12px/1 ui-monospace, SFMono-Regular, Menlo, monospace; min-width: 66px; justify-content: flex-end; }
   .mc-dnums b { color: #5B4BE0; } .mc-dnums b.t { color: #15803D; } .mc-dnums b.c { color: #0284C7; }
+  .mc-tap { font: inherit; color: inherit; text-align: left; cursor: pointer; width: 100%; -webkit-tap-highlight-color: transparent; transition: transform .12s, box-shadow .12s, border-color .12s; }
+  .mc-tap:hover { border-color: #CFC9F5; box-shadow: 0 6px 18px rgba(91,75,224,0.10); }
+  .mc-tap:active { transform: scale(.98); }
+  .mc-tap:focus-visible { outline: 3px solid rgba(91,75,224,0.35); outline-offset: 2px; }
+  .mc-kpi.mc-tap::after, .mc-role.mc-tap::after { content: "›"; position: absolute; right: 12px; top: 10px; font-size: 18px; color: #B9B4CF; }
+  .mc-kpi.mc-tap, .mc-role.mc-tap { position: relative; }
+  .mc-drow.mc-tap { background: none; border: none; border-radius: 10px; padding: 7px 4px; }
+  .mc-drow.mc-tap:hover { background: #F7F6FB; box-shadow: none; }
+  .mc-link { font: inherit; font-size: 12.5px; font-weight: 700; color: #5B4BE0; background: none; border: none; padding: 0; cursor: pointer; }
   .mc-foot { font-size: 11.5px; color: rgba(22,24,29,0.5); margin-top: 8px; }
   @media (max-width: 640px) {
     .mc { padding: 18px 16px 14px; border-radius: 22px; }

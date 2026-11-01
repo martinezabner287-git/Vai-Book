@@ -131,6 +131,8 @@ const ProviderLocationMap = lazy(() => import("./MapWidgets").then((m) => ({ def
 // dashboard load.
 const WelcomePlaqueGenerator = lazy(() => import("./WelcomePlaqueGenerator"));
 const ShareKit = lazy(() => import("./ShareKit"));
+const AdminTools = lazy(() => import("./AdminTools"));
+const ADMIN_TOOL_TABS = ["settings", "customers", "bookings", "reviews", "broadcast", "content"];
 const InfoPages = lazy(() => import("./InfoPages"));
 const INFO_PAGE_IDS = ["about", "how-it-works", "districts", "blog", "help", "contact", "privacy", "terms"];
 function MapLoadingFallback({ height }) {
@@ -3362,6 +3364,17 @@ const css = `
   .admin-dark .metric .metric-value { color: #FFFFFF !important; letter-spacing: -.02em; }
   .admin-dark .metric-label { color: rgba(244,243,250,0.55); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .14em; font-size: 10.5px; }
   .admin-light .admin-prov-actions > div { flex-wrap: wrap; justify-content: flex-end; }
+  .admin-prov-filter { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 4px; }
+  .admin-prov-filter input { flex: 1 1 200px; min-width: 0; font: inherit; font-size: 16px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 12px; background: #fff; }
+  .admin-prov-filter select { flex: 0 1 180px; min-width: 0; font: inherit; font-size: 16px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 12px; background: #fff; }
+  /* Site banner (admin Settings → Site banner) */
+  .vb-site-banner { position: relative; display: flex; align-items: center; justify-content: center; gap: 10px; padding: 10px 44px 10px 16px; font-size: 14px; line-height: 1.4; text-align: center; background: #EEECFD; color: #2E2580; }
+  .vb-site-banner a { color: inherit; text-decoration: none; }
+  .vb-site-banner b { font-weight: 700; white-space: nowrap; }
+  .vb-site-banner.k-promo { background: #E7F7EE; color: #14532D; }
+  .vb-site-banner.k-warning { background: #FEF3C7; color: #78350F; }
+  .vb-site-banner-x { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); width: 32px; height: 32px; border: none; background: transparent; color: inherit; font-size: 14px; cursor: pointer; border-radius: 8px; opacity: .7; }
+  .vb-site-banner-x:hover { opacity: 1; background: rgba(0,0,0,0.05); }
   @media (max-width: 720px) {
     .admin-light .admin-prov-row { flex-direction: column; gap: 12px; }
     .admin-light .admin-prov-actions { align-items: flex-start !important; width: 100%; }
@@ -7544,9 +7557,15 @@ const PORTAL_TOOLS_BY_VIEW = {
     { id: "active", icon: "✅", label: "Active" },
     { id: "rejected", icon: "✖", label: "Rejected" },
     { id: "providers", icon: "🏪", label: "Providers" },
+    { id: "customers", icon: "🙋", label: "Customers" },
+    { id: "bookings", icon: "📅", label: "Bookings" },
     { id: "payments", icon: "🧾", label: "Payments" },
     { id: "refunds", icon: "↩️", label: "Refunds" },
+    { id: "reviews", icon: "⭐", label: "Reviews" },
     { id: "messages", icon: "📩", label: "Messages" },
+    { id: "broadcast", icon: "📣", label: "Broadcast" },
+    { id: "content", icon: "🗂️", label: "Categories & verses" },
+    { id: "settings", icon: "⚙️", label: "Settings & prices" },
     { id: "security", icon: "🚨", label: "Emergency" },
   ],
 };
@@ -8575,7 +8594,7 @@ function LandingPage({ onNav, session, user, onSignIn, onSignOut }) {
               }}
             >
               <span className="icon-chip" style={{ background: `${s.bg}1F` }}><span className="icon">{s.icon}</span></span>
-              {t(`services.${s.key}.name`)}
+              {svcText(s, "name", t, i18n.language)}
             </button>
           ))}
         </div>
@@ -9039,7 +9058,7 @@ const LP_TEXT = {
     title2: "with VaiBook.",
     sub: "Let clients across Belize book you online, any time of day. No commission on your bookings, no setup fees.",
     cta: "Start Getting Booked",
-    heroNote: "From BZ$1.99 a day · 14-day free trial once you're approved",
+    heroNote: "From BZ${soloDay} a day · {trialDays}-day free trial once you're approved",
     whyTitle: "Why businesses use VaiBook",
     why1t: "Clients book themselves", why1b: "Your real open times, bookable 24/7. No more answering calls and texts in the middle of an appointment.",
     why2t: "Fewer no-shows", why2b: "Ask for a deposit before you confirm, and clients get reminders before every visit.",
@@ -9051,7 +9070,7 @@ const LP_TEXT = {
     how3t: "Share your link", how3b: "Post your booking link or QR code on Instagram, WhatsApp, or at your front desk.",
     how4t: "Get booked", how4b: "Clients pick a time and book. You're notified right away and confirm with one tap.",
     payTitle: "Pricing & payments",
-    payBody: "Start free with up to 30 bookings a month. When you're ready for more, Solo is just BZ$1.99 a day and Team BZ$4.99 a day on the 6-month plan — less than a soda. Your clients pay you directly, in cash or by bank transfer, and deposits go straight to your bank account. VaiBook never takes a commission.",
+    payBody: "Start free with up to {freeCap} bookings a month. When you're ready for more, Solo is just BZ${soloDay} a day and Team BZ${teamDay} a day on the 6-month plan — less than a soda. Your clients pay you directly, in cash or by bank transfer, and deposits go straight to your bank account. VaiBook never takes a commission.",
     payNote: "Pay for 6 months, get the 7th free — and no setup fee. Or pay monthly (BZ${solo}/month for Solo, plus a one-time BZ$99 setup fee).",
     whoTitle: "Who can join",
     who1: "Barbers, hair salons, nail techs, spas, massage therapists, med spas, tattoo artists, trainers and more.",
@@ -9065,7 +9084,7 @@ const LP_TEXT = {
     pricingTitle: "Simple pricing",
     pricingSub: "Less than BZ$2 a day. Pay for 6 months and get the 7th month free.",
     faqTitle: "Frequently asked questions",
-    q1: "What does it cost?", a1: "You can start free with up to 30 bookings a month. Solo is BZ$1.99 a day and Team BZ$4.99 a day (includes your first {seats} staff seats) when you pay for 6 months — you get 7 months and no setup fee. Paying monthly is BZ${solo}/month for Solo or BZ${team}/month for Team, plus a one-time BZ$99 setup fee on your first payment.",
+    q1: "What does it cost?", a1: "You can start free with up to {freeCap} bookings a month. Solo is BZ${soloDay} a day and Team BZ${teamDay} a day (includes your first {seats} staff seats) when you pay for 6 months — you get 7 months and no setup fee. Paying monthly is BZ${solo}/month for Solo or BZ${team}/month for Team, plus a one-time BZ$99 setup fee on your first payment.",
     q2: "Does VaiBook take a cut of my bookings?", a2: "No. You pay one flat price and keep everything your clients pay you.",
     q3: "How do my clients pay?", a3: "Directly to you. You can ask for a deposit to your bank account before you confirm a booking, and collect the rest at the appointment.",
     q4: "Do my clients need to download an app?", a4: "No. They book from your link in any phone browser, and can add VaiBook to their home screen if they like.",
@@ -9078,7 +9097,7 @@ const LP_TEXT = {
     title2: "con VaiBook.",
     sub: "Deja que clientes de todo Belice reserven contigo en línea, a cualquier hora. Sin comisión por tus reservas y sin costos de inicio.",
     cta: "Empieza a recibir reservas",
-    heroNote: "Desde BZ$1.99 al día · 14 días gratis una vez aprobado",
+    heroNote: "Desde BZ${soloDay} al día · {trialDays} días gratis una vez aprobado",
     whyTitle: "Por qué los negocios usan VaiBook",
     why1t: "Los clientes reservan solos", why1b: "Tus horarios reales, disponibles 24/7. Se acabó contestar llamadas y mensajes en medio de una cita.",
     why2t: "Menos ausencias", why2b: "Pide un depósito antes de confirmar, y tus clientes reciben recordatorios antes de cada visita.",
@@ -9090,7 +9109,7 @@ const LP_TEXT = {
     how3t: "Comparte tu enlace", how3b: "Publica tu enlace o código QR en Instagram, WhatsApp o en tu recepción.",
     how4t: "Recibe reservas", how4b: "Los clientes eligen una hora y reservan. Te avisamos al instante y confirmas con un toque.",
     payTitle: "Precios y pagos",
-    payBody: "Empieza gratis con hasta 30 reservas al mes. Cuando quieras más, Solo cuesta solo BZ$1.99 al día y Team BZ$4.99 al día con el plan de 6 meses — menos que un refresco. Tus clientes te pagan directamente, en efectivo o por transferencia, y los depósitos van directo a tu cuenta bancaria. VaiBook nunca cobra comisión.",
+    payBody: "Empieza gratis con hasta {freeCap} reservas al mes. Cuando quieras más, Solo cuesta solo BZ${soloDay} al día y Team BZ${teamDay} al día con el plan de 6 meses — menos que un refresco. Tus clientes te pagan directamente, en efectivo o por transferencia, y los depósitos van directo a tu cuenta bancaria. VaiBook nunca cobra comisión.",
     payNote: "Paga 6 meses y el 7.º es gratis — sin costo de inicio. O paga mensual (BZ${solo}/mes para Solo, más un costo único de inicio de BZ$99).",
     whoTitle: "Quién puede unirse",
     who1: "Barberos, salones, técnicas de uñas, spas, masajistas, med spas, tatuadores, entrenadores y más.",
@@ -9104,7 +9123,7 @@ const LP_TEXT = {
     pricingTitle: "Precios simples",
     pricingSub: "Menos de BZ$2 al día. Paga 6 meses y el 7.º mes es gratis.",
     faqTitle: "Preguntas frecuentes",
-    q1: "¿Cuánto cuesta?", a1: "Puedes empezar gratis con hasta 30 reservas al mes. Solo cuesta BZ$1.99 al día y Team BZ$4.99 al día (incluye tus primeros {seats} puestos de personal) si pagas 6 meses — recibes 7 meses y sin costo de inicio. Pagando mensual: Solo BZ${solo}/mes o Team BZ${team}/mes, más un costo único de inicio de BZ$99 en tu primer pago.",
+    q1: "¿Cuánto cuesta?", a1: "Puedes empezar gratis con hasta {freeCap} reservas al mes. Solo cuesta BZ${soloDay} al día y Team BZ${teamDay} al día (incluye tus primeros {seats} puestos de personal) si pagas 6 meses — recibes 7 meses y sin costo de inicio. Pagando mensual: Solo BZ${solo}/mes o Team BZ${team}/mes, más un costo único de inicio de BZ$99 en tu primer pago.",
     q2: "¿VaiBook se queda con una parte de mis reservas?", a2: "No. Pagas un precio fijo y te quedas con todo lo que te pagan tus clientes.",
     q3: "¿Cómo me pagan mis clientes?", a3: "Directamente a ti. Puedes pedir un depósito a tu cuenta bancaria antes de confirmar una reserva y cobrar el resto en la cita.",
     q4: "¿Mis clientes necesitan descargar una app?", a4: "No. Reservan desde tu enlace en cualquier navegador del teléfono, y pueden agregar VaiBook a su pantalla de inicio si quieren.",
@@ -9115,7 +9134,8 @@ const LP_TEXT = {
 const lpText = (lang, key, vars) => {
   const dict = LP_TEXT[(lang || "en").slice(0, 2)] || LP_TEXT.en;
   let str = dict[key] || LP_TEXT.en[key] || key;
-  if (vars) Object.keys(vars).forEach((k) => { str = str.split(`{${k}}`).join(vars[k]); });
+  const all = { ...platformVars(), ...(vars || {}) };
+  Object.keys(all).forEach((k) => { str = str.split(`{${k}}`).join(all[k]); });
   return str;
 };
 // Small outline icons in Vai Buy's line style (stroke uses currentColor).
@@ -9263,7 +9283,7 @@ function ProviderLandingPage({ onNav }) {
                 ) : (
                   <>
                     <div className="vbl-plan-price">{px("Free", "Gratis")}</div>
-                    <div className="vbl-plan-billing">{px("Up to 30 bookings a month", "Hasta 30 reservas al mes")}</div>
+                    <div className="vbl-plan-billing">{px(`Up to ${PLATFORM.freeCap} bookings a month`, `Hasta ${PLATFORM.freeCap} reservas al mes`)}</div>
                   </>
                 )}
                 <div className="vbl-plan-tagline">{p.tagline}</div>
@@ -17095,7 +17115,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                 {currentPlan.monthly === 0 && (() => {
                   const monthStart = new Date(); monthStart.setDate(1); monthStart.setHours(0, 0, 0, 0);
                   const usedThisMonth = bookings.filter((b) => new Date(b.created_at) >= monthStart).length;
-                  const STARTER_CAP = 30;
+                  const STARTER_CAP = PLATFORM.freeCap;
                   const atCap = usedThisMonth >= STARTER_CAP;
                   return (
                     <>
@@ -18786,8 +18806,8 @@ const vaiMediaMailtoUrl = () =>
 // that adds TEAM_PER_SEAT_PRICE/month. See the seat-count picker in
 // ProviderPortal's billing card (search "teamSeats") for where this is
 // actually computed and charged.
-const TEAM_FREE_SEATS = 2;
-const TEAM_PER_SEAT_PRICE = 20;
+let TEAM_FREE_SEATS = 2;
+let TEAM_PER_SEAT_PRICE = 20;
 
 // ── BILLING TERMS (Hormozi continuity offer) ─────────────────────────
 // Two ways to pay: monthly, or 6 months up front that covers 7 months
@@ -18795,13 +18815,14 @@ const TEAM_PER_SEAT_PRICE = 20;
 // monthly costs more per day and carries a one-time setup fee on the very
 // first payment, which the 6-month plan waives. No yearly plan and no
 // refunds on a period already paid (Abner, 2026-10-27).
-const SETUP_FEE = 99;
+let SETUP_FEE = 99;
 // Plain-language messages for the server-side booking checks.
 const BOOKING_SERVER_MESSAGES = {
   PAST_DATE: { en: "That date has already passed. Please pick today or a later day.", es: "Esa fecha ya pasó. Elige hoy o un día posterior." },
   PROVIDER_UNAVAILABLE: { en: "This business isn't taking bookings right now.", es: "Este negocio no está aceptando reservas en este momento." },
   SERVICE_UNAVAILABLE: { en: "This service isn't available anymore. Please pick another one.", es: "Este servicio ya no está disponible. Elige otro." },
   NOT_AUTHORIZED: { en: "Please sign in again, then try booking once more.", es: "Inicia sesión de nuevo y vuelve a intentar la reserva." },
+  ACCOUNT_BLOCKED: { en: "This account can't make bookings right now. Message VaiBook support if you think this is a mistake.", es: "Esta cuenta no puede hacer reservas por ahora. Escribe al soporte de VaiBook si crees que es un error." },
 };
 const SIX_MONTH_PAID = 6;
 const SIX_MONTH_GET = 7;
@@ -18912,6 +18933,139 @@ const PUBLIC_PLANS = PLANS.filter((p) => p.id !== "starter");
 
 
 const DISTRICTS = ["Belize City", "Cayo", "Corozal", "Orange Walk", "Stann Creek", "Toledo"];
+
+// ── PLATFORM CONFIG (admin-editable, 2026-10-31) ─────────────────────
+// Prices, free-plan cap, trial/grace days, payment details, site banner,
+// categories and districts live in Supabase (platform_settings,
+// service_categories, districts) and are edited in the admin portal.
+// The values in this file are only the defaults until they load. A copy is
+// cached so the next visit starts with the latest numbers, no flash.
+const PLATFORM = { freeCap: 30, freeCapEnforced: false, trialDays: 14, graceDays: 7, banner: null, rev: 0 };
+const PLATFORM_CACHE_KEY = "vaibook_platform_v1";
+const fmt2 = (n) => (Math.round(Number(n) * 100) / 100).toFixed(2);
+const platformVars = () => {
+  const solo = PLANS.find((x) => x.id === "pro");
+  const team = PLANS.find((x) => x.id === "business");
+  return {
+    freeCap: PLATFORM.freeCap, trialDays: PLATFORM.trialDays, graceDays: PLATFORM.graceDays,
+    soloDay: solo ? dayRate(solo.sixMonthTotal || solo.monthly * SIX_MONTH_PAID, SIX_MONTH_DAYS) : "1.99",
+    teamDay: team ? dayRate(team.sixMonthTotal || team.monthly * SIX_MONTH_PAID, SIX_MONTH_DAYS) : "4.99",
+  };
+};
+function applyPlatformConfig(cfg) {
+  if (!cfg) return;
+  const st = cfg.settings;
+  if (st) {
+    const solo = PLANS.find((x) => x.id === "pro");
+    const team = PLANS.find((x) => x.id === "business");
+    const starter = PLANS.find((x) => x.id === "starter");
+    const n = (v, d) => (v === null || v === undefined || v === "" || !isFinite(Number(v)) ? d : Number(v));
+    TEAM_FREE_SEATS = n(st.team_free_seats, TEAM_FREE_SEATS);
+    TEAM_PER_SEAT_PRICE = n(st.team_seat_price, TEAM_PER_SEAT_PRICE);
+    SETUP_FEE = n(st.setup_fee, SETUP_FEE);
+    PLATFORM.freeCap = n(st.free_booking_cap, PLATFORM.freeCap);
+    PLATFORM.freeCapEnforced = !!st.free_cap_enforced;
+    PLATFORM.trialDays = n(st.trial_days, PLATFORM.trialDays);
+    PLATFORM.graceDays = n(st.grace_days, PLATFORM.graceDays);
+    if (solo) {
+      solo.monthly = n(st.solo_monthly, solo.monthly); solo.sixMonthTotal = n(st.solo_six_month, solo.sixMonthTotal);
+      solo.price = `BZ$${fmt2(solo.monthly)}/month, or BZ$${dayRate(solo.sixMonthTotal, SIX_MONTH_DAYS)}/day on 6 months`;
+      solo.features = solo.features.map((f) => f.replace(/Try free for \d+ days/, `Try free for ${PLATFORM.trialDays} days`));
+    }
+    if (team) {
+      team.monthly = n(st.team_monthly, team.monthly); team.sixMonthTotal = n(st.team_six_month, team.sixMonthTotal);
+      team.price = `BZ$${fmt2(team.monthly)}/month, or BZ$${dayRate(team.sixMonthTotal, SIX_MONTH_DAYS)}/day on 6 months`;
+      team.desc = `Base fee + BZ$${TEAM_PER_SEAT_PRICE}/seat after your first ${TEAM_FREE_SEATS}`;
+      team.priceNote = `Base fee includes your first ${TEAM_FREE_SEATS} staff seats — BZ$${TEAM_PER_SEAT_PRICE}/month for each seat after that`;
+    }
+    if (starter) {
+      starter.desc = `Up to ${PLATFORM.freeCap} bookings/month`;
+      starter.features = starter.features.map((f) => f.replace(/Up to \d+ bookings a month/, `Up to ${PLATFORM.freeCap} bookings a month`));
+    }
+    const pay = { "Bank transfer": st.pay_bank, DigiWallet: st.pay_digiwallet, "E-Kyash": st.pay_ekyash };
+    VAIBOOK_PAY_TO.forEach((m) => { if (pay[m.method] !== undefined && pay[m.method] !== null) m.detail = String(pay[m.method]); });
+    PLATFORM.banner = st.banner_on && (st.banner_en || "").trim() ? {
+      kind: st.banner_kind || "info", audience: st.banner_audience || "everyone",
+      en: st.banner_en, es: st.banner_es, link: st.banner_link || "", stamp: String(st.updated_at || ""),
+    } : null;
+  }
+  if (Array.isArray(cfg.categories) && cfg.categories.length) {
+    const active = cfg.categories.filter((c) => c.is_active).sort((a, b) => a.sort_order - b.sort_order);
+    const tiles = active.filter((c) => c.show_on_home).map((c) => ({
+      key: c.key, icon: c.icon || "✨", name: c.name_en, desc: c.desc_en, bg: "#1A5C44",
+      categoryQuery: c.search_term || c.service_type,
+      label: { en: c.name_en, es: c.name_es || c.name_en }, descLabel: { en: c.desc_en, es: c.desc_es || c.desc_en },
+    }));
+    if (tiles.length) SERVICES.splice(0, SERVICES.length, ...tiles);
+    const types = active.map((c) => c.service_type).filter((t) => t !== "Other");
+    if (types.length) SERVICE_TYPES.splice(0, SERVICE_TYPES.length, ...types, "Other");
+    cfg.categories.forEach((c) => { if (c.service_type && !SERVICE_TYPE_TO_CATEGORY[c.service_type]) SERVICE_TYPE_TO_CATEGORY[c.service_type] = c.module_group || "general"; });
+  }
+  if (Array.isArray(cfg.districts) && cfg.districts.length) {
+    const ds = cfg.districts.filter((d) => d.is_active).sort((a, b) => a.sort_order - b.sort_order).map((d) => d.name);
+    if (ds.length) DISTRICTS.splice(0, DISTRICTS.length, ...ds);
+  }
+  try {
+    const iv = i18n.options && i18n.options.interpolation;
+    if (iv) iv.defaultVariables = { ...(iv.defaultVariables || {}), ...platformVars() };
+  } catch (e) { /* ignore */ }
+  PLATFORM.rev += 1;
+}
+async function loadPlatformConfig() {
+  const [st, cats, ds] = await Promise.all([
+    supabase.from("platform_settings").select("*").limit(1),
+    supabase.from("service_categories").select("*"),
+    supabase.from("districts").select("*"),
+  ]);
+  const one = (r) => (Array.isArray(r.data) ? r.data[0] : r.data) || null;
+  const cfg = {
+    settings: st.error ? null : one(st),
+    categories: cats.error || !Array.isArray(cats.data) ? null : cats.data,
+    districts: ds.error || !Array.isArray(ds.data) ? null : ds.data,
+  };
+  if (!cfg.settings && !cfg.categories && !cfg.districts) return false;
+  applyPlatformConfig(cfg);
+  try { localStorage.setItem(PLATFORM_CACHE_KEY, JSON.stringify(cfg)); } catch (e) { /* ignore */ }
+  return true;
+}
+function applyCachedPlatformConfig() {
+  try { const raw = localStorage.getItem(PLATFORM_CACHE_KEY); if (raw) applyPlatformConfig(JSON.parse(raw)); } catch (e) { /* ignore */ }
+}
+// Display label for a home-page category tile: admin-set names when loaded,
+// otherwise the translated defaults.
+const svcText = (s, field, t, lang) => {
+  const es = String(lang || "").toLowerCase().startsWith("es");
+  const own = field === "name" ? s.label : s.descLabel;
+  if (own) return (es ? own.es : own.en) || own.en || "";
+  return t(`services.${s.key}.${field}`);
+};
+
+// Strip across the top of the site, set in admin Settings.
+function SiteBanner({ view }) {
+  const b = PLATFORM.banner;
+  const [closed, setClosed] = useState(() => { try { return localStorage.getItem("vaibook_banner_closed") || ""; } catch (e) { return ""; } });
+  if (!b || view === "admin" || view === "auth") return null;
+  const businessSide = view === "provider" || view === "staff";
+  if (b.audience === "businesses" && !businessSide) return null;
+  if (b.audience === "customers" && businessSide) return null;
+  const id = b.stamp + "|" + b.en;
+  if (closed === id) return null;
+  const es = String(i18n.language || "").toLowerCase().startsWith("es");
+  const text = (es && b.es) ? b.es : b.en;
+  const close = () => { setClosed(id); try { localStorage.setItem("vaibook_banner_closed", id); } catch (e) { /* ignore */ } };
+  const link = b.link;
+  return (
+    <div className={`vb-site-banner k-${b.kind}`} role="status">
+      {link ? (
+        <a href={link} target={link.startsWith("#") ? undefined : "_blank"} rel={link.startsWith("#") ? undefined : "noopener noreferrer"}
+          onClick={link.startsWith("#") ? () => { window.location.hash = link.slice(1); } : undefined}>
+          <span>{text}</span> <b>{es ? "Ver más →" : "Learn more →"}</b>
+        </a>
+      ) : <span>{text}</span>}
+      <button type="button" className="vb-site-banner-x" onClick={close} aria-label={es ? "Cerrar" : "Close"}>✕</button>
+    </div>
+  );
+}
 
 // Approximate district-town centroids, used only to turn a real browser
 // geolocation fix into "closest of Belize's 6 districts" — a plain
@@ -19284,6 +19438,16 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
   useEffect(() => {
     try { sessionStorage.setItem("vaibook_admin_tab", tab); } catch (e) { /* ignore */ }
   }, [tab]);
+  // Tapping a Command Center number opens the screen behind it, sometimes
+  // pre-filtered (e.g. Customers → just customers, a district → its businesses).
+  const [jumpFilter, setJumpFilter] = useState({});
+  const [provFilter, setProvFilter] = useState({ q: "", district: "" });
+  const openFromDashboard = (target, filter) => {
+    if (target === "providers") setProvFilter({ q: "", district: filter || "" });
+    else setJumpFilter((f) => ({ ...f, [target]: filter || "" }));
+    setTab(target);
+    try { window.scrollTo({ top: 0 }); } catch (e) { /* ignore */ }
+  };
   useEffect(() => {
     if (tab !== "messages" || supportMsgs !== null) return;
     let alive = true;
@@ -19600,7 +19764,7 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
   // admin-only RPCs instead (see adminStartProviderTrial/etc. in
   // supabase.js), which skip that eligibility check entirely.
   const handleAdminStartTrial = async (provider) => {
-    if (!window.confirm(`Start a 14-day free trial of Solo for ${provider.business_name}? This moves them to Solo immediately, no payment required for 14 days.`)) return;
+    if (!window.confirm(`Start a ${PLATFORM.trialDays}-day free trial of Solo for ${provider.business_name}? This moves them to Solo immediately, no payment required for ${PLATFORM.trialDays} days.`)) return;
     setTrialActionId(provider.id);
     const updated = await adminStartProviderTrial(provider.id);
     setTrialActionId(null);
@@ -19700,6 +19864,12 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
   const isApplicationLive = (app) => liveBusinessNames.has((app.business_name || "").trim().toLowerCase());
 
   const planLabel = (id) => (PLANS.find(p => p.id === id)?.name) || id;
+  const provMatches = (p) => {
+    if (provFilter.district && p.district !== provFilter.district) return false;
+    const q = provFilter.q.trim().toLowerCase();
+    if (!q) return true;
+    return [p.business_name, p.owner_name, p.phone, p.service_type, p.district, p.user_email].some((v) => String(v || "").toLowerCase().includes(q));
+  };
 
   return (
     <div className="portal-layout admin-light">
@@ -19750,10 +19920,16 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
             refundsCount={refunds.length}
             emergencyLabel={siteOffline.on ? "Offline" : maintenance.on ? "Paused" : null}
             onJump={setTab}
+            onOpen={openFromDashboard}
           />
         )}
 
-        {tab !== "overview" && tab !== "providers" && tab !== "payments" && tab !== "refunds" && tab !== "messages" && tab !== "security" && (
+        {ADMIN_TOOL_TABS.includes(tab) && (
+          <Suspense fallback={<p style={{ color: "var(--muted)", padding: 16 }}>Loading…</p>}>
+            <AdminTools tool={tab} filter={jumpFilter[tab]} key={tab + (jumpFilter[tab] || "")} />
+          </Suspense>
+        )}
+        {tab !== "overview" && tab !== "providers" && tab !== "payments" && tab !== "refunds" && tab !== "messages" && tab !== "security" && !ADMIN_TOOL_TABS.includes(tab) && (
           <>
             <div className="portal-header">
               <h2>Provider applications</h2>
@@ -19834,13 +20010,20 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
               <div className="metric"><div className="metric-label">Total</div><div className="metric-value">{providers.length}</div><div className="metric-sub">All providers</div></div>
               <div className="metric"><div className="metric-label">Live providers</div><div className="metric-value" style={{ color: "var(--lime)" }}>{providers.filter(p => p.is_active).length}</div><div className="metric-sub">Signed in and visible in search</div></div>
               <div className="metric"><div className="metric-label">Suspended</div><div className="metric-value">{providers.filter(p => !p.is_active).length}</div><div className="metric-sub">Hidden from customers</div></div>
-              <div className="metric"><div className="metric-label">In trial</div><div className="metric-value" style={{ color: "var(--forest)" }}>{providers.filter(p => p.is_trial).length}</div><div className="metric-sub">On the 14-day free trial right now</div></div>
+              <div className="metric"><div className="metric-label">In trial</div><div className="metric-value" style={{ color: "var(--forest)" }}>{providers.filter(p => p.is_trial).length}</div><div className="metric-sub">On the {PLATFORM.trialDays}-day free trial right now</div></div>
             </div>
 
             <div className="card">
               <div className="card-title" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <span>All providers</span>
                 <button className="btn-sm forest" onClick={loadProviders} disabled={loadingProviders}>{loadingProviders ? "Refreshing..." : "Refresh"}</button>
+              </div>
+              <div className="admin-prov-filter">
+                <input type="search" placeholder="Search by name, phone or type" value={provFilter.q} onChange={(e) => setProvFilter((f) => ({ ...f, q: e.target.value }))} aria-label="Search providers" />
+                <select value={provFilter.district} onChange={(e) => setProvFilter((f) => ({ ...f, district: e.target.value }))} aria-label="District">
+                  <option value="">All districts</option>
+                  {Array.from(new Set([...DISTRICTS, ...providers.map((p) => p.district).filter(Boolean)])).map((d) => <option key={d} value={d}>{d}</option>)}
+                </select>
               </div>
 
               {(() => {
@@ -19860,7 +20043,10 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
                 </p>
               )}
 
-              {providers.map(p => {
+              {(provFilter.q || provFilter.district) && providers.length > 0 && !providers.some(provMatches) && (
+                <p style={{ fontSize: 13, color: "var(--muted)", padding: "16px 0" }}>No businesses match. <button type="button" className="btn-sm ghost" onClick={() => setProvFilter({ q: "", district: "" })}>Show all</button></p>
+              )}
+              {providers.filter(provMatches).map(p => {
                 const isEditing = editingProviderId === p.id;
                 const isSaving = savingProviderId === p.id;
                 const isConfirmingDelete = confirmDeleteId === p.id;
@@ -20320,6 +20506,17 @@ export default function App() {
   // bar and page background live outside AdminPortal, so flag the body.
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const closeMobileMenu = useCallback(() => setMobileMenuOpen(false), []);
+  // Admin-editable prices, limits, categories, districts and banner: start
+  // from the cached copy, then refresh from Supabase (and again whenever an
+  // admin saves). Bumping platformRev re-renders the app with the new values.
+  const [, setPlatformRev] = useState(() => { applyCachedPlatformConfig(); return PLATFORM.rev; });
+  useEffect(() => {
+    let alive = true;
+    const refresh = () => loadPlatformConfig().then((ok) => { if (alive && ok) setPlatformRev(PLATFORM.rev); }).catch(() => {});
+    refresh();
+    window.addEventListener("vaibook-platform-updated", refresh);
+    return () => { alive = false; window.removeEventListener("vaibook-platform-updated", refresh); };
+  }, []);
   useEffect(() => {
     document.body.classList.remove("admin-dark-body");
     return () => document.body.classList.remove("admin-dark-body");
@@ -20890,6 +21087,7 @@ export default function App() {
           sidebar layout — keeps the global nav as before. */}
       {view !== "auth" && !(view === "provider" && providerProfile) && <Nav onNav={setView} current={view} staffProfile={staffProfile} hideOnMobile={MOBILE_NAV_VIEWS.includes(view)} {...authProps} />}
       {MOBILE_NAV_VIEWS.includes(view) && <MobileTopBar view={view} session={session} onNav={setView} onOpenMenu={() => setMobileMenuOpen(true)} />}
+      <SiteBanner view={view} />
       <MobileDrawer open={mobileMenuOpen} onClose={closeMobileMenu} view={view} staffProfile={staffProfile} onNav={setView} {...authProps} />
       {BOTTOM_BAR_VIEWS.includes(view) && <BottomTabBar view={view} session={session} onNav={setView} />}
       {view === "home" && !session && <LandingPage onNav={setView} {...authProps} />}

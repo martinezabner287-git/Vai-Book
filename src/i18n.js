@@ -39,7 +39,12 @@ i18n.use(initReactI18next).init({
   },
   lng: getInitialLanguage(),
   fallbackLng: "en",
-  interpolation: { escapeValue: false }, // React already escapes — avoids double-escaping.
+  interpolation: {
+    escapeValue: false, // React already escapes — avoids double-escaping.
+    // Admin-editable numbers used in copy ({{trialDays}}, {{freeCap}}, …).
+    // App.jsx (applyPlatformConfig) overwrites these once settings load.
+    defaultVariables: { trialDays: 14, freeCap: 30, graceDays: 7, soloDay: "1.99", teamDay: "4.99" },
+  },
   react: { useSuspense: false }, // resources are bundled, not fetched — nothing to suspend on.
 });
 

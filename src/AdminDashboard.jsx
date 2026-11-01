@@ -54,6 +54,7 @@ export default function AdminDashboard({
   refundsCount = 0,
   emergencyLabel = null,
   onJump,
+  onOpen,
   platformStats = null,
   platformStatsLoading = false,
   platformStatsError = false,
@@ -66,7 +67,7 @@ export default function AdminDashboard({
     <div className="acc-root">
       <style>{ADMIN_DASHBOARD_CSS}</style>
 
-      <MissionControl stats={platformStats} loading={platformStatsLoading} error={platformStatsError} onRefresh={onRefreshStats} />
+      <MissionControl stats={platformStats} loading={platformStatsLoading} error={platformStatsError} onRefresh={onRefreshStats} onOpen={onOpen} />
 
       {/* Quick-jump status strip — these used to be badge counts on the
           sidebar (Payments / Refunds / Emergency); now that the sidebar's

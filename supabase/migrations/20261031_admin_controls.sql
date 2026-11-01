@@ -211,13 +211,14 @@ create trigger booking_platform_rules before insert on public.bookings
 -- ── 6. Customers list + block/unblock (admin) ─────────────────────────
 create or replace function public.admin_list_customers(p_search text default '', p_limit integer default 200)
 returns jsonb language plpgsql stable security definer set search_path = public as $$
-declare q text := '%' || lower(coalesce(trim(p_search), '')) || '%'; r jsonb;
+declare q text := '%' || lower(coalesce(trim(p_search), '')) || '%';
+        d text := regexp_replace(coalesce(trim(p_search), ''), '[^0-9]', '', 'g');
+        r jsonb;
 begin
   if not is_current_user_admin() then raise exception 'NOT_AUTHORIZED: admin only' using errcode = 'P0001'; end if;
   select coalesce(jsonb_agg(x order by (x->>'created_at') desc), '[]'::jsonb) into r from (
     select jsonb_build_object(
-      'id', u.id,
-      'full_name', u.full_name,
+      'id', u.id, 'full_name', u.full_name,
       'phone', coalesce(nullif(u.whatsapp_number, ''), nullif(u.phone, '')),
       'email', case when u.email ilike '%@phone.vaibook.bz' then null else u.email end,
       'created_at', u.created_at,
@@ -231,14 +232,13 @@ begin
       'cancelled', (select count(*) from bookings b where b.customer_id = u.id and b.status = 'cancelled'),
       'last_booking', (select max(b.booking_date) from bookings b where b.customer_id = u.id),
       'reviews', (select count(*) from reviews rv where rv.customer_id = u.id),
-      'blocked', bc.user_id is not null,
-      'block_reason', bc.reason
+      'blocked', bc.user_id is not null, 'block_reason', bc.reason
     ) as x
     from users u left join blocked_customers bc on bc.user_id = u.id
-    where q = '%%' or lower(coalesce(u.full_name, '')) like q or lower(coalesce(u.email, '')) like q
-       or regexp_replace(coalesce(u.whatsapp_number, '') || ' ' || coalesce(u.phone, ''), '[^0-9 ]', '', 'g')
-          like '%' || regexp_replace(coalesce(trim(p_search), ''), '[^0-9]', '', 'g') || '%'
-          and regexp_replace(coalesce(trim(p_search), ''), '[^0-9]', '', 'g') <> ''
+    where q = '%%'
+       or lower(coalesce(u.full_name, '')) like q
+       or lower(coalesce(u.email, '')) like q
+       or (d <> '' and regexp_replace(coalesce(u.whatsapp_number, '') || ' ' || coalesce(u.phone, '') || ' ' || coalesce(u.email, ''), '[^0-9 ]', '', 'g') like '%' || d || '%')
     order by u.created_at desc
     limit least(greatest(coalesce(p_limit, 200), 1), 500)
   ) t;
@@ -464,9 +464,38 @@ drop policy if exists "admins manage verses" on public.daily_verses;
 create policy "admins manage verses" on public.daily_verses for all to authenticated
   using (is_current_user_admin()) with check (is_current_user_admin());
 grant insert, update, delete on public.daily_verses to authenticated;
-do $$ begin
-  if exists (select 1 from pg_class where relname = 'daily_verses_id_seq') then
-    perform setval('public.daily_verses_id_seq', (select coalesce(max(id), 1) from public.daily_verses));
-    execute 'grant usage on sequence public.daily_verses_id_seq to authenticated';
-  end if;
+select setval('public.daily_verses_id_seq', (select coalesce(max(id), 1) from public.daily_verses));
+grant usage on sequence public.daily_verses_id_seq to authenticated;
+
+-- ── 12. Admin bookings list (Command Center → Bookings) ───────────────
+create or replace function public.admin_list_bookings(p_days integer default 30, p_limit integer default 300)
+returns jsonb language plpgsql stable security definer set search_path = public as $$
+declare r jsonb;
+begin
+  if not is_current_user_admin() then raise exception 'NOT_AUTHORIZED: admin only' using errcode = 'P0001'; end if;
+  select coalesce(jsonb_agg(x order by (x->>'created_at') desc), '[]'::jsonb) into r from (
+    select jsonb_build_object(
+      'id', b.id, 'order_number', b.order_number, 'created_at', b.created_at,
+      'booking_date', b.booking_date, 'booking_time', b.booking_time, 'status', b.status,
+      'total_amount', b.total_amount, 'business_name', p.business_name, 'district', p.district,
+      'service_name', s.name, 'customer_name', u.full_name
+    ) as x
+    from bookings b
+    left join provider_profiles p on p.id = b.provider_id
+    left join services s on s.id = b.service_id
+    left join users u on u.id = b.customer_id
+    where p_days is null or b.created_at > now() - make_interval(days => greatest(p_days, 1))
+    order by b.created_at desc
+    limit least(greatest(coalesce(p_limit, 300), 1), 1000)
+  ) t;
+  return r;
 end $$;
+
+-- ── 13. Command Center stats: MRR from settings, districts from the
+-- districts table, hidden reviews left out of the rating. (Full function
+-- as applied; see the live definition of admin_platform_stats.)
+-- Changes vs. the 2026-10-30 version:
+--   'mrr'       uses platform_settings.solo_monthly / team_monthly
+--   'districts' lists active rows of public.districts + any district a business uses
+--   'reviews' / 'avg_rating' exclude reviews where is_hidden
+--   new keys: 'reviews_hidden', 'blocked_customers'

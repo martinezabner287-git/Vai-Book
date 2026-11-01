@@ -154,11 +154,11 @@
       "emailUs": "Email us",
       "trial": {
         "q": "How does the free trial work?",
-        "a": "Every new business starts on a free Trial plan — up to 30 bookings a month, no card required. There's no automatic cutoff date; you stay on Trial until you choose to upgrade from the Billing tab in your dashboard."
+        "a": "Every new business starts on a free Trial plan — up to {{freeCap}} bookings a month, no card required. There's no automatic cutoff date; you stay on Trial until you choose to upgrade from the Billing tab in your dashboard."
       },
       "plans": {
         "q": "What plans does VaiBook offer?",
-        "a": "Three: Trial (free, up to 30 bookings a month), Solo (for solo practitioners), and Team (a base fee plus per-seat pricing for shops with staff). Full pricing and features are on the Billing tab in your dashboard."
+        "a": "Three: Trial (free, up to {{freeCap}} bookings a month), Solo (for solo practitioners), and Team (a base fee plus per-seat pricing for shops with staff). Full pricing and features are on the Billing tab in your dashboard."
       },
       "staff": {
         "q": "Can I add staff to my account?",
@@ -251,7 +251,7 @@
   "providerLanding": {
     "eyebrow": "For shop & studio owners",
     "title": "A self-care booking website.",
-    "trialBadge": "✨ 14 days free once you're approved",
+    "trialBadge": "✨ {{trialDays}} days free once you're approved",
     "applyToJoin14": "Start Getting Booked",
     "note": "No contracts, no setup fees — cancel anytime.",
     "seeItInAction": "Why shop owners choose VaiBook",
@@ -295,9 +295,9 @@
     "categoriesSub": "From a solo stylist to a full wellness team — if people book appointments with you, VaiBook was built for it.",
     "forBusinessOwners": "For business owners",
     "simplePricing": "Simple pricing. Grow when you're ready.",
-    "noContractsApply": "No contracts, no setup fees. Apply for access, and once you're approved your 14-day free trial starts automatically.",
+    "noContractsApply": "No contracts, no setup fees. Apply for access, and once you're approved your {{trialDays}}-day free trial starts automatically.",
     "recommended": "Recommended",
-    "trialBadgeShort": "✨ 14-Day Free Trial",
+    "trialBadgeShort": "✨ {{trialDays}}-Day Free Trial",
     "billedPerMonth": "Billed BZ${{amount}} / month",
     "applyToJoin": "Apply to Join",
     "pricingFootNote": "Every plan includes invoices, refund tracking, and your own booking page. Change plans anytime — email us and we'll switch you at the end of your current billing period.",
@@ -311,12 +311,12 @@
     "applyForVaiMedia": "Apply for Vai Media",
     "orEmailUs": "or email us",
     "stopLosing": "Ready to run your shop like the top shops do?",
-    "forBusinessSub": "Apply today — once you're approved, your 14-day free trial starts automatically. No contracts, no setup fees, cancel anytime."
+    "forBusinessSub": "Apply today — once you're approved, your {{trialDays}}-day free trial starts automatically. No contracts, no setup fees, cancel anytime."
   },
   "providerSignupModal": {
     "close": "Close",
-    "eyebrow": "✨ 14-day free trial",
-    "headline": "Start Your 14-Day Free Trial.",
+    "eyebrow": "✨ {{trialDays}}-day free trial",
+    "headline": "Start Your {{trialDays}}-Day Free Trial.",
     "sub": "No credit card required. Setup takes 30 seconds.",
     "shopNameLabel": "Shop Name",
     "shopNamePlaceholder": "e.g. Fresh Cutz Barbershop",
@@ -691,7 +691,7 @@
       "unknownAccount": "unknown account",
       "wrongAccountHint": "If that's not the Google account your business is registered under — easy to pick the wrong one, since Google's account picker shows up every time you sign in — that's almost always why this screen appears. Try a different account before assuming anything's wrong with your data.",
       "switchAccountButton": "Try a different Google account",
-      "newBusinessHint": "Definitely the right account, and definitely a new business? Apply below — once approved, your provider portal and 14-day free trial activate automatically.",
+      "newBusinessHint": "Definitely the right account, and definitely a new business? Apply below — once approved, your provider portal and {{trialDays}}-day free trial activate automatically.",
       "listBusinessButton": "List your business",
       "staffHint": "Work here as staff? Ask the owner to check that your seat is still active and registered to this exact email address — that's what opens your own staff view."
     },
@@ -702,7 +702,7 @@
     },
     "errors": {
       "maintenanceMode": "New bookings are temporarily paused for maintenance. Please try again shortly.",
-      "starterLimitReached": "You've reached your trial's 30 bookings/month limit. Upgrade to Solo under My plan & billing for unlimited bookings.",
+      "starterLimitReached": "You've reached your trial's {{freeCap}} bookings/month limit. Upgrade to Solo under My plan & billing for unlimited bookings.",
       "uploadFailed": "Something went wrong uploading that. Please try again.",
       "updateBookingFailed": "Couldn't update that booking. Please check your connection and try again.",
       "saveSettingFailed": "Couldn't save that setting. Please try again."
@@ -1005,19 +1005,19 @@
     "billing": {
       "subtitle": "This is your VaiBook subscription — separate from what customers pay you for bookings.",
       "currentPlan": "Current plan",
-      "trialBannerTitle": "🎉 You're in your 14-day free trial of {{plan}} — nothing to pay yet.",
+      "trialBannerTitle": "🎉 You're in your {{trialDays}}-day free trial of {{plan}} — nothing to pay yet.",
       "trialBannerSub": "Just BZ${{amount}} a day once your trial ends and billing starts — pick your plan below and upload a receipt whenever you're ready.",
       "realTrialBannerTitle": "🎉 {{days}} days left in your free Solo trial — nothing to pay yet.",
       "realTrialBannerSub": "Your trial ends {{date}}. Send a payment any time before then to keep Solo's deposits, loyalty program and reporting — if it lapses, you'll quietly drop back to the free Trial plan, no charge either way.",
       "justPerDay": "Just BZ${{amount}} a day.",
       "nextPaymentDue": "Next payment due {{date}}",
       "listingHidden": "Your listing is currently hidden from customers. If this is because a payment is overdue, upload your receipt below — you'll go back live as soon as it's confirmed.",
-      "trialNoPlanYet": "You're on the free Trial plan — up to 30 bookings a month, no cost, no time limit. Pick Solo or Team below whenever you're ready to upgrade.",
+      "trialNoPlanYet": "You're on the free Trial plan — up to {{freeCap}} bookings a month, no cost, no time limit. Pick Solo or Team below whenever you're ready to upgrade.",
       "bookingsUsedThisMonth": "{{used}} of {{cap}} bookings used this month",
       "hitLimit": "You've hit this month's limit — new bookings will be turned away until next month, or you upgrade to Solo for unlimited bookings.",
-      "soloTrialOfferTitle": "Not sure yet? Try Solo free for 14 days.",
+      "soloTrialOfferTitle": "Not sure yet? Try Solo free for {{trialDays}} days.",
       "soloTrialOfferSub": "Deposits, loyalty & rewards, and reporting — full Solo access, no payment, no card. One trial per business; you'll keep the free Trial plan either way once it ends.",
-      "soloTrialOfferCta": "Start my free 14-day Solo trial",
+      "soloTrialOfferCta": "Start my free {{trialDays}}-day Solo trial",
       "soloTrialOfferError": "That didn't go through — refresh the page and try again, or message us if it keeps happening.",
       "upgradeYourPlan": "Upgrade your plan",
       "payForYourPlan": "Pay for your plan",

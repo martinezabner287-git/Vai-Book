@@ -154,11 +154,11 @@
       "emailUs": "Escríbenos",
       "trial": {
         "q": "¿Cómo funciona la prueba gratuita?",
-        "a": "Todo negocio nuevo comienza con el plan de Prueba gratis — hasta 30 reservas al mes, sin tarjeta. No hay una fecha límite automática; te quedas en Prueba hasta que decidas actualizar desde la pestaña de Facturación en tu panel."
+        "a": "Todo negocio nuevo comienza con el plan de Prueba gratis — hasta {{freeCap}} reservas al mes, sin tarjeta. No hay una fecha límite automática; te quedas en Prueba hasta que decidas actualizar desde la pestaña de Facturación en tu panel."
       },
       "plans": {
         "q": "¿Qué planes ofrece VaiBook?",
-        "a": "Tres: Prueba (gratis, hasta 30 reservas al mes), Solo (para profesionales independientes) y Equipo (una tarifa base más un costo por asiento para negocios con personal). Los precios y detalles completos están en la pestaña de Facturación de tu panel."
+        "a": "Tres: Prueba (gratis, hasta {{freeCap}} reservas al mes), Solo (para profesionales independientes) y Equipo (una tarifa base más un costo por asiento para negocios con personal). Los precios y detalles completos están en la pestaña de Facturación de tu panel."
       },
       "staff": {
         "q": "¿Puedo agregar personal a mi cuenta?",
@@ -251,7 +251,7 @@
   "providerLanding": {
     "eyebrow": "Para dueños de salones y estudios",
     "title": "Un sitio de reservas de autocuidado.",
-    "trialBadge": "✨ 14 días gratis una vez aprobado",
+    "trialBadge": "✨ {{trialDays}} días gratis una vez aprobado",
     "applyToJoin14": "Empieza a recibir reservas",
     "note": "Sin contratos, sin cuotas de instalación — cancela cuando quieras.",
     "seeItInAction": "Por qué los dueños eligen VaiBook",
@@ -295,9 +295,9 @@
     "categoriesSub": "Desde un estilista independiente hasta un equipo completo de bienestar — si tus clientes reservan citas contigo, VaiBook fue hecho para eso.",
     "forBusinessOwners": "Para dueños de negocios",
     "simplePricing": "Precios simples. Crece cuando estés listo.",
-    "noContractsApply": "Sin contratos, sin cuotas de instalación. Aplica para acceder, y una vez aprobado tu prueba gratis de 14 días comienza automáticamente.",
+    "noContractsApply": "Sin contratos, sin cuotas de instalación. Aplica para acceder, y una vez aprobado tu prueba gratis de {{trialDays}} días comienza automáticamente.",
     "recommended": "Recomendado",
-    "trialBadgeShort": "✨ 14 días de prueba gratis",
+    "trialBadgeShort": "✨ {{trialDays}} días de prueba gratis",
     "billedPerMonth": "Se cobra BZ${{amount}} / mes",
     "applyToJoin": "Aplicar para unirte",
     "pricingFootNote": "Cada plan incluye facturas, seguimiento de reembolsos y tu propia página de reservas. Cambia de plan cuando quieras — escríbenos y te cambiamos al final de tu periodo de facturación actual.",
@@ -311,12 +311,12 @@
     "applyForVaiMedia": "Aplicar para Vai Media",
     "orEmailUs": "o escríbenos por correo",
     "stopLosing": "¿Listo para manejar tu negocio como los mejores?",
-    "forBusinessSub": "Aplica hoy — una vez aprobado, tu prueba gratis de 14 días comienza automáticamente. Sin contratos, sin cuotas de instalación, cancela cuando quieras."
+    "forBusinessSub": "Aplica hoy — una vez aprobado, tu prueba gratis de {{trialDays}} días comienza automáticamente. Sin contratos, sin cuotas de instalación, cancela cuando quieras."
   },
   "providerSignupModal": {
     "close": "Cerrar",
-    "eyebrow": "✨ Prueba gratis de 14 días",
-    "headline": "Comienza tu prueba gratis de 14 días.",
+    "eyebrow": "✨ Prueba gratis de {{trialDays}} días",
+    "headline": "Comienza tu prueba gratis de {{trialDays}} días.",
     "sub": "No se requiere tarjeta de crédito. La configuración toma 30 segundos.",
     "shopNameLabel": "Nombre del negocio",
     "shopNamePlaceholder": "ej. Barbería Fresh Cutz",
@@ -691,7 +691,7 @@
       "unknownAccount": "cuenta desconocida",
       "wrongAccountHint": "Si esa no es la cuenta de Google con la que registraste tu negocio —es fácil elegir la incorrecta, ya que el selector de cuentas de Google aparece cada vez que inicias sesión—, casi siempre esa es la razón por la que ves esta pantalla. Prueba con otra cuenta antes de pensar que algo salió mal con tus datos.",
       "switchAccountButton": "Probar con otra cuenta de Google",
-      "newBusinessHint": "¿Seguro que es la cuenta correcta y de verdad es un negocio nuevo? Aplica abajo — una vez aprobado, tu portal de proveedor y tu prueba gratuita de 14 días se activan automáticamente.",
+      "newBusinessHint": "¿Seguro que es la cuenta correcta y de verdad es un negocio nuevo? Aplica abajo — una vez aprobado, tu portal de proveedor y tu prueba gratuita de {{trialDays}} días se activan automáticamente.",
       "listBusinessButton": "Registra tu negocio",
       "staffHint": "¿Trabajas aquí como personal? Pide al dueño que confirme que tu puesto sigue activo y registrado con este correo exacto — así se abre tu propia vista de personal."
     },
@@ -702,7 +702,7 @@
     },
     "errors": {
       "maintenanceMode": "Las reservas nuevas están pausadas temporalmente por mantenimiento. Intenta de nuevo en un momento.",
-      "starterLimitReached": "Alcanzaste el límite de 30 reservas al mes de tu prueba. Actualiza a Solo en Mi plan y facturación para reservas ilimitadas.",
+      "starterLimitReached": "Alcanzaste el límite de {{freeCap}} reservas al mes de tu prueba. Actualiza a Solo en Mi plan y facturación para reservas ilimitadas.",
       "uploadFailed": "Algo salió mal al subir eso. Intenta de nuevo.",
       "updateBookingFailed": "No se pudo actualizar esa reserva. Revisa tu conexión e intenta de nuevo.",
       "saveSettingFailed": "No se pudo guardar esa configuración. Intenta de nuevo."
@@ -1005,19 +1005,19 @@
     "billing": {
       "subtitle": "Esta es tu suscripción de VaiBook — aparte de lo que los clientes te pagan por sus reservas.",
       "currentPlan": "Plan actual",
-      "trialBannerTitle": "🎉 Estás en tu prueba gratuita de 14 días de {{plan}} — nada que pagar todavía.",
+      "trialBannerTitle": "🎉 Estás en tu prueba gratuita de {{trialDays}} días de {{plan}} — nada que pagar todavía.",
       "trialBannerSub": "Solo BZ${{amount}} al día cuando termine tu prueba y empiece la facturación — elige tu plan abajo y sube un recibo cuando estés listo.",
       "realTrialBannerTitle": "🎉 Te quedan {{days}} días de tu prueba gratuita de Solo — nada que pagar todavía.",
       "realTrialBannerSub": "Tu prueba termina el {{date}}. Envía un pago antes de esa fecha para quedarte con los depósitos, el programa de lealtad y los reportes de Solo — si se vence, vuelves automáticamente al plan gratuito Trial, sin cargo de ningún lado.",
       "justPerDay": "Solo BZ${{amount}} al día.",
       "nextPaymentDue": "Próximo pago vence el {{date}}",
       "listingHidden": "Tu listado está oculto para los clientes por ahora. Si es porque un pago está vencido, sube tu recibo abajo — volverás a estar visible en cuanto se confirme.",
-      "trialNoPlanYet": "Estás en el plan gratuito Trial — hasta 30 reservas al mes, sin costo, sin límite de tiempo. Elige Solo o Team abajo cuando estés listo para actualizar.",
+      "trialNoPlanYet": "Estás en el plan gratuito Trial — hasta {{freeCap}} reservas al mes, sin costo, sin límite de tiempo. Elige Solo o Team abajo cuando estés listo para actualizar.",
       "bookingsUsedThisMonth": "{{used}} de {{cap}} reservas usadas este mes",
       "hitLimit": "Alcanzaste el límite de este mes — las reservas nuevas se rechazarán hasta el próximo mes, o puedes actualizar a Solo para reservas ilimitadas.",
-      "soloTrialOfferTitle": "¿No estás seguro todavía? Prueba Solo gratis por 14 días.",
+      "soloTrialOfferTitle": "¿No estás seguro todavía? Prueba Solo gratis por {{trialDays}} días.",
       "soloTrialOfferSub": "Depósitos, programa de lealtad y reportes — acceso completo a Solo, sin pago, sin tarjeta. Una prueba por negocio; de todas formas te quedas con el plan gratuito Trial cuando termine.",
-      "soloTrialOfferCta": "Iniciar mi prueba gratuita de Solo (14 días)",
+      "soloTrialOfferCta": "Iniciar mi prueba gratuita de Solo ({{trialDays}} días)",
       "soloTrialOfferError": "Eso no se pudo procesar — actualiza la página e intenta de nuevo, o escríbenos si sigue pasando.",
       "upgradeYourPlan": "Actualiza tu plan",
       "payForYourPlan": "Paga tu plan",
