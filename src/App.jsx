@@ -2875,6 +2875,8 @@ const css = `
     .acct-with-side .acct-side { position: absolute; left: 32px; top: 32px; width: 270px; }
   }
   @media (max-width: 899px) {
+    /* Phones: the bottom bar + side menu already cover these links. */
+    .acct-side { display: none !important; }
     .acct-side { padding: 10px; margin-bottom: 18px; }
     .acct-side-user { display: none; }
     .acct-side-nav { flex-direction: row; overflow-x: auto; scrollbar-width: none; }
@@ -7644,6 +7646,8 @@ const VBN_ICONS = {
   home: <path d="M3 10.5L12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z" />,
   explore: <g><rect x="3.5" y="3.5" width="7" height="7" rx="1.6" /><rect x="13.5" y="3.5" width="7" height="7" rx="1.6" /><rect x="3.5" y="13.5" width="7" height="7" rx="1.6" /><rect x="13.5" y="13.5" width="7" height="7" rx="1.6" /></g>,
   bookings: <g><rect x="3.5" y="5" width="17" height="16" rx="2" /><path d="M3.5 10h17M8 3v4M16 3v4" /></g>,
+  card: <g><rect x="3" y="6" width="18" height="13" rx="2" /><path d="M3 10.5h18M7 15h3" /></g>,
+  star: <path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z" />,
   saved: <path d="M12 20.5s-7.5-4.6-9.2-9.3C1.7 8 3.6 4.5 7.2 4.5c2 0 3.6 1.1 4.8 2.8 1.2-1.7 2.8-2.8 4.8-2.8 3.6 0 5.5 3.5 4.4 6.7-1.7 4.7-9.2 9.3-9.2 9.3z" />,
   account: <g><circle cx="12" cy="8" r="4" /><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6" /></g>,
   search: <g><circle cx="11" cy="11" r="7" /><path d="M20 20l-3.5-3.5" /></g>,
@@ -7759,6 +7763,8 @@ function MobileDrawer({ open, onClose, view, session, user, providerProfile, sta
         <Item icon="explore" label={vbnT("Explore services", "Explorar servicios")} onClick={() => vbnExplore(view, session, onNav)} />
         <Item icon="bookings" label={vbnT("My bookings", "Mis citas")} onClick={() => (session ? vbnGoCustomerTab("bookings", view, onNav) : vbnLogin("bookings", onNav))} />
         <Item icon="saved" label={vbnT("Saved", "Guardados")} onClick={() => (session ? vbnGoCustomerTab("favorites", view, onNav) : vbnLogin("saved", onNav))} />
+        {session && <Item icon="card" label={vbnT("Payments", "Pagos")} onClick={() => vbnGoCustomerTab("payments", view, onNav)} />}
+        {session && <Item icon="star" label={vbnT("My reviews", "Mis reseñas")} onClick={() => vbnGoCustomerTab("reviews", view, onNav)} />}
 
         <div className="vbn-divider" />
         <div className="vbn-section">{vbnT("For businesses", "Para negocios")}</div>
