@@ -683,10 +683,13 @@ export const createBooking = async (booking) => {
 // so a quick block is instantly reflected in what customers can book —
 // get_busy_windows itself only knows about real bookings.
 export const getProviderBusyWindows = async (providerId, dateStr) => {
-  const [bookingsResult, blocksResult] = await Promise.all([
-    supabase.rpc('get_busy_windows', { p_provider_id: providerId, p_date: dateStr }),
+  // get_busy_windows_v2 (2026-11-01) also says which service each booking is
+  // for and how many spots it takes, so group classes can share a start time.
+  let [bookingsResult, blocksResult] = await Promise.all([
+    supabase.rpc('get_busy_windows_v2', { p_provider_id: providerId, p_date: dateStr }),
     supabase.from('provider_blocks').select('start_time, end_time').eq('provider_id', providerId).eq('block_date', dateStr),
   ]);
+  if (bookingsResult.error) bookingsResult = await supabase.rpc('get_busy_windows', { p_provider_id: providerId, p_date: dateStr });
   if (bookingsResult.error) console.error('Error fetching busy windows:', bookingsResult.error.message);
   if (blocksResult.error) console.error('Error fetching provider blocks:', blocksResult.error.message);
   return [...(bookingsResult.data || []), ...(blocksResult.data || [])];
@@ -793,7 +796,7 @@ const throwKnownGuardErrors = (error) => {
   }
   // Server-side booking checks (create_booking_safe, 2026-10-30): surfaced
   // with a code the booking screen turns into a plain-language message.
-  for (const code of ['ACCOUNT_BLOCKED', 'PAST_DATE', 'PROVIDER_UNAVAILABLE', 'SERVICE_UNAVAILABLE', 'NOT_AUTHORIZED']) {
+  for (const code of ['CLASS_FULL', 'ACCOUNT_BLOCKED', 'PAST_DATE', 'PROVIDER_UNAVAILABLE', 'SERVICE_UNAVAILABLE', 'NOT_AUTHORIZED']) {
     if (error.message.includes(code)) {
       const err = new Error(code);
       err.code = code;
@@ -2270,4 +2273,12 @@ export const adminResetPhonePassword = async (phone, password) => {
   const { data, error } = await supabase.rpc('admin_reset_phone_password', { p_phone: phone, p_password: password });
   if (error) return { ok: false, code: (error.message || '').match(/NO_ACCOUNT_FOR_NUMBER|PASSWORD_TOO_SHORT|NOT_AUTHORIZED/)?.[0] || 'FAILED' };
   return { ok: true, name: data };
+};
+
+// Answers to the business's booking questions, saved on the booking just
+// after it's created (only by the customer who made it, within 15 minutes).
+export const setBookingAnswers = async (bookingId, answers) => {
+  const { error } = await supabase.rpc('set_booking_answers', { p_booking_id: bookingId, p_answers: answers });
+  if (error) throw error;
+  return true;
 };

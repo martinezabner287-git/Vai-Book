@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useLayoutEffect, useRef, useContext, createContext, lazy, Suspense, useCallback } from "react";
 import { flushSync } from "react-dom";
-import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, updateService, deleteService, getActiveProviders, getProviderDirectory, createBooking, getProviderBusyWindows, createBookingSafe, cancelBooking, markBookingCheckedIn, getCustomerBookings, uploadReceipt, submitReview, getProviderReviews, updateReview, sendBookingEmail, updateUserProfile, getPaymentMethods, addPaymentMethod, deletePaymentMethod, createNotification, getNotifications, markNotificationRead, markAllNotificationsRead, getCategoryDefaultFeatures, getProviderFeatureOverrides, setProviderFeatureOverride, getVisitNotes, upsertVisitNote, adminListProviders, adminUpdateProvider, adminDeleteProvider, adminCountCustomers, getFavoriteProviderIds, getFavoriteProviders, addFavorite, removeFavorite, getBookingMessages, sendBookingMessage, markBookingMessagesRead, getUnreadBookingMessages, getProviderMonthlyTrend, createProviderProfile, getProviderById, createWalkInBooking, submitProviderPayment, getMyProviderPayments, adminListProviderPayments, adminReviewProviderPayment, submitBookingRefund, adminListBookingRefunds, openPrivateFile, getProviderStaff, addProviderStaff, updateProviderStaff, deleteProviderStaff, getProviderStaffPublic, getLoyaltyAccount, getProviderLoyaltyCustomers, redeemLoyaltyReward, getMyStaffProfile, claimStaffSeatByEmail, getStaffBookings, getProviderNotifyEmail, getMaintenanceStatus, setMaintenanceMode, getSiteOfflineStatus, setSiteOffline, guestAuthWithPassword, updateGuestPassword, savePushSubscription, attachBookingServices, getProviderBlocks, insertProviderBlock, deleteProviderBlock, proposeBookingReschedule, confirmBookingReschedule, declineBookingReschedule, withdrawBookingReschedule, establishSoloSession, getServerSoloSessionToken, getLocalSoloSessionToken, clearLocalSoloSessionToken, subscribeToSoloSessionReplacement, signInWithPhonePassword, customerPhoneAuth, adminResetPhonePassword, isPhoneLoginEmail, formatPhoneForDisplay, weakPasswordReason, submitSupportMessage, listSupportMessages, setSupportMessageStatus, getProviderMembershipPlans, getMyMembershipPlans, createMembershipPlan, updateMembershipPlan, subscribeToMembershipPlan, submitMembershipPayment, getMyMemberships, getProviderMembershipSubscribers, getProviderMembershipPayments, reviewMembershipPayment, cancelMembership, redeemMembershipVisit, startSoloTrial, adminStartProviderTrial, adminExtendProviderTrial, adminEndProviderTrial, adminExtendPaymentDue, adminRestoreDowngradedPlan, adminPlatformStats } from "./supabase";
+import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, updateService, deleteService, getActiveProviders, getProviderDirectory, createBooking, getProviderBusyWindows, createBookingSafe, cancelBooking, markBookingCheckedIn, getCustomerBookings, uploadReceipt, submitReview, getProviderReviews, updateReview, sendBookingEmail, updateUserProfile, getPaymentMethods, addPaymentMethod, deletePaymentMethod, createNotification, getNotifications, markNotificationRead, markAllNotificationsRead, getCategoryDefaultFeatures, getProviderFeatureOverrides, setProviderFeatureOverride, getVisitNotes, upsertVisitNote, adminListProviders, adminUpdateProvider, adminDeleteProvider, adminCountCustomers, getFavoriteProviderIds, getFavoriteProviders, addFavorite, removeFavorite, getBookingMessages, sendBookingMessage, markBookingMessagesRead, getUnreadBookingMessages, getProviderMonthlyTrend, createProviderProfile, getProviderById, createWalkInBooking, submitProviderPayment, getMyProviderPayments, adminListProviderPayments, adminReviewProviderPayment, submitBookingRefund, adminListBookingRefunds, openPrivateFile, getProviderStaff, addProviderStaff, updateProviderStaff, deleteProviderStaff, getProviderStaffPublic, getLoyaltyAccount, getProviderLoyaltyCustomers, redeemLoyaltyReward, getMyStaffProfile, claimStaffSeatByEmail, getStaffBookings, getProviderNotifyEmail, getMaintenanceStatus, setMaintenanceMode, getSiteOfflineStatus, setSiteOffline, guestAuthWithPassword, updateGuestPassword, savePushSubscription, attachBookingServices, getProviderBlocks, insertProviderBlock, deleteProviderBlock, proposeBookingReschedule, confirmBookingReschedule, declineBookingReschedule, withdrawBookingReschedule, establishSoloSession, getServerSoloSessionToken, getLocalSoloSessionToken, clearLocalSoloSessionToken, subscribeToSoloSessionReplacement, signInWithPhonePassword, customerPhoneAuth, adminResetPhonePassword, isPhoneLoginEmail, formatPhoneForDisplay, weakPasswordReason, submitSupportMessage, listSupportMessages, setSupportMessageStatus, getProviderMembershipPlans, getMyMembershipPlans, createMembershipPlan, updateMembershipPlan, subscribeToMembershipPlan, submitMembershipPayment, getMyMemberships, getProviderMembershipSubscribers, getProviderMembershipPayments, reviewMembershipPayment, cancelMembership, redeemMembershipVisit, startSoloTrial, adminStartProviderTrial, adminExtendProviderTrial, adminEndProviderTrial, adminExtendPaymentDue, adminRestoreDowngradedPlan, adminPlatformStats, setBookingAnswers } from "./supabase";
 import AdminDashboard from "./AdminDashboard";
 import ProfilePhotoModal from "./ProfilePhotoModal";
 import LanguageSelector from "./LanguageSelector";
@@ -3367,6 +3367,53 @@ const css = `
   .admin-prov-filter { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 4px; }
   .admin-prov-filter input { flex: 1 1 200px; min-width: 0; font: inherit; font-size: 16px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 12px; background: #fff; }
   .admin-prov-filter select { flex: 0 1 180px; min-width: 0; font: inherit; font-size: 16px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 12px; background: #fff; }
+  /* Group classes + booking questions (2026-11-01) */
+  .slot-spots { display: block; font-size: 10.5px; font-weight: 600; opacity: .8; margin-top: 2px; }
+  .slot-spots.few { color: #B45309; opacity: 1; }
+  .class-tag { display: inline-block; font-size: 11px; font-weight: 700; color: #4A3BCF; background: #EEECFD; border-radius: 999px; padding: 2px 8px; margin-left: 6px; vertical-align: middle; }
+  .cap-row { display: flex; gap: 6px; flex-wrap: wrap; }
+  .cap-opt { flex: 1 1 140px; font: inherit; font-size: 13px; font-weight: 600; padding: 10px 8px; border-radius: 10px; border: 1px solid var(--border); background: #fff; color: var(--dark-text); cursor: pointer; }
+  .cap-opt.on { border-color: var(--forest); background: var(--accent-soft, #EEECFD); color: var(--forest); }
+  .cap-spots { display: flex; align-items: center; gap: 10px; margin-top: 8px; font-size: 12.5px; color: var(--muted); }
+  .cap-spots input { width: 84px !important; flex-shrink: 0; }
+  .cap-times { margin-top: 12px; }
+  .cap-times-label { font-size: 12.5px; font-weight: 600; color: var(--dark-text); margin-bottom: 6px; }
+  .cap-times-list { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+  .cap-time { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; font-weight: 600; background: var(--accent-soft, #EEECFD); color: var(--forest); border-radius: 999px; padding: 4px 4px 4px 10px; }
+  .cap-time button { border: none; background: none; color: inherit; cursor: pointer; font-size: 11px; width: 22px; height: 22px; border-radius: 50%; }
+  .cap-times-empty { font-size: 12.5px; color: var(--muted); }
+  .cap-times-add { display: flex; gap: 8px; align-items: center; }
+  .cap-times-add input { width: 140px !important; flex-shrink: 0; }
+  .bq-form { border: 1px solid var(--border); border-radius: 14px; padding: 14px; margin: 4px 0 14px; background: #FCFCFE; }
+  .bq-title { font-size: 14px; font-weight: 700; margin-bottom: 10px; }
+  .bq-item { margin-bottom: 12px; }
+  .bq-item:last-child { margin-bottom: 0; }
+  .bq-label { font-size: 13px; font-weight: 600; margin-bottom: 6px; color: var(--dark-text); line-height: 1.4; }
+  .bq-opt { font-weight: 400; color: var(--muted); }
+  .bq-req { color: #B91C1C; }
+  .bq-item textarea { width: 100%; box-sizing: border-box; font: inherit; font-size: 16px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; min-height: 56px; }
+  .bq-choices { display: flex; flex-wrap: wrap; gap: 6px; }
+  .bq-choice { font: inherit; font-size: 13.5px; font-weight: 600; padding: 9px 14px; border-radius: 999px; border: 1px solid var(--border); background: #fff; color: var(--dark-text); cursor: pointer; }
+  .bq-choice.on { background: var(--forest); border-color: var(--forest); color: #fff; }
+  .bq-agree { display: flex; gap: 10px; align-items: flex-start; font-size: 13.5px; line-height: 1.45; cursor: pointer; }
+  .bq-agree input { width: 20px !important; height: 20px !important; flex-shrink: 0; margin-top: 1px; accent-color: var(--forest); }
+  .bq-missing textarea, .bq-missing .bq-choices, .bq-missing .bq-agree { outline: 2px solid #FCA5A5; outline-offset: 2px; border-radius: 10px; }
+  .bq-err { font-size: 12px; color: #B91C1C; margin-top: 5px; }
+  .bq-answers { background: #F7F6FB; border-radius: 10px; padding: 8px 10px; margin-top: 8px; display: flex; flex-direction: column; gap: 4px; }
+  .bq-ans { display: flex; flex-direction: column; font-size: 12.5px; line-height: 1.4; }
+  .bq-ans-q { color: var(--muted); }
+  .bq-ans-a { color: var(--dark-text); font-weight: 600; overflow-wrap: anywhere; }
+  .bq-suggest { background: #F7F6FB; border-radius: 12px; padding: 12px 14px; margin: 6px 0 4px; }
+  .bq-suggest ul { margin: 0 0 10px; padding-left: 18px; font-size: 13px; color: var(--dark-text); line-height: 1.5; }
+  .bq-edit { border: 1px solid var(--border); border-radius: 12px; padding: 10px 12px; margin: 10px 0; display: flex; flex-direction: column; gap: 8px; }
+  .bq-edit-head { display: flex; align-items: center; gap: 8px; }
+  .bq-edit-n { width: 22px; height: 22px; border-radius: 50%; background: var(--accent-soft, #EEECFD); color: var(--forest); font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .bq-edit-head select { flex: 1; min-width: 0; }
+  .bq-x { width: 32px; height: 32px; border: none; background: none; color: var(--muted); font-size: 14px; cursor: pointer; border-radius: 8px; flex-shrink: 0; }
+  .bq-edit input, .bq-edit select { font: inherit; font-size: 16px; padding: 9px 11px; border: 1px solid var(--border); border-radius: 10px; width: 100%; box-sizing: border-box; background: #fff; }
+  .bq-opts { display: flex; flex-direction: column; gap: 6px; padding-left: 30px; }
+  .bq-reqline { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--dark-text); }
+  .bq-reqline input { width: 18px !important; height: 18px !important; accent-color: var(--forest); }
   /* Site banner (admin Settings → Site banner) */
   .vb-site-banner { position: relative; display: flex; align-items: center; justify-content: center; gap: 10px; padding: 10px 44px 10px 16px; font-size: 14px; line-height: 1.4; text-align: center; background: #EEECFD; color: #2E2580; }
   .vb-site-banner a { color: inherit; text-decoration: none; }
@@ -9543,6 +9590,18 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
   // "Who's coming?" — how many people this booking is for (1 = just me).
   const [partySize, setPartySize] = useState(1);
   useEffect(() => { setPartySize(1); }, [selectedProvider?.id]);
+  // Booking questions the business asks at checkout (see BookingQuestionsForm).
+  const [bqAnswers, setBqAnswers] = useState({});
+  const [bqShowErr, setBqShowErr] = useState(false);
+  useEffect(() => { setBqAnswers({}); setBqShowErr(false); }, [selectedProvider?.id]);
+  const bookingQuestionsBlock = () => {
+    if (answersMissing(selectedProvider?.booking_questions, bqAnswers).length) {
+      setBqShowErr(true);
+      setBookingError(String(i18n.language || "").toLowerCase().startsWith("es") ? "Responde las preguntas marcadas con * para reservar." : "Please answer the questions marked * to book.");
+      return true;
+    }
+    return false;
+  };
   // Multi-service checkout: tapping a service card toggles it in/out of this
   // set (see the service-card list below) — a totally separate interaction
   // from the existing single-service "Book" button, which still books that
@@ -10170,6 +10229,7 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
   // times already chosen for every OTHER selected service that shares the
   // same date — so two services in the same cart can never be scheduled to
   // overlap each other, not just against the provider's existing calendar.
+  const multiSpotsLeft = {};
   const getMultiServiceSlots = (service) => {
     const picked = multiBookingTimes[service.cartKey];
     if (!picked?.date) return [];
@@ -10198,15 +10258,12 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
       ...otherPicksSameDay,
     ];
     const slots = [];
-    for (let m = startM; m + durationMin <= endM; m += step) {
+    const fixedTimes = classTimesOf(service).map(hhmmToMin).sort((a, b) => a - b);
+    const starts = fixedTimes.length ? fixedTimes.filter((m) => m >= startM && m + durationMin <= endM) : Array.from({ length: Math.max(0, Math.floor((endM - durationMin - startM) / step) + 1) }, (_, i) => startM + i * step);
+    for (const m of starts) {
       if (isToday && m <= nowM) continue;
-      const slotEnd = m + durationMin;
-      const busy = allBusy.some((w) => {
-        const wStart = timeToMinutes(w.start_time);
-        const wEnd = timeToMinutes(w.end_time);
-        return m < wEnd && wStart < slotEnd;
-      });
-      if (!busy) slots.push(minutesToTime(m));
+      const st = slotStatus(allBusy, m, m + durationMin, service, partySize);
+      if (st.open) { const tm = minutesToTime(m); slots.push(tm); if (st.left !== null) multiSpotsLeft[`${service.cartKey}|${tm}`] = st.left; }
     }
     return slots;
   };
@@ -10298,6 +10355,7 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
 
   // Builds the list of bookable slots for the currently selected date + service:
   // provider working hours minus already-busy windows minus times in the past.
+  const slotSpotsLeft = {};
   const availableSlots = (() => {
     if (!bookingForm.date) return [];
     // Multi-service checkout: bookingForm.service_ids (set by
@@ -10328,16 +10386,14 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
       ? { start_time: selectedProvider.lunch_break_start, end_time: minutesToTime(timeToMinutes(selectedProvider.lunch_break_start) + Number(selectedProvider.lunch_break_minutes)) }
       : null;
     const allBusy = lunchWindow ? [...busyWindows, lunchWindow] : busyWindows;
+    const classSvc = (bookingForm.service_ids || []).length > 1 ? null : (selectedProvider?.services || []).find((s) => s.id === bookingForm.service_id);
     const slots = [];
-    for (let m = startM; m + durationMin <= endM; m += step) {
+    const fixedTimes = classTimesOf(classSvc).map(hhmmToMin).sort((a, b) => a - b);
+    const starts = fixedTimes.length ? fixedTimes.filter((m) => m >= startM && m + durationMin <= endM) : Array.from({ length: Math.max(0, Math.floor((endM - durationMin - startM) / step) + 1) }, (_, i) => startM + i * step);
+    for (const m of starts) {
       if (isToday && m <= nowM) continue;
-      const slotEnd = m + durationMin;
-      const busy = allBusy.some((w) => {
-        const wStart = timeToMinutes(w.start_time);
-        const wEnd = timeToMinutes(w.end_time);
-        return m < wEnd && wStart < slotEnd;
-      });
-      if (!busy) slots.push(minutesToTime(m));
+      const st = slotStatus(allBusy, m, m + durationMin, classSvc, partySize);
+      if (st.open) { const tm = minutesToTime(m); slots.push(tm); if (st.left !== null) slotSpotsLeft[tm] = st.left; }
     }
     return slots;
   })();
@@ -10494,6 +10550,13 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
       created.staff_id = staffId;
       await updateBooking(created.id, { staff_id: staffId });
     }
+    if (created) {
+      const payload = answersPayload(selectedProvider.booking_questions, bqAnswers);
+      if (payload.length) {
+        created.answers = payload;
+        try { await setBookingAnswers(created.id, payload); } catch (e) { console.error("Saving booking answers failed:", e); }
+      }
+    }
     if (created && coveredByMembership) {
       created.covered_by_membership = true;
       await updateBooking(created.id, { covered_by_membership: true });
@@ -10555,6 +10618,7 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
     if (providerProfile) { setBookingError(t("customerPortal.booking.providerCannotBook")); return; }
     const bookingCustomerId = overrideCustomerId || user?.id;
     if (!bookingCustomerId) { setBookingError(t("customerPortal.booking.signInAgain")); return; }
+    if (bookingQuestionsBlock()) return;
     if (!bookingForm.service_id || !bookingForm.date || !bookingForm.time) {
       setBookingError(t("customerPortal.booking.chooseServiceDateTime"));
       return;
@@ -10635,6 +10699,7 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
     if (providerProfile) { setBookingError(t("customerPortal.booking.providerCannotBook")); return; }
     const bookingCustomerId = overrideCustomerId || user?.id;
     if (!bookingCustomerId) { setBookingError(t("customerPortal.booking.signInAgain")); return; }
+    if (bookingQuestionsBlock()) return;
     const missingTime = selectedServicesList.find((s) => !multiBookingTimes[s.cartKey]?.date || !multiBookingTimes[s.cartKey]?.time);
     if (missingTime) {
       setBookingError(t("customerPortal.booking.chooseTimeForEach", { service: missingTime.name }));
@@ -12378,6 +12443,7 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                                                   }}
                                                 >
                                                   {formatTimeLabel(t)}
+                                                  <SpotsLeft left={multiSpotsLeft[`${service.cartKey}|${t}`]} es={String(i18n.language || "").toLowerCase().startsWith("es")} />
                                                 </button>
                                               ))}
                                             </div>
@@ -12427,6 +12493,7 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                                         }}
                                       >
                                         {formatTimeLabel(t)}
+                                        <SpotsLeft left={slotSpotsLeft[t]} es={String(i18n.language || "").toLowerCase().startsWith("es")} />
                                       </button>
                                     ))}
                                   </div>
@@ -12480,6 +12547,7 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                             );
                           })()}
 
+                          <BookingQuestionsForm questions={selectedProvider?.booking_questions} answers={bqAnswers} onChange={setBqAnswers} showErrors={bqShowErr} />
                           <div className="input-group"><label>{t("customerPortal.booking.notesOptional")}</label><textarea placeholder={t("customerPortal.booking.notesPlaceholder")} value={bookingForm.notes} onChange={e => setBookingForm(f => ({ ...f, notes: e.target.value }))} style={{ minHeight: 60 }} /></div>
 
                           {selectedProvider.downpayment_required && (
@@ -12612,6 +12680,7 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                               // error anyway, so check it up front instead of round-
                               // tripping to find out.
                               if (guestPassword.length < 6) { setBookingError(gEs ? "Crea una contraseña de al menos 6 caracteres." : "Create a password with at least 6 characters."); return; }
+                              if (bookingQuestionsBlock()) return;
                               setBookingError("");
                               // Returning customer: name left blank → just log in with
                               // number + password (their account already has their name).
@@ -12705,7 +12774,7 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                                     <span className="service-card-check">✓</span>
                                     <div>
                                       <div className="service-card-name" style={{ fontWeight: 600, fontSize: 14, color: "var(--dark-text)" }}>{s.name}</div>
-                                      <div className="service-card-meta" style={{ fontSize: 12, color: "var(--muted)" }}>{t("customerPortal.booking.durationMin", { count: s.duration_min })} · BZ${s.price}</div>
+                                      <div className="service-card-meta" style={{ fontSize: 12, color: "var(--muted)" }}>{t("customerPortal.booking.durationMin", { count: s.duration_min })} · BZ${s.price}{isClassService(s) && <span className="class-tag">{String(i18n.language || "").toLowerCase().startsWith("es") ? `Clase · ${s.capacity} lugares` : `Group class · ${s.capacity} spots`}</span>}</div>
                                       {s.description && <div style={{ fontSize: 12.5, color: "var(--muted)", marginTop: 3, maxWidth: 280 }}>{s.description}</div>}
                                       {membershipCoversService(s) && <div style={{ fontSize: 11.5, color: "var(--forest)", fontWeight: 700, marginTop: 3 }}>✓ {t("customerPortal.booking.coveredByMembership")}</div>}
                                     </div>
@@ -13347,6 +13416,7 @@ function StaffPortal({ onNav, session, staffProfile, onSignOut }) {
                 the appointment if that wasn't the owner. */}
             {b.party_size > 1 && <span className="party-badge">👥 {b.party_size} {(i18n.language || "").toLowerCase().startsWith("es") ? "personas" : "people"}</span>}
             {b.notes && <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 6 }}>{t("providerPortal.bookings.customerNote", { notes: b.notes })}</p>}
+                  <BookingAnswers answers={b.answers} />
           </div>
           );
         })}
@@ -13529,11 +13599,11 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
   const [locationLabel, setLocationLabel] = useState("");
   const [savingLocation, setSavingLocation] = useState(false);
   const [services, setServices] = useState([]);
-  const [serviceForm, setServiceForm] = useState({ name: "", price: "", duration_min: 15, description: "" });
+  const [serviceForm, setServiceForm] = useState({ name: "", price: "", duration_min: 15, description: "", capacity: 1, class_times: [] });
   const [savingService, setSavingService] = useState(false);
   const [serviceError, setServiceError] = useState("");
   const [editingServiceId, setEditingServiceId] = useState(null);
-  const [editServiceForm, setEditServiceForm] = useState({ name: "", price: "", duration_min: 15, description: "" });
+  const [editServiceForm, setEditServiceForm] = useState({ name: "", price: "", duration_min: 15, description: "", capacity: 1, class_times: [] });
   const [savingServiceEdit, setSavingServiceEdit] = useState(false);
   // MEMBERSHIP PLANS — provider side (create/edit plans, review payments,
   // see subscribers). See supabase_membership_plans.sql +
@@ -15073,10 +15143,12 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
       duration_min: Number(serviceForm.duration_min) || 15,
       description: serviceForm.description.trim() || null,
       is_active: true,
+      capacity: Math.min(200, Math.max(1, Math.round(Number(serviceForm.capacity) || 1))),
+      class_times: (Number(serviceForm.capacity) || 1) > 1 && serviceForm.class_times.length ? serviceForm.class_times.slice().sort() : null,
     });
     if (created) {
       setServices((prev) => [...prev, created]);
-      setServiceForm({ name: "", price: "", duration_min: 15, description: "" });
+      setServiceForm({ name: "", price: "", duration_min: 15, description: "", capacity: 1, class_times: [] });
       if (droppedDescription) setServiceError(st("serviceDescriptionSkipped"));
     } else if (error) {
       setServiceError(serviceErrorText(error));
@@ -15096,6 +15168,8 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
       price: s.price ?? "",
       duration_min: s.duration_min || 15,
       description: s.description || "",
+      capacity: Number(s.capacity) || 1,
+      class_times: Array.isArray(s.class_times) ? s.class_times : [],
     });
   };
 
@@ -15112,6 +15186,8 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
       price: Number(editServiceForm.price) || 0,
       duration_min: Number(editServiceForm.duration_min) || 15,
       description: editServiceForm.description.trim() || null,
+      capacity: Math.min(200, Math.max(1, Math.round(Number(editServiceForm.capacity) || 1))),
+      class_times: (Number(editServiceForm.capacity) || 1) > 1 && editServiceForm.class_times.length ? editServiceForm.class_times.slice().sort() : null,
     }, serviceId);
     if (updated) {
       setServices((prev) => prev.map((s) => (s.id === serviceId ? updated : s)));
@@ -15890,6 +15966,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                           <div className="bh-req-name">{custName(b)}</div>
                           <div className="bh-req-meta">{b.services?.name || "Service"} · {formatBookingWhen(b)} {b.party_size > 1 && <span className="party-badge">👥 {b.party_size} {(i18n.language || "").toLowerCase().startsWith("es") ? "personas" : "people"}</span>}</div>
                           {b.notes && <div className="bh-req-note">"{b.notes}"</div>}
+                          <BookingAnswers answers={b.answers} compact />
                           {past && <div className="bh-req-warn">⏰ {dx("This time already passed. Decline or offer a new time.", "Esta hora ya pasó. Declina u ofrece otra hora.")}</div>}
                         </div>
                         <div className="bh-req-price">BZ${b.total_amount ?? b.services?.price ?? "—"}</div>
@@ -16427,6 +16504,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                   )}
                   {b.party_size > 1 && <span className="party-badge">👥 {b.party_size} {(i18n.language || "").toLowerCase().startsWith("es") ? "personas" : "people"}</span>}
                   {b.notes && <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 6 }}>{t("providerPortal.bookings.customerNote", { notes: b.notes })}</p>}
+                  <BookingAnswers answers={b.answers} />
 
                   {b.pending_reschedule_date && (
                     <p style={{ fontSize: 12, color: "var(--accent-text)", marginTop: 6, fontWeight: 600 }}>
@@ -16707,6 +16785,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                         <label>{t("providerPortal.services.descriptionLabel")}</label>
                         <textarea rows={2} placeholder={t("providerPortal.services.descriptionPlaceholder")} value={editServiceForm.description} onChange={e => setEditServiceForm(f => ({ ...f, description: e.target.value }))} />
                       </div>
+                      <ServiceCapacityField value={editServiceForm.capacity} onChange={(v) => setEditServiceForm(f => ({ ...f, capacity: v }))} times={editServiceForm.class_times} onTimesChange={(v) => setEditServiceForm(f => ({ ...f, class_times: v }))} />
                       <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
                         <button className="btn-sm lime" disabled={savingServiceEdit || !editServiceForm.name.trim()} onClick={() => handleSaveEditService(s.id)}>{savingServiceEdit ? t("providerPortal.common.saving") : t("providerPortal.common.save")}</button>
                         <button className="btn-sm ghost" onClick={handleCancelEditService}>{t("providerPortal.common.cancel")}</button>
@@ -16716,7 +16795,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
                       <div>
                         <div style={{ fontSize: 14, fontWeight: 600 }}>{s.name}</div>
-                        <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 2 }}>{t("providerPortal.common.durationMin", { count: s.duration_min })}</div>
+                        <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 2 }}>{t("providerPortal.common.durationMin", { count: s.duration_min })}{isClassService(s) && <span className="class-tag">{String(i18n.language || "").toLowerCase().startsWith("es") ? `Clase · ${s.capacity} lugares` : `Group class · ${s.capacity} spots`}</span>}</div>
                         {s.description && <div style={{ fontSize: 12.5, color: "var(--muted)", marginTop: 4, maxWidth: 320 }}>{s.description}</div>}
                       </div>
                       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -16748,6 +16827,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                   <label>{t("providerPortal.services.descriptionLabel")}</label>
                   <textarea rows={2} placeholder={t("providerPortal.services.descriptionPlaceholder")} value={serviceForm.description} onChange={e => setServiceForm(f => ({ ...f, description: e.target.value }))} />
                 </div>
+                <ServiceCapacityField value={serviceForm.capacity} onChange={(v) => setServiceForm(f => ({ ...f, capacity: v }))} times={serviceForm.class_times} onTimesChange={(v) => setServiceForm(f => ({ ...f, class_times: v }))} />
                 <button className="btn-sm lime" onClick={handleAddService} disabled={savingService || !serviceForm.name.trim()}>{savingService ? t("providerPortal.services.adding") : t("providerPortal.services.addService")}</button>
                 {!serviceForm.name.trim() && !serviceError && <p className="agree-hint">{st("serviceNeedName")}</p>}
                 {serviceError && <p className={serviceError === st("serviceDescriptionSkipped") ? "mk-success" : "agree-error"} style={{ wordBreak: "break-word" }}>{serviceError}</p>}
@@ -18214,6 +18294,8 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
               </div>
             </div>
 
+            {providerProfile && <BookingQuestionsEditor key={providerProfile.id} providerProfile={providerProfile} onSaved={(u) => onProviderProfileUpdate && onProviderProfileUpdate(u)} />}
+
             <div className="card" id="settings-verse" style={{ maxWidth: 480, marginBottom: 20, scrollMarginTop: 120 }}>
               <div className="card-title">🌅 {(i18n.language || "").toLowerCase().startsWith("es") ? "Versículo de la mañana" : "Morning Bible verse"}</div>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "4px 0 0", gap: 16 }}>
@@ -18822,6 +18904,7 @@ const BOOKING_SERVER_MESSAGES = {
   PROVIDER_UNAVAILABLE: { en: "This business isn't taking bookings right now.", es: "Este negocio no está aceptando reservas en este momento." },
   SERVICE_UNAVAILABLE: { en: "This service isn't available anymore. Please pick another one.", es: "Este servicio ya no está disponible. Elige otro." },
   NOT_AUTHORIZED: { en: "Please sign in again, then try booking once more.", es: "Inicia sesión de nuevo y vuelve a intentar la reserva." },
+  CLASS_FULL: { en: "That class just filled up. Pick another time.", es: "Esa clase se acaba de llenar. Elige otra hora." },
   ACCOUNT_BLOCKED: { en: "This account can't make bookings right now. Message VaiBook support if you think this is a mistake.", es: "Esta cuenta no puede hacer reservas por ahora. Escribe al soporte de VaiBook si crees que es un error." },
 };
 const SIX_MONTH_PAID = 6;
@@ -19039,6 +19122,255 @@ const svcText = (s, field, t, lang) => {
   if (own) return (es ? own.es : own.en) || own.en || "";
   return t(`services.${s.key}.${field}`);
 };
+
+// ── GROUP CLASSES (2026-11-01) ───────────────────────────────────────
+// A service with capacity > 1 is a group class: several customers share the
+// same start time until its spots run out (the server enforces the same rule
+// in create_booking_safe). Busy windows come from get_busy_windows_v2, which
+// says which service each booking is for and how many spots it takes.
+const isClassService = (s) => (Number(s && s.capacity) || 1) > 1;
+const formatTimeLabelStatic = (t) => { const m = hhmmToMinTop(t); const h = Math.floor(m / 60); const mm = String(m % 60).padStart(2, "0"); return `${((h + 11) % 12) + 1}:${mm} ${h < 12 ? "AM" : "PM"}`; };
+function hhmmToMinTop(t) { const [h, m] = String(t || "0:0").split(":").map(Number); return (h || 0) * 60 + (m || 0); }
+const hhmmToMin = (t) => { const [h, m] = String(t || "0:0").split(":").map(Number); return (h || 0) * 60 + (m || 0); };
+// Fixed class times ("06:00", "17:30"…) set by the business; empty = any time.
+const classTimesOf = (service) => (isClassService(service) && Array.isArray(service.class_times) ? service.class_times.filter((t) => /^\d{2}:\d{2}/.test(String(t))) : []);
+function slotStatus(windows, startM, endM, service, party) {
+  const cap = Number(service && service.capacity) || 1;
+  const fixed = classTimesOf(service);
+  if (fixed.length && !fixed.some((t) => hhmmToMin(t) === startM)) return { open: false, left: 0 };
+  let taken = 0;
+  for (const w of windows || []) {
+    const ws = hhmmToMin(w.start_time);
+    const we = hhmmToMin(w.end_time);
+    if (!(startM < we && ws < endM)) continue;
+    if (cap > 1 && service && w.service_id && w.service_id === service.id && ws === startM) { taken += Number(w.spots) || 1; continue; }
+    return { open: false, left: 0 };
+  }
+  if (cap > 1) { const left = Math.max(0, cap - taken); return { open: left >= (Number(party) || 1), left }; }
+  return { open: true, left: null };
+}
+function SpotsLeft({ left, es }) {
+  if (left === null || left === undefined) return null;
+  return <span className={`slot-spots${left <= 3 ? " few" : ""}`}>{es ? `${left} ${left === 1 ? "lugar" : "lugares"}` : `${left} ${left === 1 ? "spot" : "spots"} left`}</span>;
+}
+
+// ── BOOKING QUESTIONS (2026-11-01) ───────────────────────────────────
+// Like Fresha's consultation forms: a few questions a business asks at
+// checkout. Shape: [{ id, label, type: "text" | "yesno" | "choice" | "agree",
+// options?: [..], required?: bool }]. Answers are saved on the booking as
+// [{ q, a, type }] via set_booking_answers.
+const qid = () => Math.random().toString(36).slice(2, 9);
+const BOOKING_QUESTION_TEMPLATES = {
+  fitness: [
+    { label: "Any injuries or health conditions we should know about?", type: "text" },
+    { label: "Is this your first time with us?", type: "yesno" },
+    { label: "I take part at my own risk and confirm I'm fit to exercise.", type: "agree", required: true },
+  ],
+  massage: [
+    { label: "What pressure do you prefer?", type: "choice", options: ["Light", "Medium", "Firm"] },
+    { label: "Any injuries, allergies or areas to avoid?", type: "text" },
+  ],
+  hair: [
+    { label: "Anything we should know? (allergies, last colour, the look you want)", type: "text" },
+  ],
+  medical: [
+    { label: "Any medical conditions, allergies or medications?", type: "text", required: true },
+    { label: "The information I gave is true and I consent to the treatment.", type: "agree", required: true },
+  ],
+  tattoo: [
+    { label: "Describe what you want (size and placement)", type: "text", required: true },
+    { label: "I am 18 or older.", type: "agree", required: true },
+  ],
+  pets: [
+    { label: "Pet's name and breed", type: "text", required: true },
+    { label: "Pet size", type: "choice", options: ["Small", "Medium", "Large", "Extra large"], required: true },
+  ],
+  photo: [
+    { label: "Where will the shoot be?", type: "text", required: true },
+    { label: "What is it for? (family, event, business…)", type: "text" },
+  ],
+  general: [
+    { label: "Anything we should know before your visit?", type: "text" },
+  ],
+};
+function questionTemplateKey(serviceType) {
+  const t = String(serviceType || "").toLowerCase();
+  if (/fitness|gym|yoga|pilates|recovery|training|crossfit/.test(t)) return "fitness";
+  if (/massage|spa|wellness|skincare|facial/.test(t) && !/med/.test(t)) return "massage";
+  if (/med spa|clinic|physical|therapy|medical/.test(t)) return "medical";
+  if (/tattoo|piercing/.test(t)) return "tattoo";
+  if (/pet|groom/.test(t)) return "pets";
+  if (/photo/.test(t)) return "photo";
+  if (/barber|hair|nail|lash|brow|salon/.test(t)) return "hair";
+  return "general";
+}
+const cleanQuestions = (qs) => (Array.isArray(qs) ? qs : []).filter((q) => q && String(q.label || "").trim()).slice(0, 10);
+const answersMissing = (qs, answers) => cleanQuestions(qs).filter((q) => {
+  if (!q.required) return false;
+  const a = answers[q.id];
+  if (q.type === "agree") return a !== true;
+  return a === undefined || a === null || String(a).trim() === "";
+});
+const answersPayload = (qs, answers) => cleanQuestions(qs)
+  .map((q) => ({ q: q.label, type: q.type, a: q.type === "agree" ? (answers[q.id] === true ? "Agreed" : "") : (answers[q.id] === undefined ? "" : String(answers[q.id]).trim()) }))
+  .filter((x) => x.a !== "");
+
+function BookingQuestionsForm({ questions, answers, onChange, showErrors }) {
+  const es = String(i18n.language || "").toLowerCase().startsWith("es");
+  const qs = cleanQuestions(questions);
+  if (!qs.length) return null;
+  const missing = new Set(showErrors ? answersMissing(qs, answers).map((q) => q.id) : []);
+  const set = (id, v) => onChange({ ...answers, [id]: v });
+  return (
+    <div className="bq-form">
+      <div className="bq-title">{es ? "Unas preguntas del negocio" : "A few questions from the business"}</div>
+      {qs.map((q) => (
+        <div className={`bq-item${missing.has(q.id) ? " bq-missing" : ""}`} key={q.id}>
+          {q.type === "agree" ? (
+            <label className="bq-agree">
+              <input type="checkbox" checked={answers[q.id] === true} onChange={(e) => set(q.id, e.target.checked)} />
+              <span>{q.label}{q.required && <b className="bq-req"> *</b>}</span>
+            </label>
+          ) : (
+            <>
+              <div className="bq-label">{q.label}{q.required ? <b className="bq-req"> *</b> : <span className="bq-opt"> {es ? "(opcional)" : "(optional)"}</span>}</div>
+              {q.type === "text" && <textarea rows={2} maxLength={500} value={answers[q.id] || ""} onChange={(e) => set(q.id, e.target.value)} />}
+              {(q.type === "yesno" || q.type === "choice") && (
+                <div className="bq-choices">
+                  {(q.type === "yesno" ? [es ? "Sí" : "Yes", "No"] : (q.options || [])).filter(Boolean).map((opt) => (
+                    <button type="button" key={opt} className={`bq-choice${answers[q.id] === opt ? " on" : ""}`} onClick={() => set(q.id, answers[q.id] === opt ? "" : opt)}>{opt}</button>
+                  ))}
+                </div>
+              )}
+            </>
+          )}
+          {missing.has(q.id) && <div className="bq-err">{es ? "Responde esta pregunta para reservar." : "Please answer this to book."}</div>}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function BookingAnswers({ answers, compact }) {
+  const list = Array.isArray(answers) ? answers.filter((x) => x && x.q && x.a) : [];
+  if (!list.length) return null;
+  return (
+    <div className={`bq-answers${compact ? " compact" : ""}`}>
+      {list.map((x, i) => (
+        <div className="bq-ans" key={i}><span className="bq-ans-q">{x.q}</span><span className="bq-ans-a">{x.type === "agree" ? "✓ " : ""}{x.a}</span></div>
+      ))}
+    </div>
+  );
+}
+
+function BookingQuestionsEditor({ providerProfile, onSaved }) {
+  const es = String(i18n.language || "").toLowerCase().startsWith("es");
+  const initial = cleanQuestions(providerProfile && providerProfile.booking_questions);
+  const [list, setList] = useState(initial);
+  const [saving, setSaving] = useState(false);
+  const [msg, setMsg] = useState("");
+  const tplKey = questionTemplateKey(providerProfile && providerProfile.service_type);
+  const changed = JSON.stringify(list) !== JSON.stringify(initial);
+  const update = (id, patch) => setList((l) => l.map((q) => (q.id === id ? { ...q, ...patch } : q)));
+  const useTemplate = () => setList(BOOKING_QUESTION_TEMPLATES[tplKey].map((q) => ({ ...q, id: qid(), options: q.options ? [...q.options] : undefined })));
+  const save = async () => {
+    const clean = list.map((q) => ({
+      id: q.id, label: String(q.label || "").trim().slice(0, 200), type: q.type, required: !!q.required,
+      ...(q.type === "choice" ? { options: (q.options || []).map((o) => String(o).trim()).filter(Boolean).slice(0, 8) } : {}),
+    })).filter((q) => q.label && (q.type !== "choice" || q.options.length >= 2));
+    setSaving(true); setMsg("");
+    const updated = await upsertProviderProfile({ id: providerProfile.id, user_id: providerProfile.user_id, booking_questions: clean.length ? clean : null });
+    setSaving(false);
+    if (updated) { setList(cleanQuestions(updated.booking_questions)); setMsg("ok"); onSaved && onSaved(updated); }
+    else setMsg(es ? "No se pudo guardar. Inténtalo de nuevo." : "Couldn't save. Try again.");
+  };
+  const TYPES = [
+    { id: "text", label: es ? "Respuesta escrita" : "Written answer" },
+    { id: "yesno", label: es ? "Sí / No" : "Yes / No" },
+    { id: "choice", label: es ? "Elegir una opción" : "Pick one option" },
+    { id: "agree", label: es ? "Casilla para aceptar" : "Tick to agree" },
+  ];
+  return (
+    <div className="card" id="settings-questions" style={{ maxWidth: 480, marginBottom: 20, scrollMarginTop: 120 }}>
+      <div className="card-title">📝 {es ? "Preguntas al reservar" : "Booking questions"}</div>
+      <p style={{ fontSize: 13, color: "var(--muted)", marginTop: -6, lineHeight: 1.5 }}>
+        {es ? "Lo que tus clientes responden al reservar: lesiones, alergias, tamaño de la mascota, una casilla para aceptar tu exención… Ves las respuestas en cada reserva." : "What customers answer when they book: injuries, allergies, pet size, a box to accept your waiver… You see the answers on each booking."}
+      </p>
+      {list.length === 0 && (
+        <div className="bq-suggest">
+          <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 6 }}>{es ? "Sugeridas para tu negocio:" : "Suggested for your business:"}</div>
+          <ul>{BOOKING_QUESTION_TEMPLATES[tplKey].map((q, i) => <li key={i}>{q.label}</li>)}</ul>
+          <button type="button" className="btn-sm forest" onClick={useTemplate}>{es ? "Usar estas" : "Use these"}</button>
+        </div>
+      )}
+      {list.map((q, i) => (
+        <div className="bq-edit" key={q.id}>
+          <div className="bq-edit-head">
+            <span className="bq-edit-n">{i + 1}</span>
+            <select value={q.type} onChange={(e) => update(q.id, { type: e.target.value, options: e.target.value === "choice" ? (q.options && q.options.length ? q.options : ["", ""]) : undefined })} aria-label={es ? "Tipo" : "Type"}>
+              {TYPES.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
+            </select>
+            <button type="button" className="bq-x" aria-label={es ? "Quitar" : "Remove"} onClick={() => setList((l) => l.filter((x) => x.id !== q.id))}>✕</button>
+          </div>
+          <input value={q.label} maxLength={200} placeholder={q.type === "agree" ? (es ? "Ej. Acepto participar bajo mi propio riesgo." : "e.g. I take part at my own risk.") : (es ? "Escribe la pregunta" : "Type the question")} onChange={(e) => update(q.id, { label: e.target.value })} />
+          {q.type === "choice" && (
+            <div className="bq-opts">
+              {(q.options || []).map((o, oi) => (
+                <input key={oi} value={o} maxLength={40} placeholder={`${es ? "Opción" : "Option"} ${oi + 1}`} onChange={(e) => update(q.id, { options: q.options.map((x, xi) => (xi === oi ? e.target.value : x)) })} />
+              ))}
+              {(q.options || []).length < 8 && <button type="button" className="btn-sm ghost" onClick={() => update(q.id, { options: [...(q.options || []), ""] })}>+ {es ? "Opción" : "Option"}</button>}
+            </div>
+          )}
+          <label className="bq-reqline"><input type="checkbox" checked={!!q.required} onChange={(e) => update(q.id, { required: e.target.checked })} /> {es ? "Obligatoria" : "Required to book"}</label>
+        </div>
+      ))}
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", marginTop: 10 }}>
+        {list.length > 0 && list.length < 10 && <button type="button" className="btn-sm ghost" onClick={() => setList((l) => [...l, { id: qid(), label: "", type: "text", required: false }])}>+ {es ? "Agregar pregunta" : "Add a question"}</button>}
+        {(changed || list.length > 0) && <button type="button" className="btn-sm forest" disabled={saving || !changed} onClick={save}>{saving ? (es ? "Guardando…" : "Saving…") : (es ? "Guardar" : "Save")}</button>}
+        {msg === "ok" && !changed && <span style={{ fontSize: 13, fontWeight: 600, color: "#15803D" }}>{es ? "Guardado" : "Saved"}</span>}
+        {msg && msg !== "ok" && <span style={{ fontSize: 13, fontWeight: 600, color: "#B91C1C" }}>{msg}</span>}
+      </div>
+    </div>
+  );
+}
+
+// Service editor: one person at a time, or a group class with N spots.
+function ServiceCapacityField({ value, onChange, times, onTimesChange }) {
+  const [newTime, setNewTime] = useState("");
+  const es = String(i18n.language || "").toLowerCase().startsWith("es");
+  const cap = Number(value) || 1;
+  const isClass = cap > 1;
+  return (
+    <div className="input-group">
+      <label>{es ? "¿Quién reserva?" : "Who books this?"}</label>
+      <div className="cap-row">
+        <button type="button" className={`cap-opt${!isClass ? " on" : ""}`} onClick={() => onChange(1)}>{es ? "Una persona a la vez" : "One person at a time"}</button>
+        <button type="button" className={`cap-opt${isClass ? " on" : ""}`} onClick={() => onChange(isClass ? cap : 10)}>{es ? "Clase grupal" : "Group class"}</button>
+      </div>
+      {isClass && (
+        <div className="cap-spots">
+          <input type="number" inputMode="numeric" min={2} max={200} value={value} onChange={(e) => onChange(e.target.value)} onBlur={() => onChange(Math.min(200, Math.max(2, Math.round(Number(value) || 2))))} aria-label={es ? "Lugares" : "Spots"} />
+          <span>{es ? "lugares por clase — los clientes ven cuántos quedan" : "spots per class — customers see how many are left"}</span>
+        </div>
+      )}
+      {isClass && onTimesChange && (
+        <div className="cap-times">
+          <div className="cap-times-label">{es ? "Horas de la clase (todos los días que abres)" : "Class times (every day you're open)"}</div>
+          <div className="cap-times-list">
+            {(times || []).slice().sort().map((t) => (
+              <span className="cap-time" key={t}>{formatTimeLabelStatic(t)}<button type="button" aria-label={es ? "Quitar" : "Remove"} onClick={() => onTimesChange((times || []).filter((x) => x !== t))}>✕</button></span>
+            ))}
+            {!(times || []).length && <span className="cap-times-empty">{es ? "Sin horas fijas: los clientes eligen cualquier hora libre." : "No set times yet: customers can pick any open time."}</span>}
+          </div>
+          <div className="cap-times-add">
+            <input type="time" step={900} value={newTime} onChange={(e) => setNewTime(e.target.value)} aria-label={es ? "Nueva hora" : "New time"} />
+            <button type="button" className="btn-sm ghost" disabled={!newTime || (times || []).includes(newTime) || (times || []).length >= 12} onClick={() => { onTimesChange([...(times || []), newTime.slice(0, 5)]); setNewTime(""); }}>+ {es ? "Agregar hora" : "Add time"}</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 // Strip across the top of the site, set in admin Settings.
 function SiteBanner({ view }) {
