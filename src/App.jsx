@@ -11032,10 +11032,17 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
       setSubmittingReview(false);
       return;
     }
-    await loadBookings();
-    if (!existing) setReviewThanks({ name: booking.provider_profiles?.business_name || "", at: Date.now() });
+    // Done: the "How was your …?" card goes away right now (not only after
+    // the bookings reload) and a short thank-you shows in its place.
+    dismissPrompt(booking.id);
+    if (!existing) {
+      const at = Date.now();
+      setReviewThanks({ name: booking.provider_profiles?.business_name || "", at });
+      setTimeout(() => setReviewThanks((r) => (r && r.at === at ? null : r)), 6000);
+    }
     setReviewingId(null);
     setSubmittingReview(false);
+    loadBookings();
   };
 
   const upcomingBookings = bookings.filter((b) => ["pending", "awaiting_payment", "confirmed"].includes(b.status) && !isDoneForCustomer(b, nowTick));
