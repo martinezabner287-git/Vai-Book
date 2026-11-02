@@ -548,7 +548,7 @@ export const getStaffBookings = async (staffId) => {
   if (!staffId) return [];
   const { data, error } = await supabase
     .from('bookings')
-    .select('*, users(full_name, email, avatar_url, phone, whatsapp_number), services(name, price, duration_min)')
+    .select('*, users(full_name, email, avatar_url, phone, whatsapp_number), services(name, price, duration_min, prep_note)')
     .eq('staff_id', staffId)
     .order('booking_date', { ascending: true });
   if (error) { console.error('Error fetching staff bookings:', error.message); return []; }
@@ -872,7 +872,7 @@ export const markBookingCheckedIn = async (bookingId) => {
 export const getCustomerBookings = async (customerId) => {
   const { data, error } = await supabase
     .from('bookings')
-    .select('*, provider_profiles(id, user_id, business_name, service_type, district, latitude, longitude, location_label, whatsapp, tax_id, payment_methods(id, type, name, account_name, account_number)), services(name, price, duration_min), reviews(id, rating, comment, hold_until), booking_refunds(id, amount, receipt_url, note, created_at), payments(id, amount, currency, payment_status, transaction_id, created_at)')
+    .select('*, provider_profiles(id, user_id, business_name, service_type, district, latitude, longitude, location_label, whatsapp, tax_id, payment_methods(id, type, name, account_name, account_number)), services(name, price, duration_min, prep_note), reviews(id, rating, comment, hold_until), booking_refunds(id, amount, receipt_url, note, created_at), payments(id, amount, currency, payment_status, transaction_id, created_at)')
     .eq('customer_id', customerId)
     .order('booking_date', { ascending: false });
   if (error) console.error(error.message);
@@ -896,7 +896,7 @@ export const getProviderBookings = async (providerId) => {
     // always the same value, or `phone` may be missing entirely for a
     // guest who only gave WhatsApp) — without this, every WhatsApp-message
     // button in the dashboard was blind to that customer.
-    .select('*, users(full_name, email, avatar_url, phone, whatsapp_number), services(name, price, duration_min), booking_refunds(id, amount, receipt_url, note, created_at), payments(id, amount, currency, payment_status, transaction_id, created_at)')
+    .select('*, users(full_name, email, avatar_url, phone, whatsapp_number), services(name, price, duration_min, prep_note), booking_refunds(id, amount, receipt_url, note, created_at), payments(id, amount, currency, payment_status, transaction_id, created_at)')
     .eq('provider_id', providerId)
     .order('booking_date', { ascending: true });
   if (error) console.error(error.message);

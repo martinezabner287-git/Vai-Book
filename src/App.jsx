@@ -3427,6 +3427,7 @@ const css = `
     body.printing-form .client-form-print { position: absolute; left: 0; top: 0; width: 100%; }
     body.printing-form .cf-overlay { position: static; background: none; padding: 0; }
   }
+  .cx-hero-prep { font-size: 13px; line-height: 1.45; margin-top: 8px; padding: 8px 10px; border-radius: 10px; background: rgba(91,75,224,0.08); color: var(--dark-text); }
   /* Spotlight */
   .tny-spot { background: #FEF3C7 !important; color: #78350F !important; }
   .spot-avail { font-size: 13.5px; font-weight: 700; color: #15803D; margin: 4px 0 10px; }
@@ -7538,6 +7539,7 @@ const NOTIF_DESTINATIONS = {
   // where "Book again" puts that business one tap away.
   announcement: { view: "customer", tab: "home" },
   rebook: { view: "customer", tab: "home" },
+  reminder: { view: "customer", tab: "home" },
 };
 
 // Site-wide banner for the admin-only emergency maintenance switch (see
@@ -11471,6 +11473,7 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                   <div className="cx-hero-provider">{nextAppointmentProvider?.business_name || t("customerPortal.home.providerFallback")}</div>
                   <div className="cx-hero-countdown">{nextAppointmentAt && nextAppointmentAt.getTime() <= nowTick ? hx("Happening now", "En curso") : formatCountdown(nextAppointmentAt, nowTick)}</div>
                   <div className="cx-hero-when">{formatBookingWhen(nextAppointment)}</div>
+                  {nextAppointment.services?.prep_note && <div className="cx-hero-prep">🎒 <b>{hx("Bring / prepare:", "Trae / prepárate:")}</b> {nextAppointment.services.prep_note}</div>}
                   <div className="cx-hero-divider" />
                   <div className="cx-hero-actions">
                     {nextAppointmentHasMap && (
@@ -13755,11 +13758,11 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
   const [locationLabel, setLocationLabel] = useState("");
   const [savingLocation, setSavingLocation] = useState(false);
   const [services, setServices] = useState([]);
-  const [serviceForm, setServiceForm] = useState({ name: "", price: "", duration_min: 15, description: "", capacity: 1, class_times: [] });
+  const [serviceForm, setServiceForm] = useState({ name: "", price: "", duration_min: 15, description: "", capacity: 1, class_times: [], prep_note: "" });
   const [savingService, setSavingService] = useState(false);
   const [serviceError, setServiceError] = useState("");
   const [editingServiceId, setEditingServiceId] = useState(null);
-  const [editServiceForm, setEditServiceForm] = useState({ name: "", price: "", duration_min: 15, description: "", capacity: 1, class_times: [] });
+  const [editServiceForm, setEditServiceForm] = useState({ name: "", price: "", duration_min: 15, description: "", capacity: 1, class_times: [], prep_note: "" });
   const [savingServiceEdit, setSavingServiceEdit] = useState(false);
   // MEMBERSHIP PLANS — provider side (create/edit plans, review payments,
   // see subscribers). See supabase_membership_plans.sql +
@@ -15301,10 +15304,11 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
       is_active: true,
       capacity: Math.min(200, Math.max(1, Math.round(Number(serviceForm.capacity) || 1))),
       class_times: (Number(serviceForm.capacity) || 1) > 1 && serviceForm.class_times.length ? serviceForm.class_times.slice().sort() : null,
+      prep_note: (serviceForm.prep_note || "").trim() || null,
     });
     if (created) {
       setServices((prev) => [...prev, created]);
-      setServiceForm({ name: "", price: "", duration_min: 15, description: "", capacity: 1, class_times: [] });
+      setServiceForm({ name: "", price: "", duration_min: 15, description: "", capacity: 1, class_times: [], prep_note: "" });
       if (droppedDescription) setServiceError(st("serviceDescriptionSkipped"));
     } else if (error) {
       setServiceError(serviceErrorText(error));
@@ -15326,6 +15330,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
       description: s.description || "",
       capacity: Number(s.capacity) || 1,
       class_times: Array.isArray(s.class_times) ? s.class_times : [],
+      prep_note: s.prep_note || "",
     });
   };
 
@@ -15344,6 +15349,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
       description: editServiceForm.description.trim() || null,
       capacity: Math.min(200, Math.max(1, Math.round(Number(editServiceForm.capacity) || 1))),
       class_times: (Number(editServiceForm.capacity) || 1) > 1 && editServiceForm.class_times.length ? editServiceForm.class_times.slice().sort() : null,
+      prep_note: (editServiceForm.prep_note || "").trim() || null,
     }, serviceId);
     if (updated) {
       setServices((prev) => prev.map((s) => (s.id === serviceId ? updated : s)));
@@ -16023,8 +16029,9 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
             if (!ph) return null;
             let digits = String(ph).replace(/\D/g, "");
             if (digits.length === 7) digits = `501${digits}`;
-            const msg = dx(`Hi ${custName(b)}, this is ${providerProfile?.business_name || ""} about your ${b.services?.name || "appointment"} on ${formatBookingWhen(b)}.`,
-                           `Hola ${custName(b)}, te escribe ${providerProfile?.business_name || ""} sobre tu cita de ${b.services?.name || "servicio"} el ${formatBookingWhen(b)}.`);
+            const prep = (b.services?.prep_note || "").trim();
+            const msg = dx(`Hi ${custName(b)}, this is ${providerProfile?.business_name || ""} about your ${b.services?.name || "appointment"} on ${formatBookingWhen(b)}.${prep ? `\n\nWhat to bring / how to prepare: ${prep}` : ""}`,
+                           `Hola ${custName(b)}, te escribe ${providerProfile?.business_name || ""} sobre tu cita de ${b.services?.name || "servicio"} el ${formatBookingWhen(b)}.${prep ? `\n\nQué traer / cómo prepararte: ${prep}` : ""}`);
             return `https://wa.me/${digits}?text=${encodeURIComponent(msg)}`;
           };
           const isPast = (b) => { const dt = bookingDateTime(b.booking_date, b.booking_time); return !dt || dt <= now; };
@@ -16947,6 +16954,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                         <label>{t("providerPortal.services.descriptionLabel")}</label>
                         <textarea rows={2} placeholder={t("providerPortal.services.descriptionPlaceholder")} value={editServiceForm.description} onChange={e => setEditServiceForm(f => ({ ...f, description: e.target.value }))} />
                       </div>
+                      <PrepNoteField value={editServiceForm.prep_note} onChange={(v) => setEditServiceForm(f => ({ ...f, prep_note: v }))} />
                       <ServiceCapacityField value={editServiceForm.capacity} onChange={(v) => setEditServiceForm(f => ({ ...f, capacity: v }))} times={editServiceForm.class_times} onTimesChange={(v) => setEditServiceForm(f => ({ ...f, class_times: v }))} />
                       <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
                         <button className="btn-sm lime" disabled={savingServiceEdit || !editServiceForm.name.trim()} onClick={() => handleSaveEditService(s.id)}>{savingServiceEdit ? t("providerPortal.common.saving") : t("providerPortal.common.save")}</button>
@@ -16989,6 +16997,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                   <label>{t("providerPortal.services.descriptionLabel")}</label>
                   <textarea rows={2} placeholder={t("providerPortal.services.descriptionPlaceholder")} value={serviceForm.description} onChange={e => setServiceForm(f => ({ ...f, description: e.target.value }))} />
                 </div>
+                <PrepNoteField value={serviceForm.prep_note} onChange={(v) => setServiceForm(f => ({ ...f, prep_note: v }))} />
                 <ServiceCapacityField value={serviceForm.capacity} onChange={(v) => setServiceForm(f => ({ ...f, capacity: v }))} times={serviceForm.class_times} onTimesChange={(v) => setServiceForm(f => ({ ...f, class_times: v }))} />
                 <button className="btn-sm lime" onClick={handleAddService} disabled={savingService || !serviceForm.name.trim()}>{savingService ? t("providerPortal.services.adding") : t("providerPortal.services.addService")}</button>
                 {!serviceForm.name.trim() && !serviceError && <p className="agree-hint">{st("serviceNeedName")}</p>}
@@ -19897,6 +19906,20 @@ function BookingQuestionsEditor({ providerProfile, onSaved }) {
         {msg === "ok" && !changed && <span style={{ fontSize: 13, fontWeight: 600, color: "#15803D" }}>{es ? "Guardado" : "Saved"}</span>}
         {msg && msg !== "ok" && <span style={{ fontSize: 13, fontWeight: 600, color: "#B91C1C" }}>{msg}</span>}
       </div>
+    </div>
+  );
+}
+
+// Service editor: what the customer should bring or do beforehand. Sent in
+// the reminder ~24 hours before, and shown on their booking.
+function PrepNoteField({ value, onChange }) {
+  const es = String(i18n.language || "").toLowerCase().startsWith("es");
+  return (
+    <div className="input-group">
+      <label>{es ? "Qué traer / cómo prepararse (opcional)" : "What to bring / how to prepare (optional)"}</label>
+      <textarea rows={2} maxLength={500} value={value || ""} onChange={(e) => onChange(e.target.value)}
+        placeholder={es ? "Ej. Ven con el cabello lavado y seco. Llega 10 minutos antes." : "e.g. Wear comfortable clothes. Arrive 10 minutes early."} />
+      <span className="agree-hint" style={{ marginTop: 4 }}>{es ? "Va en el recordatorio que reciben 24 horas antes." : "Goes in the reminder they get 24 hours before."}</span>
     </div>
   );
 }
