@@ -1,0 +1,11 @@
+-- 2026-11-02 — Spotlight paid placement (applied live as spotlight_placements).
+-- platform_settings.spotlight_slots (3) and spotlight_week_price (25);
+-- table public.spotlights (provider_id, district, status requested|active|cancelled,
+-- weeks, starts_on, ends_on, amount, note); RLS: public reads active, a business
+-- reads its own and can insert a 'requested' row; trg_spotlight_request fixes
+-- status/district/amount on business inserts and blocks a second open request.
+-- spotlight_taken(district, from, to) = busiest-day count of active spots.
+-- admin_activate_spotlight(id, starts_on, weeks): refuses DISTRICT_FULL when the
+-- district already has spotlight_slots active spots on any of those days, then
+-- notifies the business. admin_add_spotlight, admin_cancel_spotlight,
+-- admin_list_spotlights. (Full bodies as applied live.)

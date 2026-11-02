@@ -132,7 +132,7 @@ const ProviderLocationMap = lazy(() => import("./MapWidgets").then((m) => ({ def
 const WelcomePlaqueGenerator = lazy(() => import("./WelcomePlaqueGenerator"));
 const ShareKit = lazy(() => import("./ShareKit"));
 const AdminTools = lazy(() => import("./AdminTools"));
-const ADMIN_TOOL_TABS = ["settings", "customers", "bookings", "reviews", "broadcast", "content"];
+const ADMIN_TOOL_TABS = ["settings", "customers", "bookings", "reviews", "broadcast", "content", "spotlight"];
 const InfoPages = lazy(() => import("./InfoPages"));
 const INFO_PAGE_IDS = ["about", "how-it-works", "districts", "blog", "help", "contact", "privacy", "terms"];
 function MapLoadingFallback({ height }) {
@@ -3427,6 +3427,15 @@ const css = `
     body.printing-form .client-form-print { position: absolute; left: 0; top: 0; width: 100%; }
     body.printing-form .cf-overlay { position: static; background: none; padding: 0; }
   }
+  /* Spotlight */
+  .tny-spot { background: #FEF3C7 !important; color: #78350F !important; }
+  .spot-avail { font-size: 13.5px; font-weight: 700; color: #15803D; margin: 4px 0 10px; }
+  .spot-avail.full { color: #B45309; }
+  .spot-total { font-size: 20px; font-weight: 800; margin: 12px 0 10px; color: var(--dark-text); }
+  .spot-total span { font-size: 13px; font-weight: 500; color: var(--muted); }
+  .spot-status { background: #F7F6FB; border-radius: 12px; padding: 12px; font-size: 13.5px; display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
+  .spot-status.on { background: #FEF3C7; color: #78350F; font-weight: 700; }
+  .spot-status ul { margin: 0; padding-left: 18px; }
   /* Snag a Spot + last-minute deals */
   .cx-dropzone-sub { font-size: 13px; color: var(--muted); margin: -6px 0 10px; }
   .cx-drop-card { position: relative; }
@@ -7697,6 +7706,7 @@ const PORTAL_TOOLS_BY_VIEW = {
     { id: "reviews", icon: "⭐", label: "Reviews" },
     { id: "messages", icon: "📩", label: "Messages" },
     { id: "broadcast", icon: "📣", label: "Broadcast" },
+    { id: "spotlight", icon: "🌟", label: "Spotlight" },
     { id: "content", icon: "🗂️", label: "Categories & verses" },
     { id: "settings", icon: "⚙️", label: "Settings & prices" },
     { id: "security", icon: "🚨", label: "Emergency" },
@@ -8450,6 +8460,7 @@ function Nav({ onNav, current, session, user, providerProfile, staffProfile, isA
 const SHOW_LANDING_STAT_BAND = false;
 
 function LandingPage({ onNav, session, user, onSignIn, onSignOut }) {
+  const spotRanks = useSpotlightRanks();
   const { t } = useTranslation();
   const [heroQuery, setHeroQuery] = useState("");
   const [heroDistrict, setHeroDistrict] = useState("");
@@ -8544,6 +8555,8 @@ function LandingPage({ onNav, session, user, onSignIn, onSignOut }) {
   // meaningful.
   const trendingProviders = [...discoverProviders]
     .sort((a, b) => {
+      const sp = spotFirst(spotRanks)(a, b);
+      if (sp !== 0) return sp;
       const bf = b.is_featured ? 1 : 0, af = a.is_featured ? 1 : 0;
       if (bf !== af) return bf - af;
       return (b.reviews || []).length - (a.reviews || []).length;
@@ -8770,7 +8783,7 @@ function LandingPage({ onNav, session, user, onSignIn, onSignOut }) {
                         only shows on providers who actually opted into
                         Featured placement, the same honest proxy the
                         trending sort itself ranks on above. */}
-                    {p.is_featured && <span className="tny-scarcity">{t("landing.highDemand")}</span>}
+                    {spotRanks.has(p.id) ? <span className="tny-scarcity tny-spot">🌟 Spotlight</span> : p.is_featured && <span className="tny-scarcity">{t("landing.highDemand")}</span>}
                   </div>
                   <div className="tny-card-body">
                     <h4>{p.business_name}</h4>
@@ -9546,6 +9559,7 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
   const [loadingProviders, setLoadingProviders] = useState(false);
   const [providerSearch, setProviderSearch] = useState("");
   const [districtFilter, setDistrictFilter] = useState("All");
+  const spotRanks = useSpotlightRanks();
   const [recentProviderIds, setRecentProviderIds] = useState(() => {
     try { return JSON.parse(localStorage.getItem("vaibook_recent_providers") || "[]"); } catch (e) { return []; }
   });
@@ -11288,7 +11302,7 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
   const recommendedProviders = providers
     .filter((p) => districtFilter === "All" || p.district === districtFilter)
     .map((p) => ({ p, r: Number(providerRating(p)) || 0, n: (p.reviews || []).length }))
-    .sort((a, b) => (b.p.is_featured ? 1 : 0) - (a.p.is_featured ? 1 : 0) || b.r - a.r || b.n - a.n)
+    .sort((a, b) => spotFirst(spotRanks)(a.p, b.p) || (b.p.is_featured ? 1 : 0) - (a.p.is_featured ? 1 : 0) || b.r - a.r || b.n - a.n)
     .slice(0, 10)
     .map((x) => x.p);
 
@@ -11550,7 +11564,7 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
 
             {/* PHOTO ROWS (Fresha style): Recommended, Recently viewed, New. */}
             {[
-              ["rec", hx("Recommended", "Recomendados"), recommendedProviders, (p) => p.is_featured ? hx("Featured", "Destacado") : null],
+              ["rec", hx("Recommended", "Recomendados"), recommendedProviders, (p) => spotRanks.has(p.id) ? "🌟 Spotlight" : p.is_featured ? hx("Featured", "Destacado") : null],
               ["recent", hx("Recently viewed", "Vistos recientemente"), recentlyViewedProviders, (p) => p.is_featured ? hx("Featured", "Destacado") : null],
               ["new", hx("New to VaiBook", "Nuevos en VaiBook"), newProviders, () => hx("New", "Nuevo")],
             ].filter(([, , list]) => list.length > 0).map(([key, title, list, badgeFor]) => (
@@ -18443,6 +18457,8 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
               </div>
             </div>
 
+            {providerProfile && <SpotlightCard providerProfile={providerProfile} onContact={() => onNav && onNav("help-contact")} />}
+
             {providerProfile && <LastMinuteDealCard providerProfile={providerProfile} onSaved={(u) => onProviderProfileUpdate && onProviderProfileUpdate(u)} onUpgrade={() => setTab("billing")} />}
 
             {providerProfile && <PortalColourPicker providerProfile={providerProfile} onSaved={(u) => onProviderProfileUpdate && onProviderProfileUpdate(u)} />}
@@ -19176,7 +19192,7 @@ const DISTRICTS = ["Belize City", "Cayo", "Corozal", "Orange Walk", "Stann Creek
 // service_categories, districts) and are edited in the admin portal.
 // The values in this file are only the defaults until they load. A copy is
 // cached so the next visit starts with the latest numbers, no flash.
-const PLATFORM = { freeCap: 30, freeCapEnforced: false, trialDays: 14, graceDays: 7, banner: null, snagIncludeFree: true, rev: 0 };
+const PLATFORM = { freeCap: 30, freeCapEnforced: false, trialDays: 14, graceDays: 7, banner: null, snagIncludeFree: true, spotlightSlots: 3, spotlightWeekPrice: 25, rev: 0 };
 const PLATFORM_CACHE_KEY = "vaibook_platform_v1";
 const fmt2 = (n) => (Math.round(Number(n) * 100) / 100).toFixed(2);
 const platformVars = () => {
@@ -19204,6 +19220,8 @@ function applyPlatformConfig(cfg) {
     PLATFORM.trialDays = n(st.trial_days, PLATFORM.trialDays);
     PLATFORM.graceDays = n(st.grace_days, PLATFORM.graceDays);
     if (st.snag_include_free !== undefined && st.snag_include_free !== null) PLATFORM.snagIncludeFree = !!st.snag_include_free;
+    PLATFORM.spotlightSlots = n(st.spotlight_slots, PLATFORM.spotlightSlots);
+    PLATFORM.spotlightWeekPrice = n(st.spotlight_week_price, PLATFORM.spotlightWeekPrice);
     if (solo) {
       solo.monthly = n(st.solo_monthly, solo.monthly); solo.sixMonthTotal = n(st.solo_six_month, solo.sixMonthTotal);
       solo.price = `BZ$${fmt2(solo.monthly)}/month, or BZ$${dayRate(solo.sixMonthTotal, SIX_MONTH_DAYS)}/day on 6 months`;
@@ -19432,6 +19450,97 @@ const portalThemeVars = (id) => {
   const [main, mid, light, soft, heroA, heroB] = t.c;
   return { "--forest": main, "--lime": main, "--forest-mid": mid, "--grad-end": mid, "--forest-light": light, "--accent-soft": soft, "--hero-a": heroA, "--hero-b": heroB };
 };
+// ── SPOTLIGHT (2026-11-02) ────────────────────────────────────────────
+// Paid top placement: up to 3 businesses per district (admin setting) show
+// first on the landing page's top row and the client's Recommended row,
+// with a "Spotlight" tag. Sold by the week; the admin activates it after
+// payment. Order among spotlights rotates daily so each gets the first spot.
+let SPOTLIGHT_CACHE = null;
+function useSpotlightRanks() {
+  const [ranks, setRanks] = useState(() => SPOTLIGHT_CACHE || new Map());
+  useEffect(() => {
+    let alive = true;
+    supabase.from("spotlights").select("provider_id, district, starts_on, ends_on").eq("status", "active").then(({ data }) => {
+      const today = localDateStr();
+      const ids = Array.from(new Set((data || []).filter((r) => r.starts_on <= today && r.ends_on >= today).map((r) => r.provider_id)));
+      ids.sort((a, b) => hashStr(a + today) - hashStr(b + today));
+      const m = new Map(ids.map((id, i) => [id, i]));
+      SPOTLIGHT_CACHE = m;
+      if (alive) setRanks(m);
+    }, () => {});
+    return () => { alive = false; };
+  }, []);
+  return ranks;
+}
+const spotFirst = (ranks) => (a, b) => {
+  const ra = ranks.has(a.id) ? ranks.get(a.id) : Infinity, rb = ranks.has(b.id) ? ranks.get(b.id) : Infinity;
+  return ra === rb ? 0 : ra < rb ? -1 : 1;
+};
+
+function SpotlightCard({ providerProfile, onContact }) {
+  const es = String(i18n.language || "").toLowerCase().startsWith("es");
+  const [mine, setMine] = useState(null);
+  const [taken, setTaken] = useState(null);
+  const [weeks, setWeeks] = useState(1);
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState("");
+  const pid = providerProfile && providerProfile.id;
+  const district = providerProfile && providerProfile.district;
+  const load = useCallback(async () => {
+    if (!pid) return;
+    const today = localDateStr();
+    const { data } = await supabase.from("spotlights").select("*").eq("provider_id", pid).order("created_at", { ascending: false }).limit(5);
+    const rows = (data || []).filter((r) => r.status === "requested" || (r.status === "active" && r.ends_on >= today));
+    setMine(rows[0] || false);
+    const end = new Date(Date.now() + 6 * 864e5).toISOString().slice(0, 10);
+    const t = await supabase.rpc("spotlight_taken", { p_district: district, p_from: today, p_to: end });
+    setTaken(typeof t.data === "number" ? t.data : null);
+  }, [pid, district]);
+  useEffect(() => { load(); }, [load]);
+  const slots = PLATFORM.spotlightSlots;
+  const price = PLATFORM.spotlightWeekPrice;
+  const free = taken === null ? null : Math.max(0, slots - taken);
+  const request = async () => {
+    setBusy(true); setMsg("");
+    const { error } = await supabase.from("spotlights").insert({ provider_id: pid, weeks });
+    setBusy(false);
+    if (error) { setMsg(/ALREADY_REQUESTED/.test(error.message || "") ? (es ? "Ya tienes una solicitud pendiente." : "You already have a request waiting.") : (es ? "No se pudo enviar. Inténtalo de nuevo." : "That didn't go through. Try again.")); return; }
+    load();
+  };
+  const payTo = VAIBOOK_PAY_TO.filter((m) => (m.detail || "").trim());
+  const fmt = (d) => new Date(d + "T12:00:00").toLocaleDateString(es ? "es" : "en-US", { month: "short", day: "numeric" });
+  return (
+    <div className="card" id="settings-spotlight" style={{ maxWidth: 480, marginBottom: 20, scrollMarginTop: 120 }}>
+      <div className="card-title">🌟 Spotlight</div>
+      <p style={{ fontSize: 13, color: "var(--muted)", marginTop: -6, lineHeight: 1.5 }}>
+        {es ? `Sé el primero que ven los clientes: arriba en la página principal y en "Recomendados" de ${district || "tu distrito"}. Solo ${slots} lugares por distrito.` : `Be the first business customers see: at the top of the main page and of "Recommended" in ${district || "your district"}. Only ${slots} spots per district.`}
+      </p>
+      {mine === null ? <p className="at-muted" style={{ fontSize: 13 }}>…</p> : mine && mine.status === "active" ? (
+        <div className="spot-status on">🌟 {es ? `Estás en el Spotlight hasta el ${fmt(mine.ends_on)}.` : `You're in the Spotlight until ${fmt(mine.ends_on)}.`}</div>
+      ) : mine && mine.status === "requested" ? (
+        <div className="spot-status">
+          <b>{es ? `Solicitud enviada: ${mine.weeks} semana(s), BZ$${Number(mine.amount).toFixed(2)}` : `Request sent: ${mine.weeks} week${mine.weeks > 1 ? "s" : ""}, BZ$${Number(mine.amount).toFixed(2)}`}</b>
+          <span>{es ? "Paga y envíanos el comprobante; lo activamos al confirmar el pago." : "Pay and send us the receipt; we switch it on once the payment is confirmed."}</span>
+          {payTo.length > 0 && <ul>{payTo.map((m) => <li key={m.method}><b>{m.method}:</b> {m.detail}</li>)}</ul>}
+          {onContact && <button type="button" className="btn-sm ghost" onClick={onContact}>{es ? "Enviar comprobante" : "Send the receipt"}</button>}
+        </div>
+      ) : (
+        <>
+          <div className={`spot-avail${free === 0 ? " full" : ""}`}>{free === null ? "" : free === 0 ? (es ? `Los ${slots} lugares de ${district} están tomados esta semana. Puedes reservar para más adelante.` : `All ${slots} spots in ${district} are taken this week. You can still request one for later.`) : (es ? `${free} de ${slots} lugares libres en ${district} esta semana` : `${free} of ${slots} spots free in ${district} this week`)}</div>
+          <div className="lm-row">
+            {[1, 2, 4].map((w) => (
+              <button key={w} type="button" className={`lm-opt${weeks === w ? " on" : ""}`} onClick={() => setWeeks(w)}>{w} {es ? (w === 1 ? "semana" : "semanas") : (w === 1 ? "week" : "weeks")}</button>
+            ))}
+          </div>
+          <div className="spot-total">BZ${(price * weeks).toFixed(2)} <span>{es ? `(BZ$${price}/semana)` : `(BZ$${price}/week)`}</span></div>
+          <button type="button" className="btn-sm forest" disabled={busy || !pid} onClick={request}>{busy ? "…" : (es ? "Pedir Spotlight" : "Request Spotlight")}</button>
+          {msg && <p style={{ fontSize: 13, color: "#B91C1C", margin: "8px 0 0" }}>{msg}</p>}
+        </>
+      )}
+    </div>
+  );
+}
+
 function LastMinuteDealCard({ providerProfile, onSaved, onUpgrade }) {
   const es = String(i18n.language || "").toLowerCase().startsWith("es");
   const paid = isPaidPlan(providerProfile);

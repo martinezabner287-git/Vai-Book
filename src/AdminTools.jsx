@@ -81,7 +81,7 @@ function Notice({ msg }) {
 }
 
 // ── SETTINGS ───────────────────────────────────────────────────────────
-const NUM_FIELDS = ["solo_monthly", "solo_six_month", "team_monthly", "team_six_month", "team_free_seats", "team_seat_price", "setup_fee", "free_booking_cap", "trial_days", "grace_days", "founding_partner_limit"];
+const NUM_FIELDS = ["solo_monthly", "solo_six_month", "team_monthly", "team_six_month", "team_free_seats", "team_seat_price", "setup_fee", "free_booking_cap", "trial_days", "grace_days", "founding_partner_limit", "spotlight_slots", "spotlight_week_price"];
 
 function AdminSettings() {
   const [form, setForm] = useState(null);
@@ -110,7 +110,7 @@ function AdminSettings() {
       if (NUM_FIELDS.includes(k)) {
         const n = Number(form[k]);
         if (form[k] === "" || !isFinite(n) || n < 0) { setMsg({ ok: false, text: "Prices and numbers can't be empty or below zero." }); return; }
-        patch[k] = ["team_free_seats", "free_booking_cap", "trial_days", "grace_days", "founding_partner_limit"].includes(k) ? Math.round(n) : Math.round(n * 100) / 100;
+        patch[k] = ["team_free_seats", "free_booking_cap", "trial_days", "grace_days", "founding_partner_limit", "spotlight_slots"].includes(k) ? Math.round(n) : Math.round(n * 100) / 100;
       } else patch[k] = typeof form[k] === "string" ? form[k].trim() : form[k];
     }
     if (form.banner_link && !/^(https:\/\/|#)/i.test(form.banner_link.trim())) { setMsg({ ok: false, text: "The banner link has to start with https:// (or # for a page inside VaiBook)." }); return; }
@@ -147,6 +147,8 @@ function AdminSettings() {
         <div className="at-grid">
           <Field label="Free plan · bookings a month"><input type="number" inputMode="numeric" min="1" step="1" value={form.free_booking_cap} onChange={num("free_booking_cap")} /></Field>
           <Field label="Free trial of Solo · days"><input type="number" inputMode="numeric" min="1" max="365" step="1" value={form.trial_days} onChange={num("trial_days")} /></Field>
+          <Field label="Spotlight spots per district" hint="Businesses shown first on the main page and Recommended, per district."><input type="number" inputMode="numeric" min="0" max="20" step="1" value={form.spotlight_slots ?? 3} onChange={num("spotlight_slots")} /></Field>
+          <Field label="Spotlight price per week (BZ$)"><input type="number" inputMode="decimal" min="0" step="0.01" value={form.spotlight_week_price ?? 25} onChange={num("spotlight_week_price")} /></Field>
           <Field label="Founding Partner spots" hint="The first this-many businesses get the 🏅 Founding Partner badge for good. Everyone already on VaiBook has it."><input type="number" inputMode="numeric" min="0" max="10000" step="1" value={form.founding_partner_limit ?? 50} onChange={num("founding_partner_limit")} /></Field>
           <Field label="Days to pay after the due date" hint="After this the business moves to the free plan. Reminders go out 1 day and 2 days before the end."><input type="number" inputMode="numeric" min="3" max="60" step="1" value={form.grace_days} onChange={num("grace_days")} /></Field>
         </div>
@@ -777,7 +779,106 @@ function AdminContent({ filter }) {
   );
 }
 
-export const ADMIN_TOOL_IDS = ["settings", "customers", "bookings", "reviews", "broadcast", "content"];
+// ── SPOTLIGHT ──────────────────────────────────────────────────────────
+function AdminSpotlight() {
+  const [list, setList] = useState(null);
+  const [providers, setProviders] = useState([]);
+  const [msg, setMsg] = useState(null);
+  const [busy, setBusy] = useState(null);
+  const [starts, setStarts] = useState({});
+  const [add, setAdd] = useState({ provider: "", start: new Date().toISOString().slice(0, 10), weeks: 1 });
+  const today = new Date(Date.now() - 6 * 3600e3).toISOString().slice(0, 10);
+  const load = useCallback(async () => {
+    const [{ data, error }, prov] = await Promise.all([supabase.rpc("admin_list_spotlights"), supabase.rpc("admin_list_providers")]);
+    if (error) { setMsg({ ok: false, text: errText(error) }); setList([]); } else setList(rows(data));
+    setProviders(rows(prov.data).filter((p) => p.is_active !== false).sort((a, b) => String(a.business_name).localeCompare(String(b.business_name))));
+  }, []);
+  useEffect(() => { load(); }, [load]);
+  const spotErr = (error) => (/DISTRICT_FULL/.test(String(error && error.message)) ? String(error.message).replace(/^.*DISTRICT_FULL:\s*/, "").replace(/^./, (c) => c.toUpperCase()) + ". Pick later dates." : errText(error));
+  const activate = async (r) => {
+    setBusy(r.id); setMsg(null);
+    const { error } = await supabase.rpc("admin_activate_spotlight", { p_id: r.id, p_starts_on: starts[r.id] || today, p_weeks: r.weeks });
+    setBusy(null);
+    if (error) { setMsg({ ok: false, text: spotErr(error) }); return; }
+    setMsg({ ok: true, text: `${r.business_name} is in the Spotlight. They've been notified.` }); load();
+  };
+  const cancel = async (r) => {
+    setBusy(r.id); setMsg(null);
+    const { error } = await supabase.rpc("admin_cancel_spotlight", { p_id: r.id });
+    setBusy(null);
+    if (error) { setMsg({ ok: false, text: errText(error) }); return; }
+    setMsg({ ok: true, text: `${r.business_name}'s spotlight was cancelled.` }); load();
+  };
+  const addOne = async () => {
+    if (!add.provider) return;
+    setBusy("add"); setMsg(null);
+    const { error } = await supabase.rpc("admin_add_spotlight", { p_provider_id: add.provider, p_starts_on: add.start, p_weeks: Number(add.weeks) || 1 });
+    setBusy(null);
+    if (error) { setMsg({ ok: false, text: spotErr(error) }); return; }
+    setMsg({ ok: true, text: "Spotlight added." }); setAdd((a) => ({ ...a, provider: "" })); load();
+  };
+  const requested = (list || []).filter((r) => r.status === "requested");
+  const active = (list || []).filter((r) => r.status === "active");
+  const live = active.filter((r) => r.starts_on <= today && r.ends_on >= today);
+  const byDistrict = live.reduce((m, r) => { const k = r.district || "—"; m[k] = (m[k] || 0) + 1; return m; }, {});
+  const fmt = (d) => (d ? new Date(d + "T12:00:00").toLocaleDateString(undefined, { month: "short", day: "numeric" }) : "—");
+  return (
+    <>
+      <Header title="Spotlight" sub="Paid top placement: the first businesses customers see on the main page and in Recommended, per district. Switch one on after the payment is confirmed." />
+      <Notice msg={msg} />
+      <div className="card at-card">
+        <div className="card-title">Waiting for payment ({requested.length})</div>
+        {list === null ? <p className="at-muted">Loading…</p> : requested.length === 0 ? <p className="at-muted">No requests right now.</p> : (
+          <div className="at-list">
+            {requested.map((r) => (
+              <div className="at-row" key={r.id}>
+                <div className="at-row-main">
+                  <div className="at-row-title">{r.business_name}<span className="at-tag">{r.district || "—"}</span></div>
+                  <div className="at-row-meta"><span>{r.weeks} week{r.weeks > 1 ? "s" : ""}</span><span>{money(r.amount)}</span><span>Asked {fmtDate(r.created_at)}</span>{r.whatsapp && <a href={`https://wa.me/${String(r.whatsapp).replace(/[^0-9]/g, "")}`} target="_blank" rel="noopener noreferrer">WhatsApp</a>}</div>
+                  <div className="at-inline-form">
+                    <span className="at-muted" style={{ margin: 0 }}>Starts</span>
+                    <input type="date" value={starts[r.id] || today} min={today} onChange={(e) => setStarts((m) => ({ ...m, [r.id]: e.target.value }))} style={{ flex: "0 1 170px" }} />
+                    <button type="button" className="btn-sm forest" disabled={busy === r.id} onClick={() => activate(r)}>{busy === r.id ? "…" : "Paid · switch on"}</button>
+                    <button type="button" className="btn-sm ghost at-danger-ghost" disabled={busy === r.id} onClick={() => cancel(r)}>Decline</button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+      <div className="card at-card">
+        <div className="card-title">In the Spotlight</div>
+        {Object.keys(byDistrict).length > 0 && <div className="at-summary">{Object.entries(byDistrict).map(([d, n]) => `${d}: ${n} live`).join(" · ")}</div>}
+        {list === null ? <p className="at-muted">Loading…</p> : active.length === 0 ? <p className="at-muted">Nobody yet.</p> : (
+          <div className="at-list">
+            {active.map((r) => (
+              <div className="at-row" key={r.id}>
+                <div className="at-row-main">
+                  <div className="at-row-title">🌟 {r.business_name}<span className="at-tag">{r.district || "—"}</span>{r.starts_on > today && <span className="at-tag">Starts {fmt(r.starts_on)}</span>}</div>
+                  <div className="at-row-meta"><span>{fmt(r.starts_on)} – {fmt(r.ends_on)}</span><span>{money(r.amount)}</span></div>
+                </div>
+                <div className="at-row-actions"><button type="button" className="btn-sm ghost at-danger-ghost" disabled={busy === r.id} onClick={() => cancel(r)}>Cancel</button></div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+      <div className="card at-card">
+        <div className="card-title">Add a spotlight by hand</div>
+        <p className="at-muted">For a business that paid you directly.</p>
+        <div className="at-grid">
+          <Field label="Business"><select value={add.provider} onChange={(e) => setAdd((a) => ({ ...a, provider: e.target.value }))}><option value="">Pick a business…</option>{providers.map((p) => <option key={p.id} value={p.id}>{p.business_name} · {p.district || "—"}</option>)}</select></Field>
+          <Field label="Starts"><input type="date" value={add.start} min={today} onChange={(e) => setAdd((a) => ({ ...a, start: e.target.value }))} /></Field>
+          <Field label="Weeks"><select value={add.weeks} onChange={(e) => setAdd((a) => ({ ...a, weeks: e.target.value }))}>{[1, 2, 3, 4, 8, 12].map((w) => <option key={w} value={w}>{w}</option>)}</select></Field>
+        </div>
+        <button type="button" className="btn-sm forest" disabled={!add.provider || busy === "add"} onClick={addOne}>{busy === "add" ? "Adding…" : "Add spotlight"}</button>
+      </div>
+    </>
+  );
+}
+
+export const ADMIN_TOOL_IDS = ["settings", "customers", "bookings", "reviews", "broadcast", "content", "spotlight"];
 
 export default function AdminTools({ tool, filter }) {
   return (
@@ -789,6 +890,7 @@ export default function AdminTools({ tool, filter }) {
       {tool === "reviews" && <AdminReviews filter={filter} />}
       {tool === "broadcast" && <AdminBroadcast />}
       {tool === "content" && <AdminContent filter={filter} />}
+      {tool === "spotlight" && <AdminSpotlight />}
     </div>
   );
 }
