@@ -3427,6 +3427,44 @@ const css = `
     body.printing-form .client-form-print { position: absolute; left: 0; top: 0; width: 100%; }
     body.printing-form .cf-overlay { position: static; background: none; padding: 0; }
   }
+  /* Welcome moments (2026-11-02) */
+  .cx-greet { margin: 4px 2px 14px; }
+  .cx-greet-hi { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 24px; font-weight: 800; letter-spacing: -0.02em; color: var(--dark-text); }
+  .cx-greet-sub { font-size: 14px; color: var(--muted); margin-top: 2px; }
+  .founding-chip { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 700; color: #8A5A00; background: #FEF3C7; border: 1px solid #F5D98B; border-radius: 999px; padding: 3px 10px; white-space: nowrap; }
+  .founding-chip.on-dark { margin-top: 6px; color: #FDE68A; background: rgba(253,230,138,0.12); border-color: rgba(253,230,138,0.35); }
+  .founding-row { flex-basis: 100%; order: 10; }
+  .vb-celebrate { position: fixed; inset: 0; z-index: 1300; background: rgba(22,24,29,0.55); display: flex; align-items: center; justify-content: center; padding: 20px; overflow: hidden; }
+  .vb-celebrate-card { position: relative; z-index: 2; background: #fff; border-radius: 22px; padding: 28px 22px 22px; max-width: 360px; width: 100%; text-align: center; box-shadow: 0 24px 60px rgba(0,0,0,0.25); animation: vbPop .45s cubic-bezier(.2,.9,.3,1.3); }
+  .vb-celebrate-card h2 { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 22px; font-weight: 800; margin: 6px 0 8px; color: var(--dark-text); }
+  .vb-celebrate-card p { font-size: 15px; line-height: 1.5; color: var(--dark-text); margin: 0 0 8px; }
+  .vb-celebrate-card .vb-celebrate-sub { font-size: 13px; color: var(--muted); margin-bottom: 18px; }
+  .vb-celebrate-card .btn-sm { width: 100%; padding: 13px; font-size: 15px; }
+  .vb-celebrate-emoji { font-size: 44px; }
+  .vb-confetti { position: absolute; inset: 0; pointer-events: none; z-index: 1; }
+  .vb-confetti span { position: absolute; top: -12px; width: 8px; height: 14px; border-radius: 2px; animation: vbFall linear infinite; }
+  @keyframes vbFall { 0% { transform: translateY(-20px) rotate(0); opacity: 1; } 100% { transform: translateY(105vh) rotate(540deg); opacity: .9; } }
+  @keyframes vbPop { 0% { transform: scale(.85); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+  @media (prefers-reduced-motion: reduce) { .vb-confetti { display: none; } .vb-celebrate-card { animation: none; } }
+  .bh-month { background: #fff; border: 1px solid var(--border); border-radius: 18px; padding: 16px; margin: 0 0 16px; }
+  .bh-month-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+  .bh-month-eyebrow { font-size: 12.5px; font-weight: 700; color: var(--forest); }
+  .bh-month-title { font-size: 18px; font-weight: 800; margin-top: 2px; color: var(--dark-text); }
+  .bh-month-x { border: none; background: none; color: var(--muted); font-size: 14px; width: 32px; height: 32px; border-radius: 8px; cursor: pointer; flex-shrink: 0; }
+  .bh-month-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 12px 0 10px; }
+  .bh-month-stats div { background: #F7F6FB; border-radius: 12px; padding: 10px; display: flex; flex-direction: column; min-width: 0; }
+  .bh-month-stats b { font-size: 18px; font-weight: 800; color: var(--dark-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .bh-month-stats span { font-size: 12px; color: var(--muted); }
+  .bh-month-line { font-size: 13.5px; color: var(--dark-text); margin-top: 6px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .photo-tips-link { margin-top: 6px; font: inherit; font-size: 13px; font-weight: 600; color: var(--forest); background: none; border: none; padding: 0; cursor: pointer; text-align: left; }
+  .photo-tips-panel { background: #fff; border-radius: 18px; padding: 20px; max-width: 420px; width: 100%; margin: auto 0; }
+  .photo-tips-panel h3 { margin: 0 0 12px; font-size: 18px; }
+  .photo-tips-panel ol { margin: 0 0 14px; padding-left: 20px; display: flex; flex-direction: column; gap: 8px; }
+  .photo-tips-panel li { font-size: 14px; line-height: 1.4; }
+  .photo-tips-panel li b { display: block; color: var(--dark-text); }
+  .photo-tips-panel li span { color: var(--muted); font-size: 13px; }
+  .photo-tips-how { background: #F7F6FB; border-radius: 12px; padding: 12px; font-size: 13px; line-height: 1.5; margin-bottom: 14px; display: flex; flex-direction: column; gap: 4px; }
+  .photo-tips-panel .btn-sm { width: 100%; padding: 12px; }
   /* Site banner (admin Settings → Site banner) */
   .vb-site-banner { position: relative; display: flex; align-items: center; justify-content: center; gap: 10px; padding: 10px 44px 10px 16px; font-size: 14px; line-height: 1.4; text-align: center; background: #EEECFD; color: #2E2580; }
   .vb-site-banner a { color: inherit; text-decoration: none; }
@@ -11306,6 +11344,18 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
         )}
         {tab === "home" && (
           <>
+            {/* PERSONAL GREETING */}
+            {(() => {
+              const h = new Date().getHours();
+              const hello = h < 12 ? hx("Good morning", "Buenos días") : h < 18 ? hx("Good afternoon", "Buenas tardes") : hx("Good evening", "Buenas noches");
+              const first = String(user?.full_name || "").trim().split(/\s+/)[0];
+              return (
+                <div className="cx-greet">
+                  <div className="cx-greet-hi">{hello}{first ? `, ${first}` : ""}</div>
+                  <div className="cx-greet-sub">{nextAppointment ? hx("Your next spot is saved below.", "Tu próximo espacio está guardado abajo.") : hx("Ready to treat yourself?", "¿Listo para consentirte?")}</div>
+                </div>
+              );
+            })()}
             {/* LOCATION + SEARCH (Fresha style) */}
             <div className="cxh-top">
               <label className="cxh-location">
@@ -12203,6 +12253,7 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                 <div className="profile-header-row">
                   <div className="profile-name-row">
                     <h2>{selectedProvider.business_name}</h2>
+                    {selectedProvider.founding_partner && <span className="founding-row"><FoundingBadge /></span>}
                     <button
                       className="profile-icon-btn"
                       onClick={() => shareProvider(selectedProvider)}
@@ -15948,6 +15999,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
               <div className="bh-hello">
                 <div>
                   <h2 className="bh-hello-title">{greeting}{firstName ? `, ${firstName}` : ""}</h2>
+                  {providerProfile?.founding_partner && <FoundingBadge dark />}
                   <p className="bh-hello-date">{now.toLocaleDateString(es ? "es" : "en-US", { weekday: "long", month: "long", day: "numeric" })}</p>
                 </div>
                 {activeBlock ? (
@@ -15986,6 +16038,9 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                 <div className="bh-verse-ref">{dailyVerse.ref} <span>· KJV</span></div>
               </div>
             )}
+
+            <FirstMonthReport providerProfile={providerProfile} bookings={bookings} />
+            <FirstBookingCelebration providerId={providerProfile?.id} bookings={bookings} />
 
             {/* NEEDS YOUR ANSWER */}
             {needsCount > 0 && (
@@ -18042,6 +18097,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                 <div>
                   <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 20, fontWeight: 700 }}>{providerProfile.business_name}</div>
                   <div style={{ color: "var(--muted)", fontSize: 14 }}>{providerProfile.service_type} · {providerProfile.district}</div>
+                  <PhotoTipsLink />
                 </div>
                 <span className={`status-pill ${providerProfile.is_active ? "confirmed" : "pending"}`} style={{ marginLeft: "auto" }}>{providerProfile.is_active ? t("providerPortal.status.verified") : t("providerPortal.profile.pendingActivation")}</span>
               </div>
@@ -19294,6 +19350,133 @@ function BookingQuestionsForm({ questions, answers, onChange, showErrors }) {
         </div>
       ))}
     </div>
+  );
+}
+
+// ── WELCOME MOMENTS (2026-11-02) ─────────────────────────────────────
+// Small moments that make VaiBook feel personal: the first-booking
+// celebration, the Founding Partner badge, the first-month report and the
+// photo tips. All automatic or optional; none adds a setup step.
+const lsGet = (k) => { try { return localStorage.getItem(k); } catch (e) { return null; } };
+const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch (e) { /* ignore */ } };
+const isCustomerBooking = (b) => b && b.customer_id && !b.created_by_provider;
+
+function Confetti() {
+  const colors = ["#5B4BE0", "#16A34A", "#F59E0B", "#0EA5E9", "#EC4899"];
+  const bits = Array.from({ length: 36 }, (_, i) => i);
+  return (
+    <div className="vb-confetti" aria-hidden="true">
+      {bits.map((i) => (
+        <span key={i} style={{ left: `${(i * 37) % 100}%`, background: colors[i % colors.length], animationDelay: `${(i % 9) * 0.12}s`, animationDuration: `${2.2 + (i % 5) * 0.35}s`, transform: `rotate(${(i * 47) % 360}deg)` }} />
+      ))}
+    </div>
+  );
+}
+
+function FirstBookingCelebration({ providerId, bookings }) {
+  const es = String(i18n.language || "").toLowerCase().startsWith("es");
+  const key = `vaibook_first_booking_seen_${providerId}`;
+  const [seen, setSeen] = useState(() => !!lsGet(key));
+  if (!providerId || seen) return null;
+  const customerOnes = (bookings || []).filter(isCustomerBooking).sort((a, b) => String(a.created_at).localeCompare(String(b.created_at)));
+  if (!customerOnes.length) return null;
+  const first = customerOnes[0];
+  // Only for businesses whose first customer booking is recent; long-time
+  // businesses never see "your first booking" out of the blue.
+  if (Date.now() - new Date(first.created_at).getTime() > 21 * 864e5) { lsSet(key, "1"); return null; }
+  const name = ((first.users && first.users.full_name) || "").trim().split(/\s+/)[0] || (es ? "Un cliente" : "A customer");
+  const svc = (first.services && first.services.name) || (es ? "una cita" : "an appointment");
+  const close = () => { lsSet(key, "1"); setSeen(true); };
+  return (
+    <div className="vb-celebrate" role="dialog" aria-modal="true" aria-label={es ? "Tu primera reserva" : "Your first booking"} onClick={close}>
+      <Confetti />
+      <div className="vb-celebrate-card" onClick={(e) => e.stopPropagation()}>
+        <div className="vb-celebrate-emoji">🎉</div>
+        <h2>{es ? "¡Tu primera reserva en VaiBook!" : "Your first booking on VaiBook!"}</h2>
+        <p>{es ? `${name} reservó ${svc}. Este es el comienzo de algo bueno.` : `${name} booked ${svc}. This is the start of something good.`}</p>
+        <p className="vb-celebrate-sub">{es ? "Sigue compartiendo tu enlace: cada reserva llega aquí sola." : "Keep sharing your link: every booking lands here on its own."}</p>
+        <button type="button" className="btn-sm forest" onClick={close}>{es ? "¡Vamos!" : "Let's go!"}</button>
+      </div>
+    </div>
+  );
+}
+
+function FoundingBadge({ dark }) {
+  const es = String(i18n.language || "").toLowerCase().startsWith("es");
+  return <span className={`founding-chip${dark ? " on-dark" : ""}`} title={es ? "De los primeros negocios en VaiBook" : "One of the first businesses on VaiBook"}>🏅 {es ? "Socio Fundador" : "Founding Partner"}</span>;
+}
+
+function FirstMonthReport({ providerProfile, bookings }) {
+  const es = String(i18n.language || "").toLowerCase().startsWith("es");
+  const pid = providerProfile && providerProfile.id;
+  const key = `vaibook_first_month_seen_${pid}`;
+  const [seen, setSeen] = useState(() => !!lsGet(key));
+  if (!pid || seen || !providerProfile.created_at) return null;
+  const joined = new Date(providerProfile.created_at).getTime();
+  const days = (Date.now() - joined) / 864e5;
+  if (days < 30 || days > 45) return null;
+  const end = joined + 30 * 864e5;
+  const inMonth = (bookings || []).filter((b) => { const t = new Date(b.created_at).getTime(); return t >= joined && t < end && !["cancelled", "rejected"].includes(b.status); });
+  const clients = new Set(inMonth.map((b) => b.customer_id || b.walkin_customer_phone || b.walkin_customer_name).filter(Boolean)).size;
+  const booked = inMonth.filter((b) => ["confirmed", "completed", "pending", "awaiting_payment"].includes(b.status)).reduce((a, b) => a + (Number(b.total_amount) || 0), 0);
+  const tally = {};
+  inMonth.forEach((b) => { const n = b.services && b.services.name; if (n) tally[n] = (tally[n] || 0) + 1; });
+  const top = Object.keys(tally).sort((a, b) => tally[b] - tally[a])[0];
+  const close = () => { lsSet(key, "1"); setSeen(true); };
+  return (
+    <div className="bh-month">
+      <div className="bh-month-head">
+        <div>
+          <div className="bh-month-eyebrow">🗓️ {es ? "Tu primer mes en VaiBook" : "Your first month on VaiBook"}</div>
+          <div className="bh-month-title">{inMonth.length ? (es ? "¡Mira lo que lograste!" : "Look what you built!") : (es ? "Tu primer mes, listo" : "Your first month, done")}</div>
+        </div>
+        <button type="button" className="bh-month-x" onClick={close} aria-label={es ? "Cerrar" : "Close"}>✕</button>
+      </div>
+      <div className="bh-month-stats">
+        <div><b>{inMonth.length}</b><span>{es ? "reservas" : "bookings"}</span></div>
+        <div><b>{clients}</b><span>{es ? "clientes" : "clients"}</span></div>
+        <div><b>BZ${Math.round(booked).toLocaleString()}</b><span>{es ? "reservado" : "booked"}</span></div>
+      </div>
+      {top && <div className="bh-month-line">⭐ {es ? `Lo más reservado: ${top}` : `Most booked: ${top}`}</div>}
+      {providerProfile.founding_partner && <div className="bh-month-line"><FoundingBadge /> {es ? "Gracias por crecer con nosotros desde el inicio." : "Thank you for growing with us from the start."}</div>}
+      {!inMonth.length && <div className="bh-month-line">{es ? "Comparte tu enlace en WhatsApp e Instagram para llenar tu segundo mes." : "Share your link on WhatsApp and Instagram to fill up month two."}</div>}
+    </div>
+  );
+}
+
+function PhotoTipsLink() {
+  const es = String(i18n.language || "").toLowerCase().startsWith("es");
+  const [open, setOpen] = useState(false);
+  const tips = es ? [
+    ["Tu fachada o entrada", "Para que te encuentren fácil."],
+    ["Tú trabajando", "La gente reserva con personas, no con logos."],
+    ["Tu espacio, limpio y ordenado", "Muestra dónde se van a sentar o recostar."],
+    ["Un resultado terminado", "Un corte, unas uñas, un antes y después."],
+    ["Tu equipo", "Si trabajas con más personas."],
+  ] : [
+    ["Your storefront or entrance", "So people find you easily."],
+    ["You at work", "People book people, not logos."],
+    ["Your space, clean and tidy", "Show where they'll sit or lie down."],
+    ["A finished result", "A fresh cut, a set of nails, a before and after."],
+    ["Your team", "If you work with others."],
+  ];
+  return (
+    <>
+      <button type="button" className="photo-tips-link" onClick={() => setOpen(true)}>📸 {es ? "Fotos que consiguen reservas" : "Photos that get bookings"}</button>
+      {open && (
+        <div className="cf-overlay" onClick={() => setOpen(false)}>
+          <div className="photo-tips-panel" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label={es ? "Consejos de fotos" : "Photo tips"}>
+            <h3>📸 {es ? "5 fotos que consiguen reservas" : "5 photos that get bookings"}</h3>
+            <ol>{tips.map(([a, b]) => <li key={a}><b>{a}</b><span>{b}</span></li>)}</ol>
+            <div className="photo-tips-how">
+              <b>{es ? "Cómo tomarlas con tu teléfono" : "How to take them with your phone"}</b>
+              <span>{es ? "Usa luz del día, cerca de una ventana o afuera. Limpia el lente. Sostén el teléfono derecho. Nada de desorden atrás." : "Use daylight, near a window or outside. Wipe the lens. Hold the phone straight. Clear the clutter behind you."}</span>
+            </div>
+            <button type="button" className="btn-sm forest" onClick={() => setOpen(false)}>{es ? "Entendido" : "Got it"}</button>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 

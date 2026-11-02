@@ -81,7 +81,7 @@ function Notice({ msg }) {
 }
 
 // ── SETTINGS ───────────────────────────────────────────────────────────
-const NUM_FIELDS = ["solo_monthly", "solo_six_month", "team_monthly", "team_six_month", "team_free_seats", "team_seat_price", "setup_fee", "free_booking_cap", "trial_days", "grace_days"];
+const NUM_FIELDS = ["solo_monthly", "solo_six_month", "team_monthly", "team_six_month", "team_free_seats", "team_seat_price", "setup_fee", "free_booking_cap", "trial_days", "grace_days", "founding_partner_limit"];
 
 function AdminSettings() {
   const [form, setForm] = useState(null);
@@ -110,7 +110,7 @@ function AdminSettings() {
       if (NUM_FIELDS.includes(k)) {
         const n = Number(form[k]);
         if (form[k] === "" || !isFinite(n) || n < 0) { setMsg({ ok: false, text: "Prices and numbers can't be empty or below zero." }); return; }
-        patch[k] = ["team_free_seats", "free_booking_cap", "trial_days", "grace_days"].includes(k) ? Math.round(n) : Math.round(n * 100) / 100;
+        patch[k] = ["team_free_seats", "free_booking_cap", "trial_days", "grace_days", "founding_partner_limit"].includes(k) ? Math.round(n) : Math.round(n * 100) / 100;
       } else patch[k] = typeof form[k] === "string" ? form[k].trim() : form[k];
     }
     if (form.banner_link && !/^(https:\/\/|#)/i.test(form.banner_link.trim())) { setMsg({ ok: false, text: "The banner link has to start with https:// (or # for a page inside VaiBook)." }); return; }
@@ -147,6 +147,7 @@ function AdminSettings() {
         <div className="at-grid">
           <Field label="Free plan · bookings a month"><input type="number" inputMode="numeric" min="1" step="1" value={form.free_booking_cap} onChange={num("free_booking_cap")} /></Field>
           <Field label="Free trial of Solo · days"><input type="number" inputMode="numeric" min="1" max="365" step="1" value={form.trial_days} onChange={num("trial_days")} /></Field>
+          <Field label="Founding Partner spots" hint="The first this-many businesses get the 🏅 Founding Partner badge for good. Everyone already on VaiBook has it."><input type="number" inputMode="numeric" min="0" max="10000" step="1" value={form.founding_partner_limit ?? 50} onChange={num("founding_partner_limit")} /></Field>
           <Field label="Days to pay after the due date" hint="After this the business moves to the free plan. Reminders go out 1 day and 2 days before the end."><input type="number" inputMode="numeric" min="3" max="60" step="1" value={form.grace_days} onChange={num("grace_days")} /></Field>
         </div>
         <Toggle checked={form.free_cap_enforced} onChange={set("free_cap_enforced")}
