@@ -1682,7 +1682,7 @@ const css = `
      as every other card on this page) with the forest/gold palette kept
      only as accents — same ticket-stub shape and layout, calmer finish. */
   .cx-hero { position: relative; overflow: hidden; background: #FFFFFF; border: 1px solid var(--border); border-radius: 22px; padding: 30px 28px; margin-bottom: 24px; box-shadow: 0 10px 30px rgba(23,20,31,0.06); }
-  .cx-hero::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px; background: linear-gradient(90deg, var(--forest) 0%, #7B3FE4 55%, var(--clay) 100%); }
+  .cx-hero::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px; background: linear-gradient(90deg, var(--forest) 0%, var(--grad-end, #7B3FE4) 55%, var(--clay) 100%); }
   .cx-hero::after { content: ''; position: absolute; top: -60px; right: -60px; width: 220px; height: 220px; background: radial-gradient(circle, rgba(76,61,196,0.07) 0%, rgba(76,61,196,0) 70%); pointer-events: none; }
   .cx-hero-eyebrow { display: inline-flex; align-items: center; font-size: 11.5px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--forest); background: rgba(76,61,196,0.08); padding: 5px 11px; border-radius: 100px; margin-bottom: 12px; }
   .cx-hero-service { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 26px; font-weight: 800; color: var(--dark-text); line-height: 1.15; }
@@ -2918,7 +2918,7 @@ const css = `
   .cxh-search { position: relative; display: flex; align-items: center; gap: 10px; background: #fff; border: 1px solid var(--border); border-radius: 999px; padding: 7px 7px 7px 20px; box-shadow: 0 16px 36px rgba(76,61,196,0.12); color: var(--text, #16181D); transition: box-shadow .2s ease; }
   .cxh-search:focus-within { box-shadow: 0 16px 36px rgba(76,61,196,0.2); }
   .cxh-search input { flex: 1; min-width: 0; border: none; outline: none; background: transparent; font-size: 16px; color: var(--text, #16181D); font-family: inherit; }
-  .cxh-search-btn { flex: none; background: linear-gradient(135deg, var(--forest) 0%, #7B3FE4 100%); color: #fff; border: none; border-radius: 999px; padding: 12px 22px; font-size: 15px; font-weight: 600; cursor: pointer; font-family: inherit; }
+  .cxh-search-btn { flex: none; background: linear-gradient(135deg, var(--forest) 0%, var(--grad-end, #7B3FE4) 100%); color: #fff; border: none; border-radius: 999px; padding: 12px 22px; font-size: 15px; font-weight: 600; cursor: pointer; font-family: inherit; }
   .cxh-search .suggestions-dropdown { top: calc(100% + 6px); left: 0; right: 0; }
   .cxh-rec { margin: 8px 0 28px; }
   .cxh-rec-title { font-size: 26px; font-weight: 800; letter-spacing: -0.02em; margin: 0 0 14px; color: var(--text, #16181D); }
@@ -2989,7 +2989,7 @@ const css = `
 
   /* ===== BUSINESS HOME (provider dashboard) ===== */
   .bh-hero { position: relative; border-radius: 22px; padding: 20px 18px 18px; margin: 4px 0 16px; overflow: hidden;
-    background: linear-gradient(135deg, #152E59 0%, #1E3A6B 45%, var(--forest) 100%); color: #fff;
+    background: linear-gradient(135deg, var(--hero-a, #152E59) 0%, var(--hero-b, #1E3A6B) 45%, var(--forest) 100%); color: #fff;
     box-shadow: 0 16px 36px rgba(21,46,89,0.25); }
   .bh-hero::before { content: ''; position: absolute; top: -60px; right: -50px; width: 180px; height: 180px; border-radius: 50%;
     background: radial-gradient(circle, rgba(140,122,240,0.5) 0%, rgba(140,122,240,0) 70%); pointer-events: none; }
@@ -3031,7 +3031,7 @@ const css = `
   .bh-req-actions { grid-column: 1 / -1; display: flex; gap: 8px; flex-wrap: wrap; }
   .bh-btn { border: 1px solid var(--border); background: #fff; color: var(--text, #16181D); border-radius: 10px; padding: 9px 14px; font-weight: 700; font-size: 13.5px; cursor: pointer; font-family: inherit; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; }
   .bh-btn:disabled { opacity: 0.55; cursor: default; }
-  .bh-btn-primary { background: linear-gradient(135deg, var(--forest) 0%, #7B3FE4 100%); border-color: transparent; color: #fff; min-width: 150px; box-shadow: 0 6px 14px rgba(76,61,196,0.25); }
+  .bh-btn-primary { background: linear-gradient(135deg, var(--forest) 0%, var(--grad-end, #7B3FE4) 100%); border-color: transparent; color: #fff; min-width: 150px; box-shadow: 0 6px 14px rgba(76,61,196,0.25); }
   @media (max-width: 560px) { .bh-btn-primary { flex: 1; min-width: 110px; } }
   .bh-btn-icon { padding: 9px 11px; }
   .bh-today { display: flex; flex-direction: column; }
@@ -3058,7 +3058,7 @@ const css = `
   .bh-action:disabled { opacity: 0.5; }
   .bh-week { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; margin-bottom: 14px; }
   .bh-day { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 2px; border-radius: 12px; background: #fff; border: 1px solid var(--border); text-align: center; }
-  .bh-day.today { background: linear-gradient(160deg, var(--forest) 0%, #7B3FE4 100%); border-color: transparent; box-shadow: 0 8px 16px rgba(76,61,196,0.22); }
+  .bh-day.today { background: linear-gradient(160deg, var(--forest) 0%, var(--grad-end, #7B3FE4) 100%); border-color: transparent; box-shadow: 0 8px 16px rgba(76,61,196,0.22); }
   .bh-day.busy:not(.today) { border-color: var(--clay); }
   .bh-day.closed { opacity: 0.5; }
   .bh-day-wd { font-size: 10.5px; color: var(--muted); font-weight: 700; text-transform: capitalize; }
@@ -3427,6 +3427,13 @@ const css = `
     body.printing-form .client-form-print { position: absolute; left: 0; top: 0; width: 100%; }
     body.printing-form .cf-overlay { position: static; background: none; padding: 0; }
   }
+  /* Portal colour picker */
+  .pc-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 6px; }
+  .pc-swatch { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 8px 4px; border: 1px solid var(--border); border-radius: 14px; background: #fff; cursor: pointer; font: inherit; min-width: 0; }
+  .pc-swatch.on { border-color: var(--forest); box-shadow: 0 0 0 2px var(--accent-soft); }
+  .pc-dot { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 800; font-size: 16px; }
+  .pc-name { font-size: 11.5px; font-weight: 600; color: var(--dark-text); text-align: center; line-height: 1.25; }
+  @media (max-width: 360px) { .pc-grid { grid-template-columns: repeat(2, 1fr); } }
   /* Welcome moments (2026-11-02) */
   .cx-greet { margin: 4px 2px 14px; }
   .cx-greet-hi { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 24px; font-weight: 800; letter-spacing: -0.02em; color: var(--dark-text); }
@@ -3764,7 +3771,7 @@ const css = `
      straight onto a <canvas> at export resolution (see MonthRecapCard) so
      the on-screen preview IS the exported pixels — no separate HTML/canvas
      rendering paths to keep in sync. */
-  .mr-share-btn { display: inline-flex; align-items: center; gap: 8px; background: linear-gradient(135deg, var(--forest) 0%, #7B3FE4 100%); color: #fff; font-weight: 800; font-size: 14px; padding: 13px 22px; border-radius: 100px; border: none; cursor: pointer; box-shadow: 0 10px 24px rgba(76,61,196,0.3); transition: transform .15s ease, box-shadow .2s ease; margin-bottom: 20px; }
+  .mr-share-btn { display: inline-flex; align-items: center; gap: 8px; background: linear-gradient(135deg, var(--forest) 0%, var(--grad-end, #7B3FE4) 100%); color: #fff; font-weight: 800; font-size: 14px; padding: 13px 22px; border-radius: 100px; border: none; cursor: pointer; box-shadow: 0 10px 24px rgba(76,61,196,0.3); transition: transform .15s ease, box-shadow .2s ease; margin-bottom: 20px; }
   .mr-share-btn:hover { transform: translateY(-1px); box-shadow: 0 14px 30px rgba(76,61,196,0.38); }
   .mr-recap-panel { background: transparent; box-shadow: none; padding: 0; max-width: 360px; display: flex; flex-direction: column; align-items: center; gap: 16px; }
   .mr-recap-canvas-wrap { width: 100%; border-radius: 22px; overflow: hidden; box-shadow: 0 20px 50px rgba(11,24,37,0.45); line-height: 0; }
@@ -15801,7 +15808,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
 
   return (
     <FeatureFlagsProvider providerId={providerId} categoryKey={providerCategoryKey}>
-    <div className="provider-shell">
+    <div className="provider-shell" style={portalThemeVars(providerProfile?.portal_theme)}>
       <header className="provider-topbar">
         <div className="provider-topbar-left">
           <span className="nav-logo" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 18, color: "var(--near-white)", display: "inline-flex", alignItems: "center", gap: 7 }}><VaiBookMark size={19} />vai<span style={{ color: "var(--lime)" }}>book</span></span>
@@ -18388,6 +18395,8 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
               </div>
             </div>
 
+            {providerProfile && <PortalColourPicker providerProfile={providerProfile} onSaved={(u) => onProviderProfileUpdate && onProviderProfileUpdate(u)} />}
+
             {providerProfile && <BookingQuestionsEditor key={providerProfile.id} providerProfile={providerProfile} onSaved={(u) => onProviderProfileUpdate && onProviderProfileUpdate(u)} />}
 
             <div className="card" id="settings-verse" style={{ maxWidth: 480, marginBottom: 20, scrollMarginTop: 120 }}>
@@ -19349,6 +19358,54 @@ function BookingQuestionsForm({ questions, answers, onChange, showErrors }) {
           {missing.has(q.id) && <div className="bq-err">{es ? "Responde esta pregunta para reservar." : "Please answer this to book."}</div>}
         </div>
       ))}
+    </div>
+  );
+}
+
+// ── PORTAL COLOUR (2026-11-02) ───────────────────────────────────────
+// Each business can pick the colour of its own portal. Only they see it;
+// customers always see VaiBook's look.
+const PORTAL_THEMES = [
+  { id: "violet", en: "VaiBook violet", es: "Violeta VaiBook", c: ["#4C3DC4", "#6C5CE7", "#8C7AF0", "#EEECFC", "#152E59", "#1E3A6B"] },
+  { id: "ocean", en: "Ocean blue", es: "Azul océano", c: ["#0369A1", "#0EA5E9", "#38BDF8", "#E0F2FE", "#0C2A43", "#0F3D5E"] },
+  { id: "caribbean", en: "Caribbean teal", es: "Turquesa caribe", c: ["#0F766E", "#14B8A6", "#2DD4BF", "#CCFBF1", "#0B2E2B", "#134E4A"] },
+  { id: "jungle", en: "Jungle green", es: "Verde selva", c: ["#15803D", "#22C55E", "#4ADE80", "#DCFCE7", "#0F2E1D", "#14532D"] },
+  { id: "gold", en: "Mayan gold", es: "Oro maya", c: ["#A16207", "#CA8A04", "#EAB308", "#FEF9C3", "#2E2306", "#57400A"] },
+  { id: "sunset", en: "Sunset orange", es: "Atardecer", c: ["#C2410C", "#F97316", "#FB923C", "#FFEDD5", "#3B1A0B", "#7C2D12"] },
+  { id: "rose", en: "Hibiscus pink", es: "Hibisco", c: ["#BE185D", "#EC4899", "#F472B6", "#FCE7F3", "#3B0A23", "#701A45"] },
+  { id: "midnight", en: "Midnight", es: "Medianoche", c: ["#1F2937", "#374151", "#6B7280", "#F3F4F6", "#0B0F17", "#1F2937"] },
+];
+const portalThemeVars = (id) => {
+  const t = PORTAL_THEMES.find((x) => x.id === id);
+  if (!t || t.id === "violet") return undefined;
+  const [main, mid, light, soft, heroA, heroB] = t.c;
+  return { "--forest": main, "--lime": main, "--forest-mid": mid, "--grad-end": mid, "--forest-light": light, "--accent-soft": soft, "--hero-a": heroA, "--hero-b": heroB };
+};
+function PortalColourPicker({ providerProfile, onSaved }) {
+  const es = String(i18n.language || "").toLowerCase().startsWith("es");
+  const current = (providerProfile && providerProfile.portal_theme) || "violet";
+  const [saving, setSaving] = useState(null);
+  const [err, setErr] = useState(false);
+  const pick = async (id) => {
+    if (id === current || saving) return;
+    setSaving(id); setErr(false);
+    const updated = await upsertProviderProfile({ id: providerProfile.id, user_id: providerProfile.user_id, portal_theme: id });
+    setSaving(null);
+    if (updated) onSaved && onSaved(updated); else setErr(true);
+  };
+  return (
+    <div className="card" id="settings-colour" style={{ maxWidth: 480, marginBottom: 20, scrollMarginTop: 120 }}>
+      <div className="card-title">🎨 {es ? "Color de tu portal" : "Your portal colour"}</div>
+      <p style={{ fontSize: 13, color: "var(--muted)", marginTop: -6, lineHeight: 1.5 }}>{es ? "Hazlo tuyo. Solo tú lo ves; tus clientes ven VaiBook como siempre." : "Make it yours. Only you see it; your customers see VaiBook as usual."}</p>
+      <div className="pc-grid" role="radiogroup" aria-label={es ? "Color del portal" : "Portal colour"}>
+        {PORTAL_THEMES.map((t) => (
+          <button key={t.id} type="button" role="radio" aria-checked={current === t.id} className={`pc-swatch${current === t.id ? " on" : ""}`} onClick={() => pick(t.id)} disabled={!!saving}>
+            <span className="pc-dot" style={{ background: `linear-gradient(135deg, ${t.c[4]} 0%, ${t.c[0]} 100%)` }}>{current === t.id ? "✓" : saving === t.id ? "…" : ""}</span>
+            <span className="pc-name">{es ? t.es : t.en}</span>
+          </button>
+        ))}
+      </div>
+      {err && <p style={{ fontSize: 13, color: "#B91C1C", margin: "8px 0 0" }}>{es ? "No se guardó. Inténtalo de nuevo." : "That didn't save. Try again."}</p>}
     </div>
   );
 }
