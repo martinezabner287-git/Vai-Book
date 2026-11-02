@@ -150,6 +150,9 @@ function AdminSettings() {
           <Field label="Founding Partner spots" hint="The first this-many businesses get the 🏅 Founding Partner badge for good. Everyone already on VaiBook has it."><input type="number" inputMode="numeric" min="0" max="10000" step="1" value={form.founding_partner_limit ?? 50} onChange={num("founding_partner_limit")} /></Field>
           <Field label="Days to pay after the due date" hint="After this the business moves to the free plan. Reminders go out 1 day and 2 days before the end."><input type="number" inputMode="numeric" min="3" max="60" step="1" value={form.grace_days} onChange={num("grace_days")} /></Field>
         </div>
+        <Toggle checked={form.snag_include_free !== false} onChange={set("snag_include_free")}
+          label={'Show free-plan businesses in "Snag a Spot"'}
+          hint={form.snag_include_free !== false ? "On: free businesses show after Solo and Team ones." : "Off: only Solo and Team businesses appear there, a reason to upgrade."} />
         <Toggle checked={form.free_cap_enforced} onChange={set("free_cap_enforced")}
           label={`Stop online bookings when a free business reaches ${form.free_booking_cap || "?"} this month`}
           hint={form.free_cap_enforced ? "On: customers see a message that the business is full this month. Walk-ins the business adds itself still work." : "Off: the limit is shown to businesses but nobody gets blocked."} />

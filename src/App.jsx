@@ -3427,6 +3427,20 @@ const css = `
     body.printing-form .client-form-print { position: absolute; left: 0; top: 0; width: 100%; }
     body.printing-form .cf-overlay { position: static; background: none; padding: 0; }
   }
+  /* Snag a Spot + last-minute deals */
+  .cx-dropzone-sub { font-size: 13px; color: var(--muted); margin: -6px 0 10px; }
+  .cx-drop-card { position: relative; }
+  .cx-drop-card.has-deal { border-color: #F59E0B !important; }
+  .cx-drop-deal { position: absolute; top: 8px; right: 8px; background: #DC2626; color: #fff; font-size: 11.5px; font-weight: 800; border-radius: 999px; padding: 2px 8px; z-index: 1; }
+  .cx-drop-svc { font-size: 12px; color: rgba(255,255,255,0.82); margin: 2px 0 8px; line-height: 1.35; overflow-wrap: anywhere; }
+  .cx-drop-svc s { opacity: .65; }
+  .cx-drop-svc b { color: #FDE68A; }
+  .lastmin-note { background: #FEF3C7; color: #78350F; border-radius: 12px; padding: 10px 12px; font-size: 13.5px; font-weight: 600; margin: 4px 0 12px; }
+  .lm-row { display: flex; flex-wrap: wrap; gap: 6px; }
+  .lm-opt { font: inherit; font-size: 13.5px; font-weight: 700; padding: 9px 14px; border-radius: 999px; border: 1px solid var(--border); background: #fff; color: var(--dark-text); cursor: pointer; }
+  .lm-opt.on { background: var(--forest); border-color: var(--forest); color: #fff; }
+  .lm-locked { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; background: #F7F6FB; border-radius: 12px; padding: 12px; font-size: 13px; color: var(--dark-text); }
+  .lm-locked span { flex: 1 1 200px; }
   /* Portal colour picker */
   .pc-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 6px; }
   .pc-swatch { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 8px 4px; border: 1px solid var(--border); border-radius: 14px; background: #fff; cursor: pointer; font: inherit; min-width: 0; }
@@ -6484,6 +6498,20 @@ const minutesToHHMM = (m) => `${String(Math.floor(m / 60)).padStart(2, "0")}:${S
 // provider_blocks) minus the daily lunch break minus anything already in
 // the past today. Never returns a slot that wasn't actually computed from
 // that provider's real data — there is no placeholder/fallback path here.
+// Snag a Spot (2026-11-02): openings in the next 3 hours. Paid businesses
+// (Solo/Team, incl. trial) come first and can add a last-minute deal: % off
+// a booking that starts within 3 hours (create_booking_safe applies it).
+const SNAG_WINDOW_MIN = 180;
+const hashStr = (str) => { let h = 0; for (const ch of String(str)) h = (h * 31 + ch.charCodeAt(0)) >>> 0; return h; };
+const isPaidPlan = (p) => ["pro", "business"].includes((p && p.plan) || "starter");
+const lastMinDealPct = (p) => (isPaidPlan(p) ? Math.max(0, Math.min(50, Number(p && p.lastmin_deal_pct) || 0)) : 0);
+const lastMinDealApplies = (p, dateStr, timeStr) => {
+  const pct = lastMinDealPct(p);
+  if (!pct || !dateStr || !timeStr || dateStr !== localDateStr()) return 0;
+  const now = new Date(); const nowM = now.getHours() * 60 + now.getMinutes();
+  const m = hhmmToMinutes(timeStr);
+  return m >= nowM - 5 && m <= nowM + SNAG_WINDOW_MIN ? pct : 0;
+};
 function computeDaySlots({ hours, busy, dateStr, durationMin, lunchBreakStart, lunchBreakMinutes, step = 30 }) {
   if (!dateStr || !durationMin) return [];
   const dow = new Date(`${dateStr}T00:00:00`).getDay();
@@ -9820,7 +9848,7 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
   // (bookings + provider_blocks), never a placeholder time. See
   // computeDaySlots above.
   const [lastMinuteDrops, setLastMinuteDrops] = useState([]);
-  const [loadingLastMinute, setLoadingLastMinute] = useState(false);
+  const [, setLoadingLastMinute] = useState(false);
   const lastMinuteComputedForRef = useRef("");
 
   const [uploadingReceiptId, setUploadingReceiptId] = useState(null);
@@ -9910,22 +9938,28 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
   useEffect(() => {
     if (tab !== "home" || providers.length === 0) return;
     const today = localDateStr();
-    const key = `${today}:${providers.map((p) => p.id).slice(0, 12).join(",")}`;
+    const key = `${today}:${Math.floor(Date.now() / 900000)}:${providers.length}`;
     if (lastMinuteComputedForRef.current === key) return;
     lastMinuteComputedForRef.current = key;
 
+    const nowD = new Date();
+    const nowM = nowD.getHours() * 60 + nowD.getMinutes();
     const candidates = providers
+      .filter((p) => p.is_active !== false && (PLATFORM.snagIncludeFree || isPaidPlan(p)))
       .map((p) => {
-        const activeServices = (p.services || []).filter((s) => s.is_active !== false);
+        // Shortest one-person service: the best chance of fitting right now.
+        const activeServices = (p.services || []).filter((s) => s.is_active !== false && !isClassService(s));
         if (activeServices.length === 0) return null;
-        // The shortest active service gives same-day availability the best
-        // chance of actually fitting before closing — a fair, provider-
-        // agnostic way to pick which service this card represents.
         const repService = activeServices.slice().sort((a, b) => (Number(a.duration_min) || 30) - (Number(b.duration_min) || 30))[0];
         return { provider: p, repService };
       })
       .filter(Boolean)
-      .slice(0, 12);
+      // Deals first, then paid plans, then the rest; ties shuffled per day so
+      // the same businesses aren't always the ones checked.
+      .sort((a, b) => (lastMinDealPct(b.provider) > 0) - (lastMinDealPct(a.provider) > 0)
+        || isPaidPlan(b.provider) - isPaidPlan(a.provider)
+        || ((hashStr(a.provider.id + today) % 997) - (hashStr(b.provider.id + today) % 997)))
+      .slice(0, 16);
 
     if (candidates.length === 0) { setLastMinuteDrops([]); return; }
 
@@ -9933,7 +9967,7 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
     setLoadingLastMinute(true);
     Promise.all(
       candidates.map(({ provider, repService }) =>
-        Promise.all([getWorkingHours(provider.id), getProviderBusyWindows(provider.id, today)]).then(([hours, busy]) => {
+        Promise.all([Array.isArray(provider.working_hours) && provider.working_hours.length ? Promise.resolve(provider.working_hours) : getWorkingHours(provider.id), getProviderBusyWindows(provider.id, today)]).then(([hours, busy]) => {
           const slots = computeDaySlots({
             hours,
             busy,
@@ -9942,15 +9976,16 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
             lunchBreakStart: provider.lunch_break_start,
             lunchBreakMinutes: provider.lunch_break_minutes,
           });
-          if (slots.length === 0) return null;
-          return { provider, service: repService, time: slots[0] };
+          const soon = slots.filter((t) => hhmmToMinutes(t) <= nowM + SNAG_WINDOW_MIN);
+          if (soon.length === 0) return null;
+          return { provider, service: repService, time: soon[0], deal: lastMinDealPct(provider), paid: isPaidPlan(provider) };
         })
       )
     ).then((results) => {
       if (cancelled) return;
       const drops = results
         .filter(Boolean)
-        .sort((a, b) => hhmmToMinutes(a.time) - hhmmToMinutes(b.time))
+        .sort((a, b) => (b.deal > 0) - (a.deal > 0) || b.paid - a.paid || hhmmToMinutes(a.time) - hhmmToMinutes(b.time))
         .slice(0, 8);
       setLastMinuteDrops(drops);
       setLoadingLastMinute(false);
@@ -10587,7 +10622,9 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
     const coveredByMembership = membershipId ? await redeemMembershipVisit(membershipId) : false;
     const people = Math.min(Math.max(Number(partySize) || 1, 1), 10);
     const unitPrice = Number(service.price) || 0;
-    const total = coveredByMembership ? unitPrice * (people - 1) : unitPrice * people;
+    const dealPct = lastMinDealApplies(selectedProvider, dateStr, timeStr);
+    const baseTotal = coveredByMembership ? unitPrice * (people - 1) : unitPrice * people;
+    const total = dealPct ? Math.round(baseTotal * (100 - dealPct)) / 100 : baseTotal;
     const dpPct = selectedProvider.downpayment_required ? (selectedProvider.downpayment_pct || 50) : 0;
     const downpayment = (dpPct && !coveredByMembership) ? Math.round(total * dpPct) / 100 : null;
     const order_number = `VB-${Date.now().toString(36).toUpperCase()}${Math.random().toString(36).slice(2, 5).toUpperCase()}`;
@@ -11480,6 +11517,37 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
               </div>
             )}
 
+            {/* SNAG A SPOT — openings in the next 3 hours (deals and paid
+                plans first). Shown near the top: it's the "right now" reason
+                to open the app; hidden entirely when nothing is open. */}
+            {lastMinuteDrops.length > 0 && (
+              <div className="cx-dropzone">
+                <div className="cx-section-heading">{t("customerPortal.home.snagASpotToday")} 🔥</div>
+                <div className="cx-dropzone-sub">{hx("Open in the next 3 hours", "Disponible en las próximas 3 horas")}</div>
+                <div className="cx-dropzone-row">
+                  {lastMinuteDrops.map((drop) => {
+                    const price = Number(drop.service.price) || 0;
+                    const dealPrice = drop.deal ? Math.round(price * (100 - drop.deal)) / 100 : null;
+                    return (
+                      <div className={`cx-drop-card${drop.deal ? " has-deal" : ""}`} key={drop.provider.id}>
+                        {drop.deal > 0 && <div className="cx-drop-deal">-{drop.deal}%</div>}
+                        <div
+                          className="cx-drop-avatar"
+                          style={coverImageUrl(drop.provider) ? { background: `center/cover no-repeat url(${coverImageUrl(drop.provider)})` } : undefined}
+                        >
+                          {!coverImageUrl(drop.provider) && <span>{iconForServiceType(drop.provider.service_type)}</span>}
+                        </div>
+                        <div className="cx-drop-shop">{drop.provider.business_name}</div>
+                        <div className="cx-drop-time">{t("customerPortal.home.todayAt", { time: formatBookingTime(drop.time) })}</div>
+                        <div className="cx-drop-svc">{drop.service.name}{price > 0 && <> · {dealPrice !== null ? <><s>BZ${price}</s> <b>BZ${dealPrice}</b></> : <>BZ${price}</>}</>}</div>
+                        <button className="cx-drop-claim" onClick={() => claimLastMinuteDrop(drop)}>{t("customerPortal.home.claim")}</button>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             {/* PHOTO ROWS (Fresha style): Recommended, Recently viewed, New. */}
             {[
               ["rec", hx("Recommended", "Recomendados"), recommendedProviders, (p) => p.is_featured ? hx("Featured", "Destacado") : null],
@@ -11589,36 +11657,6 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                     );
                   })}
                 </div>
-              </div>
-            )}
-
-            {/* LAST-MINUTE DROPS — real same-day openings only (see the
-                lastMinuteDrops effect above): a provider only shows up
-                here because computeDaySlots found it an actual free slot
-                today from its real working hours and real busy windows.
-                Horizontal scroll, hidden scrollbar, compact "snag it" cards. */}
-            {(loadingLastMinute || lastMinuteDrops.length > 0) && (
-              <div className="cx-dropzone">
-                <div className="cx-section-heading">{t("customerPortal.home.snagASpotToday")} 🔥</div>
-                {loadingLastMinute && lastMinuteDrops.length === 0 ? (
-                  <div className="cx-dropzone-loading">{t("customerPortal.home.checkingWhosFree")}</div>
-                ) : (
-                  <div className="cx-dropzone-row">
-                    {lastMinuteDrops.map((drop) => (
-                      <div className="cx-drop-card" key={drop.provider.id}>
-                        <div
-                          className="cx-drop-avatar"
-                          style={coverImageUrl(drop.provider) ? { background: `center/cover no-repeat url(${coverImageUrl(drop.provider)})` } : undefined}
-                        >
-                          {!coverImageUrl(drop.provider) && <span>{iconForServiceType(drop.provider.service_type)}</span>}
-                        </div>
-                        <div className="cx-drop-shop">{drop.provider.business_name}</div>
-                        <div className="cx-drop-time">{t("customerPortal.home.todayAt", { time: formatBookingTime(drop.time) })}</div>
-                        <button className="cx-drop-claim" onClick={() => claimLastMinuteDrop(drop)}>{t("customerPortal.home.claim")}</button>
-                      </div>
-                    ))}
-                  </div>
-                )}
               </div>
             )}
 
@@ -12647,6 +12685,9 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                             );
                           })()}
 
+                          {lastMinDealApplies(selectedProvider, bookingForm.date, bookingForm.time) > 0 && (
+                            <div className="lastmin-note">🔥 {String(i18n.language || "").toLowerCase().startsWith("es") ? `Oferta de último minuto: ${lastMinDealApplies(selectedProvider, bookingForm.date, bookingForm.time)}% de descuento en esta reserva.` : `Last-minute deal: ${lastMinDealApplies(selectedProvider, bookingForm.date, bookingForm.time)}% off this booking.`}</div>
+                          )}
                           <BookingQuestionsForm questions={selectedProvider?.booking_questions} answers={bqAnswers} onChange={setBqAnswers} showErrors={bqShowErr} />
                           <div className="input-group"><label>{t("customerPortal.booking.notesOptional")}</label><textarea placeholder={t("customerPortal.booking.notesPlaceholder")} value={bookingForm.notes} onChange={e => setBookingForm(f => ({ ...f, notes: e.target.value }))} style={{ minHeight: 60 }} /></div>
 
@@ -18402,6 +18443,8 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
               </div>
             </div>
 
+            {providerProfile && <LastMinuteDealCard providerProfile={providerProfile} onSaved={(u) => onProviderProfileUpdate && onProviderProfileUpdate(u)} onUpgrade={() => setTab("billing")} />}
+
             {providerProfile && <PortalColourPicker providerProfile={providerProfile} onSaved={(u) => onProviderProfileUpdate && onProviderProfileUpdate(u)} />}
 
             {providerProfile && <BookingQuestionsEditor key={providerProfile.id} providerProfile={providerProfile} onSaved={(u) => onProviderProfileUpdate && onProviderProfileUpdate(u)} />}
@@ -19133,7 +19176,7 @@ const DISTRICTS = ["Belize City", "Cayo", "Corozal", "Orange Walk", "Stann Creek
 // service_categories, districts) and are edited in the admin portal.
 // The values in this file are only the defaults until they load. A copy is
 // cached so the next visit starts with the latest numbers, no flash.
-const PLATFORM = { freeCap: 30, freeCapEnforced: false, trialDays: 14, graceDays: 7, banner: null, rev: 0 };
+const PLATFORM = { freeCap: 30, freeCapEnforced: false, trialDays: 14, graceDays: 7, banner: null, snagIncludeFree: true, rev: 0 };
 const PLATFORM_CACHE_KEY = "vaibook_platform_v1";
 const fmt2 = (n) => (Math.round(Number(n) * 100) / 100).toFixed(2);
 const platformVars = () => {
@@ -19160,6 +19203,7 @@ function applyPlatformConfig(cfg) {
     PLATFORM.freeCapEnforced = !!st.free_cap_enforced;
     PLATFORM.trialDays = n(st.trial_days, PLATFORM.trialDays);
     PLATFORM.graceDays = n(st.grace_days, PLATFORM.graceDays);
+    if (st.snag_include_free !== undefined && st.snag_include_free !== null) PLATFORM.snagIncludeFree = !!st.snag_include_free;
     if (solo) {
       solo.monthly = n(st.solo_monthly, solo.monthly); solo.sixMonthTotal = n(st.solo_six_month, solo.sixMonthTotal);
       solo.price = `BZ$${fmt2(solo.monthly)}/month, or BZ$${dayRate(solo.sixMonthTotal, SIX_MONTH_DAYS)}/day on 6 months`;
@@ -19388,6 +19432,45 @@ const portalThemeVars = (id) => {
   const [main, mid, light, soft, heroA, heroB] = t.c;
   return { "--forest": main, "--lime": main, "--forest-mid": mid, "--grad-end": mid, "--forest-light": light, "--accent-soft": soft, "--hero-a": heroA, "--hero-b": heroB };
 };
+function LastMinuteDealCard({ providerProfile, onSaved, onUpgrade }) {
+  const es = String(i18n.language || "").toLowerCase().startsWith("es");
+  const paid = isPaidPlan(providerProfile);
+  const current = Number(providerProfile && providerProfile.lastmin_deal_pct) || 0;
+  const [saving, setSaving] = useState(null);
+  const pick = async (pct) => {
+    if (!paid || pct === current || saving !== null) return;
+    setSaving(pct);
+    const updated = await upsertProviderProfile({ id: providerProfile.id, user_id: providerProfile.user_id, lastmin_deal_pct: pct });
+    setSaving(null);
+    if (updated) onSaved && onSaved(updated);
+  };
+  return (
+    <div className="card" id="settings-lastmin" style={{ maxWidth: 480, marginBottom: 20, scrollMarginTop: 120 }}>
+      <div className="card-title">🔥 {es ? "Llena tus espacios vacíos" : "Fill your empty slots"}</div>
+      <p style={{ fontSize: 13, color: "var(--muted)", marginTop: -6, lineHeight: 1.5 }}>
+        {es ? "Cuando tienes un espacio libre en las próximas 3 horas, apareces en \"Consigue un espacio hoy\" en la página de inicio de los clientes. Agrega un descuento de último minuto para llenarlo más rápido." : "When you have a free slot in the next 3 hours, you show up in \"Snag a Spot Today\" on customers' home page. Add a last-minute discount to fill it faster."}
+      </p>
+      {paid ? (
+        <>
+          <div className="lm-row" role="radiogroup" aria-label={es ? "Descuento de último minuto" : "Last-minute discount"}>
+            {[0, 10, 15, 20, 25].map((pct) => (
+              <button key={pct} type="button" role="radio" aria-checked={current === pct} className={`lm-opt${current === pct ? " on" : ""}`} disabled={saving !== null} onClick={() => pick(pct)}>
+                {saving === pct ? "…" : pct === 0 ? (es ? "Sin descuento" : "No discount") : `${pct}%`}
+              </button>
+            ))}
+          </div>
+          <p style={{ fontSize: 12.5, color: "var(--muted)", margin: "10px 0 0" }}>{current ? (es ? `Las reservas que empiezan en las próximas 3 horas tienen ${current}% de descuento. Tus otras reservas no cambian.` : `Bookings that start within the next 3 hours get ${current}% off. Your other bookings don't change.`) : (es ? "Igual apareces primero por tener un plan pagado." : "You still show up first because you're on a paid plan.")}</p>
+        </>
+      ) : (
+        <div className="lm-locked">
+          <span>{es ? "Los negocios con plan Solo o Team aparecen primero y pueden ofrecer descuentos de último minuto." : "Solo and Team businesses show up first and can offer last-minute discounts."}</span>
+          {onUpgrade && <button type="button" className="btn-sm forest" onClick={onUpgrade}>{es ? "Ver planes" : "See plans"}</button>}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function PortalColourPicker({ providerProfile, onSaved }) {
   const es = String(i18n.language || "").toLowerCase().startsWith("es");
   const current = (providerProfile && providerProfile.portal_theme) || "violet";
