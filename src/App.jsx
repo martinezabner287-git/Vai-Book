@@ -131,6 +131,8 @@ const ProviderLocationMap = lazy(() => import("./MapWidgets").then((m) => ({ def
 // dashboard load.
 const WelcomePlaqueGenerator = lazy(() => import("./WelcomePlaqueGenerator"));
 const ShareKit = lazy(() => import("./ShareKit"));
+const Expenses = lazy(() => import("./Expenses"));
+const ProfitSnapshot = lazy(() => import("./Expenses").then((m) => ({ default: m.ProfitSnapshot })));
 const AdminTools = lazy(() => import("./AdminTools"));
 const ADMIN_TOOL_TABS = ["settings", "customers", "bookings", "reviews", "broadcast", "content", "spotlight"];
 const InfoPages = lazy(() => import("./InfoPages"));
@@ -3384,6 +3386,62 @@ const css = `
   /* Group classes + booking questions (2026-11-01) */
   .slot-spots { display: block; font-size: 10.5px; font-weight: 600; opacity: .8; margin-top: 2px; }
   .slot-spots.few { color: #B45309; opacity: 1; }
+  .xp { max-width: 640px; }
+  .xp-month { display: flex; align-items: center; justify-content: space-between; gap: 10px; background: #fff; border: 1px solid var(--border); border-radius: 14px; padding: 6px; margin-bottom: 12px; }
+  .xp-month strong { font-size: 15px; text-transform: capitalize; }
+  .xp-month-btn { width: 44px; height: 40px; border-radius: 10px; border: none; background: var(--sand, #F4F2EE); font-size: 20px; font-weight: 700; cursor: pointer; color: var(--dark-text); }
+  .xp-month-btn:disabled { opacity: .35; cursor: default; }
+  .xp-profit { display: grid; grid-template-columns: 1fr auto 1fr auto 1fr; align-items: center; gap: 6px; background: #fff; border: 1px solid var(--border); border-radius: 16px; padding: 14px 12px; }
+  .xp-profit > div { min-width: 0; text-align: center; }
+  .xp-profit span { display: block; font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); }
+  .xp-profit b { display: block; font-size: clamp(14px, 4.2vw, 20px); font-weight: 800; color: var(--dark-text); overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
+  .xp-profit .xp-minus { color: var(--muted); font-weight: 800; font-size: 18px; }
+  .xp-pos b, b.xp-pos { color: #15803D; }
+  .xp-neg b, b.xp-neg { color: #B91C1C; }
+  .xp-hint { font-size: 12px; color: var(--muted); margin: 6px 2px 14px; }
+  .xp-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+  .xp-btn { min-height: 48px; border-radius: 12px; border: 1px solid var(--border); background: #fff; font: inherit; font-weight: 700; font-size: 14.5px; color: var(--dark-text); cursor: pointer; padding: 0 14px; }
+  .xp-btn-primary { background: var(--forest, #4C3DC4); border-color: transparent; color: #fff; }
+  .xp-btn:disabled { opacity: .6; }
+  .xp-btn-sm { min-height: 40px; font-size: 13px; }
+  .xp-link { background: none; border: none; font: inherit; font-weight: 700; color: var(--forest, #4C3DC4); cursor: pointer; padding: 8px 4px; min-height: 40px; }
+  .xp-danger { color: #B91C1C; }
+  .xp-form { background: #fff; border: 1px solid var(--border); border-radius: 16px; padding: 14px; margin-bottom: 14px; }
+  .xp-form-head, .xp-form-foot { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+  .xp-form-foot { margin-top: 12px; }
+  .xp-form-foot .xp-btn-primary { flex: 1; }
+  .xp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .xp-field { display: block; margin-top: 10px; min-width: 0; }
+  .xp-field > span { display: block; font-size: 12.5px; font-weight: 700; color: var(--muted); margin-bottom: 5px; }
+  .xp-field input { width: 100%; box-sizing: border-box; min-height: 46px; border: 1px solid var(--border); border-radius: 10px; padding: 0 12px; font: inherit; font-size: 16px; background: #fff; color: var(--dark-text); }
+  .xp-cats { display: flex; flex-wrap: wrap; gap: 6px; }
+  .xp-cat { border: 1px solid var(--border); background: #fff; border-radius: 999px; padding: 8px 12px; font: inherit; font-size: 13px; cursor: pointer; color: var(--dark-text); min-height: 38px; }
+  .xp-cat.on { background: var(--accent-soft, #EEECFC); border-color: var(--forest, #4C3DC4); color: var(--forest, #4C3DC4); font-weight: 700; }
+  .xp-receipt { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
+  .xp-receipt img { width: 64px; height: 80px; object-fit: cover; border-radius: 8px; border: 1px solid var(--border); }
+  .xp-scan { margin-top: 10px; font-size: 13px; font-weight: 600; background: var(--accent-soft, #EEECFC); border-radius: 10px; padding: 10px 12px; }
+  .xp-scan.ok { background: #DCFCE7; color: #14532D; }
+  .xp-scan.warn { background: #FFF3D6; color: #6B4500; }
+  .xp-bar { height: 6px; background: rgba(0,0,0,.08); border-radius: 99px; margin-top: 8px; overflow: hidden; }
+  .xp-bar i { display: block; height: 100%; background: var(--forest, #4C3DC4); transition: width .3s; }
+  .xp-error { color: #B91C1C; font-size: 13px; margin: 10px 0 0; }
+  .xp-card { background: #fff; border: 1px solid var(--border); border-radius: 16px; padding: 14px; margin-bottom: 14px; }
+  .xp-card-title { font-weight: 800; font-size: 14.5px; margin-bottom: 8px; }
+  .xp-catrow { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr) auto; gap: 10px; align-items: center; font-size: 13px; padding: 5px 0; }
+  .xp-catrow span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .xp-catbar { height: 8px; background: var(--sand, #F4F2EE); border-radius: 99px; overflow: hidden; }
+  .xp-catbar i { display: block; height: 100%; background: var(--forest, #4C3DC4); border-radius: 99px; }
+  .xp-empty { font-size: 13px; color: var(--muted); margin: 6px 0; }
+  .xp-row { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; background: none; border: none; border-top: 1px solid var(--border); padding: 12px 2px; font: inherit; color: inherit; cursor: pointer; min-height: 56px; }
+  .xp-row-icon { font-size: 20px; width: 36px; height: 36px; display: grid; place-items: center; background: var(--sand, #F4F2EE); border-radius: 10px; flex: 0 0 auto; }
+  .xp-row-main { flex: 1; min-width: 0; }
+  .xp-row-main b { display: block; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .xp-row-main small { display: block; font-size: 12px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .xp-row-amt { font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .xp-snap { display: grid; gap: 4px; width: 100%; text-align: left; background: #fff; border: 1px solid var(--border); border-radius: 14px; padding: 14px 16px; margin-bottom: 16px; font: inherit; color: var(--dark-text); cursor: pointer; }
+  .xp-snap-title { font-weight: 800; font-size: 14px; }
+  .xp-snap-nums { font-size: 14px; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+  .xp-snap-go { font-size: 13px; font-weight: 700; color: var(--forest, #4C3DC4); }
   .svc-rules { margin: 6px 0 12px; border: 1px solid var(--border, #E5E7EB); border-radius: 12px; }
   .svc-rules-toggle { width: 100%; text-align: left; background: none; border: none; padding: 12px 14px; font: inherit; font-weight: 700; font-size: 13.5px; color: var(--dark-text, #16181D); cursor: pointer; min-height: 44px; }
   .svc-rules-body { padding: 0 14px 12px; }
@@ -7712,6 +7770,7 @@ const PORTAL_TOOLS_BY_VIEW = {
     { id: "calendar", icon: "🗓️", label: "Availability" },
     { id: "services", icon: "✂️", label: "My services" },
     { id: "earnings", icon: "💰", label: "Earnings" },
+    { id: "expenses", icon: "🧾", label: "Expenses & profit" },
     { id: "billing", icon: "🧾", label: "My plan & billing" },
     { id: "staff", icon: "👥", label: "My staff" },
     { id: "reviews", icon: "⭐", label: "My reviews" },
@@ -15541,6 +15600,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
         { id: "calendar", icon: "🗓️", label: t("providerPortal.nav.availability") },
         { id: "staff", icon: "👥", label: t("providerPortal.nav.staff") },
         { id: "earnings", icon: "💰", label: t("providerPortal.nav.earnings") },
+        { id: "expenses", icon: "🧾", label: String(i18n.language || "").toLowerCase().startsWith("es") ? "Gastos y ganancia" : "Expenses & profit" },
         { id: "review", icon: "📈", label: t("providerPortal.nav.monthlyReview") },
       ],
     },
@@ -17348,9 +17408,24 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
           </>
         )}
 
+        {tab === "expenses" && (
+          <>
+            <div className="portal-header">
+              <h2>{String(i18n.language || "").toLowerCase().startsWith("es") ? "Gastos y ganancia" : "Expenses & profit"}</h2>
+              <p>{String(i18n.language || "").toLowerCase().startsWith("es") ? "Anota lo que gastas en el negocio y mira cuánto te queda." : "Log what the business spends and see what you actually keep."}</p>
+            </div>
+            <Suspense fallback={<p style={{ fontSize: 13, color: "var(--muted)" }}>{t("providerPortal.common.loading")}</p>}>
+              <Expenses providerId={providerId} userId={providerProfile?.user_id} bookings={bookings} es={String(i18n.language || "").toLowerCase().startsWith("es")} />
+            </Suspense>
+          </>
+        )}
+
         {tab === "earnings" && (
           <>
             <div className="portal-header"><h2>{t("providerPortal.nav.earnings")}</h2><p>{t("providerPortal.earnings.subtitle")}</p></div>
+            <Suspense fallback={null}>
+              <ProfitSnapshot providerId={providerId} bookings={bookings} es={String(i18n.language || "").toLowerCase().startsWith("es")} onOpen={() => { setTab("expenses"); window.scrollTo({ top: 0, behavior: "smooth" }); }} />
+            </Suspense>
             <div className="metric-grid" style={{ gridTemplateColumns: "1fr 1fr 1fr" }}>
               <div className="metric"><div className="metric-label">{t("providerPortal.earnings.totalEarned")}</div><div className="metric-value" style={{ color: "var(--forest-light)" }}>BZ${totalNetEarned.toFixed(2)}</div><div className="metric-sub">{t("providerPortal.earnings.allTimePaidInFull")}</div></div>
               <div className="metric"><div className="metric-label">{t("providerPortal.common.upcoming")}</div><div className="metric-value">BZ${pendingEarnings.toFixed(2)}</div><div className="metric-sub">{t("providerPortal.earnings.confirmedNotCompleted")}</div></div>
