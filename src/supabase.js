@@ -643,7 +643,8 @@ export const getProviderById = async (id) => {
   const { data, error } = await supabase
     .from('provider_profiles')
     .select('*, services(*), reviews(rating)')
-    .eq('id', id)
+    // Booking links can name a business by its short name ("the-recovery-room") or its id.
+    .eq(/^[0-9a-f-]{36}$/i.test(String(id)) ? 'id' : 'slug', String(id).toLowerCase())
     .eq('is_active', true)
     .maybeSingle();
   if (error) { console.error('Error fetching provider:', error.message); return null; }
@@ -762,6 +763,7 @@ export const createBookingSafe = async (booking) => {
     p_downpayment_amount: booking.downpayment_amount,
     p_notes: booking.notes,
     p_party_size: booking.party_size || 1,
+    p_staff_id: booking.staff_id || null,
   });
   if (error) {
     throwKnownGuardErrors(error);
@@ -796,7 +798,7 @@ const throwKnownGuardErrors = (error) => {
   }
   // Server-side booking checks (create_booking_safe, 2026-10-30): surfaced
   // with a code the booking screen turns into a plain-language message.
-  for (const code of ['CLASS_FULL', 'ACCOUNT_BLOCKED', 'PAST_DATE', 'PROVIDER_UNAVAILABLE', 'SERVICE_UNAVAILABLE', 'NOT_AUTHORIZED']) {
+  for (const code of ['CLASS_FULL', 'SERVICE_HOURS', 'DAILY_FULL', 'ADDON_NEEDS_MAIN', 'ADDON_NOT_ALLOWED', 'PLAN_FULL', 'ACCOUNT_BLOCKED', 'PAST_DATE', 'PROVIDER_UNAVAILABLE', 'SERVICE_UNAVAILABLE', 'NOT_AUTHORIZED']) {
     if (error.message.includes(code)) {
       const err = new Error(code);
       err.code = code;
@@ -2122,7 +2124,7 @@ export const getMyMembershipPlans = async (providerId) => {
   return data || [];
 };
 
-export const createMembershipPlan = async (providerId, { name, description, price, visitLimit, includedServiceIds }) => {
+export const createMembershipPlan = async (providerId, { name, description, price, visitLimit, includedServiceIds, slug, maxMembers, allowances }) => {
   const { data, error } = await supabase
     .from('membership_plans')
     .insert({
@@ -2132,6 +2134,9 @@ export const createMembershipPlan = async (providerId, { name, description, pric
       price,
       visit_limit: visitLimit || null,
       included_service_ids: includedServiceIds && includedServiceIds.length ? includedServiceIds : null,
+      slug: slug || null,
+      max_members: maxMembers || null,
+      allowances: allowances && allowances.length ? allowances : null,
     })
     .select()
     .single();
@@ -2148,6 +2153,9 @@ export const updateMembershipPlan = async (planId, updates) => {
   if (updates.visitLimit !== undefined) payload.visit_limit = updates.visitLimit || null;
   if (updates.includedServiceIds !== undefined) payload.included_service_ids = updates.includedServiceIds && updates.includedServiceIds.length ? updates.includedServiceIds : null;
   if (updates.isActive !== undefined) payload.is_active = updates.isActive;
+  if (updates.slug !== undefined) payload.slug = updates.slug || null;
+  if (updates.maxMembers !== undefined) payload.max_members = updates.maxMembers || null;
+  if (updates.allowances !== undefined) payload.allowances = updates.allowances && updates.allowances.length ? updates.allowances : null;
   const { data, error } = await supabase.from('membership_plans').update(payload).eq('id', planId).select().single();
   if (error) { reportActionError('updateMembershipPlan', error); console.error('Error updating membership plan:', error.message); return null; }
   return data;
@@ -2159,6 +2167,11 @@ export const updateMembershipPlan = async (planId, updates) => {
 export const subscribeToMembershipPlan = async (planId) => {
   const { data, error } = await supabase.rpc('subscribe_to_membership_plan', { p_plan_id: planId });
   if (error) {
+    if (error.message && error.message.includes('PLAN_FULL')) {
+      const err = new Error('PLAN_FULL');
+      err.code = 'PLAN_FULL';
+      throw err;
+    }
     if (error.message && error.message.includes('ALREADY_SUBSCRIBED')) {
       const err = new Error('ALREADY_SUBSCRIBED');
       err.code = 'ALREADY_SUBSCRIBED';
@@ -2262,6 +2275,37 @@ export const cancelMembership = async (membershipId) => {
 // server-side quota check (see redeem_membership_visit). Returns false
 // (not a thrown error) on anything that makes this visit non-redeemable,
 // so the caller can cleanly fall back to charging full price.
+// Plan allowances ("1 sauna a week", "2 deep tissue a month") are checked
+// per service and date; falls back to the plain visit count if needed.
+export const redeemMembershipVisitFor = async (membershipId, serviceId, dateStr) => {
+  const { data, error } = await supabase.rpc('redeem_membership_visit_for', { p_membership_id: membershipId, p_service_id: serviceId, p_date: dateStr || null });
+  if (error) { console.error('Error redeeming membership visit:', error.message); return false; }
+  return !!data;
+};
+
+// Add-ons (cupping, warm towels…) ride on a main booking just made.
+export const attachBookingAddons = async (bookingId, addonIds) => {
+  const { data, error } = await supabase.rpc('attach_booking_addons', { p_booking_id: bookingId, p_addon_ids: addonIds });
+  if (error) { console.error('Error adding add-ons:', error.message); return null; }
+  return data;
+};
+
+// How many clients a business can take at the same moment (one per team member).
+export const getProviderCapacity = async (providerId) => {
+  const { data, error } = await supabase.rpc('provider_capacity', { p_provider_id: providerId });
+  if (error) return 1;
+  return Math.max(1, Number(data) || 1);
+};
+
+export const getPlanSpotsLeft = async (planIds) => {
+  const out = {};
+  await Promise.all((planIds || []).map(async (id) => {
+    const { data, error } = await supabase.rpc('plan_spots_left', { p_plan_id: id });
+    if (!error && data !== null && data !== undefined) out[id] = Number(data);
+  }));
+  return out;
+};
+
 export const redeemMembershipVisit = async (membershipId) => {
   const { data, error } = await supabase.rpc('redeem_membership_visit', { p_membership_id: membershipId });
   if (error) { console.error('Error redeeming membership visit:', error.message); return false; }

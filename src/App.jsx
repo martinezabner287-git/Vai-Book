@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useLayoutEffect, useRef, useContext, createContext, lazy, Suspense, useCallback } from "react";
 import { flushSync } from "react-dom";
-import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, updateService, deleteService, getActiveProviders, getProviderDirectory, createBooking, getProviderBusyWindows, createBookingSafe, cancelBooking, markBookingCheckedIn, getCustomerBookings, uploadReceipt, submitReview, getProviderReviews, updateReview, sendBookingEmail, updateUserProfile, getPaymentMethods, addPaymentMethod, deletePaymentMethod, createNotification, getNotifications, markNotificationRead, markAllNotificationsRead, getCategoryDefaultFeatures, getProviderFeatureOverrides, setProviderFeatureOverride, getVisitNotes, upsertVisitNote, adminListProviders, adminUpdateProvider, adminDeleteProvider, adminCountCustomers, getFavoriteProviderIds, getFavoriteProviders, addFavorite, removeFavorite, getBookingMessages, sendBookingMessage, markBookingMessagesRead, getUnreadBookingMessages, getProviderMonthlyTrend, createProviderProfile, getProviderById, createWalkInBooking, submitProviderPayment, getMyProviderPayments, adminListProviderPayments, adminReviewProviderPayment, submitBookingRefund, adminListBookingRefunds, openPrivateFile, getProviderStaff, addProviderStaff, updateProviderStaff, deleteProviderStaff, getProviderStaffPublic, getLoyaltyAccount, getProviderLoyaltyCustomers, redeemLoyaltyReward, getMyStaffProfile, claimStaffSeatByEmail, getStaffBookings, getProviderNotifyEmail, getMaintenanceStatus, setMaintenanceMode, getSiteOfflineStatus, setSiteOffline, guestAuthWithPassword, updateGuestPassword, savePushSubscription, attachBookingServices, getProviderBlocks, insertProviderBlock, deleteProviderBlock, proposeBookingReschedule, confirmBookingReschedule, declineBookingReschedule, withdrawBookingReschedule, establishSoloSession, getServerSoloSessionToken, getLocalSoloSessionToken, clearLocalSoloSessionToken, subscribeToSoloSessionReplacement, signInWithPhonePassword, customerPhoneAuth, adminResetPhonePassword, isPhoneLoginEmail, formatPhoneForDisplay, weakPasswordReason, submitSupportMessage, listSupportMessages, setSupportMessageStatus, getProviderMembershipPlans, getMyMembershipPlans, createMembershipPlan, updateMembershipPlan, subscribeToMembershipPlan, submitMembershipPayment, getMyMemberships, getProviderMembershipSubscribers, getProviderMembershipPayments, reviewMembershipPayment, cancelMembership, redeemMembershipVisit, startSoloTrial, adminStartProviderTrial, adminExtendProviderTrial, adminEndProviderTrial, adminExtendPaymentDue, adminRestoreDowngradedPlan, adminPlatformStats, setBookingAnswers, getFormEmail } from "./supabase";
+import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, updateService, deleteService, getActiveProviders, getProviderDirectory, createBooking, getProviderBusyWindows, createBookingSafe, cancelBooking, markBookingCheckedIn, getCustomerBookings, uploadReceipt, submitReview, getProviderReviews, updateReview, sendBookingEmail, updateUserProfile, getPaymentMethods, addPaymentMethod, deletePaymentMethod, createNotification, getNotifications, markNotificationRead, markAllNotificationsRead, getCategoryDefaultFeatures, getProviderFeatureOverrides, setProviderFeatureOverride, getVisitNotes, upsertVisitNote, adminListProviders, adminUpdateProvider, adminDeleteProvider, adminCountCustomers, getFavoriteProviderIds, getFavoriteProviders, addFavorite, removeFavorite, getBookingMessages, sendBookingMessage, markBookingMessagesRead, getUnreadBookingMessages, getProviderMonthlyTrend, createProviderProfile, getProviderById, createWalkInBooking, submitProviderPayment, getMyProviderPayments, adminListProviderPayments, adminReviewProviderPayment, submitBookingRefund, adminListBookingRefunds, openPrivateFile, getProviderStaff, addProviderStaff, updateProviderStaff, deleteProviderStaff, getProviderStaffPublic, getLoyaltyAccount, getProviderLoyaltyCustomers, redeemLoyaltyReward, getMyStaffProfile, claimStaffSeatByEmail, getStaffBookings, getProviderNotifyEmail, getMaintenanceStatus, setMaintenanceMode, getSiteOfflineStatus, setSiteOffline, guestAuthWithPassword, updateGuestPassword, savePushSubscription, attachBookingServices, getProviderBlocks, insertProviderBlock, deleteProviderBlock, proposeBookingReschedule, confirmBookingReschedule, declineBookingReschedule, withdrawBookingReschedule, establishSoloSession, getServerSoloSessionToken, getLocalSoloSessionToken, clearLocalSoloSessionToken, subscribeToSoloSessionReplacement, signInWithPhonePassword, customerPhoneAuth, adminResetPhonePassword, isPhoneLoginEmail, formatPhoneForDisplay, weakPasswordReason, submitSupportMessage, listSupportMessages, setSupportMessageStatus, getProviderMembershipPlans, getMyMembershipPlans, createMembershipPlan, updateMembershipPlan, subscribeToMembershipPlan, submitMembershipPayment, getMyMemberships, getProviderMembershipSubscribers, getProviderMembershipPayments, reviewMembershipPayment, cancelMembership, redeemMembershipVisit, startSoloTrial, adminStartProviderTrial, adminExtendProviderTrial, adminEndProviderTrial, adminExtendPaymentDue, adminRestoreDowngradedPlan, adminPlatformStats, setBookingAnswers, getFormEmail, redeemMembershipVisitFor, attachBookingAddons, getProviderCapacity, getPlanSpotsLeft } from "./supabase";
 import AdminDashboard from "./AdminDashboard";
 import ProfilePhotoModal from "./ProfilePhotoModal";
 import LanguageSelector from "./LanguageSelector";
@@ -1533,7 +1533,11 @@ const css = `
   .metric-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 24px; }
   .metric { background: var(--near-white); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; }
   .metric-label { font-size: 12px; font-weight: 500; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 8px; }
-  .metric-value { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 30px; font-weight: 800; color: var(--forest); }
+  .metric-value { font-family: 'Plus Jakarta Sans', sans-serif; font-size: clamp(19px, 5.4vw, 30px); font-weight: 800; color: var(--forest); letter-spacing: -0.02em; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; line-height: 1.15; }
+  .metric { min-width: 0; }
+  @media (max-width: 480px) { .metric { padding: 16px 14px; } .metric-grid { gap: 10px; } }
+  .mr-stat { min-width: 0; }
+  .mr-stat-value { overflow-wrap: anywhere; }
   .metric-sub { font-size: 12px; color: var(--muted); margin-top: 4px; }
   .metric-accent { color: var(--clay); }
 
@@ -3057,7 +3061,12 @@ const css = `
   .bh-action span:last-child { font-size: 11px; font-weight: 700; color: var(--text, #16181D); }
   .bh-action:disabled { opacity: 0.5; }
   .bh-week { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; margin-bottom: 14px; }
-  .bh-day { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 2px; border-radius: 12px; background: #fff; border: 1px solid var(--border); text-align: center; }
+  .bh-day { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 2px; border-radius: 12px; background: #fff; border: 1px solid var(--border); text-align: center; font: inherit; color: inherit; cursor: pointer; min-width: 0; -webkit-tap-highlight-color: transparent; transition: transform .12s ease; }
+  .bh-day:active { transform: scale(0.95); }
+  .day-filter-bar { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; background: var(--accent-soft, #EEECFC); border-radius: 12px; padding: 10px 12px; margin-bottom: 12px; }
+  .day-filter-bar strong { font-size: 14px; }
+  .day-filter-nav { display: flex; gap: 6px; }
+  .day-filter-nav button { min-height: 36px; }
   .bh-day.today { background: linear-gradient(160deg, var(--forest) 0%, var(--grad-end, #7B3FE4) 100%); border-color: transparent; box-shadow: 0 8px 16px rgba(76,61,196,0.22); }
   .bh-day.busy:not(.today) { border-color: var(--clay); }
   .bh-day.closed { opacity: 0.5; }
@@ -3109,6 +3118,9 @@ const css = `
 
   /* ===== SHARE KIT (share link, QR, poster) ===== */
   .sk-modal-panel { background: #fff; border-radius: 22px; width: min(760px, calc(100vw - 24px)); max-height: calc(100vh - 40px); overflow-y: auto; padding: 22px; box-sizing: border-box; }
+  .sk-topbar { position: sticky; top: -22px; margin: -22px -22px 10px; padding: 12px 14px; background: #fff; border-bottom: 1px solid #EEE; z-index: 2; border-radius: 22px 22px 0 0; }
+  .sk-back { background: none; border: none; font: inherit; font-size: 16px; font-weight: 700; color: #4C3DC4; padding: 6px 4px; cursor: pointer; min-height: 40px; }
+  @media (max-width: 620px) { .sk-topbar { top: -16px; margin: -16px -16px 10px; } }
   .sk-title { font-size: 20px; font-weight: 800; margin: 0; color: #16181D; }
   .sk-sub { font-size: 13.5px; color: var(--muted); margin: 4px 0 14px; }
   .sk-profile { display: flex; gap: 14px; align-items: center; padding: 14px; border: 1px solid var(--border); border-radius: 16px; margin-bottom: 12px; }
@@ -3372,6 +3384,22 @@ const css = `
   /* Group classes + booking questions (2026-11-01) */
   .slot-spots { display: block; font-size: 10.5px; font-weight: 600; opacity: .8; margin-top: 2px; }
   .slot-spots.few { color: #B45309; opacity: 1; }
+  .svc-rules { margin: 6px 0 12px; border: 1px solid var(--border, #E5E7EB); border-radius: 12px; }
+  .svc-rules-toggle { width: 100%; text-align: left; background: none; border: none; padding: 12px 14px; font: inherit; font-weight: 700; font-size: 13.5px; color: var(--dark-text, #16181D); cursor: pointer; min-height: 44px; }
+  .svc-rules-body { padding: 0 14px 12px; }
+  .svc-rules-check { display: flex; gap: 10px; align-items: flex-start; font-size: 13.5px; margin: 8px 0; cursor: pointer; }
+  .svc-rules-check input { margin-top: 3px; width: 18px; height: 18px; flex: 0 0 auto; }
+  .svc-rules-addon { padding-left: 28px; }
+  .allow-row { display: grid; grid-template-columns: 56px 1fr 1fr 40px; gap: 6px; margin-bottom: 6px; align-items: center; }
+  .allow-row input, .allow-row select { min-width: 0; }
+  .addon-tag { display: inline-block; font-size: 11px; font-weight: 700; color: #8A5A00; background: #FFF3D6; border-radius: 999px; padding: 2px 8px; margin-right: 6px; vertical-align: middle; }
+  .addon-prompt { background: #FFF8E8; border: 1px solid #F3D9A0; border-radius: 12px; padding: 12px 14px; margin: 10px 0; }
+  .addon-prompt p { margin: 0 0 8px; font-size: 13.5px; font-weight: 600; color: #4A3500; }
+  .addon-prompt-row { display: flex; flex-wrap: wrap; gap: 8px; }
+  .addon-prompt-row .btn-sm { background: #fff; border: 1px solid #E7C77E; color: #4A3500; font-weight: 700; min-height: 40px; }
+  .plan-highlight { border-color: var(--forest, #4A3BCF) !important; box-shadow: 0 0 0 3px rgba(76,61,196,0.15); }
+  .plan-spots { display: inline-block; margin-top: 5px; font-size: 11.5px; font-weight: 700; color: #4A3BCF; background: #EEECFD; border-radius: 999px; padding: 2px 8px; }
+  .plan-spots.few { color: #9A3412; background: #FFEDD5; }
   .class-tag { display: inline-block; font-size: 11px; font-weight: 700; color: #4A3BCF; background: #EEECFD; border-radius: 999px; padding: 2px 8px; margin-left: 6px; vertical-align: middle; }
   .cap-row { display: flex; gap: 6px; flex-wrap: wrap; }
   .cap-opt { flex: 1 1 140px; font: inherit; font-size: 13px; font-weight: 600; padding: 10px 8px; border-radius: 10px; border: 1px solid var(--border); background: #fff; color: var(--dark-text); cursor: pointer; }
@@ -3778,7 +3806,7 @@ const css = `
   .mr-stat::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--mr-accent, var(--forest)); }
   .mr-stat-icon { width: 34px; height: 34px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 16px; background: var(--mr-accent-soft, var(--accent-soft)); margin-bottom: 10px; }
   .mr-stat-label { font-size: 11.5px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 6px; }
-  .mr-stat-value { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 28px; font-weight: 800; color: var(--dark-text); line-height: 1.1; }
+  .mr-stat-value { font-family: 'Plus Jakarta Sans', sans-serif; font-size: clamp(19px, 5.4vw, 28px); letter-spacing: -0.02em; font-weight: 800; color: var(--dark-text); line-height: 1.1; }
   .mr-stat-sub { font-size: 12px; color: var(--muted); margin-top: 6px; }
   .mr-stat-sub.up { color: #15803D; font-weight: 700; }
   .mr-stat-sub.down { color: #B91C1C; font-weight: 700; }
@@ -6522,7 +6550,7 @@ const lastMinDealApplies = (p, dateStr, timeStr) => {
   const m = hhmmToMinutes(timeStr);
   return m >= nowM - 5 && m <= nowM + SNAG_WINDOW_MIN ? pct : 0;
 };
-function computeDaySlots({ hours, busy, dateStr, durationMin, lunchBreakStart, lunchBreakMinutes, step = 30 }) {
+function computeDaySlots({ hours, busy, dateStr, durationMin, lunchBreakStart, lunchBreakMinutes, step = 30, cap = 1 }) {
   if (!dateStr || !durationMin) return [];
   const dow = new Date(`${dateStr}T00:00:00`).getDay();
   const dayHours = (hours || []).find((h) => h.day_of_week === dow);
@@ -6540,12 +6568,16 @@ function computeDaySlots({ hours, busy, dateStr, durationMin, lunchBreakStart, l
   for (let m = startM; m + durationMin <= endM; m += step) {
     if (isToday && m <= nowM) continue;
     const slotEnd = m + durationMin;
-    const isBusy = allBusy.some((w) => {
+    let blocked = false;
+    let overlapping = 0;
+    for (const w of allBusy) {
       const wStart = hhmmToMinutes(w.start_time);
       const wEnd = hhmmToMinutes(w.end_time);
-      return m < wEnd && wStart < slotEnd;
-    });
-    if (!isBusy) slots.push(minutesToHHMM(m));
+      if (!(m < wEnd && wStart < slotEnd)) continue;
+      if (w.capacity === undefined || cap <= 1) { blocked = true; break; }
+      overlapping += 1;
+    }
+    if (!blocked && overlapping < cap) slots.push(minutesToHHMM(m));
   }
   return slots;
 }
@@ -9666,25 +9698,27 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
     (async () => {
       const p = await getProviderById(deepLinkProviderId);
       if (!cancelled && p) {
-        setSelectedProvider(p);
-        // Without this the booking form has no working hours to build time
-        // slots from, so every QR/NFC scan dead-ended on "this provider
-        // hasn't set their working hours yet" — openBooking() loads them,
-        // and this path has to do exactly the same.
-        setProviderHours([]);
-        setBusyWindows([]);
-        setLoadingHours(true);
-        // NOT gated on `cancelled` below (deliberately): onDeepLinkConsumed,
-        // called a few lines down, flips deepLinkProviderId back to null to
-        // mark this same link as consumed — that re-runs this effect's
-        // cleanup and sets `cancelled = true` for THIS in-flight fetch
-        // before getWorkingHours has resolved. Gating on it left loadingHours
-        // stuck true forever (so "Checking live availability..." never
-        // cleared) for every single deep-link-based provider open, not just
-        // QR/NFC scans. Reproduced live 2026-10-24 — see Aluxe Aesthetics.
-        getWorkingHours(p.id).then((hrs) => { setProviderHours(hrs || []); setLoadingHours(false); });
-        if (p.loyalty_enabled && user?.id) {
-          getLoyaltyAccount(p.id, user.id).then((acc) => setMyLoyalty(acc));
+        // Same setup as tapping the business in search (plans, team, capacity…).
+        openBooking(p);
+        const items = takeLinkItems();
+        if (items.length) {
+          const svcs = (p.services || []).filter((sv) => sv.is_active !== false);
+          const matchOf = (list, k) => list.find((x) => x.id === k || (x.slug && x.slug === k.toLowerCase())) || list.find((x) => linkKey(x.slug) === linkKey(k) || linkKey(x.name) === linkKey(k));
+          const picked = [];
+          const rest = [];
+          items.forEach((k) => { const sv = matchOf(svcs, k); if (sv) picked.push(sv.id); else rest.push(k); });
+          const plans = rest.length ? await getProviderMembershipPlans(p.id) : [];
+          const plan = rest.map((k) => matchOf(plans || [], k)).find(Boolean);
+          if (picked.length) setSelectedServiceIds(picked);
+          if (plan) {
+            // A plan in the link opens its Join step; services in the same
+            // link stay picked for the first session.
+            setHighlightPlanId(plan.id);
+            setProfileTab("memberships");
+            setTimeout(() => document.getElementById(`plan-${plan.id}`)?.scrollIntoView({ behavior: "smooth", block: "center" }), 600);
+          } else if (picked.length) {
+            setAutoProceed(true);
+          }
         }
       }
       if (!cancelled) onDeepLinkConsumed && onDeepLinkConsumed();
@@ -9718,6 +9752,13 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
   // from the existing single-service "Book" button, which still books that
   // one service instantly and is untouched.
   const [selectedServiceIds, setSelectedServiceIds] = useState([]);
+  // One client at a time per team member (1 for a business working alone).
+  const [staffCap, setStaffCap] = useState(1);
+  // "Cupping goes with a massage" prompt, and a booking link's pending work.
+  const [addonPrompt, setAddonPrompt] = useState(false);
+  const [autoProceed, setAutoProceed] = useState(false);
+  const [highlightPlanId, setHighlightPlanId] = useState(null);
+  const [planSpots, setPlanSpots] = useState({});
   const [submittingBooking, setSubmittingBooking] = useState(false);
   const [bookingError, setBookingError] = useState("");
   // ADDED — a guest who's already typed their name/email/WhatsApp once on
@@ -9964,7 +10005,7 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
       .filter((p) => p.is_active !== false && (PLATFORM.snagIncludeFree || isPaidPlan(p)))
       .map((p) => {
         // Shortest one-person service: the best chance of fitting right now.
-        const activeServices = (p.services || []).filter((s) => s.is_active !== false && !isClassService(s));
+        const activeServices = (p.services || []).filter((s) => s.is_active !== false && !s.is_addon && !isClassService(s));
         if (activeServices.length === 0) return null;
         const repService = activeServices.slice().sort((a, b) => (Number(a.duration_min) || 30) - (Number(b.duration_min) || 30))[0];
         return { provider: p, repService };
@@ -10101,6 +10142,8 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
     setHoursExpanded(false);
     setBookingService(null);
     setSelectedServiceIds([]);
+    setAddonPrompt(false);
+    setHighlightPlanId(null);
     setMultiBookingTimes({});
     setMultiBusyWindowsByDate({});
     setProviderReviews([]);
@@ -10142,7 +10185,14 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
       // Membership plans — public, fetched regardless of sign-in (same as
       // services) so the Memberships tab can show even to a guest; the
       // customer's own membership row only resolves once signed in.
-      getProviderMembershipPlans(provider.id).then((plans) => setProviderMembershipPlans(plans || []));
+      setStaffCap(1);
+      getProviderCapacity(provider.id).then((n) => setStaffCap(n));
+      setPlanSpots({});
+      getProviderMembershipPlans(provider.id).then((plans) => {
+        setProviderMembershipPlans(plans || []);
+        const limited = (plans || []).filter((pl) => pl.max_members).map((pl) => pl.id);
+        if (limited.length) getPlanSpotsLeft(limited).then(setPlanSpots);
+      });
       if (user?.id) {
         getMyMemberships(user.id).then((list) => {
           const mine = (list || []).find((m) => m.provider_id === provider.id && m.status !== "cancelled" && m.status !== "expired");
@@ -10252,15 +10302,33 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
   // silently sharing (and overwriting) one. cartKey === id for every
   // service's first/only unit, so none of that keying changes for the
   // still-overwhelmingly-common case of one unit per service.
-  const selectedServicesList = (() => {
+  // Add-ons (cupping, warm towels…) aren't booked on their own: each one
+  // rides on a main service in the cart that it goes with, adding its
+  // minutes and price there. One with nothing to go with stays in the cart
+  // and the customer is asked to add a main service (orphanAddons).
+  const { selectedServicesList, orphanAddons } = (() => {
     const counts = {};
-    return selectedServiceIds.map((id) => {
+    const all = selectedServiceIds.map((id) => {
       const svc = (selectedProvider?.services || []).find((s) => s.id === id);
       if (!svc) return null;
       const n = (counts[id] = (counts[id] || 0) + 1);
       return { ...svc, cartKey: n > 1 ? `${id}#${n}` : id };
     }).filter(Boolean);
+    const mains = all.filter((s) => !s.is_addon).map((s) => ({ ...s, addons: [] }));
+    const orphans = [];
+    all.filter((s) => s.is_addon).forEach((a) => {
+      const host = mains.find((m) => addonGoesWith(a, m) && !m.addons.some((x) => x.id === a.id));
+      if (host) host.addons.push(a); else orphans.push(a);
+    });
+    const list = mains.map((m) => {
+      if (!m.addons.length) return m;
+      const addMin = m.addons.reduce((sum, a) => sum + (Number(a.duration_min) || 0), 0);
+      const addPrice = m.addons.reduce((sum, a) => sum + (Number(a.price) || 0), 0);
+      return { ...m, baseDuration: Number(m.duration_min) || 30, basePrice: Number(m.price) || 0, duration_min: (Number(m.duration_min) || 30) + addMin, price: (Number(m.price) || 0) + addPrice, name: [m.name, ...m.addons.map((a) => a.name)].join(" + ") };
+    });
+    return { selectedServicesList: list, orphanAddons: orphans };
   })();
+  const hostsForAddon = (a) => (selectedProvider?.services || []).filter((s) => s.is_active !== false && !s.is_addon && addonGoesWith(a, s));
   const multiTotalPrice = selectedServicesList.reduce((sum, s) => sum + (Number(s.price) || 0), 0);
   const multiTotalDuration = selectedServicesList.reduce((sum, s) => sum + (Number(s.duration_min) || 0), 0);
 
@@ -10270,6 +10338,7 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
   // marker ({isMulti:true}) so the existing "!bookingService && ..." gating
   // elsewhere (gallery/tabs/sidebar) still hides correctly during this step.
   const proceedToMultiServiceTime = () => {
+    if (orphanAddons.length) { setAddonPrompt(true); setProfileTab("services"); return; }
     if (selectedServicesList.length === 0) return;
     const today = firstOpenDate(providerHours, Math.max(...selectedServicesList.map((s) => Number(s.duration_min) || 30)));
     setMultiBookingTimes(Object.fromEntries(selectedServicesList.map((s) => [s.cartKey, { date: today, time: "" }])));
@@ -10284,6 +10353,16 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
     setBookTogetherTime("");
     setBookingService({ isMulti: true });
   };
+
+  // A booking link that picked services goes straight to choosing a time
+  // (or asks for a massage first when only an add-on came in the link).
+  useEffect(() => {
+    if (!autoProceed || !selectedServiceIds.length) return;
+    setAutoProceed(false);
+    if (orphanAddons.length) { setAddonPrompt(true); return; }
+    proceedToMultiServiceTime();
+    // eslint-disable-next-line
+  }, [autoProceed, selectedServiceIds]);
 
   // Hours can finish loading a moment after "Book" is tapped. If the picker
   // opened on a day this business can't take anyone, move to the first day
@@ -10375,12 +10454,13 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
       ...(lunchWindow ? [lunchWindow] : []),
       ...otherPicksSameDay,
     ];
+    if (dailyLimitReached(service, multiBusyWindowsByDate[picked.date])) return [];
     const slots = [];
     const fixedTimes = classTimesOf(service).map(hhmmToMin).sort((a, b) => a - b);
     const starts = fixedTimes.length ? fixedTimes.filter((m) => m >= startM && m + durationMin <= endM) : Array.from({ length: Math.max(0, Math.floor((endM - durationMin - startM) / step) + 1) }, (_, i) => startM + i * step);
     for (const m of starts) {
       if (isToday && m <= nowM) continue;
-      const st = slotStatus(allBusy, m, m + durationMin, service, partySize);
+      const st = slotStatus(allBusy, m, m + durationMin, service, partySize, staffCap, selectedStaffId);
       if (st.open) { const tm = minutesToTime(m); slots.push(tm); if (st.left !== null) multiSpotsLeft[`${service.cartKey}|${tm}`] = st.left; }
     }
     return slots;
@@ -10393,14 +10473,28 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
   // logic a third time. A picked slot here is only ever a real opening
   // against the provider's actual hours/busy windows/lunch break for that
   // whole combined block, so nothing downstream needs its own overlap check.
-  const getBookTogetherSlots = (date) => computeDaySlots({
-    hours: providerHours,
-    busy: multiBusyWindowsByDate[date] || [],
-    dateStr: date,
-    durationMin: multiTotalDuration,
-    lunchBreakStart: selectedProvider?.lunch_break_start,
-    lunchBreakMinutes: selectedProvider?.lunch_break_minutes,
-  });
+  const getBookTogetherSlots = (date) => {
+    const busy = multiBusyWindowsByDate[date] || [];
+    if (selectedServicesList.some((s) => dailyLimitReached(s, busy))) return [];
+    return computeDaySlots({
+      hours: providerHours,
+      busy,
+      dateStr: date,
+      durationMin: multiTotalDuration,
+      lunchBreakStart: selectedProvider?.lunch_break_start,
+      lunchBreakMinutes: selectedProvider?.lunch_break_minutes,
+      cap: staffCap,
+    }).filter((time) => {
+      // Each service in the run must fall inside its own hours.
+      let cursor = hhmmToMin(time);
+      return selectedServicesList.every((s) => {
+        const d = Number(s.duration_min) || 30;
+        const ok = withinServiceHours(s, cursor, cursor + d);
+        cursor += d;
+        return ok;
+      });
+    });
+  };
 
   // Turns one picked "book together" start time into each service's own
   // entry in multiBookingTimes — service 2 starts the instant service 1
@@ -10505,12 +10599,13 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
       : null;
     const allBusy = lunchWindow ? [...busyWindows, lunchWindow] : busyWindows;
     const classSvc = (bookingForm.service_ids || []).length > 1 ? null : (selectedProvider?.services || []).find((s) => s.id === bookingForm.service_id);
+    if (dailyLimitReached(classSvc, busyWindows)) return [];
     const slots = [];
     const fixedTimes = classTimesOf(classSvc).map(hhmmToMin).sort((a, b) => a - b);
     const starts = fixedTimes.length ? fixedTimes.filter((m) => m >= startM && m + durationMin <= endM) : Array.from({ length: Math.max(0, Math.floor((endM - durationMin - startM) / step) + 1) }, (_, i) => startM + i * step);
     for (const m of starts) {
       if (isToday && m <= nowM) continue;
-      const st = slotStatus(allBusy, m, m + durationMin, classSvc, partySize);
+      const st = slotStatus(allBusy, m, m + durationMin, classSvc, partySize, staffCap, selectedStaffId);
       if (st.open) { const tm = minutesToTime(m); slots.push(tm); if (st.left !== null) slotSpotsLeft[tm] = st.left; }
     }
     return slots;
@@ -10591,7 +10686,10 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
     } catch (err) {
       setMembershipError(err?.code === "ALREADY_SUBSCRIBED"
         ? t("customerPortal.profile.membershipAlreadySubscribed")
-        : t("customerPortal.profile.membershipSubscribeFailed"));
+        : err?.code === "PLAN_FULL"
+          ? BOOKING_SERVER_MESSAGES.PLAN_FULL[(i18n.language || "").toLowerCase().startsWith("es") ? "es" : "en"]
+          : t("customerPortal.profile.membershipSubscribeFailed"));
+      if (err?.code === "PLAN_FULL") setPlanSpots((prev) => ({ ...prev, [plan.id]: 0 }));
     }
   };
 
@@ -10635,9 +10733,9 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
   // price instead of erroring the whole booking out — the customer still
   // gets their appointment, just not comped.
   const createOneBooking = async ({ bookingCustomerId, service, dateStr, timeStr, notes, staffId, membershipId }) => {
-    const coveredByMembership = membershipId ? await redeemMembershipVisit(membershipId) : false;
+    const coveredByMembership = membershipId ? await redeemMembershipVisitFor(membershipId, service.id, dateStr) : false;
     const people = Math.min(Math.max(Number(partySize) || 1, 1), 10);
-    const unitPrice = Number(service.price) || 0;
+    const unitPrice = Number(service.basePrice ?? service.price) || 0;
     const dealPct = lastMinDealApplies(selectedProvider, dateStr, timeStr);
     const baseTotal = coveredByMembership ? unitPrice * (people - 1) : unitPrice * people;
     const total = dealPct ? Math.round(baseTotal * (100 - dealPct)) / 100 : baseTotal;
@@ -10655,7 +10753,12 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
       downpayment_amount: downpayment,
       notes: notes ? notes.trim() : null,
       party_size: people,
+      staff_id: staffId || null,
     });
+    if (created && service.addons && service.addons.length) {
+      const withAddons = await attachBookingAddons(created.id, service.addons.map((a) => a.id));
+      if (withAddons) Object.assign(created, withAddons);
+    }
     if (created && staffId) {
       // create_booking_safe's own SQL isn't something this file can see or
       // safely extend blind (its overlap/rate-limit/maintenance-mode
@@ -12915,7 +13018,7 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                         ) : (
                           <div>
                             <p style={{ fontSize: 12.5, color: "var(--muted)", margin: "0 0 6px" }}>{(i18n.language || "").toLowerCase().startsWith("es") ? "Toca lo que quieres. Puedes elegir más de uno." : "Tap what you'd like. You can pick more than one."}</p>
-                            {(selectedProvider.services || []).filter(s => s.is_active !== false).map(s => {
+                            {(selectedProvider.services || []).filter(s => s.is_active !== false).slice().sort((a, b) => (a.is_addon ? 1 : 0) - (b.is_addon ? 1 : 0)).map(s => {
                               // ADDED — quantity stepper: a plain tap still adds the
                               // first unit (and still reads as a toggle for anyone
                               // who only ever wants one), but once a service has a
@@ -12932,7 +13035,7 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                                     <span className="service-card-check">✓</span>
                                     <div>
                                       <div className="service-card-name" style={{ fontWeight: 600, fontSize: 14, color: "var(--dark-text)" }}>{s.name}</div>
-                                      <div className="service-card-meta" style={{ fontSize: 12, color: "var(--muted)" }}>{t("customerPortal.booking.durationMin", { count: s.duration_min })} · BZ${s.price}{isClassService(s) && <span className="class-tag">{String(i18n.language || "").toLowerCase().startsWith("es") ? `Clase · ${s.capacity} lugares` : `Group class · ${s.capacity} spots`}</span>}</div>
+                                      <div className="service-card-meta" style={{ fontSize: 12, color: "var(--muted)" }}>{s.is_addon && <span className="addon-tag">{(i18n.language || "").toLowerCase().startsWith("es") ? "Extra" : "Add-on"}</span>}{t("customerPortal.booking.durationMin", { count: s.duration_min })} · BZ${s.price}{isClassService(s) && <span className="class-tag">{String(i18n.language || "").toLowerCase().startsWith("es") ? `Clase · ${s.capacity} lugares` : `Group class · ${s.capacity} spots`}</span>}</div>
                                       {s.description && <div style={{ fontSize: 12.5, color: "var(--muted)", marginTop: 3, maxWidth: 280 }}>{s.description}</div>}
                                       {membershipCoversService(s) && <div style={{ fontSize: 11.5, color: "var(--forest)", fontWeight: 700, marginTop: 3 }}>✓ {t("customerPortal.booking.coveredByMembership")}</div>}
                                     </div>
@@ -12941,7 +13044,22 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                                 </div>
                               );
                             })}
-                            {selectedServiceIds.length > 0 && (
+                            {orphanAddons.length > 0 && (addonPrompt || selectedServicesList.length === 0) && (() => {
+                              const es = (i18n.language || "").toLowerCase().startsWith("es");
+                              const a = orphanAddons[0];
+                              const hosts = hostsForAddon(a);
+                              return (
+                                <div className="addon-prompt" role="status">
+                                  <p>{es ? `${a.name} va con ${hosts.some((h) => /massage|masaje/i.test(h.name)) ? "un masaje" : "un servicio principal"}. Agrega uno:` : `${a.name} goes with ${hosts.some((h) => /massage|masaje/i.test(h.name)) ? "a massage" : "a main service"}. Add one:`}</p>
+                                  <div className="addon-prompt-row">
+                                    {hosts.map((h) => (
+                                      <button key={h.id} type="button" className="btn-sm" onClick={() => { addServiceUnit(h); setAddonPrompt(false); }}>+ {h.name}</button>
+                                    ))}
+                                  </div>
+                                </div>
+                              );
+                            })()}
+                            {selectedServicesList.length > 0 && (
                               <div className="multi-fab">
                                 <div className="totals">
                                   <strong>BZ${multiTotalPrice.toFixed(2)} · {t("customerPortal.booking.durationMin", { count: multiTotalDuration })}</strong>
@@ -12983,15 +13101,25 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                         )}
                         {providerMembershipPlans
                           .filter((plan) => !myProviderMembership || myProviderMembership.status === "cancelled" || myProviderMembership.plan_id !== plan.id)
-                          .map((plan) => (
-                            <div key={plan.id} className="service-card" style={{ cursor: "default" }}>
+                          .map((plan) => {
+                            const es = (i18n.language || "").toLowerCase().startsWith("es");
+                            const left = planSpots[plan.id];
+                            const full = left === 0;
+                            const svcName = (id) => (selectedProvider.services || []).find((sv) => sv.id === id)?.name;
+                            const allow = (Array.isArray(plan.allowances) ? plan.allowances : []).filter((a) => svcName(a.service_id) && Number(a.count) > 0);
+                            return (
+                            <div key={plan.id} id={`plan-${plan.id}`} className={`service-card${highlightPlanId === plan.id ? " plan-highlight" : ""}`} style={{ cursor: "default" }}>
                               <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                                 <div>
                                   <div className="service-card-name" style={{ fontWeight: 700, fontSize: 14, color: "var(--dark-text)" }}>{plan.name}</div>
                                   <div className="service-card-meta" style={{ fontSize: 12, color: "var(--muted)" }}>
-                                    {plan.visit_limit ? t("customerPortal.profile.membershipVisitsPerMonth", { count: plan.visit_limit }) : t("customerPortal.profile.membershipUnlimited")}
+                                    {allow.length
+                                      ? allow.map((a) => `${a.count} ${svcName(a.service_id)} ${a.per === "week" ? (es ? "por semana" : "a week") : (es ? "por mes" : "a month")}`).join(" · ")
+                                      : plan.visit_limit ? t("customerPortal.profile.membershipVisitsPerMonth", { count: plan.visit_limit }) : t("customerPortal.profile.membershipUnlimited")}
                                   </div>
                                   {plan.description && <div style={{ fontSize: 12.5, color: "var(--muted)", marginTop: 3, maxWidth: 280 }}>{plan.description}</div>}
+                                  {left !== undefined && <div className={`plan-spots${left <= 3 ? " few" : ""}`}>{full ? (es ? "Lleno por ahora" : "Full right now") : es ? `${left} ${left === 1 ? "lugar" : "lugares"} disponibles` : `${left} ${left === 1 ? "spot" : "spots"} left`}</div>}
+                                  {highlightPlanId === plan.id && selectedServicesList.length > 0 && <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 4 }}>{es ? "Tu primera sesión: " : "Your first session: "}{selectedServicesList.map((x) => x.name).join(", ")}</div>}
                                 </div>
                               </div>
                               <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6 }}>
@@ -12999,6 +13127,7 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                                 {(!myProviderMembership || myProviderMembership.status === "cancelled") && (
                                   <button
                                     className="btn-sm forest"
+                                    disabled={full}
                                     onClick={() => (user?.id ? startMembershipSubscribe(plan) : onNav("customer-login"))}
                                   >
                                     {user?.id ? t("customerPortal.profile.membershipSubscribe") : t("customerPortal.profile.membershipSignInToSubscribe")}
@@ -13006,7 +13135,8 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                                 )}
                               </div>
                             </div>
-                          ))}
+                            );
+                          })}
                         {subscribingPlanId && (
                           <div style={{ border: "1px solid var(--border)", borderRadius: 12, padding: "14px 16px", marginTop: 10 }}>
                             <p style={{ fontSize: 13, fontWeight: 700, margin: "0 0 8px", color: "var(--dark-text)" }}>{t("customerPortal.profile.membershipPayTitle")}</p>
@@ -13631,6 +13761,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
   const [bookings, setBookings] = useState([]);
   const [loadingBookings, setLoadingBookings] = useState(false);
   const [bookingSearch, setBookingSearch] = useState("");
+  const [bookingDayFilter, setBookingDayFilter] = useState("");
   const [bookingSort, setBookingSort] = useState("newest");
   const [bookingStatusFilter, setBookingStatusFilter] = useState("all");
   const [busyId, setBusyId] = useState(null);
@@ -13758,11 +13889,11 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
   const [locationLabel, setLocationLabel] = useState("");
   const [savingLocation, setSavingLocation] = useState(false);
   const [services, setServices] = useState([]);
-  const [serviceForm, setServiceForm] = useState({ name: "", price: "", duration_min: 15, description: "", capacity: 1, class_times: [], prep_note: "" });
+  const [serviceForm, setServiceForm] = useState({ name: "", price: "", duration_min: 15, description: "", capacity: 1, class_times: [], prep_note: "", slug: "", is_addon: false, addon_for: [], avail_from: "", avail_until: "", daily_limit: "" });
   const [savingService, setSavingService] = useState(false);
   const [serviceError, setServiceError] = useState("");
   const [editingServiceId, setEditingServiceId] = useState(null);
-  const [editServiceForm, setEditServiceForm] = useState({ name: "", price: "", duration_min: 15, description: "", capacity: 1, class_times: [], prep_note: "" });
+  const [editServiceForm, setEditServiceForm] = useState({ name: "", price: "", duration_min: 15, description: "", capacity: 1, class_times: [], prep_note: "", slug: "", is_addon: false, addon_for: [], avail_from: "", avail_until: "", daily_limit: "" });
   const [savingServiceEdit, setSavingServiceEdit] = useState(false);
   // MEMBERSHIP PLANS — provider side (create/edit plans, review payments,
   // see subscribers). See supabase_membership_plans.sql +
@@ -13772,7 +13903,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
   const [membershipSubscribers, setMembershipSubscribers] = useState([]);
   const [membershipPaymentsQueue, setMembershipPaymentsQueue] = useState([]);
   const [loadingMemberships, setLoadingMemberships] = useState(false);
-  const [planForm, setPlanForm] = useState({ name: "", price: "", visitLimit: "", description: "", includedServiceIds: [] });
+  const [planForm, setPlanForm] = useState({ name: "", price: "", visitLimit: "", description: "", includedServiceIds: [], slug: "", maxMembers: "", allowances: [] });
   const [savingPlan, setSavingPlan] = useState(false);
   const [planError, setPlanError] = useState("");
   const [editingPlanId, setEditingPlanId] = useState(null);
@@ -14603,11 +14734,14 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
       price: Number(planForm.price) || 0,
       visitLimit: planForm.visitLimit ? Number(planForm.visitLimit) : null,
       includedServiceIds: planForm.includedServiceIds,
+      slug: (planForm.slug || "").trim().toLowerCase() || null,
+      maxMembers: Number(planForm.maxMembers) > 0 ? Math.round(Number(planForm.maxMembers)) : null,
+      allowances: (planForm.allowances || []).filter((a) => a.service_id && Number(a.count) > 0).map((a) => ({ service_id: a.service_id, count: Math.round(Number(a.count)), per: a.per === "week" ? "week" : "period" })),
     });
     setSavingPlan(false);
     if (created) {
       setMembershipPlans((prev) => [...prev, created]);
-      setPlanForm({ name: "", price: "", visitLimit: "", description: "", includedServiceIds: [] });
+      setPlanForm({ name: "", price: "", visitLimit: "", description: "", includedServiceIds: [], slug: "", maxMembers: "", allowances: [] });
     } else {
       setPlanError(t("providerPortal.memberships.saveFailed"));
     }
@@ -14618,6 +14752,8 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
     setEditPlanForm({
       name: plan.name, price: String(plan.price), visitLimit: plan.visit_limit ? String(plan.visit_limit) : "",
       description: plan.description || "", includedServiceIds: plan.included_service_ids || [],
+      slug: plan.slug || "", maxMembers: plan.max_members ? String(plan.max_members) : "",
+      allowances: Array.isArray(plan.allowances) ? plan.allowances.map((a) => ({ ...a, count: String(a.count) })) : [],
     });
   };
   const handleCancelEditPlan = () => setEditingPlanId(null);
@@ -14629,6 +14765,9 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
       price: Number(editPlanForm.price) || 0,
       visitLimit: editPlanForm.visitLimit ? Number(editPlanForm.visitLimit) : null,
       includedServiceIds: editPlanForm.includedServiceIds,
+      slug: (editPlanForm.slug || "").trim().toLowerCase() || null,
+      maxMembers: Number(editPlanForm.maxMembers) > 0 ? Math.round(Number(editPlanForm.maxMembers)) : null,
+      allowances: (editPlanForm.allowances || []).filter((a) => a.service_id && Number(a.count) > 0).map((a) => ({ service_id: a.service_id, count: Math.round(Number(a.count)), per: a.per === "week" ? "week" : "period" })),
     });
     setSavingPlanEdit(false);
     if (updated) {
@@ -15287,6 +15426,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
     return { data: res.error ? null : res.data, error: res.error, droppedDescription };
   };
   const serviceErrorText = (error) => {
+    if (/SLUG_TAKEN/.test(error.message || "")) return String(i18n.language || "").toLowerCase().startsWith("es") ? "Ese nombre corto ya lo usa otro servicio o plan. Prueba otro." : "That short name is already used by another service or plan. Try another.";
     const msg = [error.message, error.details, error.hint].filter(Boolean).join(" · ");
     return st("serviceSaveFailed", { msg });
   };
@@ -15305,10 +15445,16 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
       capacity: Math.min(200, Math.max(1, Math.round(Number(serviceForm.capacity) || 1))),
       class_times: (Number(serviceForm.capacity) || 1) > 1 && serviceForm.class_times.length ? serviceForm.class_times.slice().sort() : null,
       prep_note: (serviceForm.prep_note || "").trim() || null,
+      slug: (serviceForm.slug || "").trim().toLowerCase() || null,
+      is_addon: !!serviceForm.is_addon,
+      addon_for: serviceForm.is_addon && serviceForm.addon_for.length ? serviceForm.addon_for : null,
+      avail_from: serviceForm.avail_from || null,
+      avail_until: serviceForm.avail_until || null,
+      daily_limit: Number(serviceForm.daily_limit) > 0 ? Math.round(Number(serviceForm.daily_limit)) : null,
     });
     if (created) {
       setServices((prev) => [...prev, created]);
-      setServiceForm({ name: "", price: "", duration_min: 15, description: "", capacity: 1, class_times: [], prep_note: "" });
+      setServiceForm({ name: "", price: "", duration_min: 15, description: "", capacity: 1, class_times: [], prep_note: "", slug: "", is_addon: false, addon_for: [], avail_from: "", avail_until: "", daily_limit: "" });
       if (droppedDescription) setServiceError(st("serviceDescriptionSkipped"));
     } else if (error) {
       setServiceError(serviceErrorText(error));
@@ -15331,6 +15477,12 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
       capacity: Number(s.capacity) || 1,
       class_times: Array.isArray(s.class_times) ? s.class_times : [],
       prep_note: s.prep_note || "",
+      slug: s.slug || "",
+      is_addon: !!s.is_addon,
+      addon_for: Array.isArray(s.addon_for) ? s.addon_for : [],
+      avail_from: s.avail_from ? String(s.avail_from).slice(0, 5) : "",
+      avail_until: s.avail_until ? String(s.avail_until).slice(0, 5) : "",
+      daily_limit: s.daily_limit || "",
     });
   };
 
@@ -15350,6 +15502,12 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
       capacity: Math.min(200, Math.max(1, Math.round(Number(editServiceForm.capacity) || 1))),
       class_times: (Number(editServiceForm.capacity) || 1) > 1 && editServiceForm.class_times.length ? editServiceForm.class_times.slice().sort() : null,
       prep_note: (editServiceForm.prep_note || "").trim() || null,
+      slug: (editServiceForm.slug || "").trim().toLowerCase() || null,
+      is_addon: !!editServiceForm.is_addon,
+      addon_for: editServiceForm.is_addon && editServiceForm.addon_for.length ? editServiceForm.addon_for : null,
+      avail_from: editServiceForm.avail_from || null,
+      avail_until: editServiceForm.avail_until || null,
+      daily_limit: Number(editServiceForm.daily_limit) > 0 ? Math.round(Number(editServiceForm.daily_limit)) : null,
     }, serviceId);
     if (updated) {
       setServices((prev) => prev.map((s) => (s.id === serviceId ? updated : s)));
@@ -15561,7 +15719,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
   // a working link while testing.
   const CANONICAL_SITE_ORIGIN = "https://vai-book.vercel.app";
   const siteOrigin = window.location.hostname === "localhost" ? window.location.origin : CANONICAL_SITE_ORIGIN;
-  const bookingUrl = `${siteOrigin}/#book-${providerId}`;
+  const bookingUrl = `${siteOrigin}/#book-${providerProfile?.slug || providerId}`;
   const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=480x480&margin=12&data=${encodeURIComponent(bookingUrl)}`;
 
   // "Rebooking Radar" — registered (non-walk-in) customers with no
@@ -15711,7 +15869,14 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
         : bookingStatusFilter === "cancelled"
           ? staffFilteredBookings.filter((b) => b.status === "cancelled" || b.status === "rejected")
           : staffFilteredBookings.filter((b) => b.status === bookingStatusFilter);
-  const visibleBookings = filterAndSortBookings(statusFilteredBookings, bookingSearch, bookingSort, bookingNameFn);
+  // Tapping a day in "Next 7 days" opens that day's bookings, in time order.
+  const dayFilteredBookings = bookingDayFilter
+    ? statusFilteredBookings.filter((b) => String(b.booking_date).slice(0, 10) === bookingDayFilter)
+    : statusFilteredBookings;
+  useEffect(() => { if (tab !== "bookings") setBookingDayFilter(""); }, [tab]);
+  const visibleBookings = bookingDayFilter
+    ? filterAndSortBookings(dayFilteredBookings, bookingSearch, bookingSort, bookingNameFn).slice().sort((a, b) => String(a.booking_time).localeCompare(String(b.booking_time)))
+    : filterAndSortBookings(dayFilteredBookings, bookingSearch, bookingSort, bookingNameFn);
 
   // VaiBook never touches the money — providers collect 100% directly and
   // pay only their monthly subscription — so every figure here is the real
@@ -16251,7 +16416,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
 
             {/* THIS WEEK */}
             <div className="bh-section">
-              <div className="bh-section-head"><h3><span className="bh-sec-icon bh-sec-icon-violet">📊</span>{dx("Next 7 days", "Próximos 7 días")}</h3><button className="bh-link" onClick={() => setTab("bookings")}>{dx("All bookings ›", "Todas las citas ›")}</button></div>
+              <div className="bh-section-head"><h3><span className="bh-sec-icon bh-sec-icon-violet">📊</span>{dx("Next 7 days", "Próximos 7 días")}</h3><button className="bh-link" onClick={() => { setBookingDayFilter(""); setTab("bookings"); }}>{dx("All bookings ›", "Todas las citas ›")}</button></div>
               <div className="bh-week">
                 {(() => {
                   const counts = days7.map((d) => activeOn(d));
@@ -16262,11 +16427,13 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                     const closed = !wh || !wh.is_open;
                     const busy = !closed && n > 0 && n === maxCount && maxCount > 1;
                     return (
-                      <div className={`bh-day ${i === 0 ? "today" : ""} ${closed ? "closed" : ""} ${busy ? "busy" : ""}`} key={i}>
+                      <button type="button" className={`bh-day ${i === 0 ? "today" : ""} ${closed ? "closed" : ""} ${busy ? "busy" : ""}`} key={i}
+                        onClick={() => { setBookingDayFilter(localDateStr(d)); setBookingStatusFilter("all"); setBookingSearch(""); setTab("bookings"); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+                        aria-label={`${d.toLocaleDateString(es ? "es" : "en-US", { weekday: "long", month: "long", day: "numeric" })}: ${closed ? dx("Closed", "Cerrado") : dx(`${n} booked`, `${n} citas`)}`}>
                         <span className="bh-day-wd">{i === 0 ? dx("Today", "Hoy") : d.toLocaleDateString(es ? "es" : "en-US", { weekday: "short" })}</span>
                         <span className="bh-day-num">{d.getDate()}</span>
                         <span className="bh-day-count">{closed ? dx("Closed", "Cerrado") : n === 0 ? "—" : dx(`${n} booked`, `${n} citas`)}</span>
-                      </div>
+                      </button>
                     );
                   });
                 })()}
@@ -16545,8 +16712,23 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                 )}
               </div>
 
+              {bookingDayFilter && (() => {
+                const es2 = String(i18n.language || "").toLowerCase().startsWith("es");
+                const d = new Date(`${bookingDayFilter}T00:00:00`);
+                const shift = (n) => { const x = new Date(d); x.setDate(x.getDate() + n); setBookingDayFilter(localDateStr(x)); };
+                return (
+                  <div className="day-filter-bar">
+                    <strong>📅 {d.toLocaleDateString(es2 ? "es" : "en-US", { weekday: "long", month: "short", day: "numeric" })} · {visibleBookings.length} {es2 ? "citas" : visibleBookings.length === 1 ? "booking" : "bookings"}</strong>
+                    <div className="day-filter-nav">
+                      <button className="btn-sm ghost" onClick={() => shift(-1)} aria-label={es2 ? "Día anterior" : "Previous day"}>‹</button>
+                      <button className="btn-sm ghost" onClick={() => shift(1)} aria-label={es2 ? "Día siguiente" : "Next day"}>›</button>
+                      <button className="btn-sm ghost" onClick={() => setBookingDayFilter("")}>{es2 ? "Ver todas" : "Show all"}</button>
+                    </div>
+                  </div>
+                );
+              })()}
               {visibleBookings.length === 0 && (
-                <p style={{ fontSize: 13, color: "var(--muted)", padding: "16px 0" }}>{loadingBookings ? t("providerPortal.common.loading") : bookingSearch.trim() ? t("providerPortal.bookings.noMatch") : t("providerPortal.bookings.noneYet")}</p>
+                <p style={{ fontSize: 13, color: "var(--muted)", padding: "16px 0" }}>{loadingBookings ? t("providerPortal.common.loading") : bookingDayFilter ? (String(i18n.language || "").toLowerCase().startsWith("es") ? "Nada reservado este día todavía." : "Nothing booked this day yet.") : bookingSearch.trim() ? t("providerPortal.bookings.noMatch") : t("providerPortal.bookings.noneYet")}</p>
               )}
               {visibleBookings.map((b) => (
                 <div key={b.id} style={{ padding: "14px 0", borderBottom: "1px solid var(--border)" }}>
@@ -16942,6 +17124,8 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                         <div className="input-group">
                           <label>{t("providerPortal.common.duration")}</label>
                           <select value={editServiceForm.duration_min} onChange={e => setEditServiceForm(f => ({ ...f, duration_min: e.target.value }))}>
+                            <option value={5}>{t("providerPortal.common.durationMin", { count: 5 })}</option>
+                            <option value={10}>{t("providerPortal.common.durationMin", { count: 10 })}</option>
                             <option value={15}>{t("providerPortal.common.durationMin", { count: 15 })}</option>
                             <option value={30}>{t("providerPortal.common.durationMin", { count: 30 })}</option>
                             <option value={45}>{t("providerPortal.common.durationMin", { count: 45 })}</option>
@@ -16956,6 +17140,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                       </div>
                       <PrepNoteField value={editServiceForm.prep_note} onChange={(v) => setEditServiceForm(f => ({ ...f, prep_note: v }))} />
                       <ServiceCapacityField value={editServiceForm.capacity} onChange={(v) => setEditServiceForm(f => ({ ...f, capacity: v }))} times={editServiceForm.class_times} onTimesChange={(v) => setEditServiceForm(f => ({ ...f, class_times: v }))} />
+                      <ServiceRulesField form={editServiceForm} setForm={setEditServiceForm} services={services.filter((x) => x.id !== s.id)} bookingUrl={bookingUrl} />
                       <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
                         <button className="btn-sm lime" disabled={savingServiceEdit || !editServiceForm.name.trim()} onClick={() => handleSaveEditService(s.id)}>{savingServiceEdit ? t("providerPortal.common.saving") : t("providerPortal.common.save")}</button>
                         <button className="btn-sm ghost" onClick={handleCancelEditService}>{t("providerPortal.common.cancel")}</button>
@@ -16965,7 +17150,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
                       <div>
                         <div style={{ fontSize: 14, fontWeight: 600 }}>{s.name}</div>
-                        <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 2 }}>{t("providerPortal.common.durationMin", { count: s.duration_min })}{isClassService(s) && <span className="class-tag">{String(i18n.language || "").toLowerCase().startsWith("es") ? `Clase · ${s.capacity} lugares` : `Group class · ${s.capacity} spots`}</span>}</div>
+                        <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 2 }}>{s.is_addon && <span className="addon-tag">Add-on</span>}{t("providerPortal.common.durationMin", { count: s.duration_min })}{(s.avail_from || s.avail_until) && ` · ${fmtHM(s.avail_from) || "open"}–${fmtHM(s.avail_until) || "close"}`}{s.daily_limit ? ` · max ${s.daily_limit}/day` : ""}{s.slug && <span style={{ marginLeft: 6, fontFamily: "monospace", fontSize: 11 }}>#{s.slug}</span>}{isClassService(s) && <span className="class-tag">{String(i18n.language || "").toLowerCase().startsWith("es") ? `Clase · ${s.capacity} lugares` : `Group class · ${s.capacity} spots`}</span>}</div>
                         {s.description && <div style={{ fontSize: 12.5, color: "var(--muted)", marginTop: 4, maxWidth: 320 }}>{s.description}</div>}
                       </div>
                       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -16985,7 +17170,9 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                   <div className="input-group">
                     <label>{t("providerPortal.common.duration")}</label>
                     <select value={serviceForm.duration_min} onChange={e => setServiceForm(f => ({ ...f, duration_min: e.target.value }))}>
-                      <option value={15}>{t("providerPortal.common.durationMin", { count: 15 })}</option>
+                      <option value={5}>{t("providerPortal.common.durationMin", { count: 5 })}</option>
+                            <option value={10}>{t("providerPortal.common.durationMin", { count: 10 })}</option>
+                            <option value={15}>{t("providerPortal.common.durationMin", { count: 15 })}</option>
                       <option value={30}>{t("providerPortal.common.durationMin", { count: 30 })}</option>
                       <option value={45}>{t("providerPortal.common.durationMin", { count: 45 })}</option>
                       <option value={60}>{t("providerPortal.common.durationMin", { count: 60 })}</option>
@@ -16999,6 +17186,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                 </div>
                 <PrepNoteField value={serviceForm.prep_note} onChange={(v) => setServiceForm(f => ({ ...f, prep_note: v }))} />
                 <ServiceCapacityField value={serviceForm.capacity} onChange={(v) => setServiceForm(f => ({ ...f, capacity: v }))} times={serviceForm.class_times} onTimesChange={(v) => setServiceForm(f => ({ ...f, class_times: v }))} />
+                <ServiceRulesField form={serviceForm} setForm={setServiceForm} services={services} bookingUrl={bookingUrl} />
                 <button className="btn-sm lime" onClick={handleAddService} disabled={savingService || !serviceForm.name.trim()}>{savingService ? t("providerPortal.services.adding") : t("providerPortal.services.addService")}</button>
                 {!serviceForm.name.trim() && !serviceError && <p className="agree-hint">{st("serviceNeedName")}</p>}
                 {serviceError && <p className={serviceError === st("serviceDescriptionSkipped") ? "mk-success" : "agree-error"} style={{ wordBreak: "break-word" }}>{serviceError}</p>}
@@ -17071,6 +17259,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                         </div>
                         <p style={{ fontSize: 11.5, color: "var(--muted)", margin: "4px 0 0" }}>{t("providerPortal.memberships.coveredServicesHint")}</p>
                       </div>
+                      <PlanExtrasField form={editPlanForm} setForm={setEditPlanForm} services={services} bookingUrl={bookingUrl} />
                       <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
                         <button className="btn-sm lime" disabled={savingPlanEdit || !editPlanForm.name.trim()} onClick={() => handleSaveEditPlan(plan.id)}>{savingPlanEdit ? t("providerPortal.common.saving") : t("providerPortal.common.save")}</button>
                         <button className="btn-sm ghost" onClick={handleCancelEditPlan}>{t("providerPortal.common.cancel")}</button>
@@ -17086,6 +17275,8 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                         <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 2 }}>
                           {plan.visit_limit ? t("providerPortal.memberships.visitsPerMonth", { count: plan.visit_limit }) : t("providerPortal.memberships.unlimitedVisits")}
                           {plan.included_service_ids?.length ? ` · ${t("providerPortal.memberships.someServicesCovered", { count: plan.included_service_ids.length })}` : ` · ${t("providerPortal.memberships.allServicesCovered")}`}
+                          {plan.max_members ? ` · max ${plan.max_members} members` : ""}
+                          {plan.slug && <span style={{ marginLeft: 6, fontFamily: "monospace", fontSize: 11 }}>#{plan.slug}</span>}
                         </div>
                         {plan.description && <div style={{ fontSize: 12.5, color: "var(--muted)", marginTop: 4, maxWidth: 320 }}>{plan.description}</div>}
                       </div>
@@ -17130,6 +17321,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                     <p style={{ fontSize: 11.5, color: "var(--muted)", margin: "4px 0 0" }}>{t("providerPortal.memberships.coveredServicesHint")}</p>
                   </div>
                 )}
+                <PlanExtrasField form={planForm} setForm={setPlanForm} services={services} bookingUrl={bookingUrl} />
                 <button className="btn-sm lime" onClick={handleAddPlan} disabled={savingPlan || !planForm.name.trim() || !planForm.price}>{savingPlan ? t("providerPortal.common.adding") : t("providerPortal.memberships.addPlan")}</button>
                 {planError && <p className="agree-error" style={{ wordBreak: "break-word" }}>{planError}</p>}
               </div>
@@ -18799,6 +18991,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                 photoUrl={providerProfile?.profile_photo_url || null}
                 subtitle={[providerProfile?.service_type, providerProfile?.district].filter(Boolean).join(" · ")}
                 lang={i18n.language}
+                onClose={() => setShowQrModal(false)}
               />
             </Suspense>
           </div>
@@ -19083,6 +19276,11 @@ const BOOKING_SERVER_MESSAGES = {
   SERVICE_UNAVAILABLE: { en: "This service isn't available anymore. Please pick another one.", es: "Este servicio ya no está disponible. Elige otro." },
   NOT_AUTHORIZED: { en: "Please sign in again, then try booking once more.", es: "Inicia sesión de nuevo y vuelve a intentar la reserva." },
   CLASS_FULL: { en: "That class just filled up. Pick another time.", es: "Esa clase se acaba de llenar. Elige otra hora." },
+  SERVICE_HOURS: { en: "That service isn't offered at that time. Please pick another time.", es: "Ese servicio no se ofrece a esa hora. Elige otra hora." },
+  DAILY_FULL: { en: "That service is fully booked that day. Please pick another day.", es: "Ese servicio ya está lleno ese día. Elige otro día." },
+  ADDON_NEEDS_MAIN: { en: "Add-ons go with a main service. Please add one.", es: "Los extras van con un servicio principal. Agrega uno." },
+  ADDON_NOT_ALLOWED: { en: "One of the add-ons doesn't go with that service.", es: "Uno de los extras no va con ese servicio." },
+  PLAN_FULL: { en: "This plan is full right now.", es: "Este plan está lleno por ahora." },
   ACCOUNT_BLOCKED: { en: "This account can't make bookings right now. Message VaiBook support if you think this is a mistake.", es: "Esta cuenta no puede hacer reservas por ahora. Escribe al soporte de VaiBook si crees que es un error." },
 };
 const SIX_MONTH_PAID = 6;
@@ -19311,21 +19509,46 @@ const svcText = (s, field, t, lang) => {
 // says which service each booking is for and how many spots it takes.
 const isClassService = (s) => (Number(s && s.capacity) || 1) > 1;
 const formatTimeLabelStatic = (t) => { const m = hhmmToMinTop(t); const h = Math.floor(m / 60); const mm = String(m % 60).padStart(2, "0"); return `${((h + 11) % 12) + 1}:${mm} ${h < 12 ? "AM" : "PM"}`; };
+function addonGoesWith(a, m) {
+  return !!a && !!m && !m.is_addon && (!Array.isArray(a.addon_for) || a.addon_for.length === 0 || a.addon_for.includes(m.id));
+}
+// A service's own hours (e.g. massages 10 AM–6 PM) inside the business's hours.
+function withinServiceHours(svc, startM, endM) {
+  if (!svc) return true;
+  if (svc.avail_from && startM < hhmmToMinTop(svc.avail_from)) return false;
+  if (svc.avail_until && endM > hhmmToMinTop(svc.avail_until)) return false;
+  return true;
+}
+// Daily limit (e.g. 4 sauna sessions a day), counted from that day's bookings.
+function dailyLimitReached(svc, windows) {
+  const lim = Number(svc && svc.daily_limit) || 0;
+  if (!lim) return false;
+  const n = (windows || []).filter((w) => w.capacity !== undefined && (w.service_id === svc.id || (Array.isArray(w.service_ids) && w.service_ids.includes(svc.id)))).length;
+  return n >= lim;
+}
 function hhmmToMinTop(t) { const [h, m] = String(t || "0:0").split(":").map(Number); return (h || 0) * 60 + (m || 0); }
 const hhmmToMin = (t) => { const [h, m] = String(t || "0:0").split(":").map(Number); return (h || 0) * 60 + (m || 0); };
 // Fixed class times ("06:00", "17:30"…) set by the business; empty = any time.
 const classTimesOf = (service) => (isClassService(service) && Array.isArray(service.class_times) ? service.class_times.filter((t) => /^\d{2}:\d{2}/.test(String(t))) : []);
-function slotStatus(windows, startM, endM, service, party) {
+// staffCap: how many clients the business can serve at once (one per team
+// member). Bookings use up one each; blocks, lunch and the customer's own
+// other picks (no `capacity` field) always close the time.
+function slotStatus(windows, startM, endM, service, party, staffCap = 1, staffId = null) {
   const cap = Number(service && service.capacity) || 1;
   const fixed = classTimesOf(service);
   if (fixed.length && !fixed.some((t) => hhmmToMin(t) === startM)) return { open: false, left: 0 };
+  if (service && !withinServiceHours(service, startM, endM)) return { open: false, left: 0 };
   let taken = 0;
+  let overlapping = 0;
   for (const w of windows || []) {
     const ws = hhmmToMin(w.start_time);
     const we = hhmmToMin(w.end_time);
     if (!(startM < we && ws < endM)) continue;
-    if (cap > 1 && service && w.service_id && w.service_id === service.id && ws === startM) { taken += Number(w.spots) || 1; continue; }
-    return { open: false, left: 0 };
+    const single = !Array.isArray(w.service_ids) || w.service_ids.length <= 1;
+    if (cap > 1 && service && w.service_id && w.service_id === service.id && ws === startM && single) { taken += Number(w.spots) || 1; continue; }
+    if (w.capacity === undefined || (staffId && w.staff_id === staffId)) return { open: false, left: 0 };
+    overlapping += 1;
+    if (overlapping >= (Number(staffCap) || 1)) return { open: false, left: 0 };
   }
   if (cap > 1) { const left = Math.max(0, cap - taken); return { open: left >= (Number(party) || 1), left }; }
   return { open: true, left: null };
@@ -19920,6 +20143,113 @@ function PrepNoteField({ value, onChange }) {
       <textarea rows={2} maxLength={500} value={value || ""} onChange={(e) => onChange(e.target.value)}
         placeholder={es ? "Ej. Ven con el cabello lavado y seco. Llega 10 minutos antes." : "e.g. Wear comfortable clothes. Arrive 10 minutes early."} />
       <span className="agree-hint" style={{ marginTop: 4 }}>{es ? "Va en el recordatorio que reciben 24 horas antes." : "Goes in the reminder they get 24 hours before."}</span>
+    </div>
+  );
+}
+
+const fmtHM = (t) => {
+  if (!t) return "";
+  const [h, m] = String(t).slice(0, 5).split(":").map(Number);
+  return `${h % 12 === 0 ? 12 : h % 12}${m ? `:${String(m).padStart(2, "0")}` : ""} ${h >= 12 ? "PM" : "AM"}`;
+};
+// Service editor: booking rules any business can set per service — its own
+// hours, a daily limit, whether it's an add-on, and its short link name.
+function ServiceRulesField({ form, setForm, services, bookingUrl }) {
+  const es = String(i18n.language || "").toLowerCase().startsWith("es");
+  const [open, setOpen] = useState(!!(form.is_addon || form.avail_from || form.avail_until || form.daily_limit));
+  const mains = (services || []).filter((x) => !x.is_addon);
+  const slug = (form.slug || "").trim().toLowerCase().replace(/[^a-z0-9-]+/g, "-");
+  const base = String(bookingUrl || "").split("#");
+  const link = slug && base.length === 2 ? `${base[0].replace(/\/$/, "")}/?services=${slug}#${base[1]}` : "";
+  return (
+    <div className="svc-rules">
+      <button type="button" className="svc-rules-toggle" onClick={() => setOpen((v) => !v)} aria-expanded={open}>
+        {open ? "▾" : "▸"} {es ? "Reglas de reserva y enlace" : "Booking rules & link"}
+      </button>
+      {open && (
+        <div className="svc-rules-body">
+          <div className="input-group">
+            <label>{es ? "Nombre corto para enlaces" : "Short name for links"}</label>
+            <input value={form.slug || ""} maxLength={40} placeholder={es ? "ej. sauna" : "e.g. sauna"} onChange={(e) => setForm((f) => ({ ...f, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]+/g, "-") }))} />
+            <span className="agree-hint" style={{ marginTop: 4 }}>{link ? <>{es ? "Enlace que abre este servicio listo para elegir hora: " : "Link that opens this service ready to pick a time: "}<span style={{ wordBreak: "break-all" }}>{link}</span></> : (es ? "Se crea solo con el nombre si lo dejas vacío." : "Made from the name if you leave it empty.")}</span>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+            <div className="input-group">
+              <label>{es ? "Disponible desde" : "Available from"}</label>
+              <input type="time" value={form.avail_from || ""} onChange={(e) => setForm((f) => ({ ...f, avail_from: e.target.value }))} />
+            </div>
+            <div className="input-group">
+              <label>{es ? "Hasta" : "Until"}</label>
+              <input type="time" value={form.avail_until || ""} onChange={(e) => setForm((f) => ({ ...f, avail_until: e.target.value }))} />
+            </div>
+          </div>
+          <span className="agree-hint" style={{ marginTop: -6, display: "block" }}>{es ? "Vacío = todo tu horario." : "Leave empty to use all your opening hours."}</span>
+          <div className="input-group" style={{ marginTop: 10 }}>
+            <label>{es ? "Máximo por día" : "Max per day"}</label>
+            <input type="number" min={0} max={200} inputMode="numeric" placeholder={es ? "Sin límite" : "No limit"} value={form.daily_limit || ""} onChange={(e) => setForm((f) => ({ ...f, daily_limit: e.target.value }))} />
+          </div>
+          <label className="svc-rules-check">
+            <input type="checkbox" checked={!!form.is_addon} onChange={(e) => setForm((f) => ({ ...f, is_addon: e.target.checked }))} />
+            <span>{es ? "Es un extra (solo se reserva junto a otro servicio)" : "This is an add-on (only booked together with another service)"}</span>
+          </label>
+          {form.is_addon && mains.length > 0 && (
+            <div className="svc-rules-addon">
+              <div className="agree-hint" style={{ marginBottom: 6 }}>{es ? "Va con (vacío = cualquiera):" : "Goes with (none ticked = any):"}</div>
+              {mains.map((m) => (
+                <label key={m.id} className="svc-rules-check">
+                  <input type="checkbox" checked={(form.addon_for || []).includes(m.id)} onChange={(e) => setForm((f) => ({ ...f, addon_for: e.target.checked ? [...(f.addon_for || []), m.id] : (f.addon_for || []).filter((x) => x !== m.id) }))} />
+                  <span>{m.name}</span>
+                </label>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Plan editor: short link name, member limit, and per-service allowances
+// ("1 sauna a week", "2 deep tissue a month").
+function PlanExtrasField({ form, setForm, services, bookingUrl }) {
+  const es = String(i18n.language || "").toLowerCase().startsWith("es");
+  const mains = (services || []).filter((x) => !x.is_addon);
+  const allow = form.allowances || [];
+  const setAllow = (i, patch) => setForm((f) => ({ ...f, allowances: (f.allowances || []).map((a, j) => (j === i ? { ...a, ...patch } : a)) }));
+  const slug = (form.slug || "").trim().toLowerCase();
+  const base = String(bookingUrl || "").split("#");
+  const link = slug && base.length === 2 ? `${base[0].replace(/\/$/, "")}/?services=${slug}#${base[1]}` : "";
+  return (
+    <div className="svc-rules-body" style={{ padding: 0 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+        <div className="input-group">
+          <label>{es ? "Nombre corto para enlaces" : "Short name for links"}</label>
+          <input value={form.slug || ""} maxLength={40} placeholder={es ? "ej. glow-up" : "e.g. glow-up"} onChange={(e) => setForm((f) => ({ ...f, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]+/g, "-") }))} />
+        </div>
+        <div className="input-group">
+          <label>{es ? "Máximo de miembros" : "Max members"}</label>
+          <input type="number" min={0} inputMode="numeric" placeholder={es ? "Sin límite" : "No limit"} value={form.maxMembers || ""} onChange={(e) => setForm((f) => ({ ...f, maxMembers: e.target.value }))} />
+        </div>
+      </div>
+      {link && <p className="agree-hint" style={{ margin: "-4px 0 10px", wordBreak: "break-all" }}>{es ? "Enlace para unirse: " : "Link to join: "}{link}</p>}
+      <div className="input-group">
+        <label>{es ? "Lo que incluye (opcional)" : "What it includes (optional)"}</label>
+        {allow.map((a, i) => (
+          <div key={i} className="allow-row">
+            <input type="number" min={1} inputMode="numeric" value={a.count} onChange={(e) => setAllow(i, { count: e.target.value })} aria-label={es ? "Cantidad" : "How many"} />
+            <select value={a.service_id || ""} onChange={(e) => setAllow(i, { service_id: e.target.value })}>
+              <option value="">{es ? "Servicio…" : "Service…"}</option>
+              {mains.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
+            </select>
+            <select value={a.per === "week" ? "week" : "period"} onChange={(e) => setAllow(i, { per: e.target.value })}>
+              <option value="week">{es ? "por semana" : "a week"}</option>
+              <option value="period">{es ? "por mes" : "a month"}</option>
+            </select>
+            <button type="button" className="btn-sm ghost" onClick={() => setForm((f) => ({ ...f, allowances: (f.allowances || []).filter((_, j) => j !== i) }))} aria-label={es ? "Quitar" : "Remove"}>✕</button>
+          </div>
+        ))}
+        <button type="button" className="btn-sm ghost" style={{ alignSelf: "flex-start" }} onClick={() => setForm((f) => ({ ...f, allowances: [...(f.allowances || []), { service_id: "", count: "1", per: "week" }] }))}>+ {es ? "Agregar (ej. 1 sauna por semana)" : "Add one (e.g. 1 sauna a week)"}</button>
+      </div>
     </div>
   );
 }
@@ -20802,10 +21132,11 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
             <Suspense fallback={<div className="plaque-loading">Preparing…</div>}>
               <ShareKit
                 businessName={posterFor.business_name || ""}
-                bookingUrl={`https://vai-book.vercel.app/#book-${posterFor.id}`}
+                bookingUrl={`https://vai-book.vercel.app/#book-${posterFor.slug || posterFor.id}`}
                 photoUrl={posterFor.profile_photo_url || null}
                 subtitle={[posterFor.service_type, posterFor.district].filter(Boolean).join(" · ")}
                 lang="en"
+                onClose={() => setPosterFor(null)}
               />
             </Suspense>
           </div>
@@ -21366,7 +21697,22 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
 // straight to their booking page inside VaiBook, instead of the generic
 // homepage. Kept as a plain helper so both the initial-load state and the
 // hashchange listener below parse it identically.
-const parseBookingHash = (h) => (h.startsWith("book-") ? h.slice(5) : null);
+const parseBookingHash = (h) => (h.startsWith("book-") ? (h.slice(5).split("?")[0] || null) : null);
+// Booking links can pre-pick what to book:
+//   https://vai-book.vercel.app/?services=sauna,deep#book-the-recovery-room
+// Each item is a service or plan's short name, its id, or its name. Read
+// once when the page opens; unknown items are ignored.
+let pendingLinkItems = (() => {
+  try {
+    const fromSearch = new URLSearchParams(window.location.search).get("services");
+    const hash = window.location.hash || "";
+    const q = hash.indexOf("?");
+    const fromHash = q >= 0 ? new URLSearchParams(hash.slice(q + 1)).get("services") : null;
+    return String(fromSearch || fromHash || "").split(",").map((x) => decodeURIComponent(x).trim()).filter(Boolean).slice(0, 12);
+  } catch (e) { return []; }
+})();
+const takeLinkItems = () => { const items = pendingLinkItems; pendingLinkItems = []; return items; };
+const linkKey = (v) => String(v || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "");
 
 // Shows the real reason when a save/delete fails anywhere in the app (see
 // reportActionError in supabase.js) instead of the button silently doing

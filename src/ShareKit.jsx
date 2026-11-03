@@ -21,6 +21,7 @@ const H = 1754;
 const TEXT = {
   en: {
     title: "Share your page",
+    back: "Back",
     sub: "Send it like an Instagram profile, or print the poster for your counter.",
     share: "Share…",
     copy: "Copy link",
@@ -42,6 +43,7 @@ const TEXT = {
   },
   es: {
     title: "Comparte tu página",
+    back: "Atrás",
     sub: "Envíala como un perfil de Instagram o imprime el póster para tu mostrador.",
     share: "Compartir…",
     copy: "Copiar enlace",
@@ -253,7 +255,7 @@ function printCanvas(canvas, title) {
   win.document.close();
 }
 
-export default function ShareKit({ businessName, bookingUrl, photoUrl, subtitle, lang }) {
+export default function ShareKit({ businessName, bookingUrl, photoUrl, subtitle, lang, onClose }) {
   const t = TEXT[(lang || "en").toLowerCase().startsWith("es") ? "es" : "en"];
   const [copied, setCopied] = useState(false);
   const [igNote, setIgNote] = useState(false);
@@ -305,6 +307,11 @@ export default function ShareKit({ businessName, bookingUrl, photoUrl, subtitle,
 
   return (
     <div className="sk">
+      {onClose && (
+        <div className="sk-topbar">
+          <button type="button" className="sk-back" onClick={onClose}>‹ {t.back}</button>
+        </div>
+      )}
       <h3 className="sk-title">{t.title}</h3>
       <p className="sk-sub">{t.sub}</p>
 
