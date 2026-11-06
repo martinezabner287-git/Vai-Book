@@ -3386,6 +3386,14 @@ const css = `
   /* Group classes + booking questions (2026-11-01) */
   .slot-spots { display: block; font-size: 10.5px; font-weight: 600; opacity: .8; margin-top: 2px; }
   .slot-spots.few { color: #B45309; opacity: 1; }
+  .vb-value-hero { display: flex; flex-direction: column; gap: 2px; background: linear-gradient(135deg, var(--forest, #4C3DC4), #7A6CF0); color: #fff; border-radius: 14px; padding: 14px 16px; margin-bottom: 10px; }
+  .vb-value-hero-num { font-size: clamp(22px, 6vw, 28px); font-weight: 800; letter-spacing: -0.02em; }
+  .vb-value-hero-txt { font-size: 13px; opacity: .92; }
+  .vb-value-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; }
+  .vb-value-item { display: grid; grid-template-columns: auto 1fr; column-gap: 8px; align-items: center; background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 10px 12px; min-width: 0; }
+  .vb-value-icon { grid-row: span 2; font-size: 20px; }
+  .vb-value-big { font-size: 18px; font-weight: 800; color: var(--dark-text); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+  .vb-value-text { font-size: 12px; color: var(--muted); line-height: 1.3; }
   .xp { max-width: 640px; }
   .xp-month { display: flex; align-items: center; justify-content: space-between; gap: 10px; background: #fff; border: 1px solid var(--border); border-radius: 14px; padding: 6px; margin-bottom: 12px; }
   .xp-month strong { font-size: 15px; text-transform: capitalize; }
@@ -16522,6 +16530,8 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
               </div>
             </div>
 
+            <VaiBookValueCard bookings={bookings} es={es} />
+
             {/* REBOOKING RADAR — a quiet retention nudge, not another
                 inbox to manage: only surfaces when there's actually
                 someone worth reaching out to. */}
@@ -19584,6 +19594,69 @@ const svcText = (s, field, t, lang) => {
 // says which service each booking is for and how many spots it takes.
 const isClassService = (s) => (Number(s && s.capacity) || 1) > 1;
 const formatTimeLabelStatic = (t) => { const m = hhmmToMinTop(t); const h = Math.floor(m / 60); const mm = String(m % 60).padStart(2, "0"); return `${((h + 11) % 12) + 1}:${mm} ${h < 12 ? "AM" : "PM"}`; };
+// "What VaiBook did for you this month" — the pitch, proven with their own
+// numbers: bookings customers made themselves (time saved), reminders sent,
+// last-minute slots filled, forms collected, regulars who came back, and
+// money kept with no commission. Only counts what the data actually shows;
+// the one estimate (minutes per booking) is labelled as such.
+const MIN_SAVED_PER_BOOKING = 10;
+function VaiBookValueCard({ bookings, es }) {
+  const tx = (en, sp) => (es ? sp : en);
+  const now = new Date();
+  const ym = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+  const live = (b) => !["cancelled", "rejected"].includes(b.status);
+  const month = (bookings || []).filter((b) => String(b.booking_date).slice(0, 7) === ym && live(b));
+  const self = month.filter((b) => !b.created_by_provider && b.customer_id);
+  const reminders = month.filter((b) => b.reminder_sent_at).length;
+  const lastMinute = self.filter((b) => {
+    if (!b.created_at || !b.booking_time) return false;
+    const start = new Date(`${String(b.booking_date).slice(0, 10)}T${String(b.booking_time).slice(0, 5)}:00`);
+    const lead = (start - new Date(b.created_at)) / 60000;
+    return lead >= 0 && lead <= 180;
+  });
+  const lastMinuteMoney = lastMinute.reduce((s, b) => s + (Number(b.total_amount) || 0), 0);
+  const forms = month.filter((b) => Array.isArray(b.answers) && b.answers.length).length;
+  const before = new Set((bookings || []).filter((b) => String(b.booking_date).slice(0, 7) < ym && live(b) && b.customer_id).map((b) => b.customer_id));
+  const regulars = new Set(month.filter((b) => b.customer_id && before.has(b.customer_id)).map((b) => b.customer_id)).size;
+  const kept = month.filter((b) => b.status === "completed" || b.status === "done").reduce((s, b) => s + (Number(b.total_amount) || 0), 0);
+  const minutes = self.length * MIN_SAVED_PER_BOOKING;
+  const timeLabel = minutes >= 60 ? tx(`${Math.round((minutes / 60) * 10) / 10} hours`, `${Math.round((minutes / 60) * 10) / 10} horas`) : tx(`${minutes} minutes`, `${minutes} minutos`);
+  const items = [
+    self.length > 0 && { icon: "📲", big: String(self.length), text: tx(`${self.length === 1 ? "booking" : "bookings"} customers made on their own — no calls`, `${self.length === 1 ? "cita hecha" : "citas hechas"} por los clientes solos — sin llamadas`) },
+    reminders > 0 && { icon: "⏰", big: String(reminders), text: tx(`${reminders === 1 ? "reminder" : "reminders"} sent for you — fewer no-shows`, `${reminders === 1 ? "recordatorio enviado" : "recordatorios enviados"} por ti — menos ausencias`) },
+    lastMinute.length > 0 && { icon: "🔥", big: `BZ$${lastMinuteMoney.toFixed(0)}`, text: tx(`from ${lastMinute.length} last-minute ${lastMinute.length === 1 ? "slot" : "slots"} filled`, `de ${lastMinute.length} ${lastMinute.length === 1 ? "espacio" : "espacios"} de último minuto`) },
+    regulars > 0 && { icon: "🔁", big: String(regulars), text: tx(`${regulars === 1 ? "regular" : "regulars"} came back`, `${regulars === 1 ? "cliente regresó" : "clientes regresaron"}`) },
+    forms > 0 && { icon: "📋", big: String(forms), text: tx(`client ${forms === 1 ? "form" : "forms"} filled in — no paper`, `${forms === 1 ? "formulario llenado" : "formularios llenados"} — sin papel`) },
+    kept > 0 && { icon: "💯", big: `BZ$${kept.toFixed(0)}`, text: tx("earned, 100% yours — no commission", "ganados, 100% tuyos — sin comisión") },
+  ].filter(Boolean);
+  return (
+    <div className="bh-section vb-value">
+      <div className="bh-section-head"><h3><span className="bh-sec-icon bh-sec-icon-violet">✨</span>{tx("What VaiBook did for you this month", "Lo que VaiBook hizo por ti este mes")}</h3></div>
+      {items.length === 0 ? (
+        <p className="bh-empty">{tx("Once customers start booking, you'll see here the time saved, reminders sent, empty slots filled and money you kept.", "Cuando los clientes empiecen a reservar, aquí verás el tiempo ahorrado, recordatorios enviados, espacios llenados y el dinero que te quedó.")}</p>
+      ) : (
+        <>
+          {minutes > 0 && (
+            <div className="vb-value-hero">
+              <span className="vb-value-hero-num">≈ {timeLabel}</span>
+              <span className="vb-value-hero-txt">{tx(`saved on arranging bookings (about ${MIN_SAVED_PER_BOOKING} min each)`, `ahorradas en coordinar citas (unos ${MIN_SAVED_PER_BOOKING} min cada una)`)}</span>
+            </div>
+          )}
+          <div className="vb-value-grid">
+            {items.map((it, i) => (
+              <div className="vb-value-item" key={i}>
+                <span className="vb-value-icon" aria-hidden="true">{it.icon}</span>
+                <span className="vb-value-big">{it.big}</span>
+                <span className="vb-value-text">{it.text}</span>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 function addonGoesWith(a, m) {
   return !!a && !!m && !m.is_addon && (!Array.isArray(a.addon_for) || a.addon_for.length === 0 || a.addon_for.includes(m.id));
 }
