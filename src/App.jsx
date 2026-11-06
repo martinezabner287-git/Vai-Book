@@ -9303,8 +9303,6 @@ function BusinessLoginForm({ onNav, onSignIn, dark }) {
       </div>
       {error && <p className="biz-login-error">{error}</p>}
       <button type="submit" className="biz-login-btn" disabled={busy}>{busy ? bl("signingIn") : bl("signIn")}</button>
-      <button type="button" className="biz-login-link" onClick={() => { setPendingView("provider"); onSignIn && onSignIn(); }}>{bl("google")}</button>
-      <div className="biz-login-hint">{bl("googleHint")}</div>
       <button type="button" className="biz-login-link" onClick={() => onNav && onNav("help-contact")}>{bl("forgot")}</button>
     </form>
   );
