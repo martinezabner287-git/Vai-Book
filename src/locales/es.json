@@ -154,11 +154,11 @@
       "emailUs": "Escríbenos",
       "trial": {
         "q": "¿Cómo funciona la prueba gratuita?",
-        "a": "Todo negocio nuevo comienza con el plan de Prueba gratis — hasta {{freeCap}} reservas al mes, sin tarjeta. No hay una fecha límite automática; te quedas en Prueba hasta que decidas actualizar desde la pestaña de Facturación en tu panel."
+        "a": "Todo negocio nuevo comienza con el plan Gratis — hasta {{freeCap}} reservas al mes, sin tarjeta. No hay una fecha límite automática; te quedas en Gratis hasta que decidas actualizar desde la pestaña de Facturación en tu panel."
       },
       "plans": {
         "q": "¿Qué planes ofrece VaiBook?",
-        "a": "Tres: Prueba (gratis, hasta {{freeCap}} reservas al mes), Solo (para profesionales independientes) y Equipo (una tarifa base más un costo por asiento para negocios con personal). Los precios y detalles completos están en la pestaña de Facturación de tu panel."
+        "a": "Tres: Gratis ( hasta {{freeCap}} reservas al mes), Solo (para profesionales independientes) y Equipo (una tarifa base más un costo por asiento para negocios con personal). Los precios y detalles completos están en la pestaña de Facturación de tu panel."
       },
       "staff": {
         "q": "¿Puedo agregar personal a mi cuenta?",

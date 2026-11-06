@@ -3394,6 +3394,14 @@ const css = `
   .vb-value-icon { grid-row: span 2; font-size: 20px; }
   .vb-value-big { font-size: 18px; font-weight: 800; color: var(--dark-text); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
   .vb-value-text { font-size: 12px; color: var(--muted); line-height: 1.3; }
+  .solo-upsell { background: linear-gradient(135deg, #F4F1FF, #FFF7E8); border: 1px solid #E4DCFB; border-radius: 16px; padding: 16px; max-width: 560px; margin-bottom: 16px; }
+  .solo-upsell.compact { padding: 12px 14px; margin: 8px 0 12px; }
+  .solo-upsell-badge { display: inline-block; font-size: 11.5px; font-weight: 800; color: #4C3DC4; background: #fff; border: 1px solid #DCD5FA; border-radius: 999px; padding: 2px 9px; margin-bottom: 6px; }
+  .solo-upsell-title { font-weight: 800; font-size: 15px; color: var(--dark-text); margin-bottom: 4px; }
+  .solo-upsell-text { font-size: 13.5px; color: var(--muted); margin: 0 0 10px; line-height: 1.45; }
+  .solo-upsell.compact .solo-upsell-text { margin-bottom: 8px; }
+  .solo-upsell-btn { background: var(--forest, #4C3DC4); color: #fff; border: none; border-radius: 10px; font: inherit; font-weight: 700; font-size: 13.5px; padding: 0 14px; min-height: 42px; cursor: pointer; }
+  .vbl-compare { max-width: 620px; margin: -6px auto 18px; text-align: center; font-size: 14.5px; font-weight: 600; color: var(--dark-text, #16181D); background: #FFF7E8; border: 1px solid #F3D9A0; border-radius: 12px; padding: 10px 14px; }
   .xp { max-width: 640px; }
   .xp-month { display: flex; align-items: center; justify-content: space-between; gap: 10px; background: #fff; border: 1px solid var(--border); border-radius: 14px; padding: 6px; margin-bottom: 12px; }
   .xp-month strong { font-size: 15px; text-transform: capitalize; }
@@ -9510,6 +9518,7 @@ function ProviderLandingPage({ onNav }) {
         <div className="vbl-wrap">
           <h2 className="vbl-h2">{lt("pricingTitle")}</h2>
           <p className="vbl-center-sub">{lt("pricingSub")}</p>
+          <p className="vbl-compare">{px("A website alone costs about BZ$700 and still can't take bookings, send reminders or track your money. Solo does all of it for under BZ$2 a day.", "Solo una página web cuesta unos BZ$700 y aun así no toma reservas, no envía recordatorios ni lleva tus cuentas. Solo hace todo eso por menos de BZ$2 al día.")}</p>
           <div className="term-toggle" role="tablist" aria-label={px("Billing period", "Periodo de pago")}>
             <button role="tab" aria-selected={priceTerm === "six"} className={priceTerm === "six" ? "on" : ""} onClick={() => setPriceTerm("six")}>
               {px("6 months", "6 meses")} <span className="term-save">{px("1 month free", "1 mes gratis")}</span>
@@ -9696,6 +9705,10 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
   // One account can run a business and book other businesses as a
   // customer; it just can't book its own business.
   const isOwnBusiness = !!(providerProfile && selectedProvider && providerProfile.id === selectedProvider.id);
+  // Free plan = get booked. Client forms, memberships and pre-picked booking
+  // links are Solo/Team features (the 14-day trial counts as Solo).
+  const providerPaid = isPaidPlan(selectedProvider);
+  const providerQuestions = providerPaid ? selectedProvider?.booking_questions : null;
 
   // Lets a customer share a specific service (not just the provider as a
   // whole) with someone else — mirrors the existing QR-code deep link
@@ -9777,7 +9790,8 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
         // Same setup as tapping the business in search (plans, team, capacity…).
         openBooking(p);
         const items = takeLinkItems();
-        if (items.length) {
+        // Pre-picked booking links are a Solo/Team feature; on Free the link just opens the page.
+        if (items.length && isPaidPlan(p)) {
           const svcs = (p.services || []).filter((sv) => sv.is_active !== false);
           const matchOf = (list, k) => list.find((x) => x.id === k || (x.slug && x.slug === k.toLowerCase())) || list.find((x) => linkKey(x.slug) === linkKey(k) || linkKey(x.name) === linkKey(k));
           const picked = [];
@@ -9811,12 +9825,12 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
   const [bqShowErr, setBqShowErr] = useState(false);
   useEffect(() => { setBqAnswers({}); setBqShowErr(false); }, [selectedProvider?.id]);
   useEffect(() => {
-    if (!cleanQuestions(selectedProvider?.booking_questions).length) return;
+    if (!cleanQuestions(providerQuestions).length) return;
     const nm = (user?.full_name || "").trim();
     if (nm) setBqAnswers((a) => (a.__idname ? a : { ...a, __idname: nm }));
   }, [selectedProvider?.id, user?.full_name]);
   const bookingQuestionsBlock = () => {
-    if (answersMissing(selectedProvider?.booking_questions, bqAnswers).length) {
+    if (answersMissing(providerQuestions, bqAnswers).length) {
       setBqShowErr(true);
       setBookingError(String(i18n.language || "").toLowerCase().startsWith("es") ? "Responde las preguntas marcadas con * para reservar." : "Please answer the questions marked * to book.");
       return true;
@@ -10850,7 +10864,7 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
       await updateBooking(created.id, { staff_id: staffId });
     }
     if (created) {
-      const payload = answersPayload(selectedProvider.booking_questions, bqAnswers);
+      const payload = answersPayload(providerQuestions, bqAnswers);
       if (payload.length) {
         created.answers = payload;
         try {
@@ -12599,7 +12613,7 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                         {[
                           { id: "services", label: t("customerPortal.profile.tabServices") },
                           ...(selectedProvider.allow_staff_selection ? [{ id: "team", label: t("customerPortal.profile.tabTeam") }] : []),
-                          ...(providerMembershipPlans.length > 0 ? [{ id: "memberships", label: t("customerPortal.profile.tabMemberships") }] : []),
+                          ...(providerPaid && providerMembershipPlans.length > 0 ? [{ id: "memberships", label: t("customerPortal.profile.tabMemberships") }] : []),
                           { id: "reviews", label: t("customerPortal.profile.tabReviews") },
                           { id: "about", label: t("customerPortal.profile.tabAbout") },
                         ].map((opt) => (
@@ -12884,7 +12898,7 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                           {lastMinDealApplies(selectedProvider, bookingForm.date, bookingForm.time) > 0 && (
                             <div className="lastmin-note">🔥 {String(i18n.language || "").toLowerCase().startsWith("es") ? `Oferta de último minuto: ${lastMinDealApplies(selectedProvider, bookingForm.date, bookingForm.time)}% de descuento en esta reserva.` : `Last-minute deal: ${lastMinDealApplies(selectedProvider, bookingForm.date, bookingForm.time)}% off this booking.`}</div>
                           )}
-                          <BookingQuestionsForm questions={selectedProvider?.booking_questions} answers={bqAnswers} onChange={setBqAnswers} showErrors={bqShowErr} />
+                          <BookingQuestionsForm questions={providerQuestions} answers={bqAnswers} onChange={setBqAnswers} showErrors={bqShowErr} />
                           <div className="input-group"><label>{t("customerPortal.booking.notesOptional")}</label><textarea placeholder={t("customerPortal.booking.notesPlaceholder")} value={bookingForm.notes} onChange={e => setBookingForm(f => ({ ...f, notes: e.target.value }))} style={{ minHeight: 60 }} /></div>
 
                           {selectedProvider.downpayment_required && (
@@ -16541,7 +16555,9 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
               </div>
             </div>
 
-            <VaiBookValueCard bookings={bookings} es={es} />
+            {isProOrAbove ? <VaiBookValueCard bookings={bookings} es={es} /> : (
+              <SoloUpsell title={es ? "Lo que VaiBook hizo por ti este mes" : "What VaiBook did for you this month"} text={es ? "Con Solo ves en tus propios números el tiempo ahorrado, recordatorios enviados, espacios llenados y clientes que regresaron." : "With Solo you see it in your own numbers: time saved, reminders sent, empty slots filled and regulars who came back."} onPlans={() => setTab("billing")} />
+            )}
 
             {/* REBOOKING RADAR — a quiet retention nudge, not another
                 inbox to manage: only surfaces when there's actually
@@ -17220,8 +17236,8 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                         <textarea rows={2} placeholder={t("providerPortal.services.descriptionPlaceholder")} value={editServiceForm.description} onChange={e => setEditServiceForm(f => ({ ...f, description: e.target.value }))} />
                       </div>
                       <PrepNoteField value={editServiceForm.prep_note} onChange={(v) => setEditServiceForm(f => ({ ...f, prep_note: v }))} />
-                      <ServiceCapacityField value={editServiceForm.capacity} onChange={(v) => setEditServiceForm(f => ({ ...f, capacity: v }))} times={editServiceForm.class_times} onTimesChange={(v) => setEditServiceForm(f => ({ ...f, class_times: v }))} />
-                      <ServiceRulesField form={editServiceForm} setForm={setEditServiceForm} services={services.filter((x) => x.id !== s.id)} bookingUrl={bookingUrl} />
+                      {isProOrAbove && <ServiceCapacityField value={editServiceForm.capacity} onChange={(v) => setEditServiceForm(f => ({ ...f, capacity: v }))} times={editServiceForm.class_times} onTimesChange={(v) => setEditServiceForm(f => ({ ...f, class_times: v }))} />}
+                      {isProOrAbove && <ServiceRulesField form={editServiceForm} setForm={setEditServiceForm} services={services.filter((x) => x.id !== s.id)} bookingUrl={bookingUrl} />}
                       <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
                         <button className="btn-sm lime" disabled={savingServiceEdit || !editServiceForm.name.trim()} onClick={() => handleSaveEditService(s.id)}>{savingServiceEdit ? t("providerPortal.common.saving") : t("providerPortal.common.save")}</button>
                         <button className="btn-sm ghost" onClick={handleCancelEditService}>{t("providerPortal.common.cancel")}</button>
@@ -17245,6 +17261,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
               ))}
               <div style={{ marginTop: 20, paddingTop: 16, borderTop: "1px solid var(--border)" }}>
                 <div className="card-title">{t("providerPortal.services.addService")}</div>
+                {!isProOrAbove && <SoloUpsell compact title={String(i18n.language || "").toLowerCase().startsWith("es") ? "" : ""} text={String(i18n.language || "").toLowerCase().startsWith("es") ? "Solo agrega clases grupales, extras (como ventosas con un masaje), horario propio y límite diario por servicio, y enlaces que abren con tus servicios ya elegidos." : "Solo adds group classes, add-ons (like cupping with a massage), each service's own hours and daily limits, and booking links that open with your services already picked."} onPlans={() => setTab("billing")} />}
                 <div className="input-group"><label>{t("providerPortal.services.serviceName")}</label><input placeholder={t("providerPortal.services.serviceNamePlaceholder")} value={serviceForm.name} onChange={e => setServiceForm(f => ({ ...f, name: e.target.value }))} /></div>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
                   <div className="input-group"><label>{t("providerPortal.services.price")}</label><input type="number" placeholder="0" value={serviceForm.price} onChange={e => setServiceForm(f => ({ ...f, price: e.target.value }))} /></div>
@@ -17266,8 +17283,8 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                   <textarea rows={2} placeholder={t("providerPortal.services.descriptionPlaceholder")} value={serviceForm.description} onChange={e => setServiceForm(f => ({ ...f, description: e.target.value }))} />
                 </div>
                 <PrepNoteField value={serviceForm.prep_note} onChange={(v) => setServiceForm(f => ({ ...f, prep_note: v }))} />
-                <ServiceCapacityField value={serviceForm.capacity} onChange={(v) => setServiceForm(f => ({ ...f, capacity: v }))} times={serviceForm.class_times} onTimesChange={(v) => setServiceForm(f => ({ ...f, class_times: v }))} />
-                <ServiceRulesField form={serviceForm} setForm={setServiceForm} services={services} bookingUrl={bookingUrl} />
+                {isProOrAbove && <ServiceCapacityField value={serviceForm.capacity} onChange={(v) => setServiceForm(f => ({ ...f, capacity: v }))} times={serviceForm.class_times} onTimesChange={(v) => setServiceForm(f => ({ ...f, class_times: v }))} />}
+                {isProOrAbove && <ServiceRulesField form={serviceForm} setForm={setServiceForm} services={services} bookingUrl={bookingUrl} />}
                 <button className="btn-sm lime" onClick={handleAddService} disabled={savingService || !serviceForm.name.trim()}>{savingService ? t("providerPortal.services.adding") : t("providerPortal.services.addService")}</button>
                 {!serviceForm.name.trim() && !serviceError && <p className="agree-hint">{st("serviceNeedName")}</p>}
                 {serviceError && <p className={serviceError === st("serviceDescriptionSkipped") ? "mk-success" : "agree-error"} style={{ wordBreak: "break-word" }}>{serviceError}</p>}
@@ -17276,7 +17293,13 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
           </>
         )}
 
-        {tab === "memberships" && (
+        {tab === "memberships" && !isProOrAbove && (
+          <>
+            <div className="portal-header"><h2>{t("providerPortal.nav.memberships")}</h2><p>{t("providerPortal.memberships.subtitle")}</p></div>
+            <SoloUpsell title={String(i18n.language || "").toLowerCase().startsWith("es") ? "Planes mensuales para tus clientes fijos" : "Monthly plans for your regulars"} text={String(i18n.language || "").toLowerCase().startsWith("es") ? "Vende membresías mensuales como \"4 saunas al mes\" — ingresos fijos cada mes, con límite de miembros y lo que incluye cada plan." : "Sell monthly memberships like \"4 saunas a month\" — steady income every month, with member limits and what each plan includes."} onPlans={() => setTab("billing")} />
+          </>
+        )}
+        {tab === "memberships" && isProOrAbove && (
           <>
             <div className="portal-header"><h2>{t("providerPortal.nav.memberships")}</h2><p>{t("providerPortal.memberships.subtitle")}</p></div>
 
@@ -17429,7 +17452,13 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
           </>
         )}
 
-        {tab === "expenses" && (
+        {tab === "expenses" && !isProOrAbove && (
+          <>
+            <div className="portal-header"><h2>{String(i18n.language || "").toLowerCase().startsWith("es") ? "Gastos y ganancia" : "Expenses & profit"}</h2></div>
+            <SoloUpsell title={String(i18n.language || "").toLowerCase().startsWith("es") ? "Sabe cuánto te queda de verdad" : "Know what you actually keep"} text={String(i18n.language || "").toLowerCase().startsWith("es") ? "Toma foto al recibo y queda anotado. Mira ingresos menos gastos = ganancia cada mes, y tus números de impuestos listos." : "Snap a receipt and it's logged. See income minus expenses = profit every month, plus your Belize tax numbers ready to file."} onPlans={() => setTab("billing")} />
+          </>
+        )}
+        {tab === "expenses" && isProOrAbove && (
           <>
             <div className="portal-header">
               <h2>{String(i18n.language || "").toLowerCase().startsWith("es") ? "Gastos y ganancia" : "Expenses & profit"}</h2>
@@ -18643,7 +18672,13 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
         )}
 
         {tab === "modules" && <ModulesPanel />}
-        {tab === "announcements" && (
+        {tab === "announcements" && !isProOrAbove && (
+          <>
+            <div className="portal-header"><h2>{mt("navAnnouncements")}</h2></div>
+            <SoloUpsell title={String(i18n.language || "").toLowerCase().startsWith("es") ? "Escribe a todos tus clientes a la vez" : "Message all your customers at once"} text={String(i18n.language || "").toLowerCase().startsWith("es") ? "Anuncia una oferta, nuevo horario o un cierre por feriado a todos tus clientes en un toque." : "Announce a deal, new hours or a holiday closing to every customer in one tap."} onPlans={() => setTab("billing")} />
+          </>
+        )}
+        {tab === "announcements" && isProOrAbove && (
           <AnnouncementsPanel
             providerId={providerId}
             businessName={providerProfile?.business_name || ""}
@@ -18760,7 +18795,8 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
 
             {providerProfile && <PortalColourPicker providerProfile={providerProfile} onSaved={(u) => onProviderProfileUpdate && onProviderProfileUpdate(u)} />}
 
-            {providerProfile && <BookingQuestionsEditor key={providerProfile.id} providerProfile={providerProfile} onSaved={(u) => onProviderProfileUpdate && onProviderProfileUpdate(u)} />}
+            {providerProfile && !isProOrAbove && <SoloUpsell title={String(i18n.language || "").toLowerCase().startsWith("es") ? "Formularios de clientes — sin papel" : "Client forms — no paper"} text={String(i18n.language || "").toLowerCase().startsWith("es") ? "Haz tus preguntas al reservar (salud, exoneración, nombre como en la cédula) y recibe cada formulario por correo con tu logo." : "Ask your questions at booking (health notes, waivers, full name as on ID) and get each completed form by email with your logo."} onPlans={() => setTab("billing")} />}
+            {providerProfile && isProOrAbove && <BookingQuestionsEditor key={providerProfile.id} providerProfile={providerProfile} onSaved={(u) => onProviderProfileUpdate && onProviderProfileUpdate(u)} />}
 
             <div className="card" id="settings-verse" style={{ maxWidth: 480, marginBottom: 20, scrollMarginTop: 120 }}>
               <div className="card-title">🌅 {(i18n.language || "").toLowerCase().startsWith("es") ? "Versículo de la mañana" : "Morning Bible verse"}</div>
@@ -19408,28 +19444,25 @@ const planTermPrice = (plan, term, { extraSeatsMonthly = 0, firstPayment = false
 
 const PLANS = [
   {
-    // Renamed "Starter" -> "Trial" (display name only — `id` stays
+    // (Formerly displayed as "Trial"; `id` stays
     // "starter" so STARTER_CAP booking-limit enforcement, the
     // `providerProfile?.plan || "starter"` no-plan-set fallback used
     // everywhere, and admin tooling all keep working unchanged). Per
     // explicit instruction: "Starter" as a plan name/concept should never
     // be user-visible — every provider is on a real (trial-then-paid)
     // plan, never something that reads as a permanent free tier.
-    id: "starter", name: "Trial", price: "Free", desc: "Up to 30 bookings/month", monthly: 0,
+    // 2026-11-06: a real free tier again — "Free = get booked; Solo runs
+    // the business for you". Free keeps the essentials to take bookings;
+    // the 30-a-month cap (platform_settings.free_cap_enforced) and the
+    // Solo features below are what make upgrading worth it.
+    id: "starter", name: "Free", price: "Free", desc: "Up to 30 bookings/month", monthly: 0,
     tagline: "Get listed and start taking bookings — no cost, no card required.",
-    // 2026-10-30: trimmed to what Trial actually keeps once deposits and
-    // the sales ledger moved to Solo+ (see trg_enforce_deposit_requires_paid_plan
-    // / the gated tax-card in the Earnings tab). 24/7 guest booking and
-    // automated reminders were removed from Solo's list below instead of
-    // being gated here — they were never actually plan-restricted in the
-    // code, so they're listed on whichever plan is telling the truth.
     features: [
       "Up to 30 bookings a month",
-      "Your own booking page & calendar",
-      "24/7 guest booking — no app download for your clients",
-      "Automated appointment reminders to cut no-shows",
-      "Customer messaging & notifications",
-      "Client reviews",
+      "Your own booking page, calendar & client list",
+      "24/7 online booking — no app download for your clients",
+      "QR code, share link & printable \"Scan to book\" poster",
+      "Customer messages & reviews",
       "Invoices & refunds",
     ],
   },
@@ -19444,7 +19477,7 @@ const PLANS = [
     // 2026-10-27: 6-month plan = BZ$1.99/day (BZ$417.90 for 7 months);
     // monthly raised to BZ$69.90 (BZ$2.33/day) so the 6-month plan is the deal.
     id: "pro", name: "Solo", price: "BZ$69.90/month, or BZ$1.99/day on 6 months", desc: "For solo practitioners", monthly: 69.9, sixMonthTotal: 417.9,
-    tagline: "For solo practitioners who want deposit protection against no-shows, plus their own loyalty program.",
+    tagline: "VaiBook runs the business side for you — reminders, deposits, client forms and your profit, all in one place.",
     // Shown as the small italic line under the daily-price pill (public
     // pricing cards + the provider's own "Current plan" billing card) —
     // one plan-specific line instead of the single generic string every
@@ -19453,12 +19486,15 @@ const PLANS = [
     valueNote: "(Pays for itself with a single haircut.)",
     recommended: true,
     features: [
-      "Customizable deposits routed to your bank — never caught out by a no-show",
-      "Loyalty & rewards program",
-      "Monthly tax forms, sales ledger & CSV/PDF export",
-      "Link your own VaiPlaza store front on your booking page",
+      "Unlimited bookings",
+      "Automatic reminders 24 hours before, with what to bring",
+      "Deposits to your bank — protection from no-shows",
+      "Client forms, memberships & group classes",
+      "Service hours, daily limits, add-ons & ready-made booking links",
+      "Expenses & profit with receipt scanning, plus Belize tax forms",
+      "Last-minute deals, loyalty rewards & announcements",
+      "\"What VaiBook did for you\" monthly results",
       "Try free for 14 days, no card required",
-      "A \"Solo\" badge customers see on your listing",
     ],
   },
   {
@@ -19474,6 +19510,7 @@ const PLANS = [
     features: [
       "Everything in Solo",
       "Staff seats with their own logins",
+      "One client per staff member at the same time — more bookings each hour",
       "Featured placement in district search & on the customer homepage",
       "A \"Team\" badge customers see on your listing",
     ],
@@ -19671,6 +19708,18 @@ function VaiBookValueCard({ bookings, es }) {
   );
 }
 
+// Shown in place of a Solo/Team feature on the Free plan.
+function SoloUpsell({ title, text, onPlans, compact }) {
+  const es = String(i18n.language || "").toLowerCase().startsWith("es");
+  return (
+    <div className={`solo-upsell${compact ? " compact" : ""}`}>
+      <div className="solo-upsell-badge">⭐ Solo</div>
+      {title && <div className="solo-upsell-title">{title}</div>}
+      <p className="solo-upsell-text">{text}</p>
+      {onPlans && <button type="button" className="solo-upsell-btn" onClick={onPlans}>{es ? "Ver planes — menos de BZ$2 al día" : "See plans — under BZ$2 a day"}</button>}
+    </div>
+  );
+}
 function addonGoesWith(a, m) {
   return !!a && !!m && !m.is_addon && (!Array.isArray(a.addon_for) || a.addon_for.length === 0 || a.addon_for.includes(m.id));
 }
@@ -22163,8 +22212,14 @@ export default function App() {
           trial_end_date: app.trial_end_date || null,
         });
         if (created) {
+          // Every new business starts with 14 days of everything (Solo),
+          // then stays on Free unless they pay — easier to keep than to unlock.
           try {
             p = await getProviderProfile(authUser.id);
+            if (p && p.id && (p.plan || "starter") === "starter" && !p.trial_used) {
+              const tr = await startSoloTrial(p.id);
+              if (tr && !tr.error) p = await getProviderProfile(authUser.id);
+            }
           } catch (err) {
             // The profile really was just created a moment ago — a failure
             // re-reading it is "unknown", not "doesn't exist".
