@@ -1,4 +1,4 @@
--- 2026-11-06 NOT YET APPLIED — waiting for Abner's OK.
+-- 2026-11-06 APPLIED to the live database (no_double_booking_safety_net) after Abner's OK; verified with rolled-back tests.
 -- Dry-run tested (rolled back) against the live database: closes three ways a
 -- taken time could be booked twice.
 --  1) A customer could edit their own booking's time directly (bypassing checks).
