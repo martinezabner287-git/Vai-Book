@@ -380,7 +380,7 @@
       "pickDateAndTime": "Elige una fecha y hora",
       "pickTimeTogether": "Elige una hora para tu cita",
       "pickTimesForEach": "Elige un horario para cada servicio",
-      "providerCannotBook": "Las cuentas de negocio no pueden reservar citas como cliente. Inicia sesión con una cuenta de cliente separada para reservar.",
+      "providerCannotBook": "No puedes reservar en tu propio negocio. Para reservar aquí, usa otra cuenta.",
       "rateLimited": "Has enviado varias solicitudes de reserva en poco tiempo. Espera un momento antes de intentar de nuevo.",
       "receiptUploadFailed": "Ese recibo no se pudo subir. Revisa tu conexión e inténtalo de nuevo.",
       "requestBooking": "Solicitar reserva",

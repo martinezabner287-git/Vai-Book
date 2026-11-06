@@ -380,7 +380,7 @@
       "pickDateAndTime": "Pick a date & time",
       "pickTimeTogether": "Pick a time for your appointment",
       "pickTimesForEach": "Pick a time for each service",
-      "providerCannotBook": "Business accounts can't book appointments as a customer. Please sign in with a separate customer account to book.",
+      "providerCannotBook": "You can't book your own business. To book here, use another account.",
       "rateLimited": "You've sent a few booking requests in a short time. Please wait a bit before trying again.",
       "receiptUploadFailed": "That receipt didn't upload. Please check your connection and try again.",
       "requestBooking": "Request booking",

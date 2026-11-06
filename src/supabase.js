@@ -798,7 +798,7 @@ const throwKnownGuardErrors = (error) => {
   }
   // Server-side booking checks (create_booking_safe, 2026-10-30): surfaced
   // with a code the booking screen turns into a plain-language message.
-  for (const code of ['CLASS_FULL', 'SERVICE_HOURS', 'DAILY_FULL', 'ADDON_NEEDS_MAIN', 'ADDON_NOT_ALLOWED', 'PLAN_FULL', 'ACCOUNT_BLOCKED', 'PAST_DATE', 'PROVIDER_UNAVAILABLE', 'SERVICE_UNAVAILABLE', 'NOT_AUTHORIZED']) {
+  for (const code of ['SLOT_TAKEN', 'CLASS_FULL', 'SERVICE_HOURS', 'DAILY_FULL', 'ADDON_NEEDS_MAIN', 'ADDON_NOT_ALLOWED', 'PLAN_FULL', 'ACCOUNT_BLOCKED', 'PAST_DATE', 'PROVIDER_UNAVAILABLE', 'SERVICE_UNAVAILABLE', 'NOT_AUTHORIZED']) {
     if (error.message.includes(code)) {
       const err = new Error(code);
       err.code = code;

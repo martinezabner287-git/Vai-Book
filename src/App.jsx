@@ -9204,6 +9204,9 @@ const BL_TEXT = {
     signupAccountFailed: "Couldn't create your login: {msg}",
     phoneRequired: "A WhatsApp / phone number is required so clients can reach you.",
     approvedLogin: "Once you're approved, log in with your email and password.",
+    approvedSameAccount: "Once you're approved, your business shows up right in this same account — open the menu and tap \"Go to my business\".",
+    sameAccount: "Your business will use the account you're logged in with ({who}) — no new password needed. You can switch between booking and your business from the menu.",
+    yourNumber: "your number",
     cardListedDesc: "Log in with your email and password",
     cardStaffDesc: "Log in with the email your employer added",
     cardNewDesc: "Apply to list it — you'll create your login",
@@ -9239,6 +9242,9 @@ const BL_TEXT = {
     signupAccountFailed: "No se pudo crear tu acceso: {msg}",
     phoneRequired: "Se requiere un número de WhatsApp / teléfono para que los clientes te contacten.",
     approvedLogin: "Cuando te aprueben, entra con tu correo y contraseña.",
+    approvedSameAccount: "Cuando te aprueben, tu negocio aparece en esta misma cuenta — abre el menú y toca \"Ir a mi negocio\".",
+    sameAccount: "Tu negocio usará la cuenta con la que entraste ({who}) — no necesitas otra contraseña. Puedes cambiar entre reservar y tu negocio desde el menú.",
+    yourNumber: "tu número",
     cardListedDesc: "Entra con tu correo y contraseña",
     cardStaffDesc: "Entra con el correo que agregó tu empleador",
     cardNewDesc: "Aplica para publicarlo — crearás tu acceso",
@@ -9687,6 +9693,9 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
   const [loadingBookings, setLoadingBookings] = useState(false);
 
   const [selectedProvider, setSelectedProvider] = useState(null);
+  // One account can run a business and book other businesses as a
+  // customer; it just can't book its own business.
+  const isOwnBusiness = !!(providerProfile && selectedProvider && providerProfile.id === selectedProvider.id);
 
   // Lets a customer share a specific service (not just the provider as a
   // whole) with someone else — mirrors the existing QR-code deep link
@@ -10918,7 +10927,7 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
     // here like any other customer. They need an actual, separate customer
     // account to do that now — see the same check in
     // submitMultiServiceBooking and the banner above the booking form.
-    if (providerProfile) { setBookingError(t("customerPortal.booking.providerCannotBook")); return; }
+    if (isOwnBusiness) { setBookingError(t("customerPortal.booking.providerCannotBook")); return; }
     const bookingCustomerId = overrideCustomerId || user?.id;
     if (!bookingCustomerId) { setBookingError(t("customerPortal.booking.signInAgain")); return; }
     if (bookingQuestionsBlock()) return;
@@ -10999,7 +11008,7 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
     // Same business-account guard as submitBooking above — kept here too
     // since this is a separate entry point (multi-service checkout), not a
     // wrapper around submitBooking.
-    if (providerProfile) { setBookingError(t("customerPortal.booking.providerCannotBook")); return; }
+    if (isOwnBusiness) { setBookingError(t("customerPortal.booking.providerCannotBook")); return; }
     const bookingCustomerId = overrideCustomerId || user?.id;
     if (!bookingCustomerId) { setBookingError(t("customerPortal.booking.signInAgain")); return; }
     if (bookingQuestionsBlock()) return;
@@ -12887,7 +12896,7 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                               submitBooking/submitMultiServiceBooking as the
                               real guard, this is just the honest heads-up
                               before they fill out the whole form. */}
-                          {providerProfile && (
+                          {isOwnBusiness && (
                             <p style={{ fontSize: 13, color: "#B91C1C", background: "#FEF2F2", border: "1px solid #FECACA", borderRadius: 10, padding: "10px 14px", marginBottom: 16 }}>
                               {t("customerPortal.booking.providerCannotBook")}
                             </p>
@@ -12972,7 +12981,7 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                             style={{ width: "100%", padding: "15px 0", fontSize: 15, borderRadius: 12, marginTop: 4 }}
                             disabled={submittingBooking || submittingGuestAuth || !!providerProfile}
                             onClick={async () => {
-                              if (providerProfile) { setBookingError(t("customerPortal.booking.providerCannotBook")); return; }
+                              if (isOwnBusiness) { setBookingError(t("customerPortal.booking.providerCannotBook")); return; }
                               if (selectedProvider.booking_policies && selectedProvider.booking_policies.trim() && !policiesAccepted) { setBookingError(bt("mustAgree")); return; }
                               if (user?.id) {
                                 if (bookingForSomeoneElse) {
@@ -14330,7 +14339,11 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
       }
     } catch (err) {
       setSavingWalkInSale(false);
-      if (err?.code === "RATE_LIMITED") {
+      if (err?.code === "SLOT_TAKEN") {
+        setWalkInSaleError(String(i18n.language || "").toLowerCase().startsWith("es")
+          ? "Alguien ya tiene una cita a esta hora. Agrégalo con \"+ Cita\" en otra hora, o mueve esa cita primero."
+          : "Someone is already booked right now. Add it with \"+ Appointment\" at another time, or move that booking first.");
+      } else if (err?.code === "RATE_LIMITED") {
         setWalkInSaleError(t("providerPortal.walkInSheet.rateLimited"));
       } else if (err?.code === "MAINTENANCE_MODE") {
         setWalkInSaleError(t("providerPortal.errors.maintenanceMode"));
@@ -14406,10 +14419,8 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
     setSavingWalkIn(true);
     setWalkInError("");
 
-    // Walk-ins skipped every availability check, so a provider could put an
-    // appointment straight on top of a customer's confirmed booking without
-    // either of them being told. Warn first — but still allow it, since a
-    // provider sometimes genuinely does double up on purpose.
+    // The server refuses a time that's already taken (one client per team
+    // member). Found here only to say who has it if that happens.
     const walkInService = services.find((sv) => sv.id === walkInForm.service_id);
     const clash = bookings.find((b) => {
       if (!["pending", "awaiting_payment", "confirmed"].includes(b.status)) return false;
@@ -14420,16 +14431,9 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
       const aStart = toMin(startA);
       const aEnd = aStart + (Number(walkInService?.duration_min) || 60);
       const bStart = toMin(startB);
-      const bEnd = bStart + (Number(b.services?.duration_min) || 60);
+      const bEnd = bStart + (Number(b.total_duration_min || b.services?.duration_min) || 60);
       return aStart < bEnd && bStart < aEnd;
     });
-    if (clash) {
-      const who = clash.users?.full_name || clash.walkin_customer_name || "another client";
-      if (!window.confirm(t("providerPortal.walkIn.overlapConfirm", { time: formatBookingTime(clash.booking_time), who }))) {
-        setSavingWalkIn(false);
-        return;
-      }
-    }
 
     const order_number = `VB-${Date.now().toString(36).toUpperCase()}${Math.random().toString(36).slice(2, 5).toUpperCase()}`;
     let created = null;
@@ -14446,7 +14450,14 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
       });
     } catch (err) {
       setSavingWalkIn(false);
-      if (err?.code === "RATE_LIMITED") {
+      if (err?.code === "SLOT_TAKEN" || err?.code === "CLASS_FULL") {
+        const es2 = String(i18n.language || "").toLowerCase().startsWith("es");
+        const who = clash ? (clash.users?.full_name || clash.walkin_customer_name || (es2 ? "otro cliente" : "another client")) : null;
+        setWalkInError(who
+          ? (es2 ? `Esa hora ya está reservada — ${formatBookingTime(clash.booking_time)} con ${who}. Elige otra hora.` : `That time is already booked — ${formatBookingTime(clash.booking_time)} with ${who}. Pick another time.`)
+          : (es2 ? "Esa hora ya está reservada. Elige otra hora." : "That time is already booked. Pick another time."));
+        loadBookings();
+      } else if (err?.code === "RATE_LIMITED") {
         setWalkInError(t("providerPortal.walkIn.rateLimited"));
       } else if (err?.code === "MAINTENANCE_MODE") {
         setWalkInError(t("providerPortal.errors.maintenanceMode"));
@@ -19165,6 +19176,9 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
 
 // ── PROVIDER SIGNUP ─────────────────────────────────────────────
 const SIGNUP_CSS = `
+  .signup-same-account { display: flex; gap: 10px; align-items: flex-start; background: #ECFDF3; border: 1px solid #BBF7D0; color: #14532D; border-radius: 12px; padding: 12px 14px; font-size: 13.5px; line-height: 1.45; margin-bottom: 14px; }
+  .signup-same-account > span:first-child { font-weight: 800; }
+
   .signup-wrap {
     min-height: calc(100vh - 64px);
     background: var(--sand);
@@ -20554,23 +20568,44 @@ function ProviderSignup({ onNav }) {
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
+  // Already logged in (as a customer)? Then the business goes on this same
+  // account: no new email or password, name and phone filled in, and they
+  // stay logged in. Works the same for email, phone and Google accounts.
+  const [me, setMe] = useState(null);
+  useEffect(() => {
+    let alive = true;
+    supabase.auth.getSession().then(async ({ data }) => {
+      const u = data && data.session && data.session.user;
+      if (!u || !alive) return;
+      const { data: row } = await supabase.from("users").select("full_name, phone, whatsapp_number").eq("id", u.id).maybeSingle();
+      if (!alive) return;
+      const isPhone = isPhoneLoginEmail(u.email);
+      const name = (row && row.full_name) || (u.user_metadata && (u.user_metadata.full_name || u.user_metadata.name)) || "";
+      const phone = (row && (row.whatsapp_number || row.phone)) || (u.user_metadata && u.user_metadata.phone) || "";
+      setMe({ email: String(u.email || "").toLowerCase(), isPhone, phone });
+      setForm((f) => ({ ...f, ownerName: f.ownerName || name, phone: f.phone || (phone ? formatPhoneForDisplay(phone) : ""), email: isPhone ? f.email : String(u.email || "").toLowerCase() }));
+    });
+    return () => { alive = false; };
+  }, []);
+
   const handleSubmit = async () => {
-    const required = ["businessName", "ownerName", "email", "phone", "serviceType", "district"];
+    const required = me ? ["businessName", "ownerName", "phone", "serviceType", "district"] : ["businessName", "ownerName", "email", "phone", "serviceType", "district"];
     if (required.some(k => !form[k].trim())) {
       alert(t("providerSignup.validation.requiredFields"));
       return;
     }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) { setSubmitError(bl("signupEmailInvalid")); return; }
+    if (!me && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) { setSubmitError(bl("signupEmailInvalid")); return; }
     if (phoneDigits(form.phone) < 7) { setSubmitError(bl("signupPhoneInvalid")); return; }
-    if (!passwordMeetsRules(form.password || "")) { setSubmitError(caText(i18n.language, "pwRules")); return; }
-    if (form.password !== form.password2) { setSubmitError(bl("pwMismatch")); return; }
+    if (!me && !passwordMeetsRules(form.password || "")) { setSubmitError(caText(i18n.language, "pwRules")); return; }
+    if (!me && form.password !== form.password2) { setSubmitError(bl("pwMismatch")); return; }
     setLoading(true);
     setSubmitError("");
 
     // Create (or confirm) the email + password login first, so the
     // application is only saved once the business actually has a way in.
     // Signed out again right after: they log in once they're approved.
-    {
+    // (Skipped when already logged in — the business uses that account.)
+    if (!me) {
       const { error: authErr, returning } = await guestAuthWithPassword(form.email.trim().toLowerCase(), form.password, { full_name: form.ownerName.trim(), phone: form.phone.trim() });
       if (authErr) {
         setLoading(false);
@@ -20588,7 +20623,9 @@ function ProviderSignup({ onNav }) {
       saved = await submitProviderApplication({
         business_name: form.businessName,
         owner_name: form.ownerName,
-        email: form.email.trim().toLowerCase(),
+        // Matched to the account when it's approved, so a logged-in
+        // applicant's own login email is used.
+        email: me ? me.email : form.email.trim().toLowerCase(),
         phone: form.phone,
         service_type: form.serviceType,
         district: form.district,
@@ -20624,7 +20661,7 @@ function ProviderSignup({ onNav }) {
       html: `<h3>New provider signup on VaiBook</h3>
 <p><strong>Business:</strong> ${form.businessName}<br/>
 <strong>Owner:</strong> ${form.ownerName}<br/>
-<strong>Email:</strong> ${form.email}<br/>
+<strong>Email:</strong> ${me ? (me.isPhone ? "(phone login)" : me.email) : form.email}${me ? " — applied from their existing VaiBook account" : ""}<br/>
 <strong>Phone:</strong> ${form.phone}<br/>
 <strong>Service:</strong> ${form.serviceType}<br/>
 <strong>District:</strong> ${form.district}<br/>
@@ -20634,8 +20671,8 @@ function ProviderSignup({ onNav }) {
     });
 
     // Send the applicant a confirmation too, so they know it arrived.
-    await sendBookingEmail({
-      to: form.email.trim().toLowerCase(),
+    if (!(me && me.isPhone)) await sendBookingEmail({
+      to: me ? me.email : form.email.trim().toLowerCase(),
       subject: "We got your VaiBook application",
       html: `<p>Hi ${form.ownerName},</p><p>Thanks for applying to list <strong>${form.businessName}</strong> on VaiBook. We review applications by hand — you'll get an email as soon as yours is approved, and then you sign in with <strong>${form.email.trim().toLowerCase()}</strong> to open your portal.</p><p>— VaiBook</p>`,
     });
@@ -20666,8 +20703,12 @@ function ProviderSignup({ onNav }) {
           <h2>{t("providerSignup.pending.title")}</h2>
           <p>{t("providerSignup.pending.body")}</p>
           <p className="pl-pending-meta">
-            {t("providerSignup.pending.submittedFor")} <strong>{form.businessName}</strong> {t("providerSignup.pending.emailLead")} <strong>{form.email}</strong> {t("providerSignup.pending.approvedSuffix")}
-            {" "}{bl("approvedLogin")}
+            {me ? (
+              <>{t("providerSignup.pending.submittedFor")} <strong>{form.businessName}</strong>. {bl("approvedSameAccount")}</>
+            ) : (
+              <>{t("providerSignup.pending.submittedFor")} <strong>{form.businessName}</strong> {t("providerSignup.pending.emailLead")} <strong>{form.email}</strong> {t("providerSignup.pending.approvedSuffix")}
+              {" "}{bl("approvedLogin")}</>
+            )}
           </p>
           <div className="pl-pending-actions">
             <button className="pl-pending-keep-browsing btn-lime" onClick={() => scrollToSection("services", onNav, "signup")}>{t("providerSignup.pending.keepSearching")}</button>
@@ -20707,6 +20748,19 @@ function ProviderSignup({ onNav }) {
               <input placeholder={t("providerSignup.form.ownerNamePlaceholder")} value={form.ownerName} onChange={e => set("ownerName", e.target.value)} />
             </div>
           </div>
+          {me ? (
+            <>
+              <div className="signup-same-account">
+                <span aria-hidden="true">✓</span>
+                <span>{bl("sameAccount", { who: me.isPhone ? (formatPhoneForDisplay(me.phone) || bl("yourNumber")) : me.email })}</span>
+              </div>
+              <div className="input-group">
+                <label>{t("providerSignup.form.whatsappPhone")}</label>
+                <input type="tel" inputMode="tel" placeholder="+501 600 0000" value={form.phone} onChange={e => set("phone", e.target.value)} />
+              </div>
+            </>
+          ) : (
+          <>
           <div className="form-row">
             <div className="input-group">
               <label>{t("providerSignup.form.email")}</label>
@@ -20729,6 +20783,8 @@ function ProviderSignup({ onNav }) {
           </div>
           <PasswordRules value={form.password} />
           <p className="biz-login-hint" style={{ marginTop: 4, marginBottom: 14, textAlign: "left" }}>{bl("signupPasswordHint")}</p>
+          </>
+          )}
           <div className="form-row">
             <div className="input-group">
               <label>{t("providerSignup.form.serviceType")}</label>
