@@ -15,6 +15,13 @@ if (movingToNewDomain) {
   window.location.replace(`https://vaibook.bz${pathname}${search}${hash}`);
 }
 
+// Business links: vaibook.bz/b/<slug>/ (the version that previews nicely
+// in WhatsApp) opens the same booking screen as #book-<slug>.
+const businessPath = window.location.pathname.match(/^\/b\/([^/]+)\/?$/);
+if (!movingToNewDomain && businessPath && !window.location.hash) {
+  window.history.replaceState(null, '', `/${window.location.search}#book-${decodeURIComponent(businessPath[1])}`);
+}
+
 const root = ReactDOM.createRoot(document.getElementById('root'));
 if (!movingToNewDomain) root.render(
   <AppErrorBoundary>

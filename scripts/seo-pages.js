@@ -114,6 +114,34 @@ ${(jsonld || []).map((j) => `<script type="application/ld+json">${JSON.stringify
 </body></html>`;
 }
 
+// Business pages are the real app (so a shared link opens straight into
+// booking) with that business's own title, description and photo in the
+// head — what WhatsApp, Facebook and Google read — plus a plain-text copy
+// of the page for anything that doesn't run JavaScript.
+function appShell({ urlPath, title, description, shareTitle, shareDescription, ogImage, jsonld, body }) {
+  const shell = fs.readFileSync(path.join(OUT, "index.html"), "utf8");
+  const url = `${SITE}${urlPath}`;
+  let head = shell
+    .replace(/<title>[\s\S]*?<\/title>/i, "")
+    .replace(/<meta[^>]+name="(description|twitter:card)"[^>]*>/gi, "")
+    .replace(/<meta[^>]+property="og:[^"]*"[^>]*>/gi, "")
+    .replace(/<link[^>]+rel="canonical"[^>]*>/gi, "")
+    .replace(/<script type="application\/ld\+json">[\s\S]*?<\/script>/gi, "")
+    .replace(/<noscript>[\s\S]*?<\/noscript>/i, `<noscript><main style="max-width:760px;margin:0 auto;padding:18px;font-family:system-ui,sans-serif">${body}</main></noscript>`);
+  const tags = `<title>${esc(title)}</title>
+<meta name="description" content="${esc(description)}">
+<link rel="canonical" href="${url}">
+<meta property="og:type" content="website"><meta property="og:site_name" content="VaiBook">
+<meta property="og:title" content="${esc(shareTitle)}"><meta property="og:description" content="${esc(shareDescription)}">
+<meta property="og:url" content="${url}"><meta property="og:image" content="${esc(ogImage)}">
+<meta name="twitter:card" content="summary_large_image">
+${(jsonld || []).map((j) => `<script type="application/ld+json">${JSON.stringify(j).replace(/</g, "\\u003c")}</script>`).join("")}`;
+  // Right after <meta charset> (browsers want it in the first bytes).
+  return /<meta charset="utf-8"\/?>/i.test(head)
+    ? head.replace(/(<meta charset="utf-8"\/?>)/i, `$1${tags}`)
+    : head.replace(/<head>/i, `<head>${tags}`);
+}
+
 function write(urlPath, html) {
   const dir = path.join(OUT, urlPath);
   fs.mkdirSync(dir, { recursive: true });
@@ -176,7 +204,13 @@ async function main() {
 ${p.bio && p.bio.trim() ? `<p>${esc(p.bio.trim())}</p>` : ""}
 ${businessCard(p, false)}
 ${p._cat ? `<p>More <a href="/${p._cat[0]}/">${esc(p._cat[1].toLowerCase())} in Belize</a>${p.district ? ` · <a href="/${p._cat[0]}/${slugify(p.district)}/">${esc(p._cat[1].toLowerCase())} in ${esc(p.district)}</a>` : ""}</p>` : ""}`;
-    write(`/b/${p.slug}`, page({ urlPath: `/b/${p.slug}/`, title, description, body, jsonld: [ld], ogImage: p.profile_photo_url }));
+    const priceLine = svcs.slice(0, 3).map((s) => `${s.name} ${money(s.price)}`).join(" · ");
+    write(`/b/${p.slug}`, appShell({
+      urlPath: `/b/${p.slug}/`, title, description, body, jsonld: [ld],
+      shareTitle: `Book ${p.business_name} on VaiBook`,
+      shareDescription: `${p.service_type || "Self-care"} in ${area}, Belize${p._rating ? ` · ★ ${p._rating.avg.toFixed(1)}` : ""}. ${priceLine}${svcs.length > 3 ? " and more" : ""}. Tap to see open times and book.`,
+      ogImage: p.profile_photo_url || `${SITE}/og-vaibook.jpg`,
+    }));
     urls.push({ loc: `/b/${p.slug}/`, pri: "0.9" });
   }
 

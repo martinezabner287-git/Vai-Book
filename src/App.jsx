@@ -9718,7 +9718,7 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
   // eslint-disable-next-line no-unused-vars
   const shareService = async (service) => {
     if (!selectedProvider) return;
-    const url = `${window.location.origin}/#book-${selectedProvider.id}`;
+    const url = businessLink(window.location.origin, selectedProvider);
     const text = `${service.name} at ${selectedProvider.business_name} — book it on VaiBook`;
     if (navigator.share) {
       try { await navigator.share({ title: text, url }); } catch (e) { /* user cancelled — not an error */ }
@@ -9738,7 +9738,7 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
   const [providerLinkCopied, setProviderLinkCopied] = useState(false);
   const shareProvider = async (provider) => {
     if (!provider) return;
-    const url = `${window.location.origin}/#book-${provider.id}`;
+    const url = businessLink(window.location.origin, provider);
     const text = `${provider.business_name} on VaiBook`;
     if (navigator.share) {
       try { await navigator.share({ title: text, url }); } catch (e) { /* user cancelled — not an error */ }
@@ -15810,7 +15810,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
   // a working link while testing.
   const CANONICAL_SITE_ORIGIN = "https://vaibook.bz";
   const siteOrigin = window.location.hostname === "localhost" ? window.location.origin : CANONICAL_SITE_ORIGIN;
-  const bookingUrl = `${siteOrigin}/#book-${providerProfile?.slug || providerId}`;
+  const bookingUrl = businessLink(siteOrigin, providerProfile?.slug ? providerProfile : { id: providerId });
   const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=480x480&margin=12&data=${encodeURIComponent(bookingUrl)}`;
 
   // "Rebooking Radar" — registered (non-walk-in) customers with no
@@ -20368,8 +20368,7 @@ function ServiceRulesField({ form, setForm, services, bookingUrl }) {
   const [open, setOpen] = useState(!!(form.is_addon || form.avail_from || form.avail_until || form.daily_limit));
   const mains = (services || []).filter((x) => !x.is_addon);
   const slug = (form.slug || "").trim().toLowerCase().replace(/[^a-z0-9-]+/g, "-");
-  const base = String(bookingUrl || "").split("#");
-  const link = slug && base.length === 2 ? `${base[0].replace(/\/$/, "")}/?services=${slug}#${base[1]}` : "";
+  const link = slug ? linkWithServices(bookingUrl, slug) : "";
   return (
     <div className="svc-rules">
       <button type="button" className="svc-rules-toggle" onClick={() => setOpen((v) => !v)} aria-expanded={open}>
@@ -20426,8 +20425,7 @@ function PlanExtrasField({ form, setForm, services, bookingUrl }) {
   const allow = form.allowances || [];
   const setAllow = (i, patch) => setForm((f) => ({ ...f, allowances: (f.allowances || []).map((a, j) => (j === i ? { ...a, ...patch } : a)) }));
   const slug = (form.slug || "").trim().toLowerCase();
-  const base = String(bookingUrl || "").split("#");
-  const link = slug && base.length === 2 ? `${base[0].replace(/\/$/, "")}/?services=${slug}#${base[1]}` : "";
+  const link = slug ? linkWithServices(bookingUrl, slug) : "";
   return (
     <div className="svc-rules-body" style={{ padding: 0 }}>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
@@ -21383,7 +21381,7 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
             <Suspense fallback={<div className="plaque-loading">Preparing…</div>}>
               <ShareKit
                 businessName={posterFor.business_name || ""}
-                bookingUrl={`https://vaibook.bz/#book-${posterFor.slug || posterFor.id}`}
+                bookingUrl={businessLink("https://vaibook.bz", posterFor)}
                 photoUrl={posterFor.profile_photo_url || null}
                 subtitle={[posterFor.service_type, posterFor.district].filter(Boolean).join(" · ")}
                 lang="en"
@@ -21948,6 +21946,18 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
 // straight to their booking page inside VaiBook, instead of the generic
 // homepage. Kept as a plain helper so both the initial-load state and the
 // hashchange listener below parse it identically.
+// A business's shareable booking link. /b/<slug>/ shows the business's own
+// name, photo and prices when pasted into WhatsApp/Facebook (the old #book-
+// links only ever showed the general VaiBook preview) and opens straight
+// into booking (src/index.js turns it back into #book-<slug>).
+const businessLink = (origin, p) => (p && p.slug ? `${origin}/b/${p.slug}/` : `${origin}/#book-${(p && p.id) || ""}`);
+// Adds ?services=… to either link form.
+const linkWithServices = (url, items) => {
+  const u = String(url || "");
+  if (!u) return "";
+  const i = u.indexOf("#");
+  return i >= 0 ? `${u.slice(0, i).replace(/\/$/, "")}/?services=${items}${u.slice(i)}` : `${u}?services=${items}`;
+};
 const parseBookingHash = (h) => (h.startsWith("book-") ? (h.slice(5).split("?")[0] || null) : null);
 // Booking links can pre-pick what to book:
 //   https://vaibook.bz/?services=sauna,deep#book-the-recovery-room
