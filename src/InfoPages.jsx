@@ -105,7 +105,7 @@ const C = {
           "Watch for the confirmation alert. Everything — times, receipts, messages — stays in My bookings.",
         ] },
         { tag: "c", title: "Put VaiBook on your phone's home screen", body: [
-          "iPhone: open vai-book.vercel.app in Safari, tap the Share button, then \"Add to Home Screen\".",
+          "iPhone: open vaibook.bz in Safari, tap the Share button, then \"Add to Home Screen\".",
           "Android: open it in Chrome, tap the ⋮ menu, then \"Add to Home screen\" or \"Install app\".",
           "Open VaiBook from the new icon and allow notifications so you get booking confirmations and reminders.",
         ] },
@@ -306,7 +306,7 @@ const C = {
           "Espera la alerta de confirmación. Todo — horas, recibos, mensajes — queda en Mis reservas.",
         ] },
         { tag: "c", title: "Pon VaiBook en la pantalla de inicio de tu teléfono", body: [
-          "iPhone: abre vai-book.vercel.app en Safari, toca Compartir y luego \"Agregar a inicio\".",
+          "iPhone: abre vaibook.bz en Safari, toca Compartir y luego \"Agregar a inicio\".",
           "Android: ábrelo en Chrome, toca el menú ⋮ y luego \"Agregar a la pantalla principal\" o \"Instalar app\".",
           "Abre VaiBook desde el nuevo ícono y permite las notificaciones para recibir confirmaciones y recordatorios.",
         ] },

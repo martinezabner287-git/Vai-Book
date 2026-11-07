@@ -5,8 +5,18 @@ import AppErrorBoundary, { reportClientError } from './AppErrorBoundary';
 import { ThemeProvider } from './ThemeContext';
 import './i18n';
 
+// vaibook.bz is the real address now. Old vai-book.vercel.app links, QR
+// codes and posters keep working: they land here and move to the same page
+// (booking link, selected services and all) on vaibook.bz.
+const OLD_HOST = 'vai-book.vercel.app';
+const movingToNewDomain = window.location.hostname === OLD_HOST;
+if (movingToNewDomain) {
+  const { pathname, search, hash } = window.location;
+  window.location.replace(`https://vaibook.bz${pathname}${search}${hash}`);
+}
+
 const root = ReactDOM.createRoot(document.getElementById('root'));
-root.render(
+if (!movingToNewDomain) root.render(
   <AppErrorBoundary>
     <ThemeProvider>
       <App />

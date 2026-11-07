@@ -1,6 +1,6 @@
 // VaiBook — private calendar feed for Google Calendar / Apple Calendar.
 // Lives at  api/calendar.js  in the GitHub repo (NOT inside src/).
-// Vercel turns it into  https://vai-book.vercel.app/api/calendar?t=<token>
+// Vercel turns it into  https://vaibook.bz/api/calendar?t=<token>
 //
 // A business adds that link to their calendar once ("From URL"), and every
 // booking shows up there by itself. The token is secret; get_calendar_feed
@@ -89,7 +89,7 @@ function buildIcs(feed) {
       b.total != null ? `Total: BZ$${Number(b.total).toFixed(2)}` : null,
       b.order ? `Order: ${b.order}` : null,
       b.notes ? `Note: ${b.notes}` : null,
-      'Manage it in VaiBook: https://vai-book.vercel.app/#provider',
+      'Manage it in VaiBook: https://vaibook.bz/#provider',
     ].filter(Boolean).join('\n');
     const updated = b.updated ? new Date(b.updated) : null;
 

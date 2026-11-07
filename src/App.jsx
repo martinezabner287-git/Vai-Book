@@ -215,7 +215,7 @@ function providerApprovedEmailHtml({ businessName, ownerName }) {
       <p style="margin: 0 0 20px; font-size: 14px; color: #6B6578; line-height: 1.5;"><strong>${businessName}</strong> has been approved on VaiBook. One last step to go live:</p>
       <div style="background: #F3F1FC; border-radius: 8px; padding: 16px 18px; margin-bottom: 16px;">
         <div style="font-size: 14px; line-height: 1.6;">
-          Sign in at <strong>vai-book.vercel.app/#provider</strong> with Google, using this same email address. The moment you do, your business goes live and customers can start finding and booking you.
+          Log in at <strong>vaibook.bz</strong> → Business log in, with this same email and the password you chose. The moment you do, your business goes live and customers can start finding and booking you.
         </div>
       </div>
       <p style="font-size: 13px; color: #6B6578; line-height: 1.5;">Nothing else is needed — no forms, no re-applying. Just sign in once and you're live.</p>
@@ -4443,7 +4443,7 @@ function CalendarSyncCard() {
     setToken(data); setState("idle");
   };
   useEffect(() => { load(false); }, []);
-  const feedUrl = token ? `https://vai-book.vercel.app/api/calendar?t=${token}` : "";
+  const feedUrl = token ? `https://vaibook.bz/api/calendar?t=${token}` : "";
   const webcalUrl = feedUrl.replace(/^https:/, "webcal:");
   const googleUrl = token ? `https://calendar.google.com/calendar/render?cid=${encodeURIComponent(webcalUrl)}` : "";
   const copy = async () => {
@@ -15808,7 +15808,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
   // is torn down, so a code printed from it would eventually stop working.
   // Localhost is kept as-is purely so local development can still generate
   // a working link while testing.
-  const CANONICAL_SITE_ORIGIN = "https://vai-book.vercel.app";
+  const CANONICAL_SITE_ORIGIN = "https://vaibook.bz";
   const siteOrigin = window.location.hostname === "localhost" ? window.location.origin : CANONICAL_SITE_ORIGIN;
   const bookingUrl = `${siteOrigin}/#book-${providerProfile?.slug || providerId}`;
   const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=480x480&margin=12&data=${encodeURIComponent(bookingUrl)}`;
@@ -21383,7 +21383,7 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
             <Suspense fallback={<div className="plaque-loading">Preparing…</div>}>
               <ShareKit
                 businessName={posterFor.business_name || ""}
-                bookingUrl={`https://vai-book.vercel.app/#book-${posterFor.slug || posterFor.id}`}
+                bookingUrl={`https://vaibook.bz/#book-${posterFor.slug || posterFor.id}`}
                 photoUrl={posterFor.profile_photo_url || null}
                 subtitle={[posterFor.service_type, posterFor.district].filter(Boolean).join(" · ")}
                 lang="en"
@@ -21950,7 +21950,7 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
 // hashchange listener below parse it identically.
 const parseBookingHash = (h) => (h.startsWith("book-") ? (h.slice(5).split("?")[0] || null) : null);
 // Booking links can pre-pick what to book:
-//   https://vai-book.vercel.app/?services=sauna,deep#book-the-recovery-room
+//   https://vaibook.bz/?services=sauna,deep#book-the-recovery-room
 // Each item is a service or plan's short name, its id, or its name. Read
 // once when the page opens; unknown items are ignored.
 let pendingLinkItems = (() => {
