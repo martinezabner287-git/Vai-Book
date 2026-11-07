@@ -100,7 +100,7 @@ function page({ urlPath, title, description, body, jsonld, ogImage, noindex }) {
 <link rel="canonical" href="${url}">${noindex ? '\n<meta name="robots" content="noindex,follow">' : ""}
 <meta property="og:type" content="website"><meta property="og:site_name" content="VaiBook">
 <meta property="og:title" content="${esc(title)}"><meta property="og:description" content="${esc(description)}">
-<meta property="og:url" content="${url}"><meta property="og:image" content="${esc(ogImage || SITE + "/platform-preview.jpg")}">
+<meta property="og:url" content="${url}"><meta property="og:image" content="${esc(ogImage || SITE + "/og-vaibook.jpg")}">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png"><link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <meta name="theme-color" content="#4C3DC4">
