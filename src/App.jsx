@@ -21766,7 +21766,7 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
             <>
               <div className="portal-header">
                 <h2>Messages</h2>
-                <p>What people sent from Contact us and Help &amp; support. You also get a phone alert for each new one.</p>
+                <p>What people sent from Contact us and Help &amp; support. Each new one is also emailed to every admin (and sent to your phone if you turned on push notifications).</p>
               </div>
               <div className="card" style={{ marginBottom: 16 }}>
                 <div className="card-title">Reset a customer's password</div>

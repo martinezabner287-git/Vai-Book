@@ -1,3 +1,4 @@
+-- 2026-11-06 APPLIED to the live database after Abner said "apply it"; test email delivered.
 -- 2026-11-06: support messages also EMAIL every admin (before: only an
 -- in-app bell notification + phone push, and push only reaches an admin who
 -- turned push on — so a message could arrive with nobody noticing).
