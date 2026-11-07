@@ -2074,6 +2074,33 @@ export const submitSupportMessage = async ({ name, contact, topic, message }) =>
   return { ok: true };
 };
 
+// Admin: give someone a one-time temporary password (email or WhatsApp-
+// number login). Returns { ok, name, email, phone, temp } — they must pick
+// their own password the next time they log in.
+export const adminSetTempPassword = async (login) => {
+  const { data, error } = await supabase.rpc('admin_set_temp_password', { p_login: login });
+  if (error) {
+    const code = /NO_ACCOUNT/.test(error.message || '') ? 'NO_ACCOUNT' : /NOT_AUTHORIZED/.test(error.message || '') ? 'NOT_AUTHORIZED' : 'FAILED';
+    if (code === 'FAILED') reportActionError('adminSetTempPassword', error);
+    return { ok: false, code };
+  }
+  return { ok: true, ...(data || {}) };
+};
+
+// Does the signed-in person still need to replace a temporary password?
+export const getMustChangePassword = async (uid) => {
+  if (!uid) return false;
+  const { data, error } = await supabase.from('users').select('must_change_password').eq('id', uid).maybeSingle();
+  if (error) return false;
+  return !!(data && data.must_change_password);
+};
+
+export const clearMustChangePassword = async () => {
+  const { error } = await supabase.rpc('clear_must_change_password');
+  if (error) reportActionError('clearMustChangePassword', error);
+  return !error;
+};
+
 export const listSupportMessages = async () => {
   const { data, error } = await supabase
     .from('support_messages')

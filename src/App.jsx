@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useLayoutEffect, useRef, useContext, createContext, lazy, Suspense, useCallback } from "react";
 import { flushSync } from "react-dom";
-import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, updateService, deleteService, getActiveProviders, getProviderDirectory, createBooking, getProviderBusyWindows, createBookingSafe, cancelBooking, markBookingCheckedIn, getCustomerBookings, uploadReceipt, submitReview, getProviderReviews, updateReview, sendBookingEmail, updateUserProfile, getPaymentMethods, addPaymentMethod, deletePaymentMethod, createNotification, getNotifications, markNotificationRead, markAllNotificationsRead, getCategoryDefaultFeatures, getProviderFeatureOverrides, setProviderFeatureOverride, getVisitNotes, upsertVisitNote, adminListProviders, adminUpdateProvider, adminDeleteProvider, adminCountCustomers, getFavoriteProviderIds, getFavoriteProviders, addFavorite, removeFavorite, getBookingMessages, sendBookingMessage, markBookingMessagesRead, getUnreadBookingMessages, getProviderMonthlyTrend, createProviderProfile, getProviderById, createWalkInBooking, submitProviderPayment, getMyProviderPayments, adminListProviderPayments, adminReviewProviderPayment, submitBookingRefund, adminListBookingRefunds, openPrivateFile, getProviderStaff, addProviderStaff, updateProviderStaff, deleteProviderStaff, getProviderStaffPublic, getLoyaltyAccount, getProviderLoyaltyCustomers, redeemLoyaltyReward, getMyStaffProfile, claimStaffSeatByEmail, getStaffBookings, getProviderNotifyEmail, getMaintenanceStatus, setMaintenanceMode, getSiteOfflineStatus, setSiteOffline, guestAuthWithPassword, updateGuestPassword, savePushSubscription, attachBookingServices, getProviderBlocks, insertProviderBlock, deleteProviderBlock, proposeBookingReschedule, confirmBookingReschedule, declineBookingReschedule, withdrawBookingReschedule, establishSoloSession, getServerSoloSessionToken, getLocalSoloSessionToken, clearLocalSoloSessionToken, subscribeToSoloSessionReplacement, signInWithPhonePassword, customerPhoneAuth, adminResetPhonePassword, isPhoneLoginEmail, formatPhoneForDisplay, weakPasswordReason, submitSupportMessage, listSupportMessages, setSupportMessageStatus, getProviderMembershipPlans, getMyMembershipPlans, createMembershipPlan, updateMembershipPlan, subscribeToMembershipPlan, submitMembershipPayment, getMyMemberships, getProviderMembershipSubscribers, getProviderMembershipPayments, reviewMembershipPayment, cancelMembership, redeemMembershipVisit, startSoloTrial, adminStartProviderTrial, adminExtendProviderTrial, adminEndProviderTrial, adminExtendPaymentDue, adminRestoreDowngradedPlan, adminPlatformStats, setBookingAnswers, getFormEmail, redeemMembershipVisitFor, attachBookingAddons, getProviderCapacity, getPlanSpotsLeft } from "./supabase";
+import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, updateService, deleteService, getActiveProviders, getProviderDirectory, createBooking, getProviderBusyWindows, createBookingSafe, cancelBooking, markBookingCheckedIn, getCustomerBookings, uploadReceipt, submitReview, getProviderReviews, updateReview, sendBookingEmail, updateUserProfile, getPaymentMethods, addPaymentMethod, deletePaymentMethod, createNotification, getNotifications, markNotificationRead, markAllNotificationsRead, getCategoryDefaultFeatures, getProviderFeatureOverrides, setProviderFeatureOverride, getVisitNotes, upsertVisitNote, adminListProviders, adminUpdateProvider, adminDeleteProvider, adminCountCustomers, getFavoriteProviderIds, getFavoriteProviders, addFavorite, removeFavorite, getBookingMessages, sendBookingMessage, markBookingMessagesRead, getUnreadBookingMessages, getProviderMonthlyTrend, createProviderProfile, getProviderById, createWalkInBooking, submitProviderPayment, getMyProviderPayments, adminListProviderPayments, adminReviewProviderPayment, submitBookingRefund, adminListBookingRefunds, openPrivateFile, getProviderStaff, addProviderStaff, updateProviderStaff, deleteProviderStaff, getProviderStaffPublic, getLoyaltyAccount, getProviderLoyaltyCustomers, redeemLoyaltyReward, getMyStaffProfile, claimStaffSeatByEmail, getStaffBookings, getProviderNotifyEmail, getMaintenanceStatus, setMaintenanceMode, getSiteOfflineStatus, setSiteOffline, guestAuthWithPassword, updateGuestPassword, savePushSubscription, attachBookingServices, getProviderBlocks, insertProviderBlock, deleteProviderBlock, proposeBookingReschedule, confirmBookingReschedule, declineBookingReschedule, withdrawBookingReschedule, establishSoloSession, getServerSoloSessionToken, getLocalSoloSessionToken, clearLocalSoloSessionToken, subscribeToSoloSessionReplacement, signInWithPhonePassword, customerPhoneAuth, isPhoneLoginEmail, formatPhoneForDisplay, weakPasswordReason, submitSupportMessage, adminSetTempPassword, getMustChangePassword, clearMustChangePassword, listSupportMessages, setSupportMessageStatus, getProviderMembershipPlans, getMyMembershipPlans, createMembershipPlan, updateMembershipPlan, subscribeToMembershipPlan, submitMembershipPayment, getMyMemberships, getProviderMembershipSubscribers, getProviderMembershipPayments, reviewMembershipPayment, cancelMembership, redeemMembershipVisit, startSoloTrial, adminStartProviderTrial, adminExtendProviderTrial, adminEndProviderTrial, adminExtendPaymentDue, adminRestoreDowngradedPlan, adminPlatformStats, setBookingAnswers, getFormEmail, redeemMembershipVisitFor, attachBookingAddons, getProviderCapacity, getPlanSpotsLeft } from "./supabase";
 import AdminDashboard from "./AdminDashboard";
 import ProfilePhotoModal from "./ProfilePhotoModal";
 import LanguageSelector from "./LanguageSelector";
@@ -20929,7 +20929,64 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
   const [posterFor, setPosterFor] = useState(null);
   const [supportMsgs, setSupportMsgs] = useState(null);
   const [supportFilter, setSupportFilter] = useState("new");
-  const [pwReset, setPwReset] = useState({ phone: "", password: "", busy: false, msg: "", ok: false });
+  // "Send a temporary password" — keyed by support message id, or "card"
+  // for the look-up box at the top of Messages.
+  const [tempPw, setTempPw] = useState({});
+  const [tempLogin, setTempLogin] = useState("");
+  const sendTempPassword = async (key, login) => {
+    setTempPw((s) => ({ ...s, [key]: { stage: "busy" } }));
+    const res = await adminSetTempPassword(login);
+    if (!res.ok) {
+      setTempPw((s) => ({ ...s, [key]: { stage: "error", msg: res.code === "NO_ACCOUNT" ? `No VaiBook account uses ${login}.` : "Couldn't set it. Try again." } }));
+      return;
+    }
+    const first = String(res.name || "").split(" ")[0] || "there";
+    let emailed = false; let wa = "";
+    if (res.email) {
+      emailed = await sendBookingEmail({
+        to: res.email,
+        subject: "Your temporary VaiBook password",
+        html: `<div style="font-family:Arial,sans-serif;max-width:520px;color:#16181D">
+<p>Hi ${String(first).replace(/[<>&]/g, "")},</p>
+<p>Here's a temporary password so you can get back into VaiBook:</p>
+<p style="font-size:22px;font-weight:800;letter-spacing:1px;background:#EEECFC;color:#4C3DC4;border-radius:10px;padding:12px 16px;display:inline-block">${res.temp}</p>
+<p>1. Go to <a href="https://vaibook.bz">vaibook.bz</a> and log in with <b>${res.email}</b> and this password. If you run a business, use <b>Business log in</b>.<br>2. You'll be asked to choose your own new password right away.</p>
+<p style="color:#6C7281;font-size:13px">Didn't ask for this? Just reply to this email and let us know.</p>
+<p>— The VaiBook team</p></div>`,
+      });
+    }
+    if (res.phone) {
+      wa = `https://wa.me/${res.phone}?text=${encodeURIComponent(`Hi ${first}! Here's a temporary VaiBook password: ${res.temp}\n\nLog in at vaibook.bz with your WhatsApp number and this password. You'll be asked to choose your own new password right away.`)}`;
+    }
+    setTempPw((s) => ({ ...s, [key]: { stage: "done", temp: res.temp, email: res.email, emailed, wa } }));
+  };
+  const tempPwStatus = (key) => {
+    const st = tempPw[key];
+    if (!st || st.stage === "confirm") return null;
+    if (st.stage === "busy") return <p style={{ fontSize: 13, color: "var(--muted)", margin: "8px 0 0" }}>Setting a temporary password…</p>;
+    if (st.stage === "error") return <p style={{ fontSize: 13, color: "#B91C1C", margin: "8px 0 0" }}>{st.msg}</p>;
+    return (
+      <div style={{ fontSize: 13, margin: "8px 0 0", background: "var(--accent-soft)", borderRadius: 10, padding: "10px 12px" }}>
+        <div>Temporary password: <strong style={{ fontSize: 15, letterSpacing: 1 }}>{st.temp}</strong></div>
+        {st.email && <div style={{ marginTop: 4 }}>{st.emailed ? `✓ Emailed to ${st.email}.` : `Couldn't email ${st.email} — copy the password and send it yourself.`}</div>}
+        {st.wa && <div style={{ marginTop: 4 }}><a href={st.wa} target="_blank" rel="noopener noreferrer" style={{ fontWeight: 700 }}>Send it on WhatsApp ›</a></div>}
+        <div style={{ marginTop: 4, color: "var(--muted)" }}>Their old password no longer works. When they log in with this one, VaiBook asks them to choose a new password first.</div>
+      </div>
+    );
+  };
+  const tempPwButton = (key, login) => {
+    const st = tempPw[key];
+    if (st && st.stage === "confirm") {
+      return (
+        <span style={{ display: "inline-flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
+          <span style={{ fontSize: 13 }}>Their current password will stop working.</span>
+          <button className="btn-sm forest" onClick={() => sendTempPassword(key, login)}>Yes, send it</button>
+          <button className="btn-sm" style={{ border: "1px solid var(--border)" }} onClick={() => setTempPw((s) => ({ ...s, [key]: undefined }))}>Cancel</button>
+        </span>
+      );
+    }
+    return <button className="btn-sm" style={{ border: "1px solid var(--border)" }} disabled={st && st.stage === "busy"} onClick={() => setTempPw((s) => ({ ...s, [key]: { stage: "confirm" } }))}>🔑 Send temporary password</button>;
+  };
   const [checkingAdmin, setCheckingAdmin] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const [apps, setApps] = useState([]);
@@ -20962,7 +21019,7 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
     listSupportMessages().then((m) => { if (alive) setSupportMsgs(m); });
     return () => { alive = false; };
     // eslint-disable-next-line
-  }, [tab]);
+  }, [tab, supportMsgs === null]);
 
   const [providers, setProviders] = useState([]);
   const [loadingProviders, setLoadingProviders] = useState(false);
@@ -21769,27 +21826,13 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
                 <p>What people sent from Contact us and Help &amp; support. Each new one is also emailed to every admin (and sent to your phone if you turned on push notifications).</p>
               </div>
               <div className="card" style={{ marginBottom: 16 }}>
-                <div className="card-title">Reset a customer's password</div>
-                <p style={{ fontSize: 13, color: "var(--muted)", margin: "0 0 10px" }}>Customers log in with their WhatsApp number and a password (no email). If one forgets theirs, set a new one here and send it to them on WhatsApp.</p>
+                <div className="card-title">Someone can't log in?</div>
+                <p style={{ fontSize: 13, color: "var(--muted)", margin: "0 0 10px" }}>Type the email or WhatsApp number they log in with. VaiBook makes a temporary password, emails it to them (or gives you a WhatsApp button), and asks them to pick their own password as soon as they log in.</p>
                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "flex-end" }}>
-                  <div className="input-group" style={{ margin: 0, flex: "1 1 160px" }}><label>WhatsApp number</label><input type="tel" placeholder="+501 622 1234" value={pwReset.phone} onChange={(e) => setPwReset((r) => ({ ...r, phone: e.target.value, msg: "" }))} /></div>
-                  <div className="input-group" style={{ margin: 0, flex: "1 1 160px" }}><label>New password (6+ characters)</label><input type="text" value={pwReset.password} onChange={(e) => setPwReset((r) => ({ ...r, password: e.target.value, msg: "" }))} /></div>
-                  <button className="btn-sm forest" disabled={pwReset.busy} onClick={async () => {
-                    const weakPw = weakPasswordReason(pwReset.password, pwReset.phone);
-                    if (weakPw && (pwReset.phone.match(/\d/g) || []).length >= 7) { setPwReset((r) => ({ ...r, ok: false, msg: weakPw })); return; }
-                    if ((pwReset.phone.match(/\d/g) || []).length < 7 || pwReset.password.length < 6) { setPwReset((r) => ({ ...r, ok: false, msg: "Enter the number and a new password of at least 6 characters." })); return; }
-                    setPwReset((r) => ({ ...r, busy: true, msg: "" }));
-                    const res = await adminResetPhonePassword(pwReset.phone, pwReset.password);
-                    const digits = pwReset.phone.replace(/\D/g, "");
-                    const wa = `https://wa.me/${digits.length === 7 ? "501" + digits : digits}?text=${encodeURIComponent(`Hi${res.name ? " " + res.name : ""}! Your VaiBook password has been reset. Log in with your WhatsApp number and this password: ${pwReset.password}`)}`;
-                    setPwReset((r) => ({ ...r, busy: false, ok: res.ok, wa: res.ok ? wa : "", msg: res.ok ? `Done — new password set for ${res.name}.` : res.code === "NO_ACCOUNT_FOR_NUMBER" ? "No customer account uses that number." : "Couldn't reset it. Try again." }));
-                  }}>{pwReset.busy ? "Saving…" : "Set password"}</button>
+                  <div className="input-group" style={{ margin: 0, flex: "1 1 240px" }}><label>Email or WhatsApp number</label><input type="text" placeholder="name@gmail.com or +501 622 1234" value={tempLogin} onChange={(e) => { setTempLogin(e.target.value); setTempPw((s) => ({ ...s, card: undefined })); }} /></div>
+                  {tempLogin.trim().length >= 5 && tempPwButton("card", tempLogin.trim())}
                 </div>
-                {pwReset.msg && (
-                  <p style={{ fontSize: 13, marginTop: 10, color: pwReset.ok ? "var(--forest)" : "#B91C1C" }}>
-                    {pwReset.msg} {pwReset.ok && pwReset.wa && <a href={pwReset.wa} target="_blank" rel="noopener noreferrer" style={{ fontWeight: 700 }}>Send it on WhatsApp ›</a>}
-                  </p>
-                )}
+                {tempPwStatus("card")}
               </div>
               <div className="card">
                 <div className="card-title" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
@@ -21811,13 +21854,15 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
                         <span style={{ color: "var(--muted)" }}>{m.topic} · {new Date(m.created_at).toLocaleString()}</span>
                       </div>
                       <p style={{ fontSize: 14, whiteSpace: "pre-wrap", margin: "8px 0" }}>{m.message}</p>
-                      <div style={{ display: "flex", gap: 8 }}>
+                      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
                         {href && <a className="btn-sm forest" href={href} target="_blank" rel="noopener noreferrer" style={{ textDecoration: "none" }}>Reply</a>}
                         <button className="btn-sm" style={{ border: "1px solid var(--border)" }} onClick={async () => {
                           const next = m.status === "new" ? "done" : "new";
                           if (await setSupportMessageStatus(m.id, next)) setSupportMsgs((list) => (list || []).map((x) => (x.id === m.id ? { ...x, status: next } : x)));
                         }}>{m.status === "new" ? "Mark done" : "Move to new"}</button>
+                        {(/@/.test(m.contact || "") || ((m.contact || "").match(/\d/g) || []).length >= 7) && tempPwButton(m.id, (m.contact || "").trim())}
                       </div>
+                      {tempPwStatus(m.id)}
                     </div>
                   );
                 })}
@@ -22016,6 +22061,81 @@ function ActionErrorToast() {
         </div>
       ))}
     </div>
+  );
+}
+
+// After an admin sends someone a temporary password, the first thing they
+// see when they log in with it is this: choose your own password. Nothing
+// else on the page can be used until they do.
+function ForcePasswordChange({ session }) {
+  const uid = session?.user?.id;
+  const es = String(i18n.language || "").toLowerCase().startsWith("es");
+  const [need, setNeed] = useState(false);
+  const [pw, setPw] = useState("");
+  const [pw2, setPw2] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+  useEffect(() => {
+    let alive = true;
+    setNeed(false);
+    if (uid) getMustChangePassword(uid).then((v) => { if (alive) setNeed(v); });
+    return () => { alive = false; };
+  }, [uid]);
+  if (!need) return null;
+  const phone = session?.user?.user_metadata?.phone || "";
+  const save = async (e) => {
+    e.preventDefault();
+    if (pw !== pw2) { setErr(es ? "Las dos contraseñas no coinciden." : "The two passwords don't match."); return; }
+    const weak = weakPasswordReason(pw, phone);
+    if (weak) { setErr(weak); return; }
+    setBusy(true); setErr("");
+    const { error } = await updateGuestPassword(pw, phone);
+    if (error) { setBusy(false); setErr(error.message || (es ? "No se pudo guardar. Inténtalo de nuevo." : "Couldn't save it. Try again.")); return; }
+    await clearMustChangePassword();
+    setBusy(false); setNeed(false);
+  };
+  return (
+    <div style={{ position: "fixed", inset: 0, zIndex: 10000, background: "rgba(22,24,29,0.55)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
+      <form onSubmit={save} style={{ background: "#fff", borderRadius: 18, padding: "24px 22px", width: "100%", maxWidth: 400, boxShadow: "0 20px 50px rgba(0,0,0,0.25)" }}>
+        <div style={{ fontSize: 30 }}>🔑</div>
+        <h2 style={{ fontSize: 21, margin: "6px 0 6px", color: "var(--dark-text)" }}>{es ? "Elige tu nueva contraseña" : "Choose your new password"}</h2>
+        <p style={{ fontSize: 14, color: "var(--muted)", margin: "0 0 16px" }}>{es ? "Entraste con una contraseña temporal. Crea la tuya para seguir." : "You logged in with a temporary password. Make your own to continue."}</p>
+        <div className="input-group"><label>{es ? "Nueva contraseña" : "New password"}</label><input type="password" autoComplete="new-password" value={pw} onChange={(e) => { setPw(e.target.value); setErr(""); }} autoFocus /></div>
+        <div className="input-group"><label>{es ? "Repítela" : "Type it again"}</label><input type="password" autoComplete="new-password" value={pw2} onChange={(e) => { setPw2(e.target.value); setErr(""); }} /></div>
+        {err && <p style={{ color: "#B91C1C", fontSize: 13, margin: "4px 0 10px" }}>{err}</p>}
+        <button type="submit" className="btn-primary" disabled={busy || !pw || !pw2} style={{ width: "100%", background: "var(--forest)", color: "#fff" }}>{busy ? (es ? "Guardando…" : "Saving…") : (es ? "Guardar contraseña" : "Save password")}</button>
+      </form>
+    </div>
+  );
+}
+
+// When a new version of VaiBook goes live, people with the site already open
+// keep running the old one until they reload. This checks every few minutes
+// (and whenever the app comes back to the screen) and offers a one-tap update.
+function UpdateAvailableBanner() {
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    const current = (Array.from(document.scripts).map((x) => x.src).find((x) => /\/static\/js\/main\.[^/]+\.js/.test(x)) || "").replace(/^https?:\/\/[^/]+/, "");
+    if (!current) return undefined;
+    let stop = false;
+    const check = async () => {
+      try {
+        const m = await fetch(`/asset-manifest.json?t=${Date.now()}`, { cache: "no-store" }).then((r) => r.json());
+        const latest = m && m.files && m.files["main.js"];
+        if (!stop && latest && latest !== current) setReady(true);
+      } catch (e) { /* offline — try later */ }
+    };
+    const onVis = () => { if (document.visibilityState === "visible") check(); };
+    const id = setInterval(check, 5 * 60 * 1000);
+    document.addEventListener("visibilitychange", onVis);
+    return () => { stop = true; clearInterval(id); document.removeEventListener("visibilitychange", onVis); };
+  }, []);
+  if (!ready) return null;
+  const es = String(i18n.language || "").toLowerCase().startsWith("es");
+  return (
+    <button onClick={() => window.location.reload()} style={{ position: "fixed", left: "50%", transform: "translateX(-50%)", bottom: "calc(84px + env(safe-area-inset-bottom, 0px))", zIndex: 9999, background: "#4C3DC4", color: "#fff", border: "none", borderRadius: 999, padding: "12px 20px", fontWeight: 700, fontSize: 14, boxShadow: "0 10px 30px rgba(76,61,196,0.35)", cursor: "pointer", maxWidth: "calc(100% - 32px)" }}>
+      {es ? "✨ Hay una nueva versión — toca para actualizar" : "✨ New version available — tap to update"}
+    </button>
   );
 }
 
@@ -22614,6 +22734,8 @@ export default function App() {
       <style>{css}</style>
       <MaintenanceBanner />
       <ActionErrorToast />
+      <ForcePasswordChange session={session} />
+      <UpdateAvailableBanner />
       {/* The homepage already has its own always-visible "Add to Home Screen"
           pill under the search bar (hero-get-app-btn) — this auto-popup
           banner used to also slide up a moment later on that same screen,
