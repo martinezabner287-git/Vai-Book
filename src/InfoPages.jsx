@@ -161,6 +161,7 @@ const C = {
       topics: [["general", "General question"], ["booking", "Problem with a booking"], ["business", "Listing my business"], ["account", "My account"], ["bug", "Something isn't working"], ["other", "Other"]],
       send: "Send message", sending: "Sending…",
       sent: "Thanks — your message is in. We'll reply to the email or WhatsApp number you gave.",
+      sentLogin: "Can't log in? Check your email or WhatsApp — we'll send you a temporary password. Log in with it and VaiBook will ask you to choose your own new password right away. You can change it again anytime in Settings.",
       error: "Couldn't send that. Please check your connection and try again.",
       rate: "You've sent several messages in a short time. Please wait a little and try again.",
       missing: "Please fill in your name, how to reach you, and a message.",
@@ -362,6 +363,7 @@ const C = {
       topics: [["general", "Pregunta general"], ["booking", "Problema con una reserva"], ["business", "Registrar mi negocio"], ["account", "Mi cuenta"], ["bug", "Algo no funciona"], ["other", "Otro"]],
       send: "Enviar mensaje", sending: "Enviando…",
       sent: "Gracias — recibimos tu mensaje. Te responderemos al correo o WhatsApp que nos diste.",
+      sentLogin: "¿No puedes entrar? Revisa tu correo o WhatsApp: te enviaremos una contraseña temporal. Entra con ella y VaiBook te pedirá enseguida que elijas tu propia contraseña nueva. Luego puedes cambiarla cuando quieras en Configuración.",
       error: "No se pudo enviar. Revisa tu conexión e inténtalo de nuevo.",
       rate: "Enviaste varios mensajes en poco tiempo. Espera un poco e inténtalo otra vez.",
       missing: "Escribe tu nombre, cómo contactarte y un mensaje.",
@@ -579,6 +581,7 @@ function Contact({ L, user }) {
       <div className="ip-sent">
         <div className="ip-sent-icon">✓</div>
         <p>{L.sent}</p>
+        {L.sentLogin && <p style={{ fontWeight: 500 }}>🔑 {L.sentLogin}</p>}
         <button className="ip-btn ghost" onClick={() => { setForm((f) => ({ ...f, message: "" })); setState("idle"); }}>{L.another}</button>
       </div>
     );

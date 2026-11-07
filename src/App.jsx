@@ -7411,7 +7411,12 @@ function HelpContactForm({ onNav }) {
           </div>
           {error && <p className="help-form-error">{error}</p>}
           {sendState === "sent" ? (
-            <p className="help-form-sent">✓ {es ? "Gracias — recibimos tu mensaje. Te responderemos al correo que nos diste." : "Thanks — your message is in. We'll reply to the email you gave."}</p>
+            <div className="help-form-sent">
+              <p style={{ margin: 0 }}>✓ {es ? "Gracias — recibimos tu mensaje. Te responderemos al correo que nos diste." : "Thanks — your message is in. We'll reply to the email you gave."}</p>
+              <p style={{ margin: "10px 0 0", fontWeight: 500 }}>🔑 {es
+                ? "¿No puedes entrar? Revisa tu correo (también la carpeta de spam): te enviaremos una contraseña temporal. Entra con tu correo y esa contraseña — VaiBook te pedirá enseguida que elijas tu propia contraseña nueva. Luego puedes cambiarla cuando quieras en Configuración."
+                : "Can't log in? Check your email (and your spam folder) — we'll send you a temporary password. Log in with your email and that password, and VaiBook will ask you to choose your own new password right away. You can change it again anytime in Settings."}</p>
+            </div>
           ) : (
             <button type="button" className="help-form-submit" onClick={handleSend} disabled={sendState === "sending"}>{sendState === "sending" ? (es ? "Enviando…" : "Sending…") : t("help.contact.send")}</button>
           )}
