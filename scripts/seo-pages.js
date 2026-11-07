@@ -13,6 +13,7 @@
 // reached, the build still succeeds with just the category pages.
 const fs = require("fs");
 const path = require("path");
+const { makeShareImage } = require("./share-image");
 
 const SITE = "https://vaibook.bz";
 const SUPABASE_URL = "https://nvfpdkpzrtpmvmgzvdca.supabase.co";
@@ -205,11 +206,21 @@ ${p.bio && p.bio.trim() ? `<p>${esc(p.bio.trim())}</p>` : ""}
 ${businessCard(p, false)}
 ${p._cat ? `<p>More <a href="/${p._cat[0]}/">${esc(p._cat[1].toLowerCase())} in Belize</a>${p.district ? ` · <a href="/${p._cat[0]}/${slugify(p.district)}/">${esc(p._cat[1].toLowerCase())} in ${esc(p.district)}</a>` : ""}</p>` : ""}`;
     const priceLine = svcs.slice(0, 3).map((s) => `${s.name} ${money(s.price)}`).join(" · ");
+    // Branded share picture: their photo + VaiBook purple panel.
+    let shareImg = p.profile_photo_url || `${SITE}/og-vaibook.jpg`;
+    try {
+      const prices = svcs.map((s) => Number(s.price)).filter((x) => x > 0);
+      const ok = await makeShareImage({
+        name: p.business_name, kind: p.service_type, area: `${area}, Belize`, rating: p._rating,
+        fromPrice: prices.length ? Math.min(...prices) : null, photo: process.env.SEO_PHOTO || p.profile_photo_url,
+      }, path.join(OUT, "b", p.slug, "share.jpg"));
+      if (ok) shareImg = `${SITE}/b/${p.slug}/share.jpg?v=${new Date().toISOString().slice(0, 10).replace(/-/g, "")}`;
+    } catch (e) { console.warn("seo-pages: share image failed for", p.slug, "—", e.message); }
     write(`/b/${p.slug}`, appShell({
       urlPath: `/b/${p.slug}/`, title, description, body, jsonld: [ld],
       shareTitle: `Book ${p.business_name} on VaiBook`,
       shareDescription: `${p.service_type || "Self-care"} in ${area}, Belize${p._rating ? ` · ★ ${p._rating.avg.toFixed(1)}` : ""}. ${priceLine}${svcs.length > 3 ? " and more" : ""}. Tap to see open times and book.`,
-      ogImage: p.profile_photo_url || `${SITE}/og-vaibook.jpg`,
+      ogImage: shareImg,
     }));
     urls.push({ loc: `/b/${p.slug}/`, pri: "0.9" });
   }
