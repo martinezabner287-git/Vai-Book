@@ -14,7 +14,10 @@ import { createClient } from "jsr:@supabase/supabase-js@2";
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const FROM = Deno.env.get("VAIBOOK_EMAIL_FROM") || "VaiBook <onboarding@resend.dev>";
+const FROMS = [
+  Deno.env.get("VAIBOOK_EMAIL_FROM") || "VaiBook <bookings@vaibook.bz>",
+  "VaiBook <onboarding@resend.dev>",
+];
 
 const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, { auth: { persistSession: false } });
 
@@ -44,6 +47,26 @@ async function rateLimit(bucket: string, key: string, max: number, window: strin
 async function isAdminAddress(to: string): Promise<boolean> {
   const { data } = await admin.from("admins").select("email");
   return (data || []).some((r: { email: string }) => (r.email || "").toLowerCase() === to);
+}
+
+// 2026-11-06: sends from bookings@vaibook.bz; if Resend ever reports the
+// domain unverified, falls back to Resend's test sender.
+async function sendViaResend(to: string, subject: string, html: string) {
+  let last: { ok: boolean; status: number; data: Record<string, unknown> } = { ok: false, status: 500, data: {} };
+  for (const from of FROMS) {
+    const resp = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${RESEND_API_KEY}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ from, to: [to], subject, html }),
+    });
+    const data = await resp.json().catch(() => ({}));
+    last = { ok: resp.ok, status: resp.status, data };
+    if (resp.ok) return last;
+    const msg = JSON.stringify(data);
+    if (!(resp.status === 403 || resp.status === 422) || !/domain|verif/i.test(msg)) return last;
+    console.warn("sender_fallback", from, resp.status, msg.slice(0, 200));
+  }
+  return last;
 }
 
 Deno.serve(async (req) => {
@@ -91,12 +114,7 @@ Deno.serve(async (req) => {
   }
 
   if (!RESEND_API_KEY) return json({ ok: false, error: "not_configured" }, 500);
-  const resp = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${RESEND_API_KEY}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ from: FROM, to: [to], subject, html: sanitizeHtml(html) }),
-  });
-  const data = await resp.json().catch(() => ({}));
-  if (!resp.ok) console.error("resend_failed", resp.status, JSON.stringify(data).slice(0, 300));
-  return json({ ok: resp.ok, id: (data as { id?: string }).id || null }, resp.ok ? 200 : 502);
+  const r = await sendViaResend(to, subject, sanitizeHtml(html));
+  if (!r.ok) console.error("resend_failed", r.status, JSON.stringify(r.data).slice(0, 300));
+  return json({ ok: r.ok, id: (r.data as { id?: string }).id || null }, r.ok ? 200 : 502);
 });
