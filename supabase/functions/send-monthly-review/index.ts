@@ -8,7 +8,6 @@
 // sender until the domain is verified.
 // 2026-11-06: runs at most once per business per month — calling it again
 // (by mistake or by someone outside) sends nothing new.
-// STATUS: written, awaiting Abner's OK to deploy (live is still v3 without this check).
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
