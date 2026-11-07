@@ -7646,6 +7646,8 @@ const NOTIF_DESTINATIONS = {
   announcement: { view: "customer", tab: "home" },
   rebook: { view: "customer", tab: "home" },
   reminder: { view: "customer", tab: "home" },
+  // Support messages → Admin → Messages (tapping one used to do nothing).
+  support: { view: "admin", tab: "messages" },
 };
 
 // Site-wide banner for the admin-only emergency maintenance switch (see
@@ -8080,6 +8082,9 @@ function Nav({ onNav, current, session, user, providerProfile, staffProfile, isA
     const dest = NOTIF_DESTINATIONS[n.type]
       || (n.type === "message" ? { view: providerProfile ? "provider" : "customer", tab: "bookings" } : null);
     if (!dest) return;
+    // The admin portal opens on its last-used tab; point that at the target
+    // first so it lands there even if it mounts after the event below.
+    if (dest.view === "admin") { try { sessionStorage.setItem("vaibook_admin_tab", dest.tab); } catch (e) { /* ignore */ } }
     onNav(dest.view);
     // The target portal only starts listening for a tab switch once it has
     // mounted — give the nav change one render cycle before dispatching.
@@ -20950,11 +20955,14 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
     try { window.scrollTo({ top: 0 }); } catch (e) { /* ignore */ }
   };
   useEffect(() => {
-    if (tab !== "messages" || supportMsgs !== null) return;
+    // Re-read every time Messages is opened, so a message that just came
+    // in shows up without reloading the page.
+    if (tab !== "messages") return;
     let alive = true;
     listSupportMessages().then((m) => { if (alive) setSupportMsgs(m); });
     return () => { alive = false; };
-  }, [tab, supportMsgs]);
+    // eslint-disable-next-line
+  }, [tab]);
 
   const [providers, setProviders] = useState([]);
   const [loadingProviders, setLoadingProviders] = useState(false);
