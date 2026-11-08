@@ -14436,19 +14436,19 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
   // ADD A PAST BOOKING (2026-11-07) — visits that already happened and were
   // paid: before the business joined VaiBook, or while they couldn't log in.
   const [pastOpen, setPastOpen] = useState(false);
-  const [pastForm, setPastForm] = useState({ service_id: "", date: "", time: "", name: "", phone: "", amount: "", paid_with: "cash", note: "" });
+  const [pastForm, setPastForm] = useState({ service_ids: [], date: "", time: "", name: "", phone: "", amount: "", paid_with: "cash", note: "" });
+  const pastRegular = (ids) => ids.reduce((sum, id) => sum + (Number((services.find((sv) => sv.id === id) || {}).price) || 0), 0);
   const [pastBusy, setPastBusy] = useState(false);
   const [pastError, setPastError] = useState("");
   const [pastSaved, setPastSaved] = useState(0);
   const openPastForm = () => {
-    const first = services.filter((sv) => !sv.is_addon)[0] || services[0];
-    setPastForm({ service_id: first?.id || "", date: "", time: "", name: "", phone: "", amount: first ? String(first.price ?? "") : "", paid_with: "cash", note: "" });
+    setPastForm({ service_ids: [], date: "", time: "", name: "", phone: "", amount: "", paid_with: "cash", note: "" });
     setPastError(""); setPastSaved(0); setPastOpen(true);
   };
   const closePastForm = () => { setPastOpen(false); if (pastSaved) loadBookings(); };
   const submitPast = async (again) => {
     const es = String(i18n.language || "").toLowerCase().startsWith("es");
-    if (!pastForm.service_id || !pastForm.date || !pastForm.name.trim()) {
+    if (pastForm.service_ids.length === 0 || !pastForm.date || !pastForm.name.trim()) {
       setPastError(es ? "Elige el servicio, la fecha y escribe el nombre del cliente." : "Pick the service and date, and type the client's name.");
       return;
     }
@@ -14457,7 +14457,8 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
       return;
     }
     setPastBusy(true); setPastError("");
-    const r = await recordPastBooking({ provider_id: providerId, ...pastForm });
+    const [mainId, ...extraIds] = pastForm.service_ids;
+    const r = await recordPastBooking({ provider_id: providerId, ...pastForm, service_id: mainId, extra_service_ids: extraIds });
     setPastBusy(false);
     if (!r.ok) {
       setPastError(r.code === "PAST_ONLY"
@@ -14467,8 +14468,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
     }
     setPastSaved((n) => n + 1);
     if (again) {
-      const svc = services.find((sv) => sv.id === pastForm.service_id);
-      setPastForm((f) => ({ ...f, time: "", name: "", phone: "", amount: svc ? String(svc.price ?? "") : "", note: "" }));
+      setPastForm((f) => ({ ...f, time: "", name: "", phone: "", amount: String(pastRegular(f.service_ids)), note: "" }));
     } else {
       setPastOpen(false);
       loadBookings();
@@ -16889,7 +16889,9 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                     <div className={`booking-dot ${bookingStatusClass(b.status)}`}></div>
                     <div className="booking-info">
                       <div className="title">
-                        {b.services?.name || "Service"}
+                        {Array.isArray(b.service_ids) && b.service_ids.length > 1
+                          ? b.service_ids.map((id) => (services.find((sv) => sv.id === id) || {}).name).filter(Boolean).join(" + ") || b.services?.name || "Service"
+                          : b.services?.name || "Service"}
                         {b.created_by_provider && !b.entered_later && (
                           <span style={{ marginLeft: 8, fontSize: 11, fontWeight: 600, color: "var(--accent-text)", background: "var(--sand)", padding: "2px 7px", borderRadius: 5, verticalAlign: "middle" }}>{t("providerPortal.bookings.walkInBadge")}</span>
                         )}
@@ -19082,9 +19084,10 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
       {pastOpen && (() => {
         const es = (i18n.language || "").toLowerCase().startsWith("es");
         const ax = (en, sp) => (es ? sp : en);
-        const svcList = services.filter((sv) => !sv.is_addon);
-        const svc = services.find((sv) => sv.id === pastForm.service_id) || null;
-        const regular = Number(svc?.price) || 0;
+        const svcList = services;
+        const picked = pastForm.service_ids;
+        const svc = picked.length > 0;
+        const regular = pastRegular(picked);
         const paid = pastForm.amount === "" ? null : Number(pastForm.amount);
         const off = paid != null && !Number.isNaN(paid) && paid < regular ? regular - paid : 0;
         const known = [];
@@ -19104,14 +19107,18 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
               <p style={{ fontSize: 13, color: "var(--muted)", margin: "0 0 4px" }}>{ax("For visits that already happened and were paid — before you used VaiBook, or while you couldn't log in. They count in your Earnings, Clients and monthly review. Nobody gets a message.", "Para citas que ya pasaron y se pagaron — antes de usar VaiBook o mientras no podías entrar. Cuentan en tus Ganancias, Clientes y resumen mensual. No se le envía mensaje a nadie.")}</p>
               {pastSaved > 0 && <p style={{ fontSize: 13, fontWeight: 700, color: "var(--forest)", margin: "8px 0 0" }}>✓ {ax(`${pastSaved} saved`, `${pastSaved} guardada${pastSaved === 1 ? "" : "s"}`)}</p>}
 
-              <div className="appt-step">1 · {ax("Service", "Servicio")}</div>
+              <div className="appt-step">1 · {ax("What did they get? (tap all for a combo)", "¿Qué se hizo? (toca varios si fue combo)")}</div>
               <div className="appt-chips">
                 {svcList.map((sv) => (
-                  <button key={sv.id} type="button" className={`appt-chip ${pastForm.service_id === sv.id ? "active" : ""}`} onClick={() => setPastForm((f) => ({ ...f, service_id: sv.id, amount: String(sv.price ?? "") }))}>
-                    <span>{sv.name}</span><small>BZ${sv.price} · {sv.duration_min} min</small>
+                  <button key={sv.id} type="button" className={`appt-chip ${picked.includes(sv.id) ? "active" : ""}`} onClick={() => setPastForm((f) => {
+                    const ids = f.service_ids.includes(sv.id) ? f.service_ids.filter((x) => x !== sv.id) : [...f.service_ids, sv.id];
+                    return { ...f, service_ids: ids, amount: ids.length ? String(pastRegular(ids)) : "" };
+                  })}>
+                    <span>{picked.includes(sv.id) ? "✓ " : ""}{sv.name}</span><small>BZ${sv.price} · {sv.duration_min} min{sv.is_addon ? ax(" · add-on", " · extra") : ""}</small>
                   </button>
                 ))}
               </div>
+              {picked.length > 1 && <p style={{ fontSize: 13, fontWeight: 700, margin: "8px 0 0" }}>{ax("Combo", "Combo")}: {picked.map((id) => (services.find((sv) => sv.id === id) || {}).name).join(" + ")} — {ax("regular", "normal")} BZ${regular}</p>}
 
               <div className="appt-step">2 · {ax("When was it?", "¿Cuándo fue?")}</div>
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
@@ -19135,7 +19142,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                 <label style={{ fontSize: 14, fontWeight: 700 }}>BZ$ <input className="input" type="number" min="0" step="0.5" inputMode="decimal" value={pastForm.amount} onChange={(e) => setPastForm((f) => ({ ...f, amount: e.target.value }))} style={{ width: 110 }} /></label>
                 {svc && <span style={{ fontSize: 13, color: off > 0 ? "#B45309" : "var(--muted)" }}>{off > 0
                   ? ax(`Discount: BZ$${off.toFixed(2)} off the regular BZ$${regular} (${Math.round((off / regular) * 100)}% off)`, `Descuento: BZ$${off.toFixed(2)} menos del precio normal BZ$${regular} (${Math.round((off / regular) * 100)}%)`)
-                  : ax(`Regular price BZ$${regular} — lower it here if they got a discount`, `Precio normal BZ$${regular} — bájalo aquí si tuvo descuento`)}</span>}
+                  : ax(`Regular price BZ$${regular} — type what you actually charged`, `Precio normal BZ$${regular} — escribe lo que cobraste`)}</span>}
               </div>
               <div className="appt-chips" style={{ marginTop: 8 }}>
                 {methods.map(([k, l]) => (

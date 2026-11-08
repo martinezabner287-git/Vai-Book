@@ -856,6 +856,7 @@ export const recordPastBooking = async (b) => {
     p_amount_paid: b.amount === '' || b.amount == null ? null : Number(b.amount),
     p_paid_with: b.paid_with || null,
     p_note: b.note || null,
+    p_extra_service_ids: b.extra_service_ids && b.extra_service_ids.length ? b.extra_service_ids : null,
   });
   if (error) {
     const m = error.message || '';

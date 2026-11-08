@@ -39,13 +39,15 @@ $$;
 create or replace function public.record_past_booking(
   p_provider_id uuid, p_service_id uuid, p_booking_date date, p_booking_time time,
   p_customer_name text, p_customer_phone text default null,
-  p_amount_paid numeric default null, p_paid_with text default null, p_note text default null)
+  p_amount_paid numeric default null, p_paid_with text default null, p_note text default null,
+  p_extra_service_ids uuid[] default null)  -- combos: the other services done in the same visit
 returns bookings language plpgsql security definer set search_path to 'public' as $$
 declare
   v_svc services; v_row bookings; v_paid numeric; v_today date := (now() at time zone 'America/Belize')::date;
-  v_month date;
+  v_month date; v_extra uuid[] := coalesce(p_extra_service_ids, '{}'); v_n int;
+  v_list numeric; v_dur int;
 begin
-  if not (is_current_user_admin() or exists (select 1 from provider_profiles where id = p_provider_id and user_id = auth.uid())) then
+  if not (coalesce(is_current_user_admin(), false) or exists (select 1 from provider_profiles where id = p_provider_id and user_id = auth.uid())) then
     raise exception 'NOT_AUTHORIZED' using errcode = 'P0001';
   end if;
   if p_booking_date is null or p_booking_date > v_today then
@@ -59,18 +61,26 @@ begin
   end if;
   select * into v_svc from services where id = p_service_id and provider_id = p_provider_id;
   if v_svc.id is null then raise exception 'SERVICE_NOT_FOUND' using errcode = 'P0001'; end if;
-  v_paid := coalesce(p_amount_paid, v_svc.price, 0);
+  v_extra := array(select distinct x from unnest(v_extra) x where x <> p_service_id);
+  select count(*), coalesce(sum(price), 0), coalesce(sum(duration_min), 0) into v_n, v_list, v_dur
+    from services where id = any(v_extra) and provider_id = p_provider_id;
+  if v_n <> cardinality(v_extra) then raise exception 'SERVICE_NOT_FOUND' using errcode = 'P0001'; end if;
+  v_list := coalesce(v_svc.price, 0) + v_list;
+  v_dur := coalesce(v_svc.duration_min, 30) + v_dur;
+  v_paid := coalesce(p_amount_paid, v_list);
   if v_paid < 0 then raise exception 'BAD_AMOUNT' using errcode = 'P0001'; end if;
 
   perform set_config('vaibook.trusted_booking_change', '1', true);
   insert into bookings (
-    customer_id, provider_id, service_id, booking_date, booking_time, total_duration_min,
+    customer_id, provider_id, service_id, service_ids, booking_date, booking_time, total_duration_min,
     total_amount, downpayment_amount, list_price, paid_with, entered_later,
     notes, status, payment_status, walkin_customer_name, walkin_customer_phone,
     created_by_provider, checked_in_at
   ) values (
-    null, p_provider_id, p_service_id, p_booking_date, coalesce(p_booking_time, '12:00'), v_svc.duration_min,
-    v_paid, 0, v_svc.price, nullif(trim(coalesce(p_paid_with, '')), ''), true,
+    null, p_provider_id, p_service_id,
+    case when cardinality(v_extra) > 0 then to_jsonb(array_prepend(p_service_id, v_extra)) end,
+    p_booking_date, coalesce(p_booking_time, '12:00'), v_dur,
+    v_paid, 0, v_list, nullif(trim(coalesce(p_paid_with, '')), ''), true,
     nullif(left(trim(coalesce(p_note, '')), 500), ''), 'completed', 'paid',
     left(trim(p_customer_name), 120), nullif(left(trim(coalesce(p_customer_phone, '')), 40), ''),
     true, (p_booking_date + coalesce(p_booking_time, '12:00')) at time zone 'America/Belize'
@@ -85,8 +95,8 @@ begin
   end if;
   return v_row;
 end $$;
-revoke all on function public.record_past_booking(uuid, uuid, date, time, text, text, numeric, text, text) from public, anon;
-grant execute on function public.record_past_booking(uuid, uuid, date, time, text, text, numeric, text, text) to authenticated;
+revoke all on function public.record_past_booking(uuid, uuid, date, time, text, text, numeric, text, text, uuid[]) from public, anon;
+grant execute on function public.record_past_booking(uuid, uuid, date, time, text, text, numeric, text, text, uuid[]) to authenticated;
 
 -- Past visits a business types in don't use up the Free plan's monthly
 -- online-booking allowance (only the "and not b.entered_later" line is new).
