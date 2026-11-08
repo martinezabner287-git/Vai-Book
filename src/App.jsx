@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useLayoutEffect, useRef, useContext, createContext, lazy, Suspense, useCallback, Fragment } from "react";
 import { flushSync } from "react-dom";
-import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, updateService, deleteService, getActiveProviders, getProviderDirectory, createBooking, getProviderBusyWindows, createBookingSafe, cancelBooking, markBookingCheckedIn, getCustomerBookings, uploadReceipt, submitReview, getProviderReviews, updateReview, sendBookingEmail, updateUserProfile, getPaymentMethods, addPaymentMethod, deletePaymentMethod, createNotification, getNotifications, markNotificationRead, markAllNotificationsRead, getCategoryDefaultFeatures, getProviderFeatureOverrides, setProviderFeatureOverride, getVisitNotes, upsertVisitNote, adminListProviders, adminUpdateProvider, adminDeleteProvider, adminCountCustomers, getFavoriteProviderIds, getFavoriteProviders, addFavorite, removeFavorite, getBookingMessages, sendBookingMessage, markBookingMessagesRead, getUnreadBookingMessages, getProviderMonthlyTrend, createProviderProfile, getProviderById, createWalkInBooking, submitProviderPayment, getMyProviderPayments, adminListProviderPayments, adminReviewProviderPayment, submitBookingRefund, adminListBookingRefunds, openPrivateFile, getProviderStaff, addProviderStaff, updateProviderStaff, deleteProviderStaff, getProviderStaffPublic, getLoyaltyAccount, getProviderLoyaltyCustomers, redeemLoyaltyReward, getMyStaffProfile, claimStaffSeatByEmail, getStaffBookings, getProviderNotifyEmail, getMaintenanceStatus, setMaintenanceMode, getSiteOfflineStatus, setSiteOffline, guestAuthWithPassword, updateGuestPassword, savePushSubscription, attachBookingServices, getProviderBlocks, insertProviderBlock, deleteProviderBlock, proposeBookingReschedule, confirmBookingReschedule, declineBookingReschedule, withdrawBookingReschedule, establishSoloSession, getServerSoloSessionToken, getLocalSoloSessionToken, clearLocalSoloSessionToken, subscribeToSoloSessionReplacement, signInWithPhonePassword, customerPhoneAuth, isPhoneLoginEmail, formatPhoneForDisplay, weakPasswordReason, submitSupportMessage, adminSetTempPassword, getMustChangePassword, clearMustChangePassword, adminProviderOverview, adminSetProviderBadges, adminSetProviderPhoto, adminListProviderServices, adminUpdateService, adminSetWorkingHours, adminGetFeatureOverrides, adminSetFeatureOverride, listSupportMessages, setSupportMessageStatus, getProviderMembershipPlans, getMyMembershipPlans, createMembershipPlan, updateMembershipPlan, subscribeToMembershipPlan, submitMembershipPayment, getMyMemberships, getProviderMembershipSubscribers, getProviderMembershipPayments, reviewMembershipPayment, cancelMembership, redeemMembershipVisit, startSoloTrial, adminStartProviderTrial, adminExtendProviderTrial, adminEndProviderTrial, adminExtendPaymentDue, adminRestoreDowngradedPlan, adminPlatformStats, setBookingAnswers, getFormEmail, redeemMembershipVisitFor, attachBookingAddons, getProviderCapacity, getPlanSpotsLeft, recordPastBooking, startSoloTrialFromApproval, uploadTradeLicense } from "./supabase";
+import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, updateService, deleteService, getActiveProviders, getProviderDirectory, createBooking, getProviderBusyWindows, createBookingSafe, cancelBooking, markBookingCheckedIn, getCustomerBookings, uploadReceipt, submitReview, getProviderReviews, updateReview, sendBookingEmail, updateUserProfile, getPaymentMethods, addPaymentMethod, deletePaymentMethod, createNotification, getNotifications, markNotificationRead, markAllNotificationsRead, getCategoryDefaultFeatures, getProviderFeatureOverrides, setProviderFeatureOverride, getVisitNotes, upsertVisitNote, adminListProviders, adminUpdateProvider, adminDeleteProvider, adminCountCustomers, getFavoriteProviderIds, getFavoriteProviders, addFavorite, removeFavorite, getBookingMessages, sendBookingMessage, markBookingMessagesRead, getUnreadBookingMessages, getProviderMonthlyTrend, createProviderProfile, getProviderById, createWalkInBooking, submitProviderPayment, getMyProviderPayments, adminListProviderPayments, adminReviewProviderPayment, submitBookingRefund, adminListBookingRefunds, openPrivateFile, getProviderStaff, addProviderStaff, updateProviderStaff, deleteProviderStaff, getProviderStaffPublic, getLoyaltyAccount, getProviderLoyaltyCustomers, redeemLoyaltyReward, getMyStaffProfile, claimStaffSeatByEmail, getStaffBookings, getProviderNotifyEmail, getMaintenanceStatus, setMaintenanceMode, getSiteOfflineStatus, setSiteOffline, guestAuthWithPassword, updateGuestPassword, savePushSubscription, attachBookingServices, getProviderBlocks, insertProviderBlock, deleteProviderBlock, proposeBookingReschedule, confirmBookingReschedule, declineBookingReschedule, withdrawBookingReschedule, establishSoloSession, getServerSoloSessionToken, getLocalSoloSessionToken, clearLocalSoloSessionToken, subscribeToSoloSessionReplacement, signInWithPhonePassword, customerPhoneAuth, isPhoneLoginEmail, formatPhoneForDisplay, weakPasswordReason, submitSupportMessage, adminSetTempPassword, getMustChangePassword, clearMustChangePassword, adminProviderOverview, adminSetProviderBadges, adminSetProviderPhoto, adminListProviderServices, adminUpdateService, adminSetWorkingHours, adminGetFeatureOverrides, adminSetFeatureOverride, listSupportMessages, setSupportMessageStatus, getProviderMembershipPlans, getMyMembershipPlans, createMembershipPlan, updateMembershipPlan, subscribeToMembershipPlan, submitMembershipPayment, getMyMemberships, getProviderMembershipSubscribers, getProviderMembershipPayments, reviewMembershipPayment, cancelMembership, redeemMembershipVisit, startSoloTrial, adminStartProviderTrial, adminExtendProviderTrial, adminEndProviderTrial, adminExtendPaymentDue, adminRestoreDowngradedPlan, adminPlatformStats, setBookingAnswers, getFormEmail, redeemMembershipVisitFor, attachBookingAddons, getProviderCapacity, getPlanSpotsLeft, recordPastBooking, uploadTradeLicense, getMyChallenge, markChallengeShared } from "./supabase";
 import AdminDashboard from "./AdminDashboard";
 import ProfilePhotoModal from "./ProfilePhotoModal";
 import LanguageSelector from "./LanguageSelector";
@@ -75,11 +75,16 @@ function useTransitionState(init) {
 }
 
 // Non-payment status for a business (2026-10-30). Due date passes → 7-day
-// grace → the nightly job moves them to the free plan (run_billing_enforcement).
+// grace → the nightly job pauses the business (hidden, billing page only)
+// until a payment is confirmed (run_billing_enforcement). Same when a free
+// trial ends unpaid (expire_provider_trials). There's no free plan.
 const PAY_GRACE_DAYS = 7;
 function billingStatus(p) {
   if (!p) return null;
   const planName = (id) => (id === "business" ? "Team" : id === "pro" ? "Solo" : "Free");
+  if (p.paused_unpaid) {
+    return { kind: "paused", plan: planName(p.plan), afterTrial: !p.next_payment_due_date };
+  }
   if (p.downgraded_at && p.downgraded_from_plan) {
     return { kind: "downgraded", plan: planName(p.downgraded_from_plan), since: new Date(p.downgraded_at) };
   }
@@ -91,6 +96,91 @@ function billingStatus(p) {
   if (days < 0) return { kind: "overdue", plan: planName(p.plan), due, graceEnd, daysLeft: Math.max(0, Math.round((graceEnd - today) / 86400000)) };
   if (days <= 3) return { kind: "soon", plan: planName(p.plan), due, days };
   return null;
+}
+
+// Launch challenge (2026-11-07): 5 tasks during the free trial → the first
+// 2 monthly payments are half price. Progress comes from the database
+// (my_challenge), which also stamps the reward the moment all 5 are done.
+function LaunchChallengeCard({ providerProfile, onGo }) {
+  const es = String(i18n.language || "").toLowerCase().startsWith("es");
+  const x = (en, sp) => (es ? sp : en);
+  const pid = providerProfile && providerProfile.id;
+  const [c, setC] = useState(null);
+  const [sharing, setSharing] = useState(false);
+  const show = !!(providerProfile && (providerProfile.is_trial || (providerProfile.challenge_completed_at && (providerProfile.challenge_discount_left || 0) > 0)));
+  const load = useCallback(async () => { if (pid) setC(await getMyChallenge(pid)); }, [pid]);
+  useEffect(() => { if (show) load(); }, [show, load]);
+  if (!show || !c) return null;
+
+  const done = !!c.completed_at;
+  const tasks = [
+    { key: "page", ok: !!c.page, label: x("Set up your page", "Arma tu página"), sub: x("Profile photo, a photo of your work, a description and your opening hours", "Foto de perfil, una foto de tu trabajo, descripción y horario"), go: () => onGo("profile") },
+    { key: "services", ok: c.services >= 3, label: x("Add 3 services with prices", "Agrega 3 servicios con precio"), sub: `${Math.min(c.services, 3)} / 3`, go: () => onGo("services") },
+    { key: "shared", ok: !!c.shared, label: x("Share your booking link", "Comparte tu enlace de reservas"), sub: x("On WhatsApp, Instagram or your status", "En WhatsApp, Instagram o tu estado"), go: null },
+    { key: "bookings", ok: c.bookings >= 5, label: x("Get 5 online bookings", "Recibe 5 reservas en línea"), sub: x(`${Math.min(c.bookings, 5)} / 5 — booked by clients themselves on VaiBook`, `${Math.min(c.bookings, 5)} / 5 — hechas por tus clientes en VaiBook`), go: null },
+    { key: "reviews", ok: c.reviews >= 1, label: x("Get your first review", "Recibe tu primera reseña"), sub: x("Clients can review after their visit", "Tus clientes pueden reseñar después de su visita"), go: null },
+  ];
+  const n = tasks.filter((t) => t.ok).length;
+  const ends = c.ends_at ? new Date(c.ends_at) : null;
+  const daysLeft = ends ? Math.max(0, Math.ceil((ends - Date.now()) / 86400000)) : null;
+
+  const share = async () => {
+    const url = businessLink(window.location.origin, providerProfile);
+    const text = x(`Book with ${providerProfile.business_name} online 👉 ${url}`, `Reserva con ${providerProfile.business_name} en línea 👉 ${url}`);
+    setSharing(true);
+    let shared = false;
+    if (navigator.share) {
+      try { await navigator.share({ title: providerProfile.business_name, text, url }); shared = true; }
+      catch (e) { shared = false; } // closed the share sheet without sharing
+    } else {
+      window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank", "noopener");
+      shared = true;
+    }
+    if (shared) { await markChallengeShared(pid); await load(); }
+    setSharing(false);
+  };
+
+  return (
+    <div className="card launch-challenge" style={{ marginBottom: 16, border: `1.5px solid ${done ? "var(--forest)" : "#F2B705"}`, background: done ? "#F0FDF4" : "#FFFBEB" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10, flexWrap: "wrap" }}>
+        <div style={{ minWidth: 0, flex: "1 1 220px" }}>
+          <div style={{ fontWeight: 800, fontSize: 16 }}>{done ? x("🏆 Challenge complete!", "🏆 ¡Reto completado!") : x("🏆 Launch challenge", "🏆 Reto de lanzamiento")}</div>
+          <div style={{ fontSize: 13, color: "var(--muted)", marginTop: 2, lineHeight: 1.45 }}>
+            {done
+              ? x(`Your first ${c.discount_left === 1 ? "monthly payment is" : `${c.discount_left} monthly payments are`} half price. It shows automatically in My plan & billing.`,
+                  `${c.discount_left === 1 ? "Tu primer pago mensual es" : `Tus primeros ${c.discount_left} pagos mensuales son`} a mitad de precio. Aparece solo en Mi plan y pagos.`)
+              : x(`Finish all 5 before your free trial ends${daysLeft !== null ? ` (${daysLeft === 0 ? "today" : daysLeft === 1 ? "1 day left" : `${daysLeft} days left`})` : ""} and your first 2 months are half price.`,
+                  `Termina las 5 antes de que acabe tu prueba gratis${daysLeft !== null ? ` (${daysLeft === 0 ? "hoy" : daysLeft === 1 ? "queda 1 día" : `quedan ${daysLeft} días`})` : ""} y tus primeros 2 meses son a mitad de precio.`)}
+          </div>
+        </div>
+        {!done && <div style={{ fontWeight: 800, fontSize: 14, whiteSpace: "nowrap" }}>{n} / 5</div>}
+      </div>
+      {!done && (
+        <>
+          <div style={{ height: 8, borderRadius: 4, background: "rgba(0,0,0,0.08)", overflow: "hidden", margin: "12px 0 6px" }}>
+            <div style={{ height: "100%", width: `${(n / 5) * 100}%`, background: "var(--forest)", borderRadius: 4, transition: "width .3s" }} />
+          </div>
+          <div style={{ display: "grid", gap: 2 }}>
+            {tasks.map((t) => (
+              <div key={t.key} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderTop: "1px solid rgba(0,0,0,0.06)" }}>
+                <span aria-hidden="true" style={{ fontSize: 18, width: 22, textAlign: "center" }}>{t.ok ? "✅" : "⬜"}</span>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontWeight: 700, fontSize: 14, textDecoration: t.ok ? "line-through" : "none", opacity: t.ok ? 0.6 : 1 }}>{t.label}</div>
+                  {!t.ok && <div style={{ fontSize: 12, color: "var(--muted)" }}>{t.sub}</div>}
+                </div>
+                {!t.ok && t.key === "shared" && (
+                  <button className="btn-sm forest" disabled={sharing} onClick={share}>{x("Share", "Compartir")}</button>
+                )}
+                {!t.ok && t.go && (
+                  <button className="btn-sm" onClick={t.go}>{x("Do it", "Hacerlo")}</button>
+                )}
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
 }
 
 // Default map center: Belize (roughly Belmopan) for providers who haven't set a pin yet.
@@ -220,7 +310,7 @@ function providerApprovedEmailHtml({ businessName, ownerName, trialEnds }) {
         </div>
       </div>
       <div style="background: #FFF8E1; border-radius: 8px; padding: 14px 18px; margin-bottom: 16px; font-size: 14px; line-height: 1.6;">
-        🎁 <strong>Your 14-day free Solo trial started today</strong>${endsText ? ` and runs until <strong>${endsText}</strong>` : ""}. Everything is unlocked — reminders, deposits, memberships and more. We'll remind you 24 hours before it ends.
+        🎁 <strong>Your 14-day free trial started today</strong>${endsText ? ` and runs until <strong>${endsText}</strong>` : ""}. Everything in your plan is unlocked. Finish the launch challenge in your dashboard before it ends and your first 2 months are half price. We'll remind you 24 hours before it ends.
       </div>
       <p style="font-size: 13px; color: #6B6578; line-height: 1.5;">Nothing else is needed — no forms, no re-applying. Just sign in and you're live.</p>
       <p style="font-size: 13px; color: #6B6578; margin-top: 16px;">— The VaiBook Team</p>
@@ -7658,6 +7748,9 @@ const NOTIF_DESTINATIONS = {
   // Support messages → Admin → Messages (tapping one used to do nothing).
   support: { view: "admin", tab: "messages" },
   trial_ending: { view: "provider", tab: "billing" },
+  billing_paused: { view: "provider", tab: "billing" },
+  billing_restored: { view: "provider", tab: "dashboard" },
+  challenge_complete: { view: "provider", tab: "billing" },
 };
 
 // Site-wide banner for the admin-only emergency maintenance switch (see
@@ -9348,7 +9441,7 @@ const LP_TEXT = {
     how3t: "Share your link", how3b: "Post your booking link or QR code on Instagram, WhatsApp, or at your front desk.",
     how4t: "Get booked", how4b: "Clients pick a time and book. You're notified right away and confirm with one tap.",
     payTitle: "Pricing & payments",
-    payBody: "Start free with up to {freeCap} bookings a month. When you're ready for more, Solo is just BZ${soloDay} a day and Team BZ${teamDay} a day on the 6-month plan — less than a soda. Your clients pay you directly, in cash or by bank transfer, and deposits go straight to your bank account. VaiBook never takes a commission.",
+    payBody: "Try everything free for {trialDays} days once you're approved — finish the launch challenge in that time and your first 2 months are half price. After that, Solo is just BZ${soloDay} a day and Team BZ${teamDay} a day on the 6-month plan — less than a soda. Your clients pay you directly, in cash or by bank transfer, and deposits go straight to your bank account. VaiBook never takes a commission.",
     payNote: "Pay for 6 months, get the 7th free — and no setup fee. Or pay monthly (BZ${solo}/month for Solo, plus a one-time BZ$99 setup fee).",
     whoTitle: "Who can join",
     who1: "Barbers, hair salons, nail techs, spas, massage therapists, med spas, tattoo artists, trainers and more.",
@@ -9362,7 +9455,7 @@ const LP_TEXT = {
     pricingTitle: "Simple pricing",
     pricingSub: "Less than BZ$2 a day. Pay for 6 months and get the 7th month free.",
     faqTitle: "Frequently asked questions",
-    q1: "What does it cost?", a1: "You can start free with up to {freeCap} bookings a month. Solo is BZ${soloDay} a day and Team BZ${teamDay} a day (includes your first {seats} staff seats) when you pay for 6 months — you get 7 months and no setup fee. Paying monthly is BZ${solo}/month for Solo or BZ${team}/month for Team, plus a one-time BZ$99 setup fee on your first payment.",
+    q1: "What does it cost?", a1: "Every business starts with a {trialDays}-day free trial of the plan it chooses. Finish the launch challenge during the trial and your first 2 monthly payments are half price. After that, Solo is BZ${soloDay} a day and Team BZ${teamDay} a day (includes your first {seats} staff seats) when you pay for 6 months — you get 7 months and no setup fee. Paying monthly is BZ${solo}/month for Solo or BZ${team}/month for Team, plus a one-time BZ$99 setup fee on your first payment.",
     q2: "Does VaiBook take a cut of my bookings?", a2: "No. You pay one flat price and keep everything your clients pay you.",
     q3: "How do my clients pay?", a3: "Directly to you. You can ask for a deposit to your bank account before you confirm a booking, and collect the rest at the appointment.",
     q4: "Do my clients need to download an app?", a4: "No. They book from your link in any phone browser, and can add VaiBook to their home screen if they like.",
@@ -9387,7 +9480,7 @@ const LP_TEXT = {
     how3t: "Comparte tu enlace", how3b: "Publica tu enlace o código QR en Instagram, WhatsApp o en tu recepción.",
     how4t: "Recibe reservas", how4b: "Los clientes eligen una hora y reservan. Te avisamos al instante y confirmas con un toque.",
     payTitle: "Precios y pagos",
-    payBody: "Empieza gratis con hasta {freeCap} reservas al mes. Cuando quieras más, Solo cuesta solo BZ${soloDay} al día y Team BZ${teamDay} al día con el plan de 6 meses — menos que un refresco. Tus clientes te pagan directamente, en efectivo o por transferencia, y los depósitos van directo a tu cuenta bancaria. VaiBook nunca cobra comisión.",
+    payBody: "Prueba todo gratis por {trialDays} días cuando te aprobemos — termina el reto de lanzamiento en ese tiempo y tus primeros 2 meses son a mitad de precio. Después, Solo cuesta solo BZ${soloDay} al día y Team BZ${teamDay} al día con el plan de 6 meses — menos que un refresco. Tus clientes te pagan directamente, en efectivo o por transferencia, y los depósitos van directo a tu cuenta bancaria. VaiBook nunca cobra comisión.",
     payNote: "Paga 6 meses y el 7.º es gratis — sin costo de inicio. O paga mensual (BZ${solo}/mes para Solo, más un costo único de inicio de BZ$99).",
     whoTitle: "Quién puede unirse",
     who1: "Barberos, salones, técnicas de uñas, spas, masajistas, med spas, tatuadores, entrenadores y más.",
@@ -9401,7 +9494,7 @@ const LP_TEXT = {
     pricingTitle: "Precios simples",
     pricingSub: "Menos de BZ$2 al día. Paga 6 meses y el 7.º mes es gratis.",
     faqTitle: "Preguntas frecuentes",
-    q1: "¿Cuánto cuesta?", a1: "Puedes empezar gratis con hasta {freeCap} reservas al mes. Solo cuesta BZ${soloDay} al día y Team BZ${teamDay} al día (incluye tus primeros {seats} puestos de personal) si pagas 6 meses — recibes 7 meses y sin costo de inicio. Pagando mensual: Solo BZ${solo}/mes o Team BZ${team}/mes, más un costo único de inicio de BZ$99 en tu primer pago.",
+    q1: "¿Cuánto cuesta?", a1: "Todo negocio empieza con {trialDays} días gratis del plan que elija. Termina el reto de lanzamiento durante la prueba y tus primeros 2 pagos mensuales son a mitad de precio. Después, Solo cuesta BZ${soloDay} al día y Team BZ${teamDay} al día (incluye tus primeros {seats} puestos de personal) si pagas 6 meses — recibes 7 meses y sin costo de inicio. Pagando mensual: Solo BZ${solo}/mes o Team BZ${team}/mes, más un costo único de inicio de BZ$99 en tu primer pago.",
     q2: "¿VaiBook se queda con una parte de mis reservas?", a2: "No. Pagas un precio fijo y te quedas con todo lo que te pagan tus clientes.",
     q3: "¿Cómo me pagan mis clientes?", a3: "Directamente a ti. Puedes pedir un depósito a tu cuenta bancaria antes de confirmar una reserva y cobrar el resto en la cita.",
     q4: "¿Mis clientes necesitan descargar una app?", a4: "No. Reservan desde tu enlace en cualquier navegador del teléfono, y pueden agregar VaiBook a su pantalla de inicio si quieren.",
@@ -9499,7 +9592,7 @@ function ProviderLandingPage({ onNav }) {
           <div>
             <h2 className="vbl-h2 vbl-left">{lt("payTitle")}</h2>
             <p className="vbl-body">{lt("payBody", money)}</p>
-            <div className="vbl-notebox"><span className="vbl-inline-icon"><LpIcon name="card" /></span>{lt("payNote")}</div>
+            <div className="vbl-notebox"><span className="vbl-inline-icon"><LpIcon name="card" /></span>{lt("payNote", money)}</div>
           </div>
           <div>
             <h2 className="vbl-h2 vbl-left">{lt("whoTitle")}</h2>
@@ -9539,7 +9632,7 @@ function ProviderLandingPage({ onNav }) {
             <button role="tab" aria-selected={priceTerm === "monthly"} className={priceTerm === "monthly" ? "on" : ""} onClick={() => setPriceTerm("monthly")}>{px("Monthly", "Mensual")}</button>
           </div>
           <div className="vbl-plans">
-            {PLANS.map((p) => {
+            {PUBLIC_PLANS.map((p) => {
               const tp = planTermPrice(p, priceTerm, { firstPayment: true });
               return (
               <div className={`vbl-plan ${p.recommended ? "featured" : ""}`} key={p.id}>
@@ -13856,6 +13949,11 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
   useEffect(() => {
     try { sessionStorage.setItem("vaibook_provider_tab", tab); } catch (e) { /* ignore */ }
   }, [tab]);
+  // Paused for non-payment: only the billing page, nothing else.
+  const pausedUnpaid = !!(providerProfile && providerProfile.paused_unpaid);
+  useEffect(() => {
+    if (pausedUnpaid && tab !== "billing") setTab("billing");
+  }, [pausedUnpaid, tab]);
 
   // Lets the top nav's account dropdown (with the same tools list as the
   // sidebar) switch tabs while already inside the provider portal,
@@ -14643,6 +14741,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
     const tp = planTermPrice(plan, payTerm, {
       extraSeatsMonthly: plan.id === "business" ? teamExtraSeats * TEAM_PER_SEAT_PRICE : 0,
       firstPayment: !hasPaidBefore,
+      halfPrice: (providerProfile?.challenge_discount_left || 0) > 0,
     });
     const range = coverRange(tp.months);
     setSubmittingPayment(true);
@@ -15678,12 +15777,12 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
   // below), not a curated list. "Earnings" and "Monthly review" (not part
   // of the original 3-group spec) were folded into Operations rather than
   // dropped.
-  const PROVIDER_TOP_NAV = [
+  const PROVIDER_TOP_NAV = pausedUnpaid ? [] : [
     { id: "dashboard", label: t("providerPortal.nav.dashboard") },
     { id: "bookings", label: t("providerPortal.nav.bookings") },
     { id: "clients", label: t("providerPortal.nav.clients") },
   ];
-  const PROVIDER_MENU_GROUPS = [
+  const PROVIDER_MENU_GROUPS = pausedUnpaid ? [] : [
     {
       label: t("providerPortal.nav.groupOperations"),
       items: [
@@ -16218,14 +16317,14 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
 
         {/* Mobile-only: the same 3 links collapse behind a hamburger since
             there's no room for them inline on a phone screen. */}
-        <button
+        {!pausedUnpaid && <button
           className="provider-hamburger"
           onClick={() => setProviderMobileNavOpen((v) => !v)}
           aria-label={t("providerPortal.aria.menu")}
           aria-expanded={providerMobileNavOpen}
         >
           ☰
-        </button>
+        </button>}
 
         <div className="provider-topbar-right" style={{ display: "flex", alignItems: "center", gap: 10 }}>
           {/* Provider Portal has its own topbar and never renders the
@@ -16294,7 +16393,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
         {(() => {
           const bs = billingStatus(providerProfile);
           if (!bs) return null;
-          // A business that chose to stay on the free plan stops seeing this after a month.
+          // Old "moved to free plan" accounts stop seeing this after a month.
           if (bs.kind === "downgraded" && Date.now() - bs.since.getTime() > 30 * 86400000) return null;
           const es = (i18n.language || "").toLowerCase().startsWith("es");
           const fmt = (d) => d.toLocaleDateString(es ? "es" : "en-US", { month: "short", day: "numeric" });
@@ -16306,8 +16405,15 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
           } else if (bs.kind === "overdue") {
             title = es ? "Tu pago está atrasado" : "Your payment is overdue";
             body = es
-              ? `Paga antes del ${fmt(bs.graceEnd)} para mantener las funciones de ${bs.plan}. Después tu cuenta pasa al plan gratis (tus datos quedan seguros).`
-              : `Pay by ${fmt(bs.graceEnd)} to keep your ${bs.plan} features. After that your account moves to the free plan — your data stays safe.`;
+              ? `Paga antes del ${fmt(bs.graceEnd)} para seguir visible en VaiBook. Después tu negocio queda oculto hasta que pagues (tus datos quedan seguros).`
+              : `Pay by ${fmt(bs.graceEnd)} to stay live on VaiBook. After that your business is hidden until you pay — your data stays safe.`;
+          } else if (bs.kind === "paused") {
+            title = bs.afterTrial
+              ? (es ? "Tu prueba gratis terminó" : "Your free trial has ended")
+              : (es ? "Tu negocio está en pausa" : "Your business is paused");
+            body = es
+              ? "Tu negocio está oculto en VaiBook y no puede recibir reservas. Elige tu plan abajo y envía tu pago — vuelves en cuanto lo confirmemos. Tus reservas, clientes e historial están seguros."
+              : "Your business is hidden on VaiBook and can't take bookings. Choose your plan below and send your payment — you're back on as soon as we confirm it. Your bookings, clients and history are all safe.";
           } else {
             title = es ? `Tu plan ${bs.plan} está en pausa` : `Your ${bs.plan} plan is paused`;
             body = es
@@ -16326,6 +16432,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
             </div>
           );
         })()}
+        {tab === "dashboard" && <LaunchChallengeCard providerProfile={providerProfile} onGo={(t2) => { setTab(t2); window.scrollTo({ top: 0 }); }} />}
         {tab === "dashboard" && (() => {
           const es = (i18n.language || "").toLowerCase().startsWith("es");
           const dx = (en, sp) => (es ? sp : en);
@@ -17705,7 +17812,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
           const realTrialDaysLeft = providerProfile?.is_trial && providerProfile?.trial_ends_at
             ? Math.max(0, Math.ceil((new Date(providerProfile.trial_ends_at) - new Date()) / (1000 * 60 * 60 * 24)))
             : null;
-          const inTrial = !providerProfile?.is_trial && currentPlan.monthly > 0 && !providerProfile?.next_payment_due_date;
+          const inTrial = !providerProfile?.is_trial && !providerProfile?.paused_unpaid && currentPlan.monthly > 0 && !providerProfile?.next_payment_due_date;
           return (
             <>
               <div className="portal-header"><h2>{t("providerPortal.nav.billing")}</h2><p>{t("providerPortal.billing.subtitle")}</p></div>
@@ -17748,7 +17855,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                     {t("providerPortal.billing.nextPaymentDue", { date: new Date(providerProfile.next_payment_due_date).toLocaleDateString([], { month: "long", day: "numeric", year: "numeric" }) })}
                   </p>
                 )}
-                {currentPlan.monthly > 0 && !providerProfile?.is_active && (
+                {currentPlan.monthly > 0 && !providerProfile?.is_active && !providerProfile?.paused_unpaid && (
                   <div style={{ marginTop: 12, background: "#FEE2E2", border: "1px solid #FCA5A5", borderRadius: 8, padding: "10px 14px", fontSize: 13, color: "#B91C1C" }}>
                     {t("providerPortal.billing.listingHidden")}
                   </div>
@@ -17896,7 +18003,8 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                       const bx = (en, es) => (bes ? es : en);
                       const seatsMonthly = chosenPlan.id === "business" ? teamExtraSeats * TEAM_PER_SEAT_PRICE : 0;
                       const six = planTermPrice(chosenPlan, "six", { extraSeatsMonthly: seatsMonthly });
-                      const mon = planTermPrice(chosenPlan, "monthly", { extraSeatsMonthly: seatsMonthly, firstPayment: !hasPaidBefore });
+                      const halfLeft = providerProfile?.challenge_discount_left || 0;
+                      const mon = planTermPrice(chosenPlan, "monthly", { extraSeatsMonthly: seatsMonthly, firstPayment: !hasPaidBefore, halfPrice: halfLeft > 0 });
                       const tp = payTerm === "six" ? six : mon;
                       const range = coverRange(tp.months);
                       const payTo = VAIBOOK_PAY_TO.filter((m) => (m.detail || "").trim());
@@ -17915,10 +18023,13 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                             <span className="term-card-sub">{bx(`Pay BZ$${six.total.toFixed(2)}, get 7 months. No setup fee.`, `Paga BZ$${six.total.toFixed(2)} y recibe 7 meses. Sin costo de inicio.`)}</span>
                           </button>
                           <button type="button" className={`term-card ${payTerm === "monthly" ? "on" : ""}`} onClick={() => setPayTerm("monthly")}>
+                            {mon.half && <span className="term-card-badge">🏆 {bx("Half price", "Mitad de precio")}</span>}
                             <span className="term-card-title">{bx("Monthly", "Mensual")}</span>
                             <span className="term-card-day">BZ${mon.perDay}<small>{bx("/day", "/día")}</small></span>
                             <span className="term-card-sub">
+                              {mon.half && <s style={{ opacity: 0.6, marginRight: 4 }}>BZ${mon.full.toFixed(2)}</s>}
                               {bx(`BZ$${mon.base.toFixed(2)} a month`, `BZ$${mon.base.toFixed(2)} al mes`)}
+                              {mon.half && bx(` — challenge reward, ${halfLeft} ${halfLeft === 1 ? "month" : "months"} left`, ` — premio del reto, ${halfLeft === 1 ? "queda 1 mes" : `quedan ${halfLeft} meses`}`)}
                               {mon.setup > 0 && bx(` + BZ$${mon.setup} one-time setup on your first payment`, ` + BZ$${mon.setup} de inicio en tu primer pago`)}
                             </span>
                           </button>
@@ -17959,7 +18070,9 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                         <p className="pay-fine">
                           {isUpgrade
                             ? bx(`You'll move onto ${chosenPlan.name} as soon as we confirm your payment.`, `Pasarás a ${chosenPlan.name} en cuanto confirmemos tu pago.`)
-                            : bx("We'll confirm it as soon as we've checked the receipt, and your account stays active.", "Lo confirmaremos en cuanto revisemos el recibo, y tu cuenta sigue activa.")}{" "}
+                            : providerProfile?.paused_unpaid
+                              ? bx("We'll confirm it as soon as we've checked the receipt, and your business goes live again right away.", "Lo confirmaremos en cuanto revisemos el recibo, y tu negocio vuelve a estar visible de inmediato.")
+                              : bx("We'll confirm it as soon as we've checked the receipt, and your account stays active.", "Lo confirmaremos en cuanto revisemos el recibo, y tu cuenta sigue activa.")}{" "}
                           {bx("Payments for a period already paid aren't refundable — you can switch plans or stop when your period ends.", "Los pagos de un periodo ya pagado no son reembolsables — puedes cambiar de plan o dejar de pagar al terminar tu periodo.")}
                         </p>
                       </div>
@@ -19597,15 +19710,17 @@ const VAIBOOK_PAY_TO = [
   { method: "E-Kyash", detail: "" },
 ];
 // Price of a plan for a term. `extraSeatsMonthly` = Team seats beyond the free ones.
-const planTermPrice = (plan, term, { extraSeatsMonthly = 0, firstPayment = false } = {}) => {
+const planTermPrice = (plan, term, { extraSeatsMonthly = 0, firstPayment = false, halfPrice = false } = {}) => {
   if (!plan || plan.monthly <= 0) return { total: 0, perDay: "0.00", months: 1, setup: 0 };
   if (term === "six") {
     const total = Math.round(((plan.sixMonthTotal || plan.monthly * SIX_MONTH_PAID) + extraSeatsMonthly * SIX_MONTH_PAID) * 100) / 100;
     return { total, perDay: dayRate(total, SIX_MONTH_DAYS), months: SIX_MONTH_GET, setup: 0 };
   }
-  const base = Math.round((plan.monthly + extraSeatsMonthly) * 100) / 100;
+  // Launch-challenge reward: the first 2 monthly payments are half price.
+  const full = Math.round((plan.monthly + extraSeatsMonthly) * 100) / 100;
+  const base = halfPrice ? Math.round((full / 2) * 100) / 100 : full;
   const setup = firstPayment ? SETUP_FEE : 0;
-  return { total: base + setup, base, perDay: dayRate(base, 30), months: 1, setup };
+  return { total: base + setup, base, full, half: !!halfPrice, perDay: dayRate(base, 30), months: 1, setup };
 };
 
 const PLANS = [
@@ -21748,7 +21863,7 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
   };
 
   const handleAdminEndTrial = async (provider) => {
-    if (!window.confirm(`End ${provider.business_name}'s trial now and drop them back to Trial (free)? Use this if they're not going to convert — if they already paid, confirm their payment in the Payments tab instead, which ends the trial and applies the paid plan together.`)) return;
+    if (!window.confirm(`End ${provider.business_name}'s trial now? Their business is hidden and they only see the payment page until they pay. Use this if they're not going to convert — if they already paid, confirm their payment in the Payments tab instead, which ends the trial and applies the paid plan together.`)) return;
     setTrialActionId(provider.id);
     const updated = await adminEndProviderTrial(provider.id);
     setTrialActionId(null);
@@ -21981,7 +22096,7 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
 
               {(() => {
                 const overdue = providers.filter((p) => billingStatus(p)?.kind === "overdue").length;
-                const paused = providers.filter((p) => billingStatus(p)?.kind === "downgraded").length;
+                const paused = providers.filter((p) => ["downgraded", "paused"].includes(billingStatus(p)?.kind)).length;
                 if (!overdue && !paused) return null;
                 return (
                   <div style={{ display: "flex", gap: 8, flexWrap: "wrap", margin: "8px 0 4px" }}>
@@ -22041,8 +22156,13 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
                       <div className="title">
                         {p.business_name}{" "}
                         <span style={{ fontWeight: 500, color: p.is_active ? "var(--lime)" : "var(--muted)", fontSize: 12 }}>
-                          — {p.is_active ? "Active" : "Suspended"}
+                          — {p.is_active ? "Active" : p.paused_unpaid ? "Paused · unpaid" : "Suspended"}
                         </span>
+                        {p.challenge_completed_at && (
+                          <span title={`Finished the launch challenge — ${p.challenge_discount_left || 0} half-price month(s) left`} style={{ marginLeft: 6, fontSize: 11, fontWeight: 700, background: "#FEF3C7", color: "#92400E", padding: "2px 8px", borderRadius: 100 }}>
+                            🏆 Challenge · {p.challenge_discount_left || 0} half-price left
+                          </span>
+                        )}
                       </div>
                       <div className="meta">{p.service_type} · {p.district}</div>
                       {p.whatsapp && <div className="meta">{p.whatsapp}</div>}
@@ -22069,6 +22189,22 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
                       {(() => {
                         const bs = billingStatus(p);
                         const f = (d) => d.toLocaleDateString([], { month: "short", day: "numeric" });
+                        if (bs?.kind === "paused") {
+                          return (
+                            <>
+                              <span style={{ fontSize: 11, fontWeight: 700, color: "#B91C1C", textAlign: "right" }}>⏸ {bs.afterTrial ? "Trial ended, unpaid" : "Paused for non-payment"} · hidden</span>
+                              {bs.afterTrial ? (
+                                <button className="btn-sm" style={{ background: "transparent", border: "1px solid var(--lime)", color: "var(--forest)" }} disabled={isTrialActioning} onClick={() => handleAdminExtendTrial(p)}>
+                                  {isTrialActioning ? "..." : "Give more trial days"}
+                                </button>
+                              ) : (
+                                <button className="btn-sm" style={{ background: "transparent", border: "1px solid var(--lime)", color: "var(--forest)" }} disabled={isTrialActioning} onClick={() => handleAdminRestorePlan(p, bs.plan)}>
+                                  {isTrialActioning ? "..." : `Switch back on (7 days to pay)`}
+                                </button>
+                              )}
+                            </>
+                          );
+                        }
                         if (bs?.kind === "downgraded") {
                           return (
                             <>
@@ -22084,7 +22220,7 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
                           return (
                             <>
                               <span style={{ fontSize: 11, fontWeight: 700, color: "#B91C1C", textAlign: "right" }}>
-                                Overdue since {f(bs.due)} · {bs.daysLeft === 0 ? "moves to free plan tonight" : `moves to free plan after ${f(bs.graceEnd)}`}
+                                Overdue since {f(bs.due)} · {bs.daysLeft === 0 ? "hidden tonight" : `hidden after ${f(bs.graceEnd)}`}
                               </span>
                               <button className="btn-sm" style={{ background: "transparent", border: "1px solid var(--lime)", color: "var(--forest)" }} disabled={isTrialActioning} onClick={() => handleAdminExtendPayment(p)}>
                                 {isTrialActioning ? "..." : "Extend 7 days"}
@@ -22800,15 +22936,13 @@ export default function App() {
           trial_end_date: app.trial_end_date || null,
         });
         if (created) {
-          // Every new business starts with 14 days of everything (Solo),
-          // then stays on Free unless they pay — easier to keep than to unlock.
+          // New businesses get their trial (on the plan they applied for,
+          // counted from approval) when the profile is created, in the
+          // database. This is only a fallback for older accounts.
           try {
             p = await getProviderProfile(authUser.id);
             if (p && p.id && (p.plan || "starter") === "starter" && !p.trial_used) {
-              // The 14 days count from when the admin approved them.
-              let tr = await startSoloTrialFromApproval(p.id);
-              const msg = (tr && tr.error && tr.error.message) || "";
-              if (tr && tr.error && /start_solo_trial_from_approval|function|schema cache/i.test(msg) && !/TRIAL_/.test(msg)) tr = await startSoloTrial(p.id);
+              const tr = await startSoloTrial(p.id);
               if (tr && !tr.error) p = await getProviderProfile(authUser.id);
             }
           } catch (err) {

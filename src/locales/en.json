@@ -154,7 +154,7 @@
       "emailUs": "Email us",
       "trial": {
         "q": "How does the free trial work?",
-        "a": "Every new business starts on the Free plan — up to {{freeCap}} bookings a month, no card required. There's no automatic cutoff date; you stay on Free until you choose to upgrade from the Billing tab in your dashboard."
+        "a": "Once we approve your application, you get 14 days free on the plan you chose (Solo or Team) — everything included, no card needed. Finish the launch challenge in your dashboard during those 14 days and your first 2 monthly payments are half price. When the trial ends, pay in My plan & billing to stay live; if you don't, your business is hidden until you do, and your bookings and clients stay safe."
       },
       "plans": {
         "q": "What plans does VaiBook offer?",
@@ -1007,16 +1007,16 @@
       "currentPlan": "Current plan",
       "trialBannerTitle": "🎉 You're in your {{trialDays}}-day free trial of {{plan}} — nothing to pay yet.",
       "trialBannerSub": "Just BZ${{amount}} a day once your trial ends and billing starts — pick your plan below and upload a receipt whenever you're ready.",
-      "realTrialBannerTitle": "🎉 {{days}} days left in your free Solo trial — nothing to pay yet.",
-      "realTrialBannerSub": "Your trial ends {{date}}. Send a payment any time before then to keep Solo's reminders, deposits, client forms, memberships, profit tracking and more — if it lapses, you'll quietly drop back to the Free plan, no charge either way.",
+      "realTrialBannerTitle": "🎉 {{days}} days left in your free trial — nothing to pay yet",
+      "realTrialBannerSub": "Your trial ends {{date}}. Pay any time before then to stay live on VaiBook — our payment details show here 24 hours before it ends. If it lapses, your business is hidden until you pay; your data stays safe.",
       "justPerDay": "Just BZ${{amount}} a day.",
       "nextPaymentDue": "Next payment due {{date}}",
       "listingHidden": "Your listing is currently hidden from customers. If this is because a payment is overdue, upload your receipt below — you'll go back live as soon as it's confirmed.",
-      "trialNoPlanYet": "You're on the Free plan — up to {{freeCap}} bookings a month, no cost, no time limit. Pick Solo or Team below whenever you're ready to upgrade.",
+      "trialNoPlanYet": "Pick Solo or Team below and send your payment to go live on VaiBook.",
       "bookingsUsedThisMonth": "{{used}} of {{cap}} bookings used this month",
       "hitLimit": "You've hit this month's limit — new bookings will be turned away until next month, or you upgrade to Solo for unlimited bookings.",
       "soloTrialOfferTitle": "Not sure yet? Try Solo free for {{trialDays}} days.",
-      "soloTrialOfferSub": "Reminders, deposits, client forms, memberships, profit tracking and more — full Solo access, no payment, no card. One trial per business; you'll keep the Free plan either way once it ends.",
+      "soloTrialOfferSub": "Everything in Solo, free for 14 days. One trial per business.",
       "soloTrialOfferCta": "Start my free {{trialDays}}-day Solo trial",
       "soloTrialOfferError": "That didn't go through — refresh the page and try again, or message us if it keeps happening.",
       "upgradeYourPlan": "Upgrade your plan",

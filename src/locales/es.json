@@ -154,7 +154,7 @@
       "emailUs": "Escríbenos",
       "trial": {
         "q": "¿Cómo funciona la prueba gratuita?",
-        "a": "Todo negocio nuevo comienza con el plan Gratis — hasta {{freeCap}} reservas al mes, sin tarjeta. No hay una fecha límite automática; te quedas en Gratis hasta que decidas actualizar desde la pestaña de Facturación en tu panel."
+        "a": "Cuando aprobamos tu solicitud, tienes 14 días gratis del plan que elegiste (Solo o Team) — todo incluido, sin tarjeta. Termina el reto de lanzamiento en tu panel durante esos 14 días y tus primeros 2 pagos mensuales son a mitad de precio. Cuando termina la prueba, paga en Mi plan y pagos para seguir visible; si no, tu negocio queda oculto hasta que pagues, y tus reservas y clientes quedan seguros."
       },
       "plans": {
         "q": "¿Qué planes ofrece VaiBook?",
@@ -1007,16 +1007,16 @@
       "currentPlan": "Plan actual",
       "trialBannerTitle": "🎉 Estás en tu prueba gratuita de {{trialDays}} días de {{plan}} — nada que pagar todavía.",
       "trialBannerSub": "Solo BZ${{amount}} al día cuando termine tu prueba y empiece la facturación — elige tu plan abajo y sube un recibo cuando estés listo.",
-      "realTrialBannerTitle": "🎉 Te quedan {{days}} días de tu prueba gratuita de Solo — nada que pagar todavía.",
-      "realTrialBannerSub": "Tu prueba termina el {{date}}. Envía un pago antes de esa fecha para quedarte con los depósitos, el programa de lealtad y los reportes de Solo — si se vence, vuelves automáticamente al plan gratuito Trial, sin cargo de ningún lado.",
+      "realTrialBannerTitle": "🎉 Te quedan {{days}} días de tu prueba gratis — nada que pagar todavía",
+      "realTrialBannerSub": "Tu prueba termina el {{date}}. Paga antes de esa fecha para seguir visible en VaiBook — nuestros datos de pago aparecen aquí 24 horas antes. Si se vence, tu negocio queda oculto hasta que pagues; tus datos quedan seguros.",
       "justPerDay": "Solo BZ${{amount}} al día.",
       "nextPaymentDue": "Próximo pago vence el {{date}}",
       "listingHidden": "Tu listado está oculto para los clientes por ahora. Si es porque un pago está vencido, sube tu recibo abajo — volverás a estar visible en cuanto se confirme.",
-      "trialNoPlanYet": "Estás en el plan gratuito Trial — hasta {{freeCap}} reservas al mes, sin costo, sin límite de tiempo. Elige Solo o Team abajo cuando estés listo para actualizar.",
+      "trialNoPlanYet": "Elige Solo o Team abajo y envía tu pago para aparecer en VaiBook.",
       "bookingsUsedThisMonth": "{{used}} de {{cap}} reservas usadas este mes",
       "hitLimit": "Alcanzaste el límite de este mes — las reservas nuevas se rechazarán hasta el próximo mes, o puedes actualizar a Solo para reservas ilimitadas.",
       "soloTrialOfferTitle": "¿No estás seguro todavía? Prueba Solo gratis por {{trialDays}} días.",
-      "soloTrialOfferSub": "Depósitos, programa de lealtad y reportes — acceso completo a Solo, sin pago, sin tarjeta. Una prueba por negocio; de todas formas te quedas con el plan gratuito Trial cuando termine.",
+      "soloTrialOfferSub": "Todo Solo, gratis por 14 días. Una prueba por negocio.",
       "soloTrialOfferCta": "Iniciar mi prueba gratuita de Solo ({{trialDays}} días)",
       "soloTrialOfferError": "Eso no se pudo procesar — actualiza la página e intenta de nuevo, o escríbenos si sigue pasando.",
       "upgradeYourPlan": "Actualiza tu plan",

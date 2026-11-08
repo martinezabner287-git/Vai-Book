@@ -2360,12 +2360,18 @@ export const reviewMembershipPayment = async (paymentId, status, note) => {
 // database for the real eligibility/authorization check (this is just a
 // thin wrapper; the error message it returns, e.g. TRIAL_NOT_ELIGIBLE, is
 // what the caller actually relies on).
-// The automatic trial for a newly approved business: it counts from the
-// moment the application was approved, not from this first log-in.
-export const startSoloTrialFromApproval = async (providerId) => {
-  const { data, error } = await supabase.rpc('start_solo_trial_from_approval', { p_provider_id: providerId });
-  if (error && !/TRIAL_NOT_ELIGIBLE|TRIAL_ALREADY_ENDED/.test(error.message || '')) reportActionError('startSoloTrialFromApproval', error);
-  return { data, error };
+// Launch challenge (5 tasks during the free trial → first 2 monthly
+// payments at half price). Progress is worked out on the server.
+export const getMyChallenge = async (providerId) => {
+  if (!providerId) return null;
+  const { data, error } = await supabase.rpc('my_challenge', { p_provider_id: providerId });
+  if (error) { console.error('my_challenge:', error.message); return null; }
+  return data;
+};
+export const markChallengeShared = async (providerId) => {
+  if (!providerId) return;
+  const { error } = await supabase.rpc('mark_challenge_shared', { p_provider_id: providerId });
+  if (error) console.error('mark_challenge_shared:', error.message);
 };
 
 // Uploads the applicant's trade license (photo or PDF) to private storage.
