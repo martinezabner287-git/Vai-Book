@@ -9622,6 +9622,8 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
   const [tab, setTab] = useTransitionState(() => {
     try { return sessionStorage.getItem("vaibook_customer_tab") || "home"; } catch (e) { return "home"; }
   });
+  const guestBrowsing = !session && !cameViaBookingLink;
+  useEffect(() => { if (guestBrowsing && tab !== "browse") setTab("browse"); }, [guestBrowsing, tab, setTab]);
   useEffect(() => {
     try { sessionStorage.setItem("vaibook_customer_tab", tab); } catch (e) { /* ignore */ }
     window.dispatchEvent(new CustomEvent("vaibook-customer-tab-changed", { detail: { tab } }));
@@ -10208,7 +10210,6 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
   // direct booking-link visit, which never hits the gate at all) leaves the
   // stash untouched until the mount where it can actually be used.
   useEffect(() => {
-    if (!session && !cameViaBookingLink) return;
     try {
       const raw = localStorage.getItem("vaibook_pending_search");
       if (raw) {
@@ -11563,14 +11564,12 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
   // as broken rather than intentional. The one deep-link exception stays:
   // a real QR/NFC scan still jumps straight to that one provider's booking
   // modal with no sign-in required, same as always.
-  if (!session && !cameViaBookingLink) {
-    return (
-      <GateScreen>
-        <CustomerPhoneLogin />
-        <button className="gate-back" onClick={() => onNav("home")}>{t("customerPortal.signIn.backToSite")}</button>
-      </GateScreen>
-    );
-  }
+  // 2026-11-07: visitors without an account can search and browse
+  // businesses and book (the account is made at checkout) — only the
+  // personal tabs (home dashboard, bookings, saved, settings…) need a log
+  // in. Before this, tapping Search, a category or a suggestion on the
+  // home page dropped every visitor on a WhatsApp-number + password screen.
+  if (guestBrowsing && tab !== "browse") return null;
 
   return (
     <div className="portal-layout">
