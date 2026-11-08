@@ -3,7 +3,7 @@
 // receipt (read on the phone itself, nothing sent to another company) —
 // and see income minus expenses = profit for any month.
 import { useEffect, useMemo, useRef, useState } from "react";
-import { supabase } from "./supabase";
+import { supabase, prepareImageForWeb } from "./supabase";
 
 const CATS = [
   { id: "supplies", icon: "🧴", en: "Supplies", es: "Insumos" },
@@ -169,7 +169,8 @@ export default function Expenses({ providerId, userId, bookings, es }) {
     let receipt_path = form.receipt_path;
     if (form.file) {
       const path = `${userId}/${providerId}/${Date.now()}-${Math.random().toString(36).slice(2, 7)}.jpg`;
-      const up = await supabase.storage.from("expense-receipts").upload(path, form.file, { contentType: form.file.type || "image/jpeg", upsert: false });
+      const upFile = await prepareImageForWeb(form.file);
+      const up = await supabase.storage.from("expense-receipts").upload(path, upFile, { contentType: upFile.type || "image/jpeg", upsert: false });
       if (up.error) { setSaving(false); setError(tx("The receipt photo didn't upload. Try again, or save without it.", "La foto del recibo no se subió. Inténtalo de nuevo o guarda sin ella.")); return; }
       receipt_path = path;
     }

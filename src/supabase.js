@@ -343,6 +343,42 @@ const toJpegFile = async (file) => {
     return new File([blob], (file.name || 'photo').replace(/\.[^.]+$/, '') + '.jpg', { type: 'image/jpeg' });
   } catch (e) { return null; }
 };
+// iPhone photos are often HEIC, which browsers other than Safari can't show
+// (and the photo bucket doesn't accept). Turn them into a JPEG, and shrink
+// any big photo to max 2000px so it stays under the size limit and loads fast.
+const isHeic = (f) => /image\/hei[cf]/i.test(f?.type || '') || /\.(heic|heif)$/i.test(f?.name || '');
+const drawToJpeg = async (source, name, w, h) => {
+  const scale = Math.min(1, 2000 / Math.max(w, h));
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.round(w * scale); canvas.height = Math.round(h * scale);
+  canvas.getContext('2d').drawImage(source, 0, 0, canvas.width, canvas.height);
+  const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.85));
+  return blob ? new File([blob], (name || 'photo').replace(/\.[^.]+$/, '') + '.jpg', { type: 'image/jpeg' }) : null;
+};
+export const prepareImageForWeb = async (file) => {
+  if (!file || !(isHeic(file) || /^image\//.test(file.type || ''))) return file;
+  if (!isHeic(file) && file.size <= 1.5 * 1024 * 1024) return file;
+  // Safari (and newer Chrome on Mac) can decode HEIC directly.
+  try {
+    const bmp = await createImageBitmap(file);
+    const out = await drawToJpeg(bmp, file.name, bmp.width, bmp.height);
+    if (out) return out;
+  } catch (e) { /* fall through */ }
+  if (isHeic(file)) {
+    try {
+      // Loaded only when needed (it's big). The CSP-safe build works with
+      // our Content-Security-Policy (no eval).
+      const { heicTo } = await import('heic-to/csp');
+      const blob = await heicTo({ blob: file, type: 'image/jpeg', quality: 0.85 });
+      const jpg = new File([blob], (file.name || 'photo').replace(/\.[^.]+$/, '') + '.jpg', { type: 'image/jpeg' });
+      try {
+        const bmp = await createImageBitmap(jpg);
+        return (await drawToJpeg(bmp, jpg.name, bmp.width, bmp.height)) || jpg;
+      } catch (e) { return jpg; }
+    } catch (e) { console.error('HEIC convert failed:', e?.message || e); }
+  }
+  return file;
+};
 const UPLOAD_TIMEOUT_MS = 60000;
 const withTimeout = (promise, ms) => Promise.race([
   promise,
@@ -361,6 +397,11 @@ export const uploadProviderPhoto = async (userId, file) => {
       UPLOAD_TIMEOUT_MS
     ).then((res) => ({ ...res, path }));
   };
+  file = await prepareImageForWeb(file);
+  if (isHeic(file)) {
+    reportActionError('uploadProviderPhoto', { message: "This iPhone photo (HEIC) couldn't be converted here. Try a screenshot of the photo, or on your iPhone set Settings → Camera → Formats → Most Compatible." });
+    return null;
+  }
   let res = await put(file);
   if (res.error && res.error.code !== 'UPLOAD_TIMEOUT' && /mime|type|format|not allowed|invalid/i.test(res.error.message || '') && file.type !== 'image/jpeg') {
     const jpeg = await toJpegFile(file);
@@ -954,6 +995,7 @@ export const updateBooking = async (bookingId, updates) => {
 };
 
 export const uploadReceipt = async (bookingId, file) => {
+  file = await prepareImageForWeb(file); // iPhone HEIC → JPEG so it opens everywhere
   // Timestamped so re-uploading a second photo doesn't collide with the
   // first — phone cameras hand back the same filename over and over
   // ("image.jpg", "IMG_0001.jpg"), and a collision made the upload fail
@@ -1090,6 +1132,7 @@ export const withdrawBookingReschedule = async (bookingId) => {
 // plain insert with no .select() — same RLS+RETURNING gotcha as elsewhere
 // in this file — so the caller re-fetches via getMyProviderPayments after.
 export const submitProviderPayment = async (providerId, file, { plan, amount, periodLabel, months = 1 }) => {
+  file = await prepareImageForWeb(file); // iPhone HEIC → JPEG so it opens everywhere
   const path = `provider-payments/${providerId}/${Date.now()}-${file.name}`;
   const { error: uploadError } = await supabase.storage.from('vaibook').upload(path, file);
   if (uploadError) { reportActionError('submitProviderPayment', uploadError); console.error('Error uploading payment receipt:', uploadError.message); return false; }
@@ -1140,6 +1183,7 @@ export const adminReviewProviderPayment = async (paymentId, status, note) => {
 // money back to the customer themselves — this just records proof of it.
 // See supabase_booking_refunds.sql for the table, RLS, and admin RPC.
 export const submitBookingRefund = async (bookingId, providerId, file, { amount, note }) => {
+  file = await prepareImageForWeb(file); // iPhone HEIC → JPEG so it opens everywhere
   const path = `refunds/${bookingId}/${Date.now()}-${file.name}`;
   const { error: uploadError } = await supabase.storage.from('vaibook').upload(path, file);
   if (uploadError) { reportActionError('submitBookingRefund', uploadError); console.error('Error uploading refund receipt:', uploadError.message); return false; }
@@ -2289,6 +2333,7 @@ export const subscribeToMembershipPlan = async (planId) => {
 // deliberately-no-.select() shape as submitProviderPayment (RLS+RETURNING
 // gotcha) — the caller re-fetches via getMyMemberships after.
 export const submitMembershipPayment = async (membershipId, providerId, customerId, file, { amount, periodLabel }) => {
+  file = await prepareImageForWeb(file); // iPhone HEIC → JPEG so it opens everywhere
   const path = `membership-payments/${customerId}/${Date.now()}-${file.name}`;
   const { error: uploadError } = await supabase.storage.from('vaibook').upload(path, file);
   if (uploadError) { reportActionError('submitMembershipPayment', uploadError); console.error('Error uploading membership payment receipt:', uploadError.message); return false; }
