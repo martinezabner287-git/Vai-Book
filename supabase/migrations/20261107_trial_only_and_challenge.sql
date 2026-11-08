@@ -1,4 +1,4 @@
--- STATUS: waiting for Abner's OK to apply to the live database.
+-- 2026-11-07 APPLIED to the live database after Abner said "apply trial and challenge".
 -- 2026-11-07 — Abner: "no free plan, just the 14 day free trial for Solo and
 -- Teams", "once I accept, their 14 days immediately start", a reminder 24
 -- hours before, trade license with the application, and a launch challenge:
@@ -97,6 +97,19 @@ begin
     end if;
   end if;
 
+  return new;
+end;
+$$;
+
+-- A paused business must not be handed an automatic "due in a month" date
+-- (only the paused_unpaid check is new).
+create or replace function public.trg_set_initial_payment_due_date() returns trigger
+language plpgsql as $$
+begin
+  if new.plan is not null and new.plan <> 'starter' and new.next_payment_due_date is null
+     and not coalesce(new.is_trial, false) and not coalesce(new.paused_unpaid, false) then
+    new.next_payment_due_date := current_date + interval '1 month';
+  end if;
   return new;
 end;
 $$;
@@ -355,7 +368,7 @@ begin
 
   t_page := coalesce(p.profile_photo_url, '') <> ''
         and coalesce(trim(p.bio), '') <> ''
-        and coalesce(jsonb_array_length(case when jsonb_typeof(to_jsonb(p.portfolio_urls)) = 'array' then to_jsonb(p.portfolio_urls) else '[]'::jsonb end), 0) > 0
+        and coalesce(cardinality(p.portfolio_urls), 0) > 0
         and exists (select 1 from working_hours w where w.provider_id = p.id and w.is_open);
   select count(*) into v_svc from services s
    where s.provider_id = p.id and coalesce(s.is_active, true) and not coalesce(s.is_addon, false) and coalesce(s.price, 0) > 0;
