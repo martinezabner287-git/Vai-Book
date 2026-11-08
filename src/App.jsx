@@ -612,6 +612,8 @@ const css = `
   .lang-toggle-footer:hover { color: var(--near-white); }
   .lang-toggle-footer span:first-child { font-size: 14px; }
   .nav-dropdown { position: absolute; top: calc(100% + 12px); right: 0; background: white; border-radius: 20px; box-shadow: 0 20px 50px rgba(76,61,196,0.20); border: 1px solid var(--border); min-width: 300px; max-width: calc(100vw - 32px); padding: 22px; z-index: 200; }
+  /* Long menus (admin) scroll inside the menu instead of the page behind it. */
+  .nav-dropdown, .nav-account-dropdown { max-height: calc(100vh - 100px); max-height: calc(100dvh - 100px); overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
   .nav-dropdown a, .nav-dropdown button.nav-dropdown-item { display: block; width: 100%; text-align: left; background: none; border: none; padding: 12px 8px; border-radius: 10px; font-size: 16px; font-weight: 500; color: var(--dark-text); cursor: pointer; text-decoration: none; }
   .nav-dropdown a:hover, .nav-dropdown button.nav-dropdown-item:hover { background: var(--sand); }
   .nav-dropdown hr { border: none; border-top: 1px solid var(--border); margin: 14px 0; }
@@ -3920,8 +3922,8 @@ const css = `
 // supabase.js). New customers create theirs at checkout the first time
 // they book; this box is for logging back in on any phone.
 const PL_TEXT = {
-  en: { phone: "WhatsApp number", password: "Password", login: "Log in", loggingIn: "Logging in…", wrong: "That number and password don't match. Check them and try again.", failed: "Couldn't log in. Check your connection and try again.", missing: "Enter your WhatsApp number and password.", forgot: "Forgot your password?", contact: "Message us", newHere: "New here? Find a business and book — you'll create your account at checkout.", or: "or" },
-  es: { phone: "Número de WhatsApp", password: "Contraseña", login: "Iniciar sesión", loggingIn: "Entrando…", wrong: "Ese número y contraseña no coinciden. Revísalos e inténtalo de nuevo.", failed: "No se pudo iniciar sesión. Revisa tu conexión e inténtalo de nuevo.", missing: "Escribe tu número de WhatsApp y tu contraseña.", forgot: "¿Olvidaste tu contraseña?", contact: "Escríbenos", newHere: "¿Nuevo aquí? Busca un negocio y reserva — crearás tu cuenta al confirmar.", or: "o" },
+  en: { phone: "WhatsApp number", password: "Password", login: "Log in", loggingIn: "Logging in…", wrong: "That number and password don't match. Check them and try again.", failed: "Couldn't log in. Check your connection and try again.", missing: "Enter your WhatsApp number and password.", forgot: "Forgot your password?", contact: "Message us", newHere: "New to VaiBook?", create: "Create an account", creating: "Creating…", name: "Your name", password2: "Confirm password", haveAcct: "Already have an account?", nameMissing: "Enter your name.", mismatch: "The passwords don't match.", taken: "That number already has an account. Log in instead, or message us if you forgot the password.", or: "or" },
+  es: { phone: "Número de WhatsApp", password: "Contraseña", login: "Iniciar sesión", loggingIn: "Entrando…", wrong: "Ese número y contraseña no coinciden. Revísalos e inténtalo de nuevo.", failed: "No se pudo iniciar sesión. Revisa tu conexión e inténtalo de nuevo.", missing: "Escribe tu número de WhatsApp y tu contraseña.", forgot: "¿Olvidaste tu contraseña?", contact: "Escríbenos", newHere: "¿Nuevo en VaiBook?", create: "Crear una cuenta", creating: "Creando…", name: "Tu nombre", password2: "Confirma la contraseña", haveAcct: "¿Ya tienes una cuenta?", nameMissing: "Escribe tu nombre.", mismatch: "Las contraseñas no coinciden.", taken: "Ese número ya tiene una cuenta. Inicia sesión, o escríbenos si olvidaste la contraseña.", or: "o" },
 };
 function CustomerPhoneLogin({ onSignedIn, compact }) {
   const { i18n } = useTranslation();
@@ -3930,6 +3932,22 @@ function CustomerPhoneLogin({ onSignedIn, compact }) {
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
+  const [mode, setMode] = useState("login");
+  const [name, setName] = useState("");
+  const [password2, setPassword2] = useState("");
+  const createAccount = async (e) => {
+    e && e.preventDefault();
+    if (!name.trim()) { setErr(L.nameMissing); return; }
+    if ((phone.match(/\d/g) || []).length < 7 || !password) { setErr(L.missing); return; }
+    if (!passwordMeetsRules(password)) { setErr(caText(i18n.language, "pwRules")); return; }
+    if (password !== password2) { setErr(L.mismatch); return; }
+    setBusy(true); setErr("");
+    const res = await customerPhoneAuth({ name: name.trim(), phone, password });
+    setBusy(false);
+    if (res.code === "NUMBER_HAS_ACCOUNT") { setErr(L.taken); return; }
+    if (res.error) { setErr(res.code === "WEAK_PASSWORD" ? (res.message || caText(i18n.language, "pwRules")) : L.failed); return; }
+    onSignedIn && onSignedIn();
+  };
   const submit = async (e) => {
     e && e.preventDefault();
     if ((phone.match(/\d/g) || []).length < 7 || !password) { setErr(L.missing); return; }
@@ -3939,6 +3957,19 @@ function CustomerPhoneLogin({ onSignedIn, compact }) {
     if (error) { setErr(code === "WRONG_PHONE_OR_PASSWORD" ? L.wrong : L.failed); return; }
     onSignedIn && onSignedIn();
   };
+  const switchMode = (m) => { setMode(m); setErr(""); };
+  if (mode === "signup") return (
+    <form className="phone-login" onSubmit={createAccount}>
+      <label>{L.name}<input type="text" autoComplete="name" value={name} onChange={(e) => setName(e.target.value)} /></label>
+      <label>{L.phone}<input type="tel" inputMode="tel" autoComplete="tel" placeholder="+501 622 1234" value={phone} onChange={(e) => setPhone(e.target.value)} /></label>
+      <label>{L.password}<input type="password" autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} /></label>
+      <PasswordRules value={password} />
+      <label>{L.password2}<input type="password" autoComplete="new-password" value={password2} onChange={(e) => setPassword2(e.target.value)} /></label>
+      {err && <p className="phone-login-err">{err}</p>}
+      <button type="submit" className="gate-btn" disabled={busy}>{busy ? L.creating : L.create}</button>
+      <p className="phone-login-help">{L.haveAcct} <a href="#login" onClick={(e) => { e.preventDefault(); switchMode("login"); }}>{L.login}</a></p>
+    </form>
+  );
   return (
     <form className="phone-login" onSubmit={submit}>
       <label>{L.phone}<input type="tel" inputMode="tel" autoComplete="tel" placeholder="+501 622 1234" value={phone} onChange={(e) => setPhone(e.target.value)} /></label>
@@ -3946,7 +3977,7 @@ function CustomerPhoneLogin({ onSignedIn, compact }) {
       {err && <p className="phone-login-err">{err}</p>}
       <button type="submit" className="gate-btn" disabled={busy}>{busy ? L.loggingIn : L.login}</button>
       <p className="phone-login-help">{L.forgot} <a href="#contact">{L.contact}</a></p>
-      {!compact && <p className="phone-login-help">{L.newHere}</p>}
+      {!compact && <p className="phone-login-help">{L.newHere} <a href="#create-account" onClick={(e) => { e.preventDefault(); switchMode("signup"); }}>{L.create}</a></p>}
     </form>
   );
 }
