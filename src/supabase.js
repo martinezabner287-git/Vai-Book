@@ -2360,6 +2360,33 @@ export const reviewMembershipPayment = async (paymentId, status, note) => {
 // database for the real eligibility/authorization check (this is just a
 // thin wrapper; the error message it returns, e.g. TRIAL_NOT_ELIGIBLE, is
 // what the caller actually relies on).
+// The automatic trial for a newly approved business: it counts from the
+// moment the application was approved, not from this first log-in.
+export const startSoloTrialFromApproval = async (providerId) => {
+  const { data, error } = await supabase.rpc('start_solo_trial_from_approval', { p_provider_id: providerId });
+  if (error && !/TRIAL_NOT_ELIGIBLE|TRIAL_ALREADY_ENDED/.test(error.message || '')) reportActionError('startSoloTrialFromApproval', error);
+  return { data, error };
+};
+
+// Uploads the applicant's trade license (photo or PDF) to private storage.
+// Needs a signed-in session (the applicant's own account). Returns the path.
+export const uploadTradeLicense = async (userId, file) => {
+  if (!userId || !file) return null;
+  let f = file;
+  if (f.type && f.type.startsWith('image/') && f.size > 3 * 1024 * 1024) {
+    const jpeg = await toJpegFile(f).catch(() => null);
+    if (jpeg) f = jpeg;
+  }
+  const ext = ((f.name || '').split('.').pop() || (f.type === 'application/pdf' ? 'pdf' : 'jpg')).toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg';
+  const path = `trade-licenses/${userId}/${Date.now()}.${ext}`;
+  const { error } = await withTimeout(
+    supabase.storage.from('vaibook').upload(path, f, { upsert: false, contentType: f.type || undefined }),
+    UPLOAD_TIMEOUT_MS
+  );
+  if (error) { reportActionError('uploadTradeLicense', error); return null; }
+  return path;
+};
+
 export const startSoloTrial = async (providerId) => {
   const { data, error } = await supabase.rpc('start_solo_trial', { p_provider_id: providerId });
   if (error) { reportActionError('startSoloTrial', error); console.error('Error starting Solo trial:', error.message); }

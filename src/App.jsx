@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useLayoutEffect, useRef, useContext, createContext, lazy, Suspense, useCallback, Fragment } from "react";
 import { flushSync } from "react-dom";
-import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, updateService, deleteService, getActiveProviders, getProviderDirectory, createBooking, getProviderBusyWindows, createBookingSafe, cancelBooking, markBookingCheckedIn, getCustomerBookings, uploadReceipt, submitReview, getProviderReviews, updateReview, sendBookingEmail, updateUserProfile, getPaymentMethods, addPaymentMethod, deletePaymentMethod, createNotification, getNotifications, markNotificationRead, markAllNotificationsRead, getCategoryDefaultFeatures, getProviderFeatureOverrides, setProviderFeatureOverride, getVisitNotes, upsertVisitNote, adminListProviders, adminUpdateProvider, adminDeleteProvider, adminCountCustomers, getFavoriteProviderIds, getFavoriteProviders, addFavorite, removeFavorite, getBookingMessages, sendBookingMessage, markBookingMessagesRead, getUnreadBookingMessages, getProviderMonthlyTrend, createProviderProfile, getProviderById, createWalkInBooking, submitProviderPayment, getMyProviderPayments, adminListProviderPayments, adminReviewProviderPayment, submitBookingRefund, adminListBookingRefunds, openPrivateFile, getProviderStaff, addProviderStaff, updateProviderStaff, deleteProviderStaff, getProviderStaffPublic, getLoyaltyAccount, getProviderLoyaltyCustomers, redeemLoyaltyReward, getMyStaffProfile, claimStaffSeatByEmail, getStaffBookings, getProviderNotifyEmail, getMaintenanceStatus, setMaintenanceMode, getSiteOfflineStatus, setSiteOffline, guestAuthWithPassword, updateGuestPassword, savePushSubscription, attachBookingServices, getProviderBlocks, insertProviderBlock, deleteProviderBlock, proposeBookingReschedule, confirmBookingReschedule, declineBookingReschedule, withdrawBookingReschedule, establishSoloSession, getServerSoloSessionToken, getLocalSoloSessionToken, clearLocalSoloSessionToken, subscribeToSoloSessionReplacement, signInWithPhonePassword, customerPhoneAuth, isPhoneLoginEmail, formatPhoneForDisplay, weakPasswordReason, submitSupportMessage, adminSetTempPassword, getMustChangePassword, clearMustChangePassword, adminProviderOverview, adminSetProviderBadges, adminSetProviderPhoto, adminListProviderServices, adminUpdateService, adminSetWorkingHours, adminGetFeatureOverrides, adminSetFeatureOverride, listSupportMessages, setSupportMessageStatus, getProviderMembershipPlans, getMyMembershipPlans, createMembershipPlan, updateMembershipPlan, subscribeToMembershipPlan, submitMembershipPayment, getMyMemberships, getProviderMembershipSubscribers, getProviderMembershipPayments, reviewMembershipPayment, cancelMembership, redeemMembershipVisit, startSoloTrial, adminStartProviderTrial, adminExtendProviderTrial, adminEndProviderTrial, adminExtendPaymentDue, adminRestoreDowngradedPlan, adminPlatformStats, setBookingAnswers, getFormEmail, redeemMembershipVisitFor, attachBookingAddons, getProviderCapacity, getPlanSpotsLeft, recordPastBooking } from "./supabase";
+import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, updateService, deleteService, getActiveProviders, getProviderDirectory, createBooking, getProviderBusyWindows, createBookingSafe, cancelBooking, markBookingCheckedIn, getCustomerBookings, uploadReceipt, submitReview, getProviderReviews, updateReview, sendBookingEmail, updateUserProfile, getPaymentMethods, addPaymentMethod, deletePaymentMethod, createNotification, getNotifications, markNotificationRead, markAllNotificationsRead, getCategoryDefaultFeatures, getProviderFeatureOverrides, setProviderFeatureOverride, getVisitNotes, upsertVisitNote, adminListProviders, adminUpdateProvider, adminDeleteProvider, adminCountCustomers, getFavoriteProviderIds, getFavoriteProviders, addFavorite, removeFavorite, getBookingMessages, sendBookingMessage, markBookingMessagesRead, getUnreadBookingMessages, getProviderMonthlyTrend, createProviderProfile, getProviderById, createWalkInBooking, submitProviderPayment, getMyProviderPayments, adminListProviderPayments, adminReviewProviderPayment, submitBookingRefund, adminListBookingRefunds, openPrivateFile, getProviderStaff, addProviderStaff, updateProviderStaff, deleteProviderStaff, getProviderStaffPublic, getLoyaltyAccount, getProviderLoyaltyCustomers, redeemLoyaltyReward, getMyStaffProfile, claimStaffSeatByEmail, getStaffBookings, getProviderNotifyEmail, getMaintenanceStatus, setMaintenanceMode, getSiteOfflineStatus, setSiteOffline, guestAuthWithPassword, updateGuestPassword, savePushSubscription, attachBookingServices, getProviderBlocks, insertProviderBlock, deleteProviderBlock, proposeBookingReschedule, confirmBookingReschedule, declineBookingReschedule, withdrawBookingReschedule, establishSoloSession, getServerSoloSessionToken, getLocalSoloSessionToken, clearLocalSoloSessionToken, subscribeToSoloSessionReplacement, signInWithPhonePassword, customerPhoneAuth, isPhoneLoginEmail, formatPhoneForDisplay, weakPasswordReason, submitSupportMessage, adminSetTempPassword, getMustChangePassword, clearMustChangePassword, adminProviderOverview, adminSetProviderBadges, adminSetProviderPhoto, adminListProviderServices, adminUpdateService, adminSetWorkingHours, adminGetFeatureOverrides, adminSetFeatureOverride, listSupportMessages, setSupportMessageStatus, getProviderMembershipPlans, getMyMembershipPlans, createMembershipPlan, updateMembershipPlan, subscribeToMembershipPlan, submitMembershipPayment, getMyMemberships, getProviderMembershipSubscribers, getProviderMembershipPayments, reviewMembershipPayment, cancelMembership, redeemMembershipVisit, startSoloTrial, adminStartProviderTrial, adminExtendProviderTrial, adminEndProviderTrial, adminExtendPaymentDue, adminRestoreDowngradedPlan, adminPlatformStats, setBookingAnswers, getFormEmail, redeemMembershipVisitFor, attachBookingAddons, getProviderCapacity, getPlanSpotsLeft, recordPastBooking, startSoloTrialFromApproval, uploadTradeLicense } from "./supabase";
 import AdminDashboard from "./AdminDashboard";
 import ProfilePhotoModal from "./ProfilePhotoModal";
 import LanguageSelector from "./LanguageSelector";
@@ -204,7 +204,8 @@ function bookingConfirmedEmailHtml({ customerName, providerProfile, serviceName,
 // profile is created automatically (see loadProviderProfile). This email
 // exists so they actually know to go do that, rather than the admin
 // approving someone who never finds out and never shows up in search.
-function providerApprovedEmailHtml({ businessName, ownerName }) {
+function providerApprovedEmailHtml({ businessName, ownerName, trialEnds }) {
+  const endsText = trialEnds ? new Date(trialEnds).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", timeZone: "America/Belize" }) : "";
   return `
   <div style="font-family: -apple-system, Helvetica, Arial, sans-serif; max-width: 520px; margin: 0 auto; color: #17141F;">
     <div style="background: #4C3DC4; padding: 22px 28px; border-radius: 10px 10px 0 0;">
@@ -218,7 +219,10 @@ function providerApprovedEmailHtml({ businessName, ownerName }) {
           Log in at <strong>vaibook.bz</strong> → Business log in, with this same email and the password you chose. The moment you do, your business goes live and customers can start finding and booking you.
         </div>
       </div>
-      <p style="font-size: 13px; color: #6B6578; line-height: 1.5;">Nothing else is needed — no forms, no re-applying. Just sign in once and you're live.</p>
+      <div style="background: #FFF8E1; border-radius: 8px; padding: 14px 18px; margin-bottom: 16px; font-size: 14px; line-height: 1.6;">
+        🎁 <strong>Your 14-day free Solo trial started today</strong>${endsText ? ` and runs until <strong>${endsText}</strong>` : ""}. Everything is unlocked — reminders, deposits, memberships and more. We'll remind you 24 hours before it ends.
+      </div>
+      <p style="font-size: 13px; color: #6B6578; line-height: 1.5;">Nothing else is needed — no forms, no re-applying. Just sign in and you're live.</p>
       <p style="font-size: 13px; color: #6B6578; margin-top: 16px;">— The VaiBook Team</p>
     </div>
   </div>`;
@@ -7653,6 +7657,7 @@ const NOTIF_DESTINATIONS = {
   reminder: { view: "customer", tab: "home" },
   // Support messages → Admin → Messages (tapping one used to do nothing).
   support: { view: "admin", tab: "messages" },
+  trial_ending: { view: "provider", tab: "billing" },
 };
 
 // Site-wide banner for the admin-only emergency maintenance switch (see
@@ -20787,6 +20792,8 @@ function ProviderSignup({ onNav }) {
   });
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+  const [license, setLicense] = useState(null);
+  const isEs = String(i18n.language || "").startsWith("es");
 
   // Already logged in (as a customer)? Then the business goes on this same
   // account: no new email or password, name and phone filled in, and they
@@ -20818,6 +20825,8 @@ function ProviderSignup({ onNav }) {
     if (phoneDigits(form.phone) < 7) { setSubmitError(bl("signupPhoneInvalid")); return; }
     if (!me && !passwordMeetsRules(form.password || "")) { setSubmitError(caText(i18n.language, "pwRules")); return; }
     if (!me && form.password !== form.password2) { setSubmitError(bl("pwMismatch")); return; }
+    if (!license) { setSubmitError(isEs ? "Agrega una foto o PDF de tu licencia comercial (trade license)." : "Please add a photo or PDF of your trade license."); return; }
+    if (license.size > 15 * 1024 * 1024) { setSubmitError(isEs ? "Ese archivo es muy grande (máx. 15 MB). Prueba con una foto." : "That file is too big (max 15 MB). Try a photo instead."); return; }
     setLoading(true);
     setSubmitError("");
 
@@ -20832,7 +20841,19 @@ function ProviderSignup({ onNav }) {
         setSubmitError(returning ? bl("signupEmailTaken") : bl("signupAccountFailed", { msg: authErr.message || "" }));
         return;
       }
-      try { await supabase.auth.signOut(); } catch (e) { /* ignore */ }
+    }
+
+    // Trade license goes up while they're signed in (their own private folder).
+    let licensePath = null;
+    try {
+      const { data: ud } = await supabase.auth.getUser();
+      licensePath = await uploadTradeLicense(ud && ud.user && ud.user.id, license);
+    } catch (e) { licensePath = null; }
+    if (!me) { try { await supabase.auth.signOut(); } catch (e) { /* ignore */ } }
+    if (!licensePath) {
+      setLoading(false);
+      setSubmitError(isEs ? "No pudimos subir tu licencia comercial. Revisa tu conexión e inténtalo de nuevo." : "We couldn't upload your trade license. Check your connection and try again.");
+      return;
     }
 
     const selectedPlan = PLANS.find(p => p.id === plan);
@@ -20850,6 +20871,7 @@ function ProviderSignup({ onNav }) {
         service_type: form.serviceType,
         district: form.district,
         description: form.description || null,
+        trade_license_path: licensePath,
         plan: selectedPlan.id,
         status: "pending",
       });
@@ -21024,6 +21046,18 @@ function ProviderSignup({ onNav }) {
           <div className="input-group">
             <label>{t("providerSignup.form.description")}</label>
             <textarea placeholder={t("providerSignup.form.descriptionPlaceholder")} value={form.description} onChange={e => set("description", e.target.value)} />
+          </div>
+          <div className="input-group">
+            <label>{isEs ? "Licencia comercial (trade license) *" : "Trade license *"}</label>
+            <label data-testid="license-pick" style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 14px", border: "1.5px dashed var(--border, #D6D0E6)", borderRadius: 10, cursor: "pointer", background: license ? "#F0FDF4" : "transparent", fontSize: 14 }}>
+              <span style={{ fontSize: 22 }}>{license ? "✅" : "📄"}</span>
+              <span style={{ flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                {license ? license.name : (isEs ? "Toma una foto o sube un PDF" : "Take a photo or upload a PDF")}
+              </span>
+              {license && <span style={{ fontSize: 12, fontWeight: 600, color: "var(--accent, #4C3DC4)" }}>{isEs ? "Cambiar" : "Change"}</span>}
+              <input type="file" accept="image/*,application/pdf" style={{ display: "none" }} onChange={(e) => { const f = e.target.files && e.target.files[0]; if (f) { setLicense(f); setSubmitError(""); } e.target.value = ""; }} />
+            </label>
+            <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 4 }}>{isEs ? "Solo el equipo de VaiBook la ve. La usamos para verificar tu negocio." : "Only the VaiBook team sees it. We use it to verify your business."}</div>
           </div>
         </div>
 
@@ -21598,7 +21632,7 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
       const sent = await sendBookingEmail({
         to: app.email,
         subject: "You're approved on VaiBook!",
-        html: providerApprovedEmailHtml({ businessName: app.business_name, ownerName: app.owner_name }),
+        html: providerApprovedEmailHtml({ businessName: app.business_name, ownerName: app.owner_name, trialEnds: Date.now() + 14 * 24 * 60 * 60 * 1000 }),
       });
       if (!sent) window.alert(`${app.business_name} is approved, but the approval email didn't go out. Let them know directly that they can sign in now.`);
     }
@@ -21876,6 +21910,11 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
                     <div className="meta">{app.owner_name} · {app.service_type} · {app.district}</div>
                     <div className="meta">{app.email} · {app.phone}</div>
                     {app.description && <div className="meta" style={{ marginTop: 4, fontStyle: "italic" }}>{app.description}</div>}
+                    {app.trade_license_path ? (
+                      <button type="button" className="btn-sm" style={{ marginTop: 6 }} onClick={() => openPrivateFile(app.trade_license_path)}>📄 View trade license</button>
+                    ) : (
+                      <div className="meta" style={{ marginTop: 4, fontSize: 11, color: "#B45309" }}>No trade license uploaded</div>
+                    )}
                     <div className="meta" style={{ marginTop: 4, fontSize: 11 }}>Applied {new Date(app.created_at).toLocaleDateString()}</div>
                     {(() => {
                       const similar = findSimilarApplications(app, apps);
@@ -22766,7 +22805,10 @@ export default function App() {
           try {
             p = await getProviderProfile(authUser.id);
             if (p && p.id && (p.plan || "starter") === "starter" && !p.trial_used) {
-              const tr = await startSoloTrial(p.id);
+              // The 14 days count from when the admin approved them.
+              let tr = await startSoloTrialFromApproval(p.id);
+              const msg = (tr && tr.error && tr.error.message) || "";
+              if (tr && tr.error && /start_solo_trial_from_approval|function|schema cache/i.test(msg) && !/TRIAL_/.test(msg)) tr = await startSoloTrial(p.id);
               if (tr && !tr.error) p = await getProviderProfile(authUser.id);
             }
           } catch (err) {
