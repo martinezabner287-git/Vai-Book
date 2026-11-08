@@ -1,0 +1,64 @@
+# Weekly encrypted backup of the VaiBook database (2026-11-08).
+#
+# Every Sunday at 3:00 AM Belize (09:00 UTC) — or any time from
+# GitHub → Actions → "Weekly database backup" → Run workflow — this dumps the
+# whole Supabase database, encrypts it with a passphrase only you know, and
+# keeps it for 90 days as a downloadable file on the workflow run.
+#
+# The repository is public, so the file is ENCRYPTED before upload; without
+# the passphrase it's unreadable. Needs two repository secrets
+# (GitHub → Settings → Secrets and variables → Actions → New repository secret):
+#   SUPABASE_DB_URL     Supabase → Connect → "Session pooler" connection string,
+#                       with your database password filled in.
+#   BACKUP_PASSPHRASE   A long passphrase you keep somewhere safe.
+#
+# To restore: download the .gpg file from a run, then
+#   gpg -d vaibook-YYYY-MM-DD.sql.gz.gpg | gunzip > backup.sql
+# and load backup.sql into a Postgres database (psql -f backup.sql).
+
+name: Weekly database backup
+
+on:
+  schedule:
+    - cron: "0 9 * * 0"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check secrets are set
+        env:
+          DB: ${{ secrets.SUPABASE_DB_URL }}
+          PASS: ${{ secrets.BACKUP_PASSPHRASE }}
+        run: |
+          if [ -z "$DB" ] || [ -z "$PASS" ]; then
+            echo "::error::Add the SUPABASE_DB_URL and BACKUP_PASSPHRASE repository secrets first."
+            exit 1
+          fi
+
+      - name: Dump, compress and encrypt
+        env:
+          DB: ${{ secrets.SUPABASE_DB_URL }}
+          PASS: ${{ secrets.BACKUP_PASSPHRASE }}
+        run: |
+          set -euo pipefail
+          FILE="vaibook-$(date -u +%Y-%m-%d).sql.gz.gpg"
+          docker run --rm -e DB="$DB" postgres:17 \
+            sh -c 'pg_dump "$DB" --no-owner --no-privileges --schema=public --schema=auth --schema=storage' \
+            | gzip -9 \
+            | gpg --batch --yes --pinentry-mode loopback --passphrase "$PASS" --symmetric --cipher-algo AES256 -o "$FILE"
+          ls -lh "$FILE"
+          echo "FILE=$FILE" >> "$GITHUB_ENV"
+
+      - name: Keep the encrypted file for 90 days
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.FILE }}
+          path: ${{ env.FILE }}
+          retention-days: 90
+          if-no-files-found: error

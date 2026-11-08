@@ -9,7 +9,7 @@ import { getProviderDirectory, submitSupportMessage } from "./supabase";
 
 export const INFO_PAGES = ["about", "how-it-works", "districts", "blog", "help", "contact", "privacy", "terms"];
 const DISTRICT_LIST = ["Belize City", "Cayo", "Corozal", "Orange Walk", "Stann Creek", "Toledo"];
-const UPDATED = { en: "October 27, 2026", es: "27 de octubre de 2026" };
+const UPDATED = { en: "November 8, 2026", es: "8 de noviembre de 2026" };
 
 const TITLES = {
   en: { about: "About Vai", "how-it-works": "How it works", districts: "Districts", blog: "Blog", help: "Help center", contact: "Contact us", privacy: "Privacy policy", terms: "Terms of use" },
@@ -235,7 +235,15 @@ const C = {
           "Only upload photos and content you have the right to use.",
           "Use customers' information only to provide and manage their bookings, and keep it private.",
           "You're responsible for your own licences, taxes and legal obligations. VaiBook's tax tools are a convenience, not tax or legal advice.",
-          "Subscription fees, if any, are shown before you're charged.",
+        ]],
+        ["Plans and payments for businesses", [
+          "Every approved business gets a free trial of the plan it applied for (Solo or Team). The trial starts the moment we approve your application, and we remind you 24 hours before it ends.",
+          "After the trial you pay for a plan to stay on VaiBook: monthly, or 6 months at once (which covers 7 months). Prices are shown on the pricing page and in My plan & billing before you pay. There is no setup fee and no commission on your bookings.",
+          "You pay by bank transfer or mobile wallet and upload your receipt in My plan & billing. Your plan is active once we confirm the payment.",
+          "If your trial ends or your due date passes without payment, your business is paused the next day: it's hidden from customers, can't take bookings, and you'll only see the payment page until you pay. Your bookings, clients and history are kept, and everything switches back on as soon as we confirm your payment. A receipt waiting for our review counts as paid.",
+          "Payments for a period you've already started aren't refundable. You can change plans or stop paying when your current period ends.",
+          "Launch challenge: businesses that finish all the challenge tasks during the free trial get their first 2 monthly payments at half price. It doesn't apply to the 6-month option and can't be exchanged for cash.",
+          "We may change prices for future periods. We'll tell you in the app before a new price applies to you.",
         ]],
         ["Reviews and content", [
           "Reviews must be honest and based on a real visit. We may remove content that is false, abusive, discriminatory, or breaks the law.",
@@ -437,7 +445,15 @@ const C = {
           "Sube solo fotos y contenido que tengas derecho a usar.",
           "Usa la información de los clientes solo para atender sus reservas y mantenla privada.",
           "Eres responsable de tus licencias, impuestos y obligaciones legales. Las herramientas de impuestos de VaiBook son una ayuda, no asesoría fiscal ni legal.",
-          "Las tarifas de suscripción, si las hay, se muestran antes de cobrarte.",
+        ]],
+        ["Planes y pagos para negocios", [
+          "Todo negocio aprobado recibe una prueba gratis del plan que solicitó (Solo o Team). La prueba empieza en cuanto aprobamos tu solicitud, y te avisamos 24 horas antes de que termine.",
+          "Después de la prueba pagas un plan para seguir en VaiBook: mensual, o 6 meses de una vez (que cubre 7 meses). Los precios se muestran en la página de precios y en Mi plan y pagos antes de pagar. No hay costo de inicio ni comisión por tus reservas.",
+          "Pagas por transferencia bancaria o billetera móvil y subes tu recibo en Mi plan y pagos. Tu plan queda activo cuando confirmamos el pago.",
+          "Si tu prueba termina o pasa tu fecha de pago sin pagar, tu negocio se pausa al día siguiente: queda oculto para los clientes, no puede recibir reservas y solo verás la página de pago hasta que pagues. Tus reservas, clientes e historial se conservan, y todo vuelve en cuanto confirmamos tu pago. Un recibo esperando nuestra revisión cuenta como pagado.",
+          "Los pagos de un periodo ya iniciado no son reembolsables. Puedes cambiar de plan o dejar de pagar al terminar tu periodo actual.",
+          "Reto de lanzamiento: los negocios que completan todas las tareas del reto durante la prueba gratis pagan sus primeros 2 pagos mensuales a mitad de precio. No aplica a la opción de 6 meses y no se cambia por dinero.",
+          "Podemos cambiar los precios de periodos futuros. Te avisaremos en la app antes de que un nuevo precio se te aplique.",
         ]],
         ["Reseñas y contenido", [
           "Las reseñas deben ser honestas y de una visita real. Podemos quitar contenido falso, abusivo, discriminatorio o ilegal.",
