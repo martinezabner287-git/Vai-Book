@@ -1,4 +1,4 @@
--- STATUS: waiting for Abner's OK to apply to the live database.
+-- 2026-11-08 APPLIED after Abner said "apply billing emails"; send-billing-emails deployed and a test email delivered.
 -- 2026-11-08: payment reminders go out in the morning (about 9:10 AM Belize
 -- instead of 1:10 AM), and every trial/billing notification is also emailed
 -- to the business (send-billing-emails edge function, hourly).
