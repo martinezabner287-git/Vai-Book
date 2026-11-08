@@ -1,7 +1,7 @@
 
-import { useState, useEffect, useLayoutEffect, useRef, useContext, createContext, lazy, Suspense, useCallback } from "react";
+import { useState, useEffect, useLayoutEffect, useRef, useContext, createContext, lazy, Suspense, useCallback, Fragment } from "react";
 import { flushSync } from "react-dom";
-import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, updateService, deleteService, getActiveProviders, getProviderDirectory, createBooking, getProviderBusyWindows, createBookingSafe, cancelBooking, markBookingCheckedIn, getCustomerBookings, uploadReceipt, submitReview, getProviderReviews, updateReview, sendBookingEmail, updateUserProfile, getPaymentMethods, addPaymentMethod, deletePaymentMethod, createNotification, getNotifications, markNotificationRead, markAllNotificationsRead, getCategoryDefaultFeatures, getProviderFeatureOverrides, setProviderFeatureOverride, getVisitNotes, upsertVisitNote, adminListProviders, adminUpdateProvider, adminDeleteProvider, adminCountCustomers, getFavoriteProviderIds, getFavoriteProviders, addFavorite, removeFavorite, getBookingMessages, sendBookingMessage, markBookingMessagesRead, getUnreadBookingMessages, getProviderMonthlyTrend, createProviderProfile, getProviderById, createWalkInBooking, submitProviderPayment, getMyProviderPayments, adminListProviderPayments, adminReviewProviderPayment, submitBookingRefund, adminListBookingRefunds, openPrivateFile, getProviderStaff, addProviderStaff, updateProviderStaff, deleteProviderStaff, getProviderStaffPublic, getLoyaltyAccount, getProviderLoyaltyCustomers, redeemLoyaltyReward, getMyStaffProfile, claimStaffSeatByEmail, getStaffBookings, getProviderNotifyEmail, getMaintenanceStatus, setMaintenanceMode, getSiteOfflineStatus, setSiteOffline, guestAuthWithPassword, updateGuestPassword, savePushSubscription, attachBookingServices, getProviderBlocks, insertProviderBlock, deleteProviderBlock, proposeBookingReschedule, confirmBookingReschedule, declineBookingReschedule, withdrawBookingReschedule, establishSoloSession, getServerSoloSessionToken, getLocalSoloSessionToken, clearLocalSoloSessionToken, subscribeToSoloSessionReplacement, signInWithPhonePassword, customerPhoneAuth, isPhoneLoginEmail, formatPhoneForDisplay, weakPasswordReason, submitSupportMessage, adminSetTempPassword, getMustChangePassword, clearMustChangePassword, listSupportMessages, setSupportMessageStatus, getProviderMembershipPlans, getMyMembershipPlans, createMembershipPlan, updateMembershipPlan, subscribeToMembershipPlan, submitMembershipPayment, getMyMemberships, getProviderMembershipSubscribers, getProviderMembershipPayments, reviewMembershipPayment, cancelMembership, redeemMembershipVisit, startSoloTrial, adminStartProviderTrial, adminExtendProviderTrial, adminEndProviderTrial, adminExtendPaymentDue, adminRestoreDowngradedPlan, adminPlatformStats, setBookingAnswers, getFormEmail, redeemMembershipVisitFor, attachBookingAddons, getProviderCapacity, getPlanSpotsLeft } from "./supabase";
+import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, updateService, deleteService, getActiveProviders, getProviderDirectory, createBooking, getProviderBusyWindows, createBookingSafe, cancelBooking, markBookingCheckedIn, getCustomerBookings, uploadReceipt, submitReview, getProviderReviews, updateReview, sendBookingEmail, updateUserProfile, getPaymentMethods, addPaymentMethod, deletePaymentMethod, createNotification, getNotifications, markNotificationRead, markAllNotificationsRead, getCategoryDefaultFeatures, getProviderFeatureOverrides, setProviderFeatureOverride, getVisitNotes, upsertVisitNote, adminListProviders, adminUpdateProvider, adminDeleteProvider, adminCountCustomers, getFavoriteProviderIds, getFavoriteProviders, addFavorite, removeFavorite, getBookingMessages, sendBookingMessage, markBookingMessagesRead, getUnreadBookingMessages, getProviderMonthlyTrend, createProviderProfile, getProviderById, createWalkInBooking, submitProviderPayment, getMyProviderPayments, adminListProviderPayments, adminReviewProviderPayment, submitBookingRefund, adminListBookingRefunds, openPrivateFile, getProviderStaff, addProviderStaff, updateProviderStaff, deleteProviderStaff, getProviderStaffPublic, getLoyaltyAccount, getProviderLoyaltyCustomers, redeemLoyaltyReward, getMyStaffProfile, claimStaffSeatByEmail, getStaffBookings, getProviderNotifyEmail, getMaintenanceStatus, setMaintenanceMode, getSiteOfflineStatus, setSiteOffline, guestAuthWithPassword, updateGuestPassword, savePushSubscription, attachBookingServices, getProviderBlocks, insertProviderBlock, deleteProviderBlock, proposeBookingReschedule, confirmBookingReschedule, declineBookingReschedule, withdrawBookingReschedule, establishSoloSession, getServerSoloSessionToken, getLocalSoloSessionToken, clearLocalSoloSessionToken, subscribeToSoloSessionReplacement, signInWithPhonePassword, customerPhoneAuth, isPhoneLoginEmail, formatPhoneForDisplay, weakPasswordReason, submitSupportMessage, adminSetTempPassword, getMustChangePassword, clearMustChangePassword, adminProviderOverview, adminSetProviderBadges, adminSetProviderPhoto, adminListProviderServices, adminUpdateService, adminSetWorkingHours, adminGetFeatureOverrides, adminSetFeatureOverride, listSupportMessages, setSupportMessageStatus, getProviderMembershipPlans, getMyMembershipPlans, createMembershipPlan, updateMembershipPlan, subscribeToMembershipPlan, submitMembershipPayment, getMyMemberships, getProviderMembershipSubscribers, getProviderMembershipPayments, reviewMembershipPayment, cancelMembership, redeemMembershipVisit, startSoloTrial, adminStartProviderTrial, adminExtendProviderTrial, adminEndProviderTrial, adminExtendPaymentDue, adminRestoreDowngradedPlan, adminPlatformStats, setBookingAnswers, getFormEmail, redeemMembershipVisitFor, attachBookingAddons, getProviderCapacity, getPlanSpotsLeft } from "./supabase";
 import AdminDashboard from "./AdminDashboard";
 import ProfilePhotoModal from "./ProfilePhotoModal";
 import LanguageSelector from "./LanguageSelector";
@@ -12523,7 +12523,12 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                 <div className="profile-header-row">
                   <div className="profile-name-row">
                     <h2>{selectedProvider.business_name}</h2>
-                    {selectedProvider.founding_partner && <span className="founding-row"><FoundingBadge /></span>}
+                    {(selectedProvider.founding_partner || selectedProvider.is_verified) && (
+                      <span className="founding-row" style={{ display: "inline-flex", gap: 6, flexWrap: "wrap" }}>
+                        {selectedProvider.is_verified && <span className="founding-chip" style={{ background: "#E6F6EC", color: "#15803D", borderColor: "#BFE6CC" }} title={String(i18n.language || "").startsWith("es") ? "VaiBook confirmó que este negocio es real" : "VaiBook checked this business is real"}>✓ {String(i18n.language || "").startsWith("es") ? "Verificado" : "Verified"}</span>}
+                        {selectedProvider.founding_partner && <FoundingBadge />}
+                      </span>
+                    )}
                     <button
                       className="profile-icon-btn"
                       onClick={() => shareProvider(selectedProvider)}
@@ -20928,6 +20933,180 @@ const findSimilarApplications = (app, allApps) => {
   });
 };
 
+// Admin → Providers → ⚙️ Manage: everything an admin needs to help one
+// business — stats, contact, login help, their page, photo/prices/hours,
+// badges, and which extras they have. (2026-11-06)
+const ADMIN_DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+function AdminBusinessManage({ p, ov, adminUid, tempPwButton, tempPwStatus, onChanged }) {
+  const [services, setServices] = useState(null);
+  const [svcEdits, setSvcEdits] = useState({});
+  const [hours, setHours] = useState(null);
+  const [mods, setMods] = useState(null);
+  const [msg, setMsg] = useState("");
+  const [busy, setBusy] = useState("");
+  useEffect(() => {
+    let alive = true;
+    adminListProviderServices(p.id).then((x) => { if (alive) setServices(x); });
+    getWorkingHours(p.id).then((rows) => {
+      if (!alive) return;
+      setHours([0, 1, 2, 3, 4, 5, 6].map((d) => {
+        const r = rows.find((x) => x.day_of_week === d);
+        return { day_of_week: d, is_open: r ? !!r.is_open : false, start_time: (r && r.start_time ? String(r.start_time).slice(0, 5) : "09:00"), end_time: (r && r.end_time ? String(r.end_time).slice(0, 5) : "17:00") };
+      }));
+    });
+    Promise.all([getCategoryDefaultFeatures(p.category_key || "general"), adminGetFeatureOverrides(p.id)]).then(([defs, ovr]) => {
+      if (!alive) return;
+      const m = {};
+      LIVE_INDUSTRY_FEATURES.forEach((k) => { m[k] = ovr[k] != null ? ovr[k] : (defs || []).includes(k); });
+      setMods(m);
+    });
+    return () => { alive = false; };
+  }, [p.id, p.category_key]);
+  const flash = (t) => { setMsg(t); setTimeout(() => setMsg((m) => (m === t ? "" : m)), 3000); };
+  const ago = (d) => {
+    if (!d) return "never";
+    const days = Math.floor((Date.now() - new Date(d).getTime()) / 86400000);
+    return days <= 0 ? "today" : days === 1 ? "yesterday" : `${days} days ago`;
+  };
+  const wa = String(p.whatsapp || "").replace(/\D/g, "");
+  const waLink = wa ? `https://wa.me/${wa.length === 7 ? "501" + wa : wa}?text=${encodeURIComponent(`Hi ${p.business_name}! This is VaiBook support.`)}` : null;
+  const plan = PLANS.find((x) => x.id === (p.is_trial ? "pro" : (p.plan || "starter"))) || PLANS[0];
+  const box = { border: "1px solid var(--border)", borderRadius: 12, padding: 14, background: "#fff" };
+  const h = { fontSize: 13, fontWeight: 800, margin: "0 0 8px" };
+  const badge = async (key, val, patch) => {
+    setBusy(key);
+    const r = await adminSetProviderBadges(p.id, { [key]: val });
+    setBusy("");
+    if (r) { onChanged(patch); flash("Saved ✓"); }
+  };
+  const uploadPhoto = async (file) => {
+    if (!file || !adminUid) return;
+    setBusy("photo");
+    const url = await uploadProviderPhoto(adminUid, file);
+    const ok = url && (await adminSetProviderPhoto(p.id, url));
+    setBusy("");
+    if (ok) { onChanged({ profile_photo_url: url }); flash("Photo updated ✓"); }
+  };
+  const saveService = async (s) => {
+    const e = svcEdits[s.id] || {};
+    setBusy(s.id);
+    const r = await adminUpdateService(s.id, {
+      price: e.price != null && e.price !== "" ? Number(e.price) : null,
+      duration_min: e.duration_min != null && e.duration_min !== "" ? parseInt(e.duration_min, 10) : null,
+      is_active: e.is_active != null ? e.is_active : null,
+    });
+    setBusy("");
+    if (r) { setServices((list) => list.map((x) => (x.id === s.id ? r : x))); setSvcEdits((m) => ({ ...m, [s.id]: undefined })); flash("Saved ✓"); }
+  };
+  const saveHours = async () => {
+    setBusy("hours");
+    const ok = await adminSetWorkingHours(p.id, hours);
+    setBusy("");
+    if (ok) flash("Hours saved ✓");
+  };
+  const toggleMod = async (k) => {
+    const next = !mods[k];
+    setMods((m) => ({ ...m, [k]: next }));
+    if (!(await adminSetFeatureOverride(p.id, k, next))) setMods((m) => ({ ...m, [k]: !next }));
+  };
+  return (
+    <div style={{ background: "var(--sand)", borderRadius: 14, padding: 14, margin: "0 0 14px", display: "grid", gap: 12, gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))" }}>
+      <div style={box}>
+        <p style={h}>📊 At a glance</p>
+        <div style={{ fontSize: 13, lineHeight: 1.7 }}>
+          <div>Bookings this month: <b>{ov ? ov.bookings_this_month : "…"}</b> · all time: <b>{ov ? ov.bookings_total : "…"}</b></div>
+          <div>Last booking made: <b>{ov ? ago(ov.last_booking_at) : "…"}</b></div>
+          <div>Owner last logged in: <b>{ov ? ago(ov.owner_last_login) : "…"}</b></div>
+          <div>Last payment: <b>{ov && ov.last_payment_at ? `BZ$${Number(ov.last_payment_amount || 0).toFixed(2)} · ${ago(ov.last_payment_at)} (${ov.last_payment_status})` : "none yet"}</b></div>
+        </div>
+      </div>
+      <div style={box}>
+        <p style={h}>💬 Contact & login help</p>
+        <div style={{ fontSize: 13, marginBottom: 8 }}>Owner email: <b>{ov?.owner_email || "—"}</b>{p.whatsapp ? <> · WhatsApp: <b>{p.whatsapp}</b></> : null}</div>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+          {waLink && <a className="btn-sm forest" href={waLink} target="_blank" rel="noopener noreferrer" style={{ textDecoration: "none" }}>WhatsApp</a>}
+          {ov?.owner_email && !/@phone\.vaibook\.bz$/i.test(ov.owner_email) && <a className="btn-sm" href={`mailto:${ov.owner_email}?subject=${encodeURIComponent("VaiBook — " + p.business_name)}`} style={{ textDecoration: "none", border: "1px solid var(--border)" }}>Email</a>}
+          <a className="btn-sm" href={p.slug ? `/b/${p.slug}/` : `/#book-${p.id}`} target="_blank" rel="noopener noreferrer" style={{ textDecoration: "none", border: "1px solid var(--border)" }}>👁 View their page</a>
+          {ov?.owner_email && tempPwButton(`prov-${p.id}`, ov.owner_email)}
+        </div>
+        {tempPwStatus(`prov-${p.id}`)}
+      </div>
+      <div style={box}>
+        <p style={h}>🏅 Badges</p>
+        {[["verified", "✓ Verified", "Shown on their page — you've checked this business is real", !!p.is_verified, { is_verified: !p.is_verified }],
+          ["founding", "🏅 Founding Partner", "One of the first businesses on VaiBook", !!p.founding_partner, { founding_partner: !p.founding_partner }],
+          ["featured", "⭐ Featured", "Shown first in search and on the home page", !!p.is_featured, { is_featured: !p.is_featured }]].map(([k, label, desc, on, patch]) => (
+          <div key={k} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, padding: "6px 0" }}>
+            <div><div style={{ fontSize: 13, fontWeight: 700 }}>{label}</div><div style={{ fontSize: 12, color: "var(--muted)" }}>{desc}</div></div>
+            <div className={`toggle ${on ? "on" : ""}`} style={{ opacity: busy === k ? 0.5 : 1, flexShrink: 0 }} onClick={() => busy !== k && badge(k, !on, patch)}></div>
+          </div>
+        ))}
+      </div>
+      <div style={box}>
+        <p style={h}>🖼 Photo</p>
+        <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+          {p.profile_photo_url ? <img src={p.profile_photo_url} alt="" style={{ width: 64, height: 64, borderRadius: 12, objectFit: "cover" }} /> : <div style={{ width: 64, height: 64, borderRadius: 12, background: "var(--accent-soft)" }} />}
+          <label className="btn-sm" style={{ border: "1px solid var(--border)", cursor: "pointer" }}>
+            {busy === "photo" ? "Uploading…" : "Change photo"}
+            <input type="file" accept="image/*" style={{ display: "none" }} onChange={(e) => uploadPhoto(e.target.files && e.target.files[0])} />
+          </label>
+        </div>
+        <p style={{ fontSize: 12, color: "var(--muted)", margin: "8px 0 0" }}>Also used in the picture people see when their link is shared (updates on the next site update).</p>
+      </div>
+      <div style={{ ...box, gridColumn: "1 / -1" }}>
+        <p style={h}>💲 Services & prices</p>
+        {services === null ? <p style={{ fontSize: 13, color: "var(--muted)" }}>Loading…</p> : services.length === 0 ? <p style={{ fontSize: 13, color: "var(--muted)" }}>No services yet.</p> : services.map((s) => {
+          const e = svcEdits[s.id] || {};
+          const active = e.is_active != null ? e.is_active : s.is_active !== false;
+          const dirty = Object.keys(e).length > 0;
+          return (
+            <div key={s.id} style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", padding: "8px 0", borderTop: "1px solid var(--border)" }}>
+              <div style={{ flex: "1 1 160px", fontSize: 13, fontWeight: 700 }}>{s.name}{s.is_addon && <span style={{ fontWeight: 500, color: "var(--muted)" }}> · add-on</span>}</div>
+              <label style={{ fontSize: 12 }}>BZ$ <input className="input" type="number" min="0" step="0.5" style={{ width: 80, padding: "4px 6px" }} value={e.price != null ? e.price : s.price} onChange={(ev) => setSvcEdits((m) => ({ ...m, [s.id]: { ...e, price: ev.target.value } }))} /></label>
+              <label style={{ fontSize: 12 }}><input className="input" type="number" min="5" step="5" style={{ width: 64, padding: "4px 6px" }} value={e.duration_min != null ? e.duration_min : s.duration_min} onChange={(ev) => setSvcEdits((m) => ({ ...m, [s.id]: { ...e, duration_min: ev.target.value } }))} /> min</label>
+              <label style={{ fontSize: 12, display: "flex", gap: 4, alignItems: "center" }}><input type="checkbox" checked={active} onChange={(ev) => setSvcEdits((m) => ({ ...m, [s.id]: { ...e, is_active: ev.target.checked } }))} /> Bookable</label>
+              <button className="btn-sm forest" disabled={!dirty || busy === s.id} onClick={() => saveService(s)}>{busy === s.id ? "…" : "Save"}</button>
+            </div>
+          );
+        })}
+      </div>
+      <div style={{ ...box, gridColumn: "1 / -1" }}>
+        <p style={h}>🕘 Opening hours</p>
+        {hours === null ? <p style={{ fontSize: 13, color: "var(--muted)" }}>Loading…</p> : (
+          <>
+            {hours.map((d, i) => (
+              <div key={d.day_of_week} style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", padding: "4px 0", fontSize: 13 }}>
+                <label style={{ width: 70, display: "flex", gap: 6, alignItems: "center", fontWeight: 700 }}><input type="checkbox" checked={d.is_open} onChange={(ev) => setHours((hs) => hs.map((x, j) => (j === i ? { ...x, is_open: ev.target.checked } : x)))} /> {ADMIN_DAY_NAMES[d.day_of_week]}</label>
+                {d.is_open ? (
+                  <>
+                    <input className="input" type="time" style={{ padding: "4px 6px", width: 110 }} value={d.start_time} onChange={(ev) => setHours((hs) => hs.map((x, j) => (j === i ? { ...x, start_time: ev.target.value } : x)))} />
+                    <span>to</span>
+                    <input className="input" type="time" style={{ padding: "4px 6px", width: 110 }} value={d.end_time} onChange={(ev) => setHours((hs) => hs.map((x, j) => (j === i ? { ...x, end_time: ev.target.value } : x)))} />
+                  </>
+                ) : <span style={{ color: "var(--muted)" }}>Closed</span>}
+              </div>
+            ))}
+            <button className="btn-sm forest" style={{ marginTop: 8 }} disabled={busy === "hours"} onClick={saveHours}>{busy === "hours" ? "Saving…" : "Save hours"}</button>
+          </>
+        )}
+      </div>
+      <div style={{ ...box, gridColumn: "1 / -1" }}>
+        <p style={h}>🧩 Extras</p>
+        <div style={{ fontSize: 13, marginBottom: 6 }}>On <b>{plan.name}</b>{p.is_trial ? " (free trial)" : ""} they get:</div>
+        <ul style={{ fontSize: 13, margin: "0 0 10px", paddingLeft: 18, color: "var(--dark-text)" }}>{plan.features.map((f) => <li key={f}>{f}</li>)}</ul>
+        <div style={{ fontSize: 12, color: "var(--muted)", marginBottom: 6 }}>Change their plan with the dropdown above to turn the Solo extras on or off.</div>
+        {mods && LIVE_INDUSTRY_FEATURES.map((k) => (
+          <div key={k} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, padding: "6px 0", borderTop: "1px solid var(--border)" }}>
+            <div><div style={{ fontSize: 13, fontWeight: 700 }}>{INDUSTRY_FEATURE_CATALOG[k].icon} {INDUSTRY_FEATURE_CATALOG[k].label}</div><div style={{ fontSize: 12, color: "var(--muted)" }}>{INDUSTRY_FEATURE_CATALOG[k].desc} · free module</div></div>
+            <div className={`toggle ${mods[k] ? "on" : ""}`} style={{ flexShrink: 0 }} onClick={() => toggleMod(k)}></div>
+          </div>
+        ))}
+      </div>
+      {msg && <div style={{ gridColumn: "1 / -1", fontSize: 13, fontWeight: 700, color: "var(--forest)" }}>{msg}</div>}
+    </div>
+  );
+}
+
 function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
   // Share kit / "Scan to book" poster for any business, so VaiBook can
   // print and hand a poster to a shop.
@@ -21153,10 +21332,13 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
     setLoadingApps(false);
   };
 
+  const [provOverview, setProvOverview] = useState({});
+  const [manageId, setManageId] = useState(null);
   const loadProviders = async () => {
     setLoadingProviders(true);
-    const data = await adminListProviders();
+    const [data, ov] = await Promise.all([adminListProviders(), adminProviderOverview()]);
     setProviders(data);
+    setProvOverview(ov || {});
     setLoadingProviders(false);
   };
 
@@ -21654,7 +21836,8 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
                 }
 
                 return (
-                  <div key={p.id} className="booking-item admin-prov-row" style={{ alignItems: "flex-start" }}>
+                  <Fragment key={p.id}>
+                  <div className="booking-item admin-prov-row" style={{ alignItems: "flex-start" }}>
                     <div className="booking-info" style={{ flex: 1, minWidth: 0 }}>
                       <div className="title">
                         {p.business_name}{" "}
@@ -21738,6 +21921,7 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
 
                       {!isConfirmingDelete && (
                         <div style={{ display: "flex", gap: 8 }}>
+                          <button className="btn-sm forest" onClick={() => setManageId(manageId === p.id ? null : p.id)}>{manageId === p.id ? "Close" : "⚙️ Manage"}</button>
                           <button className="btn-sm" style={{ background: "transparent", border: "1px solid var(--lime)", color: "var(--lime)" }} onClick={() => setPosterFor(p)}>Share / Poster</button>
                           <button className="btn-sm" style={{ background: "transparent", border: "1px solid var(--muted)", color: "var(--muted)" }} disabled={isSaving} onClick={() => startEditProvider(p)}>Edit</button>
                           <button className="btn-sm" style={{ background: "transparent", border: "1px solid var(--muted)", color: "var(--muted)" }} disabled={isSaving} onClick={() => toggleProviderActive(p)}>
@@ -21762,6 +21946,17 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
                       )}
                     </div>
                   </div>
+                  {manageId === p.id && (
+                    <AdminBusinessManage
+                      p={p}
+                      ov={provOverview[p.id]}
+                      adminUid={user?.id}
+                      tempPwButton={tempPwButton}
+                      tempPwStatus={tempPwStatus}
+                      onChanged={(patch) => setProviders((list) => list.map((x) => (x.id === p.id ? { ...x, ...patch } : x)))}
+                    />
+                  )}
+                  </Fragment>
                 );
               })}
             </div>

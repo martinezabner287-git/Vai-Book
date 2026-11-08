@@ -1967,6 +1967,56 @@ export const upsertVisitNote = async (note) => {
 // that checks the caller's email against the `admins` table server-side
 // (see supabase_admin_provider_management.sql) — enforced in the
 // database, not just hidden behind a UI check.
+// ── ADMIN: per-business "Manage" panel (2026-11-06) ─────────────
+// Owner email, last login, bookings this month, last payment — one call.
+export const adminProviderOverview = async () => {
+  const { data, error } = await supabase.rpc('admin_provider_overview');
+  if (error) { console.error('admin_provider_overview:', error.message); return {}; }
+  const map = {};
+  (data || []).forEach((r) => { map[r.provider_id] = r; });
+  return map;
+};
+export const adminSetProviderBadges = async (providerId, { verified = null, founding = null, featured = null }) => {
+  const { data, error } = await supabase.rpc('admin_set_provider_badges', { p_provider_id: providerId, p_verified: verified, p_founding: founding, p_featured: featured });
+  if (error) { reportActionError('adminSetProviderBadges', error); return null; }
+  return data;
+};
+export const adminSetProviderPhoto = async (providerId, url) => {
+  const { error } = await supabase.rpc('admin_set_provider_photo', { p_provider_id: providerId, p_url: url });
+  if (error) { reportActionError('adminSetProviderPhoto', error); return false; }
+  return true;
+};
+export const adminListProviderServices = async (providerId) => {
+  const { data, error } = await supabase.rpc('admin_list_provider_services', { p_provider_id: providerId });
+  if (error) { console.error('admin_list_provider_services:', error.message); return []; }
+  return data || [];
+};
+export const adminUpdateService = async (serviceId, { price = null, duration_min = null, is_active = null }) => {
+  const { data, error } = await supabase.rpc('admin_update_service', { p_service_id: serviceId, p_price: price, p_duration_min: duration_min, p_is_active: is_active });
+  if (error) { reportActionError('adminUpdateService', error); return null; }
+  return data;
+};
+export const adminSetWorkingHours = async (providerId, days) => {
+  const { error } = await supabase.rpc('admin_set_working_hours', {
+    p_provider_id: providerId,
+    p_days: days.map((d) => ({ day_of_week: d.day_of_week, is_open: !!d.is_open, open_time: d.start_time || '', close_time: d.end_time || '' })),
+  });
+  if (error) { reportActionError('adminSetWorkingHours', error); return false; }
+  return true;
+};
+export const adminGetFeatureOverrides = async (providerId) => {
+  const { data, error } = await supabase.rpc('admin_get_feature_overrides', { p_provider_id: providerId });
+  if (error) return {};
+  const map = {};
+  (data || []).forEach((r) => { map[r.feature_key] = r.enabled; });
+  return map;
+};
+export const adminSetFeatureOverride = async (providerId, feature, enabled) => {
+  const { error } = await supabase.rpc('admin_set_feature_override', { p_provider_id: providerId, p_feature: feature, p_enabled: enabled });
+  if (error) { reportActionError('adminSetFeatureOverride', error); return false; }
+  return true;
+};
+
 export const adminListProviders = async () => {
   const { data, error } = await supabase.rpc('admin_list_providers');
   if (error) { console.error('Error listing providers:', error.message); return []; }
