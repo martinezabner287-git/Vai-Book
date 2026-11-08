@@ -1,4 +1,4 @@
--- STATUS: waiting for Abner's OK to apply to the live database.
+-- 2026-11-07 APPLIED to the live database after Abner said "apply"; verified with a rolled-back test.
 -- 2026-11-07: "Where businesses pay you" becomes a list, so VaiBook can show
 -- several banks and several mobile wallets (Admin → Settings & prices).
 -- Each item: {"kind":"bank"|"wallet","name","account_name","account_number","note"}.

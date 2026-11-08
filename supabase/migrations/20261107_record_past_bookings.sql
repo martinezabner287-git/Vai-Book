@@ -1,4 +1,4 @@
--- STATUS: waiting for Abner's OK to apply to the live database.
+-- 2026-11-07 APPLIED to the live database after Abner said "apply"; verified with a rolled-back test.
 -- 2026-11-07: "Add a past booking" — a business records visits that already
 -- happened (before they used VaiBook, or while they couldn't log in): who,
 -- what, when, what they actually paid, and the discount if any. Saved as a
