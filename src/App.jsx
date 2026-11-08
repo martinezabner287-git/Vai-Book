@@ -9484,7 +9484,7 @@ const LP_TEXT = {
     tool3t: "Agreements", tool3b: "Consent forms and waivers your clients sign on their phone.",
     tool4t: "Announcements", tool4b: "Tell all your clients about promos, new hours or open spots at once.",
     pricingTitle: "Simple pricing",
-    pricingSub: "Less than BZ$2 a day. Pay for 6 months and get the 7th month free.",
+    pricingSub: "From BZ${soloDay} a day. Pay for 6 months and get the 7th month free.",
     faqTitle: "Frequently asked questions",
     q1: "What does it cost?", a1: "Every business starts with a {trialDays}-day free trial of the plan it chooses. Finish the launch challenge during the trial and your first 2 monthly payments are half price. After that, Solo is BZ${soloDay} a day and Team BZ${teamDay} a day (includes your first {seats} staff seats) when you pay for 6 months — you get 7 months. Or pay monthly: BZ${solo}/month for Solo or BZ${team}/month for Team. No setup fee, no commission.",
     q2: "Does VaiBook take a cut of my bookings?", a2: "No. You pay one flat price and keep everything your clients pay you.",
@@ -9523,7 +9523,7 @@ const LP_TEXT = {
     tool3t: "Acuerdos", tool3b: "Formularios de consentimiento y exenciones que tus clientes firman en su teléfono.",
     tool4t: "Anuncios", tool4b: "Avisa a todos tus clientes sobre promociones, horarios o espacios libres a la vez.",
     pricingTitle: "Precios simples",
-    pricingSub: "Menos de BZ$2 al día. Paga 6 meses y el 7.º mes es gratis.",
+    pricingSub: "Desde BZ${soloDay} al día. Paga 6 meses y el 7.º mes es gratis.",
     faqTitle: "Preguntas frecuentes",
     q1: "¿Cuánto cuesta?", a1: "Todo negocio empieza con {trialDays} días gratis del plan que elija. Termina el reto de lanzamiento durante la prueba y tus primeros 2 pagos mensuales son a mitad de precio. Después, Solo cuesta BZ${soloDay} al día y Team BZ${teamDay} al día (incluye tus primeros {seats} puestos de personal) si pagas 6 meses — recibes 7 meses. O paga mensual: Solo BZ${solo}/mes o Team BZ${team}/mes. Sin costo de inicio ni comisión.",
     q2: "¿VaiBook se queda con una parte de mis reservas?", a2: "No. Pagas un precio fijo y te quedas con todo lo que te pagan tus clientes.",
@@ -9655,7 +9655,7 @@ function ProviderLandingPage({ onNav }) {
         <div className="vbl-wrap">
           <h2 className="vbl-h2">{lt("pricingTitle")}</h2>
           <p className="vbl-center-sub">{lt("pricingSub")}</p>
-          <p className="vbl-compare">{px("A website alone costs about BZ$700 and still can't take bookings, send reminders or track your money. Solo does all of it for under BZ$2 a day.", "Solo una página web cuesta unos BZ$700 y aun así no toma reservas, no envía recordatorios ni lleva tus cuentas. Solo hace todo eso por menos de BZ$2 al día.")}</p>
+          <p className="vbl-compare">{px("A website alone costs about BZ$700 and still can't take bookings, send reminders or track your money. Solo does all of it for about BZ$2 a day.", "Solo una página web cuesta unos BZ$700 y aun así no toma reservas, no envía recordatorios ni lleva tus cuentas. Solo hace todo eso por menos de BZ$2 al día.")}</p>
           <div className="term-toggle" role="tablist" aria-label={px("Billing period", "Periodo de pago")}>
             <button role="tab" aria-selected={priceTerm === "six"} className={priceTerm === "six" ? "on" : ""} onClick={() => setPriceTerm("six")}>
               {px("6 months", "6 meses")} <span className="term-save">{px("1 month free", "1 mes gratis")}</span>
@@ -14827,7 +14827,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
   // upgrading fresh and telling you how many seats I'll need."
   const teamSeats = teamSeatsOverride !== null ? teamSeatsOverride : staff.length;
   const teamExtraSeats = Math.max(0, teamSeats - TEAM_FREE_SEATS);
-  const teamBaseFee = PLANS.find((p) => p.id === "business")?.monthly ?? 174.9;
+  const teamBaseFee = PLANS.find((p) => p.id === "business")?.monthly ?? 179.7;
   const teamPlanTotal = teamBaseFee + teamExtraSeats * TEAM_PER_SEAT_PRICE;
   // Setup fee is only charged on a business's very first monthly payment.
   const hasPaidBefore = !!providerProfile?.next_payment_due_date || payments.some((pm) => pm.status === "confirmed");
@@ -19789,7 +19789,7 @@ const PLANS = [
     // it's computed, not just in this label.
     // 2026-10-27: 6-month plan = BZ$1.99/day (BZ$417.90 for 7 months);
     // monthly raised to BZ$69.90 (BZ$2.33/day) so the 6-month plan is the deal.
-    id: "pro", name: "Solo", price: "BZ$69.90/month, or BZ$1.99/day on 6 months", desc: "For solo practitioners", monthly: 69.9, sixMonthTotal: 417.9,
+    id: "pro", name: "Solo", price: "BZ$89.70/month, or BZ$2.10/day on 6 months", desc: "For solo practitioners", monthly: 89.7, sixMonthTotal: 441,
     tagline: "VaiBook runs the business side for you — reminders, deposits, client forms and your profit, all in one place.",
     // Shown as the small italic line under the daily-price pill (public
     // pricing cards + the provider's own "Current plan" billing card) —
@@ -19816,7 +19816,11 @@ const PLANS = [
     // lands on exactly 4.99 wherever that math runs.
     // 2026-10-27: 6-month plan = BZ$4.99/day (BZ$1,047.90 for 7 months);
     // monthly BZ$174.90 (BZ$5.83/day).
-    id: "business", name: "Team", price: "BZ$174.90/month, or BZ$4.99/day on 6 months", desc: `Base fee + BZ$${TEAM_PER_SEAT_PRICE}/seat after your first ${TEAM_FREE_SEATS}`, monthly: 174.9, sixMonthTotal: 1047.9,
+    // 2026-11-08 (Abner): Solo BZ$2.99/day monthly (BZ$89.70) or BZ$2.10/day on
+    // 6 months (BZ$441 for 7 months); Team BZ$5.99/day monthly (BZ$179.70) or
+    // BZ$5.30/day on 6 months (BZ$1,113 for 7 months). Live values come from
+    // platform_settings (Admin → Settings & prices); these are the fallbacks.
+    id: "business", name: "Team", price: "BZ$179.70/month, or BZ$5.30/day on 6 months", desc: `Base fee + BZ$${TEAM_PER_SEAT_PRICE}/seat after your first ${TEAM_FREE_SEATS}`, monthly: 179.7, sixMonthTotal: 1113,
     priceNote: `Base fee includes your first ${TEAM_FREE_SEATS} staff seats — BZ$${TEAM_PER_SEAT_PRICE}/month for each seat after that`,
     tagline: "For teams — a base plan covering your shop, plus staff seats you add as you grow.",
     valueNote: "(Built for owners leading a team, not just themselves.)",
@@ -19856,8 +19860,8 @@ const platformVars = () => {
   const team = PLANS.find((x) => x.id === "business");
   return {
     freeCap: PLATFORM.freeCap, trialDays: PLATFORM.trialDays, graceDays: PLATFORM.graceDays,
-    soloDay: solo ? dayRate(solo.sixMonthTotal || solo.monthly * SIX_MONTH_PAID, SIX_MONTH_DAYS) : "1.99",
-    teamDay: team ? dayRate(team.sixMonthTotal || team.monthly * SIX_MONTH_PAID, SIX_MONTH_DAYS) : "4.99",
+    soloDay: solo ? dayRate(solo.sixMonthTotal || solo.monthly * SIX_MONTH_PAID, SIX_MONTH_DAYS) : "2.10",
+    teamDay: team ? dayRate(team.sixMonthTotal || team.monthly * SIX_MONTH_PAID, SIX_MONTH_DAYS) : "5.30",
   };
 };
 function applyPlatformConfig(cfg) {
@@ -20040,7 +20044,7 @@ function SoloUpsell({ title, text, onPlans, compact }) {
       <div className="solo-upsell-badge">⭐ Solo</div>
       {title && <div className="solo-upsell-title">{title}</div>}
       <p className="solo-upsell-text">{text}</p>
-      {onPlans && <button type="button" className="solo-upsell-btn" onClick={onPlans}>{es ? "Ver planes — menos de BZ$2 al día" : "See plans — under BZ$2 a day"}</button>}
+      {onPlans && <button type="button" className="solo-upsell-btn" onClick={onPlans}>{es ? "Ver planes — desde BZ$2.10 al día" : "See plans — from BZ$2.10 a day"}</button>}
     </div>
   );
 }
