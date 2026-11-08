@@ -1,3 +1,4 @@
+-- 2026-11-08 APPLIED to the live database after Abner said "apply no grace period"; verified with a rolled-back test.
 -- 2026-11-08 (Abner): "remove all the grace period days. if they don't pay
 -- they are out." No days after the due date: the day after it, an unpaid
 -- business is paused (hidden, billing page only) until a payment is
