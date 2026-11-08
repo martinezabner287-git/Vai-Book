@@ -843,6 +843,29 @@ export const createWalkInBooking = async (booking) => {
   return Array.isArray(data) ? data[0] : data;
 };
 
+// A visit that already happened (before VaiBook, or while the business
+// couldn't log in): saved as completed + paid with what they actually paid.
+export const recordPastBooking = async (b) => {
+  const { data, error } = await supabase.rpc('record_past_booking', {
+    p_provider_id: b.provider_id,
+    p_service_id: b.service_id,
+    p_booking_date: b.date,
+    p_booking_time: b.time || null,
+    p_customer_name: b.name,
+    p_customer_phone: b.phone || null,
+    p_amount_paid: b.amount === '' || b.amount == null ? null : Number(b.amount),
+    p_paid_with: b.paid_with || null,
+    p_note: b.note || null,
+  });
+  if (error) {
+    const m = error.message || '';
+    const code = /PAST_ONLY/.test(m) ? 'PAST_ONLY' : /NAME_REQUIRED/.test(m) ? 'NAME_REQUIRED' : /NOT_AUTHORIZED/.test(m) ? 'NOT_AUTHORIZED' : 'FAILED';
+    if (code === 'FAILED') reportActionError('recordPastBooking', error);
+    return { ok: false, code };
+  }
+  return { ok: true, booking: Array.isArray(data) ? data[0] : data };
+};
+
 export const cancelBooking = async (bookingId) => {
   const { data, error } = await supabase
     .from('bookings')

@@ -1,4 +1,4 @@
--- STATUS: written + tested against mocks; waiting for Abner's OK to apply to the live database.
+-- 2026-11-07 APPLIED to the live database after Abner said "apply all"; verified with a rolled-back test.
 -- 2026-11-06: "Send a temporary password" from Admin → Messages.
 -- An admin sets a one-time temporary password on someone's account (email or
 -- WhatsApp-number login). The account is flagged so the next time they log

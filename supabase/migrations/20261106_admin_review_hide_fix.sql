@@ -1,4 +1,4 @@
--- STATUS: tested on a local Postgres; waiting for Abner's OK to apply to the live database.
+-- 2026-11-07 APPLIED to the live database after Abner said "apply all"; verified with a rolled-back test.
 -- 2026-11-06: Admin → Reviews → "Hide review" always failed with
 -- "Only VaiBook admins can do this": the review-edit rule only let the
 -- reviewer edit their own (still-on-hold) review, so it blocked the admin's

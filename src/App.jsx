@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useLayoutEffect, useRef, useContext, createContext, lazy, Suspense, useCallback, Fragment } from "react";
 import { flushSync } from "react-dom";
-import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, updateService, deleteService, getActiveProviders, getProviderDirectory, createBooking, getProviderBusyWindows, createBookingSafe, cancelBooking, markBookingCheckedIn, getCustomerBookings, uploadReceipt, submitReview, getProviderReviews, updateReview, sendBookingEmail, updateUserProfile, getPaymentMethods, addPaymentMethod, deletePaymentMethod, createNotification, getNotifications, markNotificationRead, markAllNotificationsRead, getCategoryDefaultFeatures, getProviderFeatureOverrides, setProviderFeatureOverride, getVisitNotes, upsertVisitNote, adminListProviders, adminUpdateProvider, adminDeleteProvider, adminCountCustomers, getFavoriteProviderIds, getFavoriteProviders, addFavorite, removeFavorite, getBookingMessages, sendBookingMessage, markBookingMessagesRead, getUnreadBookingMessages, getProviderMonthlyTrend, createProviderProfile, getProviderById, createWalkInBooking, submitProviderPayment, getMyProviderPayments, adminListProviderPayments, adminReviewProviderPayment, submitBookingRefund, adminListBookingRefunds, openPrivateFile, getProviderStaff, addProviderStaff, updateProviderStaff, deleteProviderStaff, getProviderStaffPublic, getLoyaltyAccount, getProviderLoyaltyCustomers, redeemLoyaltyReward, getMyStaffProfile, claimStaffSeatByEmail, getStaffBookings, getProviderNotifyEmail, getMaintenanceStatus, setMaintenanceMode, getSiteOfflineStatus, setSiteOffline, guestAuthWithPassword, updateGuestPassword, savePushSubscription, attachBookingServices, getProviderBlocks, insertProviderBlock, deleteProviderBlock, proposeBookingReschedule, confirmBookingReschedule, declineBookingReschedule, withdrawBookingReschedule, establishSoloSession, getServerSoloSessionToken, getLocalSoloSessionToken, clearLocalSoloSessionToken, subscribeToSoloSessionReplacement, signInWithPhonePassword, customerPhoneAuth, isPhoneLoginEmail, formatPhoneForDisplay, weakPasswordReason, submitSupportMessage, adminSetTempPassword, getMustChangePassword, clearMustChangePassword, adminProviderOverview, adminSetProviderBadges, adminSetProviderPhoto, adminListProviderServices, adminUpdateService, adminSetWorkingHours, adminGetFeatureOverrides, adminSetFeatureOverride, listSupportMessages, setSupportMessageStatus, getProviderMembershipPlans, getMyMembershipPlans, createMembershipPlan, updateMembershipPlan, subscribeToMembershipPlan, submitMembershipPayment, getMyMemberships, getProviderMembershipSubscribers, getProviderMembershipPayments, reviewMembershipPayment, cancelMembership, redeemMembershipVisit, startSoloTrial, adminStartProviderTrial, adminExtendProviderTrial, adminEndProviderTrial, adminExtendPaymentDue, adminRestoreDowngradedPlan, adminPlatformStats, setBookingAnswers, getFormEmail, redeemMembershipVisitFor, attachBookingAddons, getProviderCapacity, getPlanSpotsLeft } from "./supabase";
+import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, updateService, deleteService, getActiveProviders, getProviderDirectory, createBooking, getProviderBusyWindows, createBookingSafe, cancelBooking, markBookingCheckedIn, getCustomerBookings, uploadReceipt, submitReview, getProviderReviews, updateReview, sendBookingEmail, updateUserProfile, getPaymentMethods, addPaymentMethod, deletePaymentMethod, createNotification, getNotifications, markNotificationRead, markAllNotificationsRead, getCategoryDefaultFeatures, getProviderFeatureOverrides, setProviderFeatureOverride, getVisitNotes, upsertVisitNote, adminListProviders, adminUpdateProvider, adminDeleteProvider, adminCountCustomers, getFavoriteProviderIds, getFavoriteProviders, addFavorite, removeFavorite, getBookingMessages, sendBookingMessage, markBookingMessagesRead, getUnreadBookingMessages, getProviderMonthlyTrend, createProviderProfile, getProviderById, createWalkInBooking, submitProviderPayment, getMyProviderPayments, adminListProviderPayments, adminReviewProviderPayment, submitBookingRefund, adminListBookingRefunds, openPrivateFile, getProviderStaff, addProviderStaff, updateProviderStaff, deleteProviderStaff, getProviderStaffPublic, getLoyaltyAccount, getProviderLoyaltyCustomers, redeemLoyaltyReward, getMyStaffProfile, claimStaffSeatByEmail, getStaffBookings, getProviderNotifyEmail, getMaintenanceStatus, setMaintenanceMode, getSiteOfflineStatus, setSiteOffline, guestAuthWithPassword, updateGuestPassword, savePushSubscription, attachBookingServices, getProviderBlocks, insertProviderBlock, deleteProviderBlock, proposeBookingReschedule, confirmBookingReschedule, declineBookingReschedule, withdrawBookingReschedule, establishSoloSession, getServerSoloSessionToken, getLocalSoloSessionToken, clearLocalSoloSessionToken, subscribeToSoloSessionReplacement, signInWithPhonePassword, customerPhoneAuth, isPhoneLoginEmail, formatPhoneForDisplay, weakPasswordReason, submitSupportMessage, adminSetTempPassword, getMustChangePassword, clearMustChangePassword, adminProviderOverview, adminSetProviderBadges, adminSetProviderPhoto, adminListProviderServices, adminUpdateService, adminSetWorkingHours, adminGetFeatureOverrides, adminSetFeatureOverride, listSupportMessages, setSupportMessageStatus, getProviderMembershipPlans, getMyMembershipPlans, createMembershipPlan, updateMembershipPlan, subscribeToMembershipPlan, submitMembershipPayment, getMyMemberships, getProviderMembershipSubscribers, getProviderMembershipPayments, reviewMembershipPayment, cancelMembership, redeemMembershipVisit, startSoloTrial, adminStartProviderTrial, adminExtendProviderTrial, adminEndProviderTrial, adminExtendPaymentDue, adminRestoreDowngradedPlan, adminPlatformStats, setBookingAnswers, getFormEmail, redeemMembershipVisitFor, attachBookingAddons, getProviderCapacity, getPlanSpotsLeft, recordPastBooking } from "./supabase";
 import AdminDashboard from "./AdminDashboard";
 import ProfilePhotoModal from "./ProfilePhotoModal";
 import LanguageSelector from "./LanguageSelector";
@@ -14433,6 +14433,48 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
   };
   const closeWalkInForm = () => { setAddingWalkIn(false); setWalkInError(""); };
 
+  // ADD A PAST BOOKING (2026-11-07) — visits that already happened and were
+  // paid: before the business joined VaiBook, or while they couldn't log in.
+  const [pastOpen, setPastOpen] = useState(false);
+  const [pastForm, setPastForm] = useState({ service_id: "", date: "", time: "", name: "", phone: "", amount: "", paid_with: "cash", note: "" });
+  const [pastBusy, setPastBusy] = useState(false);
+  const [pastError, setPastError] = useState("");
+  const [pastSaved, setPastSaved] = useState(0);
+  const openPastForm = () => {
+    const first = services.filter((sv) => !sv.is_addon)[0] || services[0];
+    setPastForm({ service_id: first?.id || "", date: "", time: "", name: "", phone: "", amount: first ? String(first.price ?? "") : "", paid_with: "cash", note: "" });
+    setPastError(""); setPastSaved(0); setPastOpen(true);
+  };
+  const closePastForm = () => { setPastOpen(false); if (pastSaved) loadBookings(); };
+  const submitPast = async (again) => {
+    const es = String(i18n.language || "").toLowerCase().startsWith("es");
+    if (!pastForm.service_id || !pastForm.date || !pastForm.name.trim()) {
+      setPastError(es ? "Elige el servicio, la fecha y escribe el nombre del cliente." : "Pick the service and date, and type the client's name.");
+      return;
+    }
+    if (pastForm.date > localDateStr(new Date())) {
+      setPastError(es ? "Esto es para citas que ya pasaron. Para una cita futura usa \"+ Cita\"." : "This is for visits that already happened. For a future visit use \"+ Appointment\".");
+      return;
+    }
+    setPastBusy(true); setPastError("");
+    const r = await recordPastBooking({ provider_id: providerId, ...pastForm });
+    setPastBusy(false);
+    if (!r.ok) {
+      setPastError(r.code === "PAST_ONLY"
+        ? (es ? "La fecha no puede ser en el futuro." : "The date can't be in the future.")
+        : (es ? "No se pudo guardar. Inténtalo de nuevo." : "Couldn't save it. Try again."));
+      return;
+    }
+    setPastSaved((n) => n + 1);
+    if (again) {
+      const svc = services.find((sv) => sv.id === pastForm.service_id);
+      setPastForm((f) => ({ ...f, time: "", name: "", phone: "", amount: svc ? String(svc.price ?? "") : "", note: "" }));
+    } else {
+      setPastOpen(false);
+      loadBookings();
+    }
+  };
+
   const submitWalkIn = async () => {
     if (!walkInForm.service_id || !walkInForm.date || !walkInForm.time) {
       setWalkInError(t("providerPortal.walkIn.chooseServiceDateTime"));
@@ -16516,6 +16558,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                 <button className="bh-action" onClick={openBlockSheet}><span className="bh-action-icon">⏸</span><span>{dx("Block time", "Bloquear")}</span></button>
               )}
               <button className="bh-action" onClick={() => setShowQrModal(true)}><span className="bh-action-icon">🔗</span><span>{dx("Share link", "Mi enlace")}</span></button>
+              <button className="bh-action" onClick={openPastForm} disabled={services.length === 0}><span className="bh-action-icon">🕘</span><span>{dx("Past visit", "Cita pasada")}</span></button>
             </div>
             {activeServices.length === 0 && <p className="bh-empty" style={{ marginTop: -8 }}>{t("providerPortal.dashboard.addServiceHint")}</p>}
 
@@ -16781,6 +16824,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                 <span>{t("providerPortal.bookings.allBookings")}</span>
                 <div style={{ display: "flex", gap: 8 }}>
                   <button className="btn-sm lime" onClick={openWalkInForm}>+ {t("providerPortal.bookings.addAppointment")}</button>
+                  <button className="btn-sm" style={{ border: "1px solid var(--border)" }} onClick={openPastForm}>🕘 {String(i18n.language || "").toLowerCase().startsWith("es") ? "Cita pasada" : "Past booking"}</button>
                   <button className="btn-sm forest" onClick={loadBookings} disabled={loadingBookings}>{loadingBookings ? "Refreshing..." : "Refresh"}</button>
                 </div>
               </div>
@@ -16846,10 +16890,21 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                     <div className="booking-info">
                       <div className="title">
                         {b.services?.name || "Service"}
-                        {b.created_by_provider && (
+                        {b.created_by_provider && !b.entered_later && (
                           <span style={{ marginLeft: 8, fontSize: 11, fontWeight: 600, color: "var(--accent-text)", background: "var(--sand)", padding: "2px 7px", borderRadius: 5, verticalAlign: "middle" }}>{t("providerPortal.bookings.walkInBadge")}</span>
                         )}
+                        {b.entered_later && (
+                          <span style={{ marginLeft: 8, fontSize: 11, fontWeight: 600, color: "var(--muted)", background: "var(--sand)", padding: "2px 7px", borderRadius: 5, verticalAlign: "middle" }}>🕘 {String(i18n.language || "").toLowerCase().startsWith("es") ? "Agregada después" : "Added later"}</span>
+                        )}
                       </div>
+                      {b.entered_later && (
+                        <div className="meta" style={{ marginTop: 2 }}>
+                          {String(i18n.language || "").toLowerCase().startsWith("es") ? "Pagó" : "Paid"} BZ${Number(b.total_amount || 0).toFixed(2)}
+                          {b.list_price != null && Number(b.list_price) > Number(b.total_amount || 0) && ` (${String(i18n.language || "").toLowerCase().startsWith("es") ? "descuento" : "discount"} BZ$${(Number(b.list_price) - Number(b.total_amount || 0)).toFixed(2)})`}
+                          {b.paid_with && ` · ${({ cash: "cash", transfer: "bank transfer", card: "card", other: "other" })[b.paid_with] || b.paid_with}`}
+                          {b.notes && ` · ${b.notes}`}
+                        </div>
+                      )}
                       <div className="meta">
                         {b.users?.full_name || b.walkin_customer_name || "Customer"}
                         {b.walkin_customer_phone && ` · ${b.walkin_customer_phone}`}
@@ -17694,7 +17749,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
 
                 {currentPlan.monthly === 0 && (() => {
                   const monthStart = new Date(); monthStart.setDate(1); monthStart.setHours(0, 0, 0, 0);
-                  const usedThisMonth = bookings.filter((b) => new Date(b.created_at) >= monthStart).length;
+                  const usedThisMonth = bookings.filter((b) => !b.entered_later && new Date(b.created_at) >= monthStart).length;
                   const STARTER_CAP = PLATFORM.freeCap;
                   const atCap = usedThisMonth >= STARTER_CAP;
                   return (
@@ -19022,6 +19077,83 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
           </div>
         </div>
       )}
+
+      {/* ADD A PAST BOOKING — a visit that already happened and was paid. */}
+      {pastOpen && (() => {
+        const es = (i18n.language || "").toLowerCase().startsWith("es");
+        const ax = (en, sp) => (es ? sp : en);
+        const svcList = services.filter((sv) => !sv.is_addon);
+        const svc = services.find((sv) => sv.id === pastForm.service_id) || null;
+        const regular = Number(svc?.price) || 0;
+        const paid = pastForm.amount === "" ? null : Number(pastForm.amount);
+        const off = paid != null && !Number.isNaN(paid) && paid < regular ? regular - paid : 0;
+        const known = [];
+        bookings.forEach((b) => {
+          const nm = (b.users?.full_name || b.walkin_customer_name || "").trim();
+          if (!nm || /^walk-in$/i.test(nm) || known.some((k) => k.name.toLowerCase() === nm.toLowerCase())) return;
+          known.push({ name: nm, phone: b.users?.whatsapp_number || b.users?.phone || b.walkin_customer_phone || "" });
+        });
+        const q = pastForm.name.trim().toLowerCase();
+        const suggestions = q.length >= 1 ? known.filter((k) => k.name.toLowerCase().includes(q) && k.name.toLowerCase() !== q).slice(0, 4) : [];
+        const methods = [["cash", ax("Cash", "Efectivo")], ["transfer", ax("Bank transfer", "Transferencia")], ["card", ax("Card", "Tarjeta")], ["other", ax("Other", "Otro")]];
+        return (
+          <div className="sheet-overlay" onClick={closePastForm}>
+            <div className="sheet-panel appt-sheet" onClick={(e) => e.stopPropagation()}>
+              <div className="sheet-handle"></div>
+              <h3 className="appt-title">🕘 {ax("Add a past booking", "Agregar una cita pasada")}</h3>
+              <p style={{ fontSize: 13, color: "var(--muted)", margin: "0 0 4px" }}>{ax("For visits that already happened and were paid — before you used VaiBook, or while you couldn't log in. They count in your Earnings, Clients and monthly review. Nobody gets a message.", "Para citas que ya pasaron y se pagaron — antes de usar VaiBook o mientras no podías entrar. Cuentan en tus Ganancias, Clientes y resumen mensual. No se le envía mensaje a nadie.")}</p>
+              {pastSaved > 0 && <p style={{ fontSize: 13, fontWeight: 700, color: "var(--forest)", margin: "8px 0 0" }}>✓ {ax(`${pastSaved} saved`, `${pastSaved} guardada${pastSaved === 1 ? "" : "s"}`)}</p>}
+
+              <div className="appt-step">1 · {ax("Service", "Servicio")}</div>
+              <div className="appt-chips">
+                {svcList.map((sv) => (
+                  <button key={sv.id} type="button" className={`appt-chip ${pastForm.service_id === sv.id ? "active" : ""}`} onClick={() => setPastForm((f) => ({ ...f, service_id: sv.id, amount: String(sv.price ?? "") }))}>
+                    <span>{sv.name}</span><small>BZ${sv.price} · {sv.duration_min} min</small>
+                  </button>
+                ))}
+              </div>
+
+              <div className="appt-step">2 · {ax("When was it?", "¿Cuándo fue?")}</div>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                <input className="input" type="date" max={localDateStr(new Date())} value={pastForm.date} onChange={(e) => setPastForm((f) => ({ ...f, date: e.target.value }))} style={{ flex: "1 1 150px" }} />
+                <input className="input" type="time" value={pastForm.time} onChange={(e) => setPastForm((f) => ({ ...f, time: e.target.value }))} style={{ flex: "1 1 120px" }} placeholder={ax("Time (optional)", "Hora (opcional)")} />
+              </div>
+
+              <div className="appt-step">3 · {ax("Client", "Cliente")}</div>
+              <input className="input" placeholder={ax("Client's name", "Nombre del cliente")} value={pastForm.name} onChange={(e) => setPastForm((f) => ({ ...f, name: e.target.value }))} style={{ width: "100%" }} />
+              {suggestions.length > 0 && (
+                <div className="appt-chips" style={{ marginTop: 6 }}>
+                  {suggestions.map((k) => (
+                    <button key={k.name} type="button" className="appt-chip" onClick={() => setPastForm((f) => ({ ...f, name: k.name, phone: k.phone || f.phone }))}><span>{k.name}</span>{k.phone && <small>{k.phone}</small>}</button>
+                  ))}
+                </div>
+              )}
+              <input className="input" type="tel" placeholder={ax("WhatsApp number (optional)", "Número de WhatsApp (opcional)")} value={pastForm.phone} onChange={(e) => setPastForm((f) => ({ ...f, phone: e.target.value }))} style={{ width: "100%", marginTop: 8 }} />
+
+              <div className="appt-step">4 · {ax("What they paid", "Lo que pagó")}</div>
+              <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+                <label style={{ fontSize: 14, fontWeight: 700 }}>BZ$ <input className="input" type="number" min="0" step="0.5" inputMode="decimal" value={pastForm.amount} onChange={(e) => setPastForm((f) => ({ ...f, amount: e.target.value }))} style={{ width: 110 }} /></label>
+                {svc && <span style={{ fontSize: 13, color: off > 0 ? "#B45309" : "var(--muted)" }}>{off > 0
+                  ? ax(`Discount: BZ$${off.toFixed(2)} off the regular BZ$${regular} (${Math.round((off / regular) * 100)}% off)`, `Descuento: BZ$${off.toFixed(2)} menos del precio normal BZ$${regular} (${Math.round((off / regular) * 100)}%)`)
+                  : ax(`Regular price BZ$${regular} — lower it here if they got a discount`, `Precio normal BZ$${regular} — bájalo aquí si tuvo descuento`)}</span>}
+              </div>
+              <div className="appt-chips" style={{ marginTop: 8 }}>
+                {methods.map(([k, l]) => (
+                  <button key={k} type="button" className={`appt-chip ${pastForm.paid_with === k ? "active" : ""}`} onClick={() => setPastForm((f) => ({ ...f, paid_with: k }))}><span>{l}</span></button>
+                ))}
+              </div>
+              <input className="input" placeholder={ax("Note (optional) — e.g. friends & family discount", "Nota (opcional) — ej. descuento de amigos")} value={pastForm.note} onChange={(e) => setPastForm((f) => ({ ...f, note: e.target.value }))} style={{ width: "100%", marginTop: 8 }} />
+
+              {pastError && <p style={{ fontSize: 13, color: "#B91C1C", margin: "10px 0 0" }}>{pastError}</p>}
+              <div style={{ display: "flex", gap: 8, marginTop: 14, flexWrap: "wrap" }}>
+                <button className="btn-sm forest" style={{ flex: "1 1 140px", padding: "13px 0", fontSize: 15, borderRadius: 12 }} disabled={pastBusy} onClick={() => submitPast(false)}>{pastBusy ? ax("Saving…", "Guardando…") : ax("Save", "Guardar")}</button>
+                <button className="btn-sm" style={{ flex: "1 1 140px", padding: "13px 0", fontSize: 15, borderRadius: 12, border: "1px solid var(--border)" }} disabled={pastBusy} onClick={() => submitPast(true)}>{ax("Save & add another", "Guardar y agregar otra")}</button>
+              </div>
+              <button className="btn-sm ghost" style={{ width: "100%", padding: "12px 0", marginTop: 8 }} onClick={closePastForm}>{pastSaved ? ax("Done", "Listo") : ax("Cancel", "Cancelar")}</button>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* ADD APPOINTMENT — one simple sheet: what, when, who. */}
       {addingWalkIn && (() => {

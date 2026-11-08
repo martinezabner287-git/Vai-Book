@@ -1,4 +1,4 @@
--- STATUS: tested on a local Postgres; waiting for Abner's OK to apply to the live database.
+-- 2026-11-07 APPLIED to the live database after Abner said "apply all"; verified with a rolled-back test.
 -- 2026-11-06: Admin → Providers "Manage" panel.
 -- Quick stats, contact, badges, prices, hours, photo and modules for any
 -- business — every function checks is_current_user_admin() first.
