@@ -17895,6 +17895,11 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                       const tp = payTerm === "six" ? six : mon;
                       const range = coverRange(tp.months);
                       const payTo = VAIBOOK_PAY_TO.filter((m) => (m.detail || "").trim());
+                      // During the free trial, our payment details only show
+                      // from 24 hours before the trial ends.
+                      const trialEnd = providerProfile?.is_trial && providerProfile?.trial_ends_at ? new Date(providerProfile.trial_ends_at) : null;
+                      const payDetailsFrom = trialEnd ? new Date(trialEnd.getTime() - 24 * 60 * 60 * 1000) : null;
+                      const payDetailsLocked = !!(payDetailsFrom && Date.now() < payDetailsFrom.getTime());
                       return (
                       <div style={{ marginTop: 8, paddingTop: 16, borderTop: "1px solid var(--border)" }}>
                         <div className="term-cards">
@@ -17923,8 +17928,13 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
 
                         <div className="pay-to">
                           <div className="pay-to-title">{bx("Where to send it", "A dónde enviarlo")}</div>
-                          {payTo.length > 0 ? payTo.map((m) => (
-                            <div key={m.method} className="pay-to-row"><strong>{m.method}</strong><span>{m.detail}</span></div>
+                          {payDetailsLocked ? (
+                            <p className="pay-to-empty">
+                              {bx(`You're on your free trial. Our bank and wallet details show here from ${payDetailsFrom.toLocaleString([], { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}, 24 hours before it ends.`,
+                                  `Estás en tu prueba gratis. Nuestros datos de banco y billetera aparecen aquí desde el ${payDetailsFrom.toLocaleString("es", { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}, 24 horas antes de que termine.`)}
+                            </p>
+                          ) : payTo.length > 0 ? payTo.map((m, i) => (
+                            <div key={`${m.method}-${i}`} className="pay-to-row"><strong>{m.kind === "wallet" ? "📱 " : m.kind === "bank" ? "🏦 " : ""}{m.method}</strong><span>{m.detail}</span></div>
                           )) : (
                             <p className="pay-to-empty">
                               {bx("Message us and we'll send you our bank and mobile-wallet details.", "Escríbenos y te enviamos nuestros datos de banco y billetera móvil.")}{" "}
@@ -19731,8 +19741,20 @@ function applyPlatformConfig(cfg) {
       starter.desc = `Up to ${PLATFORM.freeCap} bookings/month`;
       starter.features = starter.features.map((f) => f.replace(/Up to \d+ bookings a month/, `Up to ${PLATFORM.freeCap} bookings a month`));
     }
-    const pay = { "Bank transfer": st.pay_bank, DigiWallet: st.pay_digiwallet, "E-Kyash": st.pay_ekyash };
-    VAIBOOK_PAY_TO.forEach((m) => { if (pay[m.method] !== undefined && pay[m.method] !== null) m.detail = String(pay[m.method]); });
+    if (Array.isArray(st.pay_methods) && st.pay_methods.length) {
+      // Admin → Settings & prices: any number of banks and mobile wallets.
+      const list = st.pay_methods
+        .filter((m) => m && (m.name || m.account_number || m.note))
+        .map((m) => ({
+          method: m.name || (m.kind === "wallet" ? "Mobile wallet" : "Bank transfer"),
+          kind: m.kind === "wallet" ? "wallet" : "bank",
+          detail: [m.account_name, m.account_number, m.note].map((x) => String(x || "").trim()).filter(Boolean).join(" · "),
+        }));
+      VAIBOOK_PAY_TO.splice(0, VAIBOOK_PAY_TO.length, ...list);
+    } else {
+      const pay = { "Bank transfer": st.pay_bank, DigiWallet: st.pay_digiwallet, "E-Kyash": st.pay_ekyash };
+      VAIBOOK_PAY_TO.forEach((m) => { if (pay[m.method] !== undefined && pay[m.method] !== null) m.detail = String(pay[m.method]); });
+    }
     PLATFORM.banner = st.banner_on && (st.banner_en || "").trim() ? {
       kind: st.banner_kind || "info", audience: st.banner_audience || "everyone",
       en: st.banner_en, es: st.banner_es, link: st.banner_link || "", stamp: String(st.updated_at || ""),
@@ -22447,6 +22469,59 @@ function ForcePasswordChange({ session }) {
   );
 }
 
+// Most people never find "Push notifications" in Settings, so everyone who
+// is logged in gets a small card offering to turn them on right there, in
+// one tap. On iPhone, Safari only allows it once VaiBook is on the Home
+// Screen, so there the card explains that step instead. "Not now" hides it
+// for a week; it never shows again once notifications are on or blocked.
+function PushPrompt({ userId, isBusiness }) {
+  const { pushEnabled, subscribingPush, pushError, enablePushNotifications } = usePushSubscription(userId);
+  const [hidden, setHidden] = useState(() => {
+    try { return Number(localStorage.getItem("vaibook_push_prompt_snooze") || 0) > Date.now(); } catch (e) { return false; }
+  });
+  const [ready, setReady] = useState(false);
+  useEffect(() => { const id = setTimeout(() => setReady(true), 4000); return () => clearTimeout(id); }, []);
+  if (!userId || hidden || pushEnabled || !ready) return null;
+  const es = String(i18n.language || "").toLowerCase().startsWith("es");
+  const x = (en, sp) => (es ? sp : en);
+  const ios = /iphone|ipad|ipod/i.test(navigator.userAgent || "");
+  const standalone = (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) || window.navigator.standalone === true;
+  const supported = "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
+  const iosNeedsHomeScreen = ios && !standalone && !supported;
+  if (!supported && !iosNeedsHomeScreen) return null;
+  if (supported && Notification.permission === "denied") return null;
+  const snooze = () => {
+    try { localStorage.setItem("vaibook_push_prompt_snooze", String(Date.now() + 7 * 24 * 60 * 60 * 1000)); } catch (e) { /* ignore */ }
+    setHidden(true);
+  };
+  return (
+    <div role="dialog" aria-label={x("Turn on notifications", "Activar notificaciones")} style={{ position: "fixed", left: 12, right: 12, bottom: "calc(92px + env(safe-area-inset-bottom, 0px))", zIndex: 9998, maxWidth: 440, margin: "0 auto", background: "#fff", border: "1px solid var(--border)", borderRadius: 16, boxShadow: "0 14px 40px rgba(22,24,29,0.18)", padding: "14px 16px" }}>
+      <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+        <div style={{ fontSize: 26, lineHeight: 1 }}>🔔</div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontWeight: 800, fontSize: 15, color: "var(--dark-text)" }}>{isBusiness ? x("Know the moment someone books", "Entérate al instante de cada reserva") : x("Get booking updates on your phone", "Recibe avisos de tus citas en tu teléfono")}</div>
+          <div style={{ fontSize: 13, color: "var(--muted)", marginTop: 2, lineHeight: 1.45 }}>
+            {iosNeedsHomeScreen
+              ? x("On iPhone: tap the Share button (the square with an arrow), choose \"Add to Home Screen\", then open VaiBook from your Home Screen and tap \"Turn on\" there.", "En iPhone: toca Compartir (el cuadro con flecha), elige \"Agregar a inicio\", abre VaiBook desde tu pantalla de inicio y toca \"Activar\" ahí.")
+              : isBusiness
+                ? x("Turn on notifications to get new bookings, cancellations and messages straight to your phone.", "Activa las notificaciones para recibir nuevas reservas, cancelaciones y mensajes en tu teléfono.")
+                : x("Turn on notifications for confirmations, reminders and messages from the business.", "Activa las notificaciones para confirmaciones, recordatorios y mensajes del negocio.")}
+          </div>
+          {pushError && <div style={{ fontSize: 12, color: "#B91C1C", marginTop: 6 }}>{pushError}</div>}
+          <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
+            {!iosNeedsHomeScreen && (
+              <button type="button" onClick={enablePushNotifications} disabled={subscribingPush} style={{ background: "#4C3DC4", color: "#fff", border: "none", borderRadius: 10, padding: "9px 16px", fontWeight: 700, fontSize: 14, cursor: "pointer" }}>
+                {subscribingPush ? x("Turning on…", "Activando…") : x("Turn on", "Activar")}
+              </button>
+            )}
+            <button type="button" onClick={snooze} style={{ background: "transparent", color: "var(--muted)", border: "1px solid var(--border)", borderRadius: 10, padding: "9px 14px", fontWeight: 600, fontSize: 14, cursor: "pointer" }}>{iosNeedsHomeScreen ? x("Got it", "Entendido") : x("Not now", "Ahora no")}</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // When a new version of VaiBook goes live, people with the site already open
 // keep running the old one until they reload. This checks every few minutes
 // (and whenever the app comes back to the screen) and offers a one-tap update.
@@ -23074,6 +23149,7 @@ export default function App() {
       <ActionErrorToast />
       <ForcePasswordChange session={session} />
       <UpdateAvailableBanner />
+      <PushPrompt userId={session?.user?.id} isBusiness={!!providerProfile} />
       {/* The homepage already has its own always-visible "Add to Home Screen"
           pill under the search bar (hero-get-app-btn) — this auto-popup
           banner used to also slide up a moment later on that same screen,

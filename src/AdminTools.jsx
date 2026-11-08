@@ -83,6 +83,53 @@ function Notice({ msg }) {
 // ── SETTINGS ───────────────────────────────────────────────────────────
 const NUM_FIELDS = ["solo_monthly", "solo_six_month", "team_monthly", "team_six_month", "team_free_seats", "team_seat_price", "setup_fee", "free_booking_cap", "trial_days", "grace_days", "founding_partner_limit", "spotlight_slots", "spotlight_week_price"];
 
+// "Where businesses pay you" — any number of banks and mobile wallets.
+// Shown in each business's Billing tab (during a free trial, only from 24
+// hours before it ends). Saved with the rest of Settings & prices.
+const BLANK_PAY = { kind: "bank", name: "", account_name: "", account_number: "", note: "" };
+function PayMethodsEditor({ form, set }) {
+  const hasList = Array.isArray(form.pay_methods);
+  const list = hasList ? form.pay_methods : [];
+  const update = (i, patch) => set("pay_methods")(list.map((m, j) => (j === i ? { ...m, ...patch } : m)));
+  const add = (kind) => set("pay_methods")([...list, { ...BLANK_PAY, kind, name: kind === "wallet" ? "" : "" }]);
+  const remove = (i) => set("pay_methods")(list.filter((_, j) => j !== i));
+  const move = (i, d) => {
+    const j = i + d; if (j < 0 || j >= list.length) return;
+    const next = list.slice(); [next[i], next[j]] = [next[j], next[i]]; set("pay_methods")(next);
+  };
+  return (
+    <div className="card at-card">
+      <div className="card-title">Where businesses pay you</div>
+      <p className="at-muted">Add as many banks and mobile wallets as you like. They show in every business's Billing tab in this order. A business on its free trial sees them from 24 hours before the trial ends.</p>
+      {!hasList && <p className="at-muted" style={{ color: "#B91C1C" }}>This list needs a quick database update before it can be saved.</p>}
+      {list.length === 0 && hasList && <p className="at-muted">Nothing added yet — businesses are told to message you for the details.</p>}
+      {list.map((m, i) => (
+        <div key={i} style={{ border: "1px solid var(--border)", borderRadius: 12, padding: 12, marginBottom: 10 }}>
+          <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 8, flexWrap: "wrap" }}>
+            <b style={{ fontSize: 13 }}>{m.kind === "wallet" ? "📱 Mobile wallet" : "🏦 Bank"} {i + 1}</b>
+            <span style={{ flex: 1 }} />
+            <button type="button" className="btn-sm" style={{ border: "1px solid var(--border)" }} disabled={i === 0} onClick={() => move(i, -1)} aria-label="Move up">↑</button>
+            <button type="button" className="btn-sm" style={{ border: "1px solid var(--border)" }} disabled={i === list.length - 1} onClick={() => move(i, 1)} aria-label="Move down">↓</button>
+            <button type="button" className="btn-sm" style={{ border: "1px solid #e05252", color: "#e05252" }} onClick={() => remove(i)}>Remove</button>
+          </div>
+          <div className="at-grid">
+            <Field label={m.kind === "wallet" ? "Wallet (e.g. DigiWallet, E-Kyash)" : "Bank (e.g. Belize Bank, Heritage)"}><input maxLength={60} value={m.name || ""} onChange={(e) => update(i, { name: e.target.value })} /></Field>
+            <Field label="Account name"><input maxLength={80} value={m.account_name || ""} onChange={(e) => update(i, { account_name: e.target.value })} /></Field>
+            <Field label={m.kind === "wallet" ? "Wallet number" : "Account number"}><input maxLength={60} value={m.account_number || ""} onChange={(e) => update(i, { account_number: e.target.value })} /></Field>
+            <Field label="Extra note (optional)" hint="e.g. branch, account type, put your business name as the reference"><input maxLength={160} value={m.note || ""} onChange={(e) => update(i, { note: e.target.value })} /></Field>
+          </div>
+        </div>
+      ))}
+      {hasList && (
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <button type="button" className="btn-sm" style={{ border: "1px solid var(--border)" }} onClick={() => add("bank")}>+ Add a bank</button>
+          <button type="button" className="btn-sm" style={{ border: "1px solid var(--border)" }} onClick={() => add("wallet")}>+ Add a mobile wallet</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function AdminSettings() {
   const [form, setForm] = useState(null);
   const [orig, setOrig] = useState(null);
@@ -106,6 +153,17 @@ function AdminSettings() {
     const patch = {};
     for (const k of Object.keys(form)) {
       if (["id", "updated_at", "updated_by"].includes(k)) continue;
+      if (k === "pay_methods") {
+        if (JSON.stringify(form[k]) === JSON.stringify(orig[k])) continue;
+        const clean = (form[k] || []).map((m) => ({
+          kind: m.kind === "wallet" ? "wallet" : "bank",
+          name: String(m.name || "").trim(), account_name: String(m.account_name || "").trim(),
+          account_number: String(m.account_number || "").trim(), note: String(m.note || "").trim(),
+        })).filter((m) => m.name || m.account_name || m.account_number || m.note);
+        if (clean.some((m) => !m.name || !(m.account_number || m.note))) { setMsg({ ok: false, text: "Each bank or wallet needs a name and an account number (or a note with the details)." }); return; }
+        patch[k] = clean;
+        continue;
+      }
       if (form[k] === orig[k]) continue;
       if (NUM_FIELDS.includes(k)) {
         const n = Number(form[k]);
@@ -160,15 +218,7 @@ function AdminSettings() {
           hint={form.free_cap_enforced ? "On: customers see a message that the business is full this month. Walk-ins the business adds itself still work." : "Off: the limit is shown to businesses but nobody gets blocked."} />
       </div>
 
-      <div className="card at-card">
-        <div className="card-title">Where businesses pay you</div>
-        <p className="at-muted">Shown in every business's Billing tab. Leave one empty to hide it.</p>
-        <div className="at-grid one">
-          <Field label="Bank transfer"><textarea rows={2} maxLength={400} placeholder="Bank, account name, account number" value={form.pay_bank} onChange={(e) => set("pay_bank")(e.target.value)} /></Field>
-          <Field label="DigiWallet"><input maxLength={400} placeholder="DigiWallet number or name" value={form.pay_digiwallet} onChange={(e) => set("pay_digiwallet")(e.target.value)} /></Field>
-          <Field label="E-Kyash"><input maxLength={400} placeholder="E-Kyash number or name" value={form.pay_ekyash} onChange={(e) => set("pay_ekyash")(e.target.value)} /></Field>
-        </div>
-      </div>
+      <PayMethodsEditor form={form} set={set} />
 
       <div className="card at-card">
         <div className="card-title">Site banner</div>
