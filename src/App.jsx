@@ -9473,7 +9473,7 @@ const LP_TEXT = {
     how4t: "Get booked", how4b: "Clients pick a time and book. You're notified right away and confirm with one tap.",
     payTitle: "Pricing & payments",
     payBody: "Try everything free for {trialDays} days once you're approved — finish the launch challenge in that time and your first 2 months are half price. After that, Solo is just BZ${soloDay} a day and Team BZ${teamDay} a day on the 6-month plan — less than a soda. Your clients pay you directly, in cash or by bank transfer, and deposits go straight to your bank account. VaiBook never takes a commission.",
-    payNote: "Pay for 6 months, get the 7th free — and no setup fee. Or pay monthly (BZ${solo}/month for Solo, plus a one-time BZ$99 setup fee).",
+    payNote: "Pay for 6 months and get the 7th free, or pay monthly (BZ${solo}/month for Solo). No setup fee, ever.",
     whoTitle: "Who can join",
     who1: "Barbers, hair salons, nail techs, spas, massage therapists, med spas, tattoo artists, trainers and more.",
     who2: "Solo professionals and registered businesses alike.",
@@ -9486,7 +9486,7 @@ const LP_TEXT = {
     pricingTitle: "Simple pricing",
     pricingSub: "Less than BZ$2 a day. Pay for 6 months and get the 7th month free.",
     faqTitle: "Frequently asked questions",
-    q1: "What does it cost?", a1: "Every business starts with a {trialDays}-day free trial of the plan it chooses. Finish the launch challenge during the trial and your first 2 monthly payments are half price. After that, Solo is BZ${soloDay} a day and Team BZ${teamDay} a day (includes your first {seats} staff seats) when you pay for 6 months — you get 7 months and no setup fee. Paying monthly is BZ${solo}/month for Solo or BZ${team}/month for Team, plus a one-time BZ$99 setup fee on your first payment.",
+    q1: "What does it cost?", a1: "Every business starts with a {trialDays}-day free trial of the plan it chooses. Finish the launch challenge during the trial and your first 2 monthly payments are half price. After that, Solo is BZ${soloDay} a day and Team BZ${teamDay} a day (includes your first {seats} staff seats) when you pay for 6 months — you get 7 months. Or pay monthly: BZ${solo}/month for Solo or BZ${team}/month for Team. No setup fee, no commission.",
     q2: "Does VaiBook take a cut of my bookings?", a2: "No. You pay one flat price and keep everything your clients pay you.",
     q3: "How do my clients pay?", a3: "Directly to you. You can ask for a deposit to your bank account before you confirm a booking, and collect the rest at the appointment.",
     q4: "Do my clients need to download an app?", a4: "No. They book from your link in any phone browser, and can add VaiBook to their home screen if they like.",
@@ -9512,7 +9512,7 @@ const LP_TEXT = {
     how4t: "Recibe reservas", how4b: "Los clientes eligen una hora y reservan. Te avisamos al instante y confirmas con un toque.",
     payTitle: "Precios y pagos",
     payBody: "Prueba todo gratis por {trialDays} días cuando te aprobemos — termina el reto de lanzamiento en ese tiempo y tus primeros 2 meses son a mitad de precio. Después, Solo cuesta solo BZ${soloDay} al día y Team BZ${teamDay} al día con el plan de 6 meses — menos que un refresco. Tus clientes te pagan directamente, en efectivo o por transferencia, y los depósitos van directo a tu cuenta bancaria. VaiBook nunca cobra comisión.",
-    payNote: "Paga 6 meses y el 7.º es gratis — sin costo de inicio. O paga mensual (BZ${solo}/mes para Solo, más un costo único de inicio de BZ$99).",
+    payNote: "Paga 6 meses y el 7.º es gratis, o paga mensual (BZ${solo}/mes para Solo). Nunca hay costo de inicio.",
     whoTitle: "Quién puede unirse",
     who1: "Barberos, salones, técnicas de uñas, spas, masajistas, med spas, tatuadores, entrenadores y más.",
     who2: "Profesionales independientes y negocios registrados por igual.",
@@ -9525,7 +9525,7 @@ const LP_TEXT = {
     pricingTitle: "Precios simples",
     pricingSub: "Menos de BZ$2 al día. Paga 6 meses y el 7.º mes es gratis.",
     faqTitle: "Preguntas frecuentes",
-    q1: "¿Cuánto cuesta?", a1: "Todo negocio empieza con {trialDays} días gratis del plan que elija. Termina el reto de lanzamiento durante la prueba y tus primeros 2 pagos mensuales son a mitad de precio. Después, Solo cuesta BZ${soloDay} al día y Team BZ${teamDay} al día (incluye tus primeros {seats} puestos de personal) si pagas 6 meses — recibes 7 meses y sin costo de inicio. Pagando mensual: Solo BZ${solo}/mes o Team BZ${team}/mes, más un costo único de inicio de BZ$99 en tu primer pago.",
+    q1: "¿Cuánto cuesta?", a1: "Todo negocio empieza con {trialDays} días gratis del plan que elija. Termina el reto de lanzamiento durante la prueba y tus primeros 2 pagos mensuales son a mitad de precio. Después, Solo cuesta BZ${soloDay} al día y Team BZ${teamDay} al día (incluye tus primeros {seats} puestos de personal) si pagas 6 meses — recibes 7 meses. O paga mensual: Solo BZ${solo}/mes o Team BZ${team}/mes. Sin costo de inicio ni comisión.",
     q2: "¿VaiBook se queda con una parte de mis reservas?", a2: "No. Pagas un precio fijo y te quedas con todo lo que te pagan tus clientes.",
     q3: "¿Cómo me pagan mis clientes?", a3: "Directamente a ti. Puedes pedir un depósito a tu cuenta bancaria antes de confirmar una reserva y cobrar el resto en la cita.",
     q4: "¿Mis clientes necesitan descargar una app?", a4: "No. Reservan desde tu enlace en cualquier navegador del teléfono, y pueden agregar VaiBook a su pantalla de inicio si quieren.",
@@ -9674,8 +9674,8 @@ function ProviderLandingPage({ onNav }) {
                     <div className="vbl-plan-price">BZ${tp.perDay}<span> {px("/day", "/día")}</span></div>
                     <div className="vbl-plan-billing">
                       {priceTerm === "six"
-                        ? px(`BZ$${tp.total.toFixed(2)} every 6 months · you get 7 months · no setup fee`, `BZ$${tp.total.toFixed(2)} cada 6 meses · recibes 7 meses · sin costo de inicio`)
-                        : px(`BZ$${tp.base.toFixed(2)} a month + BZ$${SETUP_FEE} one-time setup`, `BZ$${tp.base.toFixed(2)} al mes + BZ$${SETUP_FEE} de inicio (una vez)`)}
+                        ? px(`BZ$${tp.total.toFixed(2)} every 6 months · you get 7 months`, `BZ$${tp.total.toFixed(2)} cada 6 meses · recibes 7 meses`)
+                        : px(`BZ$${tp.base.toFixed(2)} a month`, `BZ$${tp.base.toFixed(2)} al mes`)}
                     </div>
                     {priceTerm === "monthly" && (
                       <button className="vbl-plan-switch" onClick={() => setPriceTerm("six")}>
@@ -18051,7 +18051,7 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                             <span className="term-card-badge">{bx("Best value · 1 month free", "Mejor precio · 1 mes gratis")}</span>
                             <span className="term-card-title">{bx("6 months", "6 meses")}</span>
                             <span className="term-card-day">BZ${six.perDay}<small>{bx("/day", "/día")}</small></span>
-                            <span className="term-card-sub">{bx(`Pay BZ$${six.total.toFixed(2)}, get 7 months. No setup fee.`, `Paga BZ$${six.total.toFixed(2)} y recibe 7 meses. Sin costo de inicio.`)}</span>
+                            <span className="term-card-sub">{bx(`Pay BZ$${six.total.toFixed(2)}, get 7 months.`, `Paga BZ$${six.total.toFixed(2)} y recibe 7 meses.`)}</span>
                           </button>
                           <button type="button" className={`term-card ${payTerm === "monthly" ? "on" : ""}`} onClick={() => setPayTerm("monthly")}>
                             {mon.half && <span className="term-card-badge">🏆 {bx("Half price", "Mitad de precio")}</span>}
@@ -19713,7 +19713,8 @@ let TEAM_PER_SEAT_PRICE = 20;
 // monthly costs more per day and carries a one-time setup fee on the very
 // first payment, which the 6-month plan waives. No yearly plan and no
 // refunds on a period already paid (Abner, 2026-10-27).
-let SETUP_FEE = 99;
+// No setup fee (Abner, 2026-11-08). Kept as a constant so old code paths add 0.
+const SETUP_FEE = 0;
 // Plain-language messages for the server-side booking checks.
 const BOOKING_SERVER_MESSAGES = {
   PAST_DATE: { en: "That date has already passed. Please pick today or a later day.", es: "Esa fecha ya pasó. Elige hoy o un día posterior." },
@@ -19869,7 +19870,6 @@ function applyPlatformConfig(cfg) {
     const n = (v, d) => (v === null || v === undefined || v === "" || !isFinite(Number(v)) ? d : Number(v));
     TEAM_FREE_SEATS = n(st.team_free_seats, TEAM_FREE_SEATS);
     TEAM_PER_SEAT_PRICE = n(st.team_seat_price, TEAM_PER_SEAT_PRICE);
-    SETUP_FEE = n(st.setup_fee, SETUP_FEE);
     PLATFORM.freeCap = n(st.free_booking_cap, PLATFORM.freeCap);
     PLATFORM.freeCapEnforced = !!st.free_cap_enforced;
     PLATFORM.trialDays = n(st.trial_days, PLATFORM.trialDays);

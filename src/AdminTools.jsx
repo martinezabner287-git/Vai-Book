@@ -196,7 +196,6 @@ function AdminSettings() {
           <Field label="Team · 6 months (BZ$)" hint={`BZ$${perDay(form.team_six_month, 210)}/day`}><input type="number" inputMode="decimal" min="0" step="0.01" value={form.team_six_month} onChange={num("team_six_month")} /></Field>
           <Field label="Team · staff seats included"><input type="number" inputMode="numeric" min="0" step="1" value={form.team_free_seats} onChange={num("team_free_seats")} /></Field>
           <Field label="Team · each extra seat (BZ$/month)"><input type="number" inputMode="decimal" min="0" step="0.01" value={form.team_seat_price} onChange={num("team_seat_price")} /></Field>
-          <Field label="Setup fee on first monthly payment (BZ$)" hint="The 6-month plan never pays it. 0 = no setup fee."><input type="number" inputMode="decimal" min="0" step="0.01" value={form.setup_fee} onChange={num("setup_fee")} /></Field>
         </div>
       </div>
 
