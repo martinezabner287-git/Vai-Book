@@ -206,7 +206,6 @@ function AdminSettings() {
           <Field label="Spotlight spots per district" hint="Businesses shown first on the main page and Recommended, per district."><input type="number" inputMode="numeric" min="0" max="20" step="1" value={form.spotlight_slots ?? 3} onChange={num("spotlight_slots")} /></Field>
           <Field label="Spotlight price per week (BZ$)"><input type="number" inputMode="decimal" min="0" step="0.01" value={form.spotlight_week_price ?? 25} onChange={num("spotlight_week_price")} /></Field>
           <Field label="Founding Partner spots" hint="The first this-many businesses get the 🏅 Founding Partner badge for good. Everyone already on VaiBook has it."><input type="number" inputMode="numeric" min="0" max="10000" step="1" value={form.founding_partner_limit ?? 50} onChange={num("founding_partner_limit")} /></Field>
-          <Field label="Days to pay after the due date" hint="After this the business is hidden and only sees the payment page until you confirm a payment. Reminders go out 1 day and 2 days before the end."><input type="number" inputMode="numeric" min="3" max="60" step="1" value={form.grace_days} onChange={num("grace_days")} /></Field>
         </div>
       </div>
 

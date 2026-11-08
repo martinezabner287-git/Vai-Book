@@ -78,7 +78,8 @@ function useTransitionState(init) {
 // grace → the nightly job pauses the business (hidden, billing page only)
 // until a payment is confirmed (run_billing_enforcement). Same when a free
 // trial ends unpaid (expire_provider_trials). There's no free plan.
-const PAY_GRACE_DAYS = 7;
+// No grace period (Abner, 2026-11-08): unpaid the day after the due date = paused.
+const PAY_GRACE_DAYS = 0;
 function billingStatus(p) {
   if (!p) return null;
   const planName = (id) => (id === "business" ? "Team" : id === "pro" ? "Solo" : "Free");
@@ -16432,12 +16433,12 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
           let title, body;
           if (bs.kind === "soon") {
             title = es ? `Tu pago de ${bs.plan} vence ${bs.days === 0 ? "hoy" : bs.days === 1 ? "mañana" : `en ${bs.days} días`}` : `Your ${bs.plan} payment is due ${bs.days === 0 ? "today" : bs.days === 1 ? "tomorrow" : `in ${bs.days} days`}`;
-            body = es ? `Vence el ${fmt(bs.due)}. Paga en Facturación para mantener tus funciones.` : `Due ${fmt(bs.due)}. Pay in Billing to keep your features without interruption.`;
+            body = es ? `Vence el ${fmt(bs.due)}. Si no está pagado, tu negocio queda oculto al día siguiente.` : `Due ${fmt(bs.due)}. If it isn't paid by then, your business is hidden the next day.`;
           } else if (bs.kind === "overdue") {
             title = es ? "Tu pago está atrasado" : "Your payment is overdue";
             body = es
-              ? `Paga antes del ${fmt(bs.graceEnd)} para seguir visible en VaiBook. Después tu negocio queda oculto hasta que pagues (tus datos quedan seguros).`
-              : `Pay by ${fmt(bs.graceEnd)} to stay live on VaiBook. After that your business is hidden until you pay — your data stays safe.`;
+              ? `Venció el ${fmt(bs.due)}. Paga ahora o tu negocio queda oculto en VaiBook hasta que pagues (tus datos quedan seguros).`
+              : `It was due ${fmt(bs.due)}. Pay now or your business is hidden on VaiBook until you do — your data stays safe.`;
           } else if (bs.kind === "paused") {
             title = bs.afterTrial
               ? (es ? "Tu prueba gratis terminó" : "Your free trial has ended")
@@ -22255,7 +22256,7 @@ function AdminPortal({ session, user, onNav, onSignIn, onSignOut }) {
                           return (
                             <>
                               <span style={{ fontSize: 11, fontWeight: 700, color: "#B91C1C", textAlign: "right" }}>
-                                Overdue since {f(bs.due)} · {bs.daysLeft === 0 ? "hidden tonight" : `hidden after ${f(bs.graceEnd)}`}
+                                Overdue since {f(bs.due)} · hidden tonight
                               </span>
                               <button className="btn-sm" style={{ background: "transparent", border: "1px solid var(--lime)", color: "var(--forest)" }} disabled={isTrialActioning} onClick={() => handleAdminExtendPayment(p)}>
                                 {isTrialActioning ? "..." : "Extend 7 days"}
