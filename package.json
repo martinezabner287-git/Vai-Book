@@ -21,7 +21,7 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "build": "react-scripts build && node scripts/seo-pages.js"
+    "build": "GENERATE_SOURCEMAP=false react-scripts build && node scripts/seo-pages.js"
   },
   "browserslist": {
     "production": [
