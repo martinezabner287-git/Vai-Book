@@ -1,5 +1,5 @@
 -- 2026-11-10 security audit fixes (checked against the "20 mistakes" list).
--- NOT APPLIED until Abner says "apply security fixes".
+-- APPLIED to production 2026-11-10 (Abner: "apply security fixes").
 
 -- 1. The admins table was readable by anyone (even logged out), which
 --    exposed the admin email address. Now each admin can only see their own
