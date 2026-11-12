@@ -1564,7 +1564,7 @@ export const weakPasswordReason = (password, phone) => {
   const es = String(i18n.language || '').toLowerCase().startsWith('es');
   const pw = String(password || '');
   const low = pw.toLowerCase();
-  if (pw.length < 6) return es ? 'Usa al menos 6 caracteres.' : 'Use at least 6 characters.';
+  if (pw.length < 8) return es ? 'Usa al menos 8 caracteres.' : 'Use at least 8 characters.';
   const phoneDigits = normalizePhone(phone);
   const local = phoneDigits.startsWith('501') ? phoneDigits.slice(3) : phoneDigits;
   const pwDigits = low.replace(/\D/g, '');
@@ -1577,6 +1577,36 @@ export const weakPasswordReason = (password, phone) => {
     return es ? 'Esa contraseña es muy fácil de adivinar. Prueba otra (por ejemplo, una palabra que te guste + números).' : 'That password is too easy to guess. Try something harder (for example, a word you like + some numbers).';
   }
   return null;
+};
+
+// ── WHATSAPP CODES (2026-11-12) ─────────────────────────────────
+// A customer's number is confirmed once with a 6-digit code sent to that
+// WhatsApp (edge function phone-code → Meta WhatsApp Cloud API). Until the
+// admin switch (platform_settings.phone_codes_on) is on, all of this reports
+// "not enabled" and the app works exactly as before.
+export const phoneCodesEnabled = async () => {
+  const { data, error } = await supabase.rpc('phone_codes_enabled');
+  return !error && data === true;
+};
+// { enabled, phone_account, verified } for whoever is signed in.
+export const getMyPhoneStatus = async () => {
+  const { data, error } = await supabase.rpc('my_phone_status');
+  if (error || !data) return { enabled: false, phone_account: false, verified: true };
+  return data;
+};
+const callPhoneCode = async (body) => {
+  try {
+    const { data, error } = await supabase.functions.invoke('phone-code', { body });
+    if (error) return { error: 'FAILED' };
+    return data || { error: 'FAILED' };
+  } catch (e) { return { error: 'FAILED' }; }
+};
+export const sendPhoneCode = (phone, purpose, lang) => callPhoneCode({ action: 'send', phone, purpose, lang });
+export const checkPhoneCode = (phone, purpose, code, newPassword) => callPhoneCode({ action: 'check', phone, purpose, code, new_password: newPassword });
+// The login number of a phone account (from its stand-in login address).
+export const phoneFromLoginEmail = (email) => {
+  const m = /^p(\d+)@phone\.vaibook\.bz$/i.exec(String(email || ''));
+  return m ? m[1] : '';
 };
 
 // Log in with phone + password. Returns { data, error, code }.

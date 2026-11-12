@@ -211,6 +211,14 @@ function AdminSettings() {
 
       <PayMethodsEditor form={form} set={set} />
 
+      {"phone_codes_on" in form && (
+        <div className="card at-card">
+          <div className="card-title">Customer sign-up · WhatsApp codes</div>
+          <p className="at-muted">When on, every customer has to confirm their WhatsApp number with a 6-digit code before their account works (once — after that it's number + password), and "Forgot password" sends a code instead of messaging you. Turn on only after the Meta WhatsApp sender is set up, or nobody new can sign up. Each code costs about BZ$0.02.</p>
+          <Toggle checked={!!form.phone_codes_on} onChange={set("phone_codes_on")} label="WhatsApp codes on" />
+        </div>
+      )}
+
       <div className="card at-card">
         <div className="card-title">Site banner</div>
         <p className="at-muted">A strip across the top of VaiBook, for news, a promo or a heads-up. People can close it; a new message shows again.</p>

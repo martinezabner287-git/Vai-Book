@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useLayoutEffect, useRef, useContext, createContext, lazy, Suspense, useCallback, Fragment } from "react";
 import { flushSync } from "react-dom";
-import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, updateService, deleteService, getActiveProviders, getProviderDirectory, createBooking, getProviderBusyWindows, createBookingSafe, cancelBooking, markBookingCheckedIn, getCustomerBookings, uploadReceipt, submitReview, getProviderReviews, updateReview, sendBookingEmail, updateUserProfile, getPaymentMethods, addPaymentMethod, deletePaymentMethod, createNotification, getNotifications, markNotificationRead, markAllNotificationsRead, getCategoryDefaultFeatures, getProviderFeatureOverrides, setProviderFeatureOverride, getVisitNotes, upsertVisitNote, adminListProviders, adminUpdateProvider, adminDeleteProvider, adminCountCustomers, getFavoriteProviderIds, getFavoriteProviders, addFavorite, removeFavorite, getBookingMessages, sendBookingMessage, markBookingMessagesRead, getUnreadBookingMessages, getProviderMonthlyTrend, createProviderProfile, getProviderById, createWalkInBooking, submitProviderPayment, getMyProviderPayments, adminListProviderPayments, adminReviewProviderPayment, submitBookingRefund, adminListBookingRefunds, openPrivateFile, getProviderStaff, addProviderStaff, updateProviderStaff, deleteProviderStaff, getProviderStaffPublic, getLoyaltyAccount, getProviderLoyaltyCustomers, redeemLoyaltyReward, getMyStaffProfile, claimStaffSeatByEmail, getStaffBookings, getProviderNotifyEmail, getMaintenanceStatus, setMaintenanceMode, getSiteOfflineStatus, setSiteOffline, guestAuthWithPassword, updateGuestPassword, savePushSubscription, attachBookingServices, getProviderBlocks, insertProviderBlock, deleteProviderBlock, proposeBookingReschedule, confirmBookingReschedule, declineBookingReschedule, withdrawBookingReschedule, establishSoloSession, getServerSoloSessionToken, getLocalSoloSessionToken, clearLocalSoloSessionToken, subscribeToSoloSessionReplacement, signInWithPhonePassword, customerPhoneAuth, isPhoneLoginEmail, formatPhoneForDisplay, weakPasswordReason, submitSupportMessage, adminSetTempPassword, getMustChangePassword, clearMustChangePassword, adminProviderOverview, adminSetProviderBadges, adminSetProviderPhoto, adminListProviderServices, adminUpdateService, adminSetWorkingHours, adminGetFeatureOverrides, adminSetFeatureOverride, listSupportMessages, setSupportMessageStatus, getProviderMembershipPlans, getMyMembershipPlans, createMembershipPlan, updateMembershipPlan, subscribeToMembershipPlan, submitMembershipPayment, getMyMemberships, getProviderMembershipSubscribers, getProviderMembershipPayments, reviewMembershipPayment, cancelMembership, redeemMembershipVisit, startSoloTrial, adminStartProviderTrial, adminExtendProviderTrial, adminEndProviderTrial, adminExtendPaymentDue, adminRestoreDowngradedPlan, adminPlatformStats, setBookingAnswers, getFormEmail, redeemMembershipVisitFor, attachBookingAddons, getProviderCapacity, getPlanSpotsLeft, recordPastBooking, uploadTradeLicense, getMyChallenge, markChallengeShared } from "./supabase";
+import { supabase, signInWithGoogle, signOut, getOrCreateUser, getProviderProfile, checkIsAdmin, getProviderApplications, updateApplicationStatus, submitProviderApplication, getProviderBookings, updateBookingStatus, updateBooking, upsertProviderProfile, getWorkingHours, upsertWorkingHours, getActiveApplicationByEmail, uploadProviderPhoto, deleteProviderPhoto, createService, updateService, deleteService, getActiveProviders, getProviderDirectory, createBooking, getProviderBusyWindows, createBookingSafe, cancelBooking, markBookingCheckedIn, getCustomerBookings, uploadReceipt, submitReview, getProviderReviews, updateReview, sendBookingEmail, updateUserProfile, getPaymentMethods, addPaymentMethod, deletePaymentMethod, createNotification, getNotifications, markNotificationRead, markAllNotificationsRead, getCategoryDefaultFeatures, getProviderFeatureOverrides, setProviderFeatureOverride, getVisitNotes, upsertVisitNote, adminListProviders, adminUpdateProvider, adminDeleteProvider, adminCountCustomers, getFavoriteProviderIds, getFavoriteProviders, addFavorite, removeFavorite, getBookingMessages, sendBookingMessage, markBookingMessagesRead, getUnreadBookingMessages, getProviderMonthlyTrend, createProviderProfile, getProviderById, createWalkInBooking, submitProviderPayment, getMyProviderPayments, adminListProviderPayments, adminReviewProviderPayment, submitBookingRefund, adminListBookingRefunds, openPrivateFile, getProviderStaff, addProviderStaff, updateProviderStaff, deleteProviderStaff, getProviderStaffPublic, getLoyaltyAccount, getProviderLoyaltyCustomers, redeemLoyaltyReward, getMyStaffProfile, claimStaffSeatByEmail, getStaffBookings, getProviderNotifyEmail, getMaintenanceStatus, setMaintenanceMode, getSiteOfflineStatus, setSiteOffline, guestAuthWithPassword, updateGuestPassword, savePushSubscription, attachBookingServices, getProviderBlocks, insertProviderBlock, deleteProviderBlock, proposeBookingReschedule, confirmBookingReschedule, declineBookingReschedule, withdrawBookingReschedule, establishSoloSession, getServerSoloSessionToken, getLocalSoloSessionToken, clearLocalSoloSessionToken, subscribeToSoloSessionReplacement, signInWithPhonePassword, customerPhoneAuth, isPhoneLoginEmail, formatPhoneForDisplay, weakPasswordReason, submitSupportMessage, adminSetTempPassword, getMustChangePassword, clearMustChangePassword, adminProviderOverview, adminSetProviderBadges, adminSetProviderPhoto, adminListProviderServices, adminUpdateService, adminSetWorkingHours, adminGetFeatureOverrides, adminSetFeatureOverride, listSupportMessages, setSupportMessageStatus, getProviderMembershipPlans, getMyMembershipPlans, createMembershipPlan, updateMembershipPlan, subscribeToMembershipPlan, submitMembershipPayment, getMyMemberships, getProviderMembershipSubscribers, getProviderMembershipPayments, reviewMembershipPayment, cancelMembership, redeemMembershipVisit, startSoloTrial, adminStartProviderTrial, adminExtendProviderTrial, adminEndProviderTrial, adminExtendPaymentDue, adminRestoreDowngradedPlan, adminPlatformStats, setBookingAnswers, getFormEmail, redeemMembershipVisitFor, attachBookingAddons, getProviderCapacity, getPlanSpotsLeft, recordPastBooking, uploadTradeLicense, getMyChallenge, markChallengeShared, phoneCodesEnabled, getMyPhoneStatus, sendPhoneCode, checkPhoneCode, phoneFromLoginEmail } from "./supabase";
 import AdminDashboard from "./AdminDashboard";
 import ProfilePhotoModal from "./ProfilePhotoModal";
 import LanguageSelector from "./LanguageSelector";
@@ -2246,6 +2246,12 @@ const css = `
   .email-auth-code-input { width: 42px; height: 52px; text-align: center; font-size: 20px; font-weight: 700; border-radius: 10px; border: 1px solid var(--border, #ddd); }
   .email-auth-code-input:focus { outline: none; border-color: var(--forest); box-shadow: 0 0 0 2px rgba(76,61,196,0.15); }
   .email-auth-error { font-size: 12px; color: #B91C1C; text-align: center; margin: 8px 0 0; }
+  .phone-code-input { font-size: 26px !important; letter-spacing: 10px; text-align: center; font-weight: 700; }
+  .phone-code-sent { font-size: 13px; color: #1E7A3C; background: #E3F5E9; border-radius: 10px; padding: 8px 12px; margin: 0 0 12px; }
+  .phone-code-links { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-top: 12px; }
+  .phone-code-link { background: none; border: 0; padding: 4px 0; color: var(--accent, #4C3DC4); font-weight: 600; font-size: 13px; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+  .phone-code-link:disabled { color: #9A95AD; cursor: default; text-decoration: none; }
+  .phone-code-cancel { display: block; margin: 14px auto 0; background: none; border: 0; color: #6B6E7B; font-size: 13px; cursor: pointer; }
   .email-auth-btn { width: 100%; margin-top: 20px; padding: 14px 0; font-size: 14px; border-radius: 12px; background: var(--forest); color: #FFFFFF; font-weight: 700; border: none; cursor: pointer; }
   .email-auth-btn:disabled { opacity: 0.6; cursor: not-allowed; }
   .email-auth-resend { width: 100%; margin-top: 10px; padding: 8px 0; font-size: 12px; font-weight: 600; color: var(--forest); background: none; border: none; cursor: pointer; }
@@ -4017,8 +4023,8 @@ const css = `
 // supabase.js). New customers create theirs at checkout the first time
 // they book; this box is for logging back in on any phone.
 const PL_TEXT = {
-  en: { phone: "WhatsApp number", password: "Password", login: "Log in", loggingIn: "Logging in…", wrong: "That number and password don't match. Check them and try again.", failed: "Couldn't log in. Check your connection and try again.", missing: "Enter your WhatsApp number and password.", forgot: "Forgot your password?", contact: "Message us", newHere: "New to VaiBook?", create: "Create an account", creating: "Creating…", name: "Your name", password2: "Confirm password", haveAcct: "Already have an account?", nameMissing: "Enter your name.", mismatch: "The passwords don't match.", taken: "That number already has an account. Log in instead, or message us if you forgot the password.", or: "or" },
-  es: { phone: "Número de WhatsApp", password: "Contraseña", login: "Iniciar sesión", loggingIn: "Entrando…", wrong: "Ese número y contraseña no coinciden. Revísalos e inténtalo de nuevo.", failed: "No se pudo iniciar sesión. Revisa tu conexión e inténtalo de nuevo.", missing: "Escribe tu número de WhatsApp y tu contraseña.", forgot: "¿Olvidaste tu contraseña?", contact: "Escríbenos", newHere: "¿Nuevo en VaiBook?", create: "Crear una cuenta", creating: "Creando…", name: "Tu nombre", password2: "Confirma la contraseña", haveAcct: "¿Ya tienes una cuenta?", nameMissing: "Escribe tu nombre.", mismatch: "Las contraseñas no coinciden.", taken: "Ese número ya tiene una cuenta. Inicia sesión, o escríbenos si olvidaste la contraseña.", or: "o" },
+  en: { phone: "WhatsApp number", password: "Password", login: "Log in", loggingIn: "Logging in…", wrong: "That number and password don't match. Check them and try again.", failed: "Couldn't log in. Check your connection and try again.", missing: "Enter your WhatsApp number and password.", forgot: "Forgot your password?", contact: "Message us", newHere: "New to VaiBook?", create: "Create an account", creating: "Creating…", name: "Your name", password2: "Confirm password", haveAcct: "Already have an account?", nameMissing: "Enter your name.", mismatch: "The passwords don't match.", taken: "That number already has an account. Log in instead, or message us if you forgot the password.", or: "or", takenCode: "That number already has an account. Log in instead, or if it's your number, get a WhatsApp code to set a new password.", itsMine: "It's my number — send me a code", getCode: "Get a WhatsApp code", needCode: "Confirm your WhatsApp number with the code to use your account." },
+  es: { phone: "Número de WhatsApp", password: "Contraseña", login: "Iniciar sesión", loggingIn: "Entrando…", wrong: "Ese número y contraseña no coinciden. Revísalos e inténtalo de nuevo.", failed: "No se pudo iniciar sesión. Revisa tu conexión e inténtalo de nuevo.", missing: "Escribe tu número de WhatsApp y tu contraseña.", forgot: "¿Olvidaste tu contraseña?", contact: "Escríbenos", newHere: "¿Nuevo en VaiBook?", create: "Crear una cuenta", creating: "Creando…", name: "Tu nombre", password2: "Confirma la contraseña", haveAcct: "¿Ya tienes una cuenta?", nameMissing: "Escribe tu nombre.", mismatch: "Las contraseñas no coinciden.", taken: "Ese número ya tiene una cuenta. Inicia sesión, o escríbenos si olvidaste la contraseña.", or: "o", takenCode: "Ese número ya tiene una cuenta. Inicia sesión, o si es tu número, pide un código por WhatsApp para poner una contraseña nueva.", itsMine: "Es mi número — envíenme un código", getCode: "Pide un código por WhatsApp", needCode: "Confirma tu número de WhatsApp con el código para usar tu cuenta." },
 };
 function CustomerPhoneLogin({ onSignedIn, compact }) {
   const { i18n } = useTranslation();
@@ -4030,6 +4036,13 @@ function CustomerPhoneLogin({ onSignedIn, compact }) {
   const [mode, setMode] = useState("login");
   const [name, setName] = useState("");
   const [password2, setPassword2] = useState("");
+  const [codesOn, setCodesOn] = useState(false);
+  useEffect(() => { let live = true; phoneCodesEnabled().then((v) => { if (live) setCodesOn(v); }); return () => { live = false; }; }, []);
+  const [taken, setTaken] = useState(false);
+  const forgot = async () => {
+    const res = await openPhoneReset(phone);
+    if (res && res.ok && res.signedIn) onSignedIn && onSignedIn();
+  };
   const createAccount = async (e) => {
     e && e.preventDefault();
     if (!name.trim()) { setErr(L.nameMissing); return; }
@@ -4039,8 +4052,9 @@ function CustomerPhoneLogin({ onSignedIn, compact }) {
     setBusy(true); setErr("");
     const res = await customerPhoneAuth({ name: name.trim(), phone, password });
     setBusy(false);
-    if (res.code === "NUMBER_HAS_ACCOUNT") { setErr(L.taken); return; }
+    if (res.code === "NUMBER_HAS_ACCOUNT") { setErr(codesOn ? L.takenCode : L.taken); setTaken(true); return; }
     if (res.error) { setErr(res.code === "WEAK_PASSWORD" ? (res.message || caText(i18n.language, "pwRules")) : L.failed); return; }
+    if (!(await ensurePhoneVerified())) { setErr(L.needCode); return; }
     onSignedIn && onSignedIn();
   };
   const submit = async (e) => {
@@ -4050,9 +4064,10 @@ function CustomerPhoneLogin({ onSignedIn, compact }) {
     const { error, code } = await signInWithPhonePassword(phone, password);
     setBusy(false);
     if (error) { setErr(code === "WRONG_PHONE_OR_PASSWORD" ? L.wrong : L.failed); return; }
+    if (!(await ensurePhoneVerified())) { setErr(L.needCode); return; }
     onSignedIn && onSignedIn();
   };
-  const switchMode = (m) => { setMode(m); setErr(""); };
+  const switchMode = (m) => { setMode(m); setErr(""); setTaken(false); };
   if (mode === "signup") return (
     <form className="phone-login" onSubmit={createAccount}>
       <label>{L.name}<input type="text" autoComplete="name" value={name} onChange={(e) => setName(e.target.value)} /></label>
@@ -4061,6 +4076,7 @@ function CustomerPhoneLogin({ onSignedIn, compact }) {
       <PasswordRules value={password} />
       <label>{L.password2}<input type="password" autoComplete="new-password" value={password2} onChange={(e) => setPassword2(e.target.value)} /></label>
       {err && <p className="phone-login-err">{err}</p>}
+      {taken && codesOn && <button type="button" className="phone-code-link" onClick={forgot}>{L.itsMine}</button>}
       <button type="submit" className="gate-btn" disabled={busy}>{busy ? L.creating : L.create}</button>
       <p className="phone-login-help">{L.haveAcct} <a href="#login" onClick={(e) => { e.preventDefault(); switchMode("login"); }}>{L.login}</a></p>
     </form>
@@ -4071,7 +4087,9 @@ function CustomerPhoneLogin({ onSignedIn, compact }) {
       <label>{L.password}<input type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} /></label>
       {err && <p className="phone-login-err">{err}</p>}
       <button type="submit" className="gate-btn" disabled={busy}>{busy ? L.loggingIn : L.login}</button>
-      <p className="phone-login-help">{L.forgot} <a href="#contact">{L.contact}</a></p>
+      <p className="phone-login-help">{L.forgot} {codesOn
+        ? <a href="#reset" onClick={(e) => { e.preventDefault(); forgot(); }}>{L.getCode}</a>
+        : <a href="#contact">{L.contact}</a>}</p>
       {!compact && <p className="phone-login-help">{L.newHere} <a href="#create-account" onClick={(e) => { e.preventDefault(); switchMode("signup"); }}>{L.create}</a></p>}
     </form>
   );
@@ -7856,6 +7874,174 @@ function SiteOffline({ message, onSignIn }) {
 // email-OTP use — the class names stayed when guest checkout moved to a
 // password, below) rather than adding a parallel set of near-identical
 // modal styles.
+// ── WHATSAPP CODE SCREEN (2026-11-12) ─────────────────────────────
+// Abner's rule: a customer's WhatsApp number has to be confirmed with a
+// 6-digit code sent to that WhatsApp before the account can be used — once,
+// when the account is made (or the first login of an older account). After
+// that it's number + password. "Forgot password" also goes through a code.
+// Everything here is dormant until Admin → Settings switches codes on.
+const PC_TEXT = {
+  en: {
+    verifyTitle: "Confirm your WhatsApp number", verifySub: (n) => `We'll send a 6-digit code to ${n} on WhatsApp. Enter it here to finish.`,
+    resetTitle: "Reset your password", resetSub: "We'll send a 6-digit code to your WhatsApp. Then choose a new password.",
+    number: "WhatsApp number", send: "Send code", sending: "Sending…", code: "6-digit code", sentTo: (n) => `Code sent to ${n} on WhatsApp.`,
+    confirm: "Confirm", checking: "Checking…", newPw: "New password", newPw2: "Confirm new password", save: "Save new password",
+    resend: "Send a new code", resendIn: (s) => `New code in ${s}s`, cancel: "Not now", changeNumber: "Use another number",
+    errors: {
+      WRONG_CODE: "That code isn't right. Check the WhatsApp message and try again.", CODE_EXPIRED: "That code expired. Send a new one.",
+      TOO_MANY_TRIES: "Too many wrong tries. Send a new code.", TOO_MANY: "Too many codes asked for this number. Wait 15 minutes and try again.",
+      NO_ACCOUNT: "There's no VaiBook account with that number yet.", BAD_PHONE: "Check the number — it needs all its digits.",
+      NOT_YOUR_NUMBER: "That number isn't the one on your account.", PASSWORD_TOO_SHORT: "Use at least 8 characters.",
+      SEND_FAILED: "WhatsApp didn't take the message. Check the number is on WhatsApp and try again.", NOT_READY: "Codes aren't working right now. Message us and we'll help.",
+      MISMATCH: "The passwords don't match.", FAILED: "Something went wrong. Check your connection and try again.",
+    },
+  },
+  es: {
+    verifyTitle: "Confirma tu número de WhatsApp", verifySub: (n) => `Te enviaremos un código de 6 dígitos a ${n} por WhatsApp. Escríbelo aquí para terminar.`,
+    resetTitle: "Cambia tu contraseña", resetSub: "Te enviaremos un código de 6 dígitos por WhatsApp. Luego eliges una contraseña nueva.",
+    number: "Número de WhatsApp", send: "Enviar código", sending: "Enviando…", code: "Código de 6 dígitos", sentTo: (n) => `Código enviado a ${n} por WhatsApp.`,
+    confirm: "Confirmar", checking: "Revisando…", newPw: "Contraseña nueva", newPw2: "Confirma la contraseña nueva", save: "Guardar contraseña",
+    resend: "Enviar otro código", resendIn: (s) => `Otro código en ${s}s`, cancel: "Ahora no", changeNumber: "Usar otro número",
+    errors: {
+      WRONG_CODE: "Ese código no es correcto. Revisa el mensaje de WhatsApp e inténtalo de nuevo.", CODE_EXPIRED: "Ese código venció. Pide uno nuevo.",
+      TOO_MANY_TRIES: "Demasiados intentos. Pide un código nuevo.", TOO_MANY: "Se pidieron muchos códigos para este número. Espera 15 minutos.",
+      NO_ACCOUNT: "Todavía no hay una cuenta de VaiBook con ese número.", BAD_PHONE: "Revisa el número — le faltan dígitos.",
+      NOT_YOUR_NUMBER: "Ese número no es el de tu cuenta.", PASSWORD_TOO_SHORT: "Usa al menos 8 caracteres.",
+      SEND_FAILED: "WhatsApp no aceptó el mensaje. Revisa que el número tenga WhatsApp e inténtalo de nuevo.", NOT_READY: "Los códigos no funcionan ahora. Escríbenos y te ayudamos.",
+      MISMATCH: "Las contraseñas no coinciden.", FAILED: "Algo salió mal. Revisa tu conexión e inténtalo de nuevo.",
+    },
+  },
+};
+function PhoneCodeModal({ purpose, phone: initialPhone, onDone, onCancel }) {
+  const { i18n } = useTranslation();
+  const es = (i18n.language || "").toLowerCase().startsWith("es");
+  const L = PC_TEXT[es ? "es" : "en"];
+  const [phone, setPhone] = useState(initialPhone || "");
+  const [step, setStep] = useState(purpose === "verify" ? "sending" : "number");
+  const [code, setCode] = useState("");
+  const [pw, setPw] = useState("");
+  const [pw2, setPw2] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+  const [wait, setWait] = useState(0);
+  const pretty = formatPhoneForDisplay(phone);
+  const errText = (c) => L.errors[c] || L.errors.FAILED;
+  useEffect(() => { if (wait <= 0) return undefined; const t = setTimeout(() => setWait((w) => w - 1), 1000); return () => clearTimeout(t); }, [wait]);
+  const send = async () => {
+    if ((phone.match(/\d/g) || []).length < 7) { setErr(L.errors.BAD_PHONE); setStep("number"); return; }
+    setBusy(true); setErr("");
+    const res = await sendPhoneCode(phone, purpose, es ? "es" : "en");
+    setBusy(false);
+    if (res.error) { setErr(errText(res.error)); setStep(purpose === "verify" ? "code" : "number"); return; }
+    setCode(""); setStep("code"); setWait(60);
+  };
+  useEffect(() => { if (purpose === "verify") send(); }, []); // eslint-disable-line
+  const check = async (e) => {
+    e && e.preventDefault();
+    const digits = code.replace(/\D/g, "");
+    if (digits.length !== 6) { setErr(errText("WRONG_CODE")); return; }
+    if (purpose === "reset") {
+      const weak = weakPasswordReason(pw, phone);
+      if (weak) { setErr(weak); return; }
+      if (pw !== pw2) { setErr(L.errors.MISMATCH); return; }
+    }
+    setBusy(true); setErr("");
+    const res = await checkPhoneCode(phone, purpose, digits, purpose === "reset" ? pw : undefined);
+    if (res.error) { setBusy(false); setErr(errText(res.error)); return; }
+    if (purpose === "reset") {
+      const li = await signInWithPhonePassword(phone, pw);
+      setBusy(false);
+      onDone && onDone({ ok: true, signedIn: !li.error });
+      return;
+    }
+    setBusy(false);
+    onDone && onDone({ ok: true });
+  };
+  return (
+    <div className="email-auth-overlay" onClick={onCancel}>
+      <div className="email-auth-card phone-code-card" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label={purpose === "reset" ? L.resetTitle : L.verifyTitle}>
+        <button className="email-auth-close" onClick={onCancel} aria-label="Close">×</button>
+        <p className="email-auth-brand">vai <span>book</span></p>
+        <h2 className="email-auth-title">{purpose === "reset" ? L.resetTitle : L.verifyTitle}</h2>
+        <p className="email-auth-sub">{purpose === "reset" ? L.resetSub : L.verifySub(pretty)}</p>
+        {step === "number" && (
+          <form onSubmit={(e) => { e.preventDefault(); send(); }}>
+            <div className="input-group">
+              <label>{L.number}</label>
+              <input type="tel" inputMode="tel" autoComplete="tel" autoFocus placeholder="+501 622 1234" value={phone} onChange={(e) => setPhone(e.target.value)} />
+            </div>
+            {err && <p className="email-auth-error">{err}</p>}
+            <button type="submit" className="email-auth-btn" disabled={busy}>{busy ? L.sending : L.send}</button>
+          </form>
+        )}
+        {step === "sending" && <p className="email-auth-sub">{L.sending}</p>}
+        {step === "code" && (
+          <form onSubmit={check}>
+            {!err && <p className="phone-code-sent">✓ {L.sentTo(pretty)}</p>}
+            <div className="input-group">
+              <label>{L.code}</label>
+              <input className="phone-code-input" type="text" inputMode="numeric" autoComplete="one-time-code" autoFocus maxLength={7} placeholder="••••••" value={code} onChange={(e) => setCode(e.target.value.replace(/[^\d]/g, "").slice(0, 6))} />
+            </div>
+            {purpose === "reset" && (
+              <>
+                <div className="input-group"><label>{L.newPw}</label><input type="password" autoComplete="new-password" value={pw} onChange={(e) => setPw(e.target.value)} /></div>
+                <div className="input-group"><label>{L.newPw2}</label><input type="password" autoComplete="new-password" value={pw2} onChange={(e) => setPw2(e.target.value)} /></div>
+              </>
+            )}
+            {err && <p className="email-auth-error">{err}</p>}
+            <button type="submit" className="email-auth-btn" disabled={busy}>{busy ? L.checking : (purpose === "reset" ? L.save : L.confirm)}</button>
+            <div className="phone-code-links">
+              <button type="button" className="phone-code-link" disabled={busy || wait > 0} onClick={send}>{wait > 0 ? L.resendIn(wait) : L.resend}</button>
+              {purpose === "reset" && <button type="button" className="phone-code-link" onClick={() => { setStep("number"); setErr(""); }}>{L.changeNumber}</button>}
+            </div>
+          </form>
+        )}
+        {purpose === "verify" && <button type="button" className="phone-code-cancel" onClick={onCancel}>{L.cancel}</button>}
+      </div>
+    </div>
+  );
+}
+
+// One code screen for the whole app. ensurePhoneVerified() resolves true
+// when the signed-in person may carry on (codes off, not a phone account, or
+// already confirmed); otherwise it shows the code screen, and if they close
+// it without confirming they're signed out — an unconfirmed number can't
+// stay logged in. openPhoneReset() starts "forgot password".
+let phoneCodeOpener = null;
+let phoneVerifyPending = null;
+async function ensurePhoneVerified() {
+  if (phoneVerifyPending) return phoneVerifyPending;
+  phoneVerifyPending = (async () => {
+    const st = await getMyPhoneStatus();
+    if (!st.enabled || !st.phone_account || st.verified) return true;
+    const { data } = await supabase.auth.getSession();
+    const phone = phoneFromLoginEmail(data?.session?.user?.email);
+    const ok = phoneCodeOpener ? await new Promise((resolve) => phoneCodeOpener({ purpose: "verify", phone, resolve })) : false;
+    if (!ok) { try { await signOut(); } catch (e) { /* ignore */ } }
+    return ok;
+  })();
+  try { return await phoneVerifyPending; } finally { phoneVerifyPending = null; }
+}
+function openPhoneReset(phone) {
+  return new Promise((resolve) => { if (!phoneCodeOpener) { resolve(false); return; } phoneCodeOpener({ purpose: "reset", phone: phone || "", resolve }); });
+}
+function PhoneCodeHost() {
+  const [req, setReq] = useState(null);
+  useEffect(() => {
+    phoneCodeOpener = (r) => setReq(r);
+    // Any sign-in, anywhere (or coming back to an open session), gets checked.
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session && (event === "SIGNED_IN" || event === "INITIAL_SESSION") && /@phone\.vaibook\.bz$/i.test(session.user?.email || "")) {
+        setTimeout(() => { ensurePhoneVerified(); }, 0);
+      }
+    });
+    return () => { phoneCodeOpener = null; subscription.unsubscribe(); };
+  }, []);
+  if (!req) return null;
+  const finish = (val) => { const r = req; setReq(null); r.resolve(val); };
+  return <PhoneCodeModal purpose={req.purpose} phone={req.phone} onDone={(res) => finish(req.purpose === "reset" ? res : true)} onCancel={() => finish(false)} />;
+}
+
 function PhoneRequiredModal({ onClose, onSaved }) {
   const { t } = useTranslation();
   const [phone, setPhone] = useState("");
@@ -10030,6 +10216,11 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
   const [loadingTeam, setLoadingTeam] = useState(false);
   const [selectedStaffId, setSelectedStaffId] = useState(null);
   const [submittingGuestAuth, setSubmittingGuestAuth] = useState(false);
+  // Set when checkout finds the number already has an account and WhatsApp
+  // codes are on, so "It's my number" can start a password reset.
+  const [guestTakenPhone, setGuestTakenPhone] = useState("");
+  const [guestCodesOn, setGuestCodesOn] = useState(false);
+  useEffect(() => { let live = true; phoneCodesEnabled().then((v) => { if (live) setGuestCodesOn(v); }); return () => { live = false; }; }, []);
   const { pushEnabled, subscribingPush, pushError, enablePushNotifications } = usePushSubscription(user?.id);
   const [providerHours, setProviderHours] = useState([]);
   // Separate from loadingSlots (which only tracks the busy-windows fetch for
@@ -13083,7 +13274,7 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                               </div>
                               <div className="input-group">
                                 <label>{(i18n.language || "").toLowerCase().startsWith("es") ? "Contraseña" : "Password"}</label>
-                                <input type="password" autoComplete="new-password" placeholder={(i18n.language || "").toLowerCase().startsWith("es") ? "Al menos 6 caracteres" : "At least 6 characters"} value={guestCheckoutForm.password} onChange={e => setGuestCheckoutForm(f => ({ ...f, password: e.target.value }))} onKeyDown={e => { if (e.key === "Enter") e.preventDefault(); }} />
+                                <input type="password" autoComplete="new-password" placeholder={(i18n.language || "").toLowerCase().startsWith("es") ? "Al menos 8 caracteres" : "At least 8 characters"} value={guestCheckoutForm.password} onChange={e => setGuestCheckoutForm(f => ({ ...f, password: e.target.value }))} onKeyDown={e => { if (e.key === "Enter") e.preventDefault(); }} />
                               </div>
                               <p className="guest-checkout-note">
                                 {(i18n.language || "").toLowerCase().startsWith("es")
@@ -13131,6 +13322,12 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                           )}
 
                           {bookingError && <p style={{ fontSize: 12, color: "#B91C1C", marginBottom: 12 }}>{bookingError}</p>}
+                          {guestTakenPhone && !user?.id && (
+                            <button type="button" className="phone-code-link" style={{ marginBottom: 12 }} onClick={async () => {
+                              const res = await openPhoneReset(guestTakenPhone);
+                              if (res && res.ok) { setGuestTakenPhone(""); setBookingError((i18n.language || "").toLowerCase().startsWith("es") ? "Listo — ya entraste con tu contraseña nueva. Toca Confirmar reserva." : "Done — you're logged in with your new password. Tap Confirm booking."); }
+                            }}>{(i18n.language || "").toLowerCase().startsWith("es") ? "Es mi número — envíenme un código por WhatsApp" : "It's my number — send me a WhatsApp code"}</button>
+                          )}
 
                           <button
                             className="btn-sm forest"
@@ -13172,7 +13369,11 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                               // shorter password here would just bounce back as a signUp
                               // error anyway, so check it up front instead of round-
                               // tripping to find out.
-                              if (guestPassword.length < 6) { setBookingError(gEs ? "Crea una contraseña de al menos 6 caracteres." : "Create a password with at least 6 characters."); return; }
+                              // New accounts need 8+ characters (2026-11-12); a returning
+                              // customer (name left blank) just types the password they have.
+                              if (guestName ? guestPassword.length < 8 : !guestPassword) { setBookingError(gEs ? "Crea una contraseña de al menos 8 caracteres." : "Create a password with at least 8 characters."); return; }
+                              setGuestTakenPhone("");
+                              const needCodeMsg = gEs ? "Confirma tu número de WhatsApp con el código para reservar." : "Confirm your WhatsApp number with the code to book.";
                               if (bookingQuestionsBlock()) return;
                               setBookingError("");
                               // Returning customer: name left blank → just log in with
@@ -13187,6 +13388,7 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                                     : "We couldn't find an account with that number and password. New here? Add your name to create your account.");
                                   return;
                                 }
+                                if (!(await ensurePhoneVerified())) { setBookingError(needCodeMsg); return; }
                                 const liUid = li?.user?.id;
                                 bookingService.isMulti ? submitMultiServiceBooking(liUid) : submitBooking(liUid);
                                 return;
@@ -13200,9 +13402,12 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                               const { data, error, code, message: authMsg } = await customerPhoneAuth({ name: guestName, phone: guestWhatsapp, password: guestPassword });
                               setSubmittingGuestAuth(false);
                               if (error) {
+                                if (code === "NUMBER_HAS_ACCOUNT" && guestCodesOn) setGuestTakenPhone(guestWhatsapp);
                                 setBookingError(
                                   code === "NUMBER_HAS_ACCOUNT"
-                                    ? (gEs ? "Este número ya tiene una cuenta y la contraseña no coincide. Inténtalo de nuevo o escríbenos (Contáctanos) si la olvidaste." : "This number already has an account and that password doesn't match. Try again, or message us (Contact us) if you forgot it.")
+                                    ? (guestCodesOn
+                                      ? (gEs ? "Este número ya tiene una cuenta y la contraseña no coincide. Inténtalo de nuevo, o si es tu número, pide un código abajo." : "This number already has an account and that password doesn't match. Try again, or if it's your number, get a code below.")
+                                      : (gEs ? "Este número ya tiene una cuenta y la contraseña no coincide. Inténtalo de nuevo o escríbenos (Contáctanos) si la olvidaste." : "This number already has an account and that password doesn't match. Try again, or message us (Contact us) if you forgot it."))
                                     : code === "WEAK_PASSWORD"
                                       ? (authMsg || (gEs ? "Esa contraseña es muy débil. Usa al menos 6 caracteres con letras y números." : "That password is too weak. Use at least 6 characters with letters and numbers."))
                                       : t("customerPortal.booking.guestAuthFailed")
@@ -13220,6 +13425,7 @@ function CustomerPortal({ onNav, user, session, onSignIn, onSignOut, onUserUpdat
                                 setBookingError(t("customerPortal.booking.guestAuthFailed"));
                                 return;
                               }
+                              if (!(await ensurePhoneVerified())) { setBookingError(needCodeMsg); return; }
                               const uid = data?.user?.id;
                               bookingService.isMulti ? submitMultiServiceBooking(uid) : submitBooking(uid);
                             }}
@@ -23359,6 +23565,7 @@ export default function App() {
       <style>{css}</style>
       <MaintenanceBanner />
       <ActionErrorToast />
+      <PhoneCodeHost />
       <ForcePasswordChange session={session} />
       <UpdateAvailableBanner />
       <PushPrompt userId={session?.user?.id} isBusiness={!!providerProfile} />
