@@ -15,14 +15,14 @@ import { createClient } from "jsr:@supabase/supabase-js@2";
 // Secrets (Supabase → Edge Functions → Secrets):
 //   WHATSAPP_TOKEN            permanent System User token from Meta
 //   WHATSAPP_PHONE_NUMBER_ID  the VaiBook sender's phone number ID
-//   WHATSAPP_TEMPLATE         approved authentication template name (default vaibook_code)
+//   WHATSAPP_TEMPLATE         approved authentication template name (default vai_code)
 //   WHATSAPP_TEMPLATE_LANGS   languages it's approved in (default "en_US,es")
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const WA_TOKEN = Deno.env.get("WHATSAPP_TOKEN") || "";
 const WA_PHONE_ID = Deno.env.get("WHATSAPP_PHONE_NUMBER_ID") || "";
-const WA_TEMPLATE = Deno.env.get("WHATSAPP_TEMPLATE") || "vaibook_code";
+const WA_TEMPLATE = Deno.env.get("WHATSAPP_TEMPLATE") || "vai_code";
 const WA_LANGS = (Deno.env.get("WHATSAPP_TEMPLATE_LANGS") || "en_US,es").split(",").map((s) => s.trim()).filter(Boolean);
 const GRAPH = Deno.env.get("WHATSAPP_GRAPH_VERSION") || "v22.0";
 
