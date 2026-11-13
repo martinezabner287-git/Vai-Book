@@ -2950,11 +2950,20 @@ const css = `
   .vbl-inline-icon { color: var(--forest); display: inline-flex; flex-shrink: 0; margin-top: 1px; }
   .vbl-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 14px; }
   .vbl-list li { display: flex; gap: 10px; font-size: 15px; line-height: 1.55; color: #3A4150; }
-  .vbl-plans { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; align-items: stretch; }
+  .vbl-plans { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; align-items: stretch; max-width: 900px; margin: 0 auto; }
   .vbl-plan { position: relative; background: #FFFFFF; border: 1px solid var(--border); border-radius: 18px; padding: 26px 22px; display: flex; flex-direction: column; gap: 10px; }
   .vbl-plan.featured { border: 2px solid var(--forest); }
   .vbl-plan-badge { position: absolute; top: -12px; left: 22px; background: var(--forest); color: #FFFFFF; font-size: 11px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; padding: 4px 10px; border-radius: 100px; }
   .vbl-plan-badge.hot { background: #E08A00; }
+  .vbl-terms { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 14px 0 18px; }
+  .vbl-term { position: relative; display: flex; flex-direction: column; gap: 3px; border: 1.5px solid #E4E0FA; border-radius: 16px; padding: 20px 14px 14px; background: #FBFAFF; }
+  .vbl-term-badge { position: absolute; top: -10px; left: 12px; background: #16A34A; color: #fff; font-size: 10.5px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; border-radius: 999px; padding: 3px 9px; white-space: nowrap; }
+  .vbl-term-badge.hot { background: #E08A00; }
+  .vbl-term-name { font-size: 13px; font-weight: 700; color: #5E5870; }
+  .vbl-term-price { font-size: 26px; font-weight: 800; letter-spacing: -0.5px; color: #17141F; line-height: 1.1; }
+  .vbl-term-price small { font-size: 13px; font-weight: 600; color: #6B6E7B; margin-left: 2px; }
+  .vbl-term-bill { font-size: 12px; color: #6B6E7B; line-height: 1.35; }
+  @media (max-width: 380px) { .vbl-terms { grid-template-columns: 1fr; gap: 16px; } }
   .vbl-plan-name { font-size: 15px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
   .vbl-plan-price { font-size: 30px; font-weight: 800; letter-spacing: -0.02em; }
   .vbl-plan-price span { font-size: 14px; font-weight: 600; color: var(--muted); }
@@ -9789,7 +9798,6 @@ function ProviderLandingPage({ onNav, asHome }) {
   const solo = PLANS.find((p) => p.id === "pro");
   const team = PLANS.find((p) => p.id === "business");
   const money = { solo: (solo?.monthly || 0).toFixed(2), team: (team?.monthly || 0).toFixed(2), seats: TEAM_FREE_SEATS };
-  const [priceTerm, setPriceTerm] = useState("six");
   const lpEs = (i18n.language || "").toLowerCase().startsWith("es");
   const px = (en, es) => (lpEs ? es : en);
   const startSignup = (planId) => {
@@ -9921,33 +9929,30 @@ function ProviderLandingPage({ onNav, asHome }) {
           <h2 className="vbl-h2">{lt("pricingTitle")}</h2>
           <p className="vbl-center-sub">{lt("pricingSub")}</p>
           <p className="vbl-compare">{px("A website alone costs about BZ$700 and still can't take bookings, send reminders or track your money. Solo does all of it for about BZ$2 a day.", "Solo una página web cuesta unos BZ$700 y aun así no toma reservas, no envía recordatorios ni lleva tus cuentas. Solo hace todo eso por menos de BZ$2 al día.")}</p>
-          <div className="term-toggle" role="tablist" aria-label={px("Billing period", "Periodo de pago")}>
-            <button role="tab" aria-selected={priceTerm === "six"} className={priceTerm === "six" ? "on" : ""} onClick={() => setPriceTerm("six")}>
-              {px("6 months", "6 meses")} <span className="term-save">{px("1 month free", "1 mes gratis")}</span>
-            </button>
-            <button role="tab" aria-selected={priceTerm === "monthly"} className={priceTerm === "monthly" ? "on" : ""} onClick={() => setPriceTerm("monthly")}>{px("Monthly", "Mensual")}</button>
-          </div>
+          {/* Each plan shows both ways to pay side by side (2026-11-13):
+              6 months = Best price, monthly = Best seller. */}
           <div className="vbl-plans">
             {PUBLIC_PLANS.map((p) => {
-              const tp = planTermPrice(p, priceTerm, { firstPayment: true });
+              const six = planTermPrice(p, "six", { firstPayment: true });
+              const mon = planTermPrice(p, "monthly", { firstPayment: true });
               return (
               <div className="vbl-plan featured" key={p.id}>
-                <div className={`vbl-plan-badge${priceTerm === "monthly" ? " hot" : ""}`}>{priceTerm === "monthly" ? px("Best seller", "Más vendido") : px("Best price", "Mejor precio")}</div>
                 <div className="vbl-plan-name">{p.name}</div>
                 {p.monthly > 0 ? (
-                  <>
-                    <div className="vbl-plan-price">BZ${tp.perDay}<span> {px("/day", "/día")}</span></div>
-                    <div className="vbl-plan-billing">
-                      {priceTerm === "six"
-                        ? px(`BZ$${tp.total.toFixed(2)} every 6 months · you get 7 months`, `BZ$${tp.total.toFixed(2)} cada 6 meses · recibes 7 meses`)
-                        : px(`BZ$${tp.base.toFixed(2)} a month`, `BZ$${tp.base.toFixed(2)} al mes`)}
+                  <div className="vbl-terms">
+                    <div className="vbl-term">
+                      <span className="vbl-term-badge">{px("Best price", "Mejor precio")}</span>
+                      <span className="vbl-term-name">{px("6 months", "6 meses")}</span>
+                      <span className="vbl-term-price">BZ${six.perDay}<small>{px("/day", "/día")}</small></span>
+                      <span className="vbl-term-bill">{px(`BZ$${six.total.toFixed(2)} every 6 months · you get 7 months`, `BZ$${six.total.toFixed(2)} cada 6 meses · recibes 7 meses`)}</span>
                     </div>
-                    {priceTerm === "monthly" && (
-                      <button className="vbl-plan-switch" onClick={() => setPriceTerm("six")}>
-                        {px(`Save — get it for BZ$${planTermPrice(p, "six").perDay}/day on 6 months`, `Ahorra — BZ$${planTermPrice(p, "six").perDay}/día con 6 meses`)}
-                      </button>
-                    )}
-                  </>
+                    <div className="vbl-term">
+                      <span className="vbl-term-badge hot">{px("Best seller", "Más vendido")}</span>
+                      <span className="vbl-term-name">{px("Monthly", "Mensual")}</span>
+                      <span className="vbl-term-price">BZ${mon.perDay}<small>{px("/day", "/día")}</small></span>
+                      <span className="vbl-term-bill">{px(`BZ$${mon.base.toFixed(2)} a month`, `BZ$${mon.base.toFixed(2)} al mes`)}</span>
+                    </div>
+                  </div>
                 ) : (
                   <>
                     <div className="vbl-plan-price">{px("Free", "Gratis")}</div>
@@ -17693,14 +17698,6 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
               </div>
             </div>
 
-            {/* VAI MEDIA — non-intrusive promo, bottom of Availability. */}
-            <div className="vai-media-promo">
-              <div className="vai-media-promo-text">
-                <strong>✨ Vai Media</strong>
-                <span>{t("providerPortal.calendar.vaiMediaPromo")}</span>
-              </div>
-              <a className="vai-media-promo-btn" href={vaiMediaWhatsAppUrl("provider dashboard")} target="_blank" rel="noreferrer">{t("providerPortal.calendar.applyNow")}</a>
-            </div>
           </>
         )}
 
@@ -19972,16 +19969,8 @@ const PROVIDER_LANDING_CSS = `
 // seats and featured search placement). The "✓ Pro"/"✓ Business" badge on
 // a provider's listing is likewise real and enforced (see planBadge()) —
 // it only reflects which plan a provider is paying for, nothing more.
-// ── VAI MEDIA — a separate, high-end agency add-on (photo/video shoots,
-// social management), deliberately kept OUT of the self-serve plan grid
-// above so it never shows a price or a "Buy" button next to it — it's an
-// inquiry, not a checkout. Both CTAs below open a prefilled WhatsApp chat;
-// TODO Abner: replace this placeholder number (and the fallback email) with
-// Vai Media's real contact info before this goes live.
-const VAI_MEDIA_WHATSAPP = "50100000000"; // digits only: country code + number, no +, no spaces
-const VAI_MEDIA_EMAIL = "media@vaibook.bz";
-const vaiMediaWhatsAppUrl = (source) =>
-  `https://wa.me/${VAI_MEDIA_WHATSAPP}?text=${encodeURIComponent(`Hi! I'm interested in a Vai Media photo/video shoot for my shop. (via ${source})`)}`;
+// Vai Media promos were removed from the pitch page and dashboard (2026-11-13).
+
 
 
 // Team plan per-seat pricing. The plan picker previously advertised
