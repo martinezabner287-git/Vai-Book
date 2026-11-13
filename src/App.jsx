@@ -10204,24 +10204,6 @@ function ProviderLandingPage({ onNav, asHome, bizType }) {
         </div>
       </section>
 
-      {bt && (
-        <section className="vbl-section vbl-types-sec">
-          <div className="vbl-wrap">
-            <h2 className="vbl-h2">{px("Other kinds of business", "Otros tipos de negocio")}</h2>
-            <div className="vbl-types-grid">
-              {BIZ_TYPES.filter((b) => b.key !== bizType).map((b) => (
-                <button type="button" className="vbl-type-tile" key={b.key} onClick={() => goType(b.key)}>
-                  <span className="vbl-type-tile-icon" aria-hidden="true">{b.icon}</span>
-                  <strong>{L(b.name)}</strong>
-                  <span>{L(b.short)}</span>
-                  <em aria-hidden="true">→</em>
-                </button>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
-
       <section className="vbl-section">
         <div className="vbl-wrap vbl-narrow">
           <h2 className="vbl-h2">{lt("faqTitle")}</h2>
