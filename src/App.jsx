@@ -2890,6 +2890,28 @@ const css = `
   .vbl { background: var(--page); color: var(--dark-text); }
   .vbl-wrap { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
   .vbl-narrow { max-width: 760px; }
+  .vbl-shots-sec { background: linear-gradient(180deg, #FFFFFF 0%, #F6F4FB 100%); }
+  .vbl-shots-sub { text-align: center; color: #5E5870; margin: -8px auto 34px; max-width: 520px; font-size: 16px; line-height: 1.5; }
+  .vbl-shots { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 36px; align-items: start; }
+  .vbl-shot { margin: 0; display: flex; flex-direction: column; align-items: center; gap: 16px; }
+  .vbl-shot figcaption { font-weight: 700; font-size: 15px; text-align: center; color: #17141F; }
+  .vbl-phone { position: relative; width: 100%; max-width: 250px; padding-top: 44px; }
+  .vbl-phone-screen { position: relative; background: #17141F; border-radius: 40px; padding: 9px; box-shadow: 0 30px 60px rgba(46,36,150,0.18), 0 6px 16px rgba(23,20,31,0.12); }
+  .vbl-phone-screen::before { content: ""; position: absolute; top: 17px; left: 50%; transform: translateX(-50%); width: 76px; height: 20px; border-radius: 12px; background: #17141F; z-index: 2; }
+  .vbl-phone-screen picture, .vbl-phone-screen img { display: block; width: 100%; height: auto; border-radius: 31px; aspect-ratio: 600 / 1100; object-fit: cover; object-position: top; background: #F5F3EF; }
+  .vbl-notif { position: absolute; z-index: 3; top: 0; left: -6px; right: -6px; display: flex; align-items: flex-start; gap: 9px; background: rgba(255,255,255,0.97); border: 1px solid rgba(23,20,31,0.06); border-radius: 16px; padding: 10px 12px; box-shadow: 0 14px 30px rgba(23,20,31,0.16); text-align: left; }
+  .vbl-notif-icon { flex: none; width: 30px; height: 30px; border-radius: 8px; background: #EEEBFB; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+  .vbl-notif-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; font-size: 12.5px; line-height: 1.3; color: #3D3850; }
+  .vbl-notif-text strong { font-size: 13px; color: #17141F; }
+  .vbl-notif-now { flex: none; font-size: 11px; color: #8A859A; }
+  .vbl-shots-note { text-align: center; color: #8A859A; font-size: 13px; margin: 26px 0 0; }
+  @media (max-width: 1000px) { .vbl-shots { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 40px 24px; } }
+  @media (max-width: 640px) {
+    .vbl-shots { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; gap: 18px; margin: 0 -20px; padding: 4px 34px 10px; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+    .vbl-shots::-webkit-scrollbar { display: none; }
+    .vbl-shot { flex: 0 0 74%; scroll-snap-align: center; }
+    .vbl-notif { left: -8px; right: -8px; }
+  }
   .vbl-cust-strip { display: flex; width: 100%; align-items: center; justify-content: center; flex-wrap: wrap; gap: 6px 10px; padding: 11px 16px; border: 0; border-bottom: 1px solid rgba(23,20,31,0.08); background: #FFFFFF; color: #3D3850; font: inherit; font-size: 14px; cursor: pointer; }
   .vbl-cust-strip strong { color: var(--accent, #4C3DC4); font-weight: 700; white-space: nowrap; }
   .vbl-cust-strip:hover strong { text-decoration: underline; text-underline-offset: 3px; }
@@ -2932,6 +2954,7 @@ const css = `
   .vbl-plan { position: relative; background: #FFFFFF; border: 1px solid var(--border); border-radius: 18px; padding: 26px 22px; display: flex; flex-direction: column; gap: 10px; }
   .vbl-plan.featured { border: 2px solid var(--forest); }
   .vbl-plan-badge { position: absolute; top: -12px; left: 22px; background: var(--forest); color: #FFFFFF; font-size: 11px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; padding: 4px 10px; border-radius: 100px; }
+  .vbl-plan-badge.hot { background: #E08A00; }
   .vbl-plan-name { font-size: 15px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
   .vbl-plan-price { font-size: 30px; font-weight: 800; letter-spacing: -0.02em; }
   .vbl-plan-price span { font-size: 14px; font-weight: 600; color: var(--muted); }
@@ -9794,6 +9817,42 @@ function ProviderLandingPage({ onNav, asHome }) {
         </div>
       </section>
 
+      {/* WHAT IT LOOKS LIKE (2026-11-13): real VaiBook business screens
+          (captured from the app with sample salon data) in phone frames,
+          each with the kind of alert the owner gets. Swipe on phones. */}
+      <section className="vbl-section vbl-shots-sec">
+        <div className="vbl-wrap">
+          <h2 className="vbl-h2">{px("Your business, in your pocket", "Tu negocio, en tu bolsillo")}</h2>
+          <p className="vbl-shots-sub">{px("This is what you see every day on VaiBook. Real screens from the app.", "Esto es lo que ves cada día en VaiBook. Pantallas reales de la app.")}</p>
+          <div className="vbl-shots" role="list">
+            {[
+              ["dash", "📅", px("New booking", "Nueva reserva"), px("Ana C. booked Lash Fill · today 3:00 PM", "Ana C. reservó Relleno de pestañas · hoy 3:00 PM"), px("Bookings come in while you work", "Las reservas llegan mientras trabajas")],
+              ["bookings", "⏰", px("Reminder sent", "Recordatorio enviado"), px("Maria L. · Gel Full Set tomorrow at 9:00 AM", "Maria L. · Uñas de gel mañana a las 9:00 AM"), px("Reminders go out on their own", "Los recordatorios se envían solos")],
+              ["clients", "💬", px("Kimberly R. replied", "Kimberly R. respondió"), px("\u201cPerfect, see you Saturday!\u201d", "\u201c¡Perfecto, nos vemos el sábado!\u201d"), px("Every client and chat in one place", "Cada cliente y chat en un solo lugar")],
+              ["earnings", "💰", px("Payment logged", "Pago registrado"), px("+BZ$80 · Silk Press · Jessica P.", "+BZ$80 · Alisado · Jessica P."), px("Know exactly what you make", "Sabe exactamente cuánto ganas")],
+            ].map(([img, icon, title, body, caption]) => (
+              <figure className="vbl-shot" key={img} role="listitem">
+                <div className="vbl-phone">
+                  <div className="vbl-notif">
+                    <span className="vbl-notif-icon" aria-hidden="true">{icon}</span>
+                    <span className="vbl-notif-text"><strong>{title}</strong><span>{body}</span></span>
+                    <span className="vbl-notif-now">{px("now", "ahora")}</span>
+                  </div>
+                  <div className="vbl-phone-screen">
+                    <picture>
+                      <source srcSet={`/shots/${img}.webp`} type="image/webp" />
+                      <img src={`/shots/${img}.jpg`} alt={caption} loading="lazy" width="600" height="1299" />
+                    </picture>
+                  </div>
+                </div>
+                <figcaption>{caption}</figcaption>
+              </figure>
+            ))}
+          </div>
+          <p className="vbl-shots-note">{px("Sample business shown. Your page shows your own services, clients and numbers.", "Negocio de ejemplo. Tu página muestra tus propios servicios, clientes y números.")}</p>
+        </div>
+      </section>
+
       <section className="vbl-section">
         <div className="vbl-wrap">
           <h2 className="vbl-h2">{lt("whyTitle")}</h2>
@@ -9864,16 +9923,16 @@ function ProviderLandingPage({ onNav, asHome }) {
           <p className="vbl-compare">{px("A website alone costs about BZ$700 and still can't take bookings, send reminders or track your money. Solo does all of it for about BZ$2 a day.", "Solo una página web cuesta unos BZ$700 y aun así no toma reservas, no envía recordatorios ni lleva tus cuentas. Solo hace todo eso por menos de BZ$2 al día.")}</p>
           <div className="term-toggle" role="tablist" aria-label={px("Billing period", "Periodo de pago")}>
             <button role="tab" aria-selected={priceTerm === "six"} className={priceTerm === "six" ? "on" : ""} onClick={() => setPriceTerm("six")}>
-              {px("6 months", "6 meses")} <span className="term-save">{px("Best price", "Mejor precio")}</span>
+              {px("6 months", "6 meses")} <span className="term-save">{px("1 month free", "1 mes gratis")}</span>
             </button>
-            <button role="tab" aria-selected={priceTerm === "monthly"} className={priceTerm === "monthly" ? "on" : ""} onClick={() => setPriceTerm("monthly")}>{px("Monthly", "Mensual")} <span className="term-save hot">{px("Best seller", "Más vendido")}</span></button>
+            <button role="tab" aria-selected={priceTerm === "monthly"} className={priceTerm === "monthly" ? "on" : ""} onClick={() => setPriceTerm("monthly")}>{px("Monthly", "Mensual")}</button>
           </div>
           <div className="vbl-plans">
             {PUBLIC_PLANS.map((p) => {
               const tp = planTermPrice(p, priceTerm, { firstPayment: true });
               return (
-              <div className={`vbl-plan ${p.recommended ? "featured" : ""}`} key={p.id}>
-                {p.recommended && <div className="vbl-plan-badge">{t("providerLanding.recommended")}</div>}
+              <div className="vbl-plan featured" key={p.id}>
+                <div className={`vbl-plan-badge${priceTerm === "monthly" ? " hot" : ""}`}>{priceTerm === "monthly" ? px("Best seller", "Más vendido") : px("Best price", "Mejor precio")}</div>
                 <div className="vbl-plan-name">{p.name}</div>
                 {p.monthly > 0 ? (
                   <>
@@ -9899,7 +9958,7 @@ function ProviderLandingPage({ onNav, asHome }) {
                 <ul>
                   {p.features.map((f, i) => (<li key={i}><span className="vbl-inline-icon"><LpIcon name="check" /></span>{f}</li>))}
                 </ul>
-                <button className={p.recommended ? "vbl-btn vbl-btn-full" : "vbl-btn-outline vbl-btn-full"} onClick={() => startSignup(p.id)}>{t("providerLanding.applyToJoin")}</button>
+                <button className="vbl-btn vbl-btn-full" onClick={() => startSignup(p.id)}>{t("providerLanding.applyToJoin")}</button>
               </div>
               );
             })}
@@ -9927,17 +9986,11 @@ function ProviderLandingPage({ onNav, asHome }) {
         </div>
       </section>
 
+      {asHome && (
       <section className="vbl-section" style={{ paddingTop: 0 }}>
         <div className="vbl-wrap">
-          <div className="vai-media-banner">
-            <div className="vai-media-eyebrow">{t("providerLanding.vaiMediaEyebrow")}</div>
-            <h3 className="vai-media-title">{t("providerLanding.vaiMediaTitle")}</h3>
-            <p className="vai-media-copy">{t("providerLanding.vaiMediaCopy")}</p>
-            <a className="vai-media-btn" href={vaiMediaWhatsAppUrl("pricing page")} target="_blank" rel="noreferrer">{t("providerLanding.applyForVaiMedia")}</a>
-            <p className="vai-media-alt"><a href={vaiMediaMailtoUrl()}>{t("providerLanding.orEmailUs")}</a></p>
-          </div>
           {asHome && (
-            <div className="vbl-cust-card">
+            <div className="vbl-cust-card" style={{ marginTop: 0 }}>
               <div>
                 <h3>{px("Want to book an appointment?", "¿Quieres reservar una cita?")}</h3>
                 <p>{px("See the businesses already on VaiBook and book in a minute — no app to download.", "Mira los negocios que ya están en VaiBook y reserva en un minuto, sin descargar nada.")}</p>
@@ -9947,6 +10000,7 @@ function ProviderLandingPage({ onNav, asHome }) {
           )}
         </div>
       </section>
+      )}
 
       <SiteFooter />
     </div>
@@ -19928,8 +19982,7 @@ const VAI_MEDIA_WHATSAPP = "50100000000"; // digits only: country code + number,
 const VAI_MEDIA_EMAIL = "media@vaibook.bz";
 const vaiMediaWhatsAppUrl = (source) =>
   `https://wa.me/${VAI_MEDIA_WHATSAPP}?text=${encodeURIComponent(`Hi! I'm interested in a Vai Media photo/video shoot for my shop. (via ${source})`)}`;
-const vaiMediaMailtoUrl = () =>
-  `mailto:${VAI_MEDIA_EMAIL}?subject=${encodeURIComponent("Vai Media inquiry")}&body=${encodeURIComponent("Hi, I'd like to book a Vai Media photo/video shoot for my shop.")}`;
+
 
 // Team plan per-seat pricing. The plan picker previously advertised
 // "Base fee + per-seat pricing" with nothing behind it — submitPayment
