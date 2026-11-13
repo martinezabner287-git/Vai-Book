@@ -2890,6 +2890,50 @@ const css = `
   .vbl { background: var(--page); color: var(--dark-text); }
   .vbl-wrap { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
   .vbl-narrow { max-width: 760px; }
+  .vbl-types-bar { background: #FFFFFF; border-bottom: 1px solid rgba(23,20,31,0.08); }
+  .vbl-types-scroll { display: flex; gap: 8px; overflow-x: auto; padding: 10px 20px; max-width: 1180px; margin: 0 auto; scrollbar-width: none; }
+  .vbl-types-scroll::-webkit-scrollbar { display: none; }
+  @media (min-width: 900px) { .vbl-types-scroll { flex-wrap: wrap; justify-content: center; overflow: visible; } }
+  .vbl-types-scroll button { flex: none; display: inline-flex; align-items: center; gap: 6px; border: 1.5px solid #E4E0FA; background: #FFFFFF; color: #3D3850; font: inherit; font-size: 14px; font-weight: 600; border-radius: 999px; padding: 8px 14px; cursor: pointer; white-space: nowrap; }
+  .vbl-types-scroll button.on { background: var(--forest); border-color: var(--forest); color: #FFFFFF; }
+  .vbl-type-layout { display: grid; grid-template-columns: 1.15fr 0.85fr; gap: 36px; align-items: start; }
+  .vbl-type-points { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .vbl-type-point { display: flex; gap: 14px; background: #FFFFFF; border: 1px solid #E8E6EF; border-radius: 18px; padding: 20px; }
+  .vbl-type-point-icon { flex: none; width: 44px; height: 44px; border-radius: 12px; background: #EEEBFB; display: flex; align-items: center; justify-content: center; font-size: 22px; }
+  .vbl-type-point h3 { margin: 0 0 6px; font-size: 16.5px; }
+  .vbl-type-point p { margin: 0; color: #5E5870; font-size: 14.5px; line-height: 1.5; }
+  .vbl-menu-card { background: #FFFFFF; border: 1px solid #E8E6EF; border-radius: 24px; padding: 20px; box-shadow: 0 24px 50px rgba(46,36,150,0.12); }
+  .vbl-menu-head { display: flex; align-items: center; gap: 12px; padding-bottom: 14px; border-bottom: 1px solid #EEECF3; }
+  .vbl-menu-logo { width: 46px; height: 46px; border-radius: 14px; background: #EEEBFB; display: flex; align-items: center; justify-content: center; font-size: 24px; }
+  .vbl-menu-head strong { display: block; font-size: 17px; }
+  .vbl-menu-head span { font-size: 13px; color: #1E7A3C; font-weight: 600; }
+  .vbl-menu-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 13px 0; border-bottom: 1px solid #F1EFF5; }
+  .vbl-menu-row strong { display: block; font-size: 15px; }
+  .vbl-menu-row span { font-size: 13px; color: #6B6E7B; }
+  .vbl-menu-right { display: flex; align-items: center; gap: 10px; flex: none; }
+  .vbl-menu-right b { font-size: 15px; }
+  .vbl-menu-book { background: var(--forest); color: #FFFFFF !important; font-weight: 700; font-size: 12.5px !important; border-radius: 999px; padding: 6px 12px; }
+  .vbl-menu-note { margin: 12px 0 0; font-size: 12px; color: #8A859A; text-align: center; }
+  .vbl-types-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+  .vbl-type-tile { position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: 4px; text-align: left; background: #FFFFFF; border: 1px solid #E8E6EF; border-radius: 18px; padding: 18px 18px 16px; font: inherit; color: #17141F; cursor: pointer; transition: border-color .15s, box-shadow .15s, transform .15s; }
+  .vbl-type-tile:hover { border-color: var(--forest); box-shadow: 0 12px 28px rgba(46,36,150,0.12); transform: translateY(-2px); }
+  .vbl-type-tile-icon { font-size: 28px; margin-bottom: 6px; }
+  .vbl-type-tile strong { font-size: 16px; }
+  .vbl-type-tile span { font-size: 13.5px; color: #5E5870; line-height: 1.4; }
+  .vbl-type-tile em { position: absolute; top: 16px; right: 16px; font-style: normal; color: var(--forest); font-weight: 700; }
+  @media (max-width: 900px) {
+    .vbl-type-layout { grid-template-columns: 1fr; }
+    .vbl-types-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+  @media (max-width: 560px) { .vbl-type-points { grid-template-columns: 1fr; } .vbl-type-point { padding: 16px; } }
+  .vbl-hero .vbl-wrap { position: relative; }
+  .vbl-hero-phone { display: none; }
+  @media (min-width: 1000px) {
+    .vbl-hero { padding: 80px 0 88px; }
+    .vbl-hero-phone { display: block; position: absolute; right: 56px; top: 50%; transform: translateY(-50%) rotate(3deg); width: 215px; padding-top: 44px; }
+    .vbl-hero-phone .vbl-phone-screen img, .vbl-hero-phone .vbl-phone-screen picture { aspect-ratio: 600 / 960; }
+    .vbl-hero .vbl-sub { max-width: 560px; }
+  }
   .vbl-shots-sec { background: linear-gradient(180deg, #FFFFFF 0%, #F6F4FB 100%); }
   .vbl-shots-sub { text-align: center; color: #5E5870; margin: -8px auto 34px; max-width: 520px; font-size: 16px; line-height: 1.5; }
   .vbl-shots { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 36px; align-items: start; }
@@ -8198,7 +8242,98 @@ function setPortalTab(tabId) {
 // businesses / Help & support sections). A full-width bottom tab bar
 // (Home · Explore · Bookings · Saved · Account) sits on the landing page,
 // customer pages and help pages. Phones only — desktop keeps <Nav>.
-const MOBILE_NAV_VIEWS = ["home", "find", "customer", "providers", "help", "help-contact", "help-faq", "customer-login"];
+// ── BUSINESS TYPES (2026-11-13) ────────────────────────────────────
+// Like Fresha's "Business types": one pitch page per kind of business, same
+// VaiBook underneath but in that business's language — its own headline,
+// the features that matter most to it, and an example booking menu. Opened
+// from the "Made for every self-care business" tiles or a shareable link
+// like vaibook.bz/#for-barbers. Every feature named here exists in VaiBook.
+const BIZ_TYPES = [
+  { key: "salons", icon: "💇", name: ["Hair salons", "Salones de belleza"], short: ["Color, cuts, braids & silk press", "Color, cortes, trenzas y alisados"],
+    title: [["Salon booking that", "fills every chair."], ["Reservas para tu salón que", "llenan cada silla."]],
+    sub: ["Color, cuts, silk press, braids — clients book the right service and time themselves, and you see who's coming, what they want and what they paid.", "Color, cortes, alisados, trenzas — tus clientes reservan el servicio y la hora correctos solos, y tú ves quién viene, qué quiere y cuánto pagó."],
+    points: [
+      ["⏱️", ["Long services, done right", "Servicios largos, bien hechos"], ["Set real lengths for color, treatments and braids, plus add-ons like toner or a deep condition. Clients only see times that actually fit.", "Pon el tiempo real de color, tratamientos y trenzas, más extras como matizador o hidratación. Los clientes solo ven horas en las que de verdad cabe."]],
+      ["📝", ["Notes on every client", "Notas de cada cliente"], ["Save color formulas, allergies and how they like it, so every visit starts where the last one ended.", "Guarda fórmulas de color, alergias y cómo le gusta, para que cada visita empiece donde terminó la anterior."]],
+      ["💵", ["Deposits on big appointments", "Depósitos en citas grandes"], ["Ask for a deposit on long or costly services, so a no-show doesn't cost you a whole afternoon.", "Pide un depósito en servicios largos o caros, para que una ausencia no te cueste toda una tarde."]],
+      ["👥", ["Every stylist, one calendar", "Cada estilista, un calendario"], ["On the Team plan each stylist gets their own login and bookings, and you see the whole salon.", "Con el plan Equipo cada estilista tiene su propio acceso y reservas, y tú ves todo el salón."]],
+    ],
+    menu: [["Silk press", 90, 80], ["Color + cut", 150, 180], ["Knotless braids", 240, 220], ["Deep condition (add-on)", 20, 25]] },
+  { key: "barbers", icon: "💈", name: ["Barbers", "Barberías"], short: ["Fades, beards & walk-ins", "Fades, barbas y sin cita"],
+    title: [["Keep your chair full,", "skip the DMs."], ["Mantén tu silla llena,", "sin tantos mensajes."]],
+    sub: ["Clients pick the barber, the cut and the time. Walk-ins go on the same calendar, and regulars get a nudge when it's time for the next fade.", "Los clientes eligen el barbero, el corte y la hora. Los que llegan sin cita van al mismo calendario, y los fijos reciben un aviso cuando toca el próximo fade."],
+    points: [
+      ["🚶", ["Walk-ins and bookings together", "Sin cita y con cita, juntos"], ["Add a walk-in in two taps so online clients never get a time that's already taken.", "Agrega a quien llega sin cita en dos toques, para que nadie en línea reciba una hora ya ocupada."]],
+      ["🔁", ["Regulars come back on time", "Los fijos vuelven a tiempo"], ["VaiBook reminds regulars when they're due for their next cut, so your week fills itself.", "VaiBook le recuerda a tus fijos cuando les toca el próximo corte, y tu semana se llena sola."]],
+      ["⚡", ["Fill last-minute openings", "Llena los huecos de última hora"], ["Someone cancelled? Post the free slot as a last-minute deal and your clients see it.", "¿Alguien canceló? Publica el espacio libre como oferta de última hora y tus clientes lo ven."]],
+      ["🎁", ["Loyalty that keeps them yours", "Lealtad para que sigan contigo"], ["Set your own reward, like every 10th cut free. VaiBook counts the visits for you.", "Pon tu propio premio, como el corte 10 gratis. VaiBook cuenta las visitas por ti."]],
+    ],
+    menu: [["Fade", 40, 25], ["Fade + beard", 50, 35], ["Kids cut", 30, 15], ["Line-up", 15, 10]] },
+  { key: "nails", icon: "💅", name: ["Nail techs", "Técnicas de uñas"], short: ["Gel sets, fills & pedicures", "Gel, rellenos y pedicuras"],
+    title: [["Your nail books,", "booked for you."], ["Tu agenda de uñas,", "llena por ti."]],
+    sub: ["Gel sets, fills and pedicures with the right time blocked for each — and clients who come back on time for their refill.", "Gel, rellenos y pedicuras con el tiempo justo para cada uno, y clientas que vuelven a tiempo para su relleno."],
+    points: [
+      ["🔁", ["Fills on schedule", "Rellenos a tiempo"], ["Clients get a reminder when their fill is due, every 2 or 3 weeks — whatever you set.", "Tus clientas reciben un recordatorio cuando toca su relleno, cada 2 o 3 semanas, como tú digas."]],
+      ["✨", ["Add-ons and nail art", "Extras y diseño"], ["Let clients add art, chrome or removal when they book, with the extra time and price included.", "Que tus clientas agreguen diseño, cromado o retiro al reservar, con el tiempo y precio extra incluidos."]],
+      ["💵", ["Deposits on full sets", "Depósitos en sets completos"], ["Ask for a deposit on full sets so your time is protected.", "Pide un depósito en sets completos para proteger tu tiempo."]],
+      ["📸", ["Your best sets on show", "Tus mejores diseños a la vista"], ["Add photos of your work to your page so clients book the look they want.", "Sube fotos de tu trabajo a tu página para que reserven el estilo que quieren."]],
+    ],
+    menu: [["Gel full set", 75, 45], ["Gel fill", 60, 35], ["Spa pedicure", 45, 40], ["Nail art (add-on)", 15, 10]] },
+  { key: "lashes-brows", icon: "👁️", name: ["Lashes & brows", "Pestañas y cejas"], short: ["Sets, fills, lamination & tints", "Sets, rellenos, laminado y tinte"],
+    title: [["Lash and brow booking", "that runs itself."], ["Reservas de pestañas y cejas", "que se manejan solas."]],
+    sub: ["Fills, full sets, lamination and tints — clients book themselves, sign your consent form before they arrive, and get reminded when their fill is due.", "Rellenos, sets completos, laminado y tinte — tus clientas reservan solas, firman tu consentimiento antes de llegar y reciben aviso cuando toca su relleno."],
+    points: [
+      ["✍️", ["Consent forms, signed on their phone", "Consentimientos firmados en su teléfono"], ["Send your consent and aftercare form; clients sign it before the appointment.", "Envía tu formulario de consentimiento y cuidados; la clienta lo firma antes de la cita."]],
+      ["🔁", ["Fill reminders", "Recordatorios de relleno"], ["Clients are reminded when their fill is due, so sets don't grow out between visits.", "Tus clientas reciben aviso cuando toca el relleno, para que no se les caiga el set entre visitas."]],
+      ["💵", ["Deposits that stop no-shows", "Depósitos contra ausencias"], ["Ask for a deposit on full sets — two hours is too much to lose.", "Pide un depósito en sets completos; dos horas es demasiado para perder."]],
+      ["📝", ["Map and notes per client", "Notas por clienta"], ["Save each client's lash map, curl and length so every fill matches.", "Guarda el diseño, curvatura y largo de cada clienta para que cada relleno quede igual."]],
+    ],
+    menu: [["Classic full set", 120, 90], ["Lash fill", 60, 50], ["Brow lamination", 45, 45], ["Brow wax & tint", 30, 35]] },
+  { key: "spas", icon: "🧖", name: ["Spas & massage", "Spas y masajes"], short: ["Massage, sauna & memberships", "Masajes, sauna y membresías"],
+    title: [["Calm for your clients,", "calm for you."], ["Calma para tus clientes,", "calma para ti."]],
+    sub: ["Massage, sauna, packages and memberships — booked online any time, with intake forms filled before they walk in.", "Masajes, sauna, paquetes y membresías — reservados en línea a cualquier hora, con el formulario de salud lleno antes de que lleguen."],
+    points: [
+      ["🎟️", ["Memberships and packages", "Membresías y paquetes"], ["Sell monthly memberships and visit packs. VaiBook counts the visits left.", "Vende membresías mensuales y paquetes de visitas. VaiBook cuenta las visitas que quedan."]],
+      ["📋", ["Intake forms before they arrive", "Formularios antes de llegar"], ["Ask about injuries, pressure and allergies when they book, not at the front desk.", "Pregunta por lesiones, presión y alergias al reservar, no en la recepción."]],
+      ["👥", ["Shared sessions", "Sesiones compartidas"], ["Run sauna or group sessions where several people share one time slot.", "Ofrece sauna o sesiones en grupo donde varias personas comparten la misma hora."]],
+      ["💑", ["Book for two", "Reserva para dos"], ["Couples and friends can book two of a service at once.", "Parejas y amigos pueden reservar dos del mismo servicio a la vez."]],
+    ],
+    menu: [["Deep tissue massage", 60, 80], ["Infrared sauna", 30, 35], ["Massage + sauna", 90, 105], ["Monthly membership", 0, 150]] },
+  { key: "skincare", icon: "🧴", name: ["Skincare & med spas", "Piel y med spas"], short: ["Facials, waxing, laser & clinical", "Faciales, depilación, láser y clínica"],
+    title: [["Clinical care,", "simple booking."], ["Cuidado clínico,", "reservas simples."]],
+    sub: ["Facials, waxing, laser and injectables — with consent forms, client history and deposits built in.", "Faciales, depilación, láser e inyectables — con consentimientos, historial del cliente y depósitos incluidos."],
+    points: [
+      ["✍️", ["Signed consent forms", "Consentimientos firmados"], ["Clients sign your consent form on their phone before treatment, and you keep the record.", "El cliente firma tu consentimiento en su teléfono antes del tratamiento, y tú guardas el registro."]],
+      ["📝", ["Treatment history", "Historial de tratamientos"], ["Keep notes on skin type, products and reactions for every client.", "Guarda notas de tipo de piel, productos y reacciones de cada cliente."]],
+      ["💵", ["Deposits on high-value treatments", "Depósitos en tratamientos caros"], ["Hold costly appointments with a deposit to your bank.", "Asegura las citas caras con un depósito a tu banco."]],
+      ["🔁", ["Series that stay on track", "Series que siguen a tiempo"], ["Remind clients when the next session in their series is due.", "Recuerda a tus clientes cuando toca la próxima sesión de su serie."]],
+    ],
+    menu: [["Hydrating facial", 60, 90], ["Brazilian wax", 30, 50], ["Chemical peel", 45, 120], ["Consultation", 20, 0]] },
+  { key: "tattoo", icon: "🖋️", name: ["Tattoo & piercing", "Tatuajes y piercing"], short: ["Consults, sessions & piercings", "Consultas, sesiones y piercings"],
+    title: [["Book sessions,", "not back-and-forth."], ["Reserva sesiones,", "sin tanto ir y venir."]],
+    sub: ["Consultations, long sessions and piercings — deposits up front, release forms signed on the phone, and your portfolio right on your page.", "Consultas, sesiones largas y piercings — depósito por adelantado, formularios firmados en el teléfono y tu portafolio en tu página."],
+    points: [
+      ["💵", ["Deposits hold the date", "El depósito aparta la fecha"], ["Big sessions are only confirmed once the deposit is in your bank.", "Las sesiones grandes solo se confirman cuando el depósito está en tu banco."]],
+      ["✍️", ["Release forms", "Formularios de responsabilidad"], ["Clients sign your release form on their phone before they sit in your chair.", "El cliente firma tu formulario en su teléfono antes de sentarse en tu silla."]],
+      ["❓", ["The right questions up front", "Las preguntas correctas desde el inicio"], ["Ask for placement, size and idea when they book, so the consult is quick.", "Pregunta lugar, tamaño e idea al reservar, para que la consulta sea rápida."]],
+      ["🖼️", ["Your portfolio sells for you", "Tu portafolio vende por ti"], ["Show your best work on your booking page.", "Muestra tu mejor trabajo en tu página de reservas."]],
+    ],
+    menu: [["Consultation", 30, 0], ["Small tattoo", 60, 100], ["Half-day session", 240, 350], ["Ear piercing", 15, 40]] },
+  { key: "fitness", icon: "🏋️", name: ["Fitness & recovery", "Fitness y recuperación"], short: ["Training, classes & therapy", "Entrenamiento, clases y terapia"],
+    title: [["Train clients,", "not your inbox."], ["Entrena clientes,", "no tu bandeja de mensajes."]],
+    sub: ["Personal training, classes, physical therapy and recovery — sessions, memberships and class spots in one place.", "Entrenamiento personal, clases, fisioterapia y recuperación — sesiones, membresías y cupos de clase en un solo lugar."],
+    points: [
+      ["👥", ["Class spots that count themselves", "Cupos que se cuentan solos"], ["Set how many people fit in a class; VaiBook closes it when it's full.", "Pon cuántas personas caben en una clase; VaiBook la cierra cuando se llena."]],
+      ["🎟️", ["Memberships and session packs", "Membresías y paquetes de sesiones"], ["Sell monthly plans or 8-session packs. Visits are counted for you.", "Vende planes mensuales o paquetes de 8 sesiones. Las visitas se cuentan por ti."]],
+      ["📝", ["Progress notes", "Notas de progreso"], ["Keep injuries, goals and progress on each client.", "Guarda lesiones, metas y progreso de cada cliente."]],
+      ["🔁", ["Clients who keep showing up", "Clientes que siguen viniendo"], ["Reminders before each session and a nudge when they've been away too long.", "Recordatorios antes de cada sesión y un aviso cuando llevan mucho sin venir."]],
+    ],
+    menu: [["Personal training", 60, 50], ["Group class", 45, 15], ["Physio session", 60, 90], ["8-session pack", 0, 350]] },
+];
+const bizTypeByKey = (k) => BIZ_TYPES.find((b) => b.key === k) || null;
+const BIZ_TYPE_VIEWS = BIZ_TYPES.map((b) => `type-${b.key}`);
+
+const MOBILE_NAV_VIEWS = ["home", "find", "customer", "providers", ...BIZ_TYPE_VIEWS, "help", "help-contact", "help-faq", "customer-login"];
 const BOTTOM_BAR_VIEWS = ["home", "find", "customer", "help", "help-contact", "help-faq", "customer-login"];
 const VBN_ICONS = {
   home: <path d="M3 10.5L12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z" />,
@@ -9792,7 +9927,7 @@ const LpIcon = ({ name }) => {
   );
 };
 
-function ProviderLandingPage({ onNav, asHome }) {
+function ProviderLandingPage({ onNav, asHome, bizType }) {
   const { t, i18n } = useTranslation();
   const lt = (k, v) => lpText(i18n.language, k, v);
   const solo = PLANS.find((p) => p.id === "pro");
@@ -9807,6 +9942,23 @@ function ProviderLandingPage({ onNav, asHome }) {
   const why = [["calendar", "why1"], ["shield", "why2"], ["chart", "why3"], ["tag", "why4"]];
   const tools = [["calendar", "tool1"], ["users", "tool2"], ["pen", "tool3"], ["megaphone", "tool4"]];
   const goFind = () => { onNav("find"); window.scrollTo({ top: 0 }); };
+  const bt = bizTypeByKey(bizType);
+  const L = (pair) => (Array.isArray(pair) ? (lpEs ? pair[1] : pair[0]) : pair);
+  const goType = (k) => {
+    onNav(`type-${k}`); window.scrollTo({ top: 0 });
+    try { window.history.replaceState(null, "", `#for-${k}`); } catch (e) { /* ignore */ }
+  };
+  const typeChips = (
+    <nav className="vbl-types-bar" aria-label={px("Business types", "Tipos de negocio")}>
+      <div className="vbl-types-scroll">
+        {BIZ_TYPES.map((b) => (
+          <button type="button" key={b.key} className={b.key === bizType ? "on" : ""} aria-current={b.key === bizType ? "page" : undefined} onClick={() => goType(b.key)}>
+            <span aria-hidden="true">{b.icon}</span> {L(b.name)}
+          </button>
+        ))}
+      </div>
+    </nav>
+  );
   return (
     <div className="vbl">
       {asHome && (
@@ -9817,13 +9969,55 @@ function ProviderLandingPage({ onNav, asHome }) {
       )}
       <section className="vbl-hero">
         <div className="vbl-wrap">
-          <div className="vbl-eyebrow">{lt("eyebrow")}</div>
-          <h1 className="vbl-title">{lt("title1")}<br /><span>{lt("title2")}</span></h1>
-          <p className="vbl-sub">{lt("sub")}</p>
+          <div className="vbl-eyebrow">{bt ? `${px("For", "Para")} ${L(bt.name).toLowerCase()}` : lt("eyebrow")}</div>
+          <h1 className="vbl-title">{bt ? L(bt.title)[0] : lt("title1")}<br /><span>{bt ? L(bt.title)[1] : lt("title2")}</span></h1>
+          <p className="vbl-sub">{bt ? L(bt.sub) : lt("sub")}</p>
           <button className="vbl-btn" onClick={() => startSignup()}>{lt("cta")} <span aria-hidden="true">→</span></button>
           <div className="vbl-note">{lt("heroNote")}</div>
+          <div className="vbl-hero-phone" aria-hidden="true">
+            <div className="vbl-notif">
+              <span className="vbl-notif-icon">{bt ? bt.icon : "📅"}</span>
+              <span className="vbl-notif-text"><strong>{px("New booking", "Nueva reserva")}</strong><span>{bt ? `${bt.menu[0][0]} · ${px("Fri 9:00 AM", "Vie 9:00 AM")}` : px("Gel Full Set · Fri 9:00 AM", "Uñas de gel · Vie 9:00 AM")}</span></span>
+              <span className="vbl-notif-now">{px("now", "ahora")}</span>
+            </div>
+            <div className="vbl-phone-screen">
+              <picture><source srcSet="/shots/dash.webp" type="image/webp" /><img src="/shots/dash.jpg" alt="" width="600" height="1299" /></picture>
+            </div>
+          </div>
         </div>
       </section>
+
+      {bt && typeChips}
+      {bt && (
+        <section className="vbl-section vbl-type-sec">
+          <div className="vbl-wrap">
+            <h2 className="vbl-h2">{px(`Built for ${L(bt.name).toLowerCase()}`, `Hecho para ${L(bt.name).toLowerCase()}`)}</h2>
+            <div className="vbl-type-layout">
+              <div className="vbl-type-points">
+                {bt.points.map(([icon, title, body]) => (
+                  <div className="vbl-type-point" key={L(title)}>
+                    <span className="vbl-type-point-icon" aria-hidden="true">{icon}</span>
+                    <div><h3>{L(title)}</h3><p>{L(body)}</p></div>
+                  </div>
+                ))}
+              </div>
+              <div className="vbl-menu-card" aria-label={px("Example booking page", "Ejemplo de página de reservas")}>
+                <div className="vbl-menu-head">
+                  <span className="vbl-menu-logo" aria-hidden="true">{bt.icon}</span>
+                  <div><strong>{px("Your business", "Tu negocio")}</strong><span>{px("Book online · open now", "Reserva en línea · abierto ahora")}</span></div>
+                </div>
+                {bt.menu.map(([name, mins, price]) => (
+                  <div className="vbl-menu-row" key={name}>
+                    <div><strong>{name}</strong>{mins > 0 && <span>{mins} min</span>}</div>
+                    <div className="vbl-menu-right"><b>{price > 0 ? `BZ$${price}` : px("Free", "Gratis")}</b><span className="vbl-menu-book">{px("Book", "Reservar")}</span></div>
+                  </div>
+                ))}
+                <p className="vbl-menu-note">{px("Example menu — you set your own services, times and prices.", "Menú de ejemplo — tú pones tus servicios, tiempos y precios.")}</p>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* WHAT IT LOOKS LIKE (2026-11-13): real VaiBook business screens
           (captured from the app with sample salon data) in phone frames,
@@ -9860,6 +10054,25 @@ function ProviderLandingPage({ onNav, asHome }) {
           <p className="vbl-shots-note">{px("Sample business shown. Your page shows your own services, clients and numbers.", "Negocio de ejemplo. Tu página muestra tus propios servicios, clientes y números.")}</p>
         </div>
       </section>
+
+      {!bt && (
+        <section className="vbl-section vbl-types-sec">
+          <div className="vbl-wrap">
+            <h2 className="vbl-h2">{px("Made for every self-care business", "Hecho para todo negocio de cuidado personal")}</h2>
+            <p className="vbl-shots-sub">{px("Pick yours to see how VaiBook works for it.", "Elige el tuyo para ver cómo te ayuda VaiBook.")}</p>
+            <div className="vbl-types-grid">
+              {BIZ_TYPES.map((b) => (
+                <button type="button" className="vbl-type-tile" key={b.key} onClick={() => goType(b.key)}>
+                  <span className="vbl-type-tile-icon" aria-hidden="true">{b.icon}</span>
+                  <strong>{L(b.name)}</strong>
+                  <span>{L(b.short)}</span>
+                  <em aria-hidden="true">→</em>
+                </button>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       <section className="vbl-section">
         <div className="vbl-wrap">
@@ -9970,6 +10183,24 @@ function ProviderLandingPage({ onNav, asHome }) {
           </div>
         </div>
       </section>
+
+      {bt && (
+        <section className="vbl-section vbl-types-sec">
+          <div className="vbl-wrap">
+            <h2 className="vbl-h2">{px("Other kinds of business", "Otros tipos de negocio")}</h2>
+            <div className="vbl-types-grid">
+              {BIZ_TYPES.filter((b) => b.key !== bizType).map((b) => (
+                <button type="button" className="vbl-type-tile" key={b.key} onClick={() => goType(b.key)}>
+                  <span className="vbl-type-tile-icon" aria-hidden="true">{b.icon}</span>
+                  <strong>{L(b.name)}</strong>
+                  <span>{L(b.short)}</span>
+                  <em aria-hidden="true">→</em>
+                </button>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       <section className="vbl-section">
         <div className="vbl-wrap vbl-narrow">
@@ -23048,6 +23279,8 @@ export default function App() {
     const h = window.location.hash.replace("#", "");
     if (parseBookingHash(h)) return "customer";
     if (h === "admin" || h === "customer" || h === "provider" || h === "providers") return h;
+    // Business-type pitch pages: vaibook.bz/#for-barbers etc.
+    if (h.startsWith("for-") && bizTypeByKey(h.slice(4))) return `type-${h.slice(4)}`;
     // No explicit hash — this is the common case, since in-app navigation
     // (Nav, "For business" links, etc.) only ever calls setView, never
     // touches the hash. For "providers" (the public marketing page) and
@@ -23670,6 +23903,7 @@ export default function App() {
         <GateScreen loading loadingText="Loading your account…" />
       )}
       {view === "providers" && <ProviderLandingPage onNav={setView} {...authProps} />}
+      {BIZ_TYPE_VIEWS.includes(view) && <ProviderLandingPage key={view} onNav={setView} bizType={view.slice(5)} {...authProps} />}
       {view === "customer" && (
         <CustomerPortal
           onNav={setView}
