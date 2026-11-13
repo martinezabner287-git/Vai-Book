@@ -211,6 +211,14 @@ function AdminSettings() {
 
       <PayMethodsEditor form={form} set={set} />
 
+      {"home_mode" in form && (
+        <div className="card at-card">
+          <div className="card-title">Home page</div>
+          <p className="at-muted">While VaiBook is still signing up businesses, the home page is the pitch to businesses, with a "Find a business" link for customers. Once there are enough businesses that customers usually find what they search for (about 20–30, in 3+ categories), switch it to the customer search page. Business booking links work the same either way.</p>
+          <Toggle checked={form.home_mode === "search"} onChange={(on) => set("home_mode")(on ? "search" : "pitch")} label="Show the customer search page as the home page" />
+        </div>
+      )}
+
       {"phone_codes_on" in form && (
         <div className="card at-card">
           <div className="card-title">Customer sign-up · WhatsApp codes</div>

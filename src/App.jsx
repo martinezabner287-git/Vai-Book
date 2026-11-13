@@ -2890,6 +2890,13 @@ const css = `
   .vbl { background: var(--page); color: var(--dark-text); }
   .vbl-wrap { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
   .vbl-narrow { max-width: 760px; }
+  .vbl-cust-strip { display: flex; width: 100%; align-items: center; justify-content: center; flex-wrap: wrap; gap: 6px 10px; padding: 11px 16px; border: 0; border-bottom: 1px solid rgba(23,20,31,0.08); background: #FFFFFF; color: #3D3850; font: inherit; font-size: 14px; cursor: pointer; }
+  .vbl-cust-strip strong { color: var(--accent, #4C3DC4); font-weight: 700; white-space: nowrap; }
+  .vbl-cust-strip:hover strong { text-decoration: underline; text-underline-offset: 3px; }
+  .vbl-cust-card { margin-top: 28px; display: flex; align-items: center; justify-content: space-between; gap: 18px 28px; flex-wrap: wrap; background: #FFFFFF; border: 1px solid #E8E6EF; border-radius: 20px; padding: 24px 26px; }
+  .vbl-cust-card h3 { margin: 0 0 6px; font-size: 19px; }
+  .vbl-cust-card p { margin: 0; color: #5E5870; font-size: 14.5px; line-height: 1.5; max-width: 460px; }
+  .vbl-btn.ghost { background: #FFFFFF; color: var(--accent, #4C3DC4); border: 2px solid var(--accent, #4C3DC4); }
   .vbl-hero { background: #F2EADA; padding: 64px 0 72px; }
   .vbl-eyebrow { font-size: 12px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: var(--forest); margin-bottom: 14px; }
   .vbl-title { font-family: 'Plus Jakarta Sans', sans-serif; font-size: clamp(36px, 6vw, 60px); font-weight: 800; line-height: 1.04; letter-spacing: -0.03em; color: var(--dark-text); margin: 0 0 18px; }
@@ -8155,8 +8162,8 @@ function setPortalTab(tabId) {
 // businesses / Help & support sections). A full-width bottom tab bar
 // (Home · Explore · Bookings · Saved · Account) sits on the landing page,
 // customer pages and help pages. Phones only — desktop keeps <Nav>.
-const MOBILE_NAV_VIEWS = ["home", "customer", "providers", "help", "help-contact", "help-faq", "customer-login"];
-const BOTTOM_BAR_VIEWS = ["home", "customer", "help", "help-contact", "help-faq", "customer-login"];
+const MOBILE_NAV_VIEWS = ["home", "find", "customer", "providers", "help", "help-contact", "help-faq", "customer-login"];
+const BOTTOM_BAR_VIEWS = ["home", "find", "customer", "help", "help-contact", "help-faq", "customer-login"];
 const VBN_ICONS = {
   home: <path d="M3 10.5L12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z" />,
   explore: <g><rect x="3.5" y="3.5" width="7" height="7" rx="1.6" /><rect x="13.5" y="3.5" width="7" height="7" rx="1.6" /><rect x="3.5" y="13.5" width="7" height="7" rx="1.6" /><rect x="13.5" y="13.5" width="7" height="7" rx="1.6" /></g>,
@@ -8199,7 +8206,8 @@ function vbnExplore(view, session, onNav) {
     const input = bar.querySelector("input");
     if (input) { try { input.focus({ preventScroll: true }); } catch (e) { input.focus(); } }
   };
-  if (view !== "home") { onNav("home"); setTimeout(jump, 150); } else jump();
+  const searchView = PLATFORM.homeMode === "search" ? "home" : "find";
+  if (view !== searchView) { onNav(searchView); setTimeout(jump, 150); } else jump();
 }
 // Why the login screen was opened (so it can say so, and the bottom bar
 // can highlight the right tab): "bookings" | "account".
@@ -8223,7 +8231,7 @@ function MobileTopBar({ view, session, onNav, onOpenMenu }) {
         <VaiBookMark size={26} /> <span className="vbn-logo-word"><span>vai</span>book</span>
       </button>
       <div className="vbn-top-actions">
-        {view !== "providers" && (
+        {view !== "providers" && !(view === "home" && !session && PLATFORM.homeMode !== "search") && (
           <button className="vbn-provide-btn" onClick={() => { onNav("providers"); window.scrollTo({ top: 0 }); }}>
             <VbnIcon name="store" size={17} /> {vbnT("Provide my service", "Ofrecer mi servicio")}
           </button>
@@ -8323,7 +8331,7 @@ function BottomTabBar({ view, session, onNav }) {
   // Leaving the landing page clears the "searching" highlight.
   useEffect(() => { if (view !== "home") setGuestSearch(false); }, [view]);
   const active = view === "customer" ? ({ home: "home", browse: "search", bookings: "bookings", favorites: "account", settings: "account", payments: "account", reviews: "account", profile: "account" })[custTab] || "home"
-    : view === "home" ? (guestSearch ? "search" : "home") : view === "customer-login" ? (loginReason === "bookings" ? "bookings" : "account") : "";
+    : view === "find" ? "search" : view === "home" ? (guestSearch ? "search" : "home") : view === "customer-login" ? (loginReason === "bookings" ? "bookings" : "account") : "";
   const tabs = [
     ["home", vbnT("Home", "Inicio"), () => { setGuestSearch(false); if (session) vbnGoCustomerTab("home", view, onNav); else { onNav("home"); window.scrollTo({ top: 0, behavior: "smooth" }); } }],
     ["search", vbnT("Search", "Buscar"), () => { setGuestSearch(true); vbnExplore(view, session, onNav); }],
@@ -9748,7 +9756,7 @@ const LpIcon = ({ name }) => {
   );
 };
 
-function ProviderLandingPage({ onNav }) {
+function ProviderLandingPage({ onNav, asHome }) {
   const { t, i18n } = useTranslation();
   const lt = (k, v) => lpText(i18n.language, k, v);
   const solo = PLANS.find((p) => p.id === "pro");
@@ -9763,8 +9771,15 @@ function ProviderLandingPage({ onNav }) {
   };
   const why = [["calendar", "why1"], ["shield", "why2"], ["chart", "why3"], ["tag", "why4"]];
   const tools = [["calendar", "tool1"], ["users", "tool2"], ["pen", "tool3"], ["megaphone", "tool4"]];
+  const goFind = () => { onNav("find"); window.scrollTo({ top: 0 }); };
   return (
     <div className="vbl">
+      {asHome && (
+        <button type="button" className="vbl-cust-strip" onClick={goFind}>
+          <span>{px("Looking to book an appointment?", "¿Buscas reservar una cita?")}</span>
+          <strong>{px("Find a business", "Busca un negocio")} <span aria-hidden="true">→</span></strong>
+        </button>
+      )}
       <section className="vbl-hero">
         <div className="vbl-wrap">
           <div className="vbl-eyebrow">{lt("eyebrow")}</div>
@@ -9917,6 +9932,15 @@ function ProviderLandingPage({ onNav }) {
             <a className="vai-media-btn" href={vaiMediaWhatsAppUrl("pricing page")} target="_blank" rel="noreferrer">{t("providerLanding.applyForVaiMedia")}</a>
             <p className="vai-media-alt"><a href={vaiMediaMailtoUrl()}>{t("providerLanding.orEmailUs")}</a></p>
           </div>
+          {asHome && (
+            <div className="vbl-cust-card">
+              <div>
+                <h3>{px("Want to book an appointment?", "¿Quieres reservar una cita?")}</h3>
+                <p>{px("See the businesses already on VaiBook and book in a minute — no app to download.", "Mira los negocios que ya están en VaiBook y reserva en un minuto, sin descargar nada.")}</p>
+              </div>
+              <button type="button" className="vbl-btn ghost" onClick={goFind}>{px("Find a business", "Busca un negocio")} <span aria-hidden="true">→</span></button>
+            </div>
+          )}
         </div>
       </section>
 
@@ -20059,7 +20083,10 @@ const DISTRICTS = ["Belize City", "Cayo", "Corozal", "Orange Walk", "Stann Creek
 // service_categories, districts) and are edited in the admin portal.
 // The values in this file are only the defaults until they load. A copy is
 // cached so the next visit starts with the latest numbers, no flash.
-const PLATFORM = { freeCap: 30, freeCapEnforced: false, trialDays: 14, graceDays: 7, banner: null, snagIncludeFree: true, spotlightSlots: 3, spotlightWeekPrice: 25, rev: 0 };
+// homeMode (2026-11-13): "pitch" = logged-out home page is the pitch to
+// businesses (while VaiBook is still signing up businesses); "search" = the
+// customer search home page. Admin → Settings switches it.
+const PLATFORM = { freeCap: 30, freeCapEnforced: false, trialDays: 14, graceDays: 7, banner: null, snagIncludeFree: true, spotlightSlots: 3, spotlightWeekPrice: 25, homeMode: "pitch", rev: 0 };
 const PLATFORM_CACHE_KEY = "vaibook_platform_v1";
 const fmt2 = (n) => (Math.round(Number(n) * 100) / 100).toFixed(2);
 const platformVars = () => {
@@ -20088,6 +20115,7 @@ function applyPlatformConfig(cfg) {
     if (st.snag_include_free !== undefined && st.snag_include_free !== null) PLATFORM.snagIncludeFree = !!st.snag_include_free;
     PLATFORM.spotlightSlots = n(st.spotlight_slots, PLATFORM.spotlightSlots);
     PLATFORM.spotlightWeekPrice = n(st.spotlight_week_price, PLATFORM.spotlightWeekPrice);
+    PLATFORM.homeMode = st.home_mode === "search" ? "search" : "pitch";
     if (solo) {
       solo.monthly = n(st.solo_monthly, solo.monthly); solo.sixMonthTotal = n(st.solo_six_month, solo.sixMonthTotal);
       solo.price = `BZ$${fmt2(solo.monthly)}/month, or BZ$${dayRate(solo.sixMonthTotal, SIX_MONTH_DAYS)}/day on 6 months`;
@@ -23588,7 +23616,10 @@ export default function App() {
       <SiteBanner view={view} />
       <MobileDrawer open={mobileMenuOpen} onClose={closeMobileMenu} view={view} staffProfile={staffProfile} onNav={setView} {...authProps} />
       {BOTTOM_BAR_VIEWS.includes(view) && <BottomTabBar view={view} session={session} onNav={setView} />}
-      {view === "home" && !session && <LandingPage onNav={setView} {...authProps} />}
+      {view === "home" && !session && (PLATFORM.homeMode === "search"
+        ? <LandingPage onNav={setView} {...authProps} />
+        : <ProviderLandingPage onNav={setView} asHome {...authProps} />)}
+      {view === "find" && <LandingPage onNav={setView} {...authProps} />}
       {view === "home" && session && (
         <GateScreen loading loadingText="Loading your account…" />
       )}
