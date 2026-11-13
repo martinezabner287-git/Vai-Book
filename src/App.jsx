@@ -8742,7 +8742,9 @@ function Nav({ onNav, current, session, user, providerProfile, staffProfile, isA
   // bare Menu-button fallback nav as "provider"/"admin" without a session,
   // below, instead of looking like a browsable page with nothing to
   // actually browse.
-  const showNavSearch = current === "home";
+  // Pitch home (2026-11-13): while the home page is the pitch to businesses,
+  // the customer search lives on the "find" page, not in the top bar.
+  const showNavSearch = current === "find" || (current === "home" && (!!session || PLATFORM.homeMode === "search"));
 
   // Every page below nav is a near-white surface except the provider
   // landing page's own dark hero (view "providers" — see the --light
@@ -9945,7 +9947,21 @@ const LpIcon = ({ name }) => {
   );
 };
 
-function ProviderLandingPage({ onNav, asHome, bizType }) {
+function ProviderLandingPage({ onNav, asHome, bizType: bizTypeProp }) {
+  // The type shown can change in place from the type bar, without a page
+  // change (no fade, no jump to the top) — see switchType below.
+  const [bizType, setBizType] = useState(bizTypeProp);
+  useEffect(() => { setBizType(bizTypeProp); }, [bizTypeProp]);
+  const typeBarRef = useRef(null);
+  const typeBarTopRef = useRef(null);
+  useLayoutEffect(() => {
+    // Keep the type bar where the finger is: the headline above it can
+    // change length, so scroll by however much the bar moved.
+    if (typeBarTopRef.current == null || !typeBarRef.current) return;
+    const delta = typeBarRef.current.getBoundingClientRect().top - typeBarTopRef.current;
+    typeBarTopRef.current = null;
+    if (Math.abs(delta) > 1) window.scrollBy(0, delta);
+  }, [bizType]);
   const { t, i18n } = useTranslation();
   const lt = (k, v) => lpText(i18n.language, k, v);
   const solo = PLANS.find((p) => p.id === "pro");
@@ -9966,11 +9982,17 @@ function ProviderLandingPage({ onNav, asHome, bizType }) {
     onNav(`type-${k}`); window.scrollTo({ top: 0 });
     try { window.history.replaceState(null, "", `#for-${k}`); } catch (e) { /* ignore */ }
   };
+  const switchType = (k) => {
+    if (k === bizType) return;
+    if (typeBarRef.current) typeBarTopRef.current = typeBarRef.current.getBoundingClientRect().top;
+    setBizType(k);
+    try { window.history.replaceState(null, "", `#for-${k}`); } catch (e) { /* ignore */ }
+  };
   const typeChips = (
-    <nav className="vbl-types-bar" aria-label={px("Business types", "Tipos de negocio")}>
+    <nav className="vbl-types-bar" ref={typeBarRef} aria-label={px("Business types", "Tipos de negocio")}>
       <div className="vbl-types-scroll">
         {BIZ_TYPES.map((b) => (
-          <button type="button" key={b.key} className={b.key === bizType ? "on" : ""} aria-current={b.key === bizType ? "page" : undefined} onClick={() => goType(b.key)}>
+          <button type="button" key={b.key} className={b.key === bizType ? "on" : ""} aria-current={b.key === bizType ? "page" : undefined} onClick={() => switchType(b.key)}>
             <span aria-hidden="true">{b.icon}</span> {L(b.name)}
           </button>
         ))}
