@@ -9980,13 +9980,11 @@ function ProviderLandingPage({ onNav, asHome, bizType: bizTypeProp }) {
   const L = (pair) => (Array.isArray(pair) ? (lpEs ? pair[1] : pair[0]) : pair);
   const goType = (k) => {
     onNav(`type-${k}`); window.scrollTo({ top: 0 });
-    try { window.history.replaceState(null, "", `#for-${k}`); } catch (e) { /* ignore */ }
   };
   const switchType = (k) => {
     if (k === bizType) return;
     if (typeBarRef.current) typeBarTopRef.current = typeBarRef.current.getBoundingClientRect().top;
     setBizType(k);
-    try { window.history.replaceState(null, "", `#for-${k}`); } catch (e) { /* ignore */ }
   };
   const typeChips = (
     <nav className="vbl-types-bar" ref={typeBarRef} aria-label={px("Business types", "Tipos de negocio")}>
@@ -23391,6 +23389,15 @@ export default function App() {
     setInfoPage(null);
     try { window.history.replaceState(null, "", window.location.pathname + window.location.search); } catch (e) { /* ignore */ }
   };
+
+  // A shared vaibook.bz/#for-barbers link opens that business type; once
+  // the visitor moves on to any other page, drop it from the address so a
+  // refresh lands where they are, not back on the old type page.
+  useEffect(() => {
+    if (BIZ_TYPE_VIEWS.includes(view)) return;
+    if (!window.location.hash.startsWith("#for-")) return;
+    try { window.history.replaceState(null, "", window.location.pathname + window.location.search); } catch (e) { /* ignore */ }
+  }, [view]);
 
   // Keep view in sync if the URL hash changes without a full page reload
   // (e.g. typing/pasting a #admin or #customer link into an already-open tab).
