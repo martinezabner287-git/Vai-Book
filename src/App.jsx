@@ -2956,9 +2956,12 @@ const css = `
     .vbl-shot { flex: 0 0 74%; scroll-snap-align: center; }
     .vbl-notif { left: -8px; right: -8px; }
   }
-  .vbl-cust-strip { display: flex; width: 100%; align-items: center; justify-content: center; flex-wrap: wrap; gap: 6px 10px; padding: 11px 16px; border: 0; border-bottom: 1px solid rgba(23,20,31,0.08); background: #FFFFFF; color: #3D3850; font: inherit; font-size: 14px; cursor: pointer; }
+  .vbl-cust-strip { display: flex; width: 100%; box-sizing: border-box; align-items: center; justify-content: center; flex-wrap: wrap; gap: 4px 14px; padding: 10px 16px; border-bottom: 1px solid rgba(23,20,31,0.08); background: #FFFFFF; color: #3D3850; font-size: 14px; }
+  .vbl-cust-strip button { background: none; border: 0; padding: 2px 0; font: inherit; cursor: pointer; }
   .vbl-cust-strip strong { color: var(--accent, #4C3DC4); font-weight: 700; white-space: nowrap; }
-  .vbl-cust-strip:hover strong { text-decoration: underline; text-underline-offset: 3px; }
+  .vbl-cust-strip button:hover strong { text-decoration: underline; text-underline-offset: 3px; }
+  .vbl-cust-sep { color: #B9B3CC; }
+  @media (max-width: 520px) { .vbl-cust-sep { display: none; } .vbl-cust-strip > span:first-child { width: 100%; text-align: center; } }
   .vbl-cust-card { margin-top: 28px; display: flex; align-items: center; justify-content: space-between; gap: 18px 28px; flex-wrap: wrap; background: #FFFFFF; border: 1px solid #E8E6EF; border-radius: 20px; padding: 24px 26px; }
   .vbl-cust-card h3 { margin: 0 0 6px; font-size: 19px; }
   .vbl-cust-card p { margin: 0; color: #5E5870; font-size: 14.5px; line-height: 1.5; max-width: 460px; }
@@ -3455,6 +3458,7 @@ const css = `
   .vbn-logo-word { font-size: 21px; font-weight: 800; letter-spacing: -.02em; color: #16181D; white-space: nowrap; }
   .vbn-logo-word span { font-weight: 500; color: #8A8E99; margin-right: 1px; }
   .vbn-top-actions { display: flex; align-items: center; gap: 2px; flex-shrink: 0; }
+  .vbn-login-btn { border: 1.5px solid var(--forest, #4C3DC4); background: #FFFFFF; color: var(--forest, #4C3DC4); font: inherit; font-weight: 700; font-size: 14px; border-radius: 999px; padding: 8px 16px; cursor: pointer; white-space: nowrap; }
   .vbn-provide-btn { display: inline-flex; align-items: center; gap: 6px; height: 38px; padding: 0 12px; margin-right: 4px; border-radius: 999px;
                      border: 1px solid var(--forest); background: var(--accent-soft); color: var(--forest); font-family: inherit; font-size: 13px; font-weight: 700; line-height: 1; white-space: nowrap; cursor: pointer; }
   .vbn-icon-btn { width: 44px; height: 44px; display: inline-flex; align-items: center; justify-content: center; border: none; background: none; color: #152E59; border-radius: 12px; cursor: pointer; }
@@ -8402,15 +8406,29 @@ function MobileTopBar({ view, session, onNav, onOpenMenu }) {
         <VaiBookMark size={26} /> <span className="vbn-logo-word"><span>vai</span>book</span>
       </button>
       <div className="vbn-top-actions">
-        {view !== "providers" && !(view === "home" && !session && PLATFORM.homeMode !== "search") && (
-          <button className="vbn-provide-btn" onClick={() => { onNav("providers"); window.scrollTo({ top: 0 }); }}>
-            <VbnIcon name="store" size={17} /> {vbnT("Provide my service", "Ofrecer mi servicio")}
-          </button>
-        )}
-        <button className="vbn-icon-btn" aria-label={vbnT("Account", "Cuenta")}
-          onClick={() => (session ? vbnGoCustomerTab("settings", view, onNav) : onNav("customer-login"))}>
-          <VbnIcon name="account" size={25} />
-        </button>
+        {/* On the pitch pages (home while signing up businesses, the
+            business pages) the "Provide my service" button would point at
+            the page you're on, so a plain "Log in" goes there instead —
+            customers who land on vaibook.bz still find their way in. */}
+        {(() => {
+          const onPitch = !session && (view === "providers" || BIZ_TYPE_VIEWS.includes(view) || (view === "home" && PLATFORM.homeMode !== "search"));
+          if (onPitch) return (
+            <button className="vbn-login-btn" onClick={() => onNav("customer-login")}>{vbnT("Log in", "Iniciar sesión")}</button>
+          );
+          return (
+            <>
+              {view !== "providers" && (
+                <button className="vbn-provide-btn" onClick={() => { onNav("providers"); window.scrollTo({ top: 0 }); }}>
+                  <VbnIcon name="store" size={17} /> {vbnT("Provide my service", "Ofrecer mi servicio")}
+                </button>
+              )}
+              <button className="vbn-icon-btn" aria-label={vbnT("Account", "Cuenta")}
+                onClick={() => (session ? vbnGoCustomerTab("settings", view, onNav) : onNav("customer-login"))}>
+                <VbnIcon name="account" size={25} />
+              </button>
+            </>
+          );
+        })()}
         <button className="vbn-icon-btn" aria-label={vbnT("Menu", "Menú")} onClick={onOpenMenu}>
           <VbnIcon name="menu" size={27} />
         </button>
@@ -8772,7 +8790,7 @@ function Nav({ onNav, current, session, user, providerProfile, staffProfile, isA
       <button className={`nav-search-toggle ${navSearchActive ? "visible" : ""}`} onClick={() => setMobileSearchOpen(v => !v)} aria-label={t("nav.searchAriaLabel")}>🔍</button>
       )}
 
-      {(current === "home" || current === "providers") ? (
+      {(current === "home" || current === "providers" || current === "find" || BIZ_TYPE_VIEWS.includes(current)) ? (
         <div className="nav-cta">
           {/* LANGUAGE SELECTOR — moved here, as the first child of the
               right-side cluster, so it sits immediately to the left of the
@@ -9962,10 +9980,12 @@ function ProviderLandingPage({ onNav, asHome, bizType }) {
   return (
     <div className="vbl">
       {asHome && (
-        <button type="button" className="vbl-cust-strip" onClick={goFind}>
+        <div className="vbl-cust-strip">
           <span>{px("Looking to book an appointment?", "¿Buscas reservar una cita?")}</span>
-          <strong>{px("Find a business", "Busca un negocio")} <span aria-hidden="true">→</span></strong>
-        </button>
+          <button type="button" onClick={goFind}><strong>{px("Find a business", "Busca un negocio")} <span aria-hidden="true">→</span></strong></button>
+          <span className="vbl-cust-sep" aria-hidden="true">·</span>
+          <button type="button" onClick={() => onNav("customer-login")}><strong>{px("Already a customer? Log in", "¿Ya eres cliente? Inicia sesión")}</strong></button>
+        </div>
       )}
       <section className="vbl-hero">
         <div className="vbl-wrap">
@@ -23382,6 +23402,8 @@ export default function App() {
         setView("customer");
       } else if (h === "admin" || h === "customer" || h === "provider" || h === "providers") {
         setView(h);
+      } else if (h.startsWith("for-") && bizTypeByKey(h.slice(4))) {
+        setView(`type-${h.slice(4)}`); window.scrollTo({ top: 0 });
       }
     };
     window.addEventListener("hashchange", onHashChange);
