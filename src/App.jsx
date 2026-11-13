@@ -3805,6 +3805,10 @@ const css = `
   .term-toggle button { border: none; background: transparent; font: inherit; font-weight: 700; font-size: 14px; padding: 9px 16px; border-radius: 999px; cursor: pointer; color: #3A3F4B; display: flex; align-items: center; gap: 6px; }
   .term-toggle button.on { background: #fff; color: #16181D; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
   .term-save { background: #DCFCE7; color: #166534; font-size: 11px; font-weight: 800; border-radius: 999px; padding: 2px 8px; }
+  .term-save.hot { background: #FFF1D6; color: #9A5B00; }
+  .term-toggle button, .term-save { white-space: nowrap; }
+  @media (max-width: 420px) { .term-toggle button { padding: 9px 11px; font-size: 13.5px; gap: 5px; } .term-save { font-size: 10.5px; padding: 2px 7px; } }
+  .term-card-badge.hot { background: #E08A00; }
   .vbl-plan-billing { font-size: 13px; color: var(--muted); margin: -2px 0 10px; line-height: 1.45; }
   .vbl-plan-switch { background: #ECFDF5; color: #166534; border: 1px dashed #16A34A; border-radius: 10px; padding: 7px 10px; font: inherit; font-size: 12.5px; font-weight: 700; cursor: pointer; margin-bottom: 10px; text-align: left; }
   .term-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
@@ -9860,9 +9864,9 @@ function ProviderLandingPage({ onNav, asHome }) {
           <p className="vbl-compare">{px("A website alone costs about BZ$700 and still can't take bookings, send reminders or track your money. Solo does all of it for about BZ$2 a day.", "Solo una página web cuesta unos BZ$700 y aun así no toma reservas, no envía recordatorios ni lleva tus cuentas. Solo hace todo eso por menos de BZ$2 al día.")}</p>
           <div className="term-toggle" role="tablist" aria-label={px("Billing period", "Periodo de pago")}>
             <button role="tab" aria-selected={priceTerm === "six"} className={priceTerm === "six" ? "on" : ""} onClick={() => setPriceTerm("six")}>
-              {px("6 months", "6 meses")} <span className="term-save">{px("1 month free", "1 mes gratis")}</span>
+              {px("6 months", "6 meses")} <span className="term-save">{px("Best price", "Mejor precio")}</span>
             </button>
-            <button role="tab" aria-selected={priceTerm === "monthly"} className={priceTerm === "monthly" ? "on" : ""} onClick={() => setPriceTerm("monthly")}>{px("Monthly", "Mensual")}</button>
+            <button role="tab" aria-selected={priceTerm === "monthly"} className={priceTerm === "monthly" ? "on" : ""} onClick={() => setPriceTerm("monthly")}>{px("Monthly", "Mensual")} <span className="term-save hot">{px("Best seller", "Más vendido")}</span></button>
           </div>
           <div className="vbl-plans">
             {PUBLIC_PLANS.map((p) => {
@@ -18279,13 +18283,13 @@ function ProviderPortal({ onNav, session, user, providerProfile, onSignIn, onSig
                       <div style={{ marginTop: 8, paddingTop: 16, borderTop: "1px solid var(--border)" }}>
                         <div className="term-cards">
                           <button type="button" className={`term-card ${payTerm === "six" ? "on" : ""}`} onClick={() => setPayTerm("six")}>
-                            <span className="term-card-badge">{bx("Best value · 1 month free", "Mejor precio · 1 mes gratis")}</span>
+                            <span className="term-card-badge">{bx("Best price · 1 month free", "Mejor precio · 1 mes gratis")}</span>
                             <span className="term-card-title">{bx("6 months", "6 meses")}</span>
                             <span className="term-card-day">BZ${six.perDay}<small>{bx("/day", "/día")}</small></span>
                             <span className="term-card-sub">{bx(`Pay BZ$${six.total.toFixed(2)}, get 7 months.`, `Paga BZ$${six.total.toFixed(2)} y recibe 7 meses.`)}</span>
                           </button>
                           <button type="button" className={`term-card ${payTerm === "monthly" ? "on" : ""}`} onClick={() => setPayTerm("monthly")}>
-                            {mon.half && <span className="term-card-badge">🏆 {bx("Half price", "Mitad de precio")}</span>}
+                            {mon.half ? <span className="term-card-badge">🏆 {bx("Half price", "Mitad de precio")}</span> : <span className="term-card-badge hot">{bx("Best seller", "Más vendido")}</span>}
                             <span className="term-card-title">{bx("Monthly", "Mensual")}</span>
                             <span className="term-card-day">BZ${mon.perDay}<small>{bx("/day", "/día")}</small></span>
                             <span className="term-card-sub">
