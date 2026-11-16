@@ -2956,12 +2956,14 @@ const css = `
     .vbl-shot { flex: 0 0 74%; scroll-snap-align: center; }
     .vbl-notif { left: -8px; right: -8px; }
   }
-  .vbl-cust-strip { display: flex; width: 100%; box-sizing: border-box; align-items: center; justify-content: center; flex-wrap: wrap; gap: 4px 14px; padding: 10px 16px; border-bottom: 1px solid rgba(23,20,31,0.08); background: #FFFFFF; color: #3D3850; font-size: 14px; }
-  .vbl-cust-strip button { background: none; border: 0; padding: 2px 0; font: inherit; cursor: pointer; }
-  .vbl-cust-strip strong { color: var(--accent, #4C3DC4); font-weight: 700; white-space: nowrap; }
-  .vbl-cust-strip button:hover strong { text-decoration: underline; text-underline-offset: 3px; }
-  .vbl-cust-sep { color: #B9B3CC; }
-  @media (max-width: 520px) { .vbl-cust-sep { display: none; } .vbl-cust-strip > span:first-child { width: 100%; text-align: center; } }
+  .vbl-cust-strip { display: flex; width: 100%; box-sizing: border-box; align-items: center; justify-content: center; flex-wrap: wrap; gap: 10px 16px; padding: 12px 16px; border-bottom: 1px solid rgba(23,20,31,0.08); background: #F6F4FB; color: #17141F; }
+  .vbl-cust-label { font-size: 15px; font-weight: 600; }
+  .vbl-cust-btns { display: flex; gap: 10px; }
+  .vbl-cust-btn { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 44px; padding: 0 18px; border-radius: 999px; border: 2px solid var(--forest, #4C3DC4); background: #FFFFFF; color: var(--forest, #4C3DC4); font: inherit; font-size: 15px; font-weight: 700; cursor: pointer; white-space: nowrap; }
+  .vbl-cust-btn.main { background: var(--forest, #4C3DC4); color: #FFFFFF; }
+  .vbl-cust-btn:hover { filter: brightness(0.95); }
+  .vbl-cust-btn:focus-visible { outline: 3px solid #F2B705; outline-offset: 2px; }
+  @media (max-width: 520px) { .vbl-cust-label { width: 100%; text-align: center; } .vbl-cust-btns { width: 100%; } .vbl-cust-btn { flex: 1; padding: 0 10px; } }
   .vbl-cust-card { margin-top: 28px; display: flex; align-items: center; justify-content: space-between; gap: 18px 28px; flex-wrap: wrap; background: #FFFFFF; border: 1px solid #E8E6EF; border-radius: 20px; padding: 24px 26px; }
   .vbl-cust-card h3 { margin: 0 0 6px; font-size: 19px; }
   .vbl-cust-card p { margin: 0; color: #5E5870; font-size: 14.5px; line-height: 1.5; max-width: 460px; }
@@ -10000,11 +10002,16 @@ function ProviderLandingPage({ onNav, asHome, bizType: bizTypeProp }) {
   return (
     <div className="vbl">
       {asHome && (
-        <div className="vbl-cust-strip">
-          <span>{px("Looking to book an appointment?", "¿Buscas reservar una cita?")}</span>
-          <button type="button" onClick={goFind}><strong>{px("Find a business", "Busca un negocio")} <span aria-hidden="true">→</span></strong></button>
-          <span className="vbl-cust-sep" aria-hidden="true">·</span>
-          <button type="button" onClick={() => onNav("customer-login")}><strong>{px("Already a customer? Log in", "¿Ya eres cliente? Inicia sesión")}</strong></button>
+        <div className="vbl-cust-strip" role="region" aria-label={px("For customers", "Para clientes")}>
+          <span className="vbl-cust-label">{px("Here to book an appointment?", "¿Vienes a reservar una cita?")}</span>
+          <div className="vbl-cust-btns">
+            <button type="button" className="vbl-cust-btn main" onClick={goFind}>
+              <span aria-hidden="true">🔍</span> {px("Find a business", "Busca un negocio")}
+            </button>
+            <button type="button" className="vbl-cust-btn" onClick={() => onNav("customer-login")}>
+              <span aria-hidden="true">👤</span> {px("Log in", "Iniciar sesión")}
+            </button>
+          </div>
         </div>
       )}
       <section className="vbl-hero">
