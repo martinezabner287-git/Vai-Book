@@ -8332,6 +8332,8 @@ const BIZ_TYPES = [
 ];
 const bizTypeByKey = (k) => BIZ_TYPES.find((b) => b.key === k) || null;
 const BIZ_TYPE_VIEWS = BIZ_TYPES.map((b) => `type-${b.key}`);
+// Public pages a refresh can reopen straight away (no login needed).
+const PUBLIC_RESTORE_VIEWS = ["providers", "signup", "find", "help", "help-contact", "help-faq", "customer-login", ...BIZ_TYPE_VIEWS];
 
 const MOBILE_NAV_VIEWS = ["home", "find", "customer", "providers", ...BIZ_TYPE_VIEWS, "help", "help-contact", "help-faq", "customer-login"];
 const BOTTOM_BAR_VIEWS = ["home", "find", "customer", "help", "help-contact", "help-faq", "customer-login"];
@@ -23284,7 +23286,7 @@ export default function App() {
     // that's loaded.
     try {
       const last = sessionStorage.getItem("vaibook_last_view");
-      if (last === "providers" || last === "signup") return last;
+      if (last && PUBLIC_RESTORE_VIEWS.includes(last)) return last;
     } catch (e) { /* ignore */ }
     return "home";
   });
@@ -23363,9 +23365,17 @@ export default function App() {
   // A shared vaibook.bz/#for-barbers link opens that business type; once
   // the visitor moves on to any other page, drop it from the address so a
   // refresh lands where they are, not back on the old type page.
+  // Same for any page link left in the address (#providers, #customer,
+  // a business's booking link, …): once the visitor is on a different page,
+  // drop it so a refresh doesn't jump back to the old one.
   useEffect(() => {
-    if (BIZ_TYPE_VIEWS.includes(view)) return;
-    if (!window.location.hash.startsWith("#for-")) return;
+    const h = window.location.hash.replace("#", "");
+    if (!h) return;
+    const isBooking = !!parseBookingHash(h);
+    const managed = ["admin", "customer", "provider", "providers"].includes(h) || h.startsWith("for-") || isBooking;
+    if (!managed) return;
+    const matches = h === view || (h.startsWith("for-") && view === `type-${h.slice(4)}`) || (isBooking && view === "customer");
+    if (matches) return;
     try { window.history.replaceState(null, "", window.location.pathname + window.location.search); } catch (e) { /* ignore */ }
   }, [view]);
 
@@ -23769,8 +23779,10 @@ export default function App() {
   // "providers"/"signup" are public and restored straight out of the
   // useState initializer above, synchronously. Kept in sessionStorage (not
   // localStorage) on purpose — see the note above restoreLastPortalView.
+  // 2026-11-16: every page is remembered (it used to be only a few, so a
+  // refresh after moving on from one of them jumped back to it).
   useEffect(() => {
-    if (!["provider", "customer", "admin", "providers", "signup"].includes(view)) return;
+    if (view === "auth") return;
     try { sessionStorage.setItem("vaibook_last_view", view); } catch (e) { /* ignore */ }
   }, [view]);
 
