@@ -2890,12 +2890,6 @@ const css = `
   .vbl { background: var(--page); color: var(--dark-text); }
   .vbl-wrap { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
   .vbl-narrow { max-width: 760px; }
-  .vbl-types-bar { background: #FFFFFF; border-bottom: 1px solid rgba(23,20,31,0.08); }
-  .vbl-types-scroll { display: flex; gap: 8px; overflow-x: auto; padding: 10px 20px; max-width: 1180px; margin: 0 auto; scrollbar-width: none; }
-  .vbl-types-scroll::-webkit-scrollbar { display: none; }
-  @media (min-width: 900px) { .vbl-types-scroll { flex-wrap: wrap; justify-content: center; overflow: visible; } }
-  .vbl-types-scroll button { flex: none; display: inline-flex; align-items: center; gap: 6px; border: 1.5px solid #E4E0FA; background: #FFFFFF; color: #3D3850; font: inherit; font-size: 14px; font-weight: 600; border-radius: 999px; padding: 8px 14px; cursor: pointer; white-space: nowrap; }
-  .vbl-types-scroll button.on { background: var(--forest); border-color: var(--forest); color: #FFFFFF; }
   .vbl-type-layout { display: grid; grid-template-columns: 1.15fr 0.85fr; gap: 36px; align-items: start; }
   .vbl-type-points { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
   .vbl-type-point { display: flex; gap: 14px; background: #FFFFFF; border: 1px solid #E8E6EF; border-radius: 18px; padding: 20px; }
@@ -9949,21 +9943,7 @@ const LpIcon = ({ name }) => {
   );
 };
 
-function ProviderLandingPage({ onNav, asHome, bizType: bizTypeProp }) {
-  // The type shown can change in place from the type bar, without a page
-  // change (no fade, no jump to the top) — see switchType below.
-  const [bizType, setBizType] = useState(bizTypeProp);
-  useEffect(() => { setBizType(bizTypeProp); }, [bizTypeProp]);
-  const typeBarRef = useRef(null);
-  const typeBarTopRef = useRef(null);
-  useLayoutEffect(() => {
-    // Keep the type bar where the finger is: the headline above it can
-    // change length, so scroll by however much the bar moved.
-    if (typeBarTopRef.current == null || !typeBarRef.current) return;
-    const delta = typeBarRef.current.getBoundingClientRect().top - typeBarTopRef.current;
-    typeBarTopRef.current = null;
-    if (Math.abs(delta) > 1) window.scrollBy(0, delta);
-  }, [bizType]);
+function ProviderLandingPage({ onNav, asHome, bizType }) {
   const { t, i18n } = useTranslation();
   const lt = (k, v) => lpText(i18n.language, k, v);
   const solo = PLANS.find((p) => p.id === "pro");
@@ -9983,22 +9963,6 @@ function ProviderLandingPage({ onNav, asHome, bizType: bizTypeProp }) {
   const goType = (k) => {
     onNav(`type-${k}`); window.scrollTo({ top: 0 });
   };
-  const switchType = (k) => {
-    if (k === bizType) return;
-    if (typeBarRef.current) typeBarTopRef.current = typeBarRef.current.getBoundingClientRect().top;
-    setBizType(k);
-  };
-  const typeChips = (
-    <nav className="vbl-types-bar" ref={typeBarRef} aria-label={px("Business types", "Tipos de negocio")}>
-      <div className="vbl-types-scroll">
-        {BIZ_TYPES.map((b) => (
-          <button type="button" key={b.key} className={b.key === bizType ? "on" : ""} aria-current={b.key === bizType ? "page" : undefined} onClick={() => switchType(b.key)}>
-            <span aria-hidden="true">{b.icon}</span> {L(b.name)}
-          </button>
-        ))}
-      </div>
-    </nav>
-  );
   return (
     <div className="vbl">
       {asHome && (
@@ -10034,7 +9998,6 @@ function ProviderLandingPage({ onNav, asHome, bizType: bizTypeProp }) {
         </div>
       </section>
 
-      {bt && typeChips}
       {bt && (
         <section className="vbl-section vbl-type-sec">
           <div className="vbl-wrap">
